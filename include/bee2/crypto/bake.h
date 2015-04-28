@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.04.14
-\version 2014.11.06
+\version 2015.04.28
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -139,7 +139,7 @@ typedef err_t (*bake_certval_i)(
 );
 
 /*!	\brief Сертификат bake */
-typedef struct bake_cert
+typedef struct
 {
 	octet* data;			/*!< данные сертификата */
 	size_t len;				/*!< длина data */

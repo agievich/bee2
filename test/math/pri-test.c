@@ -5,7 +5,7 @@
 \project bee2/test
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.07
-\version 2014.07.09
+\version 2015.04.28
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -28,9 +28,10 @@ bool_t priTest()
 	size_t i;
 	word a[W_OF_B(521)];
 	word p[W_OF_B(289)];
+	word mods[1024];
 	octet combo_state[32];
 	octet stack[2048];
-	// инициализровать генератор COMBO
+	// инициализировать генератор COMBO
 	ASSERT(prngCOMBO_keep() <= sizeof(combo_state));
 	prngCOMBOStart(combo_state, utilNonce32());
 	// проверить простоту элементов факторной базы
@@ -56,6 +57,14 @@ bool_t priTest()
 	zzSubW2(a, W_OF_B(521), 1);
 	if (priRMTest(a, W_OF_B(521), 20, stack) != TRUE)
 		return FALSE;
+	// остатки по простым из факторной базы
+	i = MIN2(COUNT_OF(mods), priBaseSize());
+	priBaseMod(mods, a, W_OF_B(521), i);
+	while (i--)
+		if (mods[i] != zzModW(a, W_OF_B(521), priBasePrime(i)) ||
+			priBasePrime(i) < WORD_BIT_HALF &&
+				mods[i] != zzModW2(a, W_OF_B(521), priBasePrime(i)))
+			return FALSE;
 	// найти 2-битовое нечетное простое число
 	ASSERT(priNextPrime_deep(1, 0) <= sizeof(stack));
 	a[0] = 2;
