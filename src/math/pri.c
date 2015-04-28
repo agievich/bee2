@@ -561,12 +561,9 @@ size_t priIsPrimeW_deep()
 а получаемые степени сравниваются не с \pm 1 \mod a, а с \pm R \mod a.
 
 В начале функции проверяется, что a >= 49. Поэтому основание base будет 
-совпадать с \pm R \mod с вероятностью p < 2/(49 - 1) = 1/24 и число попыток 
+совпадать с \pm R \mod a с вероятностью p < 2/(49 - 1) = 1/24 и число попыток 
 генерации можно ограничить величиной 
 B_PER_IMPOSSLIBLE / log_2(24) < B_PER_IMPOSSLIBLE / 4.5.
-
-\warning Ошибка при вызове zzRandNZMod() или при многократной генерации 
-\pm R интерпретируется как то, что число a является составным.
 *******************************************************************************
 */
 
@@ -608,7 +605,7 @@ bool_t priRMTest(const word a[], size_t n, size_t iter, void* stack)
 		// base <-R {1, \ldots, a - 1} \ {\pm one}
 		i = 0;
 		do
-			if (i++ * 45 >= B_PER_IMPOSSIBLE * 10 || 
+			if (i++ * 45 > B_PER_IMPOSSIBLE * 10 || 
 				!zzRandNZMod(base, a, n, prngCOMBOStepG, combo_state))
 			{
 				s = m = 0;
