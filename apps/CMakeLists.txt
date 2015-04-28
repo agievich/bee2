@@ -1,0 +1,2 @@
+add_subdirectory(beltsum)
+add_subdirectory(stamp)

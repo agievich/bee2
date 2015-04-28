@@ -1,0 +1,24 @@
+/*
+*******************************************************************************
+\file stamp.rc
+\brief Windows resources
+\project bee2/apps/stamp
+\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\created 2011.10.18
+\version 2013.02.27
+\license This program is released under the GNU General Public License 
+version 3. See Copyright Notices in bee2/info.h.
+*******************************************************************************
+*/
+
+#include <winres.h>
+
+/*
+*******************************************************************************
+Stamp
+*******************************************************************************
+*/
+
+1 256 {"0123456789ABCDEF0123456789ABCDEF"}
+
+
