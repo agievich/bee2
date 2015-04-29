@@ -34,38 +34,38 @@ Build
 
 <strong>Debug</strong>
 
-    cmake -DCMAKE_BUILD_TYPE=Debug ..
+cmake -DCMAKE_BUILD_TYPE=Debug ..
 
 <strong>Coverage</strong>
 
-    cmake -DCMAKE_BUILD_TYPE=Coverage ..
+cmake -DCMAKE_BUILD_TYPE=Coverage ..
 
 <strong>ASan (AddressSanitizer)</strong>
 
-    cmake -DCMAKE_BUILD_TYPE=ASan ..
-    cmake -DCMAKE_BUILD_TYPE=ASanDbg ..
+cmake -DCMAKE_BUILD_TYPE=ASan ..
+cmake -DCMAKE_BUILD_TYPE=ASanDbg ..
 
 <strong>MemSan (MemorySanitizer)</strong>
 
-    cmake -DCMAKE_BUILD_TYPE=MemSan ..
-    cmake -DCMAKE_BUILD_TYPE=MemSanDbg ..
+cmake -DCMAKE_BUILD_TYPE=MemSan ..
+cmake -DCMAKE_BUILD_TYPE=MemSanDbg ..
 
 <strong>Check (strict complile rules)</strong>
 
-    cmake -DCMAKE_BUILD_TYPE=Check ..
-    cmake -DCMAKE_BUILD_TYPE=CheckFull ..
+cmake -DCMAKE_BUILD_TYPE=Check ..
+cmake -DCMAKE_BUILD_TYPE=CheckFull ..
 
 ### Build
 
-    make
+make
 
 ### Test
 
-    make test
+make test
 
 ### Install
 
-    make install
+make install
 
 License
 -------
