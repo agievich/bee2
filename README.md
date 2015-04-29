@@ -18,7 +18,7 @@ Bee2 fully supports the following standards:
    curves. 
 
 You can found these standards at 
-[Cryptography Standards of Belarus](http://apmi.bsu.by/resources/std.html).
+[apmi.bsu.by/resources/std.html](http://apmi.bsu.by/resources/std.html).
 
 Additionally Bee2 implements digital signature algorithms standardized in 
 Russia and Ukraine.
@@ -26,46 +26,46 @@ Russia and Ukraine.
 Build
 -----
 
-# Prepare build
+### Prepare build
 
     mkdir build
     cd build
     cmake  ..
 
-# Build types
+### Build types
 
-## Debug
+#### Debug
 
     cmake -DCMAKE_BUILD_TYPE=Debug ..
 
-## Coverage
+#### Coverage
 
     cmake -DCMAKE_BUILD_TYPE=Coverage ..
 
-## ASan (AddressSanitizer)
+#### ASan (AddressSanitizer)
 
     cmake -DCMAKE_BUILD_TYPE=ASan ..
     cmake -DCMAKE_BUILD_TYPE=ASanDbg ..
 
-## MemSan (MemorySanitizer)
+#### MemSan (MemorySanitizer)
 
     cmake -DCMAKE_BUILD_TYPE=MemSan ..
     cmake -DCMAKE_BUILD_TYPE=MemSanDbg ..
 
-## Check (strict complile)
+#### Check (strict complile rules)
 
     cmake -DCMAKE_BUILD_TYPE=Check ..
     cmake -DCMAKE_BUILD_TYPE=CheckFull ..
 
-# Build
+### Build
 
     make
 
-# Test
+### Test
 
     make test
 
-# Install
+### Install
 
     make install
 
