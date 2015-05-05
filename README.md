@@ -26,7 +26,7 @@ Build
 
     mkdir build
     cd build
-    cmake [-DCMAKE_BUILD_TYPE={Release|Debug|Coverage|ASan|ASanDbg|MemSan|MemSanDbg|Check|CheckFull] ..
+    cmake [-DCMAKE_BUILD_TYPE={Release|Debug|Coverage|ASan|ASanDbg|MemSan|MemSanDbg|Check|CheckFull}] ..
     make
     [make test]
     [make install]
