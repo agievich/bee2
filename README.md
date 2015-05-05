@@ -24,48 +24,19 @@ Russia and Ukraine.
 Build
 -----
 
-### Prepare build
-
     mkdir build
     cd build
-    cmake  ..
-
-### Build types
-
-<strong>Debug</strong>
-
-    cmake -DCMAKE_BUILD_TYPE=Debug ..
-
-<strong>Coverage</strong>
-
-    cmake -DCMAKE_BUILD_TYPE=Coverage ..
-
-<strong>ASan (AddressSanitizer)</strong>
-
-    cmake -DCMAKE_BUILD_TYPE=ASan ..
-    cmake -DCMAKE_BUILD_TYPE=ASanDbg ..
-
-<strong>MemSan (MemorySanitizer)</strong>
-
-    cmake -DCMAKE_BUILD_TYPE=MemSan ..
-    cmake -DCMAKE_BUILD_TYPE=MemSanDbg ..
-
-<strong>Check (strict complile rules)</strong>
-
-    cmake -DCMAKE_BUILD_TYPE=Check ..
-    cmake -DCMAKE_BUILD_TYPE=CheckFull ..
-
-### Build
-
+    cmake [-DCMAKE_BUILD_TYPE={Release|Debug|Coverage|ASan|ASanDbg|MemSan|MemSanDbg|Check|CheckFull] ..
     make
+    [make test]
+    [make install]
 
-### Test
-
-    make test
-
-### Install
-
-    make install
+Build types (Release by default):
+   
+*  Coverage -- test coverage,   
+*  ASan, ASanDbg -- [address sanitizer](http://en.wikipedia.org/wiki/AddressSanitizer),
+*  MemSan, MemSanDbg -- [memory sanitizer](http://code.google.com/p/memory-sanitizer/),
+*  Check, CheckFull -- strict compile rules.
 
 License
 -------
