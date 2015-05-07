@@ -1,4 +1,4 @@
-﻿set(src
+set(src
   core/blob.c
   core/der.c
   core/err.c
