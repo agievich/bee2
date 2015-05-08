@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2015.04.27
+\version 2015.05.08
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -57,7 +57,7 @@ static bool_t rngHasTRNG()
 		return FALSE;
 	/* rdrand? */
 	__cpuid((int*)info, 1);
-	 return (info[1] & 0x40000000) == 0x40000000;
+	 return (info[2] & 0x40000000) == 0x40000000;
 }
 
 #define rdrand_eax	__asm _emit 0x0F __asm _emit 0xC7 __asm _emit 0xF0
@@ -115,7 +115,7 @@ static bool_t rngHasTRNG()
 		return FALSE;
 	/* rdrand? */
 	__cpuid(1, info[0], info[1], info[2], info[3]);
-	 return (info[1] & 0x40000000) == 0x40000000;
+	 return (info[2] & 0x40000000) == 0x40000000;
 }
 
 static err_t rngReadTRNG(size_t* read, void* buf, size_t count)
@@ -143,7 +143,7 @@ static err_t rngReadTRNG(size_t* read, void* buf, size_t count)
 			i -= count - O_PER_W;
 			rand = (word*)((octet*)buf + i);
 		}
-		asm volatile ("rdseed %0; setc %1" : "=r" (*rand), "=qm" (ok));
+		asm volatile ("rdrand %0; setc %1" : "=r" (*rand), "=qm" (ok));
 		if (!ok)
 			break;
 	}
