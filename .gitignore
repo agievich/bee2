@@ -30,6 +30,35 @@
 
 # Debug files
 *.dSYM/
+*.pdb
+
+# VStudio files
+*.ncb
+*.ncb
+*.aps
+*.opt
+*.clw
+*.plg
+*.mak
+*.suo
+*.sbr
+*.idb
+*.res
+*.ilk
+*.exp
+*.bsc
+*.sdf
+*.user
+*.manifest
+*.dep
+*.log
+*.tlog
+*.lastbuildstate
+*.ipch
+*.opensdf
+
+# Math files
+*.nb
 
 # Local files
 backup
@@ -39,4 +68,3 @@ support
 win
 clear.bat
 bash*.*
-*.nb
