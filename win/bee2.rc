@@ -1,0 +1,104 @@
+/*
+*******************************************************************************
+\file bee2.rc
+\brief Resorces of Bee2 DLL
+*******************************************************************************
+\project bee2 [cryptographic library]
+\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\created 2013.02.25
+\version 2015.04.16
+\license This program is released under the GNU General Public License 
+version 3. See Copyright Notices in bee2/info.h.
+*******************************************************************************
+*/
+
+/*
+*******************************************************************************
+Используются следующие числовые и именные идентификаторы ресурсов:
+	"BEELOGO"	-- диалог logo
+	101			-- картинка "пчела"
+	102			-- поле версия диалога logo
+	103			-- поле устройства диалога logo
+*******************************************************************************
+*/
+
+#include <winres.h>
+#include "../include/bee2/info.h"
+
+#ifdef _WIN32
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+#pragma code_page(1251)
+#endif //_WIN32
+
+/*
+*******************************************************************************
+Контрольная характеристика
+*******************************************************************************
+*/
+
+1 256 {"0123456789ABCDEF0123456789ABCDEF"}
+
+/*
+*******************************************************************************
+Диалог logo
+*******************************************************************************
+*/
+
+BEELOGO DIALOGEX 10, 10, 326, 100
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
+	WS_SYSMENU
+CAPTION "Bee2: A Cryptographic Library"
+FONT 8, "MS Shell Dlg", 405, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,262,165,50,14
+    CONTROL         101,IDC_STATIC,"Static",SS_BITMAP,7,7,112,62
+    GROUPBOX        "Build info",IDC_STATIC,123,7,194,83
+    EDITTEXT        102,130,20,178,63, WS_VSCROLL | ES_AUTOHSCROLL | 
+					ES_AUTOVSCROLL | ES_READONLY | ES_MULTILINE
+END
+
+/*
+*******************************************************************************
+Картинка "пчела"
+*******************************************************************************
+*/
+
+101 BITMAP "bee2.bmp"
+
+/*
+*******************************************************************************
+Версия
+*******************************************************************************
+*/
+
+1 VERSIONINFO
+ FILEVERSION BEE2_VERSION_NUM
+ PRODUCTVERSION BEE2_VERSION_NUM
+ FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
+ FILEOS VOS__WINDOWS32
+ FILETYPE VFT_DLL
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "041904E3"
+        BEGIN
+            VALUE "Comments", "\0"
+            VALUE "CompanyName", "APMI, BSU\0"
+            VALUE "FileDescription", "Bee2 Cryptographic Library\0"
+            VALUE "FileVersion", BEE2_VERSION "\0"
+            VALUE "InternalName", "bee2\0"
+            VALUE "LegalCopyright", "Bee2 Authors\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "bee2.dll\0"
+            VALUE "PrivateBuild", "\0"
+            VALUE "ProductName", "bee2\0"
+            VALUE "ProductVersion", BEE2_VERSION "\0"
+            VALUE "SpecialBuild", "\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x419, 1251
+    END
+END
