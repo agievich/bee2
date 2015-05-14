@@ -18,8 +18,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifndef __GFP_H
-#define __GFP_H
+#ifndef __BEE2_GFP_H
+#define __BEE2_GFP_H
 
 #include "bee2/math/zm.h"
 
@@ -116,4 +116,4 @@ size_t gfpIsValid_deep(size_t n);
 } /* extern "C" */
 #endif
 
-#endif /* __GFP_H */
+#endif /* __BEE2_GFP_H */

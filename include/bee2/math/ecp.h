@@ -18,8 +18,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifndef __ECP_H
-#define __ECP_H
+#ifndef __BEE2_ECP_H
+#define __BEE2_ECP_H
 
 #include "bee2/math/ec.h"
 
@@ -253,4 +253,4 @@ size_t ecpSWU_deep(size_t n, size_t f_deep);
 } /* extern "C" */
 #endif
 
-#endif /* __ECP_H */
+#endif /* __BEE2_ECP_H */

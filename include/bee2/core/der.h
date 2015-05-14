@@ -18,8 +18,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifndef __DER_H
-#define __DER_H
+#ifndef __BEE2_DER_H
+#define __BEE2_DER_H
 
 #include "bee2/defs.h"
 
@@ -189,4 +189,4 @@ size_t derDecode2(
 } /* extern "C" */
 #endif
 
-#endif /* __MEM_H */
+#endif /* __BEE2_DER_H */

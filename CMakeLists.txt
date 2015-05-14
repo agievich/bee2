@@ -8,17 +8,17 @@ set(BEE2_VERSION "${BEE2_VERSION_MAJOR}.${BEE2_VERSION_MINOR}.${BEE2_VERSION_PAT
 
 option(BUILD_SHARED_LIBS "Build shared libraries." ON)
 option(BUILD_STATIC_LIBS "Build static libraries." OFF)
-option(BUILD_FAST "Build bee2 with the SAFE_FAST directive." ON)
-option(BUILD_APPS "Build bee2 apps." ON)
-option(BUILD_TESTS "Build bee2 tests." ON)
-option(BUILD_DOC "Build bee2 documentation (doxygen required)." OFF)
-option(INSTALL_HEADERS "Install bee2 headers." ON)
+option(BUILD_FAST "Build with the SAFE_FAST directive." ON)
+option(BUILD_APPS "Build apps." ON)
+option(BUILD_TESTS "Build tests." ON)
+option(BUILD_DOC "Build documentation (doxygen required)." OFF)
+option(INSTALL_HEADERS "Install headers." ON)
 
 string(REGEX MATCH "Clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER_ID}")
 
 if(CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE}
-      CACHE STRING "Choose the type of build: None Debug Release Coverage ASan ASanDbg MemSan MemSanDbg Check CheckFull"
+      CACHE STRING "Choose the type of build: Release Debug Coverage ASan ASanDbg MemSan MemSanDbg Check CheckFull"
       FORCE)
 else()
   set(CMAKE_BUILD_TYPE Release

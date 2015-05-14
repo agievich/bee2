@@ -18,8 +18,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifndef __TM_H
-#define __TM_H
+#ifndef __BEE2_TM_H
+#define __BEE2_TM_H
 
 #include <time.h>
 #include "bee2/defs.h"
@@ -112,4 +112,4 @@ typedef time_t tm_time_t;
 } /* extern "C" */
 #endif
 
-#endif /* __TM_H */
+#endif /* __BEE2_TM_H */

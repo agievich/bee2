@@ -18,8 +18,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifndef __EC2_H
-#define __EC2_H
+#ifndef __BEE2_EC2_H
+#define __BEE2_EC2_H
 
 #include "bee2/math/ec.h"
 
@@ -232,4 +232,4 @@ size_t ec2SubAA_deep(size_t n, size_t f_deep);
 } /* extern "C" */
 #endif
 
-#endif /* __EC2_H */
+#endif /* __BEE2_EC2_H */

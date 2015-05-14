@@ -18,8 +18,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifndef __ERR_H
-#define __ERR_H
+#ifndef __BEE2_ERR_H
+#define __BEE2_ERR_H
 
 #include "bee2/defs.h"
 
@@ -222,4 +222,4 @@ extern "C" {
 } /* extern "C" */
 #endif
 
-#endif /* __ERR_H */
+#endif /* __BEE2_ERR_H */

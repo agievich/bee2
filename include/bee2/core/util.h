@@ -18,8 +18,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifndef __UTIL_H
-#define __UTIL_H
+#ifndef __BEE2_UTIL_H
+#define __BEE2_UTIL_H
 
 #include <assert.h>
 #include "bee2/defs.h"
@@ -199,4 +199,4 @@ uint32 utilNonce32();
 } /* extern "C" */
 #endif
 
-#endif /* __UTIL_H */
+#endif /* __BEE2_UTIL_H */

@@ -18,8 +18,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifndef __STACK_H
-#define __STACK_H
+#ifndef __BEE2_STACK_H
+#define __BEE2_STACK_H
 
 #include "bee2/defs.h"
 
@@ -112,4 +112,4 @@ extern "C" {
 } /* extern "C" */
 #endif
 
-#endif /* __STACK_H */
+#endif /* __BEE2_STACK_H */

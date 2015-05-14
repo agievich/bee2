@@ -19,8 +19,8 @@ version 3. See Copyright Notices in bee2/info.h.
 */
 
 
-#ifndef __RNG_H
-#define __RNG_H
+#ifndef __BEE2_RNG_H
+#define __BEE2_RNG_H
 
 #include "bee2/defs.h"
 
@@ -230,4 +230,4 @@ void rngClose();
 } /* extern "C" */
 #endif
 
-#endif /* __RNG_H */
+#endif /* __BEE2_RNG_H */

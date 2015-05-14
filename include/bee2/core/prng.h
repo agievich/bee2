@@ -18,8 +18,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifndef __PRNG_H
-#define __PRNG_H
+#ifndef __BEE2_PRNG_H
+#define __BEE2_PRNG_H
 
 #include "bee2/defs.h"
 
@@ -176,4 +176,4 @@ void prngSTBStepG(
 } /* extern "C" */
 #endif
 
-#endif /* __PRNG_H */
+#endif /* __BEE2_PRNG_H */

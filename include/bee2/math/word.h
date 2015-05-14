@@ -18,8 +18,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifndef __WORD_H
-#define __WORD_H
+#ifndef __BEE2_WORD_H
+#define __BEE2_WORD_H
 
 #include "bee2/defs.h"
 #include "bee2/core/safe.h"
@@ -219,4 +219,4 @@ size_t FAST(wordCLZ)(register word w);
 } /* extern "C" */
 #endif
 
-#endif /* __WORD_H */
+#endif /* __BEE2_WORD_H */

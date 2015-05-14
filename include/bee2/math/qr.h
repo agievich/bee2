@@ -18,8 +18,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifndef __QR_H
-#define __QR_H
+#ifndef __BEE2_QR_H
+#define __BEE2_QR_H
 
 #include "bee2/defs.h"
 #include "bee2/core/obj.h"
@@ -448,4 +448,4 @@ size_t qrPower_deep(size_t n, size_t m, size_t r_deep);
 } /* extern "C" */
 #endif
 
-#endif /* __QR_H */
+#endif /* __BEE2_QR_H */

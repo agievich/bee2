@@ -18,8 +18,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifndef __BRNG_H
-#define __BRNG_H
+#ifndef __BEE2_BRNG_H
+#define __BEE2_BRNG_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -254,4 +254,4 @@ err_t brngHMACRand(
 } /* extern "C" */
 #endif
 
-#endif /* __BRNG_H */
+#endif /* __BEE2_BRNG_H */

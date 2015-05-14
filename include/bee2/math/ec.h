@@ -18,8 +18,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifndef __EC_H
-#define __EC_H
+#ifndef __BEE2_EC_H
+#define __BEE2_EC_H
 
 #include "bee2/math/qr.h"
 
@@ -625,4 +625,4 @@ size_t ecAddMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t k,...);
 } /* extern "C" */
 #endif
 
-#endif /* __EC_H */
+#endif /* __BEE2_EC_H */

@@ -18,8 +18,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifndef __PP_H
-#define __PP_H
+#ifndef __BEE2_PP_H
+#define __BEE2_PP_H
 
 #include "bee2/defs.h"
 
@@ -558,4 +558,4 @@ size_t ppMinPolyMod_deep(size_t n);
 } /* extern "C" */
 #endif
 
-#endif /* __PP_H */
+#endif /* __BEE2_PP_H */

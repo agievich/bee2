@@ -18,8 +18,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifndef __MT_H
-#define __MT_H
+#ifndef __BEE2_MT_H
+#define __BEE2_MT_H
 
 #include "bee2/defs.h"
 
@@ -141,4 +141,4 @@ void mtSleep(
 } /* extern "C" */
 #endif
 
-#endif /* __MT_H */
+#endif /* __BEE2_MT_H */

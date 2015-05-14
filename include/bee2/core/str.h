@@ -18,8 +18,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifndef __STR_H
-#define __STR_H
+#ifndef __BEE2_STR_H
+#define __BEE2_STR_H
 
 #include <string.h>
 #include "bee2/defs.h"
@@ -105,4 +105,4 @@ bool_t strIsHex(
 } /* extern "C" */
 #endif
 
-#endif /* __STR_H */
+#endif /* __BEE2_STR_H */

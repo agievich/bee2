@@ -18,8 +18,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifndef __BELT_H
-#define __BELT_H
+#ifndef __BEE2_BELT_H
+#define __BEE2_BELT_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -1277,4 +1277,4 @@ err_t beltPBKDF(
 } /* extern "C" */
 #endif
 
-#endif /* __BELT_H */
+#endif /* __BEE2_BELT_H */

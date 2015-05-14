@@ -18,8 +18,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifndef __BIGN_H
-#define __BIGN_H
+#ifndef __BEE2_BIGN_H
+#define __BEE2_BIGN_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -491,4 +491,4 @@ err_t bignIdVerify(
 } /* extern "C" */
 #endif
 
-#endif /* __BIGN_H */
+#endif /* __BEE2_BIGN_H */

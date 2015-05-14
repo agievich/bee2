@@ -11,8 +11,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifndef __BIGN_LCL_H
-#define __BIGN_LCL_H
+#ifndef __BEE2_BIGN_LCL_H
+#define __BEE2_BIGN_LCL_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -82,4 +82,4 @@ err_t bignStart(
 } /* extern "C" */
 #endif
 
-#endif /* __BIGN_LCL_H */
+#endif /* __BEE2_BIGN_LCL_H */

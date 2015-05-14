@@ -18,8 +18,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifndef __DSTU_H
-#define __DSTU_H
+#ifndef __BEE2_DSTU_H
+#define __BEE2_DSTU_H
 
 #include "bee2/defs.h"
 
@@ -284,4 +284,4 @@ err_t dstuVerify(
 } /* extern "C" */
 #endif
 
-#endif  /* __DSTU_H */
+#endif  /* __BEE2_DSTU_H */

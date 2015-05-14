@@ -18,8 +18,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifndef __BELS_H
-#define __BELS_H
+#ifndef __BEE2_BELS_H
+#define __BEE2_BELS_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -244,4 +244,4 @@ err_t belsRecover(
 } /* extern "C" */
 #endif
 
-#endif /* __BELS_H */
+#endif /* __BEE2_BELS_H */

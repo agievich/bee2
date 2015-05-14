@@ -18,8 +18,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifndef __GF2_H
-#define __GF2_H
+#ifndef __BEE2_GF2_H
+#define __BEE2_GF2_H
 
 #include "bee2/math/qr.h"
 
@@ -238,4 +238,4 @@ size_t gf2QSolve_deep(size_t n, size_t f_deep);
 } /* extern "C" */
 #endif
 
-#endif /* __GF2_H */
+#endif /* __BEE2_GF2_H */

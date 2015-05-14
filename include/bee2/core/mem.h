@@ -18,8 +18,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifndef __MEM_H
-#define __MEM_H
+#ifndef __BEE2_MEM_H
+#define __BEE2_MEM_H
 
 #include <memory.h>
 #include <string.h>
@@ -516,4 +516,4 @@ void memFromHexRev(
 } /* extern "C" */
 #endif
 
-#endif /* __MEM_H */
+#endif /* __BEE2_MEM_H */

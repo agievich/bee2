@@ -18,8 +18,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifndef __PFOK_H
-#define __PFOK_H
+#ifndef __BEE2_PFOK_H
+#define __BEE2_PFOK_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -312,4 +312,4 @@ err_t pfokMTI(
 } /* extern "C" */
 #endif
 
-#endif /* __PFOK_H */
+#endif /* __BEE2_PFOK_H */

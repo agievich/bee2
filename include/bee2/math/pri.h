@@ -18,8 +18,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifndef __PRI_H
-#define __PRI_H
+#ifndef __BEE2_PRI_H
+#define __BEE2_PRI_H
 
 #include "bee2/math/zz.h"
 
@@ -295,4 +295,4 @@ size_t priExtendPrime_deep(size_t l, size_t n, size_t base_count);
 } /* extern "C" */
 #endif
 
-#endif /* __PRI_H */
+#endif /* __BEE2_PRI_H */

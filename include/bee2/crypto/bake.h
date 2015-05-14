@@ -18,8 +18,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifndef __BAKE_H
-#define __BAKE_H
+#ifndef __BEE2_BAKE_H
+#define __BEE2_BAKE_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -703,4 +703,4 @@ err_t bakeBPACERunA(
 } /* extern "C" */
 #endif
 
-#endif /* __BAKE_H */
+#endif /* __BEE2_BAKE_H */

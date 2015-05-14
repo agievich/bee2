@@ -18,8 +18,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifndef __OBJ_H
-#define __OBJ_H
+#ifndef __BEE2_OBJ_H
+#define __BEE2_OBJ_H
 
 #include "bee2/defs.h"
 
@@ -151,4 +151,4 @@ void objAppend(
 } /* extern "C" */
 #endif
 
-#endif /* __OBJ_H */
+#endif /* __BEE2_OBJ_H */
