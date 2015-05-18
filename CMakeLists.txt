@@ -11,7 +11,7 @@ option(BUILD_STATIC_LIBS "Build static libraries." OFF)
 option(BUILD_FAST "Build with the SAFE_FAST directive." ON)
 option(BUILD_APPS "Build apps." ON)
 option(BUILD_TESTS "Build tests." ON)
-option(BUILD_DOC "Build documentation (doxygen required)." OFF)
+option(BUILD_DOC "Build documentation (doxygen required)." ON)
 option(INSTALL_HEADERS "Install headers." ON)
 
 string(REGEX MATCH "Clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER_ID}")
