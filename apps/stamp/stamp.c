@@ -5,7 +5,7 @@
 \project bee2/apps/stamp
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2011.10.18
-\version 2015.04.16
+\version 2015.05.19
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -80,9 +80,9 @@ int stampParsing(int argc, char* argv[])
 		return -1;
 	}
 	// проверяем режим
-	if (strCmp(argv[1], "-s") == 0)
+	if (strEq(argv[1], "-s"))
 		return 0;
-	if (strCmp(argv[1], "-c") == 0)
+	if (strEq(argv[1], "-c"))
 		return 1;
 	return -1;
 }

@@ -1560,7 +1560,7 @@ err_t beltDWPWrap(void* dest, octet mac[8], const void* src1, size_t count1,
 
 err_t beltDWPUnwrap(void* dest, const void* src1, size_t count1,
 	const void* src2, size_t count2, const octet mac[8], const octet theta[],
-	size_t len,	const octet iv[16])
+	size_t len, const octet iv[16])
 {
 	void* state;
 	// проверить входные данные

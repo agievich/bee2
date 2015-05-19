@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.27
-\version 2015.04.25
+\version 2015.05.19
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -354,53 +354,53 @@ err_t dstuStdParams(dstu_params* params, const char* name)
 	if (!memIsValid(params, sizeof(dstu_params)))
 		return ERR_BAD_INPUT;
 	memSetZero(params, sizeof(dstu_params));
-	if (strCmp(name, _curve163pb_name) == 0)
+	if (strEq(name, _curve163pb_name))
 	{
 		_LOAD_NAMED_PARAMS(params, curve163pb);
 		memCopy(params->P, _curve163pb_P, sizeof(_curve163pb_P));
 		return ERR_OK;
 	}
-	if (strCmp(name, _curve167pb_name) == 0)
+	if (strEq(name, _curve167pb_name))
 	{
 		_LOAD_NAMED_PARAMS(params, curve167pb);
 		return ERR_OK;
 	}
-	if (strCmp(name, _curve173pb_name) == 0)
+	if (strEq(name, _curve173pb_name))
 	{
 		_LOAD_NAMED_PARAMS(params, curve173pb);
 		return ERR_OK;
 	}
-	if (strCmp(name, _curve179pb_name) == 0)
+	if (strEq(name, _curve179pb_name))
 	{
 		_LOAD_NAMED_PARAMS(params, curve179pb);
 		return ERR_OK;
 	}
-	if (strCmp(name, _curve191pb_name) == 0)
+	if (strEq(name, _curve191pb_name))
 	{
 		_LOAD_NAMED_PARAMS(params, curve191pb);
 		return ERR_OK;
 	}
-	if (strCmp(name, _curve233pb_name) == 0)
+	if (strEq(name, _curve233pb_name))
 	{
 		_LOAD_NAMED_PARAMS(params, curve233pb);
 		return ERR_OK;
 	}
-	if (strCmp(name, _curve257pb_name) == 0)
+	if (strEq(name, _curve257pb_name))
 	{
 		_LOAD_NAMED_PARAMS(params, curve257pb);
 		return ERR_OK;
 	}
-	if (strCmp(name, _curve307pb_name) == 0)
+	if (strEq(name, _curve307pb_name))
 	{
 		_LOAD_NAMED_PARAMS(params, curve307pb);
 		return ERR_OK;
 	}
-	if (strCmp(name, _curve367pb_name) == 0)
+	if (strEq(name, _curve367pb_name))
 	{
 		_LOAD_NAMED_PARAMS(params, curve367pb);
 		return ERR_OK;
 	}
-	if (strCmp(name, _curve431pb_name) == 0)
+	if (strEq(name, _curve431pb_name))
 	{
 		_LOAD_NAMED_PARAMS(params, curve431pb);
 		return ERR_OK;

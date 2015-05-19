@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.09
-\version 2015.04.25
+\version 2015.05.19
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -521,42 +521,42 @@ err_t g12sStdParams(g12s_params* params, const char* name)
 	if (!memIsValid(params, sizeof(g12s_params)))
 		return ERR_BAD_INPUT;
 	memSetZero(params, sizeof(g12s_params));
-	if (strCmp(name, _a1_name) == 0)
+	if (strEq(name, _a1_name))
 	{
 		_LOAD_NAMED_PARAMS(params, a1);
 		return ERR_OK;
 	}
-	if (strCmp(name, _cryptoproA_name) == 0)
+	if (strEq(name, _cryptoproA_name))
 	{
 		_LOAD_NAMED_PARAMS(params, cryptoproA);
 		return ERR_OK;
 	}
-	if (strCmp(name, _cryptoproB_name) == 0)
+	if (strEq(name, _cryptoproB_name))
 	{
 		_LOAD_NAMED_PARAMS(params, cryptoproB);
 		return ERR_OK;
 	}
-	if (strCmp(name, _cryptoproC_name) == 0)
+	if (strEq(name, _cryptoproC_name))
 	{
 		_LOAD_NAMED_PARAMS(params, cryptoproC);
 		return ERR_OK;
 	}
-	if (strCmp(name, _cryptocom_name) == 0)
+	if (strEq(name, _cryptocom_name))
 	{
 		_LOAD_NAMED_PARAMS(params, cryptocom);
 		return ERR_OK;
 	}
-	if (strCmp(name, _a2_name) == 0)
+	if (strEq(name, _a2_name))
 	{
 		_LOAD_NAMED_PARAMS(params, a2);
 		return ERR_OK;
 	}
-	if (strCmp(name, _paramsetA512_name) == 0)
+	if (strEq(name, _paramsetA512_name))
 	{
 		_LOAD_NAMED_PARAMS(params, paramsetA512);
 		return ERR_OK;
 	}
-	if (strCmp(name, _paramsetB512_name) == 0)
+	if (strEq(name, _paramsetB512_name))
 	{
 		_LOAD_NAMED_PARAMS(params, paramsetB512);
 		return ERR_OK;

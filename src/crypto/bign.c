@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.27
-\version 2015.04.25
+\version 2015.05.19
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -201,7 +201,7 @@ err_t bignStdParams(bign_params* params, const char* name)
 {
 	if (!memIsValid(params, sizeof(bign_params)))
 		return ERR_BAD_INPUT;
-	if (strCmp(name, _curve128v1_name) == 0)
+	if (strEq(name, _curve128v1_name))
 	{
 		params->l = 128;
 		memCopy(params->p, _curve128v1_p, 32);
@@ -212,7 +212,7 @@ err_t bignStdParams(bign_params* params, const char* name)
 		memCopy(params->yG, _curve128v1_yG, 32);
 		return ERR_OK;
 	}
-	if (strCmp(name, _curve192v1_name) == 0)
+	if (strEq(name, _curve192v1_name))
 	{
 		params->l = 192;
 		memCopy(params->p, _curve192v1_p, 48);
@@ -223,7 +223,7 @@ err_t bignStdParams(bign_params* params, const char* name)
 		memCopy(params->yG, _curve192v1_yG, 48);
 		return ERR_OK;
 	}
-	if (strCmp(name, _curve256v1_name) == 0)
+	if (strEq(name, _curve256v1_name))
 	{
 		params->l = 256;
 		memCopy(params->p, _curve256v1_p, 64);

@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.01
-\version 2014.11.03
+\version 2015.05.19
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -343,7 +343,7 @@ err_t pfokStdParams(pfok_params* params, pfok_seed* seed, const char* name)
 	// подготовить params
 	memSetZero(params, sizeof(pfok_params));
 	// найти params
-	if (strCmp(name, _test_params_name) == 0)
+	if (strEq(name, _test_params_name))
 	{
 		params->l = _test_params_l;
 		params->r = _test_params_r;
@@ -357,7 +357,7 @@ err_t pfokStdParams(pfok_params* params, pfok_seed* seed, const char* name)
 		}
 		return ERR_OK;
 	}
-	if (strCmp(name, _bdh_params3_name) == 0)
+	if (strEq(name, _bdh_params3_name))
 	{
 		params->l = _bdh_params3_l;
 		params->r = _bdh_params3_r;
@@ -371,7 +371,7 @@ err_t pfokStdParams(pfok_params* params, pfok_seed* seed, const char* name)
 		}
 		return ERR_OK;
 	}
-	if (strCmp(name, _bdh_params6_name) == 0)
+	if (strEq(name, _bdh_params6_name))
 	{
 		params->l = _bdh_params6_l;
 		params->r = _bdh_params6_r;
@@ -385,7 +385,7 @@ err_t pfokStdParams(pfok_params* params, pfok_seed* seed, const char* name)
 		}
 		return ERR_OK;
 	}
-	if (strCmp(name, _bdh_params10_name) == 0)
+	if (strEq(name, _bdh_params10_name))
 	{
 		params->l = _bdh_params10_l;
 		params->r = _bdh_params10_r;
