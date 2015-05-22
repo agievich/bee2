@@ -5,14 +5,14 @@
 \project bee2/test
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.04.02
-\version 2015.04.27
-\license This program is released under the GNU General Public License 
+\version 2015.05.22
+\license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
 #include <stdio.h>
-#include "bee2/defs.h"
+#include <bee2/defs.h>
 
 /*
 *******************************************************************************
@@ -48,6 +48,7 @@ int testCore()
 
 extern bool_t priTest();
 extern bool_t zzTest();
+extern bool_t wordTest();
 extern bool_t ecpBench();
 
 int testMath()
@@ -56,6 +57,7 @@ int testMath()
 	int ret = 0;
 	printf("priTest: %s\n", (code = priTest()) ? "OK" : "Err"), ret |= !code;
 	printf("zzTest: %s\n", (code = zzTest()) ? "OK" : "Err"), ret |= !code;
+	printf("wordTest: %s\n", (code = wordTest()) ? "OK" : "Err"), ret |= !code;
 	code = ecpBench(), ret |= !code;
 	return ret;
 }

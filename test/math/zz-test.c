@@ -5,19 +5,9 @@
 \project bee2/test
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.15
-\version 2014.07.15
+\version 2015.05.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
-*******************************************************************************
-*/
-
-/*
-*******************************************************************************
-\file zz-test.c
-\brief Тестирование работы с большими числами
-\author (С) Сергей Агиевич, http://apmi.bsu.by
-\created 2014.07.15
-\version 2014.07.15
 *******************************************************************************
 */
 
@@ -53,7 +43,7 @@ bool_t zzTest()
 	ASSERT(COUNT_OF(mod) >= n);
 	// инициализровать генератор COMBO
 	ASSERT(prngCOMBO_keep() <= sizeof(combo_state));
-	prngCOMBOStart(combo_state, utilNonce32());
+	prngCOMBOStart(combo_state, 1 /*utilNonce32()*/);
 	// возведение в степень
 	ASSERT(zzPowerMod_deep(n, 1) <= sizeof(stack));
 	ASSERT(zzMulMod_deep(n) <= sizeof(stack));

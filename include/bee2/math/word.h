@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.18
-\version 2015.04.06
+\version 2015.05.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -48,22 +48,23 @@ extern "C" {
 	\brief Реверс октетов слова uint16
 */
 #define wordRevU16(a)\
-	((a) << 8 | (a) >> 8)
+	((uint16)((a) << 8 | (a) >> 8))
 
 /*!	\def wordRevU32
 	\brief Реверс октетов слова uint32
 */
 #define wordRevU32(a)\
-	((a) << 24 | ((a) & 0xFF00) << 8 | ((a) >> 8 & 0xFF00) | (a) >> 24)
+	((uint32)((a) << 24 | ((a) & 0xFF00) << 8 |\
+		((a) >> 8 & 0xFF00) | (a) >> 24))
 
 /*!	\def wordRevU64
 	\brief Реверс октетов слова uint64
 	\pre Тип uint64 поддержан.
 */
 #define wordRevU64(a)\
-	((a) << 56 | ((a) & 0xFF00) << 40 | ((a) & 0xFF0000) << 24 |\
+	((uint64)((a) << 56 | ((a) & 0xFF00) << 40 | ((a) & 0xFF0000) << 24 |\
 	((a) & 0xFF000000) << 8 | ((a) >> 8 & 0xFF000000) |\
-	((a) >> 24 & 0xFF0000) | ((a) >> 40 & 0xFF00) | (a) >> 56)
+	((a) >> 24 & 0xFF0000) | ((a) >> 40 & 0xFF00) | (a) >> 56))
 
 /*!	\def wordRev
 	\brief Реверс октетов машинного слова
@@ -98,7 +99,7 @@ bool_t wordParity(
 
 /*!	\brief Число младших нулевых битов
 
-	Определяется длина серии из нулевых битов в начале машинного слова w.
+	Определяется длина серии из нулевых младших битов машинного слова w.
 	\return Длина серии.
 	\remark CTZ == Count of Trailing Zeros
 	\safe Имеется ускоренная нерегулярная редакция.
@@ -111,7 +112,7 @@ size_t FAST(wordCTZ)(register word w);
 
 /*!	\brief Число старших нулевых битов
 
-	Определяется длина серии из нулевых битов в конце машинного слова w.
+	Определяется длина серии из нулевых старших битов машинного слова w.
 	\return Длина серии.
 	\remark CLZ == Count of Leading Zeros
 	\safe Имеется ускоренная нерегулярная редакция.

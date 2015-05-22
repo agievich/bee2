@@ -25,12 +25,13 @@ bool_t memTest()
 	octet buf[1024];
 	octet buf1[1024];
 	// сравнение
-	memFromHex(buf, "000102030405060708090A0B0C0D0E0F");
+	memFromHex(buf,	 "000102030405060708090A0B0C0D0E0F");
 	memFromHex(buf1, "F00102030405060708090A0B0C0D0EFF");
 	if (memEq(buf + 1, buf1 + 1, 15) != FALSE ||
 		memEq(buf + 8, buf1 + 8, 8) != FALSE ||
 		memEq(buf + 1, buf1 + 1, 8) != TRUE ||
 		memEq(buf + 1, buf1 + 1, 14) != TRUE ||
+		memCmp(buf, buf1, 7) != -1 ||
 		memCmp(buf, buf1, 15) != -1 ||
 		memCmp(buf1, buf, 15) != 1 ||
 		memCmp(buf, buf1, 8) != -1 ||

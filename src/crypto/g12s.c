@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.09
-\version 2015.05.19
+\version 2015.05.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -635,7 +635,7 @@ static err_t g12sCreateEc(
 		return ERR_NOT_ENOUGH_MEMORY;
 	// создать поле
 	f = (qr_o*)((octet*)state + ec_keep);
-	stack = (size_t*)((octet*)f + f_keep);
+	stack = (octet*)f + f_keep;
 	if (!gfpCreate(f, params->p, no, stack))
 	{
 		blobClose(state);

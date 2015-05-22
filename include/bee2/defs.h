@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.01
-\version 2015.04.07
+\version 2015.05.21
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -19,8 +19,8 @@ version 3. See Copyright Notices in bee2/info.h.
 */
 
 
-#ifndef __DEFS_H
-#define __DEFS_H
+#ifndef __BEE2_DEFS_H
+#define __BEE2_DEFS_H
 
 #include <limits.h>
 #include <stddef.h>
@@ -248,9 +248,6 @@ T == octet.
 	#else
 		#error "Unsupported int/long size"
 	#endif
-	#define B_PER_W 16
-	typedef uint16 word;
-	typedef uint32 dword;
 #elif (UINT_MAX == 4294967295u)
 	typedef unsigned int uint32;
 	typedef signed int int32;
@@ -269,9 +266,6 @@ T == octet.
 	#else
 		#error "Unsupported int/long size"
 	#endif
-	#define B_PER_W 32
-	typedef uint32 word;
-	typedef uint64 dword;
 #elif (UINT_MAX == 18446744073709551615u)
 	#if (ULONG_MAX == 18446744073709551615u)
 		#if !defined(ULLONG_MAX) || (ULLONG_MAX == 18446744073709551615u)
@@ -288,11 +282,46 @@ T == octet.
 	#else
 		#error "Unsupported int/long size"
 	#endif
-	#define B_PER_W 64
-	typedef uint64 word;
-	typedef uint128 dword;
 #else
 	#error "Unsupported int size"
+#endif
+
+#if defined(__GNUC__) && (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 6)
+	typedef unsigned __int128 uint128;
+#endif
+
+#if defined(__GNUC__)
+	#if (__WORDSIZE == 16)
+		#define B_PER_W 16
+		typedef uint16 word;
+		typedef uint32 dword;
+	#elif (__WORDSIZE == 32)
+		#define B_PER_W 32
+		typedef uint32 word;
+		typedef uint64 dword;
+	#elif (__WORDSIZE == 64)
+		#define B_PER_W 64
+		typedef uint64 word;
+		typedef uint128 dword;
+	#else
+		#error "Unsupported word size"
+	#endif
+#else
+	#if (UINT_MAX == 65535u)
+		#define B_PER_W 16
+		typedef uint16 word;
+		typedef uint32 dword;
+	#elif (UINT_MAX == 4294967295u)
+		#define B_PER_W 32
+		typedef uint32 word;
+		typedef uint64 dword;
+	#elif (UINT_MAX == 18446744073709551615u)
+		#define B_PER_W 64
+		typedef uint64 word;
+		typedef uint128 dword;
+	#else
+		#error "Unsupported word size"
+	#endif
 #endif
 
 #if (B_PER_W != 16 && B_PER_W != 32 && B_PER_W != 64)
@@ -321,12 +350,13 @@ T == octet.
 #define O_PER_W (B_PER_W / 8)
 #define O_PER_S (B_PER_S / 8)
 
+#define U32_0 ((uint32)0)
 #define U32_1 ((uint32)1)
-#define U32_MAX ((uint32)0 - U32_1)
+#define U32_MAX ((uint32)(U32_0 - U32_1))
 
 #define WORD_0 ((word)0)
 #define WORD_1 ((word)1)
-#define WORD_MAX (WORD_0 - WORD_1)
+#define WORD_MAX ((word)(WORD_0 - WORD_1))
 
 #define WORD_BIT_POS(pos) (WORD_1 << (pos))
 #define WORD_BIT_HI WORD_BIT_POS(B_PER_W - 1)
@@ -499,4 +529,4 @@ typedef err_t (*write_i)(
 	void* file			/*!< [in/out] описание файла */
 );
 
-#endif /* __DEFS_H */
+#endif /* __BEE2_DEFS_H */

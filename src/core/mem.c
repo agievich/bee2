@@ -6,7 +6,7 @@
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
 \version 2015.02.25
-\license This program is released under the GNU General Public License 
+\license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
@@ -135,9 +135,9 @@ int SAFE(memCmp)(const void* buf1, const void* buf2, size_t count)
 	if (count % O_PER_W)
 	{
 		w1 = w2 = 0;
-		while (count-- % O_PER_W)
+		while (count % O_PER_W)
 		{
-			w1 = w1 << 8 | ((const octet*)buf1)[count];
+			w1 = w1 << 8 | ((const octet*)buf1)[--count];
 			w2 = w2 << 8 | ((const octet*)buf2)[count];
 		}
 		less |= ~greater & wordLess01(w1, w2);

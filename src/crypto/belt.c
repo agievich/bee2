@@ -252,13 +252,13 @@ static void beltHalfBlockAddBitSizeW(word block[W_OF_B(64)], size_t count)
 	t >>= 15, t >>= 14;
 	block[1] += carry;
 	block[1] += (uint32)t;
+	t = 0;
 #elif (B_PER_W == 64)
 	block[0] += carry;
 #else
 	#error "Unsupported word size"
 #endif // B_PER_W
 	carry = 0;
-	t = 0;
 }
 
 /*

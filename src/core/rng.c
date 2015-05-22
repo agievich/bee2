@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2015.05.08
+\version 2015.05.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -336,6 +336,13 @@ bool_t rngTestFIPS1(const octet buf[2500])
 	size_t s = 0;
 	size_t count = W_OF_O(2500);
 	ASSERT(memIsValid(buf, 2500));
+	if (O_OF_W(count) > 2500)
+	{
+		word w;
+		--count;
+		memToWord(&w, buf + O_OF_W(count), 2500 - O_OF_W(count));
+		s = wordWeight(w);
+	}
 	while (count--)
 		s += wordWeight(((const word*)buf)[count]);
 	return 9725 < s && s < 10275;
@@ -362,15 +369,15 @@ bool_t rngTestFIPS2(const octet buf[2500])
 bool_t rngTestFIPS3(const octet buf[2500])
 {
 	word s[2][7];
-	bool_t b;
+	octet b;
 	size_t l;
 	size_t i;
 	ASSERT(memIsValid(buf, 2500));
 	memSetZero(s, sizeof(s));
-	b = wwTestBit((const word*)buf, 0);
+	b = buf[0] & 1;
 	l = 1;
 	for (i = 1; i < 20000; ++i)
-		if (wwTestBit((const word*)buf, i) == b)
+		if ((buf[i / 8] >> i % 8 & 1) == b)
 			++l;
 		else
 			++s[b][MIN2(l, 6)], b = !b, l = 1;
@@ -391,14 +398,14 @@ bool_t rngTestFIPS3(const octet buf[2500])
 
 bool_t rngTestFIPS4(const octet buf[2500])
 {
-	bool_t b;
+	octet b;
 	size_t l;
 	size_t i;
 	ASSERT(memIsValid(buf, 2500));
-	b = wwTestBit((const word*)buf, 0);
+	b = buf[0] & 1;
 	l = 1;
 	for (i = 1; i < 20000; ++i)
-		if (wwTestBit((const word*)buf, i) == b)
+		if ((buf[i / 8] >> i % 8 & 1) == b)
 			++l;
 		else
 		{

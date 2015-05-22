@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.04.14
-\version 2015.04.25
+\version 2015.05.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -90,14 +90,18 @@ void objCopy(void* dest, const void* src)
 
 void objAppend(void* dest, const void* src, size_t i)
 {
+	size_t t;
+	// pre
 	ASSERT(objIsOperable(src));
 	ASSERT(objIsOperable(dest));
 	ASSERT(memIsValid(objEnd(dest, void), objKeep(src)));
 	ASSERT(i < objOCount(dest));
-	// скопировать объект
+	// запомнить размер src
+	t = objKeep(src);
+	// скопировать src в конец dest
 	objCopy(objEnd(dest, void), src);
-	// установить ссылку
+	// установить ссылку на конец dest
 	objPtr(dest, i, void) = objEnd(dest, void);
-	// сдвинуть указатели
-	objHdr(dest)->keep += objKeep(src);
+	// расширить dest
+	objHdr(dest)->keep += t;
 }

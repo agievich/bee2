@@ -30,7 +30,7 @@ bool_t priTest()
 	word p[W_OF_B(289)];
 	word mods[1024];
 	octet combo_state[32];
-	octet stack[2048];
+	octet stack[4096];
 	// инициализировать генератор COMBO
 	ASSERT(prngCOMBO_keep() <= sizeof(combo_state));
 	prngCOMBOStart(combo_state, utilNonce32());

@@ -422,6 +422,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\test\math\word-test.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\test\math\zz-test.c"
 					>
 				</File>

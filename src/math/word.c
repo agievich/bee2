@@ -71,16 +71,16 @@ bool_t wordParity(register word w)
 Число нулей
 
 Реализованы алгоритмы из [1]:
--	wordCTZ(): п. 5.4, второй абзац (стр. 92);
+-	wordCTZ_safe(): п. 5.4, второй абзац (стр. 92);
 -	wordCTZ_fast(): листинг 5.13 (стр. 93);
--	wordCLZ(): листинг 5.10 (стр. 89);
+-	wordCLZ_safe(): листинг 5.10 (стр. 89);
 -	wordCLZ_fast(): листинг 5.6 (стр. 87).
 *******************************************************************************
 */
 
 size_t SAFE(wordCTZ)(register word w)
 {
-	return wordWeight(~w & (w - WORD_1));
+	return B_PER_W - wordWeight(w | (WORD_0 - w));
 }
 
 size_t FAST(wordCTZ)(register word w)

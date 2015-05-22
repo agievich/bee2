@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.22
-\version 2015.04.08
+\version 2015.05.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -38,6 +38,11 @@ sizeof(word) < sizeof(unsigned int). Правильный способ:
 \code
 	ASSERT((word)(a * b + 1) == 0);
 \endcode
+
+\warning При тестировании арифметики длина слова искусственно понижалась
+до 16 битов. При этом при включении определеннных опций компилятор GCC
+выдавал ошибки предупреждения при сравнении word с ~word:
+comparison of promoted ~unsigned with unsigned [-Werror=sign-compare].
 *******************************************************************************
 */
 
@@ -61,14 +66,14 @@ _MUL_LO:
 #if defined(_MSC_VER) && (B_PER_W == 32)
 	#include <intrin.h>
 	#define _MUL(c, a, b)\
-		(c) = __emulu(a, b)
+		(c) = __emulu((word)(a), (word)(b))
 #else
 	#define _MUL(c, a, b)\
-		(c) = (a), (c) *= (b)
+		(c) = (word)(a), (c) *= (word)(b)
 #endif 
 
 #define _MUL_LO(c, a, b)\
-	(c) = (a) * (b);
+	(c) = (word)(a) * (word)(b);
 
 /*
 *******************************************************************************

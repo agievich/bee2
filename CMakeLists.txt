@@ -3,7 +3,7 @@ project(BEE2 C)
 
 set(BEE2_VERSION_MAJOR "2")
 set(BEE2_VERSION_MINOR "0")
-set(BEE2_VERSION_PATCH "1")
+set(BEE2_VERSION_PATCH "2")
 set(BEE2_VERSION "${BEE2_VERSION_MAJOR}.${BEE2_VERSION_MINOR}.${BEE2_VERSION_PATCH}")
 
 option(BUILD_SHARED_LIBS "Build shared libraries." ON)
@@ -11,7 +11,7 @@ option(BUILD_STATIC_LIBS "Build static libraries." OFF)
 option(BUILD_FAST "Build with the SAFE_FAST directive." ON)
 option(BUILD_APPS "Build apps." ON)
 option(BUILD_TESTS "Build tests." ON)
-option(BUILD_DOC "Build documentation (doxygen required)." ON)
+option(BUILD_DOC "Build documentation (doxygen required)." OFF)
 option(INSTALL_HEADERS "Install headers." ON)
 
 string(REGEX MATCH "Clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER_ID}")

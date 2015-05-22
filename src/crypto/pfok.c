@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.01
-\version 2015.05.19
+\version 2015.05.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -29,6 +29,8 @@ version 3. See Copyright Notices in bee2/info.h.
 которых лежит в интервале (16, 32]. Для этого используется функция 
 priNextPrimeVal(), которая находит гарантированно простое число из одного 
 машинного слова. Функция не подходит, если длина машинного слова равняется 16.
+
+\todo Поддержать B_PER_W == 16.
 *******************************************************************************
 */
 

@@ -76,7 +76,7 @@ tm_ticks_t tmFreq()
 
 #if defined(__i386__) || defined(__x86_64__)
 
-#if defined(__i386__)
+#if defined(__i386__) || (B_PER_W == 16)
 
 tm_ticks_t tmTicks()
 {
