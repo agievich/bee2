@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.18
-\version 2015.05.22
+\version 2015.05.28
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -209,12 +209,12 @@ size_t FAST(wordCLZ)(register word w);
 #define wordGreater01(a, b) ((word)wordGreater(a, b))
 #define wordGeq01(a, b) ((word)wordGeq(a, b))
 
-#define wordEq0M(a, b) (wordNeq01(a, b) - WORD_1)
-#define wordNeq0M(a, b) (wordEq01(a, b) - WORD_1)
-#define wordLess0M(a, b) (wordGeq01(a, b) - WORD_1)
-#define wordLeq0M(a, b) (wordGreater01(a, b) - WORD_1)
-#define wordGreater0M(a, b) (wordLeq01(a, b) - WORD_1)
-#define wordGeq0M(a, b) (wordLess01(a, b) - WORD_1)
+#define wordEq0M(a, b) ((word)(wordNeq01(a, b) - WORD_1))
+#define wordNeq0M(a, b) ((word)(wordEq01(a, b) - WORD_1))
+#define wordLess0M(a, b) ((word)(wordGeq01(a, b) - WORD_1))
+#define wordLeq0M(a, b) ((word)(wordGreater01(a, b) - WORD_1))
+#define wordGreater0M(a, b) ((word)(wordLeq01(a, b) - WORD_1))
+#define wordGeq0M(a, b) ((word)(wordLess01(a, b) - WORD_1))
 
 #ifdef __cplusplus
 } /* extern "C" */

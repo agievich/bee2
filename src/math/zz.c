@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.22
-\version 2015.05.22
+\version 2015.06.01
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -778,7 +778,7 @@ void zzDiv(word q[], word r[], const word a[], size_t n, const word b[],
 	// divisor <- b
 	wwCopy(divisor, b, m);
 	// нормализация
-	shift = B_PER_W - wwBitSize(b + m - 1, 1);
+	shift = wordCLZ(b[m - 1]);
 	wwShHi(divident, n + 1, shift);
 	wwShHi(divisor, m, shift);
 	// цикл по разрядам делимого
@@ -868,7 +868,7 @@ void zzMod(word r[], const word a[], size_t n, const word b[], size_t m, void* s
 	// divisor <- b
 	wwCopy(divisor, b, m);
 	// нормализация
-	shift = B_PER_W - wwBitSize(b + m - 1, 1);
+	shift = wordCLZ(b[m - 1]);
 	wwShHi(divident, n + 1, shift);
 	wwShHi(divisor, m, shift);
 	// цикл по разрядам делимого
