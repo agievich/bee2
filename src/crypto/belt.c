@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2015.04.25
+\version 2015.06.05
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -1231,6 +1231,9 @@ static void beltMACStepG_internal(void* state)
 		s->mac[1] ^= s->r[2];
 		s->mac[2] ^= s->r[3];
 		s->mac[3] ^= s->r[0] ^ s->r[1];
+#if (OCTET_ORDER == BIG_ENDIAN)
+		beltBlockRevU32(s->block);
+#endif
 	}
 	// неполный (в т.ч. пустой) блок?
 	else
@@ -1245,6 +1248,9 @@ static void beltMACStepG_internal(void* state)
 		s->mac[1] ^= s->r[0];
 		s->mac[2] ^= s->r[1];
 		s->mac[3] ^= s->r[2];
+#if (OCTET_ORDER == BIG_ENDIAN)
+		beltBlockRevU32(s->block);
+#endif
 	}
 	beltBlockEncr2(s->mac, s->key);
 }
@@ -1964,6 +1970,10 @@ static void beltHashStepG_internal(void* state)
 		beltBlockRevU32(s->block + 16);
 #endif
 		beltSigma(s->ls + 4, s->h1, (uint32*)s->block, s->stack);
+#if (OCTET_ORDER == BIG_ENDIAN)
+		beltBlockRevU32(s->block + 16);
+		beltBlockRevU32(s->block);
+#endif
 	}
 	// последний блок
 	beltSigma2(s->h1, s->ls, s->stack);
@@ -2260,6 +2270,10 @@ static void beltHMACStepG_internal(void* state)
 		beltBlockRevU32(s->block + 16);
 #endif
 		beltSigma(s->ls_in + 4, s->h1_in, (uint32*)s->block, s->stack);
+#if (OCTET_ORDER == BIG_ENDIAN)
+		beltBlockRevU32(s->block + 16);
+		beltBlockRevU32(s->block);
+#endif
 	}
 	// последний блок внутреннего хэширования
 	beltSigma2(s->h1_in, s->ls_in, s->stack);
