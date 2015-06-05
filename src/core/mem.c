@@ -524,10 +524,13 @@ void memFromU32(void* dest, size_t count, const uint32 src[])
 	if (count % 4)
 	{
 		register uint32 u = src[count / 4];
-		while (count-- % 4)
+		while (1)
 		{
 			((octet*)dest)[count + 3 - 2 * (count % 4)] = (octet)u;
 			u >>= 8;
+			if (count % 4 == 0)
+				break;
+			--count;
 		}
 	}
 	for (count /= 4; count--;)
@@ -557,11 +560,14 @@ void memFromWord(void* dest, size_t count, const word src[])
 	if (count % O_PER_W)
 	{
 		register word w = src[count / O_PER_W];
-		while (count-- % O_PER_W)
+		while (1)
 		{
 			((octet*)dest)[count + O_PER_W - 1 - 2 * (count % O_PER_W)] = 
 				(octet)w;
 			w >>= 8;
+			if (count % O_PER_W == 0)
+				break;
+			--count;
 		}
 	}
 	for (count /= O_PER_W; count--;)
