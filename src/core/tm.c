@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.05.10
-\version 2014.04.16
+\version 2014.06.05
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -119,24 +119,24 @@ tm_ticks_t tmFreq()
 
 tm_ticks_t tmTicks()
 {
-    struct timespec tp;
+    struct timespec ts;
 	tm_ticks_t ticks;
-	if (clock_gettime(CLOCK_MONOTONIC, &tp))
+	if (clock_gettime(CLOCK_MONOTONIC, &ts))
 		return 0;
-	ticks = (tm_ticks_t)tp.tv_sec;
+	ticks = (tm_ticks_t)ts.tv_sec;
 	ticks *= 1000000000u;
-	ticks += (tm_ticks_t)tp.tv_nsec;
+	ticks += (tm_ticks_t)ts.tv_nsec;
 	return ticks;
 }
 
 tm_ticks_t tmFreq()
 {
-    struct timespec res;
+    struct timespec ts;
 	tm_ticks_t freq;
-	if (clock_getres(CLOCK_MONOTONIC, &res) || res.tv_sec || !res.tv_nsec)
+	if (clock_getres(CLOCK_MONOTONIC, &ts) || ts.tv_sec || !ts.tv_nsec)
 		return 0;
 	freq = 1000000000u;
-	freq /= (tm_ticks_t)tp.tv_nsec;
+	freq /= (tm_ticks_t)ts.tv_nsec;
 	return freq;
 }
 

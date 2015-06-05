@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2015.05.22
+\version 2015.06.05
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -152,11 +152,6 @@ static err_t rngReadTRNG(size_t* read, void* buf, size_t count)
 }
 
 #else
-
-static bool_t rngHasTRNG()
-{
-	return FALSE;
-}
 
 static err_t rngReadTRNG(size_t* read, void* buf, size_t count)
 {
