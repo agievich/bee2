@@ -496,7 +496,7 @@ void memFromU16(void* dest, size_t count, const uint16 src[])
 	memMove(dest, src, count);
 #if (OCTET_ORDER == BIG_ENDIAN)
 	if (count % 2)
-		((octet*)dest)[--count] = ((octet*)src)[count];
+		((octet*)dest)[count - 1] = ((octet*)src)[count], --count;
 	for (count /= 2; count--;)
 		((uint16*)dest)[count] = wordRevU16(((uint16*)dest)[count]);
 #endif // OCTET_ORDER
@@ -524,12 +524,11 @@ void memFromU32(void* dest, size_t count, const uint32 src[])
 	if (count % 4)
 	{
 		register uint32 u = src[count / 4];
-		do
+		while (count-- % 4)
 		{
-			((octet*)dest)[--count] = (octet)u;
+			((octet*)dest)[count + 3 - 2 * (count % 4)] = (octet)u;
 			u >>= 8;
 		}
-		while (count % 4);
 	}
 	for (count /= 4; count--;)
 		((uint32*)dest)[count] = wordRevU32(((uint32*)dest)[count]);
@@ -558,12 +557,12 @@ void memFromWord(void* dest, size_t count, const word src[])
 	if (count % O_PER_W)
 	{
 		register word w = src[count / O_PER_W];
-		do
+		while (count-- % O_PER_W)
 		{
-			((octet*)dest)[--count] = (octet)w;
+			((octet*)dest)[count + O_PER_W - 1 - 2 * (count % O_PER_W)] = 
+				(octet)w;
 			w >>= 8;
 		}
-		while (count % O_PER_W);
 	}
 	for (count /= O_PER_W; count--;)
 		((word*)dest)[count] = wordRev(((word*)dest)[count]);
