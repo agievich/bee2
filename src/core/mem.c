@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2015.02.25
+\version 2015.06.08
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -496,7 +496,11 @@ void memFromU16(void* dest, size_t count, const uint16 src[])
 	memMove(dest, src, count);
 #if (OCTET_ORDER == BIG_ENDIAN)
 	if (count % 2)
-		((octet*)dest)[count - 1] = ((octet*)src)[count], --count;
+	{
+		register uint16 u = src[--count / 2];
+		((octet*)dest)[count] = (octet)u;
+		u = 0;
+	}
 	for (count /= 2; count--;)
 		((uint16*)dest)[count] = wordRevU16(((uint16*)dest)[count]);
 #endif // OCTET_ORDER
@@ -523,15 +527,10 @@ void memFromU32(void* dest, size_t count, const uint32 src[])
 #if (OCTET_ORDER == BIG_ENDIAN)
 	if (count % 4)
 	{
-		register uint32 u = src[count / 4];
-		while (1)
-		{
-			((octet*)dest)[count + 3 - 2 * (count % 4)] = (octet)u;
-			u >>= 8;
-			if (count % 4 == 0)
-				break;
-			--count;
-		}
+		size_t t = count / 4;
+		register uint32 u = src[t];
+		for (t *= 4; t < count; ++t, u >>= 8)
+			((octet*)dest)[t] = (octet)u;
 	}
 	for (count /= 4; count--;)
 		((uint32*)dest)[count] = wordRevU32(((uint32*)dest)[count]);
@@ -559,16 +558,10 @@ void memFromWord(void* dest, size_t count, const word src[])
 #if (OCTET_ORDER == BIG_ENDIAN)
 	if (count % O_PER_W)
 	{
-		register word w = src[count / O_PER_W];
-		while (1)
-		{
-			((octet*)dest)[count + O_PER_W - 1 - 2 * (count % O_PER_W)] = 
-				(octet)w;
-			w >>= 8;
-			if (count % O_PER_W == 0)
-				break;
-			--count;
-		}
+		size_t t = count / O_PER_W;
+		register uint32 w = src[t];
+		for (t *= O_PER_W; t < count; ++t, w >>= 8)
+			((octet*)dest)[t] = (octet)w;
 	}
 	for (count /= O_PER_W; count--;)
 		((word*)dest)[count] = wordRev(((word*)dest)[count]);
