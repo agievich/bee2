@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.27
-\version 2015.05.19
+\version 2015.06.08
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -618,6 +618,7 @@ err_t dstuGenPoint(octet point[], const dstu_params* params, gen_i rng,
 		// сгенерировать x-координату
 		// [алгоритм из раздела 6.4 ДСТУ --- обрезка x]
 		rng(x, ec->f->no, rng_state);
+		memToWord(x, x, ec->f->no);
 		wwTrimHi(x, ec->f->n, gf2Deg(ec->f));
 		// y <- x^2
 		qrSqr(y, x, ec->f, stack);
@@ -873,6 +874,7 @@ err_t dstuGenKeypair(octet privkey[], octet pubkey[],
 	while (1)
 	{
 		rng(d, O_OF_B(order_nb), rng_state);
+		memToWord(d, d, O_OF_B(order_nb));
 		wwTrimHi(d, order_n, order_nb - 1);
 		ASSERT(wwCmp(d, ec->order, order_n) < 0);
 		// 0 < d?
@@ -980,6 +982,7 @@ step8:
 	while (1)
 	{
 		rng(e, O_OF_B(order_nb), rng_state);
+		memToWord(e, e, O_OF_B(order_nb));
 		wwTrimHi(e, order_n, order_nb - 1);
 		ASSERT(wwCmp(e, ec->order, order_n) < 0);
 		if (!wwIsZero(e, order_n))
