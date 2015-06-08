@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.05.10
-\version 2014.06.05
+\version 2015.06.08
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -142,12 +142,12 @@ tm_ticks_t tmFreq()
 
 #else
 
-ticks_t tmTicks()
+tm_ticks_t tmTicks()
 {
 	return (tm_ticks_t)clock();
 }
 
-ticks_t tmFreq()
+tm_ticks_t tmFreq()
 {
 	return (tm_ticks_t)CLOCKS_PER_SEC;
 }
@@ -156,12 +156,12 @@ ticks_t tmFreq()
 
 #else
 
-ticks_t tmTicks()
+tm_ticks_t tmTicks()
 {
 	return (tm_ticks_t)clock();
 }
 
-ticks_t tmFreq()
+tm_ticks_t tmFreq()
 {
 	return (tm_ticks_t)CLOCKS_PER_SEC;
 }
