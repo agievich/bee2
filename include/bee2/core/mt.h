@@ -62,7 +62,7 @@ mtxLock() и снимает блокировку с помощью функци�
 #ifdef OS_WINDOWS
 	#include <windows.h>
 	typedef HANDLE mt_mtx_t;
-#elif defined OS_UNIX
+#elif defined(OS_UNIX) || defined(__APPLE__)
 	#include <pthread.h>
 	typedef pthread_mutex_t mt_mtx_t;
 #else
