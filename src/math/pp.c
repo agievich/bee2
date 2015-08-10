@@ -1714,7 +1714,8 @@ void ppDivMod(word b[], const word divident[], const word a[],
 			wwXor2(da, da0, n);
 		}
 	}
-	while (!wwIsZero(u, nu));
+	while (!wwIsZero(u, nu))
+	  ;
 	// здесь v == \gcd(a, mod)
 	EXPECT(wwIsW(v, nv, 1));
 	// \gcd(a, mod) == 1? b <- da : b <- 0

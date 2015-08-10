@@ -1,4 +1,5 @@
-﻿/*
+﻿
+/*
 *******************************************************************************
 \file mem.h
 \brief Memory management
@@ -23,7 +24,12 @@ version 3. See Copyright Notices in bee2/info.h.
 
 #include <memory.h>
 #include <string.h>
+#if defined(__APPLE__)
+#include <malloc/malloc.h>
+#include <stdlib.h>
+#else
 #include <malloc.h>
+#endif /* __APPLE__ */
 #include "bee2/defs.h"
 #include "bee2/core/safe.h"
 
