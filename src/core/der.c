@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.04.21
-\version 2014.07.15
+\version 2015.08.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -21,10 +21,10 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-static size_t derLenT(uint32 tag)
+static size_t derLenT(u32 tag)
 {
 	size_t t_count = 1;
-	uint32 t;
+	u32 t;
 	// короткий тег (представляется одним октетом)?
 	if ((tag & 31) < 31)
 	{
@@ -45,7 +45,7 @@ static size_t derLenT(uint32 tag)
 	return t_count;
 }
 
-static void derEncodeT(octet der[], uint32 tag, size_t t_count)
+static void derEncodeT(octet der[], u32 tag, size_t t_count)
 {
 	ASSERT(memIsValid(der, t_count));
 	ASSERT(t_count >= 1);
@@ -69,10 +69,10 @@ static void derEncodeT(octet der[], uint32 tag, size_t t_count)
 	}
 }
 
-static size_t derDecodeT(uint32* tag, const octet der[], size_t count)
+static size_t derDecodeT(u32* tag, const octet der[], size_t count)
 {
 	size_t t_count = 1;
-	uint32 t;
+	u32 t;
 	ASSERT(memIsValid(der, count));
 	// первый октет
 	if (count < 1)
@@ -90,7 +90,7 @@ static size_t derDecodeT(uint32* tag, const octet der[], size_t count)
 		while (1)
 		{
 			// переполнение?
-			if (t * 128 + der[t_count] % 128 >= ((uint32)1 << 24))
+			if (t * 128 + der[t_count] % 128 >= ((u32)1 << 24))
 				return SIZE_MAX;
 			// обработать октет тега
 			t = t * 128 + der[t_count] % 128;
@@ -193,7 +193,7 @@ static size_t derDecodeL(size_t* len, const octet der[], size_t count)
 *******************************************************************************
 */
 
-size_t derEncode(octet der[], uint32 tag, const void* value, size_t len)
+size_t derEncode(octet der[], u32 tag, const void* value, size_t len)
 {
 	size_t t_count;
 	size_t l_count;
@@ -242,11 +242,11 @@ bool_t derIsValid(const octet der[], size_t count)
 		memIsValid(der + t_count + l_count, len);
 }
 
-bool_t derIsValid2(const octet der[], size_t count, uint32 tag)
+bool_t derIsValid2(const octet der[], size_t count, u32 tag)
 {
 	size_t t_count;
 	size_t l_count;
-	uint32 t;
+	u32 t;
 	size_t len;
 	// обработать T
 	t_count = derDecodeT(&t, der, count);
@@ -294,7 +294,7 @@ size_t derSize(const octet der[], size_t count)
 *******************************************************************************
 */
 
-size_t derDecode2(uint32* tag, const octet** value, const octet der[],
+size_t derDecode2(u32* tag, const octet** value, const octet der[],
 	size_t count)
 {
 	size_t t_count;
@@ -322,7 +322,7 @@ size_t derDecode2(uint32* tag, const octet** value, const octet der[],
 	return len;
 }
 
-size_t derDecode(uint32* tag, void* value, const octet der[], size_t count)
+size_t derDecode(u32* tag, void* value, const octet der[], size_t count)
 {
 	const octet* ptr;
 	ASSERT(tag == 0 || memIsDisjoint2(tag, 4, der, count));

@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.05.10
-\version 2015.06.08
+\version 2015.08.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -89,8 +89,8 @@ tm_ticks_t tmTicks()
 
 tm_ticks_t tmTicks()
 {
-    register uint32 hi;
-    register uint32 lo;
+    register u32 hi;
+    register u32 lo;
     __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
     return (tm_ticks_t)lo | (tm_ticks_t)hi << 32;
 }

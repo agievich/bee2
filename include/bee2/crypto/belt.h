@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2015.04.09
+\version 2015.08.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -66,7 +66,7 @@ extern "C" {
 
 На вход основных и вспомогательных функций данные и ключи подаются
 либо как void-массивы (неформатированные данные, по умолчанию),
-либо как массивы uint32 (форматированные данные). Внутри функций
+либо как массивы u32 (форматированные данные). Внутри функций
 неформатированные данные форматируются перед использованием.
 На платформах с соглашениями BIG_ENDIAN форматирование требует
 дополнительного времени.
@@ -154,7 +154,7 @@ void beltKeyExpand(
 	\remark Буферы key и theta могут пересекаться.
 */
 void beltKeyExpand2(
-	uint32 key[8],			/*!< [out] расширенный форматированный ключ */
+	u32 key[8],				/*!< [out] расширенный форматированный ключ */
 	const octet theta[],	/*!< [in] первоначальный ключ */
 	size_t len				/*!< [in] длина ключа в октетах */
 );
@@ -172,7 +172,7 @@ void beltKeyExpand2(
 */
 void beltBlockEncr(
 	octet block[16],		/*!< [in/out] блок */
-	const uint32 key[8]		/*!< [in] ключ */
+	const u32 key[8]		/*!< [in] ключ */
 );
 
 /*!	\brief Зашифрование форматированного блока
@@ -182,8 +182,8 @@ void beltBlockEncr(
 	по адресу block.
 */
 void beltBlockEncr2(
-	uint32 block[4],		/*!< [in/out] блок */
-	const uint32 key[8]		/*!< [in] ключ */
+	u32 block[4],			/*!< [in/out] блок */
+	const u32 key[8]		/*!< [in] ключ */
 );
 
 /*!	\brief Расшифрование блока
@@ -193,7 +193,7 @@ void beltBlockEncr2(
 */
 void beltBlockDecr(
 	octet block[16],		/*!< [in/out] блок */
-	const uint32 key[8]		/*!< [in] ключ */
+	const u32 key[8]		/*!< [in] ключ */
 );
 
 /*!	\brief Расшифрование форматированного блока
@@ -203,8 +203,8 @@ void beltBlockDecr(
 	по адресу block.
 */
 void beltBlockDecr2(
-	uint32 block[4],		/*!< [in/out] блок */
-	const uint32 key[8]		/*!< [in] ключ */
+	u32 block[4],			/*!< [in/out] блок */
+	const u32 key[8]		/*!< [in] ключ */
 );
 
 /*

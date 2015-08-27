@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.19
-\version 2015.04.26
+\version 2015.08.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -516,7 +516,7 @@ bool_t ecCreateGroup(
 	const octet ybase[],	/*!< [in] y-координата базовой точки */
 	const octet order[],	/*!< [in] порядок группы точек */
 	size_t order_len,		/*!< [in] длина order */
-	uint32 cofactor,		/*!< [in] кофактор группы точек */
+	u32 cofactor,			/*!< [in] кофактор группы точек */
 	void* stack				/*!< [in] вспомогательная память */
 );
 

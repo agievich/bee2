@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.27
-\version 2014.04.27
+\version 2015.08.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -82,12 +82,12 @@ no = memNonZeroSize(g12s_params::p, G12S_FIELD_SIZE * g12s_params::l / 512).
 /*!	\brief Долговременные параметры g12s */
 typedef struct g12s_params
 {
-	uint32 l;						/*!< уровень стойкости (256 или 512) */
+	u32 l;							/*!< уровень стойкости (256 или 512) */
 	octet p[G12S_FIELD_SIZE];		/*!< модуль p */
 	octet a[G12S_FIELD_SIZE];		/*!< коэффициент a */
 	octet b[G12S_FIELD_SIZE];		/*!< коэффициент b */
 	octet q[G12S_ORDER_SIZE];		/*!< порядок группы точек */
-	uint32 n;						/*!< кофактор */
+	u32 n;							/*!< кофактор */
 	octet xP[G12S_FIELD_SIZE];		/*!< x-координата точки P */
 	octet yP[G12S_FIELD_SIZE];		/*!< y-координата точки P */
 } g12s_params;

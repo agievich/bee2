@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2015.08.25
+\version 2015.08.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -48,7 +48,7 @@ version 3. See Copyright Notices in bee2/info.h.
 
 static bool_t rngHasTRNG()
 {
-	uint32 info[4];
+	u32 info[4];
 	// Intel?
 	__cpuid((int*)info, 0);
 	if (!memEq(info + 1, "Genu", 4) ||
@@ -106,7 +106,7 @@ rngSeedTRNG_break:
 
 static bool_t rngHasTRNG()
 {
-	uint32 info[4];
+	u32 info[4];
 	// Intel?
 	__cpuid(0, info[0], info[1], info[2], info[3]);
 	if (!memEq(info + 1, "Genu", 4) ||
@@ -345,7 +345,7 @@ bool_t rngTestFIPS1(const octet buf[2500])
 
 bool_t rngTestFIPS2(const octet buf[2500])
 {
-	uint32 s[16];
+	u32 s[16];
 	size_t i = 2500;
 	size_t s1 = 0;
 	ASSERT(memIsValid(buf, 2500));

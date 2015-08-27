@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.03.04
-\version 2014.04.17
+\version 2015.08.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -53,7 +53,7 @@ bool_t ecIsOperable(const ec_o* ec)
 }
 
 bool_t ecCreateGroup(ec_o* ec, const octet xbase[], const octet ybase[], 
-	const octet order[], size_t order_len, uint32 cofactor, void* stack)
+	const octet order[], size_t order_len, u32 cofactor, void* stack)
 {
 	ASSERT(ecIsOperable(ec));
 	ASSERT(memIsValid(order, order_len));
@@ -64,7 +64,7 @@ bool_t ecCreateGroup(ec_o* ec, const octet xbase[], const octet ybase[],
 	if (order_len == 0 || 
 		W_OF_O(order_len) > ec->f->n + 1 ||
 		cofactor == 0 || 
-		(uint32)(word)cofactor != cofactor)
+		(u32)(word)cofactor != cofactor)
 		return FALSE;
 	// установить базовую точку
 	if (xbase == 0)

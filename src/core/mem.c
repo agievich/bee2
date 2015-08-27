@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2015.06.08
+\version 2015.08.27
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -476,7 +476,7 @@ void memRev(void* buf, size_t count)
 *******************************************************************************
 */
 
-void memToU16(uint16 dest[], const void* src, size_t count)
+void memToU16(u16 dest[], const void* src, size_t count)
 {
 	ASSERT(memIsValid(src, count));
 	ASSERT(memIsValid(dest, ((count + 1) / 2) * 2));
@@ -489,7 +489,7 @@ void memToU16(uint16 dest[], const void* src, size_t count)
 #endif // OCTET_ORDER
 }
 
-void memFromU16(void* dest, size_t count, const uint16 src[])
+void memFromU16(void* dest, size_t count, const u16 src[])
 {
 	ASSERT(memIsValid(src, (count + 1) / 2 * 2));
 	ASSERT(memIsValid(dest, count));
@@ -497,16 +497,16 @@ void memFromU16(void* dest, size_t count, const uint16 src[])
 #if (OCTET_ORDER == BIG_ENDIAN)
 	if (count % 2)
 	{
-		register uint16 u = src[--count / 2];
+		register u16 u = src[--count / 2];
 		((octet*)dest)[count] = (octet)u;
 		u = 0;
 	}
 	for (count /= 2; count--;)
-		((uint16*)dest)[count] = wordRevU16(((uint16*)dest)[count]);
+		((u16*)dest)[count] = wordRevU16(((u16*)dest)[count]);
 #endif // OCTET_ORDER
 }
 
-void memToU32(uint32 dest[], const void* src, size_t count)
+void memToU32(u32 dest[], const void* src, size_t count)
 {
 	ASSERT(memIsValid(src, count));
 	ASSERT(memIsValid(dest, ((count + 3) / 4) * 4));
@@ -519,7 +519,7 @@ void memToU32(uint32 dest[], const void* src, size_t count)
 #endif // OCTET_ORDER
 }
 
-void memFromU32(void* dest, size_t count, const uint32 src[])
+void memFromU32(void* dest, size_t count, const u32 src[])
 {
 	ASSERT(memIsValid(src, (count + 3) / 4 * 4));
 	ASSERT(memIsValid(dest, count));
@@ -528,12 +528,12 @@ void memFromU32(void* dest, size_t count, const uint32 src[])
 	if (count % 4)
 	{
 		size_t t = count / 4;
-		register uint32 u = src[t];
+		register u32 u = src[t];
 		for (t *= 4; t < count; ++t, u >>= 8)
 			((octet*)dest)[t] = (octet)u;
 	}
 	for (count /= 4; count--;)
-		((uint32*)dest)[count] = wordRevU32(((uint32*)dest)[count]);
+		((u32*)dest)[count] = wordRevU32(((u32*)dest)[count]);
 #endif // OCTET_ORDER
 }
 
@@ -559,7 +559,7 @@ void memFromWord(void* dest, size_t count, const word src[])
 	if (count % O_PER_W)
 	{
 		size_t t = count / O_PER_W;
-		register uint32 w = src[t];
+		register u32 w = src[t];
 		for (t *= O_PER_W; t < count; ++t, w >>= 8)
 			((octet*)dest)[t] = (octet)w;
 	}

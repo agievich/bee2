@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.16
-\version 2015.08.26
+\version 2015.08.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -42,7 +42,7 @@ extern "C" {
 Реализованы или переопределены манипуляции над буферами памяти, которые
 интерпретируются как строки октетов.
 
-Буфер памяти может представлять слова uint16, uint32, word.
+Буфер памяти может представлять слова u16, u32, word.
 Стандартными считаются соглашения LITTLE_ENDIAN (см. defs.h). Поэтому
 на платформах с соглашениями BIG_ENDIAN при загрузке слова из памяти
 и, наоборот, при сохранении слова в памяти выполняется реверс октетов
@@ -402,44 +402,44 @@ void memRev(
 *******************************************************************************
 */
 
-/*!	\brief Выгрузка в массив слов uint16
+/*!	\brief Выгрузка в массив слов u16
 
-	Буфер [count]src преобразуется в массив [(count + 1) / 2]dest слов uint16.
+	Буфер [count]src преобразуется в массив [(count + 1) / 2]dest слов u16.
 */
 void memToU16(
-	uint16 dest[],		/*!< [out] приемник */
+	u16 dest[],			/*!< [out] приемник */
 	const void* src,	/*!< [in] источник */
 	size_t count		/*!< [in] число октетов */
 );
 
-/*!	\brief Загрузка из массива слов uint16
+/*!	\brief Загрузка из массива слов u16
 
-	Буфер [count]dest формируется по массиву [(count + 1) / 2]src слов uint16.
+	Буфер [count]dest формируется по массиву [(count + 1) / 2]src слов u16.
 */
 void memFromU16(
 	void* dest,			/*!< [out] приемник */
 	size_t count,		/*!< [in] число октетов */
-	const uint16 src[]	/*!< [in] источник */
+	const u16 src[]		/*!< [in] источник */
 );
 
-/*!	\brief Выгрузка в массив слов uint32
+/*!	\brief Выгрузка в массив слов u32
 
-	Буфер [count]src преобразуется в массив [(count + 3) / 4]dest слов uint32.
+	Буфер [count]src преобразуется в массив [(count + 3) / 4]dest слов u32.
 */
 void memToU32(
-	uint32 dest[],		/*!< [out] приемник */
+	u32 dest[],			/*!< [out] приемник */
 	const void* src,	/*!< [in] источник */
 	size_t count		/*!< [in] число октетов */
 );
 
-/*!	\brief Загрузка из массива слов uint32
+/*!	\brief Загрузка из массива слов u32
 
-	Буфер [count]dest формируется по массиву [(count + 3) / 4]src слов uint32.
+	Буфер [count]dest формируется по массиву [(count + 3) / 4]src слов u32.
 */
 void memFromU32(
 	void* dest,			/*!< [out] приемник */
 	size_t count,		/*!< [in] число октетов */
-	const uint32 src[]	/*!< [in] источник */
+	const u32 src[]		/*!< [in] источник */
 );
 
 /*!	\brief Выгрузка в массив машинных слов

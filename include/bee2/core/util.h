@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.16
-\version 2015.04.25
+\version 2015.08.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -162,10 +162,10 @@ size_t utilMax(
 	При первом обращении состояние state должно быть нулевым.
 	\return Контрольная сумма.
 */
-uint32 utilCRC32(
+u32 utilCRC32(
 	const void* buf,	/*!< [in] буфер */
 	size_t count,		/*!< [in] число октетов */
-	uint32 state		/*!< [in/out] состояние */
+	u32 state			/*!< [in/out] состояние */
 );
 
 /*!	\brief Контрольная сумма FNV32
@@ -179,10 +179,10 @@ uint32 utilCRC32(
 	При первом обращении state должно равняться 2166136261 = 0x811C9DC5.
 	\return Контрольная сумма.
 */
-uint32 utilFNV32(
+u32 utilFNV32(
 	const void* buf,	/*!< [in] буфер */
 	size_t count,		/*!< [in] число октетов */
-	uint32 state		/*!< [in/out] состояние */
+	u32 state			/*!< [in/out] состояние */
 );
 
 /*!	\brief 32-разрядный нонс
@@ -193,7 +193,7 @@ uint32 utilFNV32(
 	которое используется в криптографических протоколах. С помощью нонсов можно
 	инициализовать генераторы псевдослучайных чисел (см. prngCOMBOStart()).
 */
-uint32 utilNonce32();
+u32 utilNonce32();
 
 #ifdef __cplusplus
 } /* extern "C" */

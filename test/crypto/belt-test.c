@@ -5,7 +5,7 @@
 \project bee2/test
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.06.20
-\version 2015.04.27
+\version 2015.08.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -33,7 +33,7 @@ bool_t beltTest()
 	octet mac1[8];
 	octet hash[32];
 	octet hash1[32];
-	uint32 key[8];
+	u32 key[8];
 	octet level[12];
 	octet state[1024];
 	// создать стек

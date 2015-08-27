@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.05.14
-\version 2015.08.25
+\version 2015.08.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -27,7 +27,7 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-static const uint32 m_16[17] = 
+static const u32 m_16[17] = 
 {
 	0x00000087, 
 	0x00000285, 0x00000C41, 0x00001821, 0x00008015, 
@@ -36,7 +36,7 @@ static const uint32 m_16[17] =
 	0x00108041, 0x00200025, 0x00200405, 0x00200C01,
 };
 
-static const uint32 m_24[17] = 
+static const u32 m_24[17] = 
 {
 	0x00000087, 
 	0x00001209, 0x00001241, 0x00008601, 0x00008821, 
@@ -45,7 +45,7 @@ static const uint32 m_24[17] =
 	0x00228001, 0x00400209, 0x00420801, 0x00810401,
 };
 
-static const uint32 m_32[17] = 
+static const u32 m_32[17] = 
 {
 	0x00000425, 
 	0x0001000B, 0x0001000D, 0x0001A001, 0x00020061, 
@@ -325,6 +325,9 @@ err_t belsShare(octet si[], size_t count, size_t threshold, size_t len,
 /*
 *******************************************************************************
 Восстановление секрета
+
+\todo Организовать вычисления так, чтобы не было медленных (без Карацубы)
+умножений "маленького" многочлена на "большой".
 *******************************************************************************
 */
 

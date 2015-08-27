@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.01
-\version 2015.08.25
+\version 2015.08.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -38,9 +38,9 @@ version 3. See Copyright Notices in bee2/info.h.
 
 \pre Длина слова типа size_t в битах не менее 16.
 
-\pre Обязательно поддерживаются типы uint16, uint32.
+\pre Обязательно поддерживаются типы u16, u32.
 
-Могут поддерживаться типы uint64, uint128.
+Могут поддерживаться типы u64, u128.
 
 \remark Поддержка B_PER_W == 16 полезна для организации тестирования
 арифметики больших чисел и арифметики многочленов: как правило, ошибки в
@@ -190,22 +190,22 @@ T == octet.
 \typedef octet
 \brief Октет
 
-\typedef uint32
+\typedef u32
 \brief 32-разрядное беззнаковое целое
 
-\typedef uint16
+\typedef u16
 \brief 16-разрядное беззнаковое целое
 
-\typedef uint8
+\typedef u8
 \brief 8-разрядное беззнаковое целое
 
-\typedef int32
+\typedef i32
 \brief 32-разрядное знаковое целое
 
-\typedef int16
+\typedef i16
 \brief 16-разрядное знаковое целое
 
-\typedef int8
+\typedef i8
 \brief 8-разрядное знаковое целое
 
 \def B_PER_W
@@ -229,45 +229,45 @@ T == octet.
 */
 
 #if (UCHAR_MAX == 255)
-	typedef unsigned char uint8;
-	typedef signed char int8;
-	typedef uint8 octet;
+	typedef unsigned char u8;
+	typedef signed char i8;
+	typedef u8 octet;
 #else
 	#error "Unsupported char size"
 #endif
 
 #if (USHRT_MAX == 65535)
-	typedef unsigned short uint16;
-	typedef signed short int16;
+	typedef unsigned short u16;
+	typedef signed short i16;
 #else
 	#error "Unsupported short size"
 #endif
 
 #if (UINT_MAX == 65535u)
 	#if (ULONG_MAX == 4294967295ul)
-		typedef unsigned long uint32;
-		typedef signed long int32;
+		typedef unsigned long u32;
+		typedef signed long i32;
 	#else
 		#error "Unsupported long size"
 	#endif
 #elif (UINT_MAX == 4294967295u)
-	typedef unsigned int uint32;
-	typedef signed int int32;
+	typedef unsigned int u32;
+	typedef signed int i32;
 	#if (ULONG_MAX == 4294967295ul)
 		#if !defined(ULLONG_MAX) || (ULLONG_MAX == 4294967295ull)
 			#error "Unsupported int/long/long long configuration"
 		#elif (ULLONG_MAX == 18446744073709551615ull)
-			typedef unsigned long long uint64;
-			typedef signed long long int64;
+			typedef unsigned long long u64;
+			typedef signed long long i64;
 		#else
 			#error "Unsupported int/long/long long configuration"
 		#endif
 	#elif (ULONG_MAX == 18446744073709551615ul)
-		typedef unsigned long uint64;
-		typedef signed long int64;
+		typedef unsigned long u64;
+		typedef signed long i64;
 		#if defined(__GNUC__) && (__WORDSIZE == 64)
-			typedef __int128 int128;
-			typedef unsigned __int128 uint128;
+			typedef __int128 i128;
+			typedef unsigned __int128 u128;
 		#endif
 	#else
 		#error "Unsupported int/long configuration"
@@ -277,14 +277,14 @@ T == octet.
 		#if !defined(ULLONG_MAX) || (ULLONG_MAX == 18446744073709551615ull)
 			#error "Unsupported int/long/long long configuration"
 		#elif (ULLONG_MAX == 340282366920938463463374607431768211455ull)
-			typedef unsigned long long uint128;
-			typedef signed long long int128;
+			typedef unsigned long long u128;
+			typedef signed long long i128;
 		#else
 			#error "Unsupported int/long/long long configuration"
 		#endif
 	#elif (ULONG_MAX == 340282366920938463463374607431768211455ul)
-		typedef unsigned long uint128;
-		typedef signed long int128;
+		typedef unsigned long u128;
+		typedef signed long i128;
 	#else
 		#error "Unsupported long size"
 	#endif
@@ -295,32 +295,32 @@ T == octet.
 #if defined(__WORDSIZE)
 	#if (__WORDSIZE == 16)
 		#define B_PER_W 16
-		typedef uint16 word;
-		typedef uint32 dword;
+		typedef u16 word;
+		typedef u32 dword;
 	#elif (__WORDSIZE == 32)
 		#define B_PER_W 32
-		typedef uint32 word;
-		typedef uint64 dword;
+		typedef u32 word;
+		typedef u64 dword;
 	#elif (__WORDSIZE == 64)
 		#define B_PER_W 64
-		typedef uint64 word;
-		typedef uint128 dword;
+		typedef u64 word;
+		typedef u128 dword;
 	#else
 		#error "Unsupported word size"
 	#endif
 #else
 	#if (UINT_MAX == 65535u)
 		#define B_PER_W 16
-		typedef uint16 word;
-		typedef uint32 dword;
+		typedef u16 word;
+		typedef u32 dword;
 	#elif (UINT_MAX == 4294967295u)
 		#define B_PER_W 32
-		typedef uint32 word;
-		typedef uint64 dword;
+		typedef u32 word;
+		typedef u64 dword;
 	#elif (UINT_MAX == 18446744073709551615u)
 		#define B_PER_W 64
-		typedef uint64 word;
-		typedef uint128 dword;
+		typedef u64 word;
+		typedef u128 dword;
 	#else
 		#error "Unsupported word size"
 	#endif
@@ -333,9 +333,9 @@ T == octet.
 #define O_PER_W (B_PER_W / 8)
 #define O_PER_S (B_PER_S / 8)
 
-#define U32_0 ((uint32)0)
-#define U32_1 ((uint32)1)
-#define U32_MAX ((uint32)(U32_0 - U32_1))
+#define U32_0 ((u32)0)
+#define U32_1 ((u32)1)
+#define U32_MAX ((u32)(U32_0 - U32_1))
 
 #define WORD_0 ((word)0)
 #define WORD_1 ((word)1)
@@ -414,7 +414,7 @@ typedef int bool_t;
 	зарезервирован для описания специальных особых ситуаций.
 	Возврат других значений означает ошибку при выполнении функции.
 */
-typedef uint32 err_t;
+typedef u32 err_t;
 
 /*!	\brief Код успешного завершения */
 #define ERR_OK	((err_t)0)

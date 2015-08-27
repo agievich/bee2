@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.01
-\version 2015.05.22
+\version 2015.08.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -43,14 +43,14 @@ priNextPrimeVal(), которая находит гарантированно п
 Стандартные размерности
 *******************************************************************************
 */
-static uint32 const _ls[] = 
+static u32 const _ls[] = 
 {
 	638, 702, 766, 862, 958, 1022, 1118, 
     1214, 1310, 1438, 1534, 1662, 1790, 1918, 
     2046, 2174, 2334, 2462, 2622, 2782, 2942, 
 };
 
-static uint32 const _rs[] = 
+static u32 const _rs[] = 
 {
 	130, 136, 141, 149, 154, 161, 168,
     175, 181, 188, 194, 201, 208, 214,
@@ -63,9 +63,9 @@ static uint32 const _rs[] =
 *******************************************************************************
 */
 
-static const uint32 _test_params_n = 256;
+static const u32 _test_params_n = 256;
 
-static const uint16 _test_params_z[] = {
+static const u16 _test_params_z[] = {
 	40046, 43788,  1706, 57707, 58664,  8036, 56277, 12802, 
 	22211, 49982, 39997,  7717,  7896, 18474, 58455,  3341, 
 	30740, 54550, 18656, 61919, 54929, 55271, 27359, 45417, 
@@ -74,9 +74,9 @@ static const uint16 _test_params_z[] = {
 
 static const char _test_params_name[] = "test";
 
-static const uint32 _test_params_l = 638;
+static const u32 _test_params_l = 638;
 
-static const uint32 _test_params_r = 130;
+static const u32 _test_params_r = 130;
 
 static const octet _test_params_p[] = {
 	0xDF, 0x60, 0x3F, 0xB4, 0xB1, 0xCB, 0x6B, 0xEB, 
@@ -104,7 +104,7 @@ static const octet _test_params_g[] = {
 	0xB8, 0x81, 0x33, 0xC5, 0x97, 0xD3, 0x43, 0x2A,
 };
 
-static const uint32 _test_params_lt[] = {
+static const u32 _test_params_lt[] = {
 	637, 319, 160, 81, 41, 21,
 };
 
@@ -115,9 +115,9 @@ static const uint32 _test_params_lt[] = {
 */
 
 // bdh-params (common)
-static const uint32 _bdh_params_n = 256;
+static const u32 _bdh_params_n = 256;
 
-static const uint16 _bdh_params_z[] = {
+static const u16 _bdh_params_z[] = {
 	1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 
 	18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
 };
@@ -125,9 +125,9 @@ static const uint16 _bdh_params_z[] = {
 // bdh-params3
 static const char _bdh_params3_name[] = "1.2.112.0.2.0.1176.2.3.3.2";
 
-static const uint32 _bdh_params3_l = 1022;
+static const u32 _bdh_params3_l = 1022;
 
-static const uint32 _bdh_params3_r = 161;
+static const u32 _bdh_params3_r = 161;
 
 static const octet _bdh_params3_p[] = {
 	0x6F, 0x5E, 0xBE, 0x31, 0xD7, 0x55, 0x76, 0x17,
@@ -167,16 +167,16 @@ static const octet _bdh_params3_g[] = {
 	0xC8, 0xFE, 0xDC, 0x50, 0xD3, 0x3A, 0x2A, 0x32,
 };
 
-static const uint32 _bdh_params3_lt[] = {
+static const u32 _bdh_params3_lt[] = {
 	1021, 511, 256, 129, 65, 33, 17,
 };
 
 // bdh-params6
 static const char _bdh_params6_name[] = "1.2.112.0.2.0.1176.2.3.6.2";
 
-static const uint32 _bdh_params6_l = 1534;
+static const u32 _bdh_params6_l = 1534;
 
-static const uint32 _bdh_params6_r = 194;
+static const u32 _bdh_params6_r = 194;
 
 static const octet _bdh_params6_p[] = {
 	0xC7, 0x51, 0x14, 0x7B, 0xED, 0x69, 0xF4, 0x2D,
@@ -232,16 +232,16 @@ static const octet _bdh_params6_g[] = {
 	0xEF, 0x90, 0x3E, 0x5E, 0xB6, 0xA8, 0xE7, 0x24,
 };
 
-static const uint32 _bdh_params6_lt[] = {
+static const u32 _bdh_params6_lt[] = {
 	1533, 767, 384, 193, 97, 49, 25,
 };
 
 // bdh-params10
 static const char _bdh_params10_name[] = "1.2.112.0.2.0.1176.2.3.10.2";
 
-static const uint32 _bdh_params10_l = 2462;
+static const u32 _bdh_params10_l = 2462;
 
-static const uint32 _bdh_params10_r = 240;
+static const u32 _bdh_params10_r = 240;
 
 static const octet _bdh_params10_p[] = {
 	0xDB, 0x80, 0x4A, 0x65, 0x29, 0x2D, 0x15, 0x9C,
@@ -327,7 +327,7 @@ static const octet _bdh_params10_g[] = {
 	0xE5, 0x64, 0x83, 0x03,
 };
 
-static const uint32 _bdh_params10_lt[] = {
+static const u32 _bdh_params10_lt[] = {
 	2461, 1231, 616, 309, 155, 78, 40, 21,
 };
 
@@ -472,7 +472,7 @@ err_t pfokGenParams(pfok_params* params, const pfok_seed* seed,
 	size_t i;
 	size_t no, n;
 	size_t offset;
-	const uint32* lt;
+	const u32* lt;
 	// состояние 
 	void* state;
 	octet* stb_state;

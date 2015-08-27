@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2015.06.05
+\version 2015.06.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -38,11 +38,11 @@ todo
 Ускорители
 
 Реализованы быстрые операции над блоками и полублоками belt. Блок
-представляется либо как [16]octet, либо как [4]uint32,
+представляется либо как [16]octet, либо как [4]u32,
 либо как [W_OF_B(128)]word.
 
 Суффикс U32 в именах макросов и функций означает, что данные интерпретируются
-как массив uint32. Суффикс W означает, что данные интерпретируются как
+как массив u32. Суффикс W означает, что данные интерпретируются как
 массив word.
 *******************************************************************************
 */
@@ -187,21 +187,21 @@ todo
 #endif // B_PER_W
 
 #define beltBlockRevU32(block)\
-	((uint32*)(block))[0] = wordRevU32(((uint32*)(block))[0]),\
-	((uint32*)(block))[1] = wordRevU32(((uint32*)(block))[1]),\
-	((uint32*)(block))[2] = wordRevU32(((uint32*)(block))[2]),\
-	((uint32*)(block))[3] = wordRevU32(((uint32*)(block))[3])\
+	((u32*)(block))[0] = wordRevU32(((u32*)(block))[0]),\
+	((u32*)(block))[1] = wordRevU32(((u32*)(block))[1]),\
+	((u32*)(block))[2] = wordRevU32(((u32*)(block))[2]),\
+	((u32*)(block))[3] = wordRevU32(((u32*)(block))[3])\
 
 #define beltBlockIncU32(block)\
-	if ((((uint32*)(block))[0] += 1) == 0 &&\
-		(((uint32*)(block))[1] += 1) == 0 &&\
-		(((uint32*)(block))[2] += 1) == 0)\
-		((uint32*)(block))[3] += 1\
+	if ((((u32*)(block))[0] += 1) == 0 &&\
+		(((u32*)(block))[1] += 1) == 0 &&\
+		(((u32*)(block))[2] += 1) == 0)\
+		((u32*)(block))[3] += 1\
 
-static void beltBlockAddBitSizeU32(uint32 block[4], size_t count)
+static void beltBlockAddBitSizeU32(u32 block[4], size_t count)
 {
 	// block <- block + 8 * count
-	register uint32 carry = (uint32)count << 3;
+	register u32 carry = (u32)count << 3;
 #if (B_PER_S < 32)
 	carry = (block[0] += carry) < carry;
 	carry = (block[1] += carry) < carry;
@@ -211,17 +211,17 @@ static void beltBlockAddBitSizeU32(uint32 block[4], size_t count)
 	register size_t t = count >> 29;
 	carry = (block[0] += carry) < carry;
 	if ((block[1] += carry) < carry)
-		block[1] = (uint32)t;
+		block[1] = (u32)t;
 	else
-		carry = (block[1] += (uint32)t) < (uint32)t;
+		carry = (block[1] += (u32)t) < (u32)t;
 	t >>= 16, t >>= 16;
 	if ((block[2] += carry) < carry)
-		block[2] = (uint32)t;
+		block[2] = (u32)t;
 	else
-		carry = (block[2] += (uint32)t) < (uint32)t;
+		carry = (block[2] += (u32)t) < (u32)t;
 	t >>= 16, t >>= 16;
 	block[3] += carry;
-	block[3] += (uint32)t;
+	block[3] += (u32)t;
 	t = 0;
 #endif
 	carry = 0;
@@ -251,7 +251,7 @@ static void beltHalfBlockAddBitSizeW(word block[W_OF_B(64)], size_t count)
 	carry = (block[0] += carry) < carry;
 	t >>= 15, t >>= 14;
 	block[1] += carry;
-	block[1] += (uint32)t;
+	block[1] += (u32)t;
 	t = 0;
 #elif (B_PER_W == 64)
 	block[0] += carry;
@@ -306,13 +306,13 @@ void beltKeyExpand(octet key[32], const octet theta[], size_t len)
 		memCopy(key + 16, key, 16);
 	else if (len == 24)
 	{
-		uint32* w = (uint32*)key;
+		u32* w = (u32*)key;
 		w[6] = w[0] ^ w[1] ^ w[2];
 		w[7] = w[3] ^ w[4] ^ w[5];
 	}
 }
 
-void beltKeyExpand2(uint32 key[8], const octet theta[], size_t len)
+void beltKeyExpand2(u32 key[8], const octet theta[], size_t len)
 {
 	ASSERT(memIsValid(key, 32));
 	ASSERT(len == 16 || len == 24 || len == 32);
@@ -341,10 +341,10 @@ void beltKeyExpand2(uint32 key[8], const octet theta[], size_t len)
 	void beltExtendBoxes()
 	{
 		unsigned r, x;
-		uint32 y;
+		u32 y;
 		for (r = 5; r < 32; r += 8)
 		{
-			printf("static const uint32 H%u[256] = {", r);
+			printf("static const u32 H%u[256] = {", r);
 			for (x = 0; x < 256; x++)
 				y = H[x],
 				y = y << r | y >> (32 - r),
@@ -356,7 +356,7 @@ void beltKeyExpand2(uint32 key[8], const octet theta[], size_t len)
 *******************************************************************************
 */
 
-static const uint32 H5[256] = {
+static const u32 H5[256] = {
 	0x00001620,0x00001280,0x00001740,0x00001900,0x00000140,0x00000100,0x00001EA0,0x00000760,
 	0x000006C0,0x00000DA0,0x00000000,0x000011C0,0x00000B00,0x00000940,0x00000BA0,0x00001C80,
 	0x000010A0,0x00000080,0x00001F40,0x000013A0,0x00000360,0x000016C0,0x000018E0,0x00001580,
@@ -390,7 +390,7 @@ static const uint32 H5[256] = {
 	0x00001A80,0x00001DE0,0x00001B20,0x00001680,0x00000740,0x00000C40,0x00000500,0x00000EA0,
 	0x00001220,0x00000280,0x00000200,0x00001D40,0x00000EE0,0x00000D80,0x00001B40,0x000003A0,
 };
-static const uint32 H13[256] = {
+static const u32 H13[256] = {
 	0x00162000,0x00128000,0x00174000,0x00190000,0x00014000,0x00010000,0x001EA000,0x00076000,
 	0x0006C000,0x000DA000,0x00000000,0x0011C000,0x000B0000,0x00094000,0x000BA000,0x001C8000,
 	0x0010A000,0x00008000,0x001F4000,0x0013A000,0x00036000,0x0016C000,0x0018E000,0x00158000,
@@ -424,7 +424,7 @@ static const uint32 H13[256] = {
 	0x001A8000,0x001DE000,0x001B2000,0x00168000,0x00074000,0x000C4000,0x00050000,0x000EA000,
 	0x00122000,0x00028000,0x00020000,0x001D4000,0x000EE000,0x000D8000,0x001B4000,0x0003A000,
 };
-static const uint32 H21[256] = {
+static const u32 H21[256] = {
 	0x16200000,0x12800000,0x17400000,0x19000000,0x01400000,0x01000000,0x1EA00000,0x07600000,
 	0x06C00000,0x0DA00000,0x00000000,0x11C00000,0x0B000000,0x09400000,0x0BA00000,0x1C800000,
 	0x10A00000,0x00800000,0x1F400000,0x13A00000,0x03600000,0x16C00000,0x18E00000,0x15800000,
@@ -458,7 +458,7 @@ static const uint32 H21[256] = {
 	0x1A800000,0x1DE00000,0x1B200000,0x16800000,0x07400000,0x0C400000,0x05000000,0x0EA00000,
 	0x12200000,0x02800000,0x02000000,0x1D400000,0x0EE00000,0x0D800000,0x1B400000,0x03A00000,
 };
-static const uint32 H29[256] = {
+static const u32 H29[256] = {
 	0x20000016,0x80000012,0x40000017,0x00000019,0x40000001,0x00000001,0xA000001E,0x60000007,
 	0xC0000006,0xA000000D,0x00000000,0xC0000011,0x0000000B,0x40000009,0xA000000B,0x8000001C,
 	0xA0000010,0x80000000,0x4000001F,0xA0000013,0x60000003,0xC0000016,0xE0000018,0x80000015,
@@ -590,9 +590,9 @@ a <-> b, c <-> d, a <-> d.
 Зашифрование блока
 *******************************************************************************
 */
-void beltBlockEncr(octet block[16], const uint32 key[8])
+void beltBlockEncr(octet block[16], const u32 key[8])
 {
-	uint32* t = (uint32*)block;
+	u32* t = (u32*)block;
 	ASSERT(memIsDisjoint2(block, 16, key, 32));
 #if (OCTET_ORDER == BIG_ENDIAN)
 	t[0] = wordRevU32(t[0]);
@@ -609,7 +609,7 @@ void beltBlockEncr(octet block[16], const uint32 key[8])
 #endif
 }
 
-void beltBlockEncr2(uint32 block[4], const uint32 key[8])
+void beltBlockEncr2(u32 block[4], const u32 key[8])
 {
 	E((block + 0), (block + 1), (block + 2), (block + 3), key);
 }
@@ -618,9 +618,9 @@ void beltBlockEncr2(uint32 block[4], const uint32 key[8])
 Расшифрование блока
 *******************************************************************************
 */
-void beltBlockDecr(octet block[16], const uint32 key[8])
+void beltBlockDecr(octet block[16], const u32 key[8])
 {
-	uint32* t = (uint32*)block;
+	u32* t = (u32*)block;
 	ASSERT(memIsDisjoint2(block, 16, key, 32));
 #if (OCTET_ORDER == BIG_ENDIAN)
 	t[0] = wordRevU32(t[0]);
@@ -637,7 +637,7 @@ void beltBlockDecr(octet block[16], const uint32 key[8])
 #endif
 }
 
-void beltBlockDecr2(uint32 block[4], const uint32 key[8])
+void beltBlockDecr2(u32 block[4], const u32 key[8])
 {
 	D((block + 0), (block + 1), (block + 2), (block + 3), key);
 }
@@ -649,7 +649,7 @@ void beltBlockDecr2(uint32 block[4], const uint32 key[8])
 */
 typedef struct
 {
-	uint32 key[8];		/*< форматированный ключ */
+	u32 key[8];		/*< форматированный ключ */
 } belt_ecb_st;
 
 size_t beltECB_keep()
@@ -759,7 +759,7 @@ err_t beltECBDecr(void* dest, const void* src, size_t count,
 */
 typedef struct
 {
-	uint32 key[8];		/*< форматированный ключ */
+	u32 key[8];		/*< форматированный ключ */
 	octet block[16];	/*< вспомогательный блок */
 	octet block2[16];	/*< еще один вспомогательный блок */
 } belt_cbc_st;
@@ -885,7 +885,7 @@ err_t beltCBCDecr(void* dest, const void* src, size_t count,
 */
 typedef struct
 {
-	uint32 key[8];		/*< форматированный ключ */
+	u32 key[8];		/*< форматированный ключ */
 	octet block[16];	/*< блок гаммы */
 	size_t reserved;	/*< резерв октетов гаммы */
 } belt_cfb_st;
@@ -1036,7 +1036,7 @@ err_t beltCFBDecr(void* dest, const void* src, size_t count,
 *******************************************************************************
 Шифрование в режиме CTR
 
-Для ускорения работы счетчик ctr хранится в виде [4]uint32. Это позволяет
+Для ускорения работы счетчик ctr хранится в виде [4]u32. Это позволяет
 зашифровывать счетчик с помощью функции beltBlockEncr2(), в которой
 не используется реверс октетов  даже на платформах BIG_ENDIAN.
 Реверс применяется только перед использованием зашифрованного счетчика
@@ -1045,8 +1045,8 @@ err_t beltCFBDecr(void* dest, const void* src, size_t count,
 */
 typedef struct
 {
-	uint32 key[8];		/*< форматированный ключ */
-	uint32 ctr[4];		/*< счетчик */
+	u32 key[8];		/*< форматированный ключ */
+	u32 ctr[4];		/*< счетчик */
 	octet block[16];	/*< блок гаммы */
 	size_t reserved;	/*< резерв октетов гаммы */
 } belt_ctr_st;
@@ -1090,7 +1090,7 @@ void beltCTRStepE(void* buf, size_t count, void* state)
 	{
 		beltBlockIncU32(s->ctr);
 		beltBlockCopy(s->block, s->ctr);
-		beltBlockEncr2((uint32*)s->block, s->key);
+		beltBlockEncr2((u32*)s->block, s->key);
 #if (OCTET_ORDER == BIG_ENDIAN)
 		beltBlockRevU32(s->block);
 #endif
@@ -1103,7 +1103,7 @@ void beltCTRStepE(void* buf, size_t count, void* state)
 	{
 		beltBlockIncU32(s->ctr);
 		beltBlockCopy(s->block, s->ctr);
-		beltBlockEncr2((uint32*)s->block, s->key);
+		beltBlockEncr2((u32*)s->block, s->key);
 #if (OCTET_ORDER == BIG_ENDIAN)
 		beltBlockRevU32(s->block);
 #endif
@@ -1140,7 +1140,7 @@ err_t beltCTR(void* dest, const void* src, size_t count,
 *******************************************************************************
 Имитозащита (MAC)
 
-Для ускорения работы текущая имитовставка s хранится в виде [4]uint32.
+Для ускорения работы текущая имитовставка s хранится в виде [4]u32.
 Это позволяет зашифровывать s с помощью функции beltBlockEncr2(),
 в которой не используется реверс октетов даже на платформах BIG_ENDIAN.
 Реверс применяется только перед сложением накопленного блока данных
@@ -1149,10 +1149,10 @@ err_t beltCTR(void* dest, const void* src, size_t count,
 */
 typedef struct
 {
-	uint32 key[8];		/*< форматированный ключ */
-	uint32 s[4];		/*< переменная s */
-	uint32 r[4];		/*< переменная r */
-	uint32 mac[4];		/*< окончательная имитовставка */
+	u32 key[8];		/*< форматированный ключ */
+	u32 s[4];		/*< переменная s */
+	u32 r[4];		/*< переменная r */
+	u32 mac[4];		/*< окончательная имитовставка */
 	octet block[16];	/*< блок данных */
 	size_t filled;		/*< накоплено октетов в блоке */
 } belt_mac_st;
@@ -1370,7 +1370,7 @@ void beltDWPStart(void* state, const octet theta[], size_t len,
 	beltCTRStart(s->ctr, theta, len, iv);
 	// установить r, s
 	beltBlockCopy(s->r, s->ctr->ctr);
-	beltBlockEncr2((uint32*)s->r, s->ctr->key);
+	beltBlockEncr2((u32*)s->r, s->ctr->key);
 #if (OCTET_ORDER == BIG_ENDIAN && B_PER_W != 32)
 	beltBlockRevU32(s->r);
 	beltBlockRevW(s->r);
@@ -1511,7 +1511,7 @@ static void beltDWPStepG_internal(void* state)
 	beltBlockRevW(s->s);
 	beltBlockRevU32(s->s);
 #endif
-	beltBlockEncr2((uint32*)s->s, s->ctr->key);
+	beltBlockEncr2((u32*)s->s, s->ctr->key);
 }
 
 void beltDWPStepG(octet mac[8], void* state)
@@ -1519,7 +1519,7 @@ void beltDWPStepG(octet mac[8], void* state)
 	belt_dwp_st* s = (belt_dwp_st*)state;
 	ASSERT(memIsValid(mac, 8));
 	beltDWPStepG_internal(state);
-	memFromU32(mac, 8, (uint32*)s->s);
+	memFromU32(mac, 8, (u32*)s->s);
 }
 
 bool_t beltDWPStepV(const octet mac[8], void* state)
@@ -1605,7 +1605,7 @@ err_t beltDWPUnwrap(void* dest, const void* src1, size_t count1,
 */
 typedef struct
 {
-	uint32 key[8];			/*< форматированный ключ */
+	u32 key[8];			/*< форматированный ключ */
 	octet block[16];		/*< вспомогательный блок */
 	word round;				/*< номер такта */
 } belt_kwp_st;
@@ -1811,10 +1811,10 @@ h и X разбиваются на половинки:
 *******************************************************************************
 */
 
-static void beltSigma(uint32 s[4], uint32 h[8], const uint32 X[8], void* stack)
+static void beltSigma(u32 s[4], u32 h[8], const u32 X[8], void* stack)
 {
 	// [12]buf = [4]buf0 || [4]buf1 || [4]buf2
-	uint32* buf = (uint32*)stack;
+	u32* buf = (u32*)stack;
 	// буферы не пересекаются?
 	ASSERT(memIsDisjoint4(s, 16, h, 32, X, 32, buf, 48));
 	// buf0, buf1 <- h0 + h1
@@ -1841,10 +1841,10 @@ static void beltSigma(uint32 s[4], uint32 h[8], const uint32 X[8], void* stack)
 	beltBlockXor2(h + 4, X + 4);
 }
 
-static void beltSigma2(uint32 h[8], const uint32 X[8], void* stack)
+static void beltSigma2(u32 h[8], const u32 X[8], void* stack)
 {
 	// [12]buf = [4]buf0 || [4]buf1 || [4]buf2
-	uint32* buf = (uint32*)stack;
+	u32* buf = (u32*)stack;
 	// буферы не пересекаются?
 	ASSERT(memIsDisjoint3(h, 32, X, 32, buf, 48));
 	// buf0, buf1 <- h0 + h1
@@ -1882,10 +1882,10 @@ static size_t beltSigma_deep()
 *******************************************************************************
 */
 typedef struct {
-	uint32 ls[8];			/*< блок [4]len || [4]s */
-	uint32 s1[4];			/*< копия переменной s */
-	uint32 h[8];			/*< переменная h */
-	uint32 h1[8];			/*< копия переменной h */
+	u32 ls[8];			/*< блок [4]len || [4]s */
+	u32 s1[4];			/*< копия переменной s */
+	u32 h[8];			/*< переменная h */
+	u32 h1[8];			/*< копия переменной h */
 	octet block[32];		/*< блок данных */
 	size_t filled;			/*< накоплено октетов в блоке */
 	octet stack[];			/*< [beltSigma_deep()] стек beltSigma */
@@ -1931,7 +1931,7 @@ void beltHashStepH(const void* buf, size_t count, void* state)
 		beltBlockRevU32(s->block);
 		beltBlockRevU32(s->block + 16);
 #endif
-		beltSigma(s->ls + 4, s->h, (uint32*)s->block, s->stack);
+		beltSigma(s->ls + 4, s->h, (u32*)s->block, s->stack);
 		s->filled = 0;
 	}
 	// цикл по полным блокам
@@ -1943,7 +1943,7 @@ void beltHashStepH(const void* buf, size_t count, void* state)
 		beltBlockRevU32(s->block);
 		beltBlockRevU32(s->block + 16);
 #endif
-		beltSigma(s->ls + 4, s->h, (uint32*)s->block, s->stack);
+		beltSigma(s->ls + 4, s->h, (u32*)s->block, s->stack);
 		buf = (const octet*)buf + 32;
 		count -= 32;
 	}
@@ -1969,7 +1969,7 @@ static void beltHashStepG_internal(void* state)
 		beltBlockRevU32(s->block);
 		beltBlockRevU32(s->block + 16);
 #endif
-		beltSigma(s->ls + 4, s->h1, (uint32*)s->block, s->stack);
+		beltSigma(s->ls + 4, s->h1, (u32*)s->block, s->stack);
 #if (OCTET_ORDER == BIG_ENDIAN)
 		beltBlockRevU32(s->block + 16);
 		beltBlockRevU32(s->block);
@@ -2049,10 +2049,10 @@ err_t beltHash(octet hash[32], const void* src, size_t count)
 */
 
 typedef struct {
-	uint32 key[8];		/*< форматированный первоначальный ключ */
+	u32 key[8];		/*< форматированный первоначальный ключ */
 	size_t len;			/*< длина первоначального ключа */
-	uint32 block[8];	/*< блок r || level || header */
-	uint32 key_new[8];	/*< форматированный преобразованный ключ */
+	u32 block[8];	/*< блок r || level || header */
+	u32 key_new[8];	/*< форматированный преобразованный ключ */
 	octet stack[];		/*< стек beltSigma */
 } belt_krp_st;
 
@@ -2124,13 +2124,13 @@ err_t beltKRP(octet dest[], size_t m, const octet src[], size_t n,
 */
 typedef struct
 {
-	uint32 ls_in[8];	/*< блок [4]len || [4]s внутреннего хэширования */
-	uint32 h_in[8];		/*< переменная h внутреннего хэширования */
-	uint32 h1_in[8];	/*< копия переменной h внутреннего хэширования */
-	uint32 ls_out[8];	/*< блок [4]len || [4]s внешнего хэширования */
-	uint32 h_out[8];	/*< переменная h внешнего хэширования */
-	uint32 h1_out[8];	/*< копия переменной h внешнего хэширования */
-	uint32 s1[4];		/*< копия переменной s */
+	u32 ls_in[8];	/*< блок [4]len || [4]s внутреннего хэширования */
+	u32 h_in[8];		/*< переменная h внутреннего хэширования */
+	u32 h1_in[8];	/*< копия переменной h внутреннего хэширования */
+	u32 ls_out[8];	/*< блок [4]len || [4]s внешнего хэширования */
+	u32 h_out[8];	/*< переменная h внешнего хэширования */
+	u32 h1_out[8];	/*< копия переменной h внешнего хэширования */
+	u32 s1[4];		/*< копия переменной s */
 	octet block[32];	/*< блок данных */
 	size_t filled;		/*< накоплено октетов в блоке */
 	octet stack[];		/*< [beltSigma_deep()] стек beltSigma */
@@ -2170,7 +2170,7 @@ void beltHMACStart(void* state, const octet theta[], size_t len)
 			beltBlockRevU32(s->block);
 			beltBlockRevU32(s->block + 16);
 #endif
-			beltSigma(s->ls_in + 4, s->h_in, (uint32*)s->block, s->stack);
+			beltSigma(s->ls_in + 4, s->h_in, (u32*)s->block, s->stack);
 			theta += 32;
 			len -= 32;
 		}
@@ -2182,7 +2182,7 @@ void beltHMACStart(void* state, const octet theta[], size_t len)
 			beltBlockRevU32(s->block);
 			beltBlockRevU32(s->block + 16);
 #endif
-			beltSigma(s->ls_in + 4, s->h_in, (uint32*)s->block, s->stack);
+			beltSigma(s->ls_in + 4, s->h_in, (u32*)s->block, s->stack);
 		}
 		beltSigma2(s->h_in, s->ls_in, s->stack);
 		beltBlockCopy(s->block, s->h_in);
@@ -2196,7 +2196,7 @@ void beltHMACStart(void* state, const octet theta[], size_t len)
 	beltBlockAddBitSizeU32(s->ls_in, 32);
 	beltBlockSetZero(s->ls_in + 4);
 	memToU32(s->h_in, beltGetH(), 32);
-	beltSigma(s->ls_in + 4, s->h_in, (uint32*)s->block, s->stack);
+	beltSigma(s->ls_in + 4, s->h_in, (u32*)s->block, s->stack);
 	s->filled = 0;
 	// сформировать key ^ opad [0x36 ^ 0x5C == 0x6A]
 	for (; len--; )
@@ -2206,7 +2206,7 @@ void beltHMACStart(void* state, const octet theta[], size_t len)
 	beltBlockAddBitSizeU32(s->ls_out, 32 * 2);
 	beltBlockSetZero(s->ls_out + 4);
 	memToU32(s->h_out, beltGetH(), 32);
-	beltSigma(s->ls_out + 4, s->h_out, (uint32*)s->block, s->stack);
+	beltSigma(s->ls_out + 4, s->h_out, (u32*)s->block, s->stack);
 }
 
 void beltHMACStepA(const void* buf, size_t count, void* state)
@@ -2231,7 +2231,7 @@ void beltHMACStepA(const void* buf, size_t count, void* state)
 		beltBlockRevU32(s->block);
 		beltBlockRevU32(s->block + 16);
 #endif
-		beltSigma(s->ls_in + 4, s->h_in, (uint32*)s->block, s->stack);
+		beltSigma(s->ls_in + 4, s->h_in, (u32*)s->block, s->stack);
 		s->filled = 0;
 	}
 	// цикл по полным блокам
@@ -2243,7 +2243,7 @@ void beltHMACStepA(const void* buf, size_t count, void* state)
 		beltBlockRevU32(s->block);
 		beltBlockRevU32(s->block + 16);
 #endif
-		beltSigma(s->ls_in + 4, s->h_in, (uint32*)s->block, s->stack);
+		beltSigma(s->ls_in + 4, s->h_in, (u32*)s->block, s->stack);
 		buf = (const octet*)buf + 32;
 		count -= 32;
 	}
@@ -2269,7 +2269,7 @@ static void beltHMACStepG_internal(void* state)
 		beltBlockRevU32(s->block);
 		beltBlockRevU32(s->block + 16);
 #endif
-		beltSigma(s->ls_in + 4, s->h1_in, (uint32*)s->block, s->stack);
+		beltSigma(s->ls_in + 4, s->h1_in, (u32*)s->block, s->stack);
 #if (OCTET_ORDER == BIG_ENDIAN)
 		beltBlockRevU32(s->block + 16);
 		beltBlockRevU32(s->block);
@@ -2378,7 +2378,7 @@ err_t beltPBKDF(octet theta[32], const octet pwd[], size_t pwd_len,
 	// theta <- HMAC(pwd, salt || 00000001)
 	beltHMACStart(state, pwd, pwd_len);
 	beltHMACStepA(salt, salt_len, state);
-	*(uint32*)theta = 0, theta[3] = 1;
+	*(u32*)theta = 0, theta[3] = 1;
 	beltHMACStepA(theta, 4, state);
 	beltHMACStepG(theta, state);
 	// пересчитать theta

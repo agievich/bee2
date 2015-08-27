@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.27
-\version 2015.06.08
+\version 2015.08.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -48,7 +48,7 @@ typedef size_t (*_dstu_deep_i)(
 
 static const char _curve163pb_name[] = "1.2.804.2.1.1.1.1.3.1.1.1.2.0";
 
-static uint16 _curve163pb_p[4] = {163, 7, 6, 3};
+static u16 _curve163pb_p[4] = {163, 7, 6, 3};
 
 static octet _curve163pb_A = 1;
 
@@ -85,7 +85,7 @@ static octet _curve163pb_P[] = {
 
 static const char _curve167pb_name[] = "1.2.804.2.1.1.1.1.3.1.1.1.2.1";
 
-static uint16 _curve167pb_p[4] = {167, 6};
+static u16 _curve167pb_p[4] = {167, 6};
 
 static octet _curve167pb_A = 1;
 
@@ -111,7 +111,7 @@ static octet _curve167pb_c = 2;
 
 static const char _curve173pb_name[] = "1.2.804.2.1.1.1.1.3.1.1.1.2.2";
 
-static uint16 _curve173pb_p[4] = {173, 10, 2, 1};
+static u16 _curve173pb_p[4] = {173, 10, 2, 1};
 
 static octet _curve173pb_A = 0;
 
@@ -137,7 +137,7 @@ static octet _curve173pb_c = 4;
 
 static const char _curve179pb_name[] = "1.2.804.2.1.1.1.1.3.1.1.1.2.3";
 
-static uint16 _curve179pb_p[4] = {179, 4, 2, 1};
+static u16 _curve179pb_p[4] = {179, 4, 2, 1};
 
 static octet _curve179pb_A = 1;
 
@@ -163,7 +163,7 @@ static octet _curve179pb_c = 2;
 
 static const char _curve191pb_name[] = "1.2.804.2.1.1.1.1.3.1.1.1.2.4";
 
-static uint16 _curve191pb_p[4] = {191, 9};
+static u16 _curve191pb_p[4] = {191, 9};
 
 static octet _curve191pb_A = 1;
 
@@ -189,7 +189,7 @@ static octet _curve191pb_c = 2;
 
 static const char _curve233pb_name[] = "1.2.804.2.1.1.1.1.3.1.1.1.2.5";
 
-static uint16 _curve233pb_p[4] = {233, 9, 4, 1};
+static u16 _curve233pb_p[4] = {233, 9, 4, 1};
 
 static octet _curve233pb_A = 1;
 
@@ -217,7 +217,7 @@ static octet _curve233pb_c = 2;
 
 static const char _curve257pb_name[] = "1.2.804.2.1.1.1.1.3.1.1.1.2.6";
 
-static uint16 _curve257pb_p[4] = {257, 12};
+static u16 _curve257pb_p[4] = {257, 12};
 
 static octet _curve257pb_A = 0;
 
@@ -246,7 +246,7 @@ static octet _curve257pb_c = 4;
 
 static const char _curve307pb_name[] = "1.2.804.2.1.1.1.1.3.1.1.1.2.7";
 
-static uint16 _curve307pb_p[4] = {307, 8, 4, 2};
+static u16 _curve307pb_p[4] = {307, 8, 4, 2};
 
 static octet _curve307pb_A = 1;
 
@@ -276,7 +276,7 @@ static octet _curve307pb_c = 2;
 
 static const char _curve367pb_name[] = "1.2.804.2.1.1.1.1.3.1.1.1.2.8";
 
-static uint16 _curve367pb_p[4] = {367, 21};
+static u16 _curve367pb_p[4] = {367, 21};
 
 static octet _curve367pb_A = 1;
 
@@ -309,7 +309,7 @@ static octet _curve367pb_c = 2;
 
 static const char _curve431pb_name[] = "1.2.804.2.1.1.1.1.3.1.1.1.2.9";
 
-static uint16 _curve431pb_p[4] = {431, 5, 3, 1};
+static u16 _curve431pb_p[4] = {431, 5, 3, 1};
 
 static octet _curve431pb_A = 1;
 

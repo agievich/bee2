@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.05.02
-\version 2014.10.10
+\version 2015.08.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -61,7 +61,7 @@ size_t prngCOMBO_keep();
 */
 void prngCOMBOStart(
 	void* state,			/*!< [out] состояние COMBO */
-	uint32 seed				/*!< [in] инициализирующее значение */
+	u32 seed				/*!< [in] инициализирующее значение */
 );
 
 /*!	\brief Генератор COMBO
@@ -154,8 +154,8 @@ size_t prngSTB_keep();
 	\pre Если z != 0, то z[i] > 0 && z[i] < 65257, i = 0, 1,..., 30.
 */
 void prngSTBStart(
-	void* state,			/*!< [out] состояние генератора */
-	const uint16 z[31]		/*!< [in] числа z[i] */
+	void* state,		/*!< [out] состояние генератора */
+	const u16 z[31]		/*!< [in] числа z[i] */
 );
 
 /*!	\brief Использование генератора СТБ

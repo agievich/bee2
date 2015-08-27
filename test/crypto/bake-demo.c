@@ -5,7 +5,7 @@
 \project bee2/test
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.05.03
-\version 2015.04.27
+\version 2015.08.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -44,7 +44,7 @@ typedef struct
 static err_t fileCreate(void* file, void* data, size_t data_len)
 {
 	file_st* f = (file_st*)file;
-	uint16 len;
+	u16 len;
 	// pre
 	if (!memIsValid(f, sizeof(file_st)) ||
 		!memIsValid(data, data_len))
@@ -77,7 +77,7 @@ static err_t fileWrite(size_t* written, const void* buf, size_t count,
 	void* file)
 {
 	file_st* f = (file_st*)file;
-	uint16 len;
+	u16 len;
 	// pre
 	ASSERT(memIsValid(f, sizeof(file_st)));
 	ASSERT(memIsValid(buf, count));
@@ -116,7 +116,7 @@ static err_t fileWrite(size_t* written, const void* buf, size_t count,
 static err_t fileRead(size_t* read, void* buf, size_t count, void* file)
 {
 	file_st* f = (file_st*)file;
-	uint16 len;
+	u16 len;
 	err_t code;
 	// pre
 	ASSERT(memIsValid(f, sizeof(file_st)));

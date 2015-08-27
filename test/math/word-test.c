@@ -5,7 +5,7 @@
 \project bee2/test
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.05.22
-\version 2015.05.22
+\version 2015.08.27
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -21,10 +21,10 @@ version 3. See Copyright Notices in bee2/info.h.
 
 bool_t wordTest()
 {
-	uint16 a = 0x0102;
-	uint32 b = 0x01020304;
+	u16 a = 0x0102;
+	u32 b = 0x01020304;
 #if (B_PER_W >= 32)
-	uint64 c = 0x0102030405060708;
+	u64 c = 0x0102030405060708;
 #endif
 	// reverse
 	if (wordRevU16(a) != 0x0201 ||

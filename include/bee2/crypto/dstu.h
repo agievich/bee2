@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.27
-\version 2014.04.27
+\version 2015.08.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -94,11 +94,11 @@ p[0] >= p[1] >= p[2] >= p[3].
 /*! \brief Долговременные параметры dstu */
 typedef struct
 {
-	uint16 p[4];				/*!< описание базового поля */
+	u16 p[4];					/*!< описание базового поля */
 	octet A;					/*!< коэффициент A (0 или 1) */
 	octet B[DSTU_SIZE];			/*!< коэффициент B */
 	octet n[DSTU_SIZE];			/*!< порядок группы точек */
-	uint32 c;					/*!< кофактор */
+	u32 c;						/*!< кофактор */
 	octet P[2 * DSTU_SIZE];		/*!< базовая точка */
 } dstu_params;
 

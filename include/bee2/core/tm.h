@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2014.11.18
+\version 2015.08.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -52,9 +52,9 @@ extern "C" {
 */
 
 #if (B_PER_W == 16)
-	typedef uint32 tm_ticks_t;
+	typedef u32 tm_ticks_t;
 #else 
-	typedef uint64 tm_ticks_t;
+	typedef u64 tm_ticks_t;
 #endif
 
 /*!	\brief Показания таймера

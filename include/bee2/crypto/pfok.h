@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.06.30
-\version 2014.07.11
+\version 2015.08.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -103,9 +103,9 @@ extern "C" {
 /*!	\brief Долговременные параметры */
 typedef struct
 {
-	uint32 l;		/*!< битовая длина p */
-	uint32 r;		/*!< битовая длина личного ключа */
-	uint32 n;		/*!< битовая длина общего ключа */
+	u32 l;			/*!< битовая длина p */
+	u32 r;			/*!< битовая длина личного ключа */
+	u32 n;			/*!< битовая длина общего ключа */
 	octet p[368];	/*!< модуль p */
 	octet g[368];	/*!< образующий g */
 } pfok_params;
@@ -113,8 +113,8 @@ typedef struct
 /*!	\brief Затравочные данные */
 typedef struct
 {
-	uint16 z[31];	/*!< числа z[i] */
-	uint32 lt[20];	/*!< цепочка lt[i] */
+	u16 z[31];		/*!< числа z[i] */
+	u32 lt[20];		/*!< цепочка lt[i] */
 } pfok_seed;
 
 /*!	\brief Обработка нового числа q

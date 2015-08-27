@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.09
-\version 2015.05.22
+\version 2015.08.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -47,7 +47,7 @@ typedef size_t (*g12s_deep_i)(
 
 static const char _a1_name[] = "1.2.643.2.2.35.0";
 
-static const uint32 _a1_l = 256;
+static const u32 _a1_l = 256;
 
 static const octet _a1_p[] = {
 	0x31, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -95,7 +95,7 @@ static const octet _a1_yP[] = {
 
 static const char _cryptoproA_name[] = "1.2.643.2.2.35.1";
 
-static const uint32 _cryptoproA_l = 256;
+static const u32 _cryptoproA_l = 256;
 
 static const octet _cryptoproA_p[] = {
 	0x97, 0xFD, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -143,7 +143,7 @@ static const octet _cryptoproA_yP[] = {
 
 static const char _cryptoproB_name[] = "1.2.643.2.2.35.2";
 
-static const uint32 _cryptoproB_l = 256;
+static const u32 _cryptoproB_l = 256;
 
 static const octet _cryptoproB_p[] = {
 	0x99, 0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -194,7 +194,7 @@ static const octet _cryptoproB_yP[] = {
 
 static const char _cryptoproC_name[] = "1.2.643.2.2.35.3";
 
-static const uint32 _cryptoproC_l = 256;
+static const u32 _cryptoproC_l = 256;
 
 static const octet _cryptoproC_p[] = {
 	0x9B, 0x75, 0x2D, 0x02, 0xB9, 0xF7, 0x98, 0x79,
@@ -242,7 +242,7 @@ static const octet _cryptoproC_yP[] = {
 
 static const char _cryptocom_name[] = "1.2.643.2.9.1.8.1";
 
-static const uint32 _cryptocom_l = 256;
+static const u32 _cryptocom_l = 256;
 
 static const octet _cryptocom_p[] = {
 	0xC7, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -293,7 +293,7 @@ static const octet _cryptocom_yP[] = {
 
 static const char _a2_name[] = "1.2.643.7.1.2.1.2.0";
 
-static const uint32 _a2_l = 512;
+static const u32 _a2_l = 512;
 
 static const octet _a2_p[] = {
 	0x73, 0x63, 0xBE, 0x28, 0xF5, 0xBB, 0x64, 0x16, 
@@ -365,7 +365,7 @@ static const octet _a2_yP[] = {
 
 static const char _paramsetA512_name[] = "1.2.643.7.1.2.1.2.1";
 
-static const uint32 _paramsetA512_l = 512;
+static const u32 _paramsetA512_l = 512;
 
 static const octet _paramsetA512_p[] = {
 	0xC7, 0xFD, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -437,7 +437,7 @@ static const octet _paramsetA512_yP[] = {
 
 static const char _paramsetB512_name[] = "1.2.643.7.1.2.1.2.2";
 
-static const uint32 _paramsetB512_l = 512;
+static const u32 _paramsetB512_l = 512;
 
 static const octet _paramsetB512_p[] = {
 	0x6F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,

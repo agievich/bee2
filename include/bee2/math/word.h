@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.18
-\version 2015.05.28
+\version 2015.08.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -45,24 +45,24 @@ extern "C" {
 */
 
 /*!	\def wordRevU16
-	\brief Реверс октетов слова uint16
+	\brief Реверс октетов слова u16
 */
 #define wordRevU16(a)\
-	((uint16)((a) << 8 | (a) >> 8))
+	((u16)((a) << 8 | (a) >> 8))
 
 /*!	\def wordRevU32
-	\brief Реверс октетов слова uint32
+	\brief Реверс октетов слова u32
 */
 #define wordRevU32(a)\
-	((uint32)((a) << 24 | ((a) & 0xFF00) << 8 |\
+	((u32)((a) << 24 | ((a) & 0xFF00) << 8 |\
 		((a) >> 8 & 0xFF00) | (a) >> 24))
 
 /*!	\def wordRevU64
-	\brief Реверс октетов слова uint64
-	\pre Тип uint64 поддержан.
+	\brief Реверс октетов слова u64
+	\pre Тип u64 поддержан.
 */
 #define wordRevU64(a)\
-	((uint64)((a) << 56 | ((a) & 0xFF00) << 40 | ((a) & 0xFF0000) << 24 |\
+	((u64)((a) << 56 | ((a) & 0xFF00) << 40 | ((a) & 0xFF0000) << 24 |\
 	((a) & 0xFF000000) << 8 | ((a) >> 8 & 0xFF000000) |\
 	((a) >> 24 & 0xFF0000) | ((a) >> 40 & 0xFF00) | (a) >> 56))
 

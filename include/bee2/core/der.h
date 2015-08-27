@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.04.21
-\version 2014.04.23
+\version 2015.08.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -54,7 +54,7 @@ extern "C" {
 Длинные теги должен применяться только для номеров >= 31. В частности,
 если r == 1, то t_0 >= 31.
 
-Ограничение реализации: тег задается словом uint32. Номер тега задается
+Ограничение реализации: тег задается словом u32. Номер тега задается
 младшими 5 битами слова, если не все эти биты единичные (короткий тег),
 либо старшими 24 битами, в противном случае (длинный тег). Если в коротком
 теге некоторый из старших 24 битов ненулевой, то это считается ошибкой
@@ -99,7 +99,7 @@ extern "C" {
 */
 size_t derEncode(
 	octet der[],		/*!< [out] DER-код */
-	uint32 tag,			/*!< [in] тег */
+	u32 tag,			/*!< [in] тег */
 	const void* value,	/*!< [in] значение */
 	size_t len			/*!< [in] длина value в октетах */
 );
@@ -109,7 +109,7 @@ size_t derEncode(
 	Проверяется корректность DER-кода [count]der. Проверяются следующие 
 	условия:
 	-	тег T и длина L закодированы по правилам ACH.1;
-	-	тег укладывается в uint32 (органичение реализации);
+	-	тег укладывается в u32 (органичение реализации);
 	-	длина укладывается в size_t (органичение реализации);
 	-	count действительно является длиной кода.
 	.
@@ -134,7 +134,7 @@ bool_t derIsValid(
 bool_t derIsValid2(
 	const octet der[],	/*!< [in] DER-код */
 	size_t count,		/*!< [in] длина der в октетах */
-	uint32 tag			/*!< [in] тег */
+	u32 tag				/*!< [in] тег */
 );
 
 /*!	\brief Длина кода
@@ -162,7 +162,7 @@ size_t derSize(
 	\return Число октетов памяти или SIZE_MAX в случае ошибки формата.
 */
 size_t derDecode(
-	uint32* tag,		/*!< [out] тег */
+	u32* tag,			/*!< [out] тег */
 	void* value,		/*!< [out] значение */
 	const octet der[],	/*!< [in] DER-код */
 	size_t count		/*!< [in] длина der в октетах */
@@ -179,7 +179,7 @@ size_t derDecode(
 	\return Число октетов памяти или SIZE_MAX в случае ошибки формата.
 */
 size_t derDecode2(
-	uint32* tag,			/*!< [out] тег */
+	u32* tag,				/*!< [out] тег */
 	const octet** value,	/*!< [out] указатель на значение */
 	const octet der[],		/*!< [in] DER-код */
 	size_t count			/*!< [in] длина der в октетах */
