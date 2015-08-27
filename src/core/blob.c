@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.01
-\version 2015.01.30
+\version 2015.08.26
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -84,7 +84,7 @@ void blobClose(blob_t blob)
 	if (blob)
 	{
 		memWipe(_BLOB_PTR_OF(blob), _BLOB_ACTUAL_SIZE_OF(blob));
-		free(_BLOB_PTR_OF(blob));
+		memFree(_BLOB_PTR_OF(blob));
 	}
 }
 

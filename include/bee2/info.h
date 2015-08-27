@@ -25,19 +25,19 @@ version 3. See Copyright Notices at the end of this file.
 #define BEE2_NAME				"Bee2"
 #define BEE2_VERSION_MAJOR		"2"
 #define BEE2_VERSION_MINOR 		"0"
-#define BEE2_VERSION_PATCH		"2"
+#define BEE2_VERSION_PATCH		"3"
 
 #define BEE2_VERSION\
 		BEE2_VERSION_MAJOR "." BEE2_VERSION_MINOR "." BEE2_VERSION_PATCH
 
 #define BEE2_VERSION_NUM\
-		2, 0, 2
+		2, 0, 3
 
 /*!
 *******************************************************************************
 \mainpage Библиотека Bee2
 
-\version 2.0.2
+\version 2.0.3
 
 \section toc Содержание
 

@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.03.01
-\version 2015.05.22
+\version 2015.08.24
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -1325,7 +1325,6 @@ void ppMod(word r[], const word a[], size_t n, const word b[], size_t m,
 	word* w1;			/* таблица частных (16 слов) */
 	word* w2;			/* таблица умножения (16 слов) */
 	// pre
-	ASSERT(n >= m);
 	ASSERT(wwIsValid(a, n) && wwIsValid(b, m));
 	ASSERT(m > 0 && b[m - 1] > 0);
 	ASSERT(a == r || wwIsDisjoint2(a, n, r, m));

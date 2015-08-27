@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.01
-\version 2015.06.04
+\version 2015.08.25
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -146,7 +146,7 @@ T == octet.
 
 /*!
 *******************************************************************************
-\def OS_WINDOWS
+\def OS_WIN
 \brief Операционная система линейки Windows
 
 \def OS_UNIX
@@ -156,32 +156,33 @@ T == octet.
 \def OS_LINUX
 \brief Операционная система линейки Linux
 
-\def OS_MAC
-\brief Операционная система линейки MAC OS X
+\def OS_APPLE
+\brief Операционная система линеек OS X / iOS
 *******************************************************************************
 */
 
 #if defined(_WIN32) || defined(_WIN64) || defined(_WINNT) ||\
 	defined(__WIN32__) || defined(__WIN64__)  || defined(__WINNT__)
-	#define OS_WINDOWS
+	#define OS_WIN
 	#undef OS_UNIX
 	#undef OS_LINUX
-	#undef OS_MAC
-#elif defined(unix) || defined(_unix_) || defined(__unix__)
-	#undef OS_WINDOWS
+	#undef OS_APPLE
+#elif defined(unix) || defined(_unix_) || defined(__unix__) ||\
+	defined(__APPLE__)
+	#undef OS_WIN
 	#define OS_UNIX
 	#if defined(__unix__)
 		#define OS_LINUX
-		#undef OS_MAC
-	#elif defined(__APPLE__) || defined(__MACH__)
+		#undef OS_APPLE
+	#elif defined(__APPLE__)
 		#undef OS_LINUX
-		#define OS_MAC
+		#define OS_APPLE
 	#endif
 #else
-	#undef OS_WINDOWS
+	#undef OS_WIN
 	#undef OS_UNIX
 	#undef OS_LINUX
-	#undef OS_MAC
+	#undef OS_APPLE
 #endif
 
 /*!

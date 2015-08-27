@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.02.04
-\version 2015.04.14
+\version 2015.06.26
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -65,13 +65,15 @@ static size_t oidSIDDecode(char* oid, uint32 val)
 /*
 *******************************************************************************
 Проверка
+
+\remark d1 инициализируется для подавления предупреждения компилятора.
 *******************************************************************************
 */
 
 bool_t oidIsValid(const char* oid)
 {
 	uint32 val = 0;
-	uint32 d1;
+	uint32 d1 = 0;
 	size_t pos = 0;
 	size_t n = 0;
 	// pre

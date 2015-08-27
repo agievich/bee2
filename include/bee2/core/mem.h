@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.16
-\version 2015.04.06
+\version 2015.08.26
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -23,8 +23,12 @@ version 3. See Copyright Notices in bee2/info.h.
 
 #include <memory.h>
 #include <string.h>
-#include <malloc.h>
 #include "bee2/defs.h"
+#ifndef OS_APPLE
+	#include <malloc.h>
+#else
+	#include <stdlib.h>
+#endif
 #include "bee2/core/safe.h"
 
 #ifdef __cplusplus

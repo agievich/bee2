@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2015.06.05
+\version 2015.08.25
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -260,7 +260,7 @@ dev/urandom. Это неблокирующий источник, который 
 *******************************************************************************
 */
 
-#if defined OS_WINDOWS
+#if defined OS_WIN
 
 #include <windows.h>
 #include <wincrypt.h>

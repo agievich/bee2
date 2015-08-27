@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.05.14
-\version 2015.06.08
+\version 2015.08.25
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -131,7 +131,7 @@ err_t belsGenM0(octet m0[], size_t len, gen_i ang, void* ang_state)
 	stack = f0 + n + 1;
 	// сгенерировать многочлен
 	f0[n] = 1;
-	for (reps = len * 8 * 8; reps--;)
+	for (reps = len * 8 * B_PER_IMPOSSIBLE * 3 / 4; reps--;)
 	{
 		ang(f0, len, ang_state);
 		memToWord(f0, f0, len);
@@ -240,7 +240,7 @@ err_t belsGenMid(octet mid[], size_t len, const octet m0[], const octet id[],
 	memToWord(u, u, 32);
 	u[n] = 0;
 	// попытки генерации
-	for (reps = 3; reps--; )
+	for (reps = MAX2(3, B_PER_IMPOSSIBLE * 2 / len / 8); reps--;)
 	{
 		// f <- минимальный многочлен элемента u
 		ppMinPolyMod(f, u, f0, n + 1, stack);

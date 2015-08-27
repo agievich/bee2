@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.10
-\version 2014.10.13
+\version 2015.08.25
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -59,7 +59,7 @@ mtxLock() и снимает блокировку с помощью функци�
 *******************************************************************************
 */
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 	#include <windows.h>
 	typedef HANDLE mt_mtx_t;
 #elif defined OS_UNIX

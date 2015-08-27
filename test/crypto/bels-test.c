@@ -5,7 +5,7 @@
 \project bee2/test
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.06.27
-\version 2015.04.27
+\version 2015.08.24
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -136,6 +136,9 @@ bool_t belsTest()
 			"619832AB66265E08A65DD48EE406418"))
 			return FALSE;
 		// восстановить секрет
+		if (belsRecover(s, 1, len, si, m0, mi) != ERR_OK ||
+			memEq(s, beltGetH(), len))
+			return FALSE;
 		if (belsRecover(s, 2, len, si, m0, mi) != ERR_OK ||
 			memEq(s, beltGetH(), len))
 			return FALSE;

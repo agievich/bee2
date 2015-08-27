@@ -570,10 +570,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\src\crypto\bash.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\src\crypto\bels.c"
 					>
 				</File>

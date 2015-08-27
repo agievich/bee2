@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.10
-\version 2014.10.13
+\version 2015.08.25
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -21,7 +21,7 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 
 bool_t mtMtxCreate(mt_mtx_t* mtx)
 {
@@ -119,7 +119,7 @@ void mtMtxClose(mt_mtx_t* mtx)
 *******************************************************************************
 */
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 
 void mtSleep(uint32 ms)
 {

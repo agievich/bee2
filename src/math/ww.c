@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.18
-\version 2015.04.06
+\version 2015.08.26
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -86,14 +86,14 @@ int SAFE(wwCmp2)(const word a[], size_t n, const word b[], size_t m)
 	{
 		register int z = wwIsZero(a + m, n - m);
 		ret = wwCmp(a, b, m);
-		ret = (-z) & ret | (z - 1) & 1;
+		ret = -z & ret | (z - 1) & 1;
 		z = 0;
 	}
 	else if (n < m)
 	{
 		register int z = wwIsZero(b + n, m - n);
 		ret = wwCmp(a, b, n);
-		ret = (-z) & ret | (z - 1) & -1;
+		ret = -z & ret | (z - 1) & -1;
 		z = 0;
 	}
 	else
@@ -120,8 +120,8 @@ int SAFE(wwCmpW)(const word a[], size_t n, register word w)
 	else
 	{
 		register int z = wwIsZero(a + 1, n - 1);
-		ret = (-wordLess(a[0], w)) & -1 | (-wordGreater(a[0], w)) & 1;
-		ret = (-z) & ret | (z - 1) & 1;
+		ret = -wordLess(a[0], w) & -1 | -wordGreater(a[0], w) & 1;
+		ret = -z & ret | (z - 1) & 1;
 		z = 0;
 	}
 	w = 0;
