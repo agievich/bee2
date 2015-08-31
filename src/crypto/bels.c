@@ -370,8 +370,8 @@ err_t belsRecover(octet s[], size_t count, size_t len, const octet si[],
 		(count - 1) * n + 1 +
 		(count - 1) * n + 1 +
 		n + 1 +
-		(2 * count - 1) * n + 1 + 
-		(2 * count - 2) * n);
+		(2 * count - 1) * n + 
+		MAX2((2 * count - 2) * n, (count + 1) * n));
 	// создать состояние
 	state = blobCreate(deep);
 	if (state == 0)
@@ -383,18 +383,18 @@ err_t belsRecover(octet s[], size_t count, size_t len, const octet si[],
 	u = d + (count - 1) * n + 1;
 	v = u + (count - 1) * n + 1;
 	c = v + n + 1;
-	t = c + (2 * count - 1) * n + 1;
-	stack = t + (2 * count - 2) * n;
-	// c(x) <- s1(x)
+	t = c + (2 * count - 1) * n;
+	stack = t + MAX2((2 * count - 2) * n, (count + 1) * n);
+	// [n]c(x) <- s1(x)
 	memToWord(c, si, len);
-	// g(x) <- x^l + m1(x)
+	// [n + 1]g(x) <- x^l + m1(x)
 	memToWord(g, mi, len), g[n] = 1;
 	// цикл по пользователям
 	for (f[n] = 1, i = 1; i < count; ++i)
 	{
-		// f(x) <- x^l + mi(x)
+		// [n + 1]f(x) <- x^l + mi(x)
 		memToWord(f, mi + i * len, len);
-		// найти d(x) = \gcd(f(x), g(x)) и коэффициенты Безу u(x), v(x)
+		// найти d(x) = \gcd(f(x), g(x)) и коэфф. Безу [i * n]u(x), [n]v(x)
 		ppExGCD(d, u, v, f, n + 1, g, i * n + 1, stack);
 		ASSERT(u[i * n] == 0 && v[n] == 0);
 		// d(x) != 1? 
@@ -403,27 +403,30 @@ err_t belsRecover(octet s[], size_t count, size_t len, const octet si[],
 			blobClose(state);
 			return ERR_BAD_PUBKEY;
 		}
-		// c(x) <- u(x)f(x)c(x)
+		// [2 * i * n]c(x) <- u(x)f(x)c(x)
+		// (с помощью [2 * i * n]t)
 		ppMul(t, u, i * n, c, i * n, stack);
 		ppMul(c, t, 2 * i * n, f, n, stack);
 		wwXor2(c + n, t, 2 * i * n);
 		// c(x) <- c(x) + v(x)g(x)si(x)
+		// (с помощью [2 * n]d и [(i + 2) * n]t)
 		memToWord(t, si + i * len, len);
 		ppMul(d, v, n, t, n, stack);
 		ppMul(t, d, 2 * n, g, i * n, stack);
 		wwXor2(t + i * n, d, 2 * n);
 		wwXor2(c, t, (i + 2) * n);
-		// g(x) <- g(x)f(x)
+		// [(i + 1) * n + 1]g(x) <- g(x)f(x)
+		// (с помощью [(i + 1) * n]t)
 		ppMul(t, f, n, g, i * n, stack);
 		wwXor2(t + n, g, i * n);
 		wwXor2(t + i * n, f, n);
 		wwCopy(g, t, (i + 1) * n);
 		g[(i + 1) * n] = 1;
-		// c(x) <- c(x) mod g(x)
+		// [(i + 1) * n]c(x) <- c(x) mod g(x)
 		ppMod(c, c, (2 * i + 1) * n, g, (i + 1) * n + 1, stack);
 		ASSERT(c[(i + 1) * n] == 0);
 	}
-	// s(x) <- c(x) mod (x^l + m0(x))
+	// [n]s(x) <- c(x) mod (x^l + m0(x))
 	memToWord(f, m0, len), f[n] = 1;
 	ppMod(c, c, count * n, f, n + 1, stack);
 	ASSERT(c[n] == 0);

@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.06.30
-\version 2015.08.27
+\version 2015.08.31
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -183,7 +183,7 @@ err_t pfokGenParams(
 	-	g является образующим группы B_p.
 	.
 	\return ERR_OK, если параметры корректны, и код ошибки в противном случае.
-	\warning Не проверяется, что p построен по 
+	\warning Не проверяется, что p построен по алгоритму 5.2.
 */
 err_t pfokValParams(
 	const pfok_params* params	/*!< [in] долговременные параметры */

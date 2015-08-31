@@ -41,7 +41,7 @@ if(BUILD_STATIC_LIBS)
   if(NOT BUILD_SHARED_LIBS)
     set(bee2_static_target "bee2")
   else()
-    # if we build both static an shared, then let
+    # if we build both static and shared, then let
     # tests and apps link to the shared lib target
     set(bee2_static_target "bee2_static")
   endif()
@@ -58,9 +58,11 @@ endif()
 if(BUILD_SHARED_LIBS)
   add_library(bee2 SHARED ${src})
   target_link_libraries(bee2 ${libs})
-  set_target_properties(bee2 PROPERTIES 
-    VERSION ${BEE2_VERSION_MAJOR}.${BEE2_VERSION_MINOR}.${BEE2_VERSION_PATCH}
-    SOVERSION 2.0)
+
+# uncomment next lines to keep track of bee2.so with version numbers
+# set_target_properties(bee2 PROPERTIES 
+#   VERSION ${BEE2_VERSION_MAJOR}.${BEE2_VERSION_MINOR}.${BEE2_VERSION_PATCH}
+#   SOVERSION 2.0)
 
   install(TARGETS bee2
     DESTINATION ${LIB_INSTALL_DIR}

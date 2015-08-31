@@ -6,7 +6,7 @@ set(BEE2_VERSION_MINOR "0")
 set(BEE2_VERSION_PATCH "3")
 set(BEE2_VERSION "${BEE2_VERSION_MAJOR}.${BEE2_VERSION_MINOR}.${BEE2_VERSION_PATCH}")
 
-option(BUILD_SHARED_LIBS "Build shared libraries." OFF)
+option(BUILD_SHARED_LIBS "Build shared libraries." ON)
 option(BUILD_STATIC_LIBS "Build static libraries." ON)
 option(BUILD_FAST "Build with the SAFE_FAST directive." ON)
 option(BUILD_APPS "Build apps." ON)

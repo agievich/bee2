@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.05.14
-\version 2015.08.25
+\version 2015.08.31
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -51,7 +51,7 @@ extern "C" {
 	p = (1 - 1/l)^{k * l} \approx e^{-k}.\n
 В реализации\n 
 	k = B_PER_IMPOSSIBLE * 3 / 4 > B_PER_IMPOSSIBLE * \log(2)\n
-и поэтому p < 2^{B_PER_IMPOSSIBLE}.
+и поэтому p < 2^{-B_PER_IMPOSSIBLE}.
 
 В функции belsGenM0() неуспех при k * l попытках генерации интерпретируется 
 как нарушение ожидаемых свойств ang с возвратом кода ошибки ERR_BAD_ANG.
