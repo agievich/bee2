@@ -5,7 +5,7 @@
 \project bee2/test
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.10
-\version 2015.04.27
+\version 2015.10.29
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -13,6 +13,7 @@ version 3. See Copyright Notices in bee2/info.h.
 
 #include <stdio.h>
 #include <bee2/core/mem.h>
+#include <bee2/core/hex.h>
 #include <bee2/core/prng.h>
 #include <bee2/core/rng.h>
 #include <bee2/core/util.h>
@@ -32,7 +33,7 @@ bool_t rngTest()
 	if (rngReadSource(&read, buf, 2500, "timer") == ERR_OK)
 	{
 		if (read == 2500)
-			memToHex(hex, buf, 16),
+			hexFrom(hex, buf, 16),
 			printf("rngSourceTimer: %s... [FIPS: 1%c 2%c 3%c 4%c]\n",
 				hex,
 				rngTestFIPS1(buf) ? '+' : '-',
@@ -40,17 +41,17 @@ bool_t rngTest()
 				rngTestFIPS3(buf) ? '+' : '-',
 				rngTestFIPS4(buf) ? '+' : '-');
 		else if (read > 16)
-			memToHex(hex, buf, 16),
+			hexFrom(hex, buf, 16),
 			printf("rngSourceTimer: %s... (%u bytes)\n", hex, (unsigned)read);
 		else
-			memToHex(hex, buf, read),
+			hexFrom(hex, buf, read),
 			printf("rngSourceTimer: %s\n", hex);
 	}
 	// физический источник
 	if (rngReadSource(&read, buf, 2500, "trng") == ERR_OK)
 	{
 		if (read == 2500)
-			memToHex(hex, buf, 16),
+			hexFrom(hex, buf, 16),
 			printf("rngSourceTRNG:  %s... [FIPS: 1%c 2%c 3%c 4%c]\n",
 				hex,
 				rngTestFIPS1(buf) ? '+' : '-',
@@ -58,17 +59,17 @@ bool_t rngTest()
 				rngTestFIPS3(buf) ? '+' : '-',
 				rngTestFIPS4(buf) ? '+' : '-');
 		else if (read > 16)
-			memToHex(hex, buf, 16),
+			hexFrom(hex, buf, 16),
 			printf("rngSourceTRNG:  %s... (%u bytes)\n", hex, (unsigned)read);
 		else
-			memToHex(hex, buf, read),
+			hexFrom(hex, buf, read),
 			printf("rngSourceTRNG:  %s\n", hex);
 	}
 	// системный источник
 	if (rngReadSource(&read, buf, 2500, "sys") == ERR_OK)
 	{
 		if (read == 2500)
-			memToHex(hex, buf, 16),
+			hexFrom(hex, buf, 16),
 			printf("rngSourceSys:   %s... [FIPS: 1%c 2%c 3%c 4%c]\n",
 				hex,
 				rngTestFIPS1(buf) ? '+' : '-',
@@ -76,17 +77,17 @@ bool_t rngTest()
 				rngTestFIPS3(buf) ? '+' : '-',
 				rngTestFIPS4(buf) ? '+' : '-');
 		else if (read > 16)
-			memToHex(hex, buf, 16),
+			hexFrom(hex, buf, 16),
 			printf("rngSourceSys:   %s... (%u bytes)\n", hex, (unsigned)read);
 		else
-			memToHex(hex, buf, read),
+			hexFrom(hex, buf, read),
 			printf("rngSourceSys:   %s\n", hex);
 	}
 	// работа с ГСЧ
 	if (rngCreate(0, 0) != ERR_OK)
 		return FALSE;
 	rngStepG(buf, 2500, 0);
-	memToHex(hex, buf, 16);
+	hexFrom(hex, buf, 16);
 	printf("rngStepR:       %s... [FIPS: 1%c 2%c 3%c 4%c]\n",
 		hex,
 		rngTestFIPS1(buf) ? '+' : '-',

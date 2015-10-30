@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2015.08.27
+\version 2015.09.24
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -107,7 +107,10 @@ get-then-continue не поддерживается, поскольку прот
 
 \expect Общее состояние связки функций не изменяется вне этих функций.
 
-\expect{ERR_BAD_INPUT} Все входные указатели действительны.
+\expect{ERR_BAD_INPUT} Все входные указатели высокоуровневых функций 
+действительны.
+
+\pre Все входные указатели низкоуровневых функций действительны.
 
 \pre Если не оговорено противное, то входные буферы функций связки 
 не пересекаются.
@@ -634,7 +637,7 @@ void beltMACStepG2(
 
 /*!	\brief Проверка имитовставки в режиме MAC
 
-	Проверяется, что окончательная имитовставка mac всех данных,
+	Проверяется, что окончательная имитовставка всех данных,
 	обработанных до этого функцией beltMACStepA(), совпадает с mac.
 	\expect (beltMACStepA()* < beltMACStepV())*.
 	\return Признак успеха.
@@ -1041,7 +1044,7 @@ void beltHashStepG2(
 
 /*!	\brief Проверка хэш-значения
 
-	Проверяется, что окончательное хэш-значение hash всех данных,
+	Проверяется, что окончательное хэш-значение всех данных,
 	обработанных до этого функцией beltHashStepH(), совпадает с hash.
 	\expect (beltHashStepH()* < beltHashStepV())*.
 */
@@ -1209,7 +1212,7 @@ void beltHMACStepG2(
 
 /*!	\brief Проверка имитовставки в режиме HMAC
 
-	Проверяется, что окончательная имитовставка mac всех данных,
+	Проверяется, что окончательная имитовставка всех данных,
 	обработанных до этого функцией beltHMACStepA(), совпадает с mac.
 	\expect (beltHMACStepA()* < beltHMACStepV())*.
 */

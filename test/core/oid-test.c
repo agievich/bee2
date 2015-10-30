@@ -5,13 +5,14 @@
 \project bee2/test
 \author (Ñ) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.04.01
-\version 2015.05.19
+\version 2015.10.29
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
 #include <bee2/core/mem.h>
+#include <bee2/core/hex.h>
 #include <bee2/core/oid.h>
 #include <bee2/core/str.h>
 
@@ -30,39 +31,39 @@ bool_t oidTest()
 	char str1[2048];
 	size_t count;
 	// length octet 0x00
-	memFromHex(buf, "060000");
+	hexTo(buf, "060000");
 	if (oidFromDER(0, buf, 3) != SIZE_MAX)
 		return FALSE;
 	// length octet 0x80
-	memFromHex(buf, "068000");
+	hexTo(buf, "068000");
 	if (oidFromDER(0, buf, 3) != SIZE_MAX)
 		return FALSE;
 	// length octet 0xFF
-	memFromHex(buf, "06FF00");
+	hexTo(buf, "06FF00");
 	if (oidFromDER(0, buf, 3) != SIZE_MAX)
 		return FALSE;
 	// invalid type
-	memFromHex(buf, "080100");
+	hexTo(buf, "080100");
 	if (oidFromDER(0, buf, 3) != SIZE_MAX)
 		return FALSE;
 	// illegal padding
-	memFromHex(buf, "06070180808080807F");
+	hexTo(buf, "06070180808080807F");
 	if (oidFromDER(0, buf, 9) != SIZE_MAX)
 		return FALSE;
-	memFromHex(buf, "06028001");
+	hexTo(buf, "06028001");
 	if (oidFromDER(0, buf, 4) != SIZE_MAX)
 		return FALSE;
-	memFromHex(buf, "0602807F");
+	hexTo(buf, "0602807F");
 	if (oidFromDER(0, buf, 4) != SIZE_MAX)
 		return FALSE;
 	// MacOS errors
-	memFromHex(buf, "06028100");
+	hexTo(buf, "06028100");
 	if (oidFromDER(str, buf, 4) == SIZE_MAX || !strEq(str, "2.48"))
 		return FALSE;
-	memFromHex(buf, "06028101");
+	hexTo(buf, "06028101");
 	if (oidFromDER(str, buf, 4) == SIZE_MAX || !strEq(str, "2.49"))
 		return FALSE;
-	memFromHex(buf, "06028837");
+	hexTo(buf, "06028837");
 	if (oidFromDER(str, buf, 4) == SIZE_MAX || !strEq(str, "2.999"))
 		return FALSE;
 	// OpenSSL errors
@@ -71,14 +72,14 @@ bool_t oidTest()
 		!strEq(str, "2.65500"))
 		return FALSE;
 	// overflow
-	memFromHex(buf, "060981B1D1AF85ECA8804F");
+	hexTo(buf, "060981B1D1AF85ECA8804F");
 	if (oidFromDER(0, buf, 11) != SIZE_MAX)
 		return FALSE;
 	if (oidIsValid("2.5.4.4294967299"))
 		return FALSE;
 	// belt-hash
 	count = oidToDER(buf, "1.2.112.0.2.0.34.101.31.81");
-	if (count != 11 || !memEqHex(buf, "06092A7000020022651F51"))
+	if (count != 11 || !hexEq(buf, "06092A7000020022651F51"))
 		return FALSE;
 	if (oidFromDER(str, buf, count - 1) != SIZE_MAX)
 		return FALSE;

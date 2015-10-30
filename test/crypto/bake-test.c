@@ -5,7 +5,7 @@
 \project bee2/test
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.04.23
-\version 2015.04.27
+\version 2015.10.29
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -13,6 +13,7 @@ version 3. See Copyright Notices in bee2/info.h.
 
 #include <bee2/core/err.h>
 #include <bee2/core/mem.h>
+#include <bee2/core/hex.h>
 #include <bee2/core/prng.h>
 #include <bee2/core/str.h>
 #include <bee2/core/util.h>
@@ -231,19 +232,19 @@ bool_t bakeTest()
 	settingsa->rng_state = echoa;
 	settingsb->rng_state = echob;
 	// загрузить личные ключи
-	memFromHex(da, _da);
-	memFromHex(db, _db);
+	hexTo(da, _da);
+	hexTo(db, _db);
 	// загрузить сертификаты
-	memFromHex(certdataa, _certa);
-	memFromHex(certdatab, _certb);
+	hexTo(certdataa, _certa);
+	hexTo(certdatab, _certb);
 	certa->data = certdataa;
 	certa->len = strLen(_certa) / 2;
 	certb->data = certdatab;
 	certb->len = strLen(_certb) / 2;
 	certa->val = certb->val = bakeTestCertVal;
 	// тест Б.2
-	memFromHex(randa, _bmqv_randa);
-	memFromHex(randb, _bmqv_randb);
+	hexTo(randa, _bmqv_randa);
+	hexTo(randb, _bmqv_randb);
 	fileMsgFlash();
 	do
 	{
@@ -262,13 +263,13 @@ bool_t bakeTest()
 	}
 	while (codea == ERR_FILE_NOT_FOUND || codeb == ERR_FILE_NOT_FOUND);
 	if (!memEq(keya, keyb, 32) ||
-		!memEqHex(keya,
+		!hexEq(keya,
 			"C6F86D0E468D5EF1A9955B2EE0CF0581"
 			"050C81D1B47727092408E863C7EEB48C"))
 		return FALSE;
 	// тест Б.3
-	memFromHex(randa, _bsts_randa);
-	memFromHex(randb, _bsts_randb);
+	hexTo(randa, _bsts_randa);
+	hexTo(randb, _bsts_randb);
 	fileMsgFlash();
 	do
 	{
@@ -287,13 +288,13 @@ bool_t bakeTest()
 	}
 	while (codea == ERR_FILE_NOT_FOUND || codeb == ERR_FILE_NOT_FOUND);
 	if (!memEq(keya, keyb, 32) ||
-		!memEqHex(keya,
+		!hexEq(keya,
 			"78EF2C56BD6DA2116BB5BEE80CEE5C05"
 			"394E7609183CF7F76DF0C2DCFB25C4AD"))
 		return FALSE;
 	// тест Б.4
-	memFromHex(randa, _bpace_randa);
-	memFromHex(randb, _bpace_randb);
+	hexTo(randa, _bpace_randa);
+	hexTo(randb, _bpace_randb);
 	fileMsgFlash();
 	do
 	{
@@ -312,34 +313,34 @@ bool_t bakeTest()
 	}
 	while (codea == ERR_FILE_NOT_FOUND || codeb == ERR_FILE_NOT_FOUND);
 	if (!memEq(keya, keyb, 32) ||
-		!memEqHex(keya,
+		!hexEq(keya,
 			"DAC4D8F411F9C523D28BBAAB32A5270E"
 			"4DFA1F0F757EF8E0F30AF08FBDE1E7F4"))
 		return FALSE;
 	// тест bakeKDF (по данным из теста Б.4)
-	memFromHex(secret, 
+	hexTo(secret, 
 		"723356E335ED70620FFB1842752092C3"
 		"2603EB666040920587D800575BECFC42");
-	memFromHex(iv, 
+	hexTo(iv, 
 		"6B13ACBB086FB87618BCC2EF20A3FA89"
 		"475654CB367E670A2441730B24B8AB31"
 		"CD3D6487DC4EEB23456978186A069C71"
 		"375D75C2DF198BAD1E61EEA0DBBFF737");
 	if (bakeKDF(keya, secret, 32, iv, 64, 0) != ERR_OK ||
 		bakeKDF(keyb, secret, 32, iv, 64, 1) != ERR_OK ||
-		!memEqHex(keya,
+		!hexEq(keya,
 			"DAC4D8F411F9C523D28BBAAB32A5270E"
 			"4DFA1F0F757EF8E0F30AF08FBDE1E7F4") ||
-		!memEqHex(keyb,
+		!hexEq(keyb,
 			"54AC058284D679CF4C47D3D72651F3E4"
 			"EF0D61D1D0ED5BAF8FF30B8924E599D8"))
 		return FALSE;
 	// тест bakeSWU (по данным из теста Б.4)
-	memFromHex(secret, 
+	hexTo(secret, 
 		"AD1362A8F9A3D42FBE1B8E6F1C88AAD5"
 		"0F51D91347617C20BD4AB07AEF4F26A1");
 	if (bakeSWU(iv, params, secret) != ERR_OK ||
-		!memEqHex(iv,
+		!hexEq(iv,
 			"014417D3355557317D2E2AB6D0875487"
 			"8D19E8D97B71FDC95DBB2A9B894D16D7"
 			"7704A0B5CAA9CDA10791E4760671E105"

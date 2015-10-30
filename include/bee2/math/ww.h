@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.18
-\version 2015.04.06
+\version 2015.10.28
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -55,6 +55,26 @@ extern "C" {
 Псевдонимы
 *******************************************************************************
 */
+
+#if (B_PER_W == 16)
+	#include "bee2/core/u16.h"
+	#define wwRev2 u16Rev2
+	#define wwToMem u16To
+	#define wwFromMem u16From
+#elif (B_PER_W == 32)
+	#include "bee2/core/u32.h"
+	#define wwRev2 u32Rev2
+	#define wwToMem u32To
+	#define wwFromMem u32From
+#elif (B_PER_W == 64)
+	#include "bee2/core/u64.h"
+	#define wwRev2 u64Rev2
+	#define wwToMem u64To
+	#define wwFromMem u64From
+#else
+	#error "Unsupported word size"
+#endif /* B_PER_W */
+
 
 /*!	Корректное слово [n]a? */
 #define wwIsValid(a, n) memIsValid((a), O_OF_W(n))
@@ -307,28 +327,6 @@ size_t wwWordSize(
 size_t wwOctetSize(
 	const word a[],	/*!< [in] слово */
 	size_t n		/*!< [in] длина a в машинных словах */
-);
-
-/*!	\brief Выгрузить слово в буфер памяти
-
-	Слово [n]src выгружается в буфер dest.
-	\pre По адресу dest зарезервировано O_OF_W(n) октетов.
-*/
-void wwToMem(
-	void* dest,			/*!< [out] приемник */
-	const word* src,	/*!< [in] источник */
-	size_t n			/*!< [in] длина src в машинных словах */
-);
-
-/*!	\brief Загрузить слово из буфера памяти
-
-	Слово [n]dest загружается из буфера src.
-	\pre По адресу src зарезервировано O_OF_W(n) октетов.
-*/
-void wwFromMem(
-	word* dest,			/*!< [out] приемник */
-	size_t n,			/*!< [in] длина dest в машинных словах */
-	const void* src		/*!< [in] источник */
 );
 
 /*

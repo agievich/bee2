@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.08.09
-\version 2014.04.17
+\version 2015.09.01
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -43,6 +43,8 @@ extern "C" {
 	I = (mod) = {mod * a: a \in R}.
 В этих случаях приведение по модулю I состоит в редукции (определении вычета)
 по модулю mod.
+
+Кольцо вычетов описывается структурой типа qr_o.
 
 Структура qr_o проектировалась с прицелом на поддержку следующих колец: 
 -	R = Z, mod = n --- произвольное натуральное 

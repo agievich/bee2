@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2015.06.28
+\version 2015.10.28
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -14,6 +14,7 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/core/blob.h"
 #include "bee2/core/err.h"
 #include "bee2/core/mem.h"
+#include "bee2/core/u32.h"
 #include "bee2/core/util.h"
 #include "bee2/math/pp.h"
 #include "bee2/math/ww.h"
@@ -316,7 +317,7 @@ void beltKeyExpand2(u32 key[8], const octet theta[], size_t len)
 	ASSERT(memIsValid(key, 32));
 	ASSERT(len == 16 || len == 24 || len == 32);
 	ASSERT(memIsValid(theta, len));
-	memToU32(key, theta, len);
+	u32From(key, theta, len);
 	if (len == 16)
 	{
 		key[4] = key[0];
@@ -1061,7 +1062,7 @@ void beltCTRStart(void* state, const octet theta[], size_t len,
 	belt_ctr_st* s = (belt_ctr_st*)state;
 	ASSERT(memIsDisjoint2(iv, 16, state, beltCTR_keep()));
 	beltKeyExpand2(s->key, theta, len);
-	memToU32(s->ctr, iv, 16);
+	u32From(s->ctr, iv, 16);
 	beltBlockEncr2(s->ctr, s->key);
 	s->reserved = 0;
 }
@@ -1259,7 +1260,7 @@ void beltMACStepG(octet mac[8], void* state)
 	belt_mac_st* s = (belt_mac_st*)state;
 	ASSERT(memIsValid(mac, 8));
 	beltMACStepG_internal(s);
-	memFromU32(mac, 8, s->mac);
+	u32To(mac, 8, s->mac);
 }
 
 void beltMACStepG2(octet mac[], size_t mac_len, void* state)
@@ -1268,7 +1269,7 @@ void beltMACStepG2(octet mac[], size_t mac_len, void* state)
 	ASSERT(mac_len <= 8);
 	ASSERT(memIsValid(mac, mac_len));
 	beltMACStepG_internal(s);
-	memFromU32(mac, mac_len, s->mac);
+	u32To(mac, mac_len, s->mac);
 }
 
 bool_t beltMACStepV(const octet mac[8], void* state)
@@ -1374,7 +1375,7 @@ void beltDWPStart(void* state, const octet theta[], size_t len,
 	beltBlockRevU32(s->r);
 	beltBlockRevW(s->r);
 #endif
-	memToWord(s->s, beltGetH(), 16);
+	wwFromMem(s->s, beltGetH(), 16);
 	// обнулить счетчики
 	memSetZero(s->len, sizeof(s->len));
 	s->filled = 0;
@@ -1518,7 +1519,7 @@ void beltDWPStepG(octet mac[8], void* state)
 	belt_dwp_st* s = (belt_dwp_st*)state;
 	ASSERT(memIsValid(mac, 8));
 	beltDWPStepG_internal(state);
-	memFromU32(mac, 8, (u32*)s->s);
+	u32To(mac, 8, (u32*)s->s);
 }
 
 bool_t beltDWPStepV(const octet mac[8], void* state)
@@ -1903,7 +1904,7 @@ void beltHashStart(void* state)
 	beltBlockSetZero(s->ls);
 	beltBlockSetZero(s->ls + 4);
 	// h <- B194...0D
-	memToU32(s->h, beltGetH(), 32);
+	u32From(s->h, beltGetH(), 32);
 	// нет накопленнных данных
 	s->filled = 0;
 }
@@ -1985,7 +1986,7 @@ void beltHashStepG(octet hash[32], void* state)
 	belt_hash_st* s = (belt_hash_st*)state;
 	ASSERT(memIsValid(hash, 32));
 	beltHashStepG_internal(state);
-	memFromU32(hash, 32, s->h1);
+	u32To(hash, 32, s->h1);
 }
 
 void beltHashStepG2(octet hash[], size_t hash_len, void* state)
@@ -1994,7 +1995,7 @@ void beltHashStepG2(octet hash[], size_t hash_len, void* state)
 	ASSERT(hash_len <= 32);
 	ASSERT(memIsValid(hash, hash_len));
 	beltHashStepG_internal(state);
-	memFromU32(hash, hash_len, s->h1);
+	u32To(hash, hash_len, s->h1);
 }
 
 bool_t beltHashStepV(const octet hash[32], void* state)
@@ -2065,7 +2066,7 @@ void beltKRPStart(void* state, const octet theta[], size_t len, const octet leve
 	belt_krp_st* s = (belt_krp_st*)state;
 	ASSERT(memIsDisjoint2(level, 12, s, beltKRP_keep()));
 	// block <- ... || level || ...
-	memToU32(s->block + 1, level, 12);
+	u32From(s->block + 1, level, 12);
 	// сохранить ключ
 	beltKeyExpand2(s->key, theta, s->len = len);
 }
@@ -2081,14 +2082,14 @@ void beltKRPStepG(octet key[], size_t key_len, const octet header[16],
 	ASSERT(memIsDisjoint2(key, key_len, s, beltKRP_keep()));
 	ASSERT(memIsDisjoint2(header, 16, s, beltKRP_keep()));
 	// полностью определить s->block
-	memToU32(s->block, beltGetH() + 4 * (s->len - 16) + 2 * (key_len - 16), 4);
-	memToU32(s->block + 4, header, 16);
+	u32From(s->block, beltGetH() + 4 * (s->len - 16) + 2 * (key_len - 16), 4);
+	u32From(s->block + 4, header, 16);
 	// применить sigma2
 	beltBlockCopy(s->key_new, s->key);
 	beltBlockCopy(s->key_new + 4, s->key + 4);
 	beltSigma2(s->key_new, s->block, s->stack);
 	// выгрузить ключ
-	memFromU32(key, key_len, s->key_new);
+	u32To(key, key_len, s->key_new);
 }
 
 err_t beltKRP(octet dest[], size_t m, const octet src[], size_t n,
@@ -2160,7 +2161,7 @@ void beltHMACStart(void* state, const octet theta[], size_t len)
 		beltBlockSetZero(s->ls_in);
 		beltBlockAddBitSizeU32(s->ls_in, len);
 		beltBlockSetZero(s->ls_in + 4);
-		memToU32(s->h_in, beltGetH(), 32);
+		u32From(s->h_in, beltGetH(), 32);
 		while (len >= 32)
 		{
 			beltBlockCopy(s->block, theta);
@@ -2194,7 +2195,7 @@ void beltHMACStart(void* state, const octet theta[], size_t len)
 	beltBlockSetZero(s->ls_in);
 	beltBlockAddBitSizeU32(s->ls_in, 32);
 	beltBlockSetZero(s->ls_in + 4);
-	memToU32(s->h_in, beltGetH(), 32);
+	u32From(s->h_in, beltGetH(), 32);
 	beltSigma(s->ls_in + 4, s->h_in, (u32*)s->block, s->stack);
 	s->filled = 0;
 	// сформировать key ^ opad [0x36 ^ 0x5C == 0x6A]
@@ -2204,7 +2205,7 @@ void beltHMACStart(void* state, const octet theta[], size_t len)
 	beltBlockSetZero(s->ls_out);
 	beltBlockAddBitSizeU32(s->ls_out, 32 * 2);
 	beltBlockSetZero(s->ls_out + 4);
-	memToU32(s->h_out, beltGetH(), 32);
+	u32From(s->h_out, beltGetH(), 32);
 	beltSigma(s->ls_out + 4, s->h_out, (u32*)s->block, s->stack);
 }
 
@@ -2295,7 +2296,7 @@ void beltHMACStepG(octet mac[32], void* state)
 	belt_hmac_st* s = (belt_hmac_st*)state;
 	ASSERT(memIsValid(mac, 32));
 	beltHMACStepG_internal(state);
-	memFromU32(mac, 32, s->h1_out);
+	u32To(mac, 32, s->h1_out);
 }
 
 void beltHMACStepG2(octet mac[], size_t mac_len, void* state)
@@ -2304,7 +2305,7 @@ void beltHMACStepG2(octet mac[], size_t mac_len, void* state)
 	ASSERT(mac_len <= 32);
 	ASSERT(memIsValid(mac, mac_len));
 	beltHMACStepG_internal(state);
-	memFromU32(mac, mac_len, s->h1_out);
+	u32To(mac, mac_len, s->h1_out);
 }
 
 bool_t beltHMACStepV(const octet mac[32], void* state)

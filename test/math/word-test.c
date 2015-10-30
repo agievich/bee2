@@ -5,13 +5,18 @@
 \project bee2/test
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.05.22
-\version 2015.08.27
+\version 2015.10.28
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#include <bee2/math/word.h>
+#include <bee2/core/u16.h>
+#include <bee2/core/u32.h>
+#ifdef U64_SUPPORT
+	#include <bee2/core/u64.h>
+#endif
+#include <bee2/core/word.h>
 
 /*
 *******************************************************************************
@@ -23,18 +28,18 @@ bool_t wordTest()
 {
 	u16 a = 0x0102;
 	u32 b = 0x01020304;
-#if (B_PER_W >= 32)
+#ifdef U64_SUPPORT
 	u64 c = 0x0102030405060708;
 #endif
 	// reverse
-	if (wordRevU16(a) != 0x0201 ||
-		wordRevU16(wordRevU16(a)) != a ||
-		wordRevU32(b) != 0x04030201 ||
-		wordRevU32(wordRevU32(b)) != b
-#if (B_PER_W >= 32)
+	if (u16Rev(a) != 0x0201 ||
+		u16Rev(u16Rev(a)) != a ||
+		u32Rev(b) != 0x04030201 ||
+		u32Rev(u32Rev(b)) != b
+#ifdef U64_SUPPORT
 		||
-		wordRevU64(c) != 0x0807060504030201 ||
-		wordRevU64(wordRevU64(c)) != c
+		u64Rev(c) != 0x0807060504030201 ||
+		u64Rev(u64Rev(c)) != c
 #endif
 	)
 		return FALSE;

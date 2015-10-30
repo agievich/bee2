@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.01
-\version 2015.08.27
+\version 2015.10.28
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -190,24 +190,111 @@ T == octet.
 \typedef octet
 \brief Октет
 
-\typedef u32
-\brief 32-разрядное беззнаковое целое
-
-\typedef u16
-\brief 16-разрядное беззнаковое целое
-
 \typedef u8
 \brief 8-разрядное беззнаковое целое
-
-\typedef i32
-\brief 32-разрядное знаковое целое
-
-\typedef i16
-\brief 16-разрядное знаковое целое
 
 \typedef i8
 \brief 8-разрядное знаковое целое
 
+\typedef u16
+\brief 16-разрядное беззнаковое целое
+
+\typedef i16
+\brief 16-разрядное знаковое целое
+
+\typedef u32
+\brief 32-разрядное беззнаковое целое
+
+\typedef i32
+\brief 32-разрядное знаковое целое
+*******************************************************************************
+*/
+
+#undef U8_SUPPORT
+#undef U16_SUPPORT
+#undef U32_SUPPORT
+#undef U64_SUPPORT
+#undef U128_SUPPORT
+
+#if (UCHAR_MAX == 255)
+	typedef unsigned char u8;
+	typedef signed char i8;
+	typedef u8 octet;
+	#define U8_SUPPORT
+#else
+	#error "Unsupported char size"
+#endif
+
+#if (USHRT_MAX == 65535)
+	typedef unsigned short u16;
+	typedef signed short i16;
+	#define U16_SUPPORT
+#else
+	#error "Unsupported short size"
+#endif
+
+#if (UINT_MAX == 65535u)
+	#if (ULONG_MAX == 4294967295ul)
+		typedef unsigned long u32;
+		typedef signed long i32;
+		#define U32_SUPPORT
+	#else
+		#error "Unsupported long size"
+	#endif
+#elif (UINT_MAX == 4294967295u)
+	typedef unsigned int u32;
+	typedef signed int i32;
+	#define U32_SUPPORT
+	#if (ULONG_MAX == 4294967295ul)
+		#if !defined(ULLONG_MAX) || (ULLONG_MAX == 4294967295ull)
+			#error "Unsupported int/long/long long configuration"
+		#elif (ULLONG_MAX == 18446744073709551615ull)
+			typedef unsigned long long u64;
+			typedef signed long long i64;
+			#define U64_SUPPORT
+		#else
+			#error "Unsupported int/long/long long configuration"
+		#endif
+	#elif (ULONG_MAX == 18446744073709551615ul)
+		typedef unsigned long u64;
+		typedef signed long i64;
+		#define U64_SUPPORT
+		#if defined(__GNUC__) && (__WORDSIZE == 64)
+			typedef __int128 i128;
+			typedef unsigned __int128 u128;
+			#define U128_SUPPORT
+		#endif
+	#else
+		#error "Unsupported int/long configuration"
+	#endif
+#elif (UINT_MAX == 18446744073709551615u)
+	#if (ULONG_MAX == 18446744073709551615ul)
+		#if !defined(ULLONG_MAX) || (ULLONG_MAX == 18446744073709551615ull)
+			#error "Unsupported int/long/long long configuration"
+		#elif (ULLONG_MAX == 340282366920938463463374607431768211455ull)
+			typedef unsigned long long u128;
+			typedef signed long long i128;
+			#define U128_SUPPORT
+		#else
+			#error "Unsupported int/long/long long configuration"
+		#endif
+	#elif (ULONG_MAX == 340282366920938463463374607431768211455ul)
+		typedef unsigned long u128;
+		typedef signed long i128;
+		#define U128_SUPPORT
+	#else
+		#error "Unsupported long size"
+	#endif
+#else
+	#error "Unsupported int size"
+#endif
+
+#if !defined(U8_SUPPORT) || !defined(U16_SUPPORT) || !defined(U32_SUPPORT)
+	#error "One of the base types is not supported"
+#endif
+
+/*!
+*******************************************************************************
 \def B_PER_W
 \brief Число битов в машинном слове
 
@@ -220,77 +307,13 @@ T == octet.
 \def O_PER_S
 \brief Число октетов в size_t
 
-\typedef dword
-\brief Двойное машинное слово
-
 \typedef word
 \brief Машинное слово
+
+\typedef dword
+\brief Двойное машинное слово
 *******************************************************************************
 */
-
-#if (UCHAR_MAX == 255)
-	typedef unsigned char u8;
-	typedef signed char i8;
-	typedef u8 octet;
-#else
-	#error "Unsupported char size"
-#endif
-
-#if (USHRT_MAX == 65535)
-	typedef unsigned short u16;
-	typedef signed short i16;
-#else
-	#error "Unsupported short size"
-#endif
-
-#if (UINT_MAX == 65535u)
-	#if (ULONG_MAX == 4294967295ul)
-		typedef unsigned long u32;
-		typedef signed long i32;
-	#else
-		#error "Unsupported long size"
-	#endif
-#elif (UINT_MAX == 4294967295u)
-	typedef unsigned int u32;
-	typedef signed int i32;
-	#if (ULONG_MAX == 4294967295ul)
-		#if !defined(ULLONG_MAX) || (ULLONG_MAX == 4294967295ull)
-			#error "Unsupported int/long/long long configuration"
-		#elif (ULLONG_MAX == 18446744073709551615ull)
-			typedef unsigned long long u64;
-			typedef signed long long i64;
-		#else
-			#error "Unsupported int/long/long long configuration"
-		#endif
-	#elif (ULONG_MAX == 18446744073709551615ul)
-		typedef unsigned long u64;
-		typedef signed long i64;
-		#if defined(__GNUC__) && (__WORDSIZE == 64)
-			typedef __int128 i128;
-			typedef unsigned __int128 u128;
-		#endif
-	#else
-		#error "Unsupported int/long configuration"
-	#endif
-#elif (UINT_MAX == 18446744073709551615u)
-	#if (ULONG_MAX == 18446744073709551615ul)
-		#if !defined(ULLONG_MAX) || (ULLONG_MAX == 18446744073709551615ull)
-			#error "Unsupported int/long/long long configuration"
-		#elif (ULLONG_MAX == 340282366920938463463374607431768211455ull)
-			typedef unsigned long long u128;
-			typedef signed long long i128;
-		#else
-			#error "Unsupported int/long/long long configuration"
-		#endif
-	#elif (ULONG_MAX == 340282366920938463463374607431768211455ul)
-		typedef unsigned long u128;
-		typedef signed long i128;
-	#else
-		#error "Unsupported long size"
-	#endif
-#else
-	#error "Unsupported int size"
-#endif
 
 #if defined(__WORDSIZE)
 	#if (__WORDSIZE == 16)

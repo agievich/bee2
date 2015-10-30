@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.03.04
-\version 2015.08.27
+\version 2015.10.28
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -76,7 +76,7 @@ bool_t ecCreateGroup(ec_o* ec, const octet xbase[], const octet ybase[],
 	else if (!qrFrom(ecY(ec->base, ec->f->n), ybase, ec->f, stack))
 		return FALSE;
 	// установить порядок и кофактор
-	memToWord(ec->order, order, order_len);
+	wwFromMem(ec->order, order, order_len);
 	wwSetZero(ec->order + W_OF_O(order_len), 
 		ec->f->n + 1 - W_OF_O(order_len));
 	ec->cofactor = (word)cofactor;

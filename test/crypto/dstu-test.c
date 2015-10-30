@@ -5,13 +5,14 @@
 \project bee2/test
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.03.01
-\version 2015.04.27
+\version 2015.10.29
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
 #include <bee2/core/mem.h>
+#include <bee2/core/hex.h>
 #include <bee2/core/prng.h>
 #include <bee2/core/util.h>
 #include <bee2/crypto/dstu.h>
@@ -52,34 +53,34 @@ bool_t dstuTest()
 		dstuValParams(params) != ERR_OK)
 		return FALSE;
 	// тест Б.1 [генерация ключей]
-	memFromHexRev(buf, 
+	hexToRev(buf, 
 		"0183F60FDF7951FF47D67193F8D073790C1C"
 		"9B5A3E");
 	ASSERT(sizeof(state) >= prngEcho_keep());
 	prngEchoStart(state, buf, memNonZeroSize(params->n, O_OF_B(163)));
 	if (dstuGenKeypair(privkey, pubkey, params, prngEchoStepG, 
 			state) != ERR_OK ||
-		!memEqHexRev(privkey, 
+		!hexEqRev(privkey, 
 			"0183F60FDF7951FF47D67193F8D07379"
 			"0C1C9B5A3E") ||
-		!memEqHexRev(pubkey, 
+		!hexEqRev(pubkey, 
 			"057DE7FDE023FF929CB6AC785CE4B79C"
 			"F64ABDC2DA") ||
-		!memEqHexRev(pubkey + O_OF_B(163), 
+		!hexEqRev(pubkey + O_OF_B(163), 
 			"03E85444324BCF06AD85ABF6AD7B5F34"
 			"770532B9AA"))
 		return FALSE;
 	// тест Б.1 [выработка ЭЦП]
 	ld = 512;
-	memFromHexRev(hash, 
+	hexToRev(hash, 
 		"003A2EB95B7180166DDF73532EEB76ED"
 		"AEF52247FF");
-	memFromHexRev(buf, 
+	hexToRev(buf, 
 		"01025E40BD97DB012B7A1D79DE8E1293"
 		"2D247F61C6");
 	if (dstuSign(sig, params, ld, hash, 21, privkey, prngEchoStepG, 
 			state) != ERR_OK ||
-		!memEqHexRev(sig, 
+		!hexEqRev(sig, 
 			"000000000000000000000002100D8695"
 			"7331832B8E8C230F5BD6A332B3615ACA"
 			"00000000000000000000000274EA2C0C"

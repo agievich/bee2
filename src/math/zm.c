@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.09.14
-\version 2014.07.15
+\version 2015.10.29
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -13,6 +13,7 @@ version 3. See Copyright Notices in bee2/info.h.
 
 #include "bee2/core/mem.h"
 #include "bee2/core/util.h"
+#include "bee2/core/word.h"
 #include "bee2/math/ww.h"
 #include "bee2/math/zm.h"
 #include "bee2/math/zz.h"
@@ -26,7 +27,7 @@ version 3. See Copyright Notices in bee2/info.h.
 static bool_t zmFrom(word b[], const octet a[], const qr_o* r, void* stack)
 {
 	ASSERT(zmIsOperable(r));
-	memToWord(b, a, r->no);
+	wwFromMem(b, a, r->no);
 	return zmIsIn(b, r);
 }
 
@@ -34,7 +35,7 @@ static void zmTo(octet b[], const word a[], const qr_o* r, void* stack)
 {
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(a, r));
-	memFromWord(b, r->no, a);
+	wwToMem(b, r->no, a);
 }
 
 static void zmAdd2(word c[], const word a[], const word b[], const qr_o* r)
@@ -134,7 +135,7 @@ void zmCreatePlain(qr_o* r, const octet mod[], size_t no, void* stack)
 	r->no = no;
 	// зафиксировать модуль
 	r->mod = (word*)r->descr;
-	memToWord(r->mod, mod, no);
+	wwFromMem(r->mod, mod, no);
 	// подготовить единицу
 	r->unity = r->mod + r->n;
 	r->unity[0] = 1;
@@ -235,7 +236,7 @@ void zmCreateCrand(qr_o* r, const octet mod[], size_t no, void* stack)
 	r->no = no;
 	// зафиксировать модуль
 	r->mod = (word*)r->descr;
-	memToWord(r->mod, mod, no);
+	wwFromMem(r->mod, mod, no);
 	// подготовить единицу
 	r->unity = r->mod + r->n;
 	r->unity[0] = 1;
@@ -333,7 +334,7 @@ void zmCreateBarr(qr_o* r, const octet mod[], size_t no, void* stack)
 	r->no = no;
 	// зафиксировать модуль
 	r->mod = (word*)r->descr;
-	memToWord(r->mod, mod, no);
+	wwFromMem(r->mod, mod, no);
 	// подготовить единицу
 	r->unity = r->mod + r->n;
 	r->unity[0] = 1;
@@ -401,7 +402,7 @@ static bool_t zmFromMont(word b[], const octet a[], const qr_o* r,
 	ASSERT(zmIsOperable(r));
 	stack = c + 2 * r->n;
 	// a \in r?, c <- a * R
-	memToWord(c + r->n, a, r->no);
+	wwFromMem(c + r->n, a, r->no);
 	if (!zmIsIn(c + r->n, r))
 		return FALSE;
 	wwSetZero(c, r->n);
@@ -426,7 +427,7 @@ static void zmToMont(octet b[], const word a[], const qr_o* r, void* stack)
 	wwSetZero(c + r->n, r->n);
 	zzRedMont(c, r->mod, r->n, *(word*)r->params, stack);
 	// b <- c
-	memFromWord(b, r->no, c);
+	wwToMem(b, r->no, c);
 }
 
 static size_t zmToMont_deep(size_t n)
@@ -523,7 +524,7 @@ void zmCreateMont(qr_o* r, const octet mod[], size_t no, void* stack)
 	r->no = no;
 	// зафиксировать модуль
 	r->mod = (word*)r->descr;
-	memToWord(r->mod, mod, no);
+	wwFromMem(r->mod, mod, no);
 	// подготовить единицу
 	r->unity = r->mod + r->n;
 	wwSetZero(r->unity, r->n);
@@ -531,7 +532,7 @@ void zmCreateMont(qr_o* r, const octet mod[], size_t no, void* stack)
 	zzMod(r->unity, r->unity, r->n, r->mod, r->n, stack);
 	// подготовить параметры
 	r->params = r->unity + r->n;
-	*((word*)r->params) = zzCalcMontParam(r->mod[0]);
+	*((word*)r->params) = wordNegInv(r->mod[0]);
 	// настроить функции
 	r->from = zmFromMont;
 	r->to = zmToMont;
@@ -756,7 +757,7 @@ void zmMontCreate(qr_o* r, const octet mod[], size_t no, size_t l, void* stack)
 	r->no = no;
 	// зафиксировать модуль
 	r->mod = (word*)r->descr;
-	memToWord(r->mod, mod, no);
+	wwFromMem(r->mod, mod, no);
 	ASSERT(wwBitSize(r->mod, r->n) <= l && B_OF_W(r->n) >= l);
 	// подготовить единицу: unity <- R \mod mod
 	r->unity = r->mod + r->n;
@@ -768,7 +769,7 @@ void zmMontCreate(qr_o* r, const octet mod[], size_t no, size_t l, void* stack)
 	zzMod(r->unity, r->unity, r->n, r->mod, r->n, stack);
 	// подготовить параметры
 	r->params = r->unity + r->n;
-	((zm_mont_params_st*)r->params)->m0 = zzCalcMontParam(r->mod[0]);
+	((zm_mont_params_st*)r->params)->m0 = wordNegInv(r->mod[0]);
 	((zm_mont_params_st*)r->params)->l = l;
 	// настроить функции
 	r->from = zmFrom;

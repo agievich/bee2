@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.27
-\version 2015.05.19
+\version 2015.10.28
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -376,17 +376,17 @@ err_t bignValParams(const bign_params* params)
 	memCopy(hash_data, params->seed, 8);
 	beltHashStepH(hash_data, 8, hash_state);
 	// belt-hash(..seed + 1)
-	memToWord(B, hash_data, 8);
+	wwFromMem(B, hash_data, 8);
 	zzAddW2(B, W_OF_O(8), 1);
-	wwToMem(hash_data, B, W_OF_O(8));
+	wwToMem(hash_data, 8, B);
 	beltHashStepH(hash_data, 8, stack);
 	// B <- belt-hash(p || a || seed) || belt-hash(p || a || seed + 1)
 	beltHashStepG(hash_data, hash_state);
 	beltHashStepG(hash_data + 32, stack);
-	memToWord(B, hash_data, 64);
+	wwFromMem(B, hash_data, 64);
 	// B <- B \mod p
 	zzMod(B, B, W_OF_O(64), ec->f->mod, n, stack);
-	wwToMem(B, B, W_OF_O(64));
+	wwToMem(B, 64, B);
 	// проверить условия алгоритма 6.1.4
 	if (qrFrom(B, (octet*)B, ec->f, stack) &&
 		wwEq(B, ec->B, n) &&
@@ -502,7 +502,7 @@ err_t bignGenKeypair(octet privkey[], octet pubkey[],
 	if (ecMulA(Q, ec->base, ec, d, n, stack))
 	{
 		// выгрузить ключи
-		wwToMem(privkey, d, n);
+		wwToMem(privkey, no, d);
 		qrTo(pubkey, ecX(Q), ec->f, stack);
 		qrTo(pubkey + ec->f->no, ecY(Q, n), ec->f, stack);
 	}
@@ -614,7 +614,7 @@ err_t bignCalcPubkey(octet pubkey[], const bign_params* params,
 	Q = d + n;
 	stack = Q + 2 * n;
 	// загрузить d
-	memToWord(d, privkey, no);
+	wwFromMem(d, privkey, no);
 	if (wwIsZero(d, n) || wwCmp(d, ec->order, n) >= 0)
 	{
 		blobClose(state);
@@ -689,7 +689,7 @@ err_t bignDH(octet key[], const bign_params* params, const octet privkey[],
 	Q = d + n;
 	stack = Q + 2 * n;
 	// загрузить d
-	memToWord(d, privkey, no);
+	wwFromMem(d, privkey, no);
 	if (wwIsZero(d, n) || wwCmp(d, ec->order, n) >= 0)
 	{
 		blobClose(state);
@@ -788,7 +788,7 @@ err_t bignSign(octet sig[], const bign_params* params, const octet oid_der[],
 	s0 = R + n + n / 2;
 	stack = (octet*)(R + 2 * n);
 	// загрузить d
-	memToWord(d, privkey, no);
+	wwFromMem(d, privkey, no);
 	if (wwIsZero(d, n) || wwCmp(d, ec->order, n) >= 0)
 	{
 		blobClose(state);
@@ -813,7 +813,7 @@ err_t bignSign(octet sig[], const bign_params* params, const octet oid_der[],
 	beltHashStepH(R, no, stack);
 	beltHashStepH(hash, no, stack);
 	beltHashStepG2(sig, no / 2, stack);
-	memToWord(s0, sig, no / 2);
+	wwFromMem(s0, sig, no / 2);
 	// R <- (s0 + 2^l) d
 	zzMul(R, s0, n / 2, d, n, stack);
 	R[n + n / 2] = zzAdd(R + n / 2, R + n / 2, d, n);
@@ -821,10 +821,10 @@ err_t bignSign(octet sig[], const bign_params* params, const octet oid_der[],
 	zzMod(s1, R, n + n / 2 + 1, ec->order, n, stack);
 	// s1 <- (k - s1 - H) mod q
 	zzSubMod(s1, k, s1, ec->order, n);
-	memToWord(k, hash, no);
+	wwFromMem(k, hash, no);
 	zzSubMod(s1, s1, k, ec->order, n);
 	// выгрузить s1
-	wwToMem(sig + no / 2, s1, n);
+	wwToMem(sig + no / 2, no, s1);
 	// все нормально
 	blobClose(state);
 	return ERR_OK;
@@ -896,7 +896,7 @@ err_t bignSign2(octet sig[], const bign_params* params, const octet oid_der[],
 	hash_state = (octet*)(R + 2 * n);
 	stack = hash_state + beltHash_keep();
 	// загрузить d
-	memToWord(d, privkey, no);
+	wwFromMem(d, privkey, no);
 	if (wwIsZero(d, n) || wwCmp(d, ec->order, n) >= 0)
 	{
 		blobClose(state);
@@ -921,10 +921,10 @@ err_t bignSign2(octet sig[], const bign_params* params, const octet oid_der[],
 		while (1)
 		{
 			beltKWPStepE(k, no, stack);
-			memToWord(k, k, no);
+			wwFromMem(k, k, no);
 			if (!wwIsZero(k, n) && wwCmp(k, ec->order, n) < 0)
 				break;
-			wwToMem(k, k, n);
+			wwToMem(k, no, k);
 		}
 	}
 	// R <- k G
@@ -938,7 +938,7 @@ err_t bignSign2(octet sig[], const bign_params* params, const octet oid_der[],
 	beltHashStepH(R, no, hash_state);
 	beltHashStepH(hash, no, hash_state);
 	beltHashStepG2(sig, no / 2, hash_state);
-	memToWord(s0, sig, no / 2);
+	wwFromMem(s0, sig, no / 2);
 	// R <- (s0 + 2^l) d
 	zzMul(R, s0, n / 2, d, n, stack);
 	R[n + n / 2] = zzAdd(R + n / 2, R + n / 2, d, n);
@@ -946,10 +946,10 @@ err_t bignSign2(octet sig[], const bign_params* params, const octet oid_der[],
 	zzMod(s1, R, n + n / 2 + 1, ec->order, n, stack);
 	// s1 <- (k - s1 - H) mod q
 	zzSubMod(s1, k, s1, ec->order, n);
-	memToWord(k, hash, no);
+	wwFromMem(k, hash, no);
 	zzSubMod(s1, s1, k, ec->order, n);
 	// выгрузить s1
-	wwToMem(sig + no / 2, s1, n);
+	wwToMem(sig + no / 2, no, s1);
 	// все нормально
 	blobClose(state);
 	return ERR_OK;
@@ -1024,14 +1024,14 @@ err_t bignVerify(const bign_params* params, const octet oid_der[],
 		return ERR_BAD_PUBKEY;
 	}
 	// загрузить и проверить s1
-	memToWord(s1, sig + no / 2, O_OF_W(n));
+	wwFromMem(s1, sig + no / 2, O_OF_W(n));
 	if (wwCmp(s1, ec->order, n) >= 0)
 	{
 		blobClose(state);
 		return ERR_BAD_SIG;
 	}
 	// s1 <- (s1 + H) mod q
-	memToWord(H, hash, no);
+	wwFromMem(H, hash, no);
 	if (wwCmp(H, ec->order, n) >= 0)
 	{
 		zzSub2(H, ec->order, n);
@@ -1040,7 +1040,7 @@ err_t bignVerify(const bign_params* params, const octet oid_der[],
 	}
 	zzAddMod(s1, s1, H, ec->order, n);
 	// загрузить s0
-	memToWord(s0, sig, no / 2);
+	wwFromMem(s0, sig, no / 2);
 	s0[n / 2] = 1;
 	// R <- s1 G + (s0 + 2^l) Q
 	if (!ecAddMulA(R, ec, stack, 2, ec->base, s1, n, Q, s0, n / 2 + 1))
@@ -1245,7 +1245,7 @@ err_t bignKeyUnwrap(octet key[], const bign_params* params, const octet token[],
 	else
 		stack = header2 + 16;
 	// загрузить d
-	memToWord(d, privkey, no);
+	wwFromMem(d, privkey, no);
 	if (wwIsZero(d, n) || wwCmp(d, ec->order, n) >= 0)
 	{
 		blobClose(state);
@@ -1373,14 +1373,14 @@ err_t bignIdExtract(octet id_privkey[], octet id_pubkey[],
 		return ERR_BAD_PUBKEY;
 	}
 	// загрузить и проверить s1
-	memToWord(s1, sig + no / 2, no);
+	wwFromMem(s1, sig + no / 2, no);
 	if (wwCmp(s1, ec->order, n) >= 0)
 	{
 		blobClose(state);
 		return ERR_BAD_SIG;
 	}
 	// s1 <- (s1 + H) mod q
-	memToWord(H, id_hash, no);
+	wwFromMem(H, id_hash, no);
 	if (wwCmp(H, ec->order, n) >= 0)
 	{
 		zzSub2(H, ec->order, n);
@@ -1389,7 +1389,7 @@ err_t bignIdExtract(octet id_privkey[], octet id_pubkey[],
 	}
 	zzAddMod(s1, s1, H, ec->order, n);
 	// загрузить s0
-	memToWord(s0, sig, no);
+	wwFromMem(s0, sig, no);
 	s0[n / 2] = 1;
 	// R <- s1 G + (s0 + 2^l) Q
 	if (!ecAddMulA(R, ec, stack, 2, ec->base, s1, n, Q, s0, n / 2 + 1))
@@ -1405,7 +1405,7 @@ err_t bignIdExtract(octet id_privkey[], octet id_pubkey[],
 	beltHashStepH(id_hash, no, stack);
 	if (beltHashStepV2(sig, no / 2, stack))
 	{
-		wwToMem(id_privkey, s1, n);
+		wwToMem(id_privkey, no, s1);
 		memCopy(id_pubkey, R, no);
 		qrTo(id_pubkey + no, ecY(R, n), ec->f, stack);
 	}
@@ -1491,7 +1491,7 @@ err_t bignIdSign(octet id_sig[], const bign_params* params,
 	s0 = V + n + n / 2;
 	stack = (octet*)(V + 2 * n);
 	// загрузить e
-	memToWord(e, id_privkey, no);
+	wwFromMem(e, id_privkey, no);
 	if (wwCmp(e, ec->order, n) >= 0)
 	{
 		blobClose(state);
@@ -1517,7 +1517,7 @@ err_t bignIdSign(octet id_sig[], const bign_params* params,
 	beltHashStepH(id_hash, no, stack);
 	beltHashStepH(hash, no, stack);
 	beltHashStepG2(id_sig, no / 2, stack);
-	memToWord(s0, id_sig, no / 2);
+	wwFromMem(s0, id_sig, no / 2);
 	// V <- (s0 + 2^l) e
 	zzMul(V, s0, n / 2, e, n, stack);
 	V[n + n / 2] = zzAdd(V + n / 2, V + n / 2, e, n);
@@ -1525,10 +1525,10 @@ err_t bignIdSign(octet id_sig[], const bign_params* params,
 	zzMod(s1, V, n + n / 2 + 1, ec->order, n, stack);
 	// s1 <- (k - s1 - H) mod q
 	zzSubMod(s1, k, s1, ec->order, n);
-	memToWord(k, hash, no);
+	wwFromMem(k, hash, no);
 	zzSubMod(s1, s1, k, ec->order, n);
 	// выгрузить s1
-	wwToMem(id_sig + no / 2, s1, n);
+	wwToMem(id_sig + no / 2, no, s1);
 	// все нормально
 	blobClose(state);
 	return ERR_OK;
@@ -1601,7 +1601,7 @@ err_t bignIdSign2(octet id_sig[], const bign_params* params,
 	hash_state = (octet*)(V + 2 * n);
 	stack = hash_state + beltHash_keep();
 	// загрузить e
-	memToWord(e, id_privkey, no);
+	wwFromMem(e, id_privkey, no);
 	if (wwCmp(e, ec->order, n) >= 0)
 	{
 		blobClose(state);
@@ -1626,10 +1626,10 @@ err_t bignIdSign2(octet id_sig[], const bign_params* params,
 		while (1)
 		{
 			beltKWPStepE(k, no, stack);
-			memToWord(k, k, no);
+			wwFromMem(k, k, no);
 			if (!wwIsZero(k, n) && wwCmp(k, ec->order, n) < 0)
 				break;
-			wwToMem(k, k, n);
+			wwToMem(k, no, k);
 		}
 	}
 	// V <- k G
@@ -1644,7 +1644,7 @@ err_t bignIdSign2(octet id_sig[], const bign_params* params,
 	beltHashStepH(id_hash, no, hash_state);
 	beltHashStepH(hash, no, hash_state);
 	beltHashStepG2(id_sig, no / 2, hash_state);
-	memToWord(s0, id_sig, no / 2);
+	wwFromMem(s0, id_sig, no / 2);
 	// V <- (s0 + 2^l) e
 	zzMul(V, s0, n / 2, e, n, stack);
 	V[n + n / 2] = zzAdd(V + n / 2, V + n / 2, e, n);
@@ -1652,10 +1652,10 @@ err_t bignIdSign2(octet id_sig[], const bign_params* params,
 	zzMod(s1, V, n + n / 2 + 1, ec->order, n, stack);
 	// s1 <- (k - s1 - H) mod q
 	zzSubMod(s1, k, s1, ec->order, n);
-	memToWord(k, hash, no);
+	wwFromMem(k, hash, no);
 	zzSubMod(s1, s1, k, ec->order, n);
 	// выгрузить s1
-	wwToMem(id_sig + no / 2, s1, n);
+	wwToMem(id_sig + no / 2, no, s1);
 	// все нормально
 	blobClose(state);
 	return ERR_OK;
@@ -1751,14 +1751,14 @@ err_t bignIdVerify(const bign_params* params, const octet oid_der[],
 		return ERR_BAD_PUBKEY;
 	}
 	// загрузить и проверить s1
-	memToWord(s1, id_sig + no / 2, no);
+	wwFromMem(s1, id_sig + no / 2, no);
 	if (wwCmp(s1, ec->order, n) >= 0)
 	{
 		blobClose(state);
 		return ERR_BAD_SIG;
 	}
 	// s1 <- (s1 + H) mod q
-	memToWord(t, hash, no);
+	wwFromMem(t, hash, no);
 	if (wwCmp(t, ec->order, n) >= 0)
 	{
 		zzSub2(t, ec->order, n);
@@ -1767,7 +1767,7 @@ err_t bignIdVerify(const bign_params* params, const octet oid_der[],
 	}
 	zzAddMod(s1, s1, t, ec->order, n);
 	// загрузить s0
-	memToWord(s0, id_sig, no / 2);
+	wwFromMem(s0, id_sig, no / 2);
 	s0[n / 2] = 1;
 	// belt-hash(oid...)
 	beltHashStart(hash_state);
@@ -1777,7 +1777,7 @@ err_t bignIdVerify(const bign_params* params, const octet oid_der[],
 	beltHashStepH(id_pubkey, no, stack);
 	beltHashStepH(id_hash, no, stack);
 	beltHashStepG2((octet*)t, no / 2, stack);
-	memToWord(t, t, no / 2);
+	wwFromMem(t, t, no / 2);
 	// t1 <- -(t + 2^l)(s0 + 2^l) mod q
 	zzMul(t1, t, n / 2, s0, n / 2, stack);
 	t1[n] = zzAdd2(t1 + n / 2, t, n / 2);

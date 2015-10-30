@@ -5,13 +5,14 @@
 \project bee2/test
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.04.01
-\version 2015.04.27
+\version 2015.10.29
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
 #include <bee2/core/mem.h>
+#include <bee2/core/hex.h>
 #include <bee2/core/util.h>
 #include <bee2/crypto/brng.h>
 #include <bee2/crypto/belt.h>
@@ -47,7 +48,7 @@ bool_t brngTest()
 	brngCTRStepR(buf + 32, 64, state);
 	brngCTRStepG(iv, state);
 	brngCTRStepR(buf + 96, 256 - 96, state);
-	if (!memEqHex(buf, 
+	if (!hexEq(buf, 
 		"1F66B5B84B7339674533F0329C74F218"
 		"34281FED0732429E0C79235FC273E269"
 		"4C0E74B2CD5811AD21F23DE7E0FA742C"
@@ -65,7 +66,7 @@ bool_t brngTest()
 		"D37BABE50BFEEB8ED162BB1393D46FB4"
 		"3534A201EB3B1A5C085DC5068ED6F89A"))
 		return FALSE;
-	if (!memEqHex(iv, 
+	if (!hexEq(iv, 
 		"C132971343FC9A48A02A885F194B09A1"
 		"7ECDA4D01544AF8CA58450BF66D2E88A"))
 		return FALSE;
@@ -78,7 +79,7 @@ bool_t brngTest()
 	brngHMACStart(state, beltGetH() + 128, 32, beltGetH() + 128 + 64, 32);
 	brngHMACStepR(buf, 32, state);
 	brngHMACStepR(buf + 32, 64, state);
-	if (!memEqHex(buf, 
+	if (!hexEq(buf, 
 		"AF907A0E470A3A1B268ECCCCC0B90F23"
 		"9FE94A2DC6E014179FC789CB3C3887E4"
 		"695C6B96B84948F8D76924E22260859D"
@@ -96,7 +97,7 @@ bool_t brngTest()
 	brngHMACRand(buf1, 2, beltGetH() + 128, 1, beltGetH() + 128 + 64, 1);
 	if (!memEq(buf, buf1, 2))
 		return FALSE;
-	if (!memEqHex(buf, 
+	if (!hexEq(buf, 
 		"42B1"))
 		return FALSE;
 	// все нормально

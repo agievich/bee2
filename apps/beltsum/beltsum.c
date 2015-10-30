@@ -5,7 +5,7 @@
 \project bee2/apps/beltsum 
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.28
-\version 2015.08.25
+\version 2015.10.29
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -20,6 +20,7 @@ version 3. See Copyright Notices in bee2/info.h.
 
 #include <stdio.h>
 #include <bee2/core/mem.h>
+#include <bee2/core/hex.h>
 #include <bee2/core/util.h>
 #include <bee2/crypto/belt.h>
 
@@ -87,7 +88,7 @@ int main(int argc, char* argv[])
 	fclose(fp);
 	beltHashStepG(hash_state, hash_state);
 	// преобразовать в шестнадцатеричную строку
-	memToHex(szHash, hash_state, 32);
+	hexFrom(szHash, hash_state, 32);
 	memMove(szHash + 7 * 8 + 7, szHash + 7 * 8, 9);
 	memMove(szHash + 6 * 8 + 6, szHash + 6 * 8, 8);
 	memMove(szHash + 5 * 8 + 5, szHash + 5 * 8, 8);

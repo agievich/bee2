@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.22
-\version 2015.06.01
+\version 2015.10.29
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -13,7 +13,7 @@ version 3. See Copyright Notices in bee2/info.h.
 
 #include "bee2/core/mem.h"
 #include "bee2/core/util.h"
-#include "bee2/math/word.h"
+#include "bee2/core/word.h"
 #include "bee2/math/ww.h"
 #include "bee2/math/zm.h"
 #include "bee2/math/zz.h"
@@ -1737,7 +1737,7 @@ bool_t zzRandMod(word a[], const word mod[], size_t n, gen_i rng,
 	do
 	{
 		rng(a, O_OF_B(l), rng_state);
-		memToWord(a, a, O_OF_B(l));
+		wwFromMem(a, a, O_OF_B(l));
 		wwTrimHi(a, n, l);
 	}
 	while (wwCmp(a, mod, n) >= 0 && i--);
@@ -1760,7 +1760,7 @@ bool_t zzRandNZMod(word a[], const word mod[], size_t n, gen_i rng,
 	do
 	{
 		rng(a, O_OF_B(l), rng_state);
-		memToWord(a, a, O_OF_B(l));
+		wwFromMem(a, a, O_OF_B(l));
 		wwTrimHi(a, n, l);
 	}
 	while ((wwIsZero(a, n) || wwCmp(a, mod, n) >= 0) && i--);
@@ -1799,17 +1799,6 @@ DSP56000. Advances in Cryptology -- EUROCRYPT 90, LNCS 473, 230–244. 1990]:
 				a <- a / B^n
 				if (a >= mod)
 					a <- a - mod
-
-При выполнении редукции Монтгомери считается, что B = 2^{2^k},
-где k = 4, 5 или 6. Корректность алгоритма, реализованного в zzCalcMontParam(),
-обосновывается следующим образом: 
-	если c_t = - m^{-1} \mod 2^{2^t} и 
-		c_{t+1} = c_t(c_t m + 2) \mod 2^{2^{t+1}},
-	то
-		с_{t+1} m = c_t m (c_t m + 2) = 
-			(2^{2^t}r - 1)(2^{2^t}r + 1) =
-			2^{2^{t+1}}r^2 - 1 => 
-				c_{t+1} = m^{-1}2^{2^{t+1}}
 
 В алгоритме, реализованном в функции zzModMont(), на промежуточных шагах
 вычислений получается число, не превосходящее 2 * mod * R. Для хранения
@@ -1920,27 +1909,6 @@ size_t zzRedBarr_deep(size_t n)
 			zzMul_deep(n + 2, n));
 }
 
-word zzCalcMontParam(register word mod0)
-{
-	register word mont_param = mod0;
-	ASSERT(mod0 & 1);
-	// для t = 1,...,k: mont_param <- mont_param * (mod_0 * mont_param + 2)
-#if (B_PER_W >= 16)
-	mont_param = mont_param * (mod0 * mont_param + 2);
-	mont_param = mont_param * (mod0 * mont_param + 2);
-	mont_param = mont_param * (mod0 * mont_param + 2);
-	mont_param = mont_param * (mod0 * mont_param + 2);
-#endif
-#if (B_PER_W >= 32)
-	mont_param = mont_param * (mod0 * mont_param + 2);
-#endif
-#if (B_PER_W == 64)
-	mont_param = mont_param * (mod0 * mont_param + 2);
-#endif
-	mod0 = 0;
-	return mont_param;
-}
-
 void zzRedMont(word a[], const word mod[], size_t n, register word mont_param,
 	void* stack)
 {
@@ -2042,16 +2010,16 @@ void zzPowerMod(word c[], const word a[], size_t n, const word b[], size_t m,
 	r = (qr_o*)(t + n);
 	stack = (octet*)r + zmCreate_keep(no);
 	// r <- Zm(mod)
-	wwToMem(t, mod, n);
+	wwToMem(t, no, mod);
 	zmCreate(r, (octet*)t, no, stack);
 	// t <- a
-	wwToMem(t, a, n);
+	wwToMem(t, no, a);
 	qrFrom(t, (octet*)t, r, stack);
 	// t <- a^b
 	qrPower(t, t, b, m, r, stack);
 	// c <- t
 	qrTo((octet*)t, t, r, stack);
-	memToWord(c, t, no);
+	wwFromMem(c, t, no);
 }
 
 size_t zzPowerMod_deep(size_t n, size_t m)

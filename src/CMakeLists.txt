@@ -4,14 +4,20 @@ set(src
   core/err.c
   core/mem.c
   core/mt.c
+  core/hex.c
   core/obj.c
   core/oid.c
   core/prng.c
   core/rng.c
   core/str.c
   core/tm.c
+  core/u16.c
+  core/u32.c
+  core/u64.c
   core/util.c
+  core/word.c
   crypto/bake.c
+  crypto/bash.c
   crypto/bels.c
   crypto/belt.c
   crypto/bign.c
@@ -27,7 +33,6 @@ set(src
   math/pp.c
   math/pri.c
   math/qr.c
-  math/word.c
   math/ww.c
   math/zm.c
   math/zz.c

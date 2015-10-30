@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2015.08.27
+\version 2015.10.29
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -20,9 +20,9 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/core/tm.h"
 #include "bee2/core/rng.h"
 #include "bee2/core/util.h"
+#include "bee2/core/word.h"
 #include "bee2/crypto/belt.h"
 #include "bee2/crypto/brng.h"
-#include "bee2/math/word.h"
 #include "bee2/math/ww.h"
 
 /*
@@ -335,7 +335,7 @@ bool_t rngTestFIPS1(const octet buf[2500])
 	{
 		word w;
 		--count;
-		memToWord(&w, buf + O_OF_W(count), 2500 - O_OF_W(count));
+		wwFromMem(&w, buf + O_OF_W(count), 2500 - O_OF_W(count));
 		s = wordWeight(w);
 	}
 	while (count--)

@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2015.08.27
+\version 2015.10.29
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -51,7 +51,7 @@ extern "C" {
 *******************************************************************************
 */
 
-#if (B_PER_W == 16)
+#ifndef U64_SUPPORT
 	typedef u32 tm_ticks_t;
 #else 
 	typedef u64 tm_ticks_t;
@@ -92,12 +92,11 @@ size_t tmSpeed(size_t reps, tm_ticks_t ticks);
 \section tm-time Время
 
 Системное время задается числом секунд, прошедших с полуночи 
-01 января 1970 года.
-
-\remark Использованную шкалу времени прнято называть UNIX-время. 
+01 января 1970 года (1970-01-01T00:00:00Z в формате ISO 8601).
+Использованную шкалу времени прнято называть UNIX-время. 
 Начало отсчета -- старт "эры UNIX" (Unix Epoch).
 
-\remark 10 января 2004 счетчик секунд принял значение 2^30.
+\warning 10 января 2004 счетчик секунд принял значение 2^30.
 32-битовый счетчик исчерпает себя 19 января 2038 года.
 *******************************************************************************
 */
@@ -105,8 +104,12 @@ size_t tmSpeed(size_t reps, tm_ticks_t ticks);
 /*!	\brief Время */
 typedef time_t tm_time_t;
 
-/*!	\brief Текущее время */
-#define tmTime() time(0)
+/*!	\brief UNIX-время
+
+	Возвращается число секунд, прошедших с момента 1970-01-01T00:00:00Z.
+	\return Число секунд или -1 в случае ошибки.
+*/
+tm_time_t tmTime();
 
 #ifdef __cplusplus
 } /* extern "C" */

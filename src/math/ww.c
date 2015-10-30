@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.18
-\version 2015.08.26
+\version 2015.10.29
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -13,7 +13,7 @@ version 3. See Copyright Notices in bee2/info.h.
 
 #include "bee2/core/mem.h"
 #include "bee2/core/util.h"
-#include "bee2/math/word.h"
+#include "bee2/core/word.h"
 #include "bee2/math/ww.h"
 
 /*
@@ -295,28 +295,6 @@ size_t wwOctetSize(const word a[], size_t n)
 			--pos, mask >>= 8;
 		return n * O_PER_W + pos + 1;
 	}
-}
-
-void wwToMem(void* dest, const word* src, size_t n)
-{
-	ASSERT(wwIsValid(src, n));
-	ASSERT(memIsValid(dest, O_OF_W(n)));
-	memMove(dest, src, O_OF_W(n));
-#if (OCTET_ORDER == BIG_ENDIAN)
-	while (n--)
-		((word*)dest)[n] = wordRev(((word*)dest)[n]);
-#endif // OCTET_ORDER
-}
-
-void wwFromMem(word* dest, size_t n, const void* src)
-{
-	ASSERT(memIsValid(src, O_OF_W(n)));
-	ASSERT(wwIsValid(dest, n));
-	memMove(dest, src, O_OF_W(n));
-#if (OCTET_ORDER == BIG_ENDIAN)
-	while (n--)
-		dest[n] = wordRev(dest[n]);
-#endif // OCTET_ORDER
 }
 
 /*

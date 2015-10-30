@@ -5,13 +5,14 @@
 \project bee2/test
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.06.30
-\version 2015.02.02
+\version 2015.10.29
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
 #include <bee2/core/mem.h>
+#include <bee2/core/hex.h>
 #include <bee2/core/prng.h>
 #include <bee2/core/util.h>
 
@@ -29,7 +30,7 @@ bool_t prngTest()
 	ASSERT(prngSTB_keep() <= sizeof(state));
 	prngSTBStart(state, 0);
 	prngSTBStepG(buf, 128, state);
-	if (!memEqHex(buf, 
+	if (!hexEq(buf, 
 		"402971E923BFD0B621E230D4CBFAF010"
 		"E2D1F32D5C76B58AE05AB02BB85B2A10"
 		"67F8DC6FFFF51932D956E3B3749884C5"

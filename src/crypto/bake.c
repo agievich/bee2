@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.04.14
-\version 2015.04.25
+\version 2015.10.28
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -95,10 +95,10 @@ static void bakeSWU2(word W[], const ec_o* ec, const octet X[], void* stack)
 	memCopy(H, X, ec->f->no);
 	beltKWPStepE(H, ec->f->no + 16, stack);
 	// s <- \bar H mod p
-	memToWord(s, H, ec->f->no + 16);
+	wwFromMem(s, H, ec->f->no + 16);
 	zzMod(s, s, ec->f->n + W_OF_O(16), ec->f->mod, ec->f->n, stack);
 	// W <- ecpSWU(s)
-	memFromWord(H, ec->f->no, s);
+	wwToMem(H, ec->f->no, s);
 	qrFrom(s, H, ec->f, stack);
 	ecpSWU(W, s, ec, stack);
 }
@@ -136,7 +136,7 @@ err_t bakeSWU(octet pt[], const bign_params* params, const octet msg[])
 	// основные действия
 	W = (word*)pt;
 	bakeSWU2(W, (const ec_o*)state, msg, objEnd(state, void));
-	memFromWord(pt, params->l / 2, W);
+	wwToMem(pt, params->l / 2, W);
 	// завершение
 	blobClose(state);
 	return ERR_OK;
@@ -225,7 +225,7 @@ err_t bakeBMQVStart(void* state, const bign_params* params,
 	s->hdr.p_count = 4;
 	s->hdr.o_count = 1;
 	// загрузить личный ключ
-	memToWord(s->d, privkey, no);
+	wwFromMem(s->d, privkey, no);
 	// раскладка стека
 	Q = objEnd(s, word);
 	stack = Q + 2 * n;
@@ -358,7 +358,7 @@ err_t bakeBMQVStep3(octet out[], const octet in[], const bake_cert* certb,
 	beltHashStepH(Va, no, stack);
 	beltHashStepH(in, no, stack);
 	beltHashStepG2((octet*)t, no / 2, stack);
-	memToWord(t, t, no / 2);
+	wwFromMem(t, t, no / 2);
 	// out <- <Va>_4l
 	memCopy(out, Va, 2 * no);
 	// sa <- (ua - (2^l + t)da) \mod q
@@ -480,7 +480,7 @@ err_t bakeBMQVStep4(octet out[], const octet in[], const bake_cert* certa,
 	beltHashStepH(in, no, stack);
 	beltHashStepH(s->Vb, no, stack);
 	beltHashStepG2((octet*)t, no / 2, stack);
-	memToWord(t, t, no / 2);
+	wwFromMem(t, t, no / 2);
 	// sb <- (ub - (2^l + t)db) \mod q
 	zzMul(sb, t, n / 2, s->d, n, stack);
 	sb[n + n / 2] = zzAdd2(sb + n / 2, s->d, n);
@@ -794,7 +794,7 @@ err_t bakeBSTSStart(void* state, const bign_params* params,
 	s->hdr.p_count = 5;
 	s->hdr.o_count = 1;
 	// загрузить личный ключ
-	memToWord(s->d, privkey, no);
+	wwFromMem(s->d, privkey, no);
 	// раскладка стека
 	stack = objEnd(s, void);
 	// проверить сертификат и его открытый ключ
@@ -902,7 +902,7 @@ err_t bakeBSTSStep3(octet out[], const octet in[], void* state)
 	beltHashStepH(Va, no, stack);
 	beltHashStepH(in, no, stack);
 	beltHashStepG2((octet*)t, no / 2, stack);
-	memToWord(t, t, no / 2);
+	wwFromMem(t, t, no / 2);
 	// out ||.. <- <Va>_4l
 	memCopy(out, Va, 2 * no);
 	// sa <- (ua - (2^l + t)da) \mod q
@@ -911,7 +911,7 @@ err_t bakeBSTSStep3(octet out[], const octet in[], void* state)
 	zzMod(sa, sa, n + n / 2 + 1, s->ec->order, n, stack);
 	zzSubMod(sa, s->u, sa, s->ec->order, n);
 	// ..|| out ||.. <- sa || certa
-	wwToMem(out + 2 * no, sa, n);
+	wwToMem(out + 2 * no, no, sa);
 	memCopy(out + 3 * no, s->cert->data, s->cert->len);
 	// K <- beltHash(<ua Vb>_2l || helloa || hellob)
 	if (!ecMulA(Va, s->Vb, s->ec, s->u, n, stack))
@@ -1047,7 +1047,7 @@ err_t bakeBSTSStep4(octet out[], const octet in[], size_t in_len,
 		beltCFBStart(stack, s->K2, 32, block0);
 		beltCFBStepD(Ya, in_len, stack);
 		// sa \in {0, 1,..., q - 1}?
-		memToWord(sa, Ya, no);
+		wwFromMem(sa, Ya, no);
 		if (wwCmp(sa, s->ec->order, n) >= 0)
 		{
 			blobClose(Ya);
@@ -1069,7 +1069,7 @@ err_t bakeBSTSStep4(octet out[], const octet in[], size_t in_len,
 	qrTo((octet*)s->Vb, s->Vb, s->ec->f, stack);
 	beltHashStepH(s->Vb, no, stack);
 	beltHashStepG2((octet*)t, no / 2, stack);
-	memToWord(t, t, no / 2);
+	wwFromMem(t, t, no / 2);
 	// sa G + (2^l + t)Qa == Va?
 	t[n / 2] = 1;
 	if (!ecAddMulA(Qa, s->ec, stack, 2, s->ec->base, sa, n, Qa, t, n / 2 + 1))
@@ -1082,7 +1082,7 @@ err_t bakeBSTSStep4(octet out[], const octet in[], size_t in_len,
 	zzMod(sb, sb, n + n / 2 + 1, s->ec->order, n, stack);
 	zzSubMod(sb, s->u, sb, s->ec->order, n);
 	// out ||.. <- beltCFBEncr(sb || certb)
-	wwToMem(out, sb, n);
+	wwToMem(out, no, sb);
 	memCopy(out + no, s->cert->data, s->cert->len);
 	beltCFBStart(stack, s->K2, 32, block1);
 	beltCFBStepE(out, no + s->cert->len, stack);
@@ -1157,7 +1157,7 @@ err_t bakeBSTSStep5(const octet in[], size_t in_len, bake_certval_i valb,
 		beltCFBStart(stack, s->K2, 32, block1);
 		beltCFBStepD(Yb, in_len, stack);
 		// sb \in {0, 1,..., q - 1}?
-		memToWord(sb, Yb, no);
+		wwFromMem(sb, Yb, no);
 		if (wwCmp(sb, s->ec->order, n) >= 0)
 		{
 			blobClose(Yb);

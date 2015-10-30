@@ -5,7 +5,7 @@
 \project bee2/test
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.05.03
-\version 2015.08.27
+\version 2015.10.29
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -13,8 +13,10 @@ version 3. See Copyright Notices in bee2/info.h.
 
 #include <bee2/core/err.h>
 #include <bee2/core/mem.h>
+#include <bee2/core/hex.h>
 #include <bee2/core/prng.h>
 #include <bee2/core/str.h>
+#include <bee2/core/u16.h>
 #include <bee2/core/util.h>
 #include <bee2/crypto/bake.h>
 
@@ -61,7 +63,7 @@ static err_t fileCreate(void* file, void* data, size_t data_len)
 	// найти первый пакет
 	else
 	{
-		memToU16(&len, data, 2);
+		u16From(&len, data, 2);
 		f->frame_len = (size_t)len;
 		f->frame = f->data + 2;
 		f->frame_offset = 0;
@@ -100,7 +102,7 @@ static err_t fileWrite(size_t* written, const void* buf, size_t count,
 	}
 	else
 	{
-		memToU16(&len, f->frame, 2);
+		u16From(&len, f->frame, 2);
 		f->frame_len = (size_t)len;
 		f->frame += 2;
 		f->frame_offset = 0;
@@ -151,7 +153,7 @@ static err_t fileRead(size_t* read, void* buf, size_t count, void* file)
 	}
 	else
 	{
-		memToU16(&len, f->frame, 2);
+		u16From(&len, f->frame, 2);
 		f->frame_len = (size_t)len;
 		f->frame += 2;
 		f->frame_offset = 0;
@@ -355,21 +357,21 @@ bool_t bakeDemo()
 	settingsa->rng_state = echoa;
 	settingsb->rng_state = echob;
 	// загрузить личные ключи
-	memFromHex(da, _da);
-	memFromHex(db, _db);
+	hexTo(da, _da);
+	hexTo(db, _db);
 	// загрузить сертификаты
-	memFromHex(certdataa, _certa);
-	memFromHex(certdatab, _certb);
+	hexTo(certdataa, _certa);
+	hexTo(certdatab, _certb);
 	certa->data = certdataa;
 	certa->len = strLen(_certa) / 2;
 	certb->data = certdatab;
 	certb->len = strLen(_certb) / 2;
 	certa->val = certb->val = certVal;
 	// тест Б.2
-	memFromHex(randa, _bmqv_randa);
-	memFromHex(randb, _bmqv_randb);
+	hexTo(randa, _bmqv_randa);
+	hexTo(randb, _bmqv_randb);
 	ASSERT(sizeof(file_data) >= strlen(_bmqv_data) / 2);
-	memFromHex(file_data, _bmqv_data);
+	hexTo(file_data, _bmqv_data);
 	if (fileCreate(filea, file_data, strlen(_bmqv_data) / 2) != ERR_OK ||
 		fileCreate(fileb, file_data, strlen(_bmqv_data) / 2) != ERR_OK)
 		return FALSE;
@@ -381,15 +383,15 @@ bool_t bakeDemo()
 			fileRead, fileWrite, filea))
 			return FALSE;
 	if (!memEq(keya, keyb, 32) ||
-		!memEqHex(keya,
+		!hexEq(keya,
 			"C6F86D0E468D5EF1A9955B2EE0CF0581"
 			"050C81D1B47727092408E863C7EEB48C"))
 		return FALSE;
 	// тест Б.3
-	memFromHex(randa, _bsts_randa);
-	memFromHex(randb, _bsts_randb);
+	hexTo(randa, _bsts_randa);
+	hexTo(randb, _bsts_randb);
 	ASSERT(sizeof(file_data) >= strlen(_bsts_data) / 2);
-	memFromHex(file_data, _bsts_data);
+	hexTo(file_data, _bsts_data);
 	if (fileCreate(filea, file_data, strlen(_bsts_data) / 2) != ERR_OK ||
 		fileCreate(fileb, file_data, strlen(_bsts_data) / 2) != ERR_OK)
 		return FALSE;
@@ -401,15 +403,15 @@ bool_t bakeDemo()
 			fileRead, fileWrite, filea))
 			return FALSE;
 	if (!memEq(keya, keyb, 32) ||
-		!memEqHex(keya,
+		!hexEq(keya,
 			"78EF2C56BD6DA2116BB5BEE80CEE5C05"
 			"394E7609183CF7F76DF0C2DCFB25C4AD"))
 		return FALSE;
 	// тест Б.4
-	memFromHex(randa, _bpace_randa);
-	memFromHex(randb, _bpace_randb);
+	hexTo(randa, _bpace_randa);
+	hexTo(randb, _bpace_randb);
 	ASSERT(sizeof(file_data) >= strlen(_bsts_data) / 2);
-	memFromHex(file_data, _bpace_data);
+	hexTo(file_data, _bpace_data);
 	if (fileCreate(filea, file_data, strlen(_bpace_data) / 2) != ERR_OK ||
 		fileCreate(fileb, file_data, strlen(_bpace_data) / 2) != ERR_OK)
 		return FALSE;
@@ -421,7 +423,7 @@ bool_t bakeDemo()
 			fileRead, fileWrite, filea))
 			return FALSE;
 	if (!memEq(keya, keyb, 32) ||
-		!memEqHex(keya,
+		!hexEq(keya,
 			"DAC4D8F411F9C523D28BBAAB32A5270E"
 			"4DFA1F0F757EF8E0F30AF08FBDE1E7F4"))
 		return FALSE;

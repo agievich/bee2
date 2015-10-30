@@ -316,6 +316,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\include\bee2\core\hex.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\include\bee2\core\mem.h"
 					>
 				</File>
@@ -356,7 +360,23 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\include\bee2\core\u16.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\include\bee2\core\u32.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\include\bee2\core\u64.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\include\bee2\core\util.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\include\bee2\core\word.h"
 					>
 				</File>
 			</Filter>
@@ -436,10 +456,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\include\bee2\math\word.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\include\bee2\math\ww.h"
 					>
 				</File>
@@ -471,6 +487,10 @@
 				</File>
 				<File
 					RelativePath="..\..\src\core\err.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\core\hex.c"
 					>
 				</File>
 				<File
@@ -506,7 +526,23 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\src\core\u16.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\core\u32.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\core\u64.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\src\core\util.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\core\word.c"
 					>
 				</File>
 			</Filter>
@@ -546,10 +582,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\src\math\word.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\src\math\ww.c"
 					>
 				</File>
@@ -567,6 +599,10 @@
 				>
 				<File
 					RelativePath="..\..\src\crypto\bake.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\crypto\bash.c"
 					>
 				</File>
 				<File

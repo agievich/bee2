@@ -6,6 +6,8 @@ add_executable(testbee2
 	core/rng-test.c
 	core/tm-test.c
 	crypto/bake-test.c
+	crypto/bash-bench.c
+	crypto/bash-test.c
 	crypto/bels-test.c
 	crypto/belt-bench.c
 	crypto/belt-test.c

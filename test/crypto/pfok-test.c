@@ -5,13 +5,14 @@
 \project bee2/test
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.08
-\version 2015.04.27
+\version 2015.10.29
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
 #include <bee2/core/mem.h>
+#include <bee2/core/hex.h>
 #include <bee2/core/prng.h>
 #include <bee2/core/str.h>
 #include <bee2/core/util.h>
@@ -120,10 +121,10 @@ bool_t pfokTest()
 		!memEq(vb, yb, O_OF_B(params->l)))
 		return FALSE;
 	// тест PFOK.ANON.1
-	memFromHexRev(ua, 
+	hexToRev(ua, 
 		"01"
 		"1D4665B357DB361D106E32E353CD534B");
-	memFromHexRev(vb, 
+	hexToRev(vb, 
 		"0739539C2AE25B53A05C8D16A14351D8"
 		"EA86A1DD1893E08EE4A266F970E0243F"
 		"8DF27F738F64E99E262E337792E5DD84"
@@ -131,15 +132,15 @@ bool_t pfokTest()
 		"0A2E637AD35E31EB5F034D889B666701");
 	if (pfokValPubkey(params, vb) != ERR_OK ||
 		pfokDH(key, params, ua, vb) != ERR_OK ||
-		!memEqHexRev(key, 
+		!hexEqRev(key, 
 			"777BB35E950D3080C1E896BE4172DBD0" 
 			"61423D3BFEF78F15E3F7A7F2FF7A242B"))
 		return FALSE;
 	// тест PFOK.ANON.2
-	memFromHexRev(ua, 
+	hexToRev(ua, 
 		"00"
 		"0530110167E1443819A8662A0FAB7AC0");
-	memFromHexRev(vb, 
+	hexToRev(vb, 
 		"1590312CBACB7B21FC0B173DC100AC5D"
 		"8692E04813CA2F87A5763E3F4940B10C"
 		"DF3F2B3ECDF28BE4BEA9363B07A8A8A3"
@@ -147,24 +148,24 @@ bool_t pfokTest()
 		"46D02CC8EF719EF66AE47F57BEAE8E02");
 	if (pfokValPubkey(params, vb) != ERR_OK ||
 		pfokDH(key, params, ua, vb) != ERR_OK ||
-		!memEqHexRev(key, 
+		!hexEqRev(key, 
 			"46FA834B28D5E5D4183E28646AFFE806"
 			"803E4C865CB99B1C423B0F1C78DE758D"))
 		return FALSE;
 	// тест PFOK.AUTH.1
-	memFromHexRev(xa, 
+	hexToRev(xa, 
 		"00"
 		"78E7101B4A8F421D2AF5740D6ED27680");
-	memFromHexRev(yb, 
+	hexToRev(yb, 
 		"193E5E1E0839091BC7ABBDD09E8D2298"
 		"8812D37EDEB39E077130A244888BE1A7"
 		"53337AB5743C898D1CFC947430813448"
 		"16AF5189A4E84D5B6EA310F72534D2E5"
 		"E531B579CEA862EAB0251A3C20F0EC1D");
-	memFromHexRev(ua, 
+	hexToRev(ua, 
 		"01"
 		"27E33C0D7595566570936FEF0AA53A24");
-	memFromHexRev(vb, 
+	hexToRev(vb, 
 		"0947264BEFA107E99616F347B6A05C62"
 		"D7F5F26804D848FC4A7D81915F4546DD"
 		"22949C07131D84F8B5A73A60ED61BC6E"
@@ -173,24 +174,24 @@ bool_t pfokTest()
 	if (pfokValPubkey(params, yb) != ERR_OK ||
 		pfokValPubkey(params, vb) != ERR_OK ||
 		pfokMTI(key, params, xa, ua, yb, vb) != ERR_OK ||
-		!memEqHexRev(key, 
+		!hexEqRev(key, 
 			"EA92D5BCEC18BB44514E096748DB3E21"
 			"D6E7B9C97D604699BEA7D3B96C87E18B"))
 		return FALSE;
 	// тест PFOK.AUTH.2
-	memFromHexRev(xa, 
+	hexToRev(xa, 
 		"00"
 		"05773C812D6F2A002D4E3EAC643C2CF3");
-	memFromHexRev(yb, 
+	hexToRev(yb, 
 		"221CBFEB62F4AA3204D349B3D57E45E4"
 		"C9BA601483CF9DDE4DD1AE1CC2694149"
 		"F08765C5CCAEBD44B7B7D0F1783F9FDD"
 		"2929523E1CEF2A46FBD419C5E5E2E712"
 		"4099B405E0B90A5FB15A56F439DA47D1");
-	memFromHexRev(ua, 
+	hexToRev(ua, 
 		"01"
 		"3BB0377B3C0E55577A0D4A43627C6EC2");
-	memFromHexRev(vb, 
+	hexToRev(vb, 
 		"2740ECD0631257DD8124DC38CFAC3DEF"
 		"7162503B7F7C8DEC6478408B225D4C05"
 		"56E566AF50661CE2F46662FC66DC429A"
@@ -199,7 +200,7 @@ bool_t pfokTest()
 	if (pfokValPubkey(params, yb) != ERR_OK ||
 		pfokValPubkey(params, vb) != ERR_OK ||
 		pfokMTI(key, params, xa, ua, yb, vb) != ERR_OK ||
-		!memEqHexRev(key, 
+		!hexEqRev(key, 
 			"5A4C323604206C8898BF6C234F75A537"
 			"DF75E9A249D87F1E55CBD7B40C4FDAFA"))
 		return FALSE;

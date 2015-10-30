@@ -17,7 +17,6 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/core/util.h"
 #include "bee2/crypto/belt.h"
 #include "bee2/crypto/brng.h"
-#include "bee2/math/word.h"
 
 /*
 *******************************************************************************

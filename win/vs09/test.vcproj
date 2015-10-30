@@ -350,6 +350,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\test\crypto\bash-bench.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\test\crypto\bash-test.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\test\crypto\bels-test.c"
 					>
 				</File>

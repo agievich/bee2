@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.05.10
-\version 2015.08.27
+\version 2015.10.29
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -171,4 +171,18 @@ tm_ticks_t tmFreq()
 size_t tmSpeed(size_t reps, tm_ticks_t ticks)
 {
 	return ticks ? (size_t)((dword)reps * tmFreq() / ticks) : SIZE_MAX;
+}
+
+/*
+*******************************************************************************
+Время
+
+\todo Гарантировать 64-битовый счетчик.
+\todo Поддержать представление времени в формате ISO 8601.
+*******************************************************************************
+*/
+
+tm_time_t tmTime()
+{
+	return time(0);
 }

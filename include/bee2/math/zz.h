@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.22
-\version 2015.02.03
+\version 2015.10.29
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -1046,20 +1046,6 @@ void zzRedBarr(
 
 size_t zzRedBarr_deep(size_t n);
 
-/*!	\brief Параметр Монтгомери
-
-	Для заданного машинного слова mod0 определяется параметр 
-	\code
-		mont_param <- - mod0^{-1} \mod B,
-	\endcode
-	который используется в редукции Монтгомери.
-	\pre mod0 -- нечетное.
-	\return mont_param.
-*/
-word zzCalcMontParam(
-	register word mod0		/*!< [in] входное слово (первое слово модуля) */
-);
-
 /*!	\brief Редукция Монтгомери
 
 	Определяется результат [n]a редукции Монтгомери числа [2n]a по
@@ -1070,7 +1056,7 @@ word zzCalcMontParam(
 	При вычислениях используется параметр Монтгомери mont_param.
 	\pre mod -- нечетное && mod[n - 1] != 0.
 	\pre a < mod * R.
-	\pre mont_param рассчитан с помощью функции zzCalcMontParam().
+	\pre mont_param рассчитан с помощью функции wordNegInv().
 	\pre Буфер a не пересекается с буфером mod.
 	\remark Редукция предложена в статье [Montgomery P. L. Modular
 	multiplication without trial division. Mathematics of Computation,
