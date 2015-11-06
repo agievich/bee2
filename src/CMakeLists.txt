@@ -21,6 +21,7 @@ set(src
   crypto/bels.c
   crypto/belt.c
   crypto/bign.c
+  crypto/botp.c
   crypto/brng.c
   crypto/dstu.c
   crypto/g12s.c

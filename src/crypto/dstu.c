@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.27
-\version 2015.10.28
+\version 2015.11.03
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -618,7 +618,7 @@ err_t dstuGenPoint(octet point[], const dstu_params* params, gen_i rng,
 		// сгенерировать x-координату
 		// [алгоритм из раздела 6.4 ДСТУ --- обрезка x]
 		rng(x, ec->f->no, rng_state);
-		wwFromMem(x, x, ec->f->no);
+		wwFrom(x, x, ec->f->no);
 		wwTrimHi(x, ec->f->n, gf2Deg(ec->f));
 		// y <- x^2
 		qrSqr(y, x, ec->f, stack);
@@ -874,7 +874,7 @@ err_t dstuGenKeypair(octet privkey[], octet pubkey[],
 	while (1)
 	{
 		rng(d, O_OF_B(order_nb), rng_state);
-		wwFromMem(d, d, O_OF_B(order_nb));
+		wwFrom(d, d, O_OF_B(order_nb));
 		wwTrimHi(d, order_n, order_nb - 1);
 		ASSERT(wwCmp(d, ec->order, order_n) < 0);
 		// 0 < d?
@@ -891,7 +891,7 @@ err_t dstuGenKeypair(octet privkey[], octet pubkey[],
 	// Q <- -Q
 	ec2NegA(x, x, ec);
 	// выгрузить ключи
-	wwToMem(privkey, order_no, d);
+	wwTo(privkey, order_no, d);
 	qrTo(pubkey, x, ec->f, stack);
 	qrTo(pubkey + ec->f->no, y, ec->f, stack);
 	// все нормально
@@ -982,7 +982,7 @@ step8:
 	while (1)
 	{
 		rng(e, O_OF_B(order_nb), rng_state);
-		wwFromMem(e, e, O_OF_B(order_nb));
+		wwFrom(e, e, O_OF_B(order_nb));
 		wwTrimHi(e, order_n, order_nb - 1);
 		ASSERT(wwCmp(e, ec->order, order_n) < 0);
 		if (!wwIsZero(e, order_n))
@@ -1003,13 +1003,13 @@ step8:
 	// шаг 10: r <- \bar{y}
 	ASSERT(order_n <= ec->f->n);
 	qrTo((octet*)r, y, ec->f, stack);
-	wwFromMem(r, r, order_no);
+	wwFrom(r, r, order_no);
 	wwTrimHi(r, order_n, order_nb - 1);
 	// шаг 11: если r = 0, то повторить генерацию
 	if (wwIsZero(r, order_n))
 		goto step8;
 	// шаг 12: s <- (e + dr) mod order
-	wwFromMem(s, privkey, order_no);
+	wwFrom(s, privkey, order_no);
 	zzMulMod(s, s, r, ec->order, order_n, stack);
 	zzAddMod(s, s, e, ec->order, order_n);
 	// шаг 13: если s = 0, то повторить генерацию
@@ -1018,8 +1018,8 @@ step8:
 	// шаг 14: сформировать ЭЦП из r и s
 	// [алгоритм из раздела 5.10 ДСТУ]
 	memSetZero(sig, O_OF_B(ld));
-	wwToMem(sig, order_no, r);
-	wwToMem(sig + ld / 16, order_no, s);
+	wwTo(sig, order_no, r);
+	wwTo(sig + ld / 16, order_no, s);
 	// все нормально
 	_dstuCloseEc(ec);
 	return code;
@@ -1097,8 +1097,8 @@ err_t dstuVerify(const dstu_params* params, size_t ld, const octet hash[],
 	if (qrIsZero(h, ec->f))
 		qrSetUnity(h, ec->f);
 	// шаг 9: выделить части подписи
-	wwFromMem(r, sig, order_no);
-	wwFromMem(s, sig + ld / 16, order_no);
+	wwFrom(r, sig, order_no);
+	wwFrom(s, sig + ld / 16, order_no);
 	for (i = order_no; i < ld / 16; ++i)
 		if (sig[i] || sig[i + ld / 16])
 		{
@@ -1125,7 +1125,7 @@ err_t dstuVerify(const dstu_params* params, size_t ld, const octet hash[],
 	// шаг 14: r' <- \bar{y}
 	ASSERT(order_n <= ec->f->n);
 	qrTo((octet*)s, y, ec->f, stack);
-	wwFromMem(s, s, order_no);
+	wwFrom(s, s, order_no);
 	wwTrimHi(s, order_n, order_nb - 1);
 	// шаг 15:
 	if (!wwEq(r, s, order_n))

@@ -3,7 +3,7 @@ EXPORTS
 	DllMain						@1
 	beeLogo						@2
 	
-	beltGetH					@101
+	beltH						@101
 	beltKeyExpand				@102
 	beltKeyExpand2				@103
 	beltBlockEncr 				@104

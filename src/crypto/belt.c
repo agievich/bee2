@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2015.10.28
+\version 2015.11.06
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -285,7 +285,7 @@ static const octet H[256] = {
 	0xD4,0xEF,0xD9,0xB4,0x3A,0x62,0x28,0x75,0x91,0x14,0x10,0xEA,0x77,0x6C,0xDA,0x1D,
 };
 
-const octet* beltGetH()
+const octet* beltH()
 {
 	return H;
 }
@@ -1375,7 +1375,7 @@ void beltDWPStart(void* state, const octet theta[], size_t len,
 	beltBlockRevU32(s->r);
 	beltBlockRevW(s->r);
 #endif
-	wwFromMem(s->s, beltGetH(), 16);
+	wwFrom(s->s, beltH(), 16);
 	// обнулить счетчики
 	memSetZero(s->len, sizeof(s->len));
 	s->filled = 0;
@@ -1904,7 +1904,7 @@ void beltHashStart(void* state)
 	beltBlockSetZero(s->ls);
 	beltBlockSetZero(s->ls + 4);
 	// h <- B194...0D
-	u32From(s->h, beltGetH(), 32);
+	u32From(s->h, beltH(), 32);
 	// нет накопленнных данных
 	s->filled = 0;
 }
@@ -2082,7 +2082,7 @@ void beltKRPStepG(octet key[], size_t key_len, const octet header[16],
 	ASSERT(memIsDisjoint2(key, key_len, s, beltKRP_keep()));
 	ASSERT(memIsDisjoint2(header, 16, s, beltKRP_keep()));
 	// полностью определить s->block
-	u32From(s->block, beltGetH() + 4 * (s->len - 16) + 2 * (key_len - 16), 4);
+	u32From(s->block, beltH() + 4 * (s->len - 16) + 2 * (key_len - 16), 4);
 	u32From(s->block + 4, header, 16);
 	// применить sigma2
 	beltBlockCopy(s->key_new, s->key);
@@ -2161,7 +2161,7 @@ void beltHMACStart(void* state, const octet theta[], size_t len)
 		beltBlockSetZero(s->ls_in);
 		beltBlockAddBitSizeU32(s->ls_in, len);
 		beltBlockSetZero(s->ls_in + 4);
-		u32From(s->h_in, beltGetH(), 32);
+		u32From(s->h_in, beltH(), 32);
 		while (len >= 32)
 		{
 			beltBlockCopy(s->block, theta);
@@ -2195,7 +2195,7 @@ void beltHMACStart(void* state, const octet theta[], size_t len)
 	beltBlockSetZero(s->ls_in);
 	beltBlockAddBitSizeU32(s->ls_in, 32);
 	beltBlockSetZero(s->ls_in + 4);
-	u32From(s->h_in, beltGetH(), 32);
+	u32From(s->h_in, beltH(), 32);
 	beltSigma(s->ls_in + 4, s->h_in, (u32*)s->block, s->stack);
 	s->filled = 0;
 	// сформировать key ^ opad [0x36 ^ 0x5C == 0x6A]
@@ -2205,7 +2205,7 @@ void beltHMACStart(void* state, const octet theta[], size_t len)
 	beltBlockSetZero(s->ls_out);
 	beltBlockAddBitSizeU32(s->ls_out, 32 * 2);
 	beltBlockSetZero(s->ls_out + 4);
-	u32From(s->h_out, beltGetH(), 32);
+	u32From(s->h_out, beltH(), 32);
 	beltSigma(s->ls_out + 4, s->h_out, (u32*)s->block, s->stack);
 }
 

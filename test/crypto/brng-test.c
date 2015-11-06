@@ -5,7 +5,7 @@
 \project bee2/test
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.04.01
-\version 2015.10.29
+\version 2015.11.06
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -42,8 +42,8 @@ bool_t brngTest()
 	ASSERT(sizeof(state) >= brngCTR_keep());
 	ASSERT(sizeof(state) >= brngHMAC_keep());
 	// тест Б.2
-	memCopy(buf, beltGetH(), 256);
-	brngCTRStart(state, beltGetH() + 128, beltGetH() + 128 + 64);
+	memCopy(buf, beltH(), 256);
+	brngCTRStart(state, beltH() + 128, beltH() + 128 + 64);
 	brngCTRStepR(buf, 32, state);
 	brngCTRStepR(buf + 32, 64, state);
 	brngCTRStepG(iv, state);
@@ -70,13 +70,13 @@ bool_t brngTest()
 		"C132971343FC9A48A02A885F194B09A1"
 		"7ECDA4D01544AF8CA58450BF66D2E88A"))
 		return FALSE;
-	memCopy(buf1, beltGetH(), 96);
-	memCopy(iv1, beltGetH() + 128 + 64, 32);
-	brngCTRRand(buf1, 96, beltGetH() + 128, iv1);
+	memCopy(buf1, beltH(), 96);
+	memCopy(iv1, beltH() + 128 + 64, 32);
+	brngCTRRand(buf1, 96, beltH() + 128, iv1);
 	if (!memEq(buf, buf1, 96) || !memEq(iv, iv1, 32))
 		return FALSE;
 	// тест Б.4
-	brngHMACStart(state, beltGetH() + 128, 32, beltGetH() + 128 + 64, 32);
+	brngHMACStart(state, beltH() + 128, 32, beltH() + 128 + 64, 32);
 	brngHMACStepR(buf, 32, state);
 	brngHMACStepR(buf + 32, 64, state);
 	if (!hexEq(buf, 
@@ -87,14 +87,14 @@ bool_t brngTest()
 		"648077CCC5002E0561C6EF512C513B8C"
 		"24B4F3A157221CFBC1597E969778C1E4"))
 		return FALSE;
-	memCopy(buf1, beltGetH(), 96);
-	brngHMACRand(buf1, 96, beltGetH() + 128, 32, beltGetH() + 128 + 64, 32);
+	memCopy(buf1, beltH(), 96);
+	brngHMACRand(buf1, 96, beltH() + 128, 32, beltH() + 128 + 64, 32);
 	if (!memEq(buf, buf1, 96)) 
 		return FALSE;
 	// дополнительный тест: короткие ключ, синхропосылка и выходной блок
-	brngHMACStart(state, beltGetH() + 128, 1, beltGetH() + 128 + 64, 1);
+	brngHMACStart(state, beltH() + 128, 1, beltH() + 128 + 64, 1);
 	brngHMACStepR(buf, 2, state);
-	brngHMACRand(buf1, 2, beltGetH() + 128, 1, beltGetH() + 128 + 64, 1);
+	brngHMACRand(buf1, 2, beltH() + 128, 1, beltH() + 128 + 64, 1);
 	if (!memEq(buf, buf1, 2))
 		return FALSE;
 	if (!hexEq(buf, 

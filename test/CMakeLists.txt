@@ -13,6 +13,7 @@ add_executable(testbee2
 	crypto/belt-test.c
 	crypto/bign-test.c
 	crypto/brng-test.c
+	crypto/botp-test.c
 	crypto/dstu-test.c
 	crypto/g12s-test.c
 	crypto/pfok-test.c

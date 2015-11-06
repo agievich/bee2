@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.01
-\version 2015.10.28
+\version 2015.11.03
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -582,7 +582,7 @@ err_t pfokGenParams(pfok_params* params, const pfok_seed* seed,
 		}
 	}
 	// сохранить p
-	wwToMem(params->p, no, p);
+	wwTo(params->p, no, p);
 	// построить кольцо Монтгомери
 	zmMontCreate(qr, params->p, no, params->l + 2, stack);
 	// сгенерировать g
@@ -633,7 +633,7 @@ err_t pfokValParams(const pfok_params* params)
 	qr = (qr_o*)(g + n);
 	stack = (octet*)qr + zmMontCreate_keep(no);
 	// p -- простое?
-	wwFromMem(p, params->p, no);
+	wwFrom(p, params->p, no);
 	if (!priIsPrime(p, n, stack))
 	{
 		blobClose(state);
@@ -707,13 +707,13 @@ err_t pfokGenKeypair(octet privkey[], octet pubkey[],
 	zmMontCreate(qr, params->p, no, params->l + 2, stack);
 	// x <-R {0, 1,..., 2^r - 1}
 	rng(x, mo, rng_state);
-	wwFromMem(x, x, mo);
+	wwFrom(x, x, mo);
 	wwTrimHi(x, m, params->r);
 	// y <- g^(x)
-	wwFromMem(y, params->g, no);
+	wwFrom(y, params->g, no);
 	qrPower(y, y, x, m, qr, stack);
 	// выгрузить ключи
-	wwToMem(privkey, mo, x);
+	wwTo(privkey, mo, x);
 	qrTo(pubkey, y, qr, stack);
 	// все нормально
 	blobClose(state);
@@ -780,14 +780,14 @@ err_t pfokCalcPubkey(octet pubkey[], const pfok_params* params,
 	// построить кольцо Монтгомери
 	zmMontCreate(qr, params->p, no, params->l + 2, stack);
 	// x <- privkey
-	wwFromMem(x, privkey, mo);
+	wwFrom(x, privkey, mo);
 	if (wwGetBits(x, params->r, B_OF_W(m) - params->r) != 0)
 	{
 		blobClose(state);
 		return ERR_BAD_PRIVKEY;
 	}
 	// y <- g^(x)
-	wwFromMem(y, params->g, no);
+	wwFrom(y, params->g, no);
 	qrPower(y, y, x, m, qr, stack);
 	// выгрузить открытый ключ
 	qrTo(pubkey, y, qr, stack);
@@ -843,14 +843,14 @@ err_t pfokDH(octet sharekey[], const pfok_params* params,
 	// построить кольцо Монтгомери
 	zmMontCreate(qr, params->p, no, params->l + 2, stack);
 	// x <- privkey
-	wwFromMem(x, privkey, mo);
+	wwFrom(x, privkey, mo);
 	if (wwGetBits(x, params->r, B_OF_W(m) - params->r) != 0)
 	{
 		blobClose(state);
 		return ERR_BAD_PRIVKEY;
 	}
 	// y <- pubkey
-	wwFromMem(y, pubkey, no);
+	wwFrom(y, pubkey, no);
 	if (wwIsZero(y, n) || wwCmp(y, qr->mod, n) >= 0)
 	{
 		blobClose(state);
@@ -915,8 +915,8 @@ err_t pfokMTI(octet sharekey[], const pfok_params* params,
 	// построить кольцо Монтгомери
 	zmMontCreate(qr, params->p, no, params->l + 2, stack);
 	// x <- privkey, u <- privkey1
-	wwFromMem(x, privkey, mo);
-	wwFromMem(u, privkey1, mo);
+	wwFrom(x, privkey, mo);
+	wwFrom(u, privkey1, mo);
 	if (wwGetBits(x, params->r, B_OF_W(m) - params->r) != 0 ||
 		wwGetBits(u, params->r, B_OF_W(m) - params->r) != 0)
 	{
@@ -924,8 +924,8 @@ err_t pfokMTI(octet sharekey[], const pfok_params* params,
 		return ERR_BAD_PRIVKEY;
 	}
 	// y <- pubkey, v <- pubkey1
-	wwFromMem(y, pubkey, no);
-	wwFromMem(v, pubkey1, no);
+	wwFrom(y, pubkey, no);
+	wwFrom(v, pubkey1, no);
 	if (wwIsZero(y, n) || wwCmp(y, qr->mod, n) >= 0 ||
 		wwIsZero(v, n) || wwCmp(v, qr->mod, n) >= 0)
 	{

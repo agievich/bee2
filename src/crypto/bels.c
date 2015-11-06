@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.05.14
-\version 2015.10.28
+\version 2015.11.03
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -91,7 +91,7 @@ err_t belsValM(const octet m0[], size_t len)
 	f0 = (word*)state;
 	stack = f0 + n + 1;
 	// загрузить многочлен
-	wwFromMem(f0, m0, len);
+	wwFrom(f0, m0, len);
 	f0[n] = 1;
 	// неприводим?
 	code = ppIsIrred(f0, n + 1, stack) ? ERR_OK : ERR_BAD_PUBKEY;
@@ -135,10 +135,10 @@ err_t belsGenM0(octet m0[], size_t len, gen_i ang, void* ang_state)
 	for (reps = len * 8 * B_PER_IMPOSSIBLE * 3 / 4; reps--;)
 	{
 		ang(f0, len, ang_state);
-		wwFromMem(f0, f0, len);
+		wwFrom(f0, f0, len);
 		if (ppIsIrred(f0, n + 1, stack))
 		{
-			wwToMem(m0, len, f0);
+			wwTo(m0, len, f0);
 			break;
 		}
 	}
@@ -176,19 +176,19 @@ err_t belsGenMi(octet mi[], size_t len, const octet m0[], gen_i ang,
 	u = f;
 	stack = f + n + 1;
 	// загрузить многочлен
-	wwFromMem(f0, m0, len);
+	wwFrom(f0, m0, len);
 	f0[n] = 1;
 	// попытки генерации
 	for (reps = 3; reps--; )
 	{
 		ang(u, len, ang_state);
-		wwFromMem(u, u, len), u[n] = 0;
+		wwFrom(u, u, len), u[n] = 0;
 		// f <- минимальный многочлен элемента u
 		ppMinPolyMod(f, u, f0, n + 1, stack);
 		// f подходит?
 		if (f[n] == 1 && wwCmp(f, f0, n) != 0)
 		{
-			wwToMem(mi, len, f);
+			wwTo(mi, len, f);
 			break;
 		}
 	}
@@ -232,13 +232,13 @@ err_t belsGenMid(octet mid[], size_t len, const octet m0[], const octet id[],
 	u = f + n + 1;
 	stack = u + W_OF_O(32) + 1;
 	// загрузить многочлен
-	wwFromMem(f0, m0, len);
+	wwFrom(f0, m0, len);
 	f0[n] = 1;
 	// хэшировать
 	beltHashStart(stack);
 	beltHashStepH(id, id_len, stack);
 	beltHashStepG((octet*)u, stack);
-	wwFromMem(u, u, 32);
+	wwFrom(u, u, 32);
 	u[n] = 0;
 	// попытки генерации
 	for (reps = MAX2(3, B_PER_IMPOSSIBLE * 2 / len / 8); reps--;)
@@ -248,7 +248,7 @@ err_t belsGenMid(octet mid[], size_t len, const octet m0[], const octet id[],
 		// f подходит?
 		if (f[n] == 1 && !wwEq(f, f0, n))
 		{
-			wwToMem(mid, len, f);
+			wwTo(mid, len, f);
 			break;
 		}
 		// u <- u + 1
@@ -300,23 +300,23 @@ err_t belsShare(octet si[], size_t count, size_t threshold, size_t len,
 	stack = c + threshold * n;
 	// сгенерировать k
 	rng(k, threshold * len - len, rng_state);
-	wwFromMem(k, k, threshold * len - len);
+	wwFrom(k, k, threshold * len - len);
 	// c(x) <- (x^l + m0(x))k(x) + s(x)
-	wwFromMem(f, m0, len);
+	wwFrom(f, m0, len);
 	ppMul(c, k, threshold * n - n, f, n, stack);
 	wwXor2(c + n, k, threshold * n - n);
-	wwFromMem(f, s, len);
+	wwFrom(f, s, len);
 	wwXor2(c, f, n);
 	// цикл по пользователям
 	for (i = 0; i < count; ++i)
 	{
 		// f(x) <- x^l + mi(x)
 		EXPECT(belsValM(mi + i * len, len) == ERR_OK);
-		wwFromMem(f, mi + i * len, len);
+		wwFrom(f, mi + i * len, len);
 		f[n] = 1;
 		// si(x) <- c(x) mod f(x)
 		ppMod(f, c, threshold * n, f, n + 1, stack);
-		wwToMem(si + i * len, len, f);
+		wwTo(si + i * len, len, f);
 	}
 	// завершение
 	blobClose(state);
@@ -387,14 +387,14 @@ err_t belsRecover(octet s[], size_t count, size_t len, const octet si[],
 	t = c + (2 * count - 1) * n;
 	stack = t + MAX2((2 * count - 2) * n, (count + 1) * n);
 	// [n]c(x) <- s1(x)
-	wwFromMem(c, si, len);
+	wwFrom(c, si, len);
 	// [n + 1]g(x) <- x^l + m1(x)
-	wwFromMem(g, mi, len), g[n] = 1;
+	wwFrom(g, mi, len), g[n] = 1;
 	// цикл по пользователям
 	for (f[n] = 1, i = 1; i < count; ++i)
 	{
 		// [n + 1]f(x) <- x^l + mi(x)
-		wwFromMem(f, mi + i * len, len);
+		wwFrom(f, mi + i * len, len);
 		// найти d(x) = \gcd(f(x), g(x)) и коэфф. Безу [i * n]u(x), [n]v(x)
 		ppExGCD(d, u, v, f, n + 1, g, i * n + 1, stack);
 		ASSERT(u[i * n] == 0 && v[n] == 0);
@@ -411,7 +411,7 @@ err_t belsRecover(octet s[], size_t count, size_t len, const octet si[],
 		wwXor2(c + n, t, 2 * i * n);
 		// c(x) <- c(x) + v(x)g(x)si(x)
 		// (с помощью [2 * n]d и [(i + 2) * n]t)
-		wwFromMem(t, si + i * len, len);
+		wwFrom(t, si + i * len, len);
 		ppMul(d, v, n, t, n, stack);
 		ppMul(t, d, 2 * n, g, i * n, stack);
 		wwXor2(t + i * n, d, 2 * n);
@@ -428,10 +428,10 @@ err_t belsRecover(octet s[], size_t count, size_t len, const octet si[],
 		ASSERT(c[(i + 1) * n] == 0);
 	}
 	// [n]s(x) <- c(x) mod (x^l + m0(x))
-	wwFromMem(f, m0, len), f[n] = 1;
+	wwFrom(f, m0, len), f[n] = 1;
 	ppMod(c, c, count * n, f, n + 1, stack);
 	ASSERT(c[n] == 0);
-	wwToMem(s, len, c);
+	wwTo(s, len, c);
 	// завершение
 	blobClose(state);
 	return ERR_OK;

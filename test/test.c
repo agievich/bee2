@@ -5,7 +5,7 @@
 \project bee2/test
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.04.02
-\version 2015.09.21
+\version 2015.11.06
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -81,6 +81,7 @@ extern bool_t pfokTestStdParams();
 extern bool_t bakeDemo();
 extern bool_t bashTest();
 extern bool_t bashBench();
+extern bool_t botpTest();
 
 int testCrypto()
 {
@@ -90,6 +91,7 @@ int testCrypto()
 	printf("bashTest: %s\n", (code = bashTest()) ? "OK" : "Err"), ret |= !code;
 	code = beltBench(),	ret |= !code;
 	code = bashBench(),	ret |= !code;
+	printf("botpTest: %s\n", (code = botpTest()) ? "OK" : "Err"), ret |= !code;
 	printf("bignTest: %s\n", (code = bignTest()) ? "OK" : "Err"), ret |= !code;
 	printf("brngTest: %s\n", (code = brngTest()) ? "OK" : "Err"), ret |= !code;
 	printf("belsTest: %s\n", (code = belsTest()) ? "OK" : "Err"), ret |= !code;

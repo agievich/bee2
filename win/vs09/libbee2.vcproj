@@ -404,6 +404,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\include\bee2\crypto\botp.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\include\bee2\crypto\brng.h"
 					>
 				</File>
@@ -619,6 +623,10 @@
 				</File>
 				<File
 					RelativePath="..\..\src\crypto\bign_lcl.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\crypto\botp.c"
 					>
 				</File>
 				<File

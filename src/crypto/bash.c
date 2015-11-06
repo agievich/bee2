@@ -6,7 +6,7 @@
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \author (С) Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2014.07.15
-\version 2015.10.29
+\version 2015.11.05
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -23,10 +23,10 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 Алгоритм bash-s
 
-\remark На платформе IA64 компилятор распознает циклические сдвиги u64RotHi 
+\remark На платформе x64 компилятор распознает циклические сдвиги u64RotHi 
 и задействует команды rol / ror.
 
-\remark На платформе IA64 скорость работы зависит от числа пересылок через 
+\remark На платформе x64 скорость работы зависит от числа пересылок через 
 команду mov. Макрос bashS реализован так, чтобы уменьшить число пересылок.
 Дальнейшие оптимизации связаны с использованием новых вспомогательных 
 переменных.
@@ -62,30 +62,30 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-static const u64 c0 =  0x3BF5080AC8BA94B1;
-static const u64 c1 =  0xC1D1659C1BBD92F6;
-static const u64 c2 =  0x60E8B2CE0DDEC97B;
-static const u64 c3 =  0xEC5FB8FE790FBC13;
-static const u64 c4 =  0xAA043DE6436706A7;
-static const u64 c5 =  0x8929FF6A5E535BFD;
-static const u64 c6 =  0x98BF1E2C50C97550;
-static const u64 c7 =  0x4C5F8F162864BAA8;
-static const u64 c8 =  0x262FC78B14325D54;
-static const u64 c9 =  0x1317E3C58A192EAA;
-static const u64 c10 = 0x098BF1E2C50C9755;
-static const u64 c11 = 0xD8EE19681D669304;
-static const u64 c12 = 0x6C770CB40EB34982;
-static const u64 c13 = 0x363B865A0759A4C1;
-static const u64 c14 = 0xC73622B47C4C0ACE;
-static const u64 c15 = 0x639B115A3E260567;
-static const u64 c16 = 0xEDE6693460F3DA1D;
-static const u64 c17 = 0xAAD8D5034F9935A0;
-static const u64 c18 = 0x556C6A81A7CC9AD0;
-static const u64 c19 = 0x2AB63540D3E64D68;
-static const u64 c20 = 0x155B1AA069F326B4;
-static const u64 c21 = 0x0AAD8D5034F9935A;
-static const u64 c22 = 0x0556C6A81A7CC9AD;
-static const u64 c23 = 0xDE8082CD72DEBC78;
+static const u64 c1 =  0x3BF5080AC8BA94B1;
+static const u64 c2 =  0xC1D1659C1BBD92F6;
+static const u64 c3 =  0x60E8B2CE0DDEC97B;
+static const u64 c4 =  0xEC5FB8FE790FBC13;
+static const u64 c5 =  0xAA043DE6436706A7;
+static const u64 c6 =  0x8929FF6A5E535BFD;
+static const u64 c7 =  0x98BF1E2C50C97550;
+static const u64 c8 =  0x4C5F8F162864BAA8;
+static const u64 c9 =  0x262FC78B14325D54;
+static const u64 c10 =  0x1317E3C58A192EAA;
+static const u64 c11 = 0x098BF1E2C50C9755;
+static const u64 c12 = 0xD8EE19681D669304;
+static const u64 c13 = 0x6C770CB40EB34982;
+static const u64 c14 = 0x363B865A0759A4C1;
+static const u64 c15 = 0xC73622B47C4C0ACE;
+static const u64 c16 = 0x639B115A3E260567;
+static const u64 c17 = 0xEDE6693460F3DA1D;
+static const u64 c18 = 0xAAD8D5034F9935A0;
+static const u64 c19 = 0x556C6A81A7CC9AD0;
+static const u64 c20 = 0x2AB63540D3E64D68;
+static const u64 c21 = 0x155B1AA069F326B4;
+static const u64 c22 = 0x0AAD8D5034F9935A;
+static const u64 c23 = 0x0556C6A81A7CC9AD;
+static const u64 c24 = 0xDE8082CD72DEBC78;
 
 /*
 *******************************************************************************
@@ -149,30 +149,30 @@ static void bashF0(u64 s[24])
 	register u64 t1;
 	register u64 t2;
 	ASSERT(memIsValid(s, 192));
-	bashR(s, P0, P1,  0, t0, t1, t2);
-	bashR(s, P1, P2,  1, t0, t1, t2);
-	bashR(s, P2, P3,  2, t0, t1, t2);
-	bashR(s, P3, P4,  3, t0, t1, t2);
-	bashR(s, P4, P5,  4, t0, t1, t2);
-	bashR(s, P5, P0,  5, t0, t1, t2);
-	bashR(s, P0, P1,  6, t0, t1, t2);
-	bashR(s, P1, P2,  7, t0, t1, t2);
-	bashR(s, P2, P3,  8, t0, t1, t2);
-	bashR(s, P3, P4,  9, t0, t1, t2);
-	bashR(s, P4, P5, 10, t0, t1, t2);
-	bashR(s, P5, P0, 11, t0, t1, t2);
-	bashR(s, P0, P1, 12, t0, t1, t2);
-	bashR(s, P1, P2, 13, t0, t1, t2);
-	bashR(s, P2, P3, 14, t0, t1, t2);
-	bashR(s, P3, P4, 15, t0, t1, t2);
-	bashR(s, P4, P5, 16, t0, t1, t2);
-	bashR(s, P5, P0, 17, t0, t1, t2);
-	bashR(s, P0, P1, 18, t0, t1, t2);
-	bashR(s, P1, P2, 19, t0, t1, t2);
-	bashR(s, P2, P3, 20, t0, t1, t2);
-	bashR(s, P3, P4, 21, t0, t1, t2);
-	bashR(s, P4, P5, 22, t0, t1, t2);
-	bashR(s, P5, P0, 23, t0, t1, t2);
+	bashR(s, P0, P1,  1, t0, t1, t2);
+	bashR(s, P1, P2,  2, t0, t1, t2);
+	bashR(s, P2, P3,  3, t0, t1, t2);
+	bashR(s, P3, P4,  4, t0, t1, t2);
+	bashR(s, P4, P5,  5, t0, t1, t2);
+	bashR(s, P5, P0,  6, t0, t1, t2);
+	bashR(s, P0, P1,  7, t0, t1, t2);
+	bashR(s, P1, P2,  8, t0, t1, t2);
+	bashR(s, P2, P3,  9, t0, t1, t2);
+	bashR(s, P3, P4, 10, t0, t1, t2);
+	bashR(s, P4, P5, 11, t0, t1, t2);
+	bashR(s, P5, P0, 12, t0, t1, t2);
+	bashR(s, P0, P1, 13, t0, t1, t2);
+	bashR(s, P1, P2, 14, t0, t1, t2);
+	bashR(s, P2, P3, 15, t0, t1, t2);
+	bashR(s, P3, P4, 16, t0, t1, t2);
+	bashR(s, P4, P5, 17, t0, t1, t2);
+	bashR(s, P5, P0, 18, t0, t1, t2);
+	bashR(s, P0, P1, 19, t0, t1, t2);
+	bashR(s, P1, P2, 20, t0, t1, t2);
+	bashR(s, P2, P3, 21, t0, t1, t2);
+	bashR(s, P3, P4, 22, t0, t1, t2);
+	bashR(s, P4, P5, 23, t0, t1, t2);
+	bashR(s, P5, P0, 24, t0, t1, t2);
 	t0 = t1 = t2 = 0;
 }
 

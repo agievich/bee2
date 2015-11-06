@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.18
-\version 2015.10.28
+\version 2015.11.03
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -59,18 +59,18 @@ extern "C" {
 #if (B_PER_W == 16)
 	#include "bee2/core/u16.h"
 	#define wwRev2 u16Rev2
-	#define wwToMem u16To
-	#define wwFromMem u16From
+	#define wwTo u16To
+	#define wwFrom u16From
 #elif (B_PER_W == 32)
 	#include "bee2/core/u32.h"
 	#define wwRev2 u32Rev2
-	#define wwToMem u32To
-	#define wwFromMem u32From
+	#define wwTo u32To
+	#define wwFrom u32From
 #elif (B_PER_W == 64)
 	#include "bee2/core/u64.h"
 	#define wwRev2 u64Rev2
-	#define wwToMem u64To
-	#define wwFromMem u64From
+	#define wwTo u64To
+	#define wwFrom u64From
 #else
 	#error "Unsupported word size"
 #endif /* B_PER_W */

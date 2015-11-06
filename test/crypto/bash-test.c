@@ -5,7 +5,7 @@
 \project bee2/test
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.09.22
-\version 2015.10.29
+\version 2015.11.06
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -62,7 +62,7 @@ bool_t bashTest()
 	ASSERT(sizeof(state) >= bash384_keep());
 	ASSERT(sizeof(state) >= bash512_keep());
 	// тест A.1
-	memCopy(buf, beltGetH(), 192);
+	memCopy(buf, beltH(), 192);
 	hexFrom(str, buf, 192);
 	strHexFormat(str);
 	printf("A.1 (pre):\n%s\n", str);
@@ -71,57 +71,57 @@ bool_t bashTest()
 	strHexFormat(str);
 	printf("A.1:\n%s\n", str);
 	// тест A.2
-	bash256Hash(hash, beltGetH(), 0);
+	bash256Hash(hash, beltH(), 0);
 	hexFrom(str, hash, 32);
 	strHexFormat(str);
 	printf("A.2:\n%s\n", str);
 	// тест A.3
-	bash256Hash(hash, beltGetH(), 127);
+	bash256Hash(hash, beltH(), 127);
 	hexFrom(str, hash, 32);
 	strHexFormat(str);
 	printf("A.3:\n%s\n", str);
 	// тест A.4
-	bash256Hash(hash, beltGetH(), 128);
+	bash256Hash(hash, beltH(), 128);
 	hexFrom(str, hash, 32);
 	strHexFormat(str);
 	printf("A.4:\n%s\n", str);
 	// тест A.5
-	bash256Hash(hash, beltGetH(), 135);
+	bash256Hash(hash, beltH(), 135);
 	hexFrom(str, hash, 32);
 	strHexFormat(str);
 	printf("A.5:\n%s\n", str);
 	// тест A.6
-	bash384Hash(hash, beltGetH(), 95);
+	bash384Hash(hash, beltH(), 95);
 	hexFrom(str, hash, 48);
 	strHexFormat(str);
 	printf("A.6:\n%s\n", str);
 	// тест A.7
-	bash384Hash(hash, beltGetH(), 96);
+	bash384Hash(hash, beltH(), 96);
 	hexFrom(str, hash, 48);
 	strHexFormat(str);
 	printf("A.7:\n%s\n", str);
 	// тест A.8
-	bash384Hash(hash, beltGetH(), 108);
+	bash384Hash(hash, beltH(), 108);
 	hexFrom(str, hash, 48);
 	strHexFormat(str);
 	printf("A.8:\n%s\n", str);
 	// тест A.9
-	bash512Hash(hash, beltGetH(), 63);
+	bash512Hash(hash, beltH(), 63);
 	hexFrom(str, hash, 64);
 	strHexFormat(str);
 	printf("A.9:\n%s\n", str);
 	// тест A.10
-	bash512Hash(hash, beltGetH(), 64);
+	bash512Hash(hash, beltH(), 64);
 	hexFrom(str, hash, 64);
 	strHexFormat(str);
 	printf("A.10:\n%s\n", str);
 	// тест A.11
-	bash512Hash(hash, beltGetH(), 127);
+	bash512Hash(hash, beltH(), 127);
 	hexFrom(str, hash, 64);
 	strHexFormat(str);
 	printf("A.11:\n%s\n", str);
 	// тест A.12
-	bash512Hash(hash, beltGetH(), 192);
+	bash512Hash(hash, beltH(), 192);
 	hexFrom(str, hash, 64);
 	strHexFormat(str);
 	printf("A.12:\n%s\n", str);
