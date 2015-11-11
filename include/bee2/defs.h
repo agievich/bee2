@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.01
-\version 2015.10.28
+\version 2015.11.09
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -355,18 +355,6 @@ T == octet.
 
 #define O_PER_W (B_PER_W / 8)
 #define O_PER_S (B_PER_S / 8)
-
-#define U32_0 ((u32)0)
-#define U32_1 ((u32)1)
-#define U32_MAX ((u32)(U32_0 - U32_1))
-
-#define WORD_0 ((word)0)
-#define WORD_1 ((word)1)
-#define WORD_MAX ((word)(WORD_0 - WORD_1))
-
-#define WORD_BIT_POS(pos) (WORD_1 << (pos))
-#define WORD_BIT_HI WORD_BIT_POS(B_PER_W - 1)
-#define WORD_BIT_HALF WORD_BIT_POS(B_PER_W / 2)
 
 #define SIZE_0 ((size_t)0)
 #define SIZE_1 ((size_t)1)

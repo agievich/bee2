@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.02.04
-\version 2014.09.17
+\version 2015.11.09
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -26,16 +26,15 @@ bool_t strIsValid(const char* str)
 	return memIsValid(str, strLen(str));
 }
 
-bool_t strIsHex(const char* str)
+void strRev(char* str)
 {
+	register size_t i;
+	register size_t j;
 	ASSERT(strIsValid(str));
-	for (; *str; ++str)
+	for (i = 0, j = strLen(str); i < j;)
 	{
-		if (*str >= '0' && *str <= '9' ||
-			*str >= 'a' && *str <= 'f' ||
-			*str >= 'A' && *str <= 'F')
-			continue;
-		return FALSE;
+		str[i] ^= str[--j];
+		str[j] ^= str[i];
+		str[i++] ^= str[j];
 	}
-	return TRUE;
 }

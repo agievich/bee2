@@ -20,9 +20,10 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
+extern bool_t decTest();
 extern bool_t memTest();
-extern bool_t oidTest();
 extern bool_t objTest();
+extern bool_t oidTest();
 extern bool_t prngTest();
 extern bool_t rngTest();
 extern bool_t tmTest();
@@ -31,9 +32,10 @@ int testCore()
 {
 	bool_t code;
 	int ret = 0;
+	printf("decTest: %s\n", (code = decTest()) ? "OK" : "Err"), ret |= !code;
 	printf("memTest: %s\n", (code = memTest()) ? "OK" : "Err"), ret |= !code;
-	printf("oidTest: %s\n", (code = oidTest()) ? "OK" : "Err"), ret |= !code;
 	printf("objTest: %s\n", (code = objTest()) ? "OK" : "Err"), ret |= !code;
+	printf("oidTest: %s\n", (code = oidTest()) ? "OK" : "Err"), ret |= !code;
 	printf("genTest: %s\n", (code = prngTest()) ? "OK" : "Err"), ret |= !code;
 	printf("rngTest: %s\n", (code = rngTest()) ? "OK" : "Err"), ret |= !code;
 	printf("tmTest: %s\n", (code = tmTest()) ? "OK" : "Err"), ret |= !code;

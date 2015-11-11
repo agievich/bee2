@@ -1,11 +1,11 @@
 /*
 *******************************************************************************
-\file mem.c
+\file hex.c
 \brief Hexadecimal strings
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.10.29
-\version 2015.10.29
+\version 2015.11.09
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************

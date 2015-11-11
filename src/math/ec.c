@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.03.04
-\version 2015.11.03
+\version 2015.11.09
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -15,6 +15,7 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/core/mem.h"
 #include "bee2/core/stack.h"
 #include "bee2/core/util.h"
+#include "bee2/core/word.h"
 #include "bee2/math/ec.h"
 #include "bee2/math/ww.h"
 #include "bee2/math/zz.h"

@@ -398,6 +398,10 @@
 				Name="core"
 				>
 				<File
+					RelativePath="..\..\test\core\dec-test.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\test\core\mem-test.c"
 					>
 				</File>

@@ -85,8 +85,6 @@ extern "C" {
 #define ERR_FILE_EXISTS				_ERR_REG(80)
 /* объект не может быть создан */
 #define ERR_CANNOT_MAKE				_ERR_REG(82)
-/* неверный пароль */
-#define ERR_INVALID_PASSWORD		_ERR_REG(86)
 /* неверный параметр */
 #define ERR_INVALID_PARAMETER		_ERR_REG(87)
 /* невозможно открыть устройство или файл */
@@ -181,6 +179,8 @@ extern "C" {
 #define ERR_BAD_FORMAT				_ERR_REG(32023)
 /* неверная логика (протокола) */
 #define ERR_BAD_LOGIC				_ERR_REG(32024)
+/* неверный пароль */
+#define ERR_BAD_PWD					_ERR_REG(32025)
 
 /*
 *******************************************************************************

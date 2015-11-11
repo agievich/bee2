@@ -1,4 +1,5 @@
 add_executable(testbee2
+	core/dec-test.c
 	core/mem-test.c
 	core/obj-test.c
 	core/oid-test.c

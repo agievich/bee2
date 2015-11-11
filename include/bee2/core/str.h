@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.02.04
-\version 2015.04.14
+\version 2015.11.09
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -89,16 +89,13 @@ bool_t strIsValid(
 	const char* str		/*!< [in] строка */
 );
 
-/*!	\brief Шестнадцатеричная строка?
+/*!	\brief Разворот строки
 
-	Проверяется, что строка str состоит из шестнадцатеричных символов 
-	'0' -- '9', 'A' -- 'F' (в верхнем или нижнем регистрах).
+	Символы строки str переписываются в обратном порядке.
 	\pre Строка корректна.
-	\return Проверяемый признак.
-	\safe Функция нерегулярна.
 */
-bool_t strIsHex(
-	const char* str		/*!< [in] строка */
+void strRev(
+	char* str		/*!< [in] строка */
 );
 
 #ifdef __cplusplus

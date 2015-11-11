@@ -5,7 +5,7 @@
 \project bee2/test
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.02.01
-\version 2015.10.29
+\version 2015.11.09
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -28,10 +28,10 @@ bool_t memTest()
 	// сравнение
 	hexTo(buf,	 "000102030405060708090A0B0C0D0E0F");
 	hexTo(buf1, "F00102030405060708090A0B0C0D0EFF");
-	if (memEq(buf + 1, buf1 + 1, 15) != FALSE ||
-		memEq(buf + 8, buf1 + 8, 8) != FALSE ||
-		memEq(buf + 1, buf1 + 1, 8) != TRUE ||
-		memEq(buf + 1, buf1 + 1, 14) != TRUE ||
+	if (memEq(buf + 1, buf1 + 1, 15) ||
+		memEq(buf + 8, buf1 + 8, 8) ||
+		!memEq(buf + 1, buf1 + 1, 8) ||
+		!memEq(buf + 1, buf1 + 1, 14) ||
 		memCmp(buf, buf1, 7) != -1 ||
 		memCmp(buf, buf1, 15) != -1 ||
 		memCmp(buf1, buf, 15) != 1 ||

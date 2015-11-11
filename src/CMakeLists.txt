@@ -1,5 +1,6 @@
 set(src
   core/blob.c
+  core/dec.c
   core/der.c
   core/err.c
   core/mem.c
