@@ -3,7 +3,7 @@
 \file pri-test.c
 \brief Tests for prime numbers
 \project bee2/test
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.07
 \version 2015.11.09
 \license This program is released under the GNU General Public License 

@@ -3,9 +3,9 @@
 \file rng.c
 \brief Entropy sources and random number generators
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2015.11.03
+\version 2015.11.20
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -189,6 +189,9 @@ static err_t rngReadTRNG(size_t* read, void* buf, size_t count)
 \warning [Jessie Walker]: наблюдения зависимы, модель AR(1).
 
 \todo Полноценная оценка энтропии.
+
+\todo Остановка на Windows, если параллельно запущено несколько ресурсоемких
+процессов.
 *******************************************************************************
 */
 

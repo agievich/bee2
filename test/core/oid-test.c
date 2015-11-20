@@ -3,7 +3,7 @@
 \file oid.c
 \brief Tests for object identifiers
 \project bee2/test
-\author (Ñ) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.04.01
 \version 2015.10.29
 \license This program is released under the GNU General Public License 

@@ -3,7 +3,7 @@
 \file belt-bench.c
 \brief Benchmarks for STB 34.101.31 (belt)
 \project bee2/test
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.11.18
 \version 2015.01.23
 \license This program is released under the GNU General Public License 

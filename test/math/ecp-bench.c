@@ -3,7 +3,7 @@
 \file ecp-bench.c
 \brief Benchmarks for elliptic curves over prime fields
 \project bee2/test
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.10.17
 \version 2015.04.25
 \license This program is released under the GNU General Public License 

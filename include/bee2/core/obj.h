@@ -3,7 +3,7 @@
 \file obj.h
 \brief Compound objects
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.04.14
 \version 2014.04.17
 \license This program is released under the GNU General Public License 

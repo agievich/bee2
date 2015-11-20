@@ -3,7 +3,7 @@
 \file mem-test.c
 \brief Tests for memory functions
 \project bee2/test
-\author (Ñ) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.02.01
 \version 2015.11.09
 \license This program is released under the GNU General Public License 

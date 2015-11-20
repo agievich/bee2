@@ -3,7 +3,7 @@
 \file u32.h
 \brief 32-bit words
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.10.28
 \version 2015.11.09
 \license This program is released under the GNU General Public License 

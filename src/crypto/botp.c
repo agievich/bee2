@@ -3,9 +3,9 @@
 \file botp.с
 \brief STB 34.101.botp: experimental OTP algorithms
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.11.02
-\version 2015.11.11
+\version 2015.11.20
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -59,12 +59,14 @@ static const u32 powers_of_10[11] = {
 	4294967295u,
 };
 
-static u32 botpDT(const octet mac[32], size_t digit)
+static u32 botpDT(const octet mac[], size_t mac_len, size_t digit)
 {
 	register u32 pwd;
 	register size_t offset;
+	ASSERT(mac_len >= 20);
+	ASSERT(memIsValid(mac, mac_len));
 	ASSERT(4 <= digit && digit <= 10);
-	offset = mac[31] & 15;
+	offset = mac[mac_len - 1] & 15;
 	pwd = mac[offset], pwd <<= 8;
 	pwd ^= mac[offset + 1], pwd <<= 8;
 	pwd ^= mac[offset + 2], pwd <<= 8;
@@ -78,6 +80,7 @@ static u32 botpDT(const octet mac[32], size_t digit)
 static void botpCtrNext(octet ctr[8])
 {
 	register octet carry = 1;
+	ASSERT(memIsValid(ctr, 8));
 	carry = ((ctr[7] += carry) < carry);
 	carry = ((ctr[6] += carry) < carry);
 	carry = ((ctr[5] += carry) < carry);
@@ -150,7 +153,7 @@ void botpHOTPStepG(char* otp, size_t digit, octet ctr[8], void* state)
 	// инкремент счетчика
 	botpCtrNext(ctr);
 	// построить пароль
-	decFromU32(otp, digit, botpDT(s->mac, digit));
+	decFromU32(otp, digit, botpDT(s->mac, 32, digit));
 }
 
 bool_t botpHOTPStepV(const char* otp, octet ctr[8], size_t attempts, 
@@ -178,7 +181,7 @@ bool_t botpHOTPStepV(const char* otp, octet ctr[8], size_t attempts,
 		// инкремент счетчика
 		botpCtrNext(s->ctr);
 		// проверить пароль
-		if (botpDT(s->mac, digit) == pwd)
+		if (botpDT(s->mac, 32, digit) == pwd)
 		{
 			memCopy(ctr, s->ctr, 8);
 			pwd = 0, digit = 0;
@@ -282,7 +285,7 @@ void botpTOTPStepG(char* otp, size_t digit, tm_time_t t, void* state)
 	beltHMACStepA(s->ctr, 8, s->stack);
 	beltHMACStepG(s->mac, s->stack);
 	// построить пароль
-	decFromU32(otp, digit, botpDT(s->mac, digit));
+	decFromU32(otp, digit, botpDT(s->mac, 32, digit));
 }
 
 bool_t botpTOTPStepV(const char* otp, tm_time_t t, size_t attempts_bwd, 
@@ -305,7 +308,7 @@ bool_t botpTOTPStepV(const char* otp, tm_time_t t, size_t attempts_bwd,
 	beltHMACStepA(s->ctr0, 8, s->stack);
 	beltHMACStepG(s->mac, s->stack);
 	// проверить пароль
-	if (botpDT(s->mac, digit) == pwd)
+	if (botpDT(s->mac, 32, digit) == pwd)
 	{	
 		pwd = 0, digit = 0;
 		return TRUE;
@@ -322,7 +325,7 @@ bool_t botpTOTPStepV(const char* otp, tm_time_t t, size_t attempts_bwd,
 			memCopy(s->stack, s->stack + beltHMAC_keep(), beltHMAC_keep());
 			beltHMACStepA(s->ctr, 8, s->stack);
 			beltHMACStepG(s->mac, s->stack);
-			if (botpDT(s->mac, digit) == pwd)
+			if (botpDT(s->mac, 32, digit) == pwd)
 			{
 				pwd = 0, digit = 0;
 				return TRUE;
@@ -342,7 +345,7 @@ bool_t botpTOTPStepV(const char* otp, tm_time_t t, size_t attempts_bwd,
 			memCopy(s->stack, s->stack + beltHMAC_keep(), beltHMAC_keep());
 			beltHMACStepA(s->ctr, 8, s->stack);
 			beltHMACStepG(s->mac, s->stack);
-			if (botpDT(s->mac, digit) == pwd)
+			if (botpDT(s->mac, 32, digit) == pwd)
 			{
 				pwd = 0, digit = 0;
 				return TRUE;

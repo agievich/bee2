@@ -3,7 +3,7 @@
 \file zz.c
 \brief Multiple-precision unsigned integers
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.22
 \version 2015.11.02
 \license This program is released under the GNU General Public License 

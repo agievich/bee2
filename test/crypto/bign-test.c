@@ -3,7 +3,7 @@
 \file bign-test.c
 \brief Tests for STB 34.101.45 (bign)
 \project bee2/test
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.08.27
 \version 2015.11.06
 \license This program is released under the GNU General Public License 

@@ -3,7 +3,7 @@
 \file stamp.c
 \brief Integrity control of Windows PE Executables
 \project bee2/apps/stamp
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2011.10.18
 \version 2015.05.19
 \license This program is released under the GNU General Public License 

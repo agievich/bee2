@@ -4,7 +4,7 @@
 \brief Bee2 DLL entry points
 *******************************************************************************
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.02.25
 \version 2015.05.13
 \license This program is released under the GNU General Public License 

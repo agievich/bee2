@@ -3,7 +3,7 @@
 \file zm.с
 \brief Quotient rings of integers modulo m
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.09.14
 \version 2015.11.03
 \license This program is released under the GNU General Public License 

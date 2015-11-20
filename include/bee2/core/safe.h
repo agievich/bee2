@@ -3,7 +3,7 @@
 \file safe.h
 \brief Safe (regular) calculations
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.10.07
 \version 2015.10.29
 \license This program is released under the GNU General Public License 

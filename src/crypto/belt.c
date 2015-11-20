@@ -3,9 +3,9 @@
 \file belt.c
 \brief STB 34.101.31 (belt): data encryption and integrity algorithms
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2015.11.06
+\version 2015.11.17
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -16,15 +16,14 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/core/mem.h"
 #include "bee2/core/u32.h"
 #include "bee2/core/util.h"
+#include "bee2/core/word.h"
 #include "bee2/math/pp.h"
 #include "bee2/math/ww.h"
 #include "bee2/crypto/belt.h"
 
 /*
 *******************************************************************************
-todo
-
-Состояния некоторых связок (например, beltHash) содержат память, которую 
+\todo Состояния некоторых связок (например, beltHash) содержат память, которую 
 не обязательно поддерживать постоянной между обращениями к функциям связки. 
 Это -- дополнительный управляемый стек. Можно передавать указатель на эту 
 память через дополнительный параметр (stack, а не state), описав предварительно
@@ -187,10 +186,10 @@ todo
 #endif // B_PER_W
 
 #define beltBlockRevU32(block)\
-	((u32*)(block))[0] = wordRevU32(((u32*)(block))[0]),\
-	((u32*)(block))[1] = wordRevU32(((u32*)(block))[1]),\
-	((u32*)(block))[2] = wordRevU32(((u32*)(block))[2]),\
-	((u32*)(block))[3] = wordRevU32(((u32*)(block))[3])\
+	((u32*)(block))[0] = u32Rev(((u32*)(block))[0]),\
+	((u32*)(block))[1] = u32Rev(((u32*)(block))[1]),\
+	((u32*)(block))[2] = u32Rev(((u32*)(block))[2]),\
+	((u32*)(block))[3] = u32Rev(((u32*)(block))[3])\
 
 #define beltBlockIncU32(block)\
 	if ((((u32*)(block))[0] += 1) == 0 &&\
@@ -595,17 +594,17 @@ void beltBlockEncr(octet block[16], const u32 key[8])
 	u32* t = (u32*)block;
 	ASSERT(memIsDisjoint2(block, 16, key, 32));
 #if (OCTET_ORDER == BIG_ENDIAN)
-	t[0] = wordRevU32(t[0]);
-	t[1] = wordRevU32(t[1]);
-	t[2] = wordRevU32(t[2]);
-	t[3] = wordRevU32(t[3]);
+	t[0] = u32Rev(t[0]);
+	t[1] = u32Rev(t[1]);
+	t[2] = u32Rev(t[2]);
+	t[3] = u32Rev(t[3]);
 #endif
 	E((t + 0), (t + 1), (t + 2), (t + 3), key);
 #if (OCTET_ORDER == BIG_ENDIAN)
-	t[3] = wordRevU32(t[3]);
-	t[2] = wordRevU32(t[2]);
-	t[1] = wordRevU32(t[1]);
-	t[0] = wordRevU32(t[0]);
+	t[3] = u32Rev(t[3]);
+	t[2] = u32Rev(t[2]);
+	t[1] = u32Rev(t[1]);
+	t[0] = u32Rev(t[0]);
 #endif
 }
 
@@ -623,17 +622,17 @@ void beltBlockDecr(octet block[16], const u32 key[8])
 	u32* t = (u32*)block;
 	ASSERT(memIsDisjoint2(block, 16, key, 32));
 #if (OCTET_ORDER == BIG_ENDIAN)
-	t[0] = wordRevU32(t[0]);
-	t[1] = wordRevU32(t[1]);
-	t[2] = wordRevU32(t[2]);
-	t[3] = wordRevU32(t[3]);
+	t[0] = u32Rev(t[0]);
+	t[1] = u32Rev(t[1]);
+	t[2] = u32Rev(t[2]);
+	t[3] = u32Rev(t[3]);
 #endif
 	D((t + 0), (t + 1), (t + 2), (t + 3), key);
 #if (OCTET_ORDER == BIG_ENDIAN)
-	t[3] = wordRevU32(t[3]);
-	t[2] = wordRevU32(t[2]);
-	t[1] = wordRevU32(t[1]);
-	t[0] = wordRevU32(t[0]);
+	t[3] = u32Rev(t[3]);
+	t[2] = u32Rev(t[2]);
+	t[1] = u32Rev(t[1]);
+	t[0] = u32Rev(t[0]);
 #endif
 }
 
@@ -1278,8 +1277,8 @@ bool_t beltMACStepV(const octet mac[8], void* state)
 	ASSERT(memIsValid(mac, 8));
 	beltMACStepG_internal(s);
 #if (OCTET_ORDER == BIG_ENDIAN)
-	s->mac[0] = wordRevU32(s->mac[0]);
-	s->mac[1] = wordRevU32(s->mac[1]);
+	s->mac[0] = u32Rev(s->mac[0]);
+	s->mac[1] = u32Rev(s->mac[1]);
 #endif
 	return memEq(mac, s->mac, 8);
 }
@@ -1291,8 +1290,8 @@ bool_t beltMACStepV2(const octet mac[], size_t mac_len, void* state)
 	ASSERT(memIsValid(mac, mac_len));
 	beltMACStepG_internal(s);
 #if (OCTET_ORDER == BIG_ENDIAN)
-	s->mac[0] = wordRevU32(s->mac[0]);
-	s->mac[1] = wordRevU32(s->mac[1]);
+	s->mac[0] = u32Rev(s->mac[0]);
+	s->mac[1] = u32Rev(s->mac[1]);
 #endif
 	return memEq(mac, s->mac, mac_len);
 }
@@ -1528,8 +1527,8 @@ bool_t beltDWPStepV(const octet mac[8], void* state)
 	ASSERT(memIsValid(mac, 8));
 	beltDWPStepG_internal(state);
 #if (OCTET_ORDER == BIG_ENDIAN)
-	s->s[0] = wordRevU32(s->s[0]);
-	s->s[1] = wordRevU32(s->s[1]);
+	s->s[0] = u32Rev(s->s[0]);
+	s->s[1] = u32Rev(s->s[1]);
 #endif
 	return memEq(mac, s->s, 8);
 }

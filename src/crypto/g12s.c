@@ -3,7 +3,7 @@
 \file g12s.c
 \brief GOST R 34.10-94 (Russia): digital signature algorithms
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.09
 \version 2015.11.03
 \license This program is released under the GNU General Public License 

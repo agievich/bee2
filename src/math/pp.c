@@ -3,7 +3,7 @@
 \file pp.c
 \brief Binary polynomials
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.03.01
 \version 2015.08.24
 \license This program is released under the GNU General Public License 

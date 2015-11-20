@@ -3,9 +3,9 @@
 \file prng.c
 \brief Pseudorandom number generators
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.05.02
-\version 2015.08.28
+\version 2015.11.17
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -13,6 +13,7 @@ version 3. See Copyright Notices in bee2/info.h.
 
 #include "bee2/core/mem.h"
 #include "bee2/core/prng.h"
+#include "bee2/core/u32.h"
 #include "bee2/core/util.h"
 
 /*
@@ -47,7 +48,7 @@ static void prngCOMBOStep(prng_combo_st* s)
 	s->z = (s->z & 0xFFFF) * 30903 + (s->z >> 16);
 	s->r.u32 += s->z;
 #if (OCTET_ORDER == BIG_ENDIAN)
-	s->r.u32 = wordRevU32(s->r.u32);
+	s->r.u32 = u32Rev(s->r.u32);
 #endif
 }
 

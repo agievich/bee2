@@ -3,9 +3,9 @@
 \file u64.c
 \brief 64-bit unsigned words
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.10.28
-\version 2015.10.28
+\version 2015.11.17
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -55,6 +55,6 @@ void u64To(void* dest, size_t count, const u64 src[])
 			((octet*)dest)[t] = (octet)u;
 	}
 	for (count /= 8; count--;)
-		((u64*)dest)[count] = wordRevU32(((u64*)dest)[count]);
+		((u64*)dest)[count] = u64Rev(((u64*)dest)[count]);
 #endif // OCTET_ORDER
 }

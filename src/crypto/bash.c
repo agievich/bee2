@@ -1,12 +1,12 @@
 /*
 *******************************************************************************
 \file bash.c
-\brief STB 34.101.bash: experimental hashing algorithms
+\brief STB 34.101.77 (bash): hashing algorithms
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
-\author (С) Vlad Semenov [semenov.vlad.by@gmail.com]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2014.07.15
-\version 2015.11.05
+\version 2015.11.20
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -237,7 +237,7 @@ void bashStepH(const void* buf, size_t count, void* state)
 		count -= s->block_len - s->filled;
 		buf = (octet*)buf + s->block_len - s->filled;
 #if (OCTET_ORDER == BIG_ENDIAN)
-		bashRevU64(s->s, block_len / 8);
+		u64Rev2(s->s, s->block_len / 8);
 #endif
 		bashF0(s->s);
 		s->filled = 0;

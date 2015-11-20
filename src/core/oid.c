@@ -3,7 +3,7 @@
 \file oid.c
 \brief Object identifiers
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.02.04
 \version 2015.11.09
 \license This program is released under the GNU General Public License 
