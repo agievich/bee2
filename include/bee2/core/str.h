@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.02.04
-\version 2015.11.09
+\version 2015.11.26
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -36,7 +36,7 @@ extern "C" {
 представляет собой последовательность символов-октетов, которая
 заканчивается нулевым октетом.
 
-\pre В функции передаются корректные буферы памяти.
+\pre Во все функции, кроме strIsValid(), передаются корректные строки.
 *******************************************************************************
 */
 
@@ -83,16 +83,37 @@ extern "C" {
 /*!	\brief Корректная строка?
 
 	Проверяется, что строка str корректна.
-	\return Проверяемый признак.
+	\return Признак успеха.
 */
 bool_t strIsValid(
 	const char* str		/*!< [in] строка */
 );
 
+/*!	\brief Начинается?
+
+	Проверяется, что строка str начинается с префикca prefix.
+	\return Признак успеха.
+	\safe Функция нерегулярна.
+*/
+bool_t strStartsWith(
+	const char* str,	/*!< [in] строка */
+	const char* prefix	/*!< [in] префикс */
+);
+
+/*!	\brief Заканчивается?
+
+	Проверяется, что строка str заканчивается суффиксом suffix.
+	\return Признак успеха.
+	\safe Функция нерегулярна.
+*/
+bool_t strEndsWith(
+	const char* str,	/*!< [in] строка */
+	const char* suffix	/*!< [in] суффикс */
+);
+
 /*!	\brief Разворот строки
 
 	Символы строки str переписываются в обратном порядке.
-	\pre Строка корректна.
 */
 void strRev(
 	char* str		/*!< [in] строка */

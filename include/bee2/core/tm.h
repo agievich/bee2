@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2015.11.06
+\version 2015.11.25
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -99,6 +99,9 @@ size_t tmSpeed(
 Использованную шкалу времени прнято называть UNIX-время. 
 Начало отсчета -- старт "эры UNIX" (Unix Epoch).
 
+Отметка времени представляется типом tm_time_t. Этот тип повторяет системный 
+тип time_t и наследует его неопределенность по разрядности и знаковости.
+
 \warning 10 января 2004 счетчик секунд принял значение 2^30.
 32-битовый счетчик исчерпает себя 19 января 2038 года.
 *******************************************************************************
@@ -109,12 +112,12 @@ typedef time_t tm_time_t;
 
 #define TIME_0 ((tm_time_t)0)
 #define TIME_1 ((tm_time_t)1)
-#define TIME_MAX ((tm_time_t)(TIME_0 - TIME_1))
+#define TIME_ERR ((tm_time_t)(TIME_0 - TIME_1))
 
 /*!	\brief UNIX-время
 
 	Возвращается число секунд, прошедших с момента 1970-01-01T00:00:00Z.
-	\return Число секунд или TIME_MAX в случае ошибки.
+	\return Число секунд или TIME_ERR в случае ошибки.
 */
 tm_time_t tmTime();
 
@@ -122,7 +125,7 @@ tm_time_t tmTime();
 
 	Возвращается округленное UNIX-время (tmTime() - t0) / ts,
 	где t0 --- базовая отметка времени (начало отсчета), ts -- шаг времени.
-	\return Округленное UNIX-время или TIME_MAX в случае ошибки.
+	\return Округленное UNIX-время или TIME_ERR в случае ошибки.
 	\remark Ошибками считаются следующие ситуации: 
 		ts == 0, tmTime() < t0.
 	\remark Процедура округления соответствует RFC 6238.
