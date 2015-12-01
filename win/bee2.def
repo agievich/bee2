@@ -152,6 +152,29 @@ EXPORTS
 	bashStepV					@605
 	bashHash					@606
 	
+	botpHOTP_keep				@701
+	botpHOTPStart				@702
+	botpHOTPStepS				@703
+	botpHOTPStepR				@704
+	botpHOTPStepV				@705
+	botpHOTPStepG				@706
+	botpHOTPRand				@707
+	botpHOTPVerify				@708
+	botpTOTP_keep				@721
+	botpTOTPStart				@722
+	botpTOTPStepR				@723
+	botpTOTPStepV				@724
+	botpTOTPRand				@725
+	botpTOTPVerify				@726
+	botpOCRA_keep				@741
+	botpOCRAStart				@742
+	botpOCRAStepS				@743
+	botpOCRAStepR				@744
+	botpOCRAStepV				@745
+	botpOCRAStepG				@746
+	botpOCRARand				@747
+	botpOCRAVerify				@748
+	
 	dstuStdParams				@1101
 	dstuValParams				@1102
 	dstuGenPoint				@1103
