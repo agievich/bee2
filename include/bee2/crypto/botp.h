@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.11.02
-\version 2015.11.27
+\version 2015.12.01
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -114,9 +114,8 @@ size_t botpHOTP_keep();
 
 /*!	\brief Инициализация режима HOTP
 
-	По числу digit ключу [key_len]key и счетчику ctr в state формируются 
-	структуры данных, необходимые для управления паролями длины digit 
-	в режиме HOTP.
+	По числу digit ключу [key_len]key в state формируются структуры данных, 
+	необходимые для управления паролями длины digit в режиме HOTP.
 	\pre 6 <= digit && digit <= 8.
 	\pre По адресу state зарезервировано botpHOTP_keep() октетов.
 	\remark Рекомендуется использовать ключ из 32 октетов.
@@ -146,7 +145,7 @@ void botpHOTPStepS(
 	\expect botpHOTPStepS() < botpHOTPStepR()*.
 */
 void botpHOTPStepR(
-	char* otp,			/*!< [in] одноразовый пароль */
+	char* otp,			/*!< [out] одноразовый пароль */
 	void* state			/*!< [in/out] состояние */
 );
 
