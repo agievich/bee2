@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.11.06
-\version 2015.11.27
+\version 2015.12.04
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -30,55 +30,53 @@ version 3. See Copyright Notices in bee2/info.h.
 
 bool_t botpTest()
 {
-	octet ctr[8], ctr1[8];
-	char otp[10];
+	octet ctr[8];
+	char otp[10], otp1[10], otp2[10], otp3[10];
+	const char suite[] = "OCRA-1:HOTP-HBELT-8:C-QN08-PHBELT-S064-T1M";
+	char q[32];
+	octet p[32];
+	char str[17];
+	char p_str[65];
+	char s_str[129];
 	tm_time_t t;
 	octet state[2048];
 	// создать стек
 	ASSERT(sizeof(state) >= botpHOTP_keep());
 	// тесты HOTP
-	memSetZero(ctr, 8); 
-	botpHOTPStart(state, 6, beltH(), 32);
+	memCopy(ctr, beltH() + 192, 8); 
+	botpHOTPStart(state, 8, beltH() + 128, 32);
 	botpHOTPStepS(state, ctr);
-	botpHOTPStepR(otp, state);
 	botpHOTPStepG(ctr, state);
-	printf("HOTP.1 otp = %s\n", otp);
-	botpHOTPStart(state, 7, beltH(), 32);
-	botpHOTPStepS(state, ctr);
-	botpHOTPStepR(otp, state);
+	botpHOTPStepR(otp1, state);
+	hexFrom(str, ctr, 8);
+	printf("HOTP.1:\n\tC = %s\n\tR = %s\n", str, otp1);
 	botpHOTPStepG(ctr, state);
-	printf("HOTP.2 otp = %s\n", otp);
-	botpHOTPStart(state, 8, beltH(), 32);
-	botpHOTPStepS(state, ctr);
-	if (botpHOTPRand(otp, 8, beltH(), 32, ctr) != ERR_OK)
-		return FALSE;
-	printf("HOTP.3 otp = %s\n", otp);
-	memSetZero(ctr1, 8);
-	if (!botpHOTPStepV(otp, 0, state) ||
-		botpHOTPVerify(otp, beltH(), 32, ctr1, 1) == ERR_OK ||
-		botpHOTPVerify(otp, beltH(), 32, ctr1, 2) != ERR_OK ||
-		!memEq(ctr, ctr1, 8) ||
-		botpHOTPVerify(otp, beltH(), 32, ctr1, 4) == ERR_OK)
-		return FALSE;
+	botpHOTPStepR(otp2, state);
+	hexFrom(str, ctr, 8);
+	printf("HOTP.2:\n\tC = %s\n\tR = %s\n", str, otp2);
+	botpHOTPStepG(ctr, state);
+	botpHOTPStepR(otp3, state);
+	hexFrom(str, ctr, 8);
+	printf("HOTP.3:\n\tC = %s\n\tR = %s\n", str, otp3);
+	botpHOTPStepG(ctr, state);
 	// тесты TOTP
-	t = tmTimeRound(0, 30);
+	t = 1449165288;
 	if (t == TIME_ERR)
 		return FALSE;
-	botpTOTPStart(state, 6, beltH(), 32);
-	botpTOTPStepR(otp, t - 2, state);
-	printf("TOTP.1 otp = %s\n", otp);
-	if (botpTOTPRand(otp, 7, beltH(), 32, t - 1) != ERR_OK)
-		return FALSE;
-	printf("TOTP.2 otp = %s\n", otp);
-	botpTOTPStart(state, 8, beltH(), 32);
-	botpTOTPStepR(otp, t, state);
-	printf("TOTP.3 otp = %s\n", otp);
-	if (botpTOTPStepV(otp, t + 4, 3, 3, state) ||
-		botpTOTPVerify(otp, beltH(), 32, t + 2, 1, 0) == ERR_OK ||
-		botpTOTPStepV(otp, t - 2, 0, 1, state) ||
-		!botpTOTPStepV(otp, t + 2, 2, 0, state) ||
-		botpTOTPVerify(otp, beltH(), 32, t - 2, 0, 2) != ERR_OK)
-		return FALSE;
+	botpTOTPStart(state, 8, beltH() + 128, 32);
+	botpTOTPStepR(otp, t / 60, state);
+	printf("TOTP.1:\n\tT = %u / 60 = %u\n\tR = %s\n", 
+		(unsigned)t, (unsigned)(t / 60), otp);
+	t /= 60, ++t, t *= 60;
+	botpTOTPStart(state, 8, beltH() + 128, 32);
+	botpTOTPStepR(otp, t / 60, state);
+	printf("TOTP.2:\n\tT = %u / 60 = %u\n\tR = %s\n", 
+		(unsigned)t, (unsigned)(t / 60), otp);
+	t /= 60, t += 2, t *= 60, --t;
+	botpTOTPStart(state, 8, beltH() + 128, 32);
+	botpTOTPStepR(otp, t / 60, state);
+	printf("TOTP.3:\n\tT = %u / 60 = %u\n\tR = %s\n", 
+		(unsigned)t, (unsigned)(t / 60), otp);
 	// OCRA
 	if (botpOCRAStart(state, "OCRA-:HOTP-HBELT-6:C-QN08", beltH(), 32) ||
 		botpOCRAStart(state, "OCRA-1:HOTP-HBELT-3:C-QN08", beltH(), 32) ||
@@ -91,20 +89,33 @@ bool_t botpTest()
 		botpOCRAStart(state, "OCRA-1:HOTP-HBELT-8:QN08-T61S", beltH(), 32) ||
 		botpOCRAStart(state, "OCRA-1:HOTP-HBELT-8:QN08-T51H", beltH(), 32))
 		return FALSE;
-	memCopy(ctr1, ctr, 8);
-	if (botpOCRARand(otp, "OCRA-1:HOTP-HBELT-8:C-QN08-PHBELT-S032-T30S",	
-			beltH(), 32, "01234567", ctr, 
-			beltH() + 32, beltH() + 64, t) != ERR_OK)
-			return FALSE;
-	printf("OCRA.1 otp = %s\n", otp);
-	if (botpOCRAVerify(otp, "OCRA-1:HOTP-HBELT-8:C-QN08-PHBELT-S032-T30S",	
-			beltH(), 32, "01234567", ctr, 
-			beltH() + 32, beltH() + 64, t) == ERR_OK)
-			return FALSE;
-	if (botpOCRAVerify(otp, "OCRA-1:HOTP-HBELT-8:C-QN08-PHBELT-S032-T30S",	
-			beltH(), 32, "01234567", ctr1, 
-			beltH() + 32, beltH() + 64, t) != ERR_OK)
-			return FALSE;
+	beltHash(p, beltH(), 13);
+	hexFrom(p_str, p, 32);
+	hexFrom(s_str, beltH(), 64); 
+	botpOCRAStart(state, suite, beltH() + 128, 32);
+	botpOCRAStepS(state, ctr, p, beltH());
+	printf("OCRA:\n\t\n\tD = %s\n\tP = %s\n\tS = %s\n", 
+		suite, p_str, s_str);
+	t /= 60;
+	strCopy(q, otp1);
+	botpOCRAStepR(otp, (const octet*)otp1, strLen(otp1), t += 3, state);
+	hexFrom(str, ctr, 8);
+	printf("OCRA.1:\n\tQ = %s\n\tC = %s\n\tT = %u\n\tR = %s\n", 
+		q, str, (unsigned)t, otp);
+	botpOCRAStepG(ctr, state);
+	strCopy(q, otp2);
+	strCopy(q + strLen(q), otp3);
+	botpOCRAStepR(otp, (const octet*)q, strLen(q), t += 10, state);
+	hexFrom(str, ctr, 8);
+	printf("OCRA.2:\n\tQ = %s\n\tC = %s\n\tT = %u\n\tR = %s\n", 
+		q, str, (unsigned)t, otp);
+	botpOCRAStepG(ctr, state);
+	strCopy(q, otp3);
+	strCopy(q + strLen(q), otp2);
+	botpOCRAStepR(otp, (const octet*)q, strLen(q), ++t, state);
+	hexFrom(str, ctr, 8);
+	printf("OCRA.2:\n\tQ = %s\n\tC = %s\n\tT = %u\n\tR = %s\n", 
+		q, str, (unsigned)t, otp);
 	// все нормально
 	return TRUE;
 }

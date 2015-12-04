@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.11.02
-\version 2015.11.27
+\version 2015.12.03
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -59,13 +59,14 @@ static const u32 powers_of_10[10] = {
 	1000000000,
 };
 
-static u32 botpDT(size_t digit, const octet mac[], size_t mac_len)
+void botpDT(char* otp, size_t digit, const octet mac[], size_t mac_len)
 {
 	register u32 pwd;
 	register size_t offset;
 	ASSERT(mac_len >= 20);
-	ASSERT(memIsValid(mac, mac_len));
 	ASSERT(4 <= digit && digit <= 9);
+	ASSERT(memIsValid(otp, digit + 1));
+	ASSERT(memIsValid(mac, mac_len));
 	offset = mac[mac_len - 1] & 15;
 	pwd = mac[offset], pwd <<= 8;
 	pwd ^= mac[offset + 1], pwd <<= 8;
@@ -73,11 +74,22 @@ static u32 botpDT(size_t digit, const octet mac[], size_t mac_len)
 	pwd ^= mac[offset + 3];
 	pwd &= 0x7FFFFFFF;
 	pwd %= powers_of_10[digit];
+	decFromU32(otp, digit, pwd);
 	offset = 0;
-	return pwd;
+	pwd = 0;
 }
 
-static void botpCtrNext(octet ctr[8])
+static void botpTimeToCtr(octet ctr[8], tm_time_t t)
+{
+	ASSERT(sizeof(t) <= 8);
+	memSetZero(ctr, 8 - sizeof(t));
+	memCopy(ctr + 8 - sizeof(t), &t, sizeof(t));
+#if (OCTET_ORDER == LITTLE_ENDIAN)
+	memRev(ctr + 8 - sizeof(t), sizeof(t));
+#endif
+}
+
+void botpCtrNext(octet ctr[8])
 {
 	register octet carry = 1;
 	ASSERT(memIsValid(ctr, 8));
@@ -92,21 +104,12 @@ static void botpCtrNext(octet ctr[8])
 	carry = 0;
 }
 
-static void botpTimeToCtr(octet ctr[8], tm_time_t t)
-{
-	ASSERT(sizeof(t) <= 8);
-	memSetZero(ctr, 8 - sizeof(t));
-	memCopy(ctr + 8 - sizeof(t), &t, sizeof(t));
-#if (OCTET_ORDER == LITTLE_ENDIAN)
-	memRev(ctr + 8 - sizeof(t), sizeof(t));
-#endif
-}
-
 /*
 *******************************************************************************
 Режим HOTP
 *******************************************************************************
 */
+
 typedef struct
 {
 	size_t digit;		/*< число цифр в пароле */
@@ -126,10 +129,8 @@ void botpHOTPStart(void* state, size_t digit, const octet key[],
 	size_t key_len)
 {
 	botp_hotp_st* s = (botp_hotp_st*)state;
-	// pre
 	ASSERT(6 <= digit && digit <= 8);
 	ASSERT(memIsDisjoint2(key, key_len, s, botpHOTP_keep()));
-	// подготовить state
 	s->digit = digit;
 	beltHMACStart(s->stack + beltHMAC_keep(), key, key_len);
 }
@@ -152,28 +153,23 @@ void botpHOTPStepR(char* otp, void* state)
 	beltHMACStepA(s->ctr, 8, s->stack);
 	beltHMACStepG(s->mac, s->stack);
 	// построить пароль
-	decFromU32(otp, s->digit, botpDT(s->digit, s->mac, 32));
+	botpDT(otp, s->digit, s->mac, 32);
 	// инкремент счетчика
 	botpCtrNext(s->ctr);
 }
 
-bool_t botpHOTPStepV(const char* otp, size_t attempts, void* state)
+bool_t botpHOTPStepV(const char* otp, void* state)
 {
 	botp_hotp_st* s = (botp_hotp_st*)state;
 	// pre
 	ASSERT(strIsValid(otp));
-	ASSERT(attempts < 10);
 	ASSERT(memIsDisjoint2(otp, strLen(otp) + 1, state, botpHOTP_keep()));
 	// сохранить счетчик
 	memCopy(s->ctr1, s->ctr, 8);
-	// попытки синхронизации
-	do
-	{
-		botpHOTPStepR(s->otp, state);
-		if (strEq(s->otp, otp))
-			return TRUE;
-	}
-	while (attempts--);
+	// проверить пароль
+	botpHOTPStepR(s->otp, state);
+	if (strEq(s->otp, otp))
+		return TRUE;
 	// вернуться к первоначальному счетчику
 	memCopy(s->ctr, s->ctr1, 8);
 	return FALSE;
@@ -187,7 +183,7 @@ void botpHOTPStepG(octet ctr[8], const void* state)
 }
 
 err_t botpHOTPRand(char* otp, size_t digit, const octet key[], size_t key_len, 
-	octet ctr[8])
+	const octet ctr[8])
 {
 	void* state;
 	// проверить входные данные
@@ -195,8 +191,7 @@ err_t botpHOTPRand(char* otp, size_t digit, const octet key[], size_t key_len,
 		return ERR_BAD_PARAMS;
 	if (!memIsValid(otp, digit + 1) || 
 		!memIsValid(key, key_len) ||
-		!memIsValid(ctr, 8) ||
-		!memIsDisjoint2(otp, digit + 1, ctr, 8))
+		!memIsValid(ctr, 8))
 		return ERR_BAD_INPUT;
 	// создать состояние
 	state = blobCreate(botpHOTP_keep());
@@ -206,24 +201,20 @@ err_t botpHOTPRand(char* otp, size_t digit, const octet key[], size_t key_len,
 	botpHOTPStart(state, digit, key, key_len);
 	botpHOTPStepS(state, ctr);
 	botpHOTPStepR(otp, state);
-	botpHOTPStepG(ctr, state);
 	// завершить
 	blobClose(state);
 	return ERR_OK;
 }
 
 err_t botpHOTPVerify(const char* otp, const octet key[], size_t key_len, 
-	octet ctr[8], size_t attempts)
+	const octet ctr[8])
 {
 	void* state;
 	bool_t success;
 	// проверить входные данные
 	if (!strIsValid(otp) || strLen(otp) < 6 || strLen(otp) > 8)
 		return ERR_BAD_PWD;
-	if (attempts >= 10)
-		return ERR_BAD_PARAMS;
-	if (!memIsValid(key, key_len) ||
-		!memIsValid(ctr, 8))
+	if (!memIsValid(key, key_len) || !memIsValid(ctr, 8))
 		return ERR_BAD_INPUT;
 	// создать состояние
 	state = blobCreate(botpHOTP_keep());
@@ -232,8 +223,7 @@ err_t botpHOTPVerify(const char* otp, const octet key[], size_t key_len,
 	// проверить пароль
 	botpHOTPStart(state, strLen(otp), key, key_len);
 	botpHOTPStepS(state, ctr);
-	if (success = botpHOTPStepV(otp, attempts, state))
-		botpHOTPStepG(ctr, state);
+	success = botpHOTPStepV(otp, state);
 	// завершить
 	blobClose(state);
 	return success ? ERR_OK : ERR_BAD_PWD;
@@ -282,40 +272,19 @@ void botpTOTPStepR(char* otp, tm_time_t t, void* state)
 	beltHMACStepA(s->t, 8, s->stack);
 	beltHMACStepG(s->mac, s->stack);
 	// построить пароль
-	decFromU32(otp, s->digit, botpDT(s->digit, s->mac, 32));
+	botpDT(otp, s->digit, s->mac, 32);
 }
 
-bool_t botpTOTPStepV(const char* otp, tm_time_t t, size_t attempts_bwd, 
-	size_t attempts_fwd, void* state)
+bool_t botpTOTPStepV(const char* otp, tm_time_t t, void* state)
 {
 	botp_totp_st* s = (botp_totp_st*)state;
-	tm_time_t t1;
 	// pre
 	ASSERT(strIsValid(otp));
 	ASSERT(t != TIME_ERR);
-	ASSERT(attempts_bwd < 5 && attempts_fwd < 5);
 	ASSERT(memIsDisjoint2(otp, strLen(otp) + 1, state, botpTOTP_keep()));
 	// вычислить и проверить пароль
 	botpTOTPStepR(s->otp, t, state);
-	if (strEq(s->otp, otp))
-		return TRUE;
-	// попытки "синхронизации назад"
-	t1 = t;
-	while (attempts_bwd-- && --t1 >= 0)
-	{
-		botpTOTPStepR(s->otp, t1, state);
-		if (strEq(s->otp, otp))
-			return TRUE;
-	}
-	// попытки "синхронизации вперед"
-	t1 = t;
-	while (attempts_fwd-- && ++t1 >= 0)
-	{
-		botpTOTPStepR(s->otp, t1, state);
-		if (strEq(s->otp, otp))
-			return TRUE;
-	}
-	return FALSE;
+	return strEq(s->otp, otp);
 }
 
 err_t botpTOTPRand(char* otp, size_t digit, const octet key[], size_t key_len, 
@@ -343,7 +312,7 @@ err_t botpTOTPRand(char* otp, size_t digit, const octet key[], size_t key_len,
 }
 
 err_t botpTOTPVerify(const char* otp, const octet key[], size_t key_len, 
-	tm_time_t t, size_t attempts_bwd, size_t attempts_fwd)
+	tm_time_t t)
 {
 	void* state;
 	bool_t success;
@@ -352,8 +321,6 @@ err_t botpTOTPVerify(const char* otp, const octet key[], size_t key_len,
 		return ERR_BAD_PWD;
 	if (t == TIME_ERR)
 		return ERR_BAD_TIME;
-	if (attempts_bwd >= 5 || attempts_bwd >= 5)
-		return ERR_BAD_PARAMS;
 	if (!memIsValid(key, key_len))
 		return ERR_BAD_INPUT;
 	// создать состояние
@@ -362,7 +329,7 @@ err_t botpTOTPVerify(const char* otp, const octet key[], size_t key_len,
 		return ERR_NOT_ENOUGH_MEMORY;
 	// проверить пароль
 	botpTOTPStart(state, strLen(otp), key, key_len);
-	success = botpTOTPStepV(otp, t, attempts_bwd, attempts_fwd, state);
+	success = botpTOTPStepV(otp, t, state);
 	// завершить
 	blobClose(state);
 	return success ? ERR_OK : ERR_BAD_PWD;
@@ -383,7 +350,7 @@ typedef struct botp_ocra_st
 	size_t ctr_len;		/*< длина счетчика */
 	octet q[128];		/*< запрос */
 	char q_type;		/*< тип запроса (A, N, H) */
-	size_t q_len;		/*< длина запроса */
+	size_t q_max;		/*< максимальная длина одиночного запроса */
 	octet p[64];		/*< хэш-значение статического пароля */
 	size_t p_len;		/*< длина p */
 	octet s[512];		/*< идентификатор сеанса */
@@ -459,9 +426,9 @@ bool_t botpOCRAStart(void* state, const char* suite, const octet key[],
 	if (suite[0] < '0' || suite[0] > '9' || 
 		suite[1] < '0' || suite[1] > '9')
 		return FALSE;
-	s->q_len = (size_t)(suite[0] - '0');
-	s->q_len *= 10, s->q_len += (size_t)(suite[1] - '0');
-	if (s->q_len < 4 || s->q_len > 64)
+	s->q_max = (size_t)(suite[0] - '0');
+	s->q_max *= 10, s->q_max += (size_t)(suite[1] - '0');
+	if (s->q_max < 4 || s->q_max > 64)
 		return FALSE;
 	suite += 2;
 	// разбор suite: p
@@ -570,20 +537,23 @@ void botpOCRAStepS(void* state, const octet ctr[8], const octet p[],
 	}
 }
 
-void botpOCRAStepR(char* otp, const octet q[], tm_time_t t, void* state)
+void botpOCRAStepR(char* otp, const octet q[], size_t q_len, tm_time_t t, 
+	void* state)
 {
 	botp_ocra_st* s = (botp_ocra_st*)state;
 	// pre
-	ASSERT(t != TIME_ERR);
 	ASSERT(memIsDisjoint2(otp, s->digit + 1, state, botpOCRA_keep()) || 
 		otp == s->otp);
+	ASSERT(4 <= q_len && q_len <= 2 * s->q_max);
+	ASSERT(memIsValid(q, q_len));
+	ASSERT(t != TIME_ERR);
 	// вычислить имитовставку
 	memCopy(s->stack, s->stack + beltHMAC_keep(), beltHMAC_keep());
 	beltHMACStepA(s->suite, strLen(s->suite) + 1, s->stack);
 	if (s->ctr_len)
 		beltHMACStepA(s->ctr, 8, s->stack), botpCtrNext(s->ctr);
-	memSetZero(s->q + s->q_len, sizeof(s->q) - s->q_len);
-	beltHMACStepA(s->q, s->q_len, s->stack);
+	memSetZero(s->q + q_len, sizeof(s->q) - q_len);
+	beltHMACStepA(s->q, q_len, s->stack);
 	if (s->p_len)
 		beltHMACStepA(s->p, s->p_len, s->stack);
 	if (s->s_len)
@@ -592,11 +562,11 @@ void botpOCRAStepR(char* otp, const octet q[], tm_time_t t, void* state)
 		botpTimeToCtr(s->t, t), beltHMACStepA(s->t, 8, s->stack);
 	beltHMACStepG(s->mac, s->stack);
 	// построить пароль
-	decFromU32(otp, s->digit, botpDT(s->digit, s->mac, 32));
+	botpDT(otp, s->digit, s->mac, 32);
 }
 
-bool_t botpOCRAStepV(const char* otp, const octet q[], tm_time_t t, 
-	void* state)
+bool_t botpOCRAStepV(const char* otp, const octet q[], size_t q_len, 
+	tm_time_t t, void* state)
 {
 	botp_ocra_st* s = (botp_ocra_st*)state;
 	// pre
@@ -605,7 +575,7 @@ bool_t botpOCRAStepV(const char* otp, const octet q[], tm_time_t t,
 	// сохранить счетчик
 	memCopy(s->ctr1, s->ctr, 8);
 	// проверить пароль
-	botpOCRAStepR(s->otp, q, t, state);
+	botpOCRAStepR(s->otp, q, q_len, t, state);
 	if (strEq(s->otp, otp))
 		return TRUE;
 	// вернуться к первоначальному счетчику
@@ -621,13 +591,12 @@ void botpOCRAStepG(octet ctr[8], const void* state)
 }
 
 err_t botpOCRARand(char* otp, const char* suite, const octet key[],	
-	size_t key_len, const octet q[], octet ctr[8], const octet p[],
-	const octet s[], tm_time_t t)
+	size_t key_len, const octet q[], size_t q_len, const octet ctr[8], 
+	const octet p[], const octet s[], tm_time_t t)
 {
 	botp_ocra_st* state;
 	// предварительно проверить входные данные
-	if (!strIsValid(suite) || 
-		!memIsValid(key, key_len))
+	if (!strIsValid(suite) || !memIsValid(key, key_len))
 		return ERR_BAD_INPUT;
 	// создать состояние
 	state = (botp_ocra_st*)blobCreate(botpOCRA_keep());
@@ -635,11 +604,14 @@ err_t botpOCRARand(char* otp, const char* suite, const octet key[],
 		return ERR_NOT_ENOUGH_MEMORY;
 	// разобрать suite
 	if (!botpOCRAStart(state, suite, key, key_len))
+		return ERR_BAD_FORMAT;
+	// проверить q_len
+	if (q_len < 4 || q_len > 2 * state->q_max)
 		return ERR_BAD_PARAMS;
 	// полностью проверить входные данные
 	if (!memIsValid(otp, state->digit + 1) ||
 		state->ctr_len && !memIsValid(ctr, state->ctr_len) ||
-		state->q_len && !memIsValid(q, state->q_len) ||
+		!memIsValid(q, q_len) ||
 		state->p_len && !memIsValid(p, state->p_len) ||
 		state->s_len && !memIsValid(s, state->s_len))
 		return ERR_BAD_INPUT;
@@ -647,24 +619,20 @@ err_t botpOCRARand(char* otp, const char* suite, const octet key[],
 		return ERR_BAD_TIME;
 	// сгенерировать пароль
 	botpOCRAStepS(state, ctr, p, s);
-	botpOCRAStepR(otp, q, t, state);
-	// выгрузить счетчик
-	if (state->ctr_len)
-		botpOCRAStepG(ctr, state);
+	botpOCRAStepR(otp, q, q_len, t, state);
 	// завершить
 	blobClose(state);
 	return ERR_OK;
 }
 
 err_t botpOCRAVerify(const char* otp, const char* suite, const octet key[], 
-	size_t key_len, const octet q[], octet ctr[8], const octet p[], 
-	const octet s[], tm_time_t t)
+	size_t key_len, const octet q[], size_t q_len, const octet ctr[8], 
+	const octet p[], const octet s[], tm_time_t t)
 {
 	botp_ocra_st* state;
 	bool_t success;
 	// предварительно проверить входные данные
-	if (!strIsValid(suite) || 
-		!memIsValid(key, key_len))
+	if (!strIsValid(suite) || !memIsValid(key, key_len))
 		return ERR_BAD_INPUT;
 	// создать состояние
 	state = (botp_ocra_st*)blobCreate(botpOCRA_keep());
@@ -672,13 +640,16 @@ err_t botpOCRAVerify(const char* otp, const char* suite, const octet key[],
 		return ERR_NOT_ENOUGH_MEMORY;
 	// разобрать suite
 	if (!botpOCRAStart(state, suite, key, key_len))
+		return ERR_BAD_FORMAT;
+	// проверить q_len
+	if (q_len < 4 || q_len > 2 * state->q_max)
 		return ERR_BAD_PARAMS;
 	// полностью проверить входные данные
 	if (state->digit != strLen(otp))
 		return ERR_BAD_PWD;
 	if (!memIsValid(otp, state->digit + 1) ||
 		state->ctr_len && !memIsValid(ctr, state->ctr_len) ||
-		state->q_len && !memIsValid(q, state->q_len) ||
+		!memIsValid(q, q_len) ||
 		state->p_len && !memIsValid(p, state->p_len) ||
 		state->s_len && !memIsValid(s, state->s_len))
 		return ERR_BAD_INPUT;
@@ -686,8 +657,7 @@ err_t botpOCRAVerify(const char* otp, const char* suite, const octet key[],
 		return ERR_BAD_TIME;
 	// проверить пароль
 	botpOCRAStepS(state, ctr, p, s);
-	if (success = botpOCRAStepV(otp, q, t, state))
-		botpOCRAStepG(ctr, state);
+	success = botpOCRAStepV(otp, q, q_len, t, state);
 	// завершить
 	blobClose(state);
 	return success ? ERR_OK : ERR_BAD_PWD;

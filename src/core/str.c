@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.02.04
-\version 2015.11.26
+\version 2015.12.03
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -18,19 +18,33 @@ version 3. See Copyright Notices in bee2/info.h.
 /*
 *******************************************************************************
 Проверка
+
+\todo Переделать: strLen() может рекурсивно вызывать strIsValid() при проверке
+предусловия.
 *******************************************************************************
 */
 
 bool_t strIsValid(const char* str)
 {
-	return memIsValid(str, strLen(str));
+	return memIsValid(str, strLen(str) + 1);
 }
 
 /*
 *******************************************************************************
-Поиск
+Структура
 *******************************************************************************
 */
+
+bool_t strIsAlphanumeric(const char* str)
+{
+	ASSERT(strIsValid(str));
+	for (; *str; ++str)
+		if ((*str < '0' || *str > '9') &&
+			(*str < 'A' || *str > 'Z') &&
+			(*str < 'a' || *str > 'z'))
+			return FALSE;
+	return TRUE;
+}
 
 bool_t strStartsWith(const char* str, const char* prefix)
 {

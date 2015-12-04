@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.02.04
-\version 2015.11.26
+\version 2015.12.03
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -86,6 +86,17 @@ extern "C" {
 	\return Признак успеха.
 */
 bool_t strIsValid(
+	const char* str		/*!< [in] строка */
+);
+
+/*!	\brief Буквенно-цифовая?
+
+	Проверяется, что строка str состоит только из символов-цифр '0'-'9'
+	и символов букв 'A'-'Z', 'a'-'z'.
+	\return Признак успеха.
+	\safe Функция нерегулярна.
+*/
+bool_t strIsAlphanumeric(
 	const char* str		/*!< [in] строка */
 );
 

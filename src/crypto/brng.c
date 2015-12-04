@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.01.31
-\version 2015.11.17
+\version 2015.12.03
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -63,7 +63,7 @@ static void brngBlockInc(octet block[32])
 
 В brng_ctr_st::state_ex размещаются два beltHMAC-состояния:
 -	вспомогательное состояние;
--	состояние beltHash(theta ||....).
+-	состояние beltHash(key ||....).
 *******************************************************************************
 */
 typedef struct
@@ -80,14 +80,14 @@ size_t brngCTR_keep()
 	return sizeof(brng_ctr_st) + 2 * beltHash_keep();
 }
 
-void brngCTRStart(void* state, const octet theta[32], const octet iv[32])
+void brngCTRStart(void* state, const octet key[32], const octet iv[32])
 {
 	brng_ctr_st* s = (brng_ctr_st*)state;
-	ASSERT(memIsDisjoint2(s, brngCTR_keep(), theta, 32));
+	ASSERT(memIsDisjoint2(s, brngCTR_keep(), key, 32));
 	ASSERT(iv == 0 || memIsDisjoint2(s, brngCTR_keep(), iv, 32));
-	// обработать theta
+	// обработать key
 	beltHashStart(s->state_ex + beltHash_keep());
-	beltHashStepH(theta, 32, s->state_ex + beltHash_keep());
+	beltHashStepH(key, 32, s->state_ex + beltHash_keep());
 	//	сохранить iv
 	if (iv)
 		memCopy(s->s, iv, 32);
@@ -120,7 +120,7 @@ void brngCTRStepR(void* buf, size_t count, void* state)
 	// цикл по полным блокам
 	while (count >= 32)
 	{
-		// Y_t <- belt-hash(theta || s || X_t || r)
+		// Y_t <- belt-hash(key || s || X_t || r)
 		memCopy(s->state_ex, s->state_ex + beltHash_keep(), beltHash_keep());
 		beltHashStepH(s->s, 32, s->state_ex);
 		beltHashStepH(buf, 32, s->state_ex);
@@ -135,7 +135,7 @@ void brngCTRStepR(void* buf, size_t count, void* state)
 	// неполный блок?
 	if (count)
 	{
-		// block <- beltHash(theta || s || zero_pad(X_t) || r)
+		// block <- beltHash(key || s || zero_pad(X_t) || r)
 		memSetZero(s->block + count, 32 - count);
 		memCopy(s->state_ex, s->state_ex + beltHash_keep(), beltHash_keep());
 		beltHashStepH(s->s, 32, s->state_ex);
@@ -159,11 +159,11 @@ void brngCTRStepG(octet iv[32], void* state)
 	memCopy(iv, s->s, 32);
 }
 
-err_t brngCTRRand(void* buf, size_t count, const octet theta[32], octet iv[32])
+err_t brngCTRRand(void* buf, size_t count, const octet key[32], octet iv[32])
 {
 	void* state;
 	// проверить входные данные
-	if (!memIsValid(theta, 32) ||
+	if (!memIsValid(key, 32) ||
 		!memIsValid(iv, 32) ||
 		!memIsValid(buf, count))
 		return ERR_BAD_INPUT;
@@ -172,7 +172,7 @@ err_t brngCTRRand(void* buf, size_t count, const octet theta[32], octet iv[32])
 	if (state == 0)
 		return ERR_NOT_ENOUGH_MEMORY;
 	// сгенерировать данные
-	brngCTRStart(state, theta, iv);
+	brngCTRStart(state, key, iv);
 	brngCTRStepR(buf, count, state);
 	brngCTRStepG(iv, state);
 	// завершить
@@ -186,7 +186,7 @@ err_t brngCTRRand(void* buf, size_t count, const octet theta[32], octet iv[32])
 
 В brng_hmac_st::state_ex размещаются два beltHMAC-состояния:
 -	вспомогательное состояние;
--	состояние beltHMAC(theta, ...).
+-	состояние beltHMAC(key, ...).
 
 \remark Учитывается инкрементальность beltHMAC
 *******************************************************************************
@@ -206,18 +206,18 @@ size_t brngHMAC_keep()
 	return sizeof(brng_hmac_st) + 2 * beltHMAC_keep();
 }
 
-void brngHMACStart(void* state, const octet theta[], size_t theta_len, 
+void brngHMACStart(void* state, const octet key[], size_t key_len, 
 	const octet iv[32], size_t iv_len)
 {
 	brng_hmac_st* s = (brng_hmac_st*)state;
-	ASSERT(memIsDisjoint2(s, brngHMAC_keep(), theta, theta_len));
+	ASSERT(memIsDisjoint2(s, brngHMAC_keep(), key, key_len));
 	ASSERT(memIsDisjoint2(s, brngHMAC_keep(), iv, iv_len));
 	// запомнить iv
 	s->iv = iv;
 	s->iv_len = iv_len;
-	// обработать theta
-	beltHMACStart(s->state_ex + beltHMAC_keep(), theta, theta_len);
-	// r <- beltHMAC(theta, iv)
+	// обработать key
+	beltHMACStart(s->state_ex + beltHMAC_keep(), key, key_len);
+	// r <- beltHMAC(key, iv)
 	memCopy(s->state_ex, s->state_ex + beltHMAC_keep(), beltHMAC_keep());
 	beltHMACStepA(iv, iv_len, s->state_ex);
 	beltHMACStepG(s->r, s->state_ex);
@@ -246,11 +246,11 @@ void brngHMACStepR(void* buf, size_t count, void* state)
 	// цикл по полным блокам
 	while (count >= 32)
 	{
-		// r <- beltHMAC(theta, r) 
+		// r <- beltHMAC(key, r) 
 		memCopy(s->state_ex, s->state_ex + beltHMAC_keep(), beltHMAC_keep());
 		beltHMACStepA(s->r, 32, s->state_ex);
 		beltHMACStepG(s->r, s->state_ex);
-		// Y_t <- beltHMAC(theta, r || iv)
+		// Y_t <- beltHMAC(key, r || iv)
 		beltHMACStepA(s->iv, s->iv_len, s->state_ex);
 		beltHMACStepG(buf, s->state_ex);
 		// next
@@ -260,11 +260,11 @@ void brngHMACStepR(void* buf, size_t count, void* state)
 	// неполный блок?
 	if (count)
 	{
-		// r <- beltHMAC(theta, r) 
+		// r <- beltHMAC(key, r) 
 		memCopy(s->state_ex, s->state_ex + beltHMAC_keep(), beltHMAC_keep());
 		beltHMACStepA(s->r, 32, s->state_ex);
 		beltHMACStepG(s->r, s->state_ex);
-		// Y_t <- left(beltHMAC(theta, r || iv))
+		// Y_t <- left(beltHMAC(key, r || iv))
 		beltHMACStepA(s->iv, s->iv_len, s->state_ex);
 		beltHMACStepG2(buf, count, s->state_ex);
 		// next
@@ -272,12 +272,12 @@ void brngHMACStepR(void* buf, size_t count, void* state)
 	}
 }
 
-err_t brngHMACRand(void* buf, size_t count, const octet theta[], size_t theta_len,
+err_t brngHMACRand(void* buf, size_t count, const octet key[], size_t key_len,
 	const octet iv[], size_t iv_len)
 {
 	void* state;
 	// проверить входные данные
-	if (!memIsValid(theta, theta_len) ||
+	if (!memIsValid(key, key_len) ||
 		!memIsValid(iv, iv_len) ||
 		!memIsValid(buf, count) ||
 		!memIsDisjoint2(buf, count, iv, iv_len))
@@ -287,7 +287,7 @@ err_t brngHMACRand(void* buf, size_t count, const octet theta[], size_t theta_le
 	if (state == 0)
 		return ERR_NOT_ENOUGH_MEMORY;
 	// сгенерировать данные
-	brngHMACStart(state, theta, theta_len, iv, iv_len);
+	brngHMACStart(state, key, key_len, iv, iv_len);
 	brngHMACStepR(buf, count, state);
 	// завершить
 	blobClose(state);
