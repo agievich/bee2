@@ -6,7 +6,7 @@
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2014.07.15
-\version 2015.11.20
+\version 2015.12.09
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -235,7 +235,7 @@ void bashStepH(const void* buf, size_t count, void* state)
 		}
 		memCopy((octet*)s->s + s->filled, buf, s->block_len - s->filled);
 		count -= s->block_len - s->filled;
-		buf = (octet*)buf + s->block_len - s->filled;
+		buf = (const octet*)buf + s->block_len - s->filled;
 #if (OCTET_ORDER == BIG_ENDIAN)
 		u64Rev2(s->s, s->block_len / 8);
 #endif
@@ -250,7 +250,7 @@ void bashStepH(const void* buf, size_t count, void* state)
 		u64Rev2(s->s, s->block_len / 8);
 #endif
 		bashF0(s->s);
-		buf = (octet*)buf + s->block_len;
+		buf = (const octet*)buf + s->block_len;
 		count -= s->block_len;
 	}
 	// неполный блок?

@@ -94,7 +94,7 @@ bool_t botpTest()
 	hexFrom(s_str, beltH(), 64); 
 	botpOCRAStart(state, suite, beltH() + 128, 32);
 	botpOCRAStepS(state, ctr, p, beltH());
-	printf("OCRA:\n\t\n\tD = %s\n\tP = %s\n\tS = %s\n", 
+	printf("OCRA:\t\n\tD = %s\n\tP = %s\n\tS = %s\n", 
 		suite, p_str, s_str);
 	t /= 60;
 	strCopy(q, otp1);

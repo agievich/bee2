@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.11.02
-\version 2015.12.03
+\version 2015.12.09
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -177,7 +177,7 @@ bool_t botpHOTPStepV(const char* otp, void* state)
 
 void botpHOTPStepG(octet ctr[8], const void* state)
 {
-	botp_hotp_st* s = (botp_hotp_st*)state;
+	const botp_hotp_st* s = (const botp_hotp_st*)state;
 	ASSERT(memIsDisjoint2(ctr, 8, state, botpHOTP_keep()) || ctr == s->ctr);
 	memMove(ctr, s->ctr, 8);
 }
@@ -585,7 +585,7 @@ bool_t botpOCRAStepV(const char* otp, const octet q[], size_t q_len,
 
 void botpOCRAStepG(octet ctr[8], const void* state)
 {
-	botp_ocra_st* s = (botp_ocra_st*)state;
+	const botp_ocra_st* s = (const botp_ocra_st*)state;
 	ASSERT(memIsDisjoint2(ctr, 8, state, botpOCRA_keep()) || ctr == s->ctr);
 	memMove(ctr, s->ctr, 8);
 }
@@ -604,19 +604,31 @@ err_t botpOCRARand(char* otp, const char* suite, const octet key[],
 		return ERR_NOT_ENOUGH_MEMORY;
 	// разобрать suite
 	if (!botpOCRAStart(state, suite, key, key_len))
+	{
+		blobClose(state);
 		return ERR_BAD_FORMAT;
+	}
 	// проверить q_len
 	if (q_len < 4 || q_len > 2 * state->q_max)
+	{
+		blobClose(state);
 		return ERR_BAD_PARAMS;
+	}
 	// полностью проверить входные данные
 	if (!memIsValid(otp, state->digit + 1) ||
 		state->ctr_len && !memIsValid(ctr, state->ctr_len) ||
 		!memIsValid(q, q_len) ||
 		state->p_len && !memIsValid(p, state->p_len) ||
 		state->s_len && !memIsValid(s, state->s_len))
+	{
+		blobClose(state);
 		return ERR_BAD_INPUT;
+	}
 	if (state->ts && t == TIME_ERR)
+	{
+		blobClose(state);
 		return ERR_BAD_TIME;
+	}
 	// сгенерировать пароль
 	botpOCRAStepS(state, ctr, p, s);
 	botpOCRAStepR(otp, q, q_len, t, state);
@@ -640,21 +652,36 @@ err_t botpOCRAVerify(const char* otp, const char* suite, const octet key[],
 		return ERR_NOT_ENOUGH_MEMORY;
 	// разобрать suite
 	if (!botpOCRAStart(state, suite, key, key_len))
+	{
+		blobClose(state);
 		return ERR_BAD_FORMAT;
+	}
 	// проверить q_len
 	if (q_len < 4 || q_len > 2 * state->q_max)
+	{
+		blobClose(state);
 		return ERR_BAD_PARAMS;
+	}
 	// полностью проверить входные данные
 	if (state->digit != strLen(otp))
+	{
+		blobClose(state);
 		return ERR_BAD_PWD;
+	}
 	if (!memIsValid(otp, state->digit + 1) ||
 		state->ctr_len && !memIsValid(ctr, state->ctr_len) ||
 		!memIsValid(q, q_len) ||
 		state->p_len && !memIsValid(p, state->p_len) ||
 		state->s_len && !memIsValid(s, state->s_len))
+	{
+		blobClose(state);
 		return ERR_BAD_INPUT;
+	}
 	if (state->ts && t == TIME_ERR)
+	{
+		blobClose(state);
 		return ERR_BAD_TIME;
+	}
 	// проверить пароль
 	botpOCRAStepS(state, ctr, p, s);
 	success = botpOCRAStepV(otp, q, q_len, t, state);
