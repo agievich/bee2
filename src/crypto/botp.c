@@ -1,11 +1,11 @@
 /*
 *******************************************************************************
 \file botp.с
-\brief STB 34.101.botp: experimental OTP algorithms
+\brief STB 34.101.47/botp: OTP algorithms
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.11.02
-\version 2015.12.09
+\version 2016.03.10
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************

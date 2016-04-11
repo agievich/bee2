@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2015.11.17
+\version 2016.04.11
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -758,7 +758,7 @@ err_t beltECBDecr(void* dest, const void* src, size_t count,
 */
 typedef struct
 {
-	u32 key[8];		/*< форматированный ключ */
+	u32 key[8];			/*< форматированный ключ */
 	octet block[16];	/*< вспомогательный блок */
 	octet block2[16];	/*< еще один вспомогательный блок */
 } belt_cbc_st;
@@ -884,7 +884,7 @@ err_t beltCBCDecr(void* dest, const void* src, size_t count,
 */
 typedef struct
 {
-	u32 key[8];		/*< форматированный ключ */
+	u32 key[8];			/*< форматированный ключ */
 	octet block[16];	/*< блок гаммы */
 	size_t reserved;	/*< резерв октетов гаммы */
 } belt_cfb_st;
@@ -1044,8 +1044,8 @@ err_t beltCFBDecr(void* dest, const void* src, size_t count,
 */
 typedef struct
 {
-	u32 key[8];		/*< форматированный ключ */
-	u32 ctr[4];		/*< счетчик */
+	u32 key[8];			/*< форматированный ключ */
+	u32 ctr[4];			/*< счетчик */
 	octet block[16];	/*< блок гаммы */
 	size_t reserved;	/*< резерв октетов гаммы */
 } belt_ctr_st;
@@ -1148,10 +1148,10 @@ err_t beltCTR(void* dest, const void* src, size_t count,
 */
 typedef struct
 {
-	u32 key[8];		/*< форматированный ключ */
-	u32 s[4];		/*< переменная s */
-	u32 r[4];		/*< переменная r */
-	u32 mac[4];		/*< окончательная имитовставка */
+	u32 key[8];			/*< форматированный ключ */
+	u32 s[4];			/*< переменная s */
+	u32 r[4];			/*< переменная r */
+	u32 mac[4];			/*< окончательная имитовставка */
 	octet block[16];	/*< блок данных */
 	size_t filled;		/*< накоплено октетов в блоке */
 } belt_mac_st;
@@ -1604,7 +1604,7 @@ err_t beltDWPUnwrap(void* dest, const void* src1, size_t count1,
 */
 typedef struct
 {
-	u32 key[8];			/*< форматированный ключ */
+	u32 key[8];				/*< форматированный ключ */
 	octet block[16];		/*< вспомогательный блок */
 	word round;				/*< номер такта */
 } belt_kwp_st;
@@ -1881,10 +1881,10 @@ static size_t beltSigma_deep()
 *******************************************************************************
 */
 typedef struct {
-	u32 ls[8];			/*< блок [4]len || [4]s */
-	u32 s1[4];			/*< копия переменной s */
-	u32 h[8];			/*< переменная h */
-	u32 h1[8];			/*< копия переменной h */
+	u32 ls[8];				/*< блок [4]len || [4]s */
+	u32 s1[4];				/*< копия переменной s */
+	u32 h[8];				/*< переменная h */
+	u32 h1[8];				/*< копия переменной h */
 	octet block[32];		/*< блок данных */
 	size_t filled;			/*< накоплено октетов в блоке */
 	octet stack[];			/*< [beltSigma_deep()] стек beltSigma */
@@ -2048,10 +2048,10 @@ err_t beltHash(octet hash[32], const void* src, size_t count)
 */
 
 typedef struct {
-	u32 key[8];		/*< форматированный первоначальный ключ */
+	u32 key[8];			/*< форматированный первоначальный ключ */
 	size_t len;			/*< длина первоначального ключа */
-	u32 block[8];	/*< блок r || level || header */
-	u32 key_new[8];	/*< форматированный преобразованный ключ */
+	u32 block[8];		/*< блок r || level || header */
+	u32 key_new[8];		/*< форматированный преобразованный ключ */
 	octet stack[];		/*< стек beltSigma */
 } belt_krp_st;
 
@@ -2123,13 +2123,13 @@ err_t beltKRP(octet dest[], size_t m, const octet src[], size_t n,
 */
 typedef struct
 {
-	u32 ls_in[8];	/*< блок [4]len || [4]s внутреннего хэширования */
+	u32 ls_in[8];		/*< блок [4]len || [4]s внутреннего хэширования */
 	u32 h_in[8];		/*< переменная h внутреннего хэширования */
-	u32 h1_in[8];	/*< копия переменной h внутреннего хэширования */
-	u32 ls_out[8];	/*< блок [4]len || [4]s внешнего хэширования */
-	u32 h_out[8];	/*< переменная h внешнего хэширования */
-	u32 h1_out[8];	/*< копия переменной h внешнего хэширования */
-	u32 s1[4];		/*< копия переменной s */
+	u32 h1_in[8];		/*< копия переменной h внутреннего хэширования */
+	u32 ls_out[8];		/*< блок [4]len || [4]s внешнего хэширования */
+	u32 h_out[8];		/*< переменная h внешнего хэширования */
+	u32 h1_out[8];		/*< копия переменной h внешнего хэширования */
+	u32 s1[4];			/*< копия переменной s */
 	octet block[32];	/*< блок данных */
 	size_t filled;		/*< накоплено октетов в блоке */
 	octet stack[];		/*< [beltSigma_deep()] стек beltSigma */

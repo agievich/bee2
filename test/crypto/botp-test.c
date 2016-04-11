@@ -1,11 +1,11 @@
 /*
 *******************************************************************************
 \file botp-test.c
-\brief Tests for STB 34.101.botp
+\brief Tests for STB 34.101.47/botp
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.11.06
-\version 2015.12.04
+\version 2016.03.10
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -17,8 +17,6 @@ version 3. See Copyright Notices in bee2/info.h.
 #include <bee2/core/util.h>
 #include <bee2/crypto/belt.h>
 #include <bee2/crypto/botp.h>
-
-#include <stdio.h>
 
 /*
 *******************************************************************************
