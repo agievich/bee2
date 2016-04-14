@@ -2,7 +2,7 @@ Bee2: a cryptographic library
 =============================
 
 [![Build Status](https://travis-ci.org/agievich/bee2.svg?branch=master)](https://travis-ci.org/agievich/bee2)
-[![Coverage Status](https://coveralls.io/repos/github/agievich/bee2/badge.svg?branch=master)](https://coveralls.io/github/agievich/bee2?branch=master)
+[![Coverity Status](https://codecov.io/github/agievich/bee2/coverage.svg?branch=master)](https://codecov.io/github/agievich/bee2?branch=master)
 
 What is Bee2?
 -------------
@@ -37,7 +37,7 @@ Build
 
 Build types (Release by default):
    
-*  Coverage -- test coverage,   
+*  Coverage -- test coverage,
 *  ASan, ASanDbg -- [address sanitizer](http://en.wikipedia.org/wiki/AddressSanitizer),
 *  MemSan, MemSanDbg -- [memory sanitizer](http://code.google.com/p/memory-sanitizer/),
 *  Check, CheckFull -- strict compile rules.

@@ -9,11 +9,11 @@ compiler:
   - clang
 
 branches:
-  - master
+  only:
+    - master
 
 script: 
-  - mkdir build && cd build && cmake .. && make && make test
+  - mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Coverage .. && make && make test
 
 after_success:
-  - coveralls
-
+  - bash <(curl -s https://codecov.io/bash)
