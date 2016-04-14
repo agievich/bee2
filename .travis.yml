@@ -13,7 +13,4 @@ branches:
     - master
 
 script: 
-  - mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Coverage .. && make && make test
-
-after_success:
-  - bash <(curl -s https://codecov.io/bash)
+  - mkdir build && cd build && cmake .. && make && make test
