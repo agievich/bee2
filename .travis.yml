@@ -1,0 +1,16 @@
+# Travis-CI Build for bee2
+# see travis-ci.org for details
+
+language: c
+sudo: false
+
+compiler:
+  - gcc
+  - clang
+
+branches:
+  - master
+
+script: 
+  - mkdir build && cd build && cmake .. && make && make test
+
