@@ -2,15 +2,32 @@
 # see travis-ci.org for details
 
 language: c
-sudo: false
 
-compiler:
-  - gcc
-  - clang
+sudo: false
 
 branches:
   only:
     - master
 
+os:
+  - linux
+  - osx
+
+compiler:
+  - gcc
+  - clang
+
+env:
+  - BUILD_TYPE=Release
+  - BUILD_TYPE=Coverage
+  - BUILD_TYPE=ASan
+  - BUILD_TYPE=MemSan
+  - BUILD_TYPE=Check
+  - BUILD_TYPE=CheckFull
+
 script: 
-  - mkdir build && cd build && cmake .. && make && make test
+  - mkdir build && cd build
+  - cmake -DBUILD_TYPE=$BUILD_TYPE ..
+  - make
+  - make test
+  - make install
