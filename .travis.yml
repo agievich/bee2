@@ -3,7 +3,7 @@
 
 language: c
 
-sudo: false
+sudo: required
 
 branches:
   only:
@@ -20,7 +20,6 @@ compiler:
 env:
   - BUILD_TYPE=Release
   - BUILD_TYPE=Debug
-  - BUILD_TYPE=Coverage
   - BUILD_TYPE=ASan
   - BUILD_TYPE=MemSan
   - BUILD_TYPE=CheckFull
