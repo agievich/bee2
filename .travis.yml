@@ -19,10 +19,10 @@ compiler:
 
 env:
   - BUILD_TYPE=Release
+  - BUILD_TYPE=Debug
   - BUILD_TYPE=Coverage
   - BUILD_TYPE=ASan
   - BUILD_TYPE=MemSan
-  - BUILD_TYPE=Check
   - BUILD_TYPE=CheckFull
 
 script: 
@@ -30,4 +30,4 @@ script:
   - cmake -DBUILD_TYPE=$BUILD_TYPE ..
   - make
   - make test
-  - make install
+  - sudo make install
