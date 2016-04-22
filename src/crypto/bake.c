@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.04.14
-\version 2015.11.03
+\version 2016.04.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -49,7 +49,7 @@ err_t bakeKDF(octet key[32], const octet secret[], size_t secret_len,
 	// создать состояние
 	state = blobCreate(utilMax(2, beltHash_keep(), beltKRP_keep() + 16));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	block = (octet*)state + beltKRP_keep();
 	// key <- beltHash(secret || iv)
 	beltHashStart(state);
@@ -129,7 +129,7 @@ err_t bakeSWU(octet pt[], const bign_params* params, const octet msg[])
 	// создать состояние
 	state = blobCreate(bignStart_keep(params->l, bakeSWU2_deep));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// старт
 	code = bignStart(state, params);
 	ERR_CALL_HANDLE(code, blobClose(state));
@@ -637,7 +637,7 @@ err_t bakeBMQVRunB(octet key[32], const bign_params* params,
 		return ERR_BAD_PARAMS;
 	blob = blobCreate(params->l + 8 + bakeBMQV_keep(params->l));
 	if (blob == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// раскладка блоба
 	in = (octet*)blob;
 	out = in + params->l / 2 + 8;
@@ -686,7 +686,7 @@ err_t bakeBMQVRunA(octet key[32], const bign_params* params,
 		return ERR_BAD_PARAMS;
 	blob = blobCreate(params->l + 8 + bakeBMQV_keep(params->l));
 	if (blob == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// раскладка блоба
 	in = (octet*)blob;
 	out = in + params->l / 2;
@@ -1042,7 +1042,7 @@ err_t bakeBSTSStep4(octet out[], const octet in[], size_t in_len,
 		blob_t Ya;
 		// sa || certa <- beltCFBDecr(Ya, K2, 0^128)
 		if ((Ya = blobCreate(in_len)) == 0)
-			return ERR_NOT_ENOUGH_MEMORY;
+			return ERR_OUTOFMEMORY;
 		memCopy(Ya, in + 2 * no, in_len);
 		beltCFBStart(stack, s->K2, 32, block0);
 		beltCFBStepD(Ya, in_len, stack);
@@ -1152,7 +1152,7 @@ err_t bakeBSTSStep5(const octet in[], size_t in_len, bake_certval_i valb,
 		blob_t Yb;
 		// sb || certb <- beltCFBDecr(Yb, K2, 1^128)
 		if ((Yb = blobCreate(in_len)) == 0)
-			return ERR_NOT_ENOUGH_MEMORY;
+			return ERR_OUTOFMEMORY;
 		memCopy(Yb, in, in_len);
 		beltCFBStart(stack, s->K2, 32, block1);
 		beltCFBStepD(Yb, in_len, stack);
@@ -1248,7 +1248,7 @@ err_t bakeBSTSRunB(octet key[32], const bign_params* params,
 		MAX2(params->l / 2, params->l / 4 + certb->len + 8) +
 		bakeBSTS_keep(params->l));
 	if (blob == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// раскладка блоба
 	in = (octet*)blob;
 	out = in + 512;
@@ -1286,7 +1286,7 @@ err_t bakeBSTSRunB(octet key[32], const bign_params* params,
 			if ((M2 = blobResize(M2, blobSize(M2) + len)) == 0)
 			{
 				blobClose(blob);
-				return ERR_NOT_ENOUGH_MEMORY;
+				return ERR_OUTOFMEMORY;
 			}
 			memCopy((octet*)M2 + blobSize(M2) - len, in, len);
 			code = read(&len, in, 512, file);
@@ -1300,7 +1300,7 @@ err_t bakeBSTSRunB(octet key[32], const bign_params* params,
 		if ((M2 = blobResize(M2, blobSize(M2) + len)) == 0)
 		{
 			blobClose(blob);
-			return ERR_NOT_ENOUGH_MEMORY;
+			return ERR_OUTOFMEMORY;
 		}
 		memCopy((octet*)M2 + blobSize(M2) - len, in, len);
 		code = bakeBSTSStep4(out, M2, blobSize(M2), vala, state);
@@ -1338,7 +1338,7 @@ err_t bakeBSTSRunA(octet key[32], const bign_params* params,
 		3 * params->l / 4 + certa->len + 8 +
 		bakeBSTS_keep(params->l));
 	if (blob == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// раскладка блоба
 	in = (octet*)blob;
 	out = in + MAX2(512, params->l / 2);
@@ -1376,7 +1376,7 @@ err_t bakeBSTSRunA(octet key[32], const bign_params* params,
 			if ((M3 = blobResize(M3, blobSize(M3) + len)) == 0)
 			{
 				blobClose(blob);
-				return ERR_NOT_ENOUGH_MEMORY;
+				return ERR_OUTOFMEMORY;
 			}
 			memCopy((octet*)M3 + blobSize(M3) - len, in, len);
 			code = read(&len, in, 512, file);
@@ -1390,7 +1390,7 @@ err_t bakeBSTSRunA(octet key[32], const bign_params* params,
 		if ((M3 = blobResize(M3, blobSize(M3) + len)) == 0)
 		{
 			blobClose(blob);
-			return ERR_NOT_ENOUGH_MEMORY;
+			return ERR_OUTOFMEMORY;
 		}
 		memCopy((octet*)M3 + blobSize(M3) - len, in, len);
 		code = bakeBSTSStep5(M3, blobSize(M3), valb, state);
@@ -1844,7 +1844,7 @@ err_t bakeBPACERunB(octet key[32], const bign_params* params,
 		return ERR_BAD_PARAMS;
 	blob = blobCreate(9 * params->l / 8 + 8 + bakeBPACE_keep(params->l));
 	if (blob == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// раскладка блоба
 	in = (octet*)blob;
 	out = in + 5 * params->l / 8;
@@ -1897,7 +1897,7 @@ err_t bakeBPACERunA(octet key[32], const bign_params* params,
 		return ERR_BAD_PARAMS;
 	blob = blobCreate(9 * params->l / 8 + 8 + bakeBPACE_keep(params->l));
 	if (blob == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// раскладка блоба
 	in = (octet*)blob;
 	out = in + params->l / 2 + 8;

@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.04.23
-\version 2015.10.29
+\version 2016.04.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -54,10 +54,10 @@ static err_t fileMsgWrite(size_t* written, const void* buf, size_t count,
 	// найти сообщение
 	f = (file_msg_st*)file;
 	if (f->i >= 4)
-		return ERR_WRITE_FAULT;
+		return ERR_FILE_WRITE;
 	// записать
 	if (count > sizeof(_msgs[f->i].buf))
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	_msgs[f->i].valid = TRUE;
 	memCopy(_msgs[f->i].buf, buf, count);
 	*written = _msgs[f->i].len = count;
@@ -77,7 +77,7 @@ static err_t fileMsgRead(size_t* read, void* buf, size_t count, void* file)
 	// найти сообщение
 	f = (file_msg_st*)file;
 	if (f->i >= 4)
-		return ERR_READ_FAULT;
+		return ERR_FILE_READ;
 	if (!_msgs[f->i].valid)
 		return ERR_FILE_NOT_FOUND;
 	// прочитать частично?

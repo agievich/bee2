@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.27
-\version 2015.11.03
+\version 2016.04.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -353,7 +353,7 @@ err_t bignValParams(const bign_params* params)
 	// создать состояние
 	state = blobCreate(bignStart_keep(params->l, bignValParams_deep));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// старт
 	code = bignStart(state, params);
 	ERR_CALL_HANDLE(code, blobClose(state));
@@ -431,7 +431,7 @@ err_t bignOidToDER(octet oid_der[], size_t* oid_len, const char* oid)
 	if (oid_der)
 	{
 		if (*oid_len < len)
-			return ERR_NOT_ENOUGH_MEMORY;
+			return ERR_OUTOFMEMORY;
 		oidToDER(oid_der, oid);
 	}
 	*oid_len = len;
@@ -473,7 +473,7 @@ err_t bignGenKeypair(octet privkey[], octet pubkey[],
 	// создать состояние
 	state = blobCreate(bignStart_keep(params->l, bignGenKeypair_deep));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// старт
 	code = bignStart(state, params);
 	ERR_CALL_HANDLE(code, blobClose(state));
@@ -537,7 +537,7 @@ err_t bignValPubkey(const bign_params* params, const octet pubkey[])
 	// создать состояние
 	state = blobCreate(bignStart_keep(params->l, bignValPubkey_deep));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// старт
 	code = bignStart(state, params);
 	ERR_CALL_HANDLE(code, blobClose(state));
@@ -594,7 +594,7 @@ err_t bignCalcPubkey(octet pubkey[], const bign_params* params,
 	// создать состояние
 	state = blobCreate(bignStart_keep(params->l, bignCalcPubkey_deep));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// старт
 	code = bignStart(state, params);
 	ERR_CALL_HANDLE(code, blobClose(state));
@@ -662,7 +662,7 @@ err_t bignDH(octet key[], const bign_params* params, const octet privkey[],
 	// создать состояние
 	state = blobCreate(bignStart_keep(params->l, bignDH_deep));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// старт
 	code = bignStart(state, params);
 	ERR_CALL_HANDLE(code, blobClose(state));
@@ -765,7 +765,7 @@ err_t bignSign(octet sig[], const bign_params* params, const octet oid_der[],
 	// создать состояние
 	state = blobCreate(bignStart_keep(params->l, bignSign_deep));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// старт
 	code = bignStart(state, params);
 	ERR_CALL_HANDLE(code, blobClose(state));
@@ -872,7 +872,7 @@ err_t bignSign2(octet sig[], const bign_params* params, const octet oid_der[],
 	// создать состояние
 	state = blobCreate(bignStart_keep(params->l, bignSign2_deep));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// старт
 	code = bignStart(state, params);
 	ERR_CALL_HANDLE(code, blobClose(state));
@@ -995,7 +995,7 @@ err_t bignVerify(const bign_params* params, const octet oid_der[],
 	// создать состояние
 	state = blobCreate(bignStart_keep(params->l, bignVerify_deep));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// старт
 	code = bignStart(state, params);
 	ERR_CALL_HANDLE(code, blobClose(state));
@@ -1104,7 +1104,7 @@ err_t bignKeyWrap(octet token[], const bign_params* params, const octet key[],
 	// создать состояние
 	state = blobCreate(bignStart_keep(params->l, bignKeyWrap_deep));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// старт
 	code = bignStart(state, params);
 	ERR_CALL_HANDLE(code, blobClose(state));
@@ -1212,7 +1212,7 @@ err_t bignKeyUnwrap(octet key[], const bign_params* params, const octet token[],
 	// создать состояние
 	state = blobCreate(bignStart_keep(params->l, bignKeyUnwrap_deep));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// старт
 	code = bignStart(state, params);
 	ERR_CALL_HANDLE(code, blobClose(state));
@@ -1342,7 +1342,7 @@ err_t bignIdExtract(octet id_privkey[], octet id_pubkey[],
 	// создать состояние
 	state = blobCreate(bignStart_keep(params->l, bignIdExtract_deep));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// старт
 	code = bignStart(state, params);
 	ERR_CALL_HANDLE(code, blobClose(state));
@@ -1467,7 +1467,7 @@ err_t bignIdSign(octet id_sig[], const bign_params* params,
 	// создать состояние
 	state = blobCreate(bignStart_keep(params->l, bignIdSign_deep));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// старт
 	code = bignStart(state, params);
 	ERR_CALL_HANDLE(code, blobClose(state));
@@ -1576,7 +1576,7 @@ err_t bignIdSign2(octet id_sig[], const bign_params* params,
 	// создать состояние
 	state = blobCreate(bignStart_keep(params->l, bignIdSign2_deep));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// старт
 	code = bignStart(state, params);
 	ERR_CALL_HANDLE(code, blobClose(state));
@@ -1708,7 +1708,7 @@ err_t bignIdVerify(const bign_params* params, const octet oid_der[],
 	// создать состояние
 	state = blobCreate(bignStart_keep(params->l, bignIdVerify_deep));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// старт
 	code = bignStart(state, params);
 	ERR_CALL_HANDLE(code, blobClose(state));

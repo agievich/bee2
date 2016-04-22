@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.01
-\version 2015.11.03
+\version 2016.04.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -519,7 +519,7 @@ err_t pfokGenParams(pfok_params* params, const pfok_seed* seed,
 			zmMontCreate_deep(no), 
 			qrPower_deep(n, n, zmMontCreate_deep(no))));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// раскладка состояния
 	stb_state = (octet*)state;
 	qi = (word*)(stb_state + prngSTB_keep());
@@ -626,7 +626,7 @@ err_t pfokValParams(const pfok_params* params)
 			zmMontCreate_deep(no),
 			qrPower_deep(n, n, zmMontCreate_deep(no))));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// раскладка состояния
 	p = (word*)state;
 	g = p + n;
@@ -697,7 +697,7 @@ err_t pfokGenKeypair(octet privkey[], octet pubkey[],
 			zmMontCreate_deep(no),
 			qrPower_deep(n, n, zmMontCreate_deep(no))));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// раскладка состояния
 	x = (word*)state;
 	y = x + m;
@@ -771,7 +771,7 @@ err_t pfokCalcPubkey(octet pubkey[], const pfok_params* params,
 			zmMontCreate_deep(no),
 			qrPower_deep(n, n, zmMontCreate_deep(no))));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// раскладка состояния
 	x = (word*)state;
 	y = x + m;
@@ -834,7 +834,7 @@ err_t pfokDH(octet sharekey[], const pfok_params* params,
 			zmMontCreate_deep(no),
 			qrPower_deep(n, n, zmMontCreate_deep(no))));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// раскладка состояния
 	x = (word*)state;
 	y = x + m;
@@ -904,7 +904,7 @@ err_t pfokMTI(octet sharekey[], const pfok_params* params,
 			zmMontCreate_deep(no),
 			qrPower_deep(n, n, zmMontCreate_deep(no))));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// раскладка состояния
 	x = (word*)state;
 	u = x + m;

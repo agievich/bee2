@@ -6,7 +6,7 @@
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2014.07.15
-\version 2015.12.09
+\version 2016.04.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -310,7 +310,7 @@ err_t bashHash(octet hash[], size_t l, const void* src, size_t count)
 	// создать состояние
 	state = blobCreate(bash_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// вычислить хэш-значение
 	bashStart(state, l);
 	bashStepH(src, count, state);

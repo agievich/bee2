@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.11.02
-\version 2016.03.10
+\version 2016.04.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -196,7 +196,7 @@ err_t botpHOTPRand(char* otp, size_t digit, const octet key[], size_t key_len,
 	// создать состояние
 	state = blobCreate(botpHOTP_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// сгенерировать пароль и изменить счетчик
 	botpHOTPStart(state, digit, key, key_len);
 	botpHOTPStepS(state, ctr);
@@ -219,7 +219,7 @@ err_t botpHOTPVerify(const char* otp, const octet key[], size_t key_len,
 	// создать состояние
 	state = blobCreate(botpHOTP_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// проверить пароль
 	botpHOTPStart(state, strLen(otp), key, key_len);
 	botpHOTPStepS(state, ctr);
@@ -302,7 +302,7 @@ err_t botpTOTPRand(char* otp, size_t digit, const octet key[], size_t key_len,
 	// создать состояние
 	state = blobCreate(botpTOTP_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// сгенерировать пароль
 	botpTOTPStart(state, digit, key, key_len);
 	botpTOTPStepR(otp, t, state);
@@ -326,7 +326,7 @@ err_t botpTOTPVerify(const char* otp, const octet key[], size_t key_len,
 	// создать состояние
 	state = blobCreate(botpTOTP_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// проверить пароль
 	botpTOTPStart(state, strLen(otp), key, key_len);
 	success = botpTOTPStepV(otp, t, state);
@@ -601,7 +601,7 @@ err_t botpOCRARand(char* otp, const char* suite, const octet key[],
 	// создать состояние
 	state = (botp_ocra_st*)blobCreate(botpOCRA_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// разобрать suite
 	if (!botpOCRAStart(state, suite, key, key_len))
 	{
@@ -649,7 +649,7 @@ err_t botpOCRAVerify(const char* otp, const char* suite, const octet key[],
 	// создать состояние
 	state = (botp_ocra_st*)blobCreate(botpOCRA_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// разобрать suite
 	if (!botpOCRAStart(state, suite, key, key_len))
 	{

@@ -2,7 +2,7 @@ Bee2: a cryptographic library
 =============================
 
 [![Build Status](https://travis-ci.org/agievich/bee2.svg?branch=master)](https://travis-ci.org/agievich/bee2)
-
+[![Coverity Static Analysis](https://scan.coverity.com/projects/8544/badge.svg)](https://scan.coverity.com/projects/agievich-bee2)
 
 What is Bee2?
 -------------

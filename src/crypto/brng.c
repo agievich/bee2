@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.01.31
-\version 2015.12.03
+\version 2016.04.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -170,7 +170,7 @@ err_t brngCTRRand(void* buf, size_t count, const octet key[32], octet iv[32])
 	// создать состояние
 	state = blobCreate(brngCTR_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// сгенерировать данные
 	brngCTRStart(state, key, iv);
 	brngCTRStepR(buf, count, state);
@@ -285,7 +285,7 @@ err_t brngHMACRand(void* buf, size_t count, const octet key[], size_t key_len,
 	// создать состояние
 	state = blobCreate(brngHMAC_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// сгенерировать данные
 	brngHMACStart(state, key, key_len, iv, iv_len);
 	brngHMACStepR(buf, count, state);

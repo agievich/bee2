@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2016.04.11
+\version 2016.04.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -717,7 +717,7 @@ err_t beltECBEncr(void* dest, const void* src, size_t count,
 	// создать состояние
 	state = blobCreate(beltECB_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// зашифровать
 	beltECBStart(state, theta, len);
 	memMove(dest, src, count);
@@ -741,7 +741,7 @@ err_t beltECBDecr(void* dest, const void* src, size_t count,
 	// создать состояние
 	state = blobCreate(beltECB_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// расшифровать
 	beltECBStart(state, theta, len);
 	memMove(dest, src, count);
@@ -842,7 +842,7 @@ err_t beltCBCEncr(void* dest, const void* src, size_t count,
 	// создать состояние
 	state = blobCreate(beltCBC_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// зашифровать
 	beltCBCStart(state, theta, len, iv);
 	memMove(dest, src, count);
@@ -867,7 +867,7 @@ err_t beltCBCDecr(void* dest, const void* src, size_t count,
 	// создать состояние
 	state = blobCreate(beltCBC_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// расшифровать
 	beltCBCStart(state, theta, len, iv);
 	memMove(dest, src, count);
@@ -996,7 +996,7 @@ err_t beltCFBEncr(void* dest, const void* src, size_t count,
 	// создать состояние
 	state = blobCreate(beltCFB_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// зашифровать
 	beltCFBStart(state, theta, len, iv);
 	memMove(dest, src, count);
@@ -1021,7 +1021,7 @@ err_t beltCFBDecr(void* dest, const void* src, size_t count,
 	// создать состояние
 	state = blobCreate(beltCFB_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// расшифровать
 	beltCFBStart(state, theta, len, iv);
 	memMove(dest, src, count);
@@ -1125,7 +1125,7 @@ err_t beltCTR(void* dest, const void* src, size_t count,
 	// создать состояние
 	state = blobCreate(beltCTR_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// зашифровать
 	beltCTRStart(state, theta, len, iv);
 	memMove(dest, src, count);
@@ -1309,7 +1309,7 @@ err_t beltMAC(octet mac[8], const void* src, size_t count,
 	// создать состояние
 	state = blobCreate(beltMAC_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// выработать имитовставку
 	beltMACStart(state, theta, len);
 	beltMACStepA(src, count, state);
@@ -1550,7 +1550,7 @@ err_t beltDWPWrap(void* dest, octet mac[8], const void* src1, size_t count1,
 	// создать состояние
 	state = blobCreate(beltDWP_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// установить защиту
 	beltDWPStart(state, theta, len, iv);
 	beltDWPStepI(src2, count2, state);
@@ -1580,7 +1580,7 @@ err_t beltDWPUnwrap(void* dest, const void* src1, size_t count1,
 	// создать состояние
 	state = blobCreate(beltDWP_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// снять защиту
 	beltDWPStart(state, theta, len, iv);
 	beltDWPStepI(src2, count2, state);
@@ -1742,7 +1742,7 @@ err_t beltKWPWrap(octet dest[], const octet src[], size_t count,
 	// создать состояние
 	state = blobCreate(beltKWP_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// установить защиту
 	beltKWPStart(state, theta, len);
 	memMove(dest, src, count);
@@ -1773,7 +1773,7 @@ err_t beltKWPUnwrap(octet dest[], const octet src[], size_t count,
 	// создать состояние
 	state = blobCreate(beltKWP_keep() + 16);
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	header2 = (octet*)state + beltKWP_keep();
 	// снять защиту
 	beltKWPStart(state, theta, len);
@@ -2031,7 +2031,7 @@ err_t beltHash(octet hash[32], const void* src, size_t count)
 	// создать состояние
 	state = blobCreate(beltHash_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// вычислить хэш-значение
 	beltHashStart(state);
 	beltHashStepH(src, count, state);
@@ -2107,7 +2107,7 @@ err_t beltKRP(octet dest[], size_t m, const octet src[], size_t n,
 	// создать состояние
 	state = blobCreate(beltKRP_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// преобразовать ключ
 	beltKRPStart(state, src, n, level);
 	beltKRPStepG(dest, m, header, state);
@@ -2344,7 +2344,7 @@ err_t beltHMAC(octet mac[32], const void* src, size_t count,
 	// создать состояние
 	state = blobCreate(beltHMAC_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// выработать имитовставку
 	beltHMACStart(state, theta, len);
 	beltHMACStepA(src, count, state);
@@ -2373,7 +2373,7 @@ err_t beltPBKDF(octet theta[32], const octet pwd[], size_t pwd_len,
 	// создать состояние
 	state = blobCreate(beltHMAC_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// theta <- HMAC(pwd, salt || 00000001)
 	beltHMACStart(state, pwd, pwd_len);
 	beltHMACStepA(salt, salt_len, state);

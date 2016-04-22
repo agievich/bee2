@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.27
-\version 2015.11.03
+\version 2016.04.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -469,7 +469,7 @@ static err_t _dstuCreateEc(
 			ecCreateGroup_deep(f_deep),
 			deep(n, f_deep, ec_d, ec_deep)));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// создать поле
 	f = (qr_o*)((octet*)state + ec_keep);
 	p = (size_t*)((octet*)f + f_keep);

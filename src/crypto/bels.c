@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.05.14
-\version 2015.11.03
+\version 2016.04.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -86,7 +86,7 @@ err_t belsValM(const octet m0[], size_t len)
 	n = W_OF_O(len);
 	state = blobCreate(n + 1 + ppIsIrred_deep(n + 1));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// раскладка состояния
 	f0 = (word*)state;
 	stack = f0 + n + 1;
@@ -126,7 +126,7 @@ err_t belsGenM0(octet m0[], size_t len, gen_i ang, void* ang_state)
 	n = W_OF_O(len);
 	state = blobCreate(n + 1 + ppIsIrred_deep(n + 1));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// раскладка состояния
 	f0 = (word*)state;
 	stack = f0 + n + 1;
@@ -169,7 +169,7 @@ err_t belsGenMi(octet mi[], size_t len, const octet m0[], gen_i ang,
 	n = W_OF_O(len);
 	state = blobCreate(O_OF_W(2 * n + 2) + ppMinPolyMod_deep(n + 1));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// раскладка состояния
 	f0 = (word*)state;
 	f = f0 + n + 1;
@@ -225,7 +225,7 @@ err_t belsGenMid(octet mid[], size_t len, const octet m0[], const octet id[],
 			beltHash_keep(),
 			ppMinPolyMod_deep(n + 1)));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// раскладка состояния
 	f0 = (word*)state;
 	f = f0 + n + 1;
@@ -292,7 +292,7 @@ err_t belsShare(octet si[], size_t count, size_t threshold, size_t len,
 			ppMul_deep(threshold * n - n, n),
 			ppMod_deep(threshold * n, n + 1)));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// раскладка состояния
 	f = (word*)state;
 	k = f + n + 1;
@@ -376,7 +376,7 @@ err_t belsRecover(octet s[], size_t count, size_t len, const octet si[],
 	// создать состояние
 	state = blobCreate(deep);
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// раскладка состояния
 	f = (word*)state;
 	g = f + n + 1;

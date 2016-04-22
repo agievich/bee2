@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.11.06
-\version 2016.04.15
+\version 2016.04.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -63,8 +63,7 @@ bool_t botpTest()
 	botpHOTPStepG(ctr, state);
 	// тесты TOTP
 	t = 1449165288;
-	if (t == TIME_ERR)
-		return FALSE;
+	ASSERT(t != TIME_ERR);
 	botpTOTPStart(state, 8, beltH() + 128, 32);
 	botpTOTPStepR(otp, t / 60, state);
 	printf("TOTP.1:\n\tT = %u / 60 = %u\n\tR = %s\n", 

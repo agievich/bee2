@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2016.04.11
+\version 2016.04.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -465,14 +465,14 @@ err_t rngCreate(read_i source, void* source_state)
 	}
 	// создать мьютекс и заблокировать его
 	if (!mtMtxCreate(_mtx))
-		return ERR_CANNOT_MAKE;
+		return ERR_FILE_CREATE;
 	mtMtxLock(_mtx);
 	// создать состояние
 	_state = (rng_state_st*)blobCreate(rngCreate_keep());
 	if (!_state)
 	{
 		mtMtxClose(_mtx);
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	}
 	// опрос источников случайности
 	count = 0;
@@ -501,7 +501,7 @@ err_t rngCreate(read_i source, void* source_state)
 	{
 		blobClose(_state);
 		mtMtxClose(_mtx);
-		return ERR_INSUFFICIENT_ENTROPY;
+		return ERR_BAD_ENTROPY;
 	}
 	// создать brngCTR
 	beltHashStepG(_state->block, _state->alg_state);
