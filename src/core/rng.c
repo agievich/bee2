@@ -304,7 +304,7 @@ static err_t rngReadSys(size_t* read, void* buf, size_t count)
 	ASSERT(memIsValid(buf, count));
 	fp = fopen("/dev/urandom", "r");
 	if (!fp)
-		return ERR_OPEN_FAILED;
+		return ERR_FILE_OPEN;
 	*read = fread(buf, 1, count, fp);
 	fclose(fp);
 	return ERR_OK;
