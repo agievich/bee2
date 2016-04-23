@@ -3,9 +3,9 @@
 \file rng.c
 \brief Entropy sources and random number generators
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2015.10.29
+\version 2016.04.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -189,6 +189,9 @@ static err_t rngReadTRNG(size_t* read, void* buf, size_t count)
 \warning [Jessie Walker]: наблюдения зависимы, модель AR(1).
 
 \todo Полноценная оценка энтропии.
+
+\todo Остановка на Windows, если параллельно запущено несколько ресурсоемких
+процессов.
 *******************************************************************************
 */
 
@@ -335,7 +338,7 @@ bool_t rngTestFIPS1(const octet buf[2500])
 	{
 		word w;
 		--count;
-		wwFromMem(&w, buf + O_OF_W(count), 2500 - O_OF_W(count));
+		wwFrom(&w, buf + O_OF_W(count), 2500 - O_OF_W(count));
 		s = wordWeight(w);
 	}
 	while (count--)
@@ -437,20 +440,17 @@ err_t rngReadSource(size_t* read, void* buf, size_t count,
 
 typedef struct 
 {
-	obj_hdr_t hdr;				/*< заголовок */
-// ptr_table {
-	octet* alg_state;			/*< [MAX(beltHash_keep(), brngCTR_keep())] */
-// }
-	octet data[32];				/*< данные */
-} rng_state_o;
+	octet block[32];			/*< дополнительные данные brngCTR */
+	octet alg_state[];			/*< [MAX(beltHash_keep(), brngCTR_keep())] */
+} rng_state_st;
 
 static size_t _lock;			/*< счетчик блокировок */
 static mt_mtx_t _mtx[1];		/*< мьютекс */
-static rng_state_o* _state;		/*< состояние */
+static rng_state_st* _state;	/*< состояние */
 
 size_t rngCreate_keep()
 {
-	return sizeof(rng_state_o) + MAX2(beltHash_keep(), brngCTR_keep());
+	return sizeof(rng_state_st) + MAX2(beltHash_keep(), brngCTR_keep());
 }
 
 err_t rngCreate(read_i source, void* source_state)
@@ -465,53 +465,48 @@ err_t rngCreate(read_i source, void* source_state)
 	}
 	// создать мьютекс и заблокировать его
 	if (!mtMtxCreate(_mtx))
-		return ERR_CANNOT_MAKE;
+		return ERR_FILE_CREATE;
 	mtMtxLock(_mtx);
 	// создать состояние
-	_state = (rng_state_o*)blobCreate(rngCreate_keep());
+	_state = (rng_state_st*)blobCreate(rngCreate_keep());
 	if (!_state)
 	{
 		mtMtxClose(_mtx);
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	}
-	// раскладка состояния
-	_state->hdr.keep = rngCreate_keep();
-	_state->hdr.p_count = 1;
-	_state->hdr.o_count = 0;
-	_state->alg_state = _state->data + 32;
 	// опрос источников случайности
 	count = 0;
 	beltHashStart(_state->alg_state);
-	if (rngReadSource(&read, _state->data, 32, "trng") == ERR_OK)
+	if (rngReadSource(&read, _state->block, 32, "trng") == ERR_OK)
 	{
-		beltHashStepH(_state->data, read, _state->alg_state);
+		beltHashStepH(_state->block, read, _state->alg_state);
 		count += read;
 	}
-	if (rngReadSource(&read, _state->data, 32, "timer") == ERR_OK)
+	if (rngReadSource(&read, _state->block, 32, "timer") == ERR_OK)
 	{
-		beltHashStepH(_state->data, read, _state->alg_state);
+		beltHashStepH(_state->block, read, _state->alg_state);
 		count += read;
 	}
-	if (rngReadSource(&read, _state->data, 32, "sys") == ERR_OK)
+	if (rngReadSource(&read, _state->block, 32, "sys") == ERR_OK)
 	{
-		beltHashStepH(_state->data, read, _state->alg_state);
+		beltHashStepH(_state->block, read, _state->alg_state);
 		count += read;
 	}
-	if (source && source(&read, _state->data, 32, source_state) == ERR_OK)
+	if (source && source(&read, _state->block, 32, source_state) == ERR_OK)
 	{
-		beltHashStepH(_state->data, read, _state->alg_state);
+		beltHashStepH(_state->block, read, _state->alg_state);
 		count += read;
 	}
 	if (count < 32)
 	{
 		blobClose(_state);
 		mtMtxClose(_mtx);
-		return ERR_INSUFFICIENT_ENTROPY;
+		return ERR_BAD_ENTROPY;
 	}
 	// создать brngCTR
-	beltHashStepG(_state->data, _state->alg_state);
-	brngCTRStart(_state->alg_state, _state->data, 0);
-	memSetZero(_state->data, 32);
+	beltHashStepG(_state->block, _state->alg_state);
+	brngCTRStart(_state->alg_state, _state->block, 0);
+	memSetZero(_state->block, 32);
 	// завершение
 	_lock = 1;
 	mtMtxUnlock(_mtx);

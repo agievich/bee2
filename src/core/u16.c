@@ -3,9 +3,9 @@
 \file u16.c
 \brief 16-bit unsigned words
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.10.28
-\version 2015.10.28
+\version 2015.11.17
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -54,6 +54,6 @@ void u16To(void* dest, size_t count, const u16 src[])
 		u = 0;
 	}
 	for (count /= 2; count--;)
-		((u16*)dest)[count] = wordRevU16(((u16*)dest)[count]);
+		((u16*)dest)[count] = u16Rev(((u16*)dest)[count]);
 #endif // OCTET_ORDER
 }

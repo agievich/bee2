@@ -1,11 +1,11 @@
 /*
 *******************************************************************************
 \file bash.h
-\brief STB 34.101.bash: experimental hashing algorithms
+\brief STB 34.101.77 (bash): hashing algorithms
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.15
-\version 2015.10.28
+\version 2015.12.01
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -132,7 +132,7 @@ void bashStepG(
 	\return Признак успеха.
 */
 bool_t bashStepV(
-	const octet hash[],	/*!< [out] контрольное хэш-значение */
+	const octet hash[],	/*!< [in] контрольное хэш-значение */
 	size_t hash_len,	/*!< [in] длина hash */
 	void* state			/*!< [in/out] состояние */
 );

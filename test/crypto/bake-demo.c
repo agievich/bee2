@@ -3,9 +3,9 @@
 \file bake-demo.c
 \brief Demo for STB 34.101.66 (bake)
 \project bee2/test
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.05.03
-\version 2015.10.29
+\version 2016.04.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -92,7 +92,7 @@ static err_t fileWrite(size_t* written, const void* buf, size_t count,
 		f->frame_offset != 0 ||
 		f->frame_len != count ||
 		!memEq(f->frame, buf, count))
-		return ERR_WRITE_FAULT;
+		return ERR_FILE_WRITE;
 	// к следующему пакету
 	f->frame += f->frame_len;
 	if (f->frame + 2 >= f->data + f->data_len)

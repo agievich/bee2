@@ -3,9 +3,9 @@
 \file zz.c
 \brief Multiple-precision unsigned integers
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.22
-\version 2015.10.29
+\version 2015.11.02
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -1737,7 +1737,7 @@ bool_t zzRandMod(word a[], const word mod[], size_t n, gen_i rng,
 	do
 	{
 		rng(a, O_OF_B(l), rng_state);
-		wwFromMem(a, a, O_OF_B(l));
+		wwFrom(a, a, O_OF_B(l));
 		wwTrimHi(a, n, l);
 	}
 	while (wwCmp(a, mod, n) >= 0 && i--);
@@ -1760,7 +1760,7 @@ bool_t zzRandNZMod(word a[], const word mod[], size_t n, gen_i rng,
 	do
 	{
 		rng(a, O_OF_B(l), rng_state);
-		wwFromMem(a, a, O_OF_B(l));
+		wwFrom(a, a, O_OF_B(l));
 		wwTrimHi(a, n, l);
 	}
 	while ((wwIsZero(a, n) || wwCmp(a, mod, n) >= 0) && i--);
@@ -2010,16 +2010,16 @@ void zzPowerMod(word c[], const word a[], size_t n, const word b[], size_t m,
 	r = (qr_o*)(t + n);
 	stack = (octet*)r + zmCreate_keep(no);
 	// r <- Zm(mod)
-	wwToMem(t, no, mod);
+	wwTo(t, no, mod);
 	zmCreate(r, (octet*)t, no, stack);
 	// t <- a
-	wwToMem(t, no, a);
+	wwTo(t, no, a);
 	qrFrom(t, (octet*)t, r, stack);
 	// t <- a^b
 	qrPower(t, t, b, m, r, stack);
 	// c <- t
 	qrTo((octet*)t, t, r, stack);
-	wwFromMem(c, t, no);
+	wwFrom(c, t, no);
 }
 
 size_t zzPowerMod_deep(size_t n, size_t m)

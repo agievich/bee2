@@ -3,9 +3,9 @@
 \file hex.h
 \brief Hexadecimal strings
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.10.29
-\version 2015.10.29
+\version 2015.11.09
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -124,10 +124,9 @@ bool_t FAST(hexEqRev)(const void* buf, const char* hex);
 
 /*!	\brief Загрузка из буфера памяти
 
-	Буфер [count]src преобразуется в шестнадцатеричную строку dest. Первому 
-	октету src соответствует первая пара символов dest, второму октету --
-	вторая пара и т.д.
-	\pre По адресу dest зарезервировано 2 * count + 1 символов.
+	Буфер [count]src преобразуется в шестнадцатеричную строку 
+	{2 * count + 1}dest. Первому октету src соответствует первая пара 
+	символов dest, второму октету -- вторая пара и т.д.
 	\pre Буферы dest и src не пересекаются.
 	\safe Функция нерегулярна.
 */
@@ -139,10 +138,9 @@ void hexFrom(
 
 /*!	\brief Обратная загрузка из буфера памяти
 
-	Буфер [count]src преобразуется в шестнадцатеричную строку dest. Первому 
-	октету src соответствует последняя пара символов dest, второму октету --
-	предпоследняя пара и т.д.
-	\pre По адресу dest зарезервировано 2 * count + 1 символов.
+	Буфер [count]src преобразуется в шестнадцатеричную строку 
+	[2 * count + 1]dest. Первому октету src соответствует последняя пара 
+	символов dest, второму октету -- предпоследняя пара и т.д.
 	\pre Буферы dest и src не пересекаются.
 	\safe Функция нерегулярна.
 */

@@ -1,5 +1,6 @@
 set(src
   core/blob.c
+  core/dec.c
   core/der.c
   core/err.c
   core/mem.c
@@ -21,6 +22,7 @@ set(src
   crypto/bels.c
   crypto/belt.c
   crypto/bign.c
+  crypto/botp.c
   crypto/brng.c
   crypto/dstu.c
   crypto/g12s.c

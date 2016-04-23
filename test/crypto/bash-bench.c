@@ -1,11 +1,11 @@
 ﻿/*
 *******************************************************************************
 \file bash-bench.c
-\brief Benchmarks for STB 34.101.bash
+\brief Benchmarks for STB 34.101.77 (bash)
 \project bee2/test
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.15
-\version 2015.09.25
+\version 2015.11.23
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -49,7 +49,7 @@ bool_t bashBench()
 			beltHashStepH(buf, sizeof(buf), belt_state);
 		beltHashStepG(hash, belt_state);
 		ticks = tmTicks() - ticks;
-		printf("bashBench::belt-hash:  %u cycles / byte [%u kBytes / sec]\n",
+		printf("bashBench::belt-hash: %3u cycles / byte [%5u kBytes / sec]\n",
 			(unsigned)(ticks / 1024 / reps),
 			(unsigned)tmSpeed(reps, ticks));
 		// эксперимент c bash256
@@ -59,7 +59,7 @@ bool_t bashBench()
 			bash256StepH(buf, sizeof(buf), bash_state);
 		bash256StepG(hash, bash_state);
 		ticks = tmTicks() - ticks;
-		printf("bashBench::bash256:  %u cycles / byte [%u kBytes / sec]\n",
+		printf("bashBench::bash256:   %3u cycles / byte [%5u kBytes / sec]\n",
 			(unsigned)(ticks / 1024 / reps),
 			(unsigned)tmSpeed(reps, ticks));
 		// эксперимент c bash384
@@ -69,7 +69,7 @@ bool_t bashBench()
 			bash384StepH(buf, sizeof(buf), bash_state);
 		bash384StepG(hash, bash_state);
 		ticks = tmTicks() - ticks;
-		printf("bashBench::bash384:  %u cycles / byte [%u kBytes / sec]\n",
+		printf("bashBench::bash384:   %3u cycles / byte [%5u kBytes / sec]\n",
 			(unsigned)(ticks / 1024 / reps),
 			(unsigned)tmSpeed(reps, ticks));
 		// эксперимент c bash512
@@ -79,7 +79,7 @@ bool_t bashBench()
 			bash512StepH(buf, sizeof(buf), bash_state);
 		bash512StepG(hash, bash_state);
 		ticks = tmTicks() - ticks;
-		printf("bashBench::bash512:  %u cycles / byte [%u kBytes / sec]\n",
+		printf("bashBench::bash512:   %3u cycles / byte [%5u kBytes / sec]\n",
 			(unsigned)(ticks / 1024 / reps),
 			(unsigned)tmSpeed(reps, ticks));
 	}

@@ -3,9 +3,9 @@
 \file str.h
 \brief Strings
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.02.04
-\version 2015.04.14
+\version 2015.12.03
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -36,7 +36,7 @@ extern "C" {
 представляет собой последовательность символов-октетов, которая
 заканчивается нулевым октетом.
 
-\pre В функции передаются корректные буферы памяти.
+\pre Во все функции, кроме strIsValid(), передаются корректные строки.
 *******************************************************************************
 */
 
@@ -83,22 +83,51 @@ extern "C" {
 /*!	\brief Корректная строка?
 
 	Проверяется, что строка str корректна.
-	\return Проверяемый признак.
+	\return Признак успеха.
 */
 bool_t strIsValid(
 	const char* str		/*!< [in] строка */
 );
 
-/*!	\brief Шестнадцатеричная строка?
+/*!	\brief Буквенно-цифовая?
 
-	Проверяется, что строка str состоит из шестнадцатеричных символов 
-	'0' -- '9', 'A' -- 'F' (в верхнем или нижнем регистрах).
-	\pre Строка корректна.
-	\return Проверяемый признак.
+	Проверяется, что строка str состоит только из символов-цифр '0'-'9'
+	и символов букв 'A'-'Z', 'a'-'z'.
+	\return Признак успеха.
 	\safe Функция нерегулярна.
 */
-bool_t strIsHex(
+bool_t strIsAlphanumeric(
 	const char* str		/*!< [in] строка */
+);
+
+/*!	\brief Начинается?
+
+	Проверяется, что строка str начинается с префикca prefix.
+	\return Признак успеха.
+	\safe Функция нерегулярна.
+*/
+bool_t strStartsWith(
+	const char* str,	/*!< [in] строка */
+	const char* prefix	/*!< [in] префикс */
+);
+
+/*!	\brief Заканчивается?
+
+	Проверяется, что строка str заканчивается суффиксом suffix.
+	\return Признак успеха.
+	\safe Функция нерегулярна.
+*/
+bool_t strEndsWith(
+	const char* str,	/*!< [in] строка */
+	const char* suffix	/*!< [in] суффикс */
+);
+
+/*!	\brief Разворот строки
+
+	Символы строки str переписываются в обратном порядке.
+*/
+void strRev(
+	char* str		/*!< [in] строка */
 );
 
 #ifdef __cplusplus

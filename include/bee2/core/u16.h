@@ -3,9 +3,9 @@
 \file u16.h
 \brief 16-bit words
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.10.28
-\version 2015.10.29
+\version 2015.11.09
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -36,6 +36,10 @@ extern "C" {
 \pre В функции передаются корректные буферы памяти.
 *******************************************************************************
 */
+
+#define U16_0 ((u16)0)
+#define U16_1 ((u16)1)
+#define U16_MAX ((u16)(U16_0 - U16_1))
 
 /*!	\def u16RotHi
 	\brief Циклический сдвиг слова u16 на d позиций в сторону старших разрядов

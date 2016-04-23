@@ -3,7 +3,7 @@ EXPORTS
 	DllMain						@1
 	beeLogo						@2
 	
-	beltGetH					@101
+	beltH						@101
 	beltKeyExpand				@102
 	beltKeyExpand2				@103
 	beltBlockEncr 				@104
@@ -151,6 +151,31 @@ EXPORTS
 	bashStepG					@604
 	bashStepV					@605
 	bashHash					@606
+	
+	botpDT						@701
+	botpCtrNext					@702
+	botpHOTP_keep				@711
+	botpHOTPStart				@712
+	botpHOTPStepS				@713
+	botpHOTPStepR				@714
+	botpHOTPStepV				@715
+	botpHOTPStepG				@716
+	botpHOTPRand				@717
+	botpHOTPVerify				@718
+	botpTOTP_keep				@721
+	botpTOTPStart				@722
+	botpTOTPStepR				@723
+	botpTOTPStepV				@724
+	botpTOTPRand				@725
+	botpTOTPVerify				@726
+	botpOCRA_keep				@731
+	botpOCRAStart				@732
+	botpOCRAStepS				@733
+	botpOCRAStepR				@734
+	botpOCRAStepV				@735
+	botpOCRAStepG				@736
+	botpOCRARand				@737
+	botpOCRAVerify				@738
 	
 	dstuStdParams				@1101
 	dstuValParams				@1102

@@ -3,9 +3,9 @@
 \file gf2.c
 \brief Binary fields
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.17
-\version 2015.10.28
+\version 2015.11.03
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -204,7 +204,7 @@ gf2Div() случай m % B_PER_W == 0 обрабатывается особен
 static bool_t gf2From(word b[], const octet a[], const qr_o* f, void* stack)
 {
 	ASSERT(gf2IsOperable(f));
-	wwFromMem(b, a, f->no);
+	wwFrom(b, a, f->no);
 	return gf2IsIn(b, f);
 }
 
@@ -212,7 +212,7 @@ static void gf2To(octet b[], const word a[], const qr_o* f, void* stack)
 {
 	ASSERT(gf2IsOperable(f));
 	ASSERT(gf2IsIn(a, f));
-	wwToMem(b, f->no, a);
+	wwTo(b, f->no, a);
 }
 
 static void gf2Add3(word c[], const word a[], const word b[], const qr_o* f)

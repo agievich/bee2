@@ -4,9 +4,9 @@
 \brief Bee2 DLL entry points
 *******************************************************************************
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.02.25
-\version 2015.05.13
+\version 2016.04.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -43,32 +43,32 @@ static err_t beeReadAndCalcStamp(octet stampRead[STAMP_SIZE],
 	void* hash_state;
 	// имя модуля
 	if (!GetModuleFileNameA(GetModuleHandleA("bee2.dll"), name, sizeof(name)))
-		return ERR_SYS_FUNCTION;
+		return ERR_SYS;
 	// открыть файл
 	hFile = CreateFileA(name, GENERIC_READ,	0, NULL, OPEN_EXISTING, 
 		FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile == INVALID_HANDLE_VALUE)
-		return ERR_OPEN_FAILED;
+		return ERR_FILE_OPEN;
 	// длина файла
 	size = SetFilePointer(hFile, 0, NULL, FILE_END);
 	if (size == INVALID_SET_FILE_POINTER)
 	{
 		CloseHandle(hFile);
-		return ERR_SYS_FUNCTION;
+		return ERR_SYS;
 	}
 	// проецировать файл в память
 	hMapping = CreateFileMappingA(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
 	if (hMapping == INVALID_HANDLE_VALUE)
 	{
 		CloseHandle(hFile);
-		return ERR_SYS_FUNCTION;
+		return ERR_SYS;
 	}
 	// отобразить файл в память
 	image = (octet*)MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, 0);
 	if (image == NULL)
 	{
 		CloseHandle(hMapping), CloseHandle(hFile);
-		return ERR_SYS_FUNCTION;
+		return ERR_SYS;
 	}
 	// найти смещение контрольной характеристики
 	offset = stampFindOffset(image, size);
@@ -286,7 +286,7 @@ err_t beeLogo()
 	// вызвать диалог
 	if (DialogBoxA(GetModuleHandleA("bee2.dll"), 
 		"BEELOGO", beeFindMainWindow(), (DLGPROC)beeLogoDlgProc) == -1)
-		return ERR_SYS_FUNCTION;
+		return ERR_SYS;
 	return ERR_OK;
 }
 

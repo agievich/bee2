@@ -3,9 +3,9 @@
 \file word.h
 \brief Machine words
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.18
-\version 2015.10.29
+\version 2015.11.09
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -48,6 +48,14 @@ http://www.hackersdelight.org/.
 \remark Манипуляции с массивами машинных слов реализованы в модуле ww.
 *******************************************************************************
 */
+
+#define WORD_0 ((word)0)
+#define WORD_1 ((word)1)
+#define WORD_MAX ((word)(WORD_0 - WORD_1))
+
+#define WORD_BIT_POS(pos) (WORD_1 << (pos))
+#define WORD_BIT_HI WORD_BIT_POS(B_PER_W - 1)
+#define WORD_BIT_HALF WORD_BIT_POS(B_PER_W / 2)
 
 #if (B_PER_W == 16)
 	#include "bee2/core/u16.h"

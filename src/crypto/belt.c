@@ -3,9 +3,9 @@
 \file belt.c
 \brief STB 34.101.31 (belt): data encryption and integrity algorithms
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2015.10.28
+\version 2016.04.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -16,15 +16,14 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/core/mem.h"
 #include "bee2/core/u32.h"
 #include "bee2/core/util.h"
+#include "bee2/core/word.h"
 #include "bee2/math/pp.h"
 #include "bee2/math/ww.h"
 #include "bee2/crypto/belt.h"
 
 /*
 *******************************************************************************
-todo
-
-Состояния некоторых связок (например, beltHash) содержат память, которую 
+\todo Состояния некоторых связок (например, beltHash) содержат память, которую 
 не обязательно поддерживать постоянной между обращениями к функциям связки. 
 Это -- дополнительный управляемый стек. Можно передавать указатель на эту 
 память через дополнительный параметр (stack, а не state), описав предварительно
@@ -187,10 +186,10 @@ todo
 #endif // B_PER_W
 
 #define beltBlockRevU32(block)\
-	((u32*)(block))[0] = wordRevU32(((u32*)(block))[0]),\
-	((u32*)(block))[1] = wordRevU32(((u32*)(block))[1]),\
-	((u32*)(block))[2] = wordRevU32(((u32*)(block))[2]),\
-	((u32*)(block))[3] = wordRevU32(((u32*)(block))[3])\
+	((u32*)(block))[0] = u32Rev(((u32*)(block))[0]),\
+	((u32*)(block))[1] = u32Rev(((u32*)(block))[1]),\
+	((u32*)(block))[2] = u32Rev(((u32*)(block))[2]),\
+	((u32*)(block))[3] = u32Rev(((u32*)(block))[3])\
 
 #define beltBlockIncU32(block)\
 	if ((((u32*)(block))[0] += 1) == 0 &&\
@@ -285,7 +284,7 @@ static const octet H[256] = {
 	0xD4,0xEF,0xD9,0xB4,0x3A,0x62,0x28,0x75,0x91,0x14,0x10,0xEA,0x77,0x6C,0xDA,0x1D,
 };
 
-const octet* beltGetH()
+const octet* beltH()
 {
 	return H;
 }
@@ -595,17 +594,17 @@ void beltBlockEncr(octet block[16], const u32 key[8])
 	u32* t = (u32*)block;
 	ASSERT(memIsDisjoint2(block, 16, key, 32));
 #if (OCTET_ORDER == BIG_ENDIAN)
-	t[0] = wordRevU32(t[0]);
-	t[1] = wordRevU32(t[1]);
-	t[2] = wordRevU32(t[2]);
-	t[3] = wordRevU32(t[3]);
+	t[0] = u32Rev(t[0]);
+	t[1] = u32Rev(t[1]);
+	t[2] = u32Rev(t[2]);
+	t[3] = u32Rev(t[3]);
 #endif
 	E((t + 0), (t + 1), (t + 2), (t + 3), key);
 #if (OCTET_ORDER == BIG_ENDIAN)
-	t[3] = wordRevU32(t[3]);
-	t[2] = wordRevU32(t[2]);
-	t[1] = wordRevU32(t[1]);
-	t[0] = wordRevU32(t[0]);
+	t[3] = u32Rev(t[3]);
+	t[2] = u32Rev(t[2]);
+	t[1] = u32Rev(t[1]);
+	t[0] = u32Rev(t[0]);
 #endif
 }
 
@@ -623,17 +622,17 @@ void beltBlockDecr(octet block[16], const u32 key[8])
 	u32* t = (u32*)block;
 	ASSERT(memIsDisjoint2(block, 16, key, 32));
 #if (OCTET_ORDER == BIG_ENDIAN)
-	t[0] = wordRevU32(t[0]);
-	t[1] = wordRevU32(t[1]);
-	t[2] = wordRevU32(t[2]);
-	t[3] = wordRevU32(t[3]);
+	t[0] = u32Rev(t[0]);
+	t[1] = u32Rev(t[1]);
+	t[2] = u32Rev(t[2]);
+	t[3] = u32Rev(t[3]);
 #endif
 	D((t + 0), (t + 1), (t + 2), (t + 3), key);
 #if (OCTET_ORDER == BIG_ENDIAN)
-	t[3] = wordRevU32(t[3]);
-	t[2] = wordRevU32(t[2]);
-	t[1] = wordRevU32(t[1]);
-	t[0] = wordRevU32(t[0]);
+	t[3] = u32Rev(t[3]);
+	t[2] = u32Rev(t[2]);
+	t[1] = u32Rev(t[1]);
+	t[0] = u32Rev(t[0]);
 #endif
 }
 
@@ -718,7 +717,7 @@ err_t beltECBEncr(void* dest, const void* src, size_t count,
 	// создать состояние
 	state = blobCreate(beltECB_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// зашифровать
 	beltECBStart(state, theta, len);
 	memMove(dest, src, count);
@@ -742,7 +741,7 @@ err_t beltECBDecr(void* dest, const void* src, size_t count,
 	// создать состояние
 	state = blobCreate(beltECB_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// расшифровать
 	beltECBStart(state, theta, len);
 	memMove(dest, src, count);
@@ -759,7 +758,7 @@ err_t beltECBDecr(void* dest, const void* src, size_t count,
 */
 typedef struct
 {
-	u32 key[8];		/*< форматированный ключ */
+	u32 key[8];			/*< форматированный ключ */
 	octet block[16];	/*< вспомогательный блок */
 	octet block2[16];	/*< еще один вспомогательный блок */
 } belt_cbc_st;
@@ -843,7 +842,7 @@ err_t beltCBCEncr(void* dest, const void* src, size_t count,
 	// создать состояние
 	state = blobCreate(beltCBC_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// зашифровать
 	beltCBCStart(state, theta, len, iv);
 	memMove(dest, src, count);
@@ -868,7 +867,7 @@ err_t beltCBCDecr(void* dest, const void* src, size_t count,
 	// создать состояние
 	state = blobCreate(beltCBC_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// расшифровать
 	beltCBCStart(state, theta, len, iv);
 	memMove(dest, src, count);
@@ -885,7 +884,7 @@ err_t beltCBCDecr(void* dest, const void* src, size_t count,
 */
 typedef struct
 {
-	u32 key[8];		/*< форматированный ключ */
+	u32 key[8];			/*< форматированный ключ */
 	octet block[16];	/*< блок гаммы */
 	size_t reserved;	/*< резерв октетов гаммы */
 } belt_cfb_st;
@@ -997,7 +996,7 @@ err_t beltCFBEncr(void* dest, const void* src, size_t count,
 	// создать состояние
 	state = blobCreate(beltCFB_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// зашифровать
 	beltCFBStart(state, theta, len, iv);
 	memMove(dest, src, count);
@@ -1022,7 +1021,7 @@ err_t beltCFBDecr(void* dest, const void* src, size_t count,
 	// создать состояние
 	state = blobCreate(beltCFB_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// расшифровать
 	beltCFBStart(state, theta, len, iv);
 	memMove(dest, src, count);
@@ -1045,8 +1044,8 @@ err_t beltCFBDecr(void* dest, const void* src, size_t count,
 */
 typedef struct
 {
-	u32 key[8];		/*< форматированный ключ */
-	u32 ctr[4];		/*< счетчик */
+	u32 key[8];			/*< форматированный ключ */
+	u32 ctr[4];			/*< счетчик */
 	octet block[16];	/*< блок гаммы */
 	size_t reserved;	/*< резерв октетов гаммы */
 } belt_ctr_st;
@@ -1126,7 +1125,7 @@ err_t beltCTR(void* dest, const void* src, size_t count,
 	// создать состояние
 	state = blobCreate(beltCTR_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// зашифровать
 	beltCTRStart(state, theta, len, iv);
 	memMove(dest, src, count);
@@ -1149,10 +1148,10 @@ err_t beltCTR(void* dest, const void* src, size_t count,
 */
 typedef struct
 {
-	u32 key[8];		/*< форматированный ключ */
-	u32 s[4];		/*< переменная s */
-	u32 r[4];		/*< переменная r */
-	u32 mac[4];		/*< окончательная имитовставка */
+	u32 key[8];			/*< форматированный ключ */
+	u32 s[4];			/*< переменная s */
+	u32 r[4];			/*< переменная r */
+	u32 mac[4];			/*< окончательная имитовставка */
 	octet block[16];	/*< блок данных */
 	size_t filled;		/*< накоплено октетов в блоке */
 } belt_mac_st;
@@ -1278,8 +1277,8 @@ bool_t beltMACStepV(const octet mac[8], void* state)
 	ASSERT(memIsValid(mac, 8));
 	beltMACStepG_internal(s);
 #if (OCTET_ORDER == BIG_ENDIAN)
-	s->mac[0] = wordRevU32(s->mac[0]);
-	s->mac[1] = wordRevU32(s->mac[1]);
+	s->mac[0] = u32Rev(s->mac[0]);
+	s->mac[1] = u32Rev(s->mac[1]);
 #endif
 	return memEq(mac, s->mac, 8);
 }
@@ -1291,8 +1290,8 @@ bool_t beltMACStepV2(const octet mac[], size_t mac_len, void* state)
 	ASSERT(memIsValid(mac, mac_len));
 	beltMACStepG_internal(s);
 #if (OCTET_ORDER == BIG_ENDIAN)
-	s->mac[0] = wordRevU32(s->mac[0]);
-	s->mac[1] = wordRevU32(s->mac[1]);
+	s->mac[0] = u32Rev(s->mac[0]);
+	s->mac[1] = u32Rev(s->mac[1]);
 #endif
 	return memEq(mac, s->mac, mac_len);
 }
@@ -1310,7 +1309,7 @@ err_t beltMAC(octet mac[8], const void* src, size_t count,
 	// создать состояние
 	state = blobCreate(beltMAC_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// выработать имитовставку
 	beltMACStart(state, theta, len);
 	beltMACStepA(src, count, state);
@@ -1375,7 +1374,7 @@ void beltDWPStart(void* state, const octet theta[], size_t len,
 	beltBlockRevU32(s->r);
 	beltBlockRevW(s->r);
 #endif
-	wwFromMem(s->s, beltGetH(), 16);
+	wwFrom(s->s, beltH(), 16);
 	// обнулить счетчики
 	memSetZero(s->len, sizeof(s->len));
 	s->filled = 0;
@@ -1528,8 +1527,8 @@ bool_t beltDWPStepV(const octet mac[8], void* state)
 	ASSERT(memIsValid(mac, 8));
 	beltDWPStepG_internal(state);
 #if (OCTET_ORDER == BIG_ENDIAN)
-	s->s[0] = wordRevU32(s->s[0]);
-	s->s[1] = wordRevU32(s->s[1]);
+	s->s[0] = u32Rev(s->s[0]);
+	s->s[1] = u32Rev(s->s[1]);
 #endif
 	return memEq(mac, s->s, 8);
 }
@@ -1551,7 +1550,7 @@ err_t beltDWPWrap(void* dest, octet mac[8], const void* src1, size_t count1,
 	// создать состояние
 	state = blobCreate(beltDWP_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// установить защиту
 	beltDWPStart(state, theta, len, iv);
 	beltDWPStepI(src2, count2, state);
@@ -1581,7 +1580,7 @@ err_t beltDWPUnwrap(void* dest, const void* src1, size_t count1,
 	// создать состояние
 	state = blobCreate(beltDWP_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// снять защиту
 	beltDWPStart(state, theta, len, iv);
 	beltDWPStepI(src2, count2, state);
@@ -1605,7 +1604,7 @@ err_t beltDWPUnwrap(void* dest, const void* src1, size_t count1,
 */
 typedef struct
 {
-	u32 key[8];			/*< форматированный ключ */
+	u32 key[8];				/*< форматированный ключ */
 	octet block[16];		/*< вспомогательный блок */
 	word round;				/*< номер такта */
 } belt_kwp_st;
@@ -1743,7 +1742,7 @@ err_t beltKWPWrap(octet dest[], const octet src[], size_t count,
 	// создать состояние
 	state = blobCreate(beltKWP_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// установить защиту
 	beltKWPStart(state, theta, len);
 	memMove(dest, src, count);
@@ -1774,7 +1773,7 @@ err_t beltKWPUnwrap(octet dest[], const octet src[], size_t count,
 	// создать состояние
 	state = blobCreate(beltKWP_keep() + 16);
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	header2 = (octet*)state + beltKWP_keep();
 	// снять защиту
 	beltKWPStart(state, theta, len);
@@ -1882,10 +1881,10 @@ static size_t beltSigma_deep()
 *******************************************************************************
 */
 typedef struct {
-	u32 ls[8];			/*< блок [4]len || [4]s */
-	u32 s1[4];			/*< копия переменной s */
-	u32 h[8];			/*< переменная h */
-	u32 h1[8];			/*< копия переменной h */
+	u32 ls[8];				/*< блок [4]len || [4]s */
+	u32 s1[4];				/*< копия переменной s */
+	u32 h[8];				/*< переменная h */
+	u32 h1[8];				/*< копия переменной h */
 	octet block[32];		/*< блок данных */
 	size_t filled;			/*< накоплено октетов в блоке */
 	octet stack[];			/*< [beltSigma_deep()] стек beltSigma */
@@ -1904,7 +1903,7 @@ void beltHashStart(void* state)
 	beltBlockSetZero(s->ls);
 	beltBlockSetZero(s->ls + 4);
 	// h <- B194...0D
-	u32From(s->h, beltGetH(), 32);
+	u32From(s->h, beltH(), 32);
 	// нет накопленнных данных
 	s->filled = 0;
 }
@@ -2032,7 +2031,7 @@ err_t beltHash(octet hash[32], const void* src, size_t count)
 	// создать состояние
 	state = blobCreate(beltHash_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// вычислить хэш-значение
 	beltHashStart(state);
 	beltHashStepH(src, count, state);
@@ -2049,10 +2048,10 @@ err_t beltHash(octet hash[32], const void* src, size_t count)
 */
 
 typedef struct {
-	u32 key[8];		/*< форматированный первоначальный ключ */
+	u32 key[8];			/*< форматированный первоначальный ключ */
 	size_t len;			/*< длина первоначального ключа */
-	u32 block[8];	/*< блок r || level || header */
-	u32 key_new[8];	/*< форматированный преобразованный ключ */
+	u32 block[8];		/*< блок r || level || header */
+	u32 key_new[8];		/*< форматированный преобразованный ключ */
 	octet stack[];		/*< стек beltSigma */
 } belt_krp_st;
 
@@ -2082,7 +2081,7 @@ void beltKRPStepG(octet key[], size_t key_len, const octet header[16],
 	ASSERT(memIsDisjoint2(key, key_len, s, beltKRP_keep()));
 	ASSERT(memIsDisjoint2(header, 16, s, beltKRP_keep()));
 	// полностью определить s->block
-	u32From(s->block, beltGetH() + 4 * (s->len - 16) + 2 * (key_len - 16), 4);
+	u32From(s->block, beltH() + 4 * (s->len - 16) + 2 * (key_len - 16), 4);
 	u32From(s->block + 4, header, 16);
 	// применить sigma2
 	beltBlockCopy(s->key_new, s->key);
@@ -2108,7 +2107,7 @@ err_t beltKRP(octet dest[], size_t m, const octet src[], size_t n,
 	// создать состояние
 	state = blobCreate(beltKRP_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// преобразовать ключ
 	beltKRPStart(state, src, n, level);
 	beltKRPStepG(dest, m, header, state);
@@ -2124,13 +2123,13 @@ err_t beltKRP(octet dest[], size_t m, const octet src[], size_t n,
 */
 typedef struct
 {
-	u32 ls_in[8];	/*< блок [4]len || [4]s внутреннего хэширования */
+	u32 ls_in[8];		/*< блок [4]len || [4]s внутреннего хэширования */
 	u32 h_in[8];		/*< переменная h внутреннего хэширования */
-	u32 h1_in[8];	/*< копия переменной h внутреннего хэширования */
-	u32 ls_out[8];	/*< блок [4]len || [4]s внешнего хэширования */
-	u32 h_out[8];	/*< переменная h внешнего хэширования */
-	u32 h1_out[8];	/*< копия переменной h внешнего хэширования */
-	u32 s1[4];		/*< копия переменной s */
+	u32 h1_in[8];		/*< копия переменной h внутреннего хэширования */
+	u32 ls_out[8];		/*< блок [4]len || [4]s внешнего хэширования */
+	u32 h_out[8];		/*< переменная h внешнего хэширования */
+	u32 h1_out[8];		/*< копия переменной h внешнего хэширования */
+	u32 s1[4];			/*< копия переменной s */
 	octet block[32];	/*< блок данных */
 	size_t filled;		/*< накоплено октетов в блоке */
 	octet stack[];		/*< [beltSigma_deep()] стек beltSigma */
@@ -2161,7 +2160,7 @@ void beltHMACStart(void* state, const octet theta[], size_t len)
 		beltBlockSetZero(s->ls_in);
 		beltBlockAddBitSizeU32(s->ls_in, len);
 		beltBlockSetZero(s->ls_in + 4);
-		u32From(s->h_in, beltGetH(), 32);
+		u32From(s->h_in, beltH(), 32);
 		while (len >= 32)
 		{
 			beltBlockCopy(s->block, theta);
@@ -2195,7 +2194,7 @@ void beltHMACStart(void* state, const octet theta[], size_t len)
 	beltBlockSetZero(s->ls_in);
 	beltBlockAddBitSizeU32(s->ls_in, 32);
 	beltBlockSetZero(s->ls_in + 4);
-	u32From(s->h_in, beltGetH(), 32);
+	u32From(s->h_in, beltH(), 32);
 	beltSigma(s->ls_in + 4, s->h_in, (u32*)s->block, s->stack);
 	s->filled = 0;
 	// сформировать key ^ opad [0x36 ^ 0x5C == 0x6A]
@@ -2205,7 +2204,7 @@ void beltHMACStart(void* state, const octet theta[], size_t len)
 	beltBlockSetZero(s->ls_out);
 	beltBlockAddBitSizeU32(s->ls_out, 32 * 2);
 	beltBlockSetZero(s->ls_out + 4);
-	u32From(s->h_out, beltGetH(), 32);
+	u32From(s->h_out, beltH(), 32);
 	beltSigma(s->ls_out + 4, s->h_out, (u32*)s->block, s->stack);
 }
 
@@ -2345,7 +2344,7 @@ err_t beltHMAC(octet mac[32], const void* src, size_t count,
 	// создать состояние
 	state = blobCreate(beltHMAC_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// выработать имитовставку
 	beltHMACStart(state, theta, len);
 	beltHMACStepA(src, count, state);
@@ -2374,7 +2373,7 @@ err_t beltPBKDF(octet theta[32], const octet pwd[], size_t pwd_len,
 	// создать состояние
 	state = blobCreate(beltHMAC_keep());
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// theta <- HMAC(pwd, salt || 00000001)
 	beltHMACStart(state, pwd, pwd_len);
 	beltHMACStepA(salt, salt_len, state);

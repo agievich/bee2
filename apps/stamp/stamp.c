@@ -3,9 +3,9 @@
 \file stamp.c
 \brief Integrity control of Windows PE Executables
 \project bee2/apps/stamp
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2011.10.18
-\version 2015.05.19
+\version 2016.04.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -71,7 +71,7 @@ void stampUsage(const char* prg_name)
 	-	1 -- create;
 	-	-1 -- ошибка синтаксиса. 
 */
-int stampParsing(int argc, char* argv[])
+int stampParsing(int argc, const char* argv[])
 {
 	// проверяем число аргументов
 	if (argc != 3)

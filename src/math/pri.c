@@ -3,9 +3,9 @@
 \file pri.c
 \brief Prime numbers
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.08.13
-\version 2015.10.28
+\version 2015.11.09
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -14,6 +14,7 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/core/mem.h"
 #include "bee2/core/prng.h"
 #include "bee2/core/util.h"
+#include "bee2/core/word.h"
 #include "bee2/math/pri.h"
 #include "bee2/math/ww.h"
 #include "bee2/math/zm.h"
@@ -618,7 +619,7 @@ bool_t priRMTest(const word a[], size_t n, size_t iter, void* stack)
 	// подготовить генератор
 	prngCOMBOStart(combo_state, utilNonce32());
 	// создать кольцо
-	wwToMem(base, O_OF_W(n), a);
+	wwTo(base, O_OF_W(n), a);
 	zmCreate(qr, (octet*)base, memNonZeroSize(base, O_OF_W(n)), stack);
 	// a - 1 = r 2^s (r -- нечетное)
 	wwCopy(r, a, n);
@@ -716,7 +717,7 @@ bool_t priIsSGPrime(const word q[], size_t n, void* stack)
 	++p[0];
 	// создать кольцо \mod p
 	no = wwOctetSize(p, n + 1);
-	wwToMem(p, no, p);
+	wwTo(p, no, p);
 	zmCreate(qr, (octet*)p, no, stack);
 	// p <- 4^q (в кольце qr)
 	qrAdd(p, qr->unity, qr->unity, qr);
@@ -900,7 +901,7 @@ bool_t priExtendPrime(word p[], size_t l, const word q[], size_t n,
 	{
 		// t <-R [2^{l - 2}, 2^{l - 1})
 		rng(t, mo, rng_state);
-		wwFromMem(t, t, mo);
+		wwFrom(t, t, mo);
 		wwTrimHi(t, m, l - 2);
 		wwSetBit(t, l - 2, 1);
 		// r <- t \div q
@@ -933,7 +934,7 @@ bool_t priExtendPrime(word p[], size_t l, const word q[], size_t n,
 			if (i == base_count)
 			{
 				// создать кольцо вычетов \mod p
-				wwToMem(t, mo, p);
+				wwTo(t, mo, p);
 				zmCreate(qr, (octet*)t, mo, stack);
 				// four <- 4 [в кольце qr]
 				qrAdd(four, qr->unity, qr->unity, qr);

@@ -3,9 +3,9 @@
 \file u64.h
 \brief 64-bit words
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.10.28
-\version 2015.10.28
+\version 2015.11.09
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -40,6 +40,10 @@ extern "C" {
 \pre В функции передаются корректные буферы памяти.
 *******************************************************************************
 */
+
+#define U64_0 ((u64)0)
+#define U64_1 ((u64)1)
+#define U64_MAX ((u64)(U64_0 - U64_1))
 
 /*!	\def u64RotHi
 	\brief Циклический сдвиг слова u64 на d позиций в сторону старших разрядов

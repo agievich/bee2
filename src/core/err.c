@@ -3,9 +3,9 @@
 \file err.c
 \brief Errors
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.09
-\version 2012.03.01
+\version 2014.04.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -45,8 +45,8 @@ typedef struct {
 } err_msg;
 
 static const err_msg _messages[] = {
-	{ERR_OK, "Успешное завершение"},
-	{ERR_INVALID_FUNCTION, "Ошибочное завершение"},
+	{ERR_OK, "Success"},
+	{ERR_BAD_UNIT, "Bad unit"},
 };
 
 const char* errMsg(err_t code)

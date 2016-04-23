@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="libbee2"
 	ProjectGUID="{1B3F88D7-BD23-4398-A331-3DB139CF07EF}"
 	RootNamespace="bee2lib"
@@ -308,6 +308,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\include\bee2\core\dec.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\include\bee2\core\der.h"
 					>
 				</File>
@@ -404,6 +408,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\include\bee2\crypto\botp.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\include\bee2\crypto\brng.h"
 					>
 				</File>
@@ -479,6 +487,10 @@
 				>
 				<File
 					RelativePath="..\..\src\core\blob.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\core\dec.c"
 					>
 				</File>
 				<File
@@ -619,6 +631,10 @@
 				</File>
 				<File
 					RelativePath="..\..\src\crypto\bign_lcl.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\crypto\botp.c"
 					>
 				</File>
 				<File

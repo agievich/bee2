@@ -374,6 +374,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\test\crypto\botp-test.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\test\crypto\brng-test.c"
 					>
 				</File>
@@ -393,6 +397,10 @@
 			<Filter
 				Name="core"
 				>
+				<File
+					RelativePath="..\..\test\core\dec-test.c"
+					>
+				</File>
 				<File
 					RelativePath="..\..\test\core\mem-test.c"
 					>

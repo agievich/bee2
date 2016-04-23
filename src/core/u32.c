@@ -3,9 +3,9 @@
 \file u32.c
 \brief 32-bit unsigned words
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.10.28
-\version 2015.10.28
+\version 2015.11.17
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -55,6 +55,6 @@ void u32To(void* dest, size_t count, const u32 src[])
 			((octet*)dest)[t] = (octet)u;
 	}
 	for (count /= 4; count--;)
-		((u32*)dest)[count] = wordRevU32(((u32*)dest)[count]);
+		((u32*)dest)[count] = u32Rev(((u32*)dest)[count]);
 #endif // OCTET_ORDER
 }

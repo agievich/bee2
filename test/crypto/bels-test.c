@@ -3,9 +3,9 @@
 \file bels-test.c
 \brief Tests for STB 34.101.60 (bels)
 \project bee2/test
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.06.27
-\version 2015.10.29
+\version 2015.11.06
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -104,9 +104,9 @@ bool_t belsTest()
 		belsStdM(mi + 3 * len, len, 4);
 		belsStdM(mi + 4 * len, len, 5);
 		// инициализировать эхо-генератор
-		prngEchoStart(echo_state, beltGetH() + 128, 128);
+		prngEchoStart(echo_state, beltH() + 128, 128);
 		// разделить секрет (тесты Б.2 -- Б.4)
-		if (belsShare(si, 5, 3, len, beltGetH(), m0, mi, prngEchoStepG, 
+		if (belsShare(si, 5, 3, len, beltH(), m0, mi, prngEchoStepG, 
 			echo_state) != ERR_OK)
 			return FALSE;
 		if (len == 16 && !hexEq(si,
@@ -142,19 +142,19 @@ bool_t belsTest()
 			return FALSE;
 		// восстановить секрет
 		if (belsRecover(s, 1, len, si, m0, mi) != ERR_OK ||
-			memEq(s, beltGetH(), len))
+			memEq(s, beltH(), len))
 			return FALSE;
 		if (belsRecover(s, 2, len, si, m0, mi) != ERR_OK ||
-			memEq(s, beltGetH(), len))
+			memEq(s, beltH(), len))
 			return FALSE;
 		if (belsRecover(s, 3, len, si, m0, mi) != ERR_OK ||
-			!memEq(s, beltGetH(), len))
+			!memEq(s, beltH(), len))
 			return FALSE;
 		if (belsRecover(s, 4, len, si, m0, mi) != ERR_OK ||
-			!memEq(s, beltGetH(), len))
+			!memEq(s, beltH(), len))
 			return FALSE;
 		if (belsRecover(s, 5, len, si, m0, mi) != ERR_OK ||
-			!memEq(s, beltGetH(), len))
+			!memEq(s, beltH(), len))
 			return FALSE;
 		// восстановить секрет (тесты Б.5 -- Б.7, строка 1)
 		if (belsRecover(s, 2, len, si, m0, mi) != ERR_OK ||

@@ -3,7 +3,7 @@
 \file stack.h
 \brief Controlled stack 
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.05.10
 \version 2015.02.13
 \license This program is released under the GNU General Public License 

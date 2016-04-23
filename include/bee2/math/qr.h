@@ -3,7 +3,7 @@
 \file qr.h
 \brief Quotient rings
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.08.09
 \version 2015.09.01
 \license This program is released under the GNU General Public License 

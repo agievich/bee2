@@ -3,9 +3,9 @@
 \file pri-test.c
 \brief Tests for prime numbers
 \project bee2/test
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.07
-\version 2015.04.28
+\version 2015.11.09
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -14,6 +14,7 @@ version 3. See Copyright Notices in bee2/info.h.
 #include <bee2/core/mem.h>
 #include <bee2/core/prng.h>
 #include <bee2/core/util.h>
+#include <bee2/core/word.h>
 #include <bee2/math/pri.h>
 #include <bee2/math/ww.h>
 

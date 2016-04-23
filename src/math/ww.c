@@ -3,9 +3,9 @@
 \file ww.c
 \brief Arbitrary length words
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.18
-\version 2015.10.29
+\version 2016.04.11
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -648,7 +648,7 @@ void wwTrimLo(word a[], size_t n, size_t pos)
 	ASSERT(wwIsValid(a, n));
 	if (i < n)
 		// очистить биты слова a[i]
-		if (pos %= B_PER_W != 0)
+		if (pos %= B_PER_W)
 			a[i] >>= pos, a[i] <<= pos;
 	else if (i > n)
 		i = n;

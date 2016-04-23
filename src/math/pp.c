@@ -3,9 +3,9 @@
 \file pp.c
 \brief Binary polynomials
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.03.01
-\version 2015.08.24
+\version 2016.04.15
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -1713,10 +1713,9 @@ void ppDivMod(word b[], const word divident[], const word a[],
 			wwXor2(da, da0, n);
 		}
 	}
-	while (!wwIsZero(u, nu));
 	// здесь v == \gcd(a, mod)
 	EXPECT(wwIsW(v, nv, 1));
-	// \gcd(a, mod) == 1? b <- da : b <- 0
+	// \gcd(a, mod) == 1 ? b <- da : b <- 0
 	if (wwIsW(v, nv, 1))
 		wwCopy(b, da, n);
 	else

@@ -3,9 +3,9 @@
 \file tm.c
 \brief Time and timers
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.05.10
-\version 2015.10.29
+\version 2015.11.25
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -185,4 +185,13 @@ size_t tmSpeed(size_t reps, tm_ticks_t ticks)
 tm_time_t tmTime()
 {
 	return time(0);
+}
+
+tm_time_t tmTimeRound(tm_time_t t0, tm_time_t ts)
+{
+	register tm_time_t t = tmTime();
+	if (ts == 0 || t < t0)
+		return TIME_ERR;
+	t = (t - t0) / ts;
+	return t;
 }

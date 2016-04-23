@@ -3,9 +3,9 @@
 \file g12s.c
 \brief GOST R 34.10-94 (Russia): digital signature algorithms
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.09
-\version 2015.10.28
+\version 2016.04.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -632,7 +632,7 @@ static err_t g12sCreateEc(
 			ecCreateGroup_deep(f_deep),
 			deep(n, f_deep, ec_d, ec_deep)));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// создать поле
 	f = (qr_o*)((octet*)state + ec_keep);
 	stack = (octet*)f + f_keep;
@@ -796,7 +796,7 @@ err_t g12sGenKeypair(octet privkey[], octet pubkey[],
 		return ERR_BAD_PARAMS;
 	}
 	// выгрузить ключи
-	wwToMem(privkey, mo, d);
+	wwTo(privkey, mo, d);
 	qrTo(pubkey, ecX(Q), ec->f, stack);
 	qrTo(pubkey + ec->f->no, ecY(Q, ec->f->n), ec->f, stack);
 	// все нормально
@@ -861,7 +861,7 @@ err_t g12sSign(octet sig[], const g12s_params* params, const octet hash[],
 	s = r + m;
 	stack = s + m;
 	// загрузить d
-	wwFromMem(d, privkey, mo);
+	wwFrom(d, privkey, mo);
 	if (wwIsZero(d, m) || 
 		wwCmp(d, ec->order, m) >= 0)
 	{
@@ -871,7 +871,7 @@ err_t g12sSign(octet sig[], const g12s_params* params, const octet hash[],
 	// e <- hash \mod q
 	memCopy(e, hash, mo);
 	memRev(e, mo);
-	wwFromMem(e, e, mo);
+	wwFrom(e, e, mo);
 	zzMod(e, e, m, ec->order, m, stack);
 	// e == 0 => e <- 1
 	if (wwIsZero(e, m))
@@ -892,7 +892,7 @@ gen_k:
 	}
 	// r <- x_C \mod q
 	qrTo((octet*)C, ecX(C), ec->f, stack);
-	wwFromMem(r, C, ec->f->no);
+	wwFrom(r, C, ec->f->no);
 	zzMod(r, r, ec->f->n, ec->order, m, stack);
 	// r == 0 => повторить генерацию k
 	if (wwIsZero(r, m))
@@ -902,8 +902,8 @@ gen_k:
 	zzMulMod(s, r, d, ec->order, m, stack);
 	zzAddMod(s, s, k, ec->order, m);
 	// выгрузить ЭЦП
-	wwToMem(sig, mo, s);
-	wwToMem(sig + mo, mo, r);
+	wwTo(sig, mo, s);
+	wwTo(sig + mo, mo, r);
 	memRev(sig, 2 * mo);
 	// все нормально
 	g12sCloseEc(ec);
@@ -970,10 +970,10 @@ err_t g12sVerify(const g12s_params* params, const octet hash[],
 	// загрузить r и s
 	memCopy(s, sig + mo, mo);
 	memRev(s, mo);
-	wwFromMem(s, s, mo);
+	wwFrom(s, s, mo);
 	memCopy(r, sig, mo);
 	memRev(r, mo);
-	wwFromMem(r, r, mo);
+	wwFrom(r, r, mo);
 	if (wwIsZero(s, m) || 
 		wwIsZero(r, m) || 
 		wwCmp(s, ec->order, m) >= 0 ||
@@ -985,7 +985,7 @@ err_t g12sVerify(const g12s_params* params, const octet hash[],
 	// e <- hash \mod q
 	memCopy(e, hash, mo);
 	memRev(e, mo);
-	wwFromMem(e, e, mo);
+	wwFrom(e, e, mo);
 	zzMod(e, e, m, ec->order, m, stack);
 	// e == 0 => e <- 1
 	if (wwIsZero(e, m))
@@ -1005,7 +1005,7 @@ err_t g12sVerify(const g12s_params* params, const octet hash[],
 	}
 	// s <- x_Q \mod q [x_R \mod q]
 	qrTo((octet*)Q, ecX(Q), ec->f, stack);
-	wwFromMem(Q, Q, ec->f->no);
+	wwFrom(Q, Q, ec->f->no);
 	zzMod(s, Q, ec->f->n, ec->order, m, stack);
 	// s == r?
 	code = wwEq(r, s, m) ? ERR_OK : ERR_BAD_SIG;
