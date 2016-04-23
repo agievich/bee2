@@ -21,13 +21,16 @@ env:
   global:
     - secure: "xxx"
   matrix:
-    - BUILD_TYPE=Release
-    - BUILD_TYPE=Debug
-    - BUILD_TYPE=ASan
-    - BUILD_TYPE=MemSan
-    - BUILD_TYPE=CheckFull
-    - BUILD_FAST=ON
-    - BUILD_FAST=OFF
+    - BUILD_TYPE=Release   BUILD_FAST=ON
+    - BUILD_TYPE=Release   BUILD_FAST=OFF
+    - BUILD_TYPE=Debug     BUILD_FAST=ON
+    - BUILD_TYPE=Debug     BUILD_FAST=OFF
+    - BUILD_TYPE=ASan      BUILD_FAST=ON
+    - BUILD_TYPE=ASan      BUILD_FAST=OFF
+    - BUILD_TYPE=MemSan    BUILD_FAST=ON
+    - BUILD_TYPE=MemSan    BUILD_FAST=OFF
+    - BUILD_TYPE=CheckFull BUILD_FAST=ON
+    - BUILD_TYPE=CheckFull BUILD_FAST=OFF
 
 matrix:
   exclude:
