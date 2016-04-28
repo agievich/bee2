@@ -24,6 +24,6 @@ add_executable(testbee2
 	math/word-test.c
 	test.c
 )
-target_link_libraries(testbee2 bee2)
+target_link_libraries(testbee2 bee2_static)
 
 add_test(testbee2 testbee2)

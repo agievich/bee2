@@ -30,7 +30,8 @@ Build
 
     mkdir build
     cd build
-    cmake [-DCMAKE_BUILD_TYPE={Release|Debug|Coverage|ASan|ASanDbg|MemSan|MemSanDbg|Check|CheckFull}] ..
+    cmake [-DCMAKE_BUILD_TYPE={Release|Debug|Coverage|ASan|ASanDbg|MemSan|MemSanDbg|Check}]/
+          [-DBUILD_FAST=ON] ..
     make
     [make test]
     [make install]
@@ -40,7 +41,11 @@ Build types (Release by default):
 *  Coverage -- test coverage,
 *  ASan, ASanDbg -- [address sanitizer](http://en.wikipedia.org/wiki/AddressSanitizer),
 *  MemSan, MemSanDbg -- [memory sanitizer](http://code.google.com/p/memory-sanitizer/),
-*  Check, CheckFull -- strict compile rules.
+*  Check -- strict compile rules.
+
+The BUILD_FAST option (OFF by default) switches from safe (constant-time) 
+functions to fast (non-constant-time) ones.
+
 
 License
 -------
