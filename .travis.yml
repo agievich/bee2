@@ -9,45 +9,37 @@ branches:
   only:
     - master
 
-os:
-  - linux
-  - osx
-
-compiler:
-  - gcc
-  - clang
-
 env:
   global:
     - secure: "Y97AOikD1LkYs19T2ezxizvM/8s0rjw/ibMXa/UJJMrEo9hI//wzLFU3xNC9Tt/VHDIa8MbjI7N4cHD0Sa9M6J4WlqHXAy087uC58W17nt5rzcopB7Kqwd4SVI67kY8TuDVV2BiQenRREU81dPUGHn84xTo38qDI/zkWNLFibGtaH6p+domY0k+kxLADBFFtl5STlva+EqjZz5QopcHuT1AqmfMTXL6DwVSiSiLl/hpkte1vQqmc0HVbxWC05zpBK8nYEwnTFnT1Kz0UUSUS3+oQx7k96HpjDwb6PA5GL7aSCvLldKR38wmN4lDbwZKlJIMXivITRk4gmJA/ZV9inmcjXy2N0oc1HwtFBnItWV0WgkGsgFVxEpNk2ccSwx/k/nDaiOSDFN2cq3AHh5VNPUNHT/MpaHVt/F4a6wRwFBbiyZfBpy8dCBRgRW4pS2GoqUQy8Kc2M/DJYMuSWx8crjckY7WVk2g/z6FIsMj1CDtZmK9ZtXegeo9rzIIFfg2uNXkMrUeZqWaMQMQMrjYMPAsHeQl/W/kBXaZQ6W2ynCTdXbtQfsXLoqU/qD9Msym+3YSMbH+VS5XxrGkC80/FIxYsADy56WnSRQqXiN4Qf0TmSNWfSj5cUYuSq7cebTaNcXwd0lFy9+fjbS7+kYWNCPvRWiK1sR+/xKuYivuK6Bc="
-  matrix:
-    - BUILD_TYPE=Release BUILD_FAST=ON
-    - BUILD_TYPE=Release BUILD_FAST=OFF
-    - BUILD_TYPE=Debug   BUILD_FAST=ON
-    - BUILD_TYPE=Debug   BUILD_FAST=OFF
-    - BUILD_TYPE=ASan    BUILD_FAST=ON
-    - BUILD_TYPE=ASan    BUILD_FAST=OFF
-    - BUILD_TYPE=MemSan  BUILD_FAST=ON
-    - BUILD_TYPE=MemSan  BUILD_FAST=OFF
-    - BUILD_TYPE=Check   BUILD_FAST=ON
-    - BUILD_TYPE=Check   BUILD_FAST=OFF
 
 matrix:
-  exclude:
+  include:
+    - os: linux
+      compiler: gcc
+      env: BUILD_TYPE=Release BUILD_FAST=OFF
+    - os: linux
+      compiler: clang
+      env: BUILD_TYPE=Debug BUILD_FAST=ON
     - os: osx
       compiler: gcc
+      env: BUILD_TYPE=ASan BUILD_FAST=OFF
+    - os: osx
+      compiler: clang
+      env: BUILD_TYPE=Check BUILD_FAST=ON
+    - os: linux
+      compiler: gcc
+      env: BUILD_TYPE=Coverage BUILD_FAST=OFF
 
 addons:
   coverity_scan:
     project:
       name: "agievich/bee2"
       description: "Build submitted via Travis CI"
-      notification_email: agievich@gmail.com
-      build_command_prepend: 
-        - mkdir build-coverity && cd build-coverity
-        - cmake -DBUILD_TYPE=Debug -DBUILD_FAST=OFF ..
-      build_command: make
-      branch_pattern: master
+    notification_email: agievich@gmail.com
+    build_command_prepend: mkdir coverity && cd coverity && cmake -DBUILD_TYPE=Debug -DBUILD_FAST=OFF ..
+    build_command: make
+    branch_pattern: master
 
 script: 
   - mkdir build && cd build 
@@ -55,3 +47,8 @@ script:
   - make
   - make test
   - sudo make install
+
+after_success:
+  - if [ "$BUILD_TYPE" == "Coverage"]; then
+      bash <(curl -s https://codecov.io/bash)
+    fi

@@ -30,7 +30,7 @@ Build
 
     mkdir build
     cd build
-    cmake [-DCMAKE_BUILD_TYPE={Release|Debug|Coverage|ASan|ASanDbg|MemSan|MemSanDbg|Check}]/
+    cmake [-DCMAKE_BUILD_TYPE={Release|Debug|Coverage|ASan|ASanDbg|MemSan|MemSanDbg|Check}]\
           [-DBUILD_FAST=ON] ..
     make
     [make test]
