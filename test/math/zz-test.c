@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.15
-\version 2015.10.29
+\version 2016.05.23
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -24,7 +24,7 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-bool_t zzTest()
+static bool_t zzTestAdd()
 {
 	const size_t n = 8;
 	size_t reps;
@@ -32,31 +32,15 @@ bool_t zzTest()
 	word b[8];
 	word c[8];
 	word c1[8];
-	word mod[8];
 	octet combo_state[32];
-	octet stack[2048];
 	// pre
 	ASSERT(COUNT_OF(a) >= n);
 	ASSERT(COUNT_OF(b) >= n);
 	ASSERT(COUNT_OF(c) >= n);
 	ASSERT(COUNT_OF(c1) >= n);
-	ASSERT(COUNT_OF(mod) >= n);
-	// инициализровать генератор COMBO
+	// инициализировать генератор COMBO
 	ASSERT(prngCOMBO_keep() <= sizeof(combo_state));
 	prngCOMBOStart(combo_state, utilNonce32());
-	// возведение в степень
-	ASSERT(zzPowerMod_deep(n, 1) <= sizeof(stack));
-	ASSERT(zzMulMod_deep(n) <= sizeof(stack));
-	ASSERT(zzSqrMod_deep(n) <= sizeof(stack));
-	wwRepW(mod, n, WORD_MAX);
-	if (!zzRandMod(a, mod, n, prngCOMBOStepG, combo_state))
-		return FALSE;
-	b[0] = 3;
-	zzPowerMod(c, a, n, b, 1, mod, stack);
-	zzSqrMod(c1, a, mod, n, stack);
-	zzMulMod(c1, c1, a, mod, n, stack);
-	if (wwCmp(c, c1, n) != 0)
-		return FALSE;
 	// сложение / вычитание
 	for (reps = 0; reps < 1000; ++reps)
 	{
@@ -99,3 +83,72 @@ bool_t zzTest()
 	// все нормально
 	return TRUE;
 }
+
+static bool_t zzTestMod()
+{
+	const size_t n = 8;
+	size_t reps;
+	word a[8];
+	word b[8];
+	word t[8];
+	word t1[8];
+	word mod[8];
+	octet combo_state[32];
+	octet stack[2048];
+	// pre
+	ASSERT(COUNT_OF(a) >= n);
+	ASSERT(COUNT_OF(b) >= n);
+	ASSERT(COUNT_OF(t) >= n);
+	ASSERT(COUNT_OF(t1) >= n);
+	ASSERT(COUNT_OF(mod) >= n);
+	// инициализировать генератор COMBO
+	ASSERT(prngCOMBO_keep() <= sizeof(combo_state));
+	prngCOMBOStart(combo_state, utilNonce32());
+	// возведение в степень
+	ASSERT(zzPowerMod_deep(n, 1) <= sizeof(stack));
+	ASSERT(zzMulMod_deep(n) <= sizeof(stack));
+	ASSERT(zzSqrMod_deep(n) <= sizeof(stack));
+	ASSERT(zzMod_deep(n, n) <= sizeof(stack));
+	wwRepW(mod, n, WORD_MAX);
+	if (!zzRandMod(a, mod, n, prngCOMBOStepG, combo_state))
+		return FALSE;
+	b[0] = 3;
+	zzPowerMod(t, a, n, b, 1, mod, stack);
+	zzSqrMod(t1, a, mod, n, stack);
+	zzMulMod(t1, t1, a, mod, n, stack);
+	if (wwCmp(t, t1, n) != 0)
+		return FALSE;
+	// сложение / вычитание
+	for (reps = 0; reps < 1000; ++reps)
+	{
+		// генерация
+		prngCOMBOStepG(mod, O_OF_W(n), combo_state);
+		prngCOMBOStepG(a, O_OF_W(n), combo_state);
+		prngCOMBOStepG(b, O_OF_W(n), combo_state);
+		if (mod[n - 1] == 0)
+			mod[n - 1] = WORD_MAX;
+		zzMod(a, a, n, mod, n, stack);
+		zzMod(b, b, n, mod, n, stack);
+		// zzAddMod / zzSubMod
+		zzAddMod(t, a, b, mod, n);
+		zzSubMod(t1, t, b, mod, n);
+		if (!wwEq(t1, a, n))
+			return FALSE;
+		zzSubMod(t1, t, a, mod, n);
+		if (!wwEq(t1, b, n))
+			return FALSE;
+		// zzAddModW / zzSubModW
+		zzAddWMod(t, a, b[0], mod, n);
+		zzSubWMod(t1, t, b[0], mod, n);
+		if (!wwEq(t1, a, n))
+			return FALSE;
+	}
+	// все нормально
+	return TRUE;
+}
+
+bool_t zzTest()
+{
+	return zzTestAdd() && zzTestMod();
+}
+

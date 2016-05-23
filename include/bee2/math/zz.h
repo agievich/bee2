@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.22
-\version 2015.10.29
+\version 2016.05.23
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -63,8 +63,6 @@ extern "C" {
 число машинных слов.
 
 \pre Вспомогательный буфер stack не пересекается с другими буферами.
-
-\safe todo
 *******************************************************************************
 */
 
@@ -188,7 +186,7 @@ word zzAddW2(
 	\remark Переставляя операнды, можно проверять не только суммы,
 	но и разности.
 	\return Признак равенства.
-	\safe todo
+	\safe Имеется ускоренная нерегулярная редакция.
 */
 bool_t zzIsSumEq(
 	const word c[],		/*!< [in] сумма */
@@ -228,7 +226,6 @@ bool_t FAST(zzIsSumWEq)(const word b[], const word a[], size_t n,
 	\endcode
 	\pre Буфер c либо не пересекается, либо совпадает с каждым из буферов a, b.
 	\return Слово заема borrow.
-	\safe todo
 */
 word zzSub(
 	word c[],			/*!< [out] разность */
@@ -245,7 +242,6 @@ word zzSub(
 	\endcode
 	\pre Буфер c либо не пересекается, либо совпадает с каждым из буферов a, b.
 	\return Слово заема borrow.
-	\safe todo
 */
 word zzSub2(
 	word b[],			/*!< [in/out] уменьшаемое / разность */
@@ -658,7 +654,7 @@ size_t zzJacobi_deep(size_t n, size_t m);
 	\pre a < mod && b < mod.
 	\pre Буфер c либо не пересекается, либо совпадает с каждым из буферов a, b.
 	\pre Буфер с не пересекается с буфером mod.
-	\safe todo
+	\safe Имеется ускоренная нерегулярная редакция.
 */
 void zzAddMod(
 	word c[],			/*!< [out] сумма */
@@ -667,6 +663,9 @@ void zzAddMod(
 	const word mod[],	/*!< [in] модуль */
 	size_t n			/*!< [in] длина чисел в машинных словах */
 );
+
+void FAST(zzAddMod)(word c[], const word a[], const word b[], const word mod[], 
+	size_t n);
 
 /*!	\brief Сложение числа со словом по модулю
 
@@ -977,6 +976,7 @@ bool_t zzRandNZMod(
 	\pre n >= 1 && mod[n - 1] != 0.
 	\pre Буферы a и mod не пересекаются.
 	\deep{stack} zzRed_deep(n).
+	\safe Функция нерегулярна.
 */
 void zzRed(
 	word a[],					/*!< [in/out] делимое / остаток */
