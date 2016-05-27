@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.05.14
-\version 2016.04.22
+\version 2016.05.25
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -357,11 +357,10 @@ err_t belsRecover(octet s[], size_t count, size_t len, const octet si[],
 		ppMul_deep(n, n), 
 		ppMod_deep(count * n, n + 1));
 	for (i = 1; i < count; ++i)
-		deep = utilMax(7, 
+		deep = utilMax(6, 
 			deep, 
 			ppExGCD_deep(n + 1, i * n + 1),
 			ppMul_deep(i * n, i * n),
-			ppMul_deep(2 * i * n, n),
 			ppMul_deep(2 * i * n, n),
 			ppMul_deep(2 * n, i * n),
 			ppMod_deep((2 * i + 1) * n, (i + 1) * n + 1));

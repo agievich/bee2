@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.18
-\version 2016.04.11
+\version 2016.05.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -480,6 +480,8 @@ size_t wwNAF(word naf[], const word a[], size_t n, size_t w)
 \todo Функции wwShLoCarry(), wwShHiCarry() перегружены. Оценить их
 востребованность. Для размышления. В архитектуре i386 при сдвиге регистра
 более чем на 1 позицию флаг переноса формально не определен.
+
+\todo Проверить wwTrimLo().
 *******************************************************************************
 */
 
@@ -647,9 +649,11 @@ void wwTrimLo(word a[], size_t n, size_t pos)
 	size_t i = pos / B_PER_W;
 	ASSERT(wwIsValid(a, n));
 	if (i < n)
+	{
 		// очистить биты слова a[i]
 		if (pos %= B_PER_W)
 			a[i] >>= pos, a[i] <<= pos;
+	}
 	else if (i > n)
 		i = n;
 	// очистить остальные слова

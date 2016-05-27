@@ -5,7 +5,7 @@
 \project bee2/stamp
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2011.10.18
-\version 2013.02.25
+\version 2016.05.24
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -78,7 +78,7 @@ DWORD stampFindOffset(const UINT8* image, DWORD size)
 	_CHECK_PTR(pDOSHeader, image_end);
 	pNTHeader = _CAST_PTR_OFFSET(IMAGE_NT_HEADERS, pDOSHeader, 
 		pDOSHeader->e_lfanew);
-	_CHECK_PTR(pDOSHeader, image_end);
+	_CHECK_PTR(pNTHeader, image_end);
 	pFileHeader = _CAST_PTR(IMAGE_FILE_HEADER, &pNTHeader->FileHeader); 
 	_CHECK_PTR(pFileHeader, image_end);
 	// поиск секции ресурсов

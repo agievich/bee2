@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2016.04.22
+\version 2016.05.24
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -1013,7 +1013,6 @@ err_t beltCFBDecr(void* dest, const void* src, size_t count,
 	// проверить входные данные
 	if (len != 16 && len != 24 && len != 32 ||
 		!memIsValid(src, count) ||
-		!memIsValid(dest, count) ||
 		!memIsValid(theta, len) ||
 		!memIsValid(iv, 16) ||
 		!memIsValid(dest, count))
