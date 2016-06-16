@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.02.04
-\version 2015.12.03
+\version 2016.04.28
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -40,12 +40,6 @@ extern "C" {
 *******************************************************************************
 */
 
-/*
-*******************************************************************************
-Псевдонимы стандартных функций
-*******************************************************************************
-*/
-
 /*!	Определяется длина строки (число символов до завершающего нулевого).
 */
 #define strLen(str) strlen(str)
@@ -55,18 +49,37 @@ extern "C" {
 */
 #define strLen2(str, count) strnlen(str, count)
 
-/*!	Строка src копируется в dest.
+/*!	\brief Корректная строка?
+
+	Проверяется, что строка str корректна.
+	\return Признак успеха.
+*/
+bool_t strIsValid(
+	const char* str		/*!< [in] строка */
+);
+
+/*!	\brief Копирование строки
+
+	Строка src копируется в dest.
 	\pre По адресу dest зарезервировано strLen(src) + 1 октетов.
 	\pre Буферы src и dest не пересекаются.
 */
-#define strCopy(dest, src) strcpy(dest, src)
+void strCopy(
+	char* dest,			/*!< [out] строка-назначение */
+	const char* src		/*!< [in] строка-источник */
+);
 
-/*!	Строки str1 и str2 сравниваются лексикографически.
+/*!	\brief Сравнение строк
+	
+	Строки str1 и str2 сравниваются лексикографически.
 	\return 1, если str1 > str2, или -1, если str1 < str2,
 	или 0, если str1 == str2.
 	\safe Функция нерегулярна.
 */
-#define strCmp(str1, str2) strcmp(str1, str2)
+int strCmp(
+	const char* str1,	/*!< [in] первая строка */
+	const char* str2	/*!< [in] вторая строка */
+);
 
 /*!	Проверяется совпадение строк str1 и str2.
 	\return Признак совпадения.
@@ -79,15 +92,6 @@ extern "C" {
 Дополнительные функции
 *******************************************************************************
 */
-
-/*!	\brief Корректная строка?
-
-	Проверяется, что строка str корректна.
-	\return Признак успеха.
-*/
-bool_t strIsValid(
-	const char* str		/*!< [in] строка */
-);
 
 /*!	\brief Буквенно-цифовая?
 

@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.22
-\version 2015.11.02
+\version 2016.05.23
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -1319,7 +1319,114 @@ size_t zzJacobi_deep(size_t n, size_t m)
 
 /*
 *******************************************************************************
-Модулярная арифметика
+Модулярная арифметика: аддитивные операции
+
+Функция zzAddMod() регулязирована Станиславом Поручником 
+[poruchnikstanislav@gmail.com]. В первом проходе выполняется сложение и 
+одновременно проверяется, не превосходит ли сумма модуль. Во втором проходе 
+выполняется вычитание либо собственно модуля, либо нуля.
+*******************************************************************************
+*/
+
+void FAST(zzAddMod)(word c[], const word a[], const word b[], const word mod[],
+	size_t n)
+{
+	ASSERT(wwIsSameOrDisjoint(a, c, n));
+	ASSERT(wwIsSameOrDisjoint(b, c, n));
+	ASSERT(wwIsDisjoint(c, mod, n));
+	ASSERT(wwCmp(a, mod, n) < 0 && wwCmp(b, mod, n) < 0);
+	if (zzAdd(c, a, b, n) || FAST(wwCmp)(c, mod, n) >= 0)
+		zzSub2(c, mod, n);
+}
+
+void SAFE(zzAddMod)(word c[], const word a[], const word b[], const word mod[],
+	size_t n)
+{
+	register word carry = 0;
+	register word mask = 1;
+	register word w;
+	size_t i;
+	// pre
+	ASSERT(wwIsSameOrDisjoint(a, c, n));
+	ASSERT(wwIsSameOrDisjoint(b, c, n));
+	ASSERT(wwIsDisjoint(c, mod, n));
+	ASSERT(wwCmp(a, mod, n) < 0 && wwCmp(b, mod, n) < 0);
+	// add 	
+	for (i = 0; i < n; ++i)
+	{
+		w = a[i] + carry;
+		carry = wordLess01(w, carry);
+		c[i] = w + b[i];
+		carry |= wordLess01(c[i], w);
+		// mask <- mod[i] < c[i] || mask && mod[i] == c[i];
+		mask &= wordEq01(mod[i], c[i]);
+		mask |= wordLess01(mod[i], c[i]);
+	}
+	// sub
+	mask |= carry;
+	mask = WORD_0 - mask;
+	carry = 0;
+	for(i = 0; i < n; ++i)
+	{
+		w = (mod[i] & mask) + carry;
+		carry = wordLess01(w, carry);
+		carry |= wordLess01(c[i], w);
+		c[i] = c[i] - w;
+	}
+	w = mask = carry = 0;
+}
+
+void zzAddWMod(word b[], const word a[], register word w, 
+	const word mod[], size_t n)
+{
+	ASSERT(wwIsSameOrDisjoint(a, b, n));
+	ASSERT(wwIsDisjoint(b, mod, n));
+	ASSERT(wwCmp(a, mod, n) < 0 && wwCmpW(mod, n, w) > 0);
+	// a + w >= mod => a + w - mod < mod
+	if (zzAddW(b, a, n, w) || wwCmp(b, mod, n) >= 0)
+		zzSub2(b, mod, n);
+	w = 0;
+}
+
+void zzSubMod(word c[], const word a[], const word b[], const word mod[],
+	size_t n)
+{
+	ASSERT(wwIsSameOrDisjoint(a, c, n));
+	ASSERT(wwIsSameOrDisjoint(b, c, n));
+	ASSERT(wwIsDisjoint(c, mod, n));
+	ASSERT(wwCmp(a, mod, n) < 0 && wwCmp(b, mod, n) < 0);
+	// a < b => a - b + mod < mod
+	if (zzSub(c, a, b, n))
+		zzAdd2(c, mod, n);
+}
+
+void zzSubWMod(word b[], const word a[], register word w, 
+	const word mod[], size_t n)
+{
+	ASSERT(wwIsSameOrDisjoint(a, b, n));
+	ASSERT(wwIsDisjoint(b, mod, n));
+	ASSERT(wwCmp(a, mod, n) < 0 && wwCmpW(mod, n, w) >= 0);
+	// a < w => a - w + mod < mod
+	if (zzSubW(b, a, n, w))
+		zzAdd2(b, mod, n);
+	w = 0;
+}
+
+void zzNegMod(word b[], const word a[], const word mod[], size_t n)
+{
+	ASSERT(wwIsSameOrDisjoint(a, b, n));
+	ASSERT(wwIsDisjoint(b, mod, n));
+	ASSERT(wwCmp(a, mod, n) < 0);
+	// a != 0 => b <- mod - a
+	if (!wwIsZero(a, n))
+		zzSub(b, mod, a, n);
+	else
+		wwSetZero(b, n);
+}
+
+/*
+*******************************************************************************
+Модулярная арифметика: мультипликативные операции
 
 В zzDivMod() реализован упрощенный вариант zzExGCD(): рассчитываются
 только da0, da, причем da0 = divident (а не 1).
@@ -1372,66 +1479,6 @@ a и mod < 2^m, причем условие a < mod может нарушать�
 нечетного mod. Можно ли сузить интервал [0, 2 * mod - 1]?
 *******************************************************************************
 */
-
-void zzAddMod(word c[], const word a[], const word b[], const word mod[],
-	size_t n)
-{
-	ASSERT(wwIsSameOrDisjoint(a, c, n));
-	ASSERT(wwIsSameOrDisjoint(b, c, n));
-	ASSERT(wwIsDisjoint(c, mod, n));
-	ASSERT(wwCmp(a, mod, n) < 0 && wwCmp(b, mod, n) < 0);
-	// вычисления (a + b >= mod => a + b - mod < mod)
-	if (zzAdd(c, a, b, n) || wwCmp(c, mod, n) >= 0)
-		zzSub2(c, mod, n);
-}
-
-void zzAddWMod(word b[], const word a[], register word w, 
-	const word mod[], size_t n)
-{
-	ASSERT(wwIsSameOrDisjoint(a, b, n));
-	ASSERT(wwIsDisjoint(b, mod, n));
-	ASSERT(wwCmp(a, mod, n) < 0 && wwCmpW(mod, n, w) > 0);
-	// a + w >= mod => a + w - mod < mod
-	if (zzAddW(b, a, n, w) || wwCmp(b, mod, n) >= 0)
-		zzSub2(b, mod, n);
-	w = 0;
-}
-
-void zzSubMod(word c[], const word a[], const word b[], const word mod[],
-	size_t n)
-{
-	ASSERT(wwIsSameOrDisjoint(a, c, n));
-	ASSERT(wwIsSameOrDisjoint(b, c, n));
-	ASSERT(wwIsDisjoint(c, mod, n));
-	ASSERT(wwCmp(a, mod, n) < 0 && wwCmp(b, mod, n) < 0);
-	// a < b => a - b + mod < mod
-	if (zzSub(c, a, b, n))
-		zzAdd2(c, mod, n);
-}
-
-void zzSubWMod(word b[], const word a[], register word w, 
-	const word mod[], size_t n)
-{
-	ASSERT(wwIsSameOrDisjoint(a, b, n));
-	ASSERT(wwIsDisjoint(b, mod, n));
-	ASSERT(wwCmp(a, mod, n) < 0 && wwCmpW(mod, n, w) >= 0);
-	// a < w => a - w + mod < mod
-	if (zzSubW(b, a, n, w))
-		zzAdd2(b, mod, n);
-	w = 0;
-}
-
-void zzNegMod(word b[], const word a[], const word mod[], size_t n)
-{
-	ASSERT(wwIsSameOrDisjoint(a, b, n));
-	ASSERT(wwIsDisjoint(b, mod, n));
-	ASSERT(wwCmp(a, mod, n) < 0);
-	// a != 0 => b <- mod - a
-	if (!wwIsZero(a, n))
-		zzSub(b, mod, a, n);
-	else
-		wwSetZero(b, n);
-}
 
 void zzMulMod(word c[], const word a[], const word b[], const word mod[],
 	size_t n, void* stack)

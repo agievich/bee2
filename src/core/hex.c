@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.10.29
-\version 2015.11.09
+\version 2016.06.16
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -159,7 +159,7 @@ bool_t FAST(hexEqRev)(const void* buf, const char* hex)
 
 /*
 *******************************************************************************
-Преобразования
+Кодирование
 *******************************************************************************
 */
 
@@ -182,18 +182,20 @@ void hexFromRev(char* dest, const void* src, size_t count)
 
 void hexTo(void* dest, const char* src)
 {
-	size_t count = strLen(src);
+	size_t count;
 	ASSERT(hexIsValid(src));
-	ASSERT(memIsDisjoint2(src, count + 1, dest, count / 2));
+	ASSERT(memIsDisjoint2(src, strLen(src) + 1, dest, strLen(src) / 2));
+	count = strLen(src);
 	for (; count; count -= 2, src += 2, dest = (octet*)dest + 1)
 		*(octet*)dest = hexToO(src);
 }
 
 void hexToRev(void* dest, const char* src)
 {
-	size_t count = strLen(src);
+	size_t count;
 	ASSERT(hexIsValid(src));
-	ASSERT(memIsDisjoint2(src, count + 1, dest, count / 2));
+	ASSERT(memIsDisjoint2(src, strLen(src) + 1, dest, strLen(src) / 2));
+	count = strLen(src);
 	src = src + count;
 	for (; count; count -= 2, dest = (octet*)dest + 1)
 		*(octet*)dest = hexToO(src -= 2);

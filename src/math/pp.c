@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.03.01
-\version 2016.04.15
+\version 2016.05.18
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -34,7 +34,7 @@ version 3. See Copyright Notices in bee2/info.h.
 
 size_t ppDeg(const word a[], size_t n)
 {
-	return wwBitSize(a, n) - 1;
+	return wwBitSize(a, n) - SIZE_1;
 }
 
 /*

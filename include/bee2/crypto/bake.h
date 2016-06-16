@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.04.14
-\version 2015.09.01
+\version 2016.06.16
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -425,7 +425,6 @@ err_t bakeBSTSStep2(
 	\expect bakeBSTSStart() < bakeBSTSStep3().
 	\expect bakeBSTSStep2() << bakeBSTSStep3().
 	\return ERR_OK, если шаг успешно выполнен, и код ошибки в противном случае.
-	\remark Синтаксис [?out_len]out объяснен в defs.h. 
 */
 err_t bakeBSTSStep3(
 	octet out[],			/*!< [out] выходное сообщение M2 */

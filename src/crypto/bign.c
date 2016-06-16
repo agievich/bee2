@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.27
-\version 2016.04.22
+\version 2016.05.25
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -1448,11 +1448,6 @@ err_t bignIdSign(octet id_sig[], const bign_params* params,
 	word* s0;				/* [n/2] первая часть подписи */
 	word* s1;				/* [n] вторая часть подписи */
 	octet* stack;
-	// проверить params
-	if (!memIsValid(params, sizeof(bign_params)))
-		return ERR_BAD_INPUT;
-	if (params->l != 128 && params->l != 192 && params->l != 256)
-		return ERR_BAD_PARAMS;
 	// проверить params
 	if (!memIsValid(params, sizeof(bign_params)))
 		return ERR_BAD_INPUT;

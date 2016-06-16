@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.02.04
-\version 2015.12.03
+\version 2016.04.28
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -19,14 +19,37 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 Проверка
 
-\todo Переделать: strLen() может рекурсивно вызывать strIsValid() при проверке
-предусловия.
+\warning В strLen() нельзя вызывать strIsValid() -- будет рекурсия.
 *******************************************************************************
 */
 
 bool_t strIsValid(const char* str)
 {
 	return memIsValid(str, strLen(str) + 1);
+}
+
+/*
+*******************************************************************************
+Стандартные функции
+
+\remark strLen() реализована через memcpy(), а не через strcpy(), 
+чтобы избежать предупреждений MSVC.
+*******************************************************************************
+*/
+
+void strCopy(char* dest, const char* src)
+{
+	ASSERT(strIsValid(src));
+	ASSERT(memIsValid(dest, strLen(src) + 1));
+	ASSERT(memIsDisjoint(src, dest, strLen(src) + 1));
+	memcpy(dest, src, strLen(src) + 1);
+}
+
+int strCmp(const char* str1, const char* str2)
+{
+	ASSERT(strIsValid(str1));
+	ASSERT(strIsValid(str2));
+	return strcmp(str1, str2);
 }
 
 /*

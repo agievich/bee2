@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.03.01
-\version 2015.02.01
+\version 2016.05.18
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -68,7 +68,7 @@ extern "C" {
 
 	Определяется степень многочлена [n]a.
 	\remark Степенью является позиция старшего ненулевого бита a
-	(нумерация от 0). Степень нулевого многочлена полагается равной -1.
+	(нумерация от 0). Степень нулевого многочлена полагается равной SIZE_MAX.
 	\return Степень a.
 */
 size_t ppDeg(

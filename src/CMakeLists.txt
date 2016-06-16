@@ -1,4 +1,5 @@
 set(src
+  core/b64.c
   core/blob.c
   core/dec.c
   core/der.c
@@ -40,30 +41,30 @@ set(src
   math/zz.c
 )
 
-if(NOT BUILD_STATIC_LIBS AND NOT BUILD_SHARED_LIBS)
-  message(FATAL_ERROR "Need to choose static or shared bee2 build!")
-endif()
+add_library(bee2_static STATIC ${src})
+set_target_properties(bee2_static PROPERTIES OUTPUT_NAME bee2_static)
+target_link_libraries(bee2_static ${libs})
 
-if(BUILD_STATIC_LIBS)
-  if(NOT BUILD_SHARED_LIBS)
-    set(bee2_static_target "bee2")
-  else()
-    # if we build both static and shared, then let
-    # tests and apps link to the shared lib target
-    set(bee2_static_target "bee2_static")
-  endif()
-
-  add_library(${bee2_static_target} STATIC ${src})
-  set_target_properties(${bee2_static_target} PROPERTIES OUTPUT_NAME ${bee2_static_target})
-  target_link_libraries(${bee2_static_target} ${libs})
-
-  install(TARGETS ${bee2_static_target}
-    DESTINATION ${LIB_INSTALL_DIR}
-    PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-endif()
+install(TARGETS bee2_static
+  DESTINATION ${LIB_INSTALL_DIR}
+  PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 
 if(BUILD_SHARED_LIBS)
-  add_library(bee2 SHARED ${src})
+  if(NOT WIN32)
+    add_library(bee2 SHARED ${src})
+  else()
+    if(MSVC)
+      # disable the security warnings for sprintf() in bee2.c
+      add_definitions(/D _CRT_SECURE_NO_WARNINGS)
+    endif()
+    add_library(bee2 SHARED ${src} 
+      ../win/bee2.def
+      ../win/bee2.bmp
+      ../win/bee2.rc
+      ../win/bee2.c
+    )
+  endif()
+
   target_link_libraries(bee2 ${libs})
 
 # uncomment next lines to keep track of bee2.so with version numbers

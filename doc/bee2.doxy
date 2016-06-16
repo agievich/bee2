@@ -672,6 +672,7 @@ INPUT                  = ../include/bee2/info.h \
                          ../include/bee2/math/ww.h \
                          ../include/bee2/math/zm.h \
                          ../include/bee2/math/zz.h \
+                         ../include/bee2/core/b64.h \
                          ../include/bee2/core/blob.h \
                          ../include/bee2/core/der.h \
                          ../include/bee2/core/err.h \

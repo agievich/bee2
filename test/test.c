@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.04.02
-\version 2015.11.06
+\version 2016.06.16
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -20,6 +20,7 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
+extern bool_t b64Test();
 extern bool_t decTest();
 extern bool_t memTest();
 extern bool_t objTest();
@@ -32,6 +33,7 @@ int testCore()
 {
 	bool_t code;
 	int ret = 0;
+	printf("b64Test: %s\n", (code = b64Test()) ? "OK" : "Err"), ret |= !code;
 	printf("decTest: %s\n", (code = decTest()) ? "OK" : "Err"), ret |= !code;
 	printf("memTest: %s\n", (code = memTest()) ? "OK" : "Err"), ret |= !code;
 	printf("objTest: %s\n", (code = objTest()) ? "OK" : "Err"), ret |= !code;

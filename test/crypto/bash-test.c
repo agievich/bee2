@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.09.22
-\version 2015.11.20
+\version 2016.05.25
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -23,6 +23,8 @@ version 3. See Copyright Notices in bee2/info.h.
 Самотестирование
 
 Создаются тесты для приложения А к СТБ 34.101.bash.
+
+\todo Использовать state, или убрать.
 *******************************************************************************
 */
 

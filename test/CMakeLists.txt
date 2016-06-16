@@ -1,4 +1,5 @@
 add_executable(testbee2
+	core/b64-test.c
 	core/dec-test.c
 	core/mem-test.c
 	core/obj-test.c
@@ -24,6 +25,6 @@ add_executable(testbee2
 	math/word-test.c
 	test.c
 )
-target_link_libraries(testbee2 bee2)
+target_link_libraries(testbee2 bee2_static)
 
 add_test(testbee2 testbee2)

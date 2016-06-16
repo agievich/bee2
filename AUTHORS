@@ -1,0 +1,22 @@
+Authors and contributors
+========================
+
+Bee2 is written and maintained by
+
+- Sergey Agievich [agievich@{bsu.by|gmail.com}] 
+
+Power contributors
+------------------
+
+- Vlad Semenov [semenov.vlad.by@gmail.com]
+  - crypto/bash
+
+Contributors
+------------
+
+- Stanislav Poruchnik [poruchnikstanislav@gmail.com] 
+  - SAFE(math/zz)
+- Stanislav Lipnickii [stas_lipnickii@mail.ru]
+  - static analysis
+
+
