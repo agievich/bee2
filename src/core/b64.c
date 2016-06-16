@@ -68,21 +68,21 @@ bool_t b64IsValid(const char* b64)
 	// последний блок данных состоял из 2 октетов?
 	if (len % 4 == 3)
 	{
-		if (dec_table[b64[len - 1]] & 3)
+		if (dec_table[(octet)b64[len - 1]] & 3)
 			return FALSE;
 		--len;
 	}
 	// последний блок данных состоял из 1 октета?
 	else if (len % 4 == 2)
 	{
-		if (dec_table[b64[len - 1]] & 15)
+		if (dec_table[(octet)b64[len - 1]] & 15)
 			return FALSE;
 		--len;
 	}
 	// проверить остальные символы 
 	for (; len--; ++b64)
 	{
-		if (dec_table[*b64] == 0xFF)
+		if (dec_table[(octet)*b64] == 0xFF)
 			return FALSE;
 	}
 	return TRUE;
@@ -151,28 +151,28 @@ void b64To(void* dest, size_t* count, const char* src)
 	ASSERT(memIsDisjoint2(src, strLen(src) + 1, dest, *count));
 	for (; len >= 4; len -= 4)
 	{
-		block  = dec_table[src[0]], block <<= 6;
-		block |= dec_table[src[1]], block <<= 6;
-		block |= dec_table[src[2]], block <<= 6;
-		block |= dec_table[src[3]];
+		block  = dec_table[(octet)src[0]], block <<= 6;
+		block |= dec_table[(octet)src[1]], block <<= 6;
+		block |= dec_table[(octet)src[2]], block <<= 6;
+		block |= dec_table[(octet)src[3]];
 		((octet*)dest)[2] = block & 255, block >>= 8;
 		((octet*)dest)[1] = block & 255, block >>= 8;
-		((octet*)dest)[0];
+		((octet*)dest)[0] = block;
 		src += 4;
 		dest = (octet*)dest + 3;
 	}
 	if (len == 3)
 	{
-		block  = dec_table[src[0]], block <<= 6;
-		block |= dec_table[src[1]], block <<= 6;
-		block |= dec_table[src[2]], block >>= 2;
+		block  = dec_table[(octet)src[0]], block <<= 6;
+		block |= dec_table[(octet)src[1]], block <<= 6;
+		block |= dec_table[(octet)src[2]], block >>= 2;
 		((octet*)dest)[1] = block & 255, block >>= 8;
 		((octet*)dest)[0] = block;
 	}
 	else if (len == 2)
 	{
-		block  = dec_table[src[0]], block <<= 6;
-		block |= dec_table[src[1]], block >>= 4;
+		block  = dec_table[(octet)src[0]], block <<= 6;
+		block |= dec_table[(octet)src[1]], block >>= 4;
 		((octet*)dest)[0] = block;
 	}
 	block = 0;
