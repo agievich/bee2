@@ -18,7 +18,7 @@ version 3. See Copyright Notices in bee2/info.h.
 
 /*
 *******************************************************************************
-Тестирование
+РўРµСЃС‚РёСЂРѕРІР°РЅРёРµ
 *******************************************************************************
 */
 
@@ -28,13 +28,13 @@ bool_t hexTest()
 	char hex[512 + 1];
 	char hex1[512 + 1];
 	size_t count;
-	// валидация
+	// РІР°Р»РёРґР°С†РёСЏ
 	if (!hexIsValid("1234") ||
 		hexIsValid("12345") ||
 		!hexIsValid("ABCDEFabcdef") ||
 		hexIsValid("abcdefgh"))
 		return FALSE;
-	// кодировать / декодировать
+	// РєРѕРґРёСЂРѕРІР°С‚СЊ / РґРµРєРѕРґРёСЂРѕРІР°С‚СЊ
 	for (count = 0; count <= 256; ++count)
 	{
 		hexFrom(hex, beltH(), count);
@@ -55,6 +55,6 @@ bool_t hexTest()
 		if (!strEq(hex, hex1))
 			return FALSE;
 	}
-	// все нормально
+	// РІСЃРµ РЅРѕСЂРјР°Р»СЊРЅРѕ
 	return TRUE;
 }
