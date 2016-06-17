@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.10.29
-\version 2016.06.16
+\version 2016.06.17
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -19,48 +19,54 @@ version 3. See Copyright Notices in bee2/info.h.
 
 /*
 *******************************************************************************
-Шестнадцатеричные символы
+Таблицы
+*******************************************************************************
+*/
 
-\todo Функция hexToO() нерегулярна. Поэтому нерегулярны и другие функции
-hexToXXX. Регуляризировать.
+static const char hex_upper[] = "0123456789ABCDEF";
+static const char hex_lower[] = "0123456789abcdef";
+
+static const octet hex_dec_table[256] = {
+	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+	0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+	0xFF,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+	0xFF,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+};
+
+/*
+*******************************************************************************
+Октеты
 *******************************************************************************
 */
 
 static octet hexToO(const char* hex)
 {
-	register octet o;
+	register octet hi;
+	register octet lo;
 	ASSERT(memIsValid(hex, 2));
-	// определить старшую тетраду
-	if ('0' <= *hex && *hex <= '9')
-		o = *hex - '0';
-	else if ('A' <= *hex && *hex <= 'F')
-		o = *hex - 'A' + 10;
-	else if ('a' <= *hex && *hex <= 'f')
-		o = *hex - 'a' + 10;
-	else
-		ASSERT(0);
-	// к младшей тетраде
-	o <<= 4, ++hex;
-	// определить младшую тетраду
-	if ('0' <= *hex && *hex <= '9')
-		o |= *hex - '0';
-	else if ('A' <= *hex && *hex <= 'F')
-		o |= *hex - 'A' + 10;
-	else if ('a' <= *hex && *hex <= 'f')
-		o |= *hex - 'a' + 10;
-	else
-		ASSERT(0);
-	// результат
-	return o;
+	hi = hex_dec_table[(octet)hex[0]];
+	lo = hex_dec_table[(octet)hex[1]];
+	ASSERT(hi != 0xFF && lo != 0xFF);
+	return hi << 4 | lo;
 }
-
-static const char hex_symbols[] = "0123456789ABCDEF";
 
 static void hexFromO(char* hex, register octet o)
 {
 	ASSERT(memIsValid(hex, 2));
-	hex[0] = hex_symbols[o >> 4];
-	hex[1] = hex_symbols[o & 15];
+	hex[0] = hex_upper[o >> 4];
+	hex[1] = hex_upper[o & 15];
 	o = 0;
 }
 
@@ -75,9 +81,7 @@ bool_t hexIsValid(const char* hex)
 	if (!strIsValid(hex) || strLen(hex) % 2)
 		return FALSE;
 	for (; *hex; ++hex)
-		if (!('0' <= *hex && *hex <= '9' ||
-				'A' <= *hex && *hex <= 'F' ||
-				'a' <= *hex && *hex <= 'f'))
+		if (hex_dec_table[(octet)*hex] == 0xFF)
 			return FALSE;
 	return TRUE;
 }
@@ -88,21 +92,30 @@ bool_t hexIsValid(const char* hex)
 *******************************************************************************
 */
 
-static const char hex_upper[] = "0123456789ABCDEF";
-static const char hex_lower[] = "0123456789abcdef";
-
 void hexUpper(char* hex)
 {
+	register octet o;
 	ASSERT(hexIsValid(hex));
-	for (; *hex; ++hex)
-		*hex = hex_upper[*hex - '0'];
+	for (; *hex; hex += 2)
+	{
+		o = hexToO(hex);
+		hex[0] = hex_upper[o >> 4];
+		hex[1] = hex_upper[o & 15];
+	}
+	o = 0;
 }
 
 void hexLower(char* hex)
 {
+	register octet o;
 	ASSERT(hexIsValid(hex));
-	for (; *hex; ++hex)
-		*hex = hex_lower[*hex - '0'];
+	for (; *hex; hex += 2)
+	{
+		o = hexToO(hex);
+		hex[0] = hex_lower[o >> 4];
+		hex[1] = hex_lower[o & 15];
+	}
+	o = 0;
 }
 
 /*
@@ -114,9 +127,10 @@ void hexLower(char* hex)
 bool_t SAFE(hexEq)(const void* buf, const char* hex)
 {
 	register word diff = 0;
-	size_t count = strLen(hex);
+	size_t count;
 	ASSERT(hexIsValid(hex));
-	ASSERT(memIsValid(buf, count / 2));
+	ASSERT(memIsValid(buf, strLen(hex) / 2));
+	count = strLen(hex);
 	for (; count; count -= 2, hex += 2, buf = (const octet*)buf + 1)
 		diff |= *(const octet*)buf ^ hexToO(hex);
 	return wordEq(diff, 0);
@@ -124,9 +138,10 @@ bool_t SAFE(hexEq)(const void* buf, const char* hex)
 
 bool_t FAST(hexEq)(const void* buf, const char* hex)
 {
-	size_t count = strLen(hex);
+	size_t count;
 	ASSERT(hexIsValid(hex));
-	ASSERT(memIsValid(buf, count / 2));
+	ASSERT(memIsValid(buf, strLen(hex) / 2));
+	count = strLen(hex);
 	for (; count; count -= 2, hex += 2, buf = (const octet*)buf + 1)
 		if (*(const octet*)buf != hexToO(hex))
 			return FALSE;
@@ -136,9 +151,10 @@ bool_t FAST(hexEq)(const void* buf, const char* hex)
 bool_t SAFE(hexEqRev)(const void* buf, const char* hex)
 {
 	register word diff = 0;
-	size_t count = strLen(hex);
+	size_t count;
 	ASSERT(hexIsValid(hex));
-	ASSERT(memIsValid(buf, count / 2));
+	ASSERT(memIsValid(buf, strLen(hex) / 2));
+	count = strLen(hex);
 	hex = hex + count;
 	for (; count; count -= 2, buf = (const octet*)buf + 1)
 		diff |= *(const octet*)buf ^ hexToO(hex -= 2);
@@ -147,9 +163,10 @@ bool_t SAFE(hexEqRev)(const void* buf, const char* hex)
 
 bool_t FAST(hexEqRev)(const void* buf, const char* hex)
 {
-	size_t count = strLen(hex);
+	size_t count;
 	ASSERT(hexIsValid(hex));
-	ASSERT(memIsValid(buf, count / 2));
+	ASSERT(memIsValid(buf, strLen(hex) / 2));
+	count = strLen(hex);
 	hex = hex + count;
 	for (; count; count -= 2, buf = (const octet*)buf + 1)
 		if (*(const octet*)buf != hexToO(hex -= 2))

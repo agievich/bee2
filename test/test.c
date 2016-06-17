@@ -23,6 +23,7 @@ version 3. See Copyright Notices in bee2/info.h.
 extern bool_t b64Test();
 extern bool_t decTest();
 extern bool_t memTest();
+extern bool_t hexTest();
 extern bool_t objTest();
 extern bool_t oidTest();
 extern bool_t prngTest();
@@ -36,6 +37,7 @@ int testCore()
 	printf("b64Test: %s\n", (code = b64Test()) ? "OK" : "Err"), ret |= !code;
 	printf("decTest: %s\n", (code = decTest()) ? "OK" : "Err"), ret |= !code;
 	printf("memTest: %s\n", (code = memTest()) ? "OK" : "Err"), ret |= !code;
+	printf("hexTest: %s\n", (code = hexTest()) ? "OK" : "Err"), ret |= !code;
 	printf("objTest: %s\n", (code = objTest()) ? "OK" : "Err"), ret |= !code;
 	printf("oidTest: %s\n", (code = oidTest()) ? "OK" : "Err"), ret |= !code;
 	printf("genTest: %s\n", (code = prngTest()) ? "OK" : "Err"), ret |= !code;

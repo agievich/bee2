@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2016.06.16
-\version 2016.06.16
+\version 2016.06.17
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -15,7 +15,6 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/core/mem.h"
 #include "bee2/core/str.h"
 #include "bee2/core/util.h"
-#include "bee2/core/word.h"
 
 /*
 *******************************************************************************
@@ -23,12 +22,12 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-static const char enc_table[] = 
+static const char b64_symbols[] = 
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	"abcdefghijklmnopqrstuvwxyz"
 	"0123456789+/";
 
-static const octet dec_table[256] = {
+static const octet b64_dec_table[256] = {
 	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
 	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
 	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x3E,0xFF,0xFF,0xFF,0x3F,
@@ -65,26 +64,24 @@ bool_t b64IsValid(const char* b64)
 	// обработать паддинг 
 	if (len && b64[len - 1] == '=' && b64[--len - 1] == '=')
 		--len;
-	// последний блок данных состоял из 2 октетов?
+	// последний блок данных из 2 октетов?
 	if (len % 4 == 3)
 	{
-		if (dec_table[(octet)b64[len - 1]] & 3)
+		if (b64_dec_table[(octet)b64[len - 1]] & 3)
 			return FALSE;
 		--len;
 	}
-	// последний блок данных состоял из 1 октета?
+	// последний блок данных из 1 октета?
 	else if (len % 4 == 2)
 	{
-		if (dec_table[(octet)b64[len - 1]] & 15)
+		if (b64_dec_table[(octet)b64[len - 1]] & 15)
 			return FALSE;
 		--len;
 	}
 	// проверить остальные символы 
 	for (; len--; ++b64)
-	{
-		if (dec_table[(octet)*b64] == 0xFF)
+		if (b64_dec_table[(octet)*b64] == 0xFF)
 			return FALSE;
-	}
 	return TRUE;
 }
 
@@ -103,10 +100,10 @@ void b64From(char* dest, const void* src, size_t count)
 		block  = ((const octet*)src)[0], block <<= 8;
 		block |= ((const octet*)src)[1], block <<= 8;
 		block |= ((const octet*)src)[2];
-		dest[3] = enc_table[block & 63], block >>= 6;
-		dest[2] = enc_table[block & 63], block >>= 6;
-		dest[1] = enc_table[block & 63], block >>= 6;
-		dest[0] = enc_table[block];
+		dest[3] = b64_symbols[block & 63], block >>= 6;
+		dest[2] = b64_symbols[block & 63], block >>= 6;
+		dest[1] = b64_symbols[block & 63], block >>= 6;
+		dest[0] = b64_symbols[block];
 		src = (const octet*)src + 3;
 		dest += 4;
 	}
@@ -115,17 +112,17 @@ void b64From(char* dest, const void* src, size_t count)
 		block  = ((const octet*)src)[0], block <<= 8;
 		block |= ((const octet*)src)[1], block <<= 2;
 		dest[3] = '=';
-		dest[2] = enc_table[block & 63], block >>= 6;
-		dest[1] = enc_table[block & 63], block >>= 6;
-		dest[0] = enc_table[block];
+		dest[2] = b64_symbols[block & 63], block >>= 6;
+		dest[1] = b64_symbols[block & 63], block >>= 6;
+		dest[0] = b64_symbols[block];
 		dest += 4;
 	}
 	else if (count == 1)
 	{
 		block  = ((const octet*)src)[0], block <<= 4;
 		dest[3] = dest[2] = '=';
-		dest[1] = enc_table[block & 0x3F], block >>= 6;
-		dest[0] = enc_table[block];
+		dest[1] = b64_symbols[block & 63], block >>= 6;
+		dest[0] = b64_symbols[block];
 		dest += 4;
 	}
 	*dest = '\0';
@@ -151,10 +148,10 @@ void b64To(void* dest, size_t* count, const char* src)
 	ASSERT(memIsDisjoint2(src, strLen(src) + 1, dest, *count));
 	for (; len >= 4; len -= 4)
 	{
-		block  = dec_table[(octet)src[0]], block <<= 6;
-		block |= dec_table[(octet)src[1]], block <<= 6;
-		block |= dec_table[(octet)src[2]], block <<= 6;
-		block |= dec_table[(octet)src[3]];
+		block  = b64_dec_table[(octet)src[0]], block <<= 6;
+		block |= b64_dec_table[(octet)src[1]], block <<= 6;
+		block |= b64_dec_table[(octet)src[2]], block <<= 6;
+		block |= b64_dec_table[(octet)src[3]];
 		((octet*)dest)[2] = block & 255, block >>= 8;
 		((octet*)dest)[1] = block & 255, block >>= 8;
 		((octet*)dest)[0] = block;
@@ -163,16 +160,16 @@ void b64To(void* dest, size_t* count, const char* src)
 	}
 	if (len == 3)
 	{
-		block  = dec_table[(octet)src[0]], block <<= 6;
-		block |= dec_table[(octet)src[1]], block <<= 6;
-		block |= dec_table[(octet)src[2]], block >>= 2;
+		block  = b64_dec_table[(octet)src[0]], block <<= 6;
+		block |= b64_dec_table[(octet)src[1]], block <<= 6;
+		block |= b64_dec_table[(octet)src[2]], block >>= 2;
 		((octet*)dest)[1] = block & 255, block >>= 8;
 		((octet*)dest)[0] = block;
 	}
 	else if (len == 2)
 	{
-		block  = dec_table[(octet)src[0]], block <<= 6;
-		block |= dec_table[(octet)src[1]], block >>= 4;
+		block  = b64_dec_table[(octet)src[0]], block <<= 6;
+		block |= b64_dec_table[(octet)src[1]], block >>= 4;
 		((octet*)dest)[0] = block;
 	}
 	block = 0;

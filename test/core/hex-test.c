@@ -1,18 +1,19 @@
 /*
 *******************************************************************************
-\file b64-test.c
-\brief Tests for base64 encoding
+\file hex-test.c
+\brief Tests for hexadecimal strings
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
-\created 2016.06.16
-\version 2016.06.16
+\created 2016.06.17
+\version 2016.06.17
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#include <bee2/core/b64.h>
+#include <bee2/core/hex.h>
 #include <bee2/core/mem.h>
+#include <bee2/core/str.h>
 #include <bee2/crypto/belt.h>
 
 /*
@@ -21,35 +22,37 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-bool_t b64Test()
+bool_t hexTest()
 {
 	octet buf[256];
-	char b64[255 / 3 * 4 + 1];
+	char hex[512 + 1];
+	char hex1[512 + 1];
 	size_t count;
 	// валидация
-	if (!b64IsValid("1234") ||
-		b64IsValid("AbC=") ||
-		!b64IsValid("AbE=") ||
-		b64IsValid("AbCBD4==") ||
-		!b64IsValid("AbCBDg==") ||
-		b64IsValid("AbC78a8@") ||
-		b64IsValid("AbC78a8") ||
-		b64IsValid("AbC7===") ||
-		b64IsValid("Ab=7=="))
+	if (!hexIsValid("1234") ||
+		hexIsValid("12345") ||
+		!hexIsValid("ABCDEFabcdef") ||
+		hexIsValid("abcdefgh"))
 		return FALSE;
 	// кодировать / декодировать
-	for (count = 0; count < 256; ++count)
+	for (count = 0; count <= 256; ++count)
 	{
-		size_t t;
-		b64From(b64, beltH(), count);
-		b64To(0, &t, b64);
-		if (t != count)
+		hexFrom(hex, beltH(), count);
+		if (!hexEq(beltH(), hex))
 			return FALSE;
-		t += 1;
-		b64To(buf, &t, b64);
-		if (t != count)
-			return FALSE;
+		hexTo(buf, hex);
 		if (!memEq(buf, beltH(), count))
+			return FALSE;
+		hexFromRev(hex, beltH(), count);
+		if (!hexEqRev(beltH(), hex))
+			return FALSE;
+		hexToRev(buf, hex);
+		if (!memEq(buf, beltH(), count))
+			return FALSE;
+		memCopy(hex1, hex, sizeof(hex));
+		hexLower(hex1);
+		hexUpper(hex1);
+		if (!strEq(hex, hex1))
 			return FALSE;
 	}
 	// все нормально
