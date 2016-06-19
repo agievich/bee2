@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.10.29
-\version 2016.06.17
+\version 2016.06.19
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -62,11 +62,19 @@ static octet hexToO(const char* hex)
 	return hi << 4 | lo;
 }
 
-static void hexFromO(char* hex, register octet o)
+static void hexFromOUpper(char* hex, register octet o)
 {
 	ASSERT(memIsValid(hex, 2));
 	hex[0] = hex_upper[o >> 4];
 	hex[1] = hex_upper[o & 15];
+	o = 0;
+}
+
+static void hexFromOLower(char* hex, register octet o)
+{
+	ASSERT(memIsValid(hex, 2));
+	hex[0] = hex_lower[o >> 4];
+	hex[1] = hex_lower[o & 15];
 	o = 0;
 }
 
@@ -94,28 +102,16 @@ bool_t hexIsValid(const char* hex)
 
 void hexUpper(char* hex)
 {
-	register octet o;
 	ASSERT(hexIsValid(hex));
 	for (; *hex; hex += 2)
-	{
-		o = hexToO(hex);
-		hex[0] = hex_upper[o >> 4];
-		hex[1] = hex_upper[o & 15];
-	}
-	o = 0;
+		hexFromOUpper(hex, hexToO(hex));
 }
 
 void hexLower(char* hex)
 {
-	register octet o;
 	ASSERT(hexIsValid(hex));
 	for (; *hex; hex += 2)
-	{
-		o = hexToO(hex);
-		hex[0] = hex_lower[o >> 4];
-		hex[1] = hex_lower[o & 15];
-	}
-	o = 0;
+		hexFromOLower(hex, hexToO(hex));
 }
 
 /*
@@ -184,7 +180,7 @@ void hexFrom(char* dest, const void* src, size_t count)
 {
 	ASSERT(memIsDisjoint2(src, count, dest, 2 * count + 1));
 	for (; count--; dest += 2, src = (const octet*)src + 1)
-		hexFromO(dest, *(const octet*)src);
+		hexFromOUpper(dest, *(const octet*)src);
 	*dest = '\0';
 }
 
@@ -194,7 +190,7 @@ void hexFromRev(char* dest, const void* src, size_t count)
 	dest = dest + 2 * count;
 	*dest = '\0';
 	for (; count--; src = (const octet*)src + 1)
-		hexFromO(dest -= 2, *(const octet*)src);
+		hexFromOUpper(dest -= 2, *(const octet*)src);
 }
 
 void hexTo(void* dest, const char* src)

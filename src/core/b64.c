@@ -1,11 +1,11 @@
 /*
 *******************************************************************************
 \file b64.c
-\brief Base64 coding
+\brief The Base64 encoding
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2016.06.16
-\version 2016.06.17
+\version 2016.06.19
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -22,7 +22,7 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-static const char b64_symbols[] = 
+static const char b64_alphabet[] = 
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	"abcdefghijklmnopqrstuvwxyz"
 	"0123456789+/";
@@ -100,10 +100,10 @@ void b64From(char* dest, const void* src, size_t count)
 		block  = ((const octet*)src)[0], block <<= 8;
 		block |= ((const octet*)src)[1], block <<= 8;
 		block |= ((const octet*)src)[2];
-		dest[3] = b64_symbols[block & 63], block >>= 6;
-		dest[2] = b64_symbols[block & 63], block >>= 6;
-		dest[1] = b64_symbols[block & 63], block >>= 6;
-		dest[0] = b64_symbols[block];
+		dest[3] = b64_alphabet[block & 63], block >>= 6;
+		dest[2] = b64_alphabet[block & 63], block >>= 6;
+		dest[1] = b64_alphabet[block & 63], block >>= 6;
+		dest[0] = b64_alphabet[block];
 		src = (const octet*)src + 3;
 		dest += 4;
 	}
@@ -112,17 +112,17 @@ void b64From(char* dest, const void* src, size_t count)
 		block  = ((const octet*)src)[0], block <<= 8;
 		block |= ((const octet*)src)[1], block <<= 2;
 		dest[3] = '=';
-		dest[2] = b64_symbols[block & 63], block >>= 6;
-		dest[1] = b64_symbols[block & 63], block >>= 6;
-		dest[0] = b64_symbols[block];
+		dest[2] = b64_alphabet[block & 63], block >>= 6;
+		dest[1] = b64_alphabet[block & 63], block >>= 6;
+		dest[0] = b64_alphabet[block];
 		dest += 4;
 	}
 	else if (count == 1)
 	{
 		block  = ((const octet*)src)[0], block <<= 4;
 		dest[3] = dest[2] = '=';
-		dest[1] = b64_symbols[block & 63], block >>= 6;
-		dest[0] = b64_symbols[block];
+		dest[1] = b64_alphabet[block & 63], block >>= 6;
+		dest[0] = b64_alphabet[block];
 		dest += 4;
 	}
 	*dest = '\0';
