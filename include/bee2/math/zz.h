@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.22
-\version 2016.05.23
+\version 2016.07.01
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -469,7 +469,7 @@ word zzModW2(
 	\pre Буферы q и r не пересекаются.
 	\pre Буфер r либо не пересекается с буфером a, либо r == a.
 	\deep{stack} zzDiv_deep(n, m).
-	\safe todo
+	\safe Функция нерегулярна.
 */
 void zzDiv(
 	word q[],			/*!< [out] частное */
@@ -492,7 +492,7 @@ size_t zzDiv_deep(size_t n, size_t m);
 	\pre m > 0 && b[m - 1] != 0.
 	\pre Буфер r либо не пересекается с буфером a, либо r == a.
 	\deep{stack} zzMod_deep(n, m).
-	\safe todo
+	\safe Функция нерегулярна.
 */
 void zzMod(
 	word r[],			/*!< [out] остаток */
@@ -676,7 +676,7 @@ void FAST(zzAddMod)(word c[], const word a[], const word b[], const word mod[],
 	\pre a < mod && w < mod.
 	\pre Буфер b либо не пересекается, либо совпадает с буфером a.
 	\pre Буфер b не пересекается с буфером mod.
-	\safe todo
+	\safe Имеется ускоренная нерегулярная редакция.
 */
 void zzAddWMod(
 	word b[],			/*!< [out] сумма */
@@ -685,6 +685,9 @@ void zzAddWMod(
 	const word mod[],	/*!< [in] модуль */
 	size_t n			/*!< [in] длина чисел в машинных словах */
 );
+
+void FAST(zzAddWMod)(word b[], const word a[], register word w, 
+	const word mod[], size_t n);
 
 /*!	\brief Вычитание чисел по модулю
 
@@ -696,7 +699,7 @@ void zzAddWMod(
 	\pre a < mod && b < mod.
 	\pre Буфер c либо не пересекается, либо совпадает с каждым из буферов a, b.
 	\pre Буфер с не пересекается с буфером mod.
-	\safe todo
+	\safe Имеется ускоренная нерегулярная редакция.
 */
 void zzSubMod(
 	word c[],			/*!< [out] разность */
@@ -705,6 +708,9 @@ void zzSubMod(
 	const word mod[],	/*!< [in] модуль */
 	size_t n			/*!< [in] длина чисел в машинных словах */
 );
+
+void FAST(zzSubMod)(word c[], const word a[], const word b[], 
+	const word mod[], size_t n);
 
 /*!	\brief Вычитание из числа слова по модулю
 
@@ -715,7 +721,7 @@ void zzSubMod(
 	\pre a < mod && w < mod.
 	\pre Буфер b либо не пересекается, либо совпадает с буфером a.
 	\pre Буфер b не пересекается с буфером mod.
-	\safe todo
+	\safe Имеется ускоренная нерегулярная редакция.
 */
 void zzSubWMod(
 	word b[],			/*!< [out] разность */
@@ -724,6 +730,9 @@ void zzSubWMod(
 	const word mod[],	/*!< [in] модуль */
 	size_t n			/*!< [in] длина чисел в машинных словах */
 );
+
+void FAST(zzSubWMod)(word b[], const word a[], register word w, 
+	const word mod[], size_t n);
 
 /*!	\brief Аддитивное обращение чисел по модулю
 
@@ -735,7 +744,7 @@ void zzSubWMod(
 	\pre a < mod.
 	\pre Буфер b либо не пересекается, либо совпадает с буфером a.
 	\pre Буфер b не пересекается с буфером mod.
-	\safe todo
+	\safe Имеется ускоренная нерегулярная редакция.
 */
 void zzNegMod(
 	word b[],			/*!< [in/out] обратное число */
@@ -743,6 +752,8 @@ void zzNegMod(
 	const word mod[],	/*!< [in] модуль */
 	size_t n			/*!< [in] длина чисел в машинных словах */
 );
+
+void FAST(zzNegMod)(word b[], const word a[], const word mod[], size_t n);
 
 /*!	\brief Умножение чисел по модулю
 
@@ -844,7 +855,7 @@ size_t zzDivMod_deep(size_t n);
 	\pre a < mod.
 	\pre Буфер b либо не пересекается, либо совпадает с буфером a.
 	\pre Буфер b не пересекается с буфером mod.
-	\safe todo
+	\safe Имеется ускоренная нерегулярная реализация.
 */
 void zzDoubleMod(
 	word b[],			/*!< [out] произведение */
@@ -852,6 +863,8 @@ void zzDoubleMod(
 	const word mod[],	/*!< [in] модуль */
 	size_t n			/*!< [in] длина чисел в машинных словах */
 );
+
+void FAST(zzDoubleMod)(word b[], const word a[], const word mod[], size_t n);
 
 /*!	\brief Половина числа по модулю
 
@@ -863,7 +876,7 @@ void zzDoubleMod(
 	\pre a < mod.
 	\pre Буфер b либо не пересекается, либо совпадает с буфером a.
 	\pre Буфер b не пересекается с буфером mod.
-	\safe todo
+	\safe Имеется ускоренная нерегулярная реализация.
 */
 void zzHalfMod(
 	word b[],			/*!< [out] частное */
@@ -871,6 +884,8 @@ void zzHalfMod(
 	const word mod[],	/*!< [in] модуль */
 	size_t n			/*!< [in] длина чисел в машинных словах */
 );
+
+void FAST(zzHalfMod)(word b[], const word a[], const word mod[], size_t n);
 
 /*!	\brief Почти-обращение по модулю
 
@@ -995,7 +1010,7 @@ size_t zzRed_deep(size_t n);
 	\pre Модуль mod имеет вид B^n - c, где 0 < c < B.
 	\pre Буферы a и mod не пересекаются.
 	\deep{stack} zzRedCrand_deep(n).
-	\safe todo
+	\safe Имеется ускоренная нерегулярная редакция.
 */
 void zzRedCrand(
 	word a[],					/*!< [in/out] делимое / остаток */
@@ -1003,6 +1018,8 @@ void zzRedCrand(
 	size_t n,					/*!< [in] длина mod в машинных словах */
 	void* stack					/*!< [in] вспомогательная память (не исп.) */
 );
+
+void FAST(zzRedCrand)(word a[], const word mod[], size_t n, void* stack);
 
 size_t zzRedCrand_deep(size_t n);
 
@@ -1062,7 +1079,7 @@ size_t zzRedBarr_deep(size_t n);
 	multiplication without trial division. Mathematics of Computation,
 	44(170): 519–521, 1985].
 	\deep{stack} zzRedMont_deep(n).
-	\safe todo
+	\safe Имеется ускоренная нерегулярная редакция.
 */
 void zzRedMont(
 	word a[],					/*!< [in/out] входное число / результат */
@@ -1071,6 +1088,9 @@ void zzRedMont(
 	register word mont_param,	/*!< [in] параметр Монтгомери */
 	void* stack					/*!< [in] вспомогательная память */
 );
+
+void FAST(zzRedMont)(word a[], const word mod[], size_t n, 
+	register word mont_param, void* stack);
 
 size_t zzRedMont_deep(size_t n);
 
@@ -1087,7 +1107,7 @@ size_t zzRedMont_deep(size_t n);
 	\pre mont_param рассчитан с помощью функции zzCalcMontParam().
 	\pre Буфер a не пересекается с буфером mod.
 	\deep{stack} zzRedCrandMont_deep(n).
-	\safe todo
+	\safe Имеется ускоренная нерегулярная редакция.
 */
 void zzRedCrandMont(
 	word a[],					/*!< [in/out] входное число / результат */
@@ -1096,6 +1116,9 @@ void zzRedCrandMont(
 	register word mont_param,	/*!< [in] параметр Монтгомери */
 	void* stack					/*!< [in] вспомогательная память */
 );
+
+void FAST(zzRedCrandMont)(word a[], const word mod[], size_t n, 
+	register word mont_param, void* stack);
 
 size_t zzRedCrandMont_deep(size_t n);
 

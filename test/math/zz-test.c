@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.15
-\version 2016.05.23
+\version 2016.07.01
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -140,6 +140,20 @@ static bool_t zzTestMod()
 		// zzAddModW / zzSubModW
 		zzAddWMod(t, a, b[0], mod, n);
 		zzSubWMod(t1, t, b[0], mod, n);
+		if (!wwEq(t1, a, n))
+			return FALSE;
+		// zzNegMod
+		zzNegMod(t, a, mod, n);
+		zzAddMod(t1, t, a, mod, n);
+		if (!wwIsZero(t1, n))
+			return FALSE;
+		zzNegMod(t1, t1, mod, n);
+		if (!wwIsZero(t1, n))
+			return FALSE;
+		// zzDoubleMod / zzHalfMod
+		mod[0] |= 1;
+		zzHalfMod(t, a, mod, n);
+		zzDoubleMod(t1, t, mod, n);
 		if (!wwEq(t1, a, n))
 			return FALSE;
 	}

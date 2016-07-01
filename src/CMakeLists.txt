@@ -38,7 +38,13 @@ set(src
   math/qr.c
   math/ww.c
   math/zm.c
-  math/zz.c
+  math/zz/zz_add.c
+  math/zz/zz_etc.c
+  math/zz/zz_gcd.c
+  math/zz/zz_mod.c
+  math/zz/zz_mul.c
+  math/zz/zz_pow.c
+  math/zz/zz_red.c
 )
 
 add_library(bee2_static STATIC ${src})

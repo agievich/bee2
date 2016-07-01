@@ -176,7 +176,7 @@
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="../../include;../../src"
-				PreprocessorDefinitions="SAFE_FAST;WIN32;NDEBUG;_LIB"
+				PreprocessorDefinitions="SAFE_SAFE;WIN32;NDEBUG;_LIB"
 				ExceptionHandling="1"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -609,10 +609,42 @@
 					RelativePath="..\..\src\math\zm.c"
 					>
 				</File>
-				<File
-					RelativePath="..\..\src\math\zz.c"
+				<Filter
+					Name="zz"
 					>
-				</File>
+					<File
+						RelativePath="..\..\src\math\zz\zz_add.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\math\zz\zz_etc.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\math\zz\zz_gcd.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\math\zz\zz_int.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\math\zz\zz_mod.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\math\zz\zz_mul.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\math\zz\zz_pow.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\math\zz\zz_red.c"
+						>
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="crypto"
