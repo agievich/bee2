@@ -5,22 +5,55 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2016.07.01
-\version 2016.07.01
+\version 2016.07.02
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
+#ifndef __ZZ_INT_H
+#define __ZZ_INT_H
+
 #include "bee2/defs.h"
 
 /*
 *******************************************************************************
-Примитивы регуляризации
+Замечания по языку C
+
+В языке С все операции с беззнаковыми целыми, которые короче unsigned int,
+выполняются после их предварительного приведения к unsigned int
+[так назваемое integer promotions, см. C99, п. 6.3.1.4].
+
+Сказанное учтено в реализации. Пусть, например, требуется проверить, что для
+слов a, b типа word выполнено условие:
+	a * b + 1 \equiv 0 (\mod 2^B_PER_W).
+Можно подумать, что можно организовать проверку следующим образом:
+\code
+	ASSERT(a * b + 1 == 0);
+\endcode
+Данная проверка будет давать неверный результат при
+sizeof(word) < sizeof(unsigned int). Правильный способ:
+\code
+	ASSERT((word)(a * b + 1) == 0);
+\endcode
+
+\warning При тестировании арифметики длина слова искусственно понижалась
+до 16 битов. При этом при включении определеннных опций компилятор GCC
+выдавал ошибки предупреждения при сравнении word с ~word:
+comparison of promoted ~unsigned with unsigned [-Werror=sign-compare].
 *******************************************************************************
 */
 
-word zzSubAndW(word b[], const word a[], size_t n, register word w);
+/*
+*******************************************************************************
+Примитивы регуляризации
+
+\remark Реализованы в zz_etc.c.
+*******************************************************************************
+*/
+
 void zzAddAndW(word b[], const word a[], size_t n, register word w);
+void zzSubAndW(word b[], const word a[], size_t n, register word w);
 
 /*
 *******************************************************************************
@@ -50,3 +83,5 @@ _MUL_LO:
 
 #define _MUL_LO(c, a, b)\
 	(c) = (word)(a) * (word)(b);
+
+#endif /* __ZZ_INT_H */

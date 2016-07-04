@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.09.14
-\version 2015.11.03
+\version 2016.07.04
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -341,7 +341,7 @@ void zmCreateBarr(qr_o* r, const octet mod[], size_t no, void* stack)
 	wwSetZero(r->unity + 1, r->n - 1);
 	// подготовить параметры
 	r->params = r->unity + r->n;
-	zzCalcBarrParam(r->params, r->mod, r->n, stack);
+	zzRedBarrStart(r->params, r->mod, r->n, stack);
 	// настроить функции
 	r->from = zmFrom;
 	r->to = zmTo;
@@ -373,7 +373,7 @@ size_t zmCreateBarr_deep(size_t no)
 {
 	const size_t n = W_OF_O(no);
 	return utilMax(5,
-		zzCalcBarrParam_deep(n),
+		zzRedBarrStart_deep(n),
 		zmMulBarr_deep(n),
 		zmSqrBarr_deep(n),
 		zmInv_deep(n),

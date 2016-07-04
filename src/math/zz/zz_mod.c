@@ -6,7 +6,7 @@
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \author (C) Stanislav Poruchnik [poruchnikstanislav@gmail.com]
 \created 2012.04.22
-\version 2016.07.01
+\version 2016.07.02
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -256,12 +256,12 @@ void FAST(zzDoubleMod)(word b[], const word a[], const word mod[], size_t n)
 	ASSERT(wwCmp(a, mod, n) < 0);
 	ASSERT(wwIsSameOrDisjoint(a, b, n));
 	ASSERT(wwIsDisjoint(b, mod, n));
-	// умножение на 2
+	// b <- a * 2
 	for (i = 0; i < n; ++i)
 		hi = a[i] >> (B_PER_W - 1),
 		b[i] = a[i] << 1 | carry,
 		carry = hi;
-	// корректировка
+	// sub mod
 	if (carry || wwCmp(b, mod, n) >= 0)
 		zzSub2(b, mod, n);
 	// очистка
@@ -278,17 +278,17 @@ void SAFE(zzDoubleMod)(word b[], const word a[], const word mod[], size_t n)
 	ASSERT(wwCmp(a, mod, n) < 0);
 	ASSERT(wwIsSameOrDisjoint(a, b, n));
 	ASSERT(wwIsDisjoint(b, mod, n));
-	// умножение на 2
-	for (i = 0; i < n; ++i){
+	// b <- a * 2
+	for (i = 0; i < n; ++i)
+	{
 		hi = a[i] >> (B_PER_W - 1);
 		b[i] = a[i] << 1 | carry;
-
 		carry = hi;
 		// mask <- mod[i] < b[i] || mask && mod[i] == b[i];
 		mask &= wordEq01(mod[i], b[i]);
 		mask |= wordLess01(mod[i], b[i]);
 	}
-	// корректировка
+	// sub mod
 	mask |= carry;
 	mask = WORD_0 - mask;
 	zzSubAndW(b, mod, n, mask);
@@ -328,6 +328,7 @@ void SAFE(zzHalfMod)(word b[], const word a[], const word mod[], size_t n)
 {
 	register word carry = 0;
 	register word mask = 0;
+	register word w;
 	size_t i;
 	// pre
 	ASSERT(wwIsSameOrDisjoint(a, b, n));
@@ -337,23 +338,24 @@ void SAFE(zzHalfMod)(word b[], const word a[], const word mod[], size_t n)
 	// mask <- (a -- нечетное) ? WORD_MAX : WORD_0
 	mask = WORD_0 - (a[0] & WORD_1);
 	// b <- (a + mod & mask) / 2 [(a -- нечетное) ? (a + mod) / 2 : a / 2]
-	b[0] = a[0];
-	b[0] += mask & mod[0];
-	carry = wordLess01(b[0], mask & mod[0]);
+	w = mask & mod[0];
+	b[0] = a[0] + w;
+	carry = wordLess01(b[0], w);
 	b[0] >>= 1;
 	for(i = 1; i < n; ++i)
 	{
 		b[i] = a[i];
 		b[i] += carry;
 		carry = wordLess01(b[i], carry);
-		b[i] += mask & mod[i];
-		carry |= wordLess01(b[i], mask & mod[i]);
+		w = mask & mod[i];
+		b[i] += w;
+		carry |= wordLess01(b[i], w);
 		b[i - 1] |= (b[i] & WORD_1) << (B_PER_W - 1);
 		b[i] >>= 1;
 	}
 	b[n - 1] |= carry << (B_PER_W - 1);
 	// очистка
-	carry = mask = 0;
+	carry = mask = w = 0;
 }
 
 bool_t zzRandMod(word a[], const word mod[], size_t n, gen_i rng, 
@@ -401,4 +403,3 @@ bool_t zzRandNZMod(word a[], const word mod[], size_t n, gen_i rng,
 	l = 0;
 	return i != SIZE_MAX;
 }
-

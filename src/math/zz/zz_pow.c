@@ -18,7 +18,6 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/math/zm.h"
 #include "bee2/math/zz.h"
 
-
 /*
 *******************************************************************************
 Возведение в степень

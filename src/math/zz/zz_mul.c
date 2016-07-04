@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.22
-\version 2016.07.01
+\version 2016.07.04
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -16,35 +16,7 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/core/word.h"
 #include "bee2/math/ww.h"
 #include "bee2/math/zz.h"
-
-/*
-*******************************************************************************
-Макросы умножения слов
-
-_MUL:
-	dword c;
-	word a, b;
-	c <- a, c <- c * b;
-
-_MUL_LO:
-	word a, b;
-	return (word)(a * b);
-
-\todo _MUL_HI.
-*******************************************************************************
-*/
-
-#if defined(_MSC_VER) && (B_PER_W == 32)
-	#include <intrin.h>
-	#define _MUL(c, a, b)\
-		(c) = __emulu((word)(a), (word)(b))
-#else
-	#define _MUL(c, a, b)\
-		(c) = (word)(a), (c) *= (word)(b)
-#endif 
-
-#define _MUL_LO(c, a, b)\
-	(c) = (word)(a) * (word)(b);
+#include "zz_int.h"
 
 /*
 *******************************************************************************
@@ -191,14 +163,7 @@ size_t zzSqr_deep(size_t n)
 
 /*
 *******************************************************************************
-Деление
-
-\opt При делении слов определять остаток по частному: (/,*) вместо (/, %).
-
-\todo Убрать ограничение n >= m в zzDiv.
-
-\todo T. Jabelean. An Algorithm for exact division. J. of Symb. Computations, 
-15 (2): 169-180, 1993.
+Деление на машинное слово
 
 В функции zzModW2() сначала определяется значение (b = B \mod mod):
 	r = \sum_i a[i] b^i \equiv \sum_i a[i] B^i = a \mod mod,
@@ -218,43 +183,6 @@ size_t zzSqr_deep(size_t n)
 По окончании второй итерации (**):
 	r <= (mod - 1)(mod - 1) + (mod - 1) = mod(mod - 1) < B.
 Таким образом, r \mod mod = r0 \mod mod.
-
-В функциях zzDiv(), zzMod() делимое a = a[n - 1]...a[0] и делитель
-b = b[m - 1]...b[0] предварительно нормализуются:
-	a = a[n]...a[0] <- a * 2^shift;
-	b = b[m - 1]...b[0] <- b * 2^shift.
-Здесь shift --- минимальное натуральное т.ч. старший бит b[m - 1] * 2^shift
-равняется 1.
-
-Деление выполняется по алгоритму 14.20 из [Menezes A., van Oorschot P.,
-Vanstone S. Handbook of Applied Cryptography]:
-	for i = n, n - 1, ...., m:
-		if a[i] == b[m - 1]											(#)
-			q[i - m] <- B - 1
-		else
-			q[i - m] <- a[i]a[i - 1] div b[m - 1]
-		while (q[i - m] * b[m - 1]b[m - 2] > a[i]a[i - 1]a[i - 2])	(##)
-			q[i - m]--
-		a <- a - q[i - m] * b * B^{i - m}
-		if (a < 0)
-			a += b * B^{i - m}, q[i - m]--
-	return q = q[n - m]...q[0] --- частное и a --- остаток
-
-В реализации вместо (#):
-	d <- a[i]a[i - 1] div b[m - 1]
-	if d >= B
-		d <- B - 1
-	q[i - m] <- d
-
-\opt Если a[i] == b[m - 1] в (#), то цикл (##) можно не выполнять:
-	q[i - m] * b[m - 1]b[m - 2] <=
-		(B - 1) * (a[i] * B + (B - 1)) =
-		B^2 * a[i] + B^2 - 1 - a[i] * B < a[i]a[i - 1]a[i - 2]
-
-\opt Если известен остаток d = a[i]a[i - 1] mod b[m - 1], то (##) можно
-	заменить на
-		while (q[i - m] * b[m - 2] > d * B + a[i - 2])
-			q[i - m]--, d += b[m - 1]
 *******************************************************************************
 */
 
@@ -300,12 +228,10 @@ word zzModW2(const word a[], size_t n, register word w)
 	register word b;
 	// pre
 	ASSERT(w > 0);
-	ASSERT(w < WORD_BIT_HALF);
+	ASSERT(w <= WORD_BIT_HALF);
 	ASSERT(wwIsValid(a, n));
 	// b <- B \mod mod
-	b = WORD_MAX % w + 1;
-	if (b == w)
-		return n ? a[0] % w : 0;
+	b = (WORD_MAX - w + 1) % w;
 	// (r1 r0) <- \sum_i a[i] b^i
 	while (n--)
 	{
@@ -317,6 +243,7 @@ word zzModW2(const word a[], size_t n, register word w)
 		r1 >>= B_PER_W;
 	}
 	// нормализация
+#ifdef SAFE_FAST
 	while (r1 != 0)
 	{
 		r1 *= b;
@@ -325,10 +252,71 @@ word zzModW2(const word a[], size_t n, register word w)
 		r1 >>= B_PER_W;
 	}
 	r0 %= w;
+#else
+	r1 *= b;
+	r1 += r0 % w;
+	r0 = (word)r1;
+	r1 >>= B_PER_W;
+	r1 *= b;
+	r1 += r0 % w;
+	r0 = (word)r1 % w;
+#endif
 	// очистка и возврат
 	r1 = 0, b = w = 0;
 	return r0;
 }
+
+/*
+*******************************************************************************
+Общее деление
+
+\opt При делении слов определять остаток по частному: (/,*) вместо (/, %).
+
+\todo Убрать ограничение n >= m в zzDiv().
+
+\todo T. Jabelean. An Algorithm for exact division. J. of Symb. Computations, 
+15 (2): 169-180, 1993.
+
+\todo: В zzMod() отказаться от divident.
+
+В функциях zzDiv(), zzMod() делимое a = a[n - 1]...a[0] и делитель
+b = b[m - 1]...b[0] предварительно нормализуются:
+	a = a[n]...a[0] <- a * 2^shift;
+	b = b[m - 1]...b[0] <- b * 2^shift.
+Здесь shift --- минимальное натуральное т.ч. старший бит b[m - 1] * 2^shift
+равняется 1.
+
+Деление выполняется по алгоритму 14.20 из [Menezes A., van Oorschot P.,
+Vanstone S. Handbook of Applied Cryptography]:
+	for i = n, n - 1, ...., m:
+		if a[i] == b[m - 1]											(#)
+			q[i - m] <- B - 1
+		else
+			q[i - m] <- a[i]a[i - 1] div b[m - 1]
+		while (q[i - m] * b[m - 1]b[m - 2] > a[i]a[i - 1]a[i - 2])	(##)
+			q[i - m]--
+		a <- a - q[i - m] * b * B^{i - m}
+		if (a < 0)
+			a += b * B^{i - m}, q[i - m]--
+	return q = q[n - m]...q[0] --- частное и a --- остаток
+
+В реализации вместо (#):
+	d <- a[i]a[i - 1] div b[m - 1]
+	if d >= B
+		d <- B - 1
+	q[i - m] <- d
+
+\opt Если a[i] == b[m - 1] в (#), то цикл (##) можно не выполнять:
+	q[i - m] * b[m - 1]b[m - 2] <=
+		(B - 1) * (a[i] * B + (B - 1)) =
+		B^2 * a[i] + B^2 - 1 - a[i] * B < a[i]a[i - 1]a[i - 2]
+
+\opt Если известен остаток d = a[i]a[i - 1] mod b[m - 1], то (##) можно
+	заменить на
+		while (q[i - m] * b[m - 2] > d * B + a[i - 2])
+			q[i - m]--, d += b[m - 1]
+*******************************************************************************
+*/
 
 void zzDiv(word q[], word r[], const word a[], size_t n, const word b[],
 	size_t m, void* stack)
@@ -421,7 +409,6 @@ size_t zzDiv_deep(size_t n, size_t m)
 	return O_OF_W(n + m + 4);
 }
 
-// todo: отказаться от divident
 void zzMod(word r[], const word a[], size_t n, const word b[], size_t m, void* stack)
 {
 	register dword dividentHi;
@@ -506,4 +493,3 @@ size_t zzMod_deep(size_t n, size_t m)
 {
 	return O_OF_W(n + m + 4);
 }
-

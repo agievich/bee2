@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.22
-\version 2016.07.01
+\version 2016.07.04
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -367,6 +367,9 @@ void zzMul(
 
 size_t zzMul_deep(size_t n, size_t m);
 
+size_t zzMulADK(word c[], const word a[], const word b[], size_t n, void* stack);
+
+
 /*!	\brief Возведение числа в квадрат
 
 	Определяется квадрат [2n]b числа [n]a:
@@ -448,7 +451,6 @@ word zzModW(
 	\return Остаток от деления r.
 	\remark Функция zzModW2() работает быстрее zzModW() на тех платформах,
 	где деление не менее чем в 2 раза медленнее умножения.
-	\safe todo
 */
 word zzModW2(
 	const word a[],		/*!< [in] делимое */
@@ -936,7 +938,9 @@ size_t zzAlmostInvMod_deep(size_t n);
 	определенный порог d, будет возвращен отрицательный результат. Порог d 
 	выбирается так, что вероятность события "для генерации потребуется d 
 	истинно случайных октетов" не превосходит 2^{-B_PER_IMPOSSIBLE}.
-	\safe todo
+	\safe Время выполнения может флуктуировать. По времени выполнения можно 
+	судить о выходных данных rng, но не тех, которые используются для 
+	формирования a.
 */
 bool_t zzRandMod(
 	word a[],			/*!< [out] случайное число */
@@ -960,7 +964,9 @@ bool_t zzRandMod(
 		O_OF_B(l) * 2^l / (mod - 1) \leq 2^l / (2^{l - 1} - 1) O_OF_B(l)
 	случайных октетов rng в среднем. 
 	\remark Повторяется последнее замечание по функции zzRandMod().
-	\safe todo
+	\safe Время выполнения может флуктуировать. По времени выполнения можно 
+	судить о выходных данных rng, но не тех, которые используются для 
+	формирования a.
 */
 bool_t zzRandNZMod(
 	word a[],			/*!< [out] случайное число */
@@ -1023,7 +1029,7 @@ void FAST(zzRedCrand)(word a[], const word mod[], size_t n, void* stack);
 
 size_t zzRedCrand_deep(size_t n);
 
-/*!	\brief Параметр Барретта
+/*!	\brief Инициализация редукции Барретта
 
 	По модулю [n]mod определяется параметр [n + 2]barr_param:
 	\code
@@ -1032,16 +1038,16 @@ size_t zzRedCrand_deep(size_t n);
 	Этот параметр используется в редукции Барретта.
 	\pre n > 0 && mod[n] != 0.
 	\pre Буферы barr_param и mod не пересекаются.
-	\deep{stack} zzCalcBarrParam_deep(n).
+	\deep{stack} zzRedBarrStart_deep(n).
 */
-void zzCalcBarrParam(
+void zzRedBarrStart(
 	word barr_param[],			/*!< [out] параметр Барретта */
 	const word mod[],			/*!< [in] модуль */
 	size_t n,					/*!< [in] длина mod в машинных словах */
 	void* stack					/*!< [in] вспомогательная память */
 );
 
-size_t zzCalcBarrParam_deep(size_t n);
+size_t zzRedBarrStart_deep(size_t n);
 
 /*!	\brief Редукция Барретта
 
@@ -1049,7 +1055,7 @@ size_t zzCalcBarrParam_deep(size_t n);
 	При вычислениях используется параметр Барретта [n + 2]barr_param.
 	\pre n > 0 && mod[n - 1] != 0.
 	\pre Буфер a не пересекается с буфером mod.
-	\expect barr_param рассчитан с помощью функции zzCalcBarrParam().
+	\expect barr_param рассчитан с помощью функции zzRedBarrStart().
 	\deep{stack} zzRedBarr_deep(n).
 	\safe todo
 */
@@ -1104,7 +1110,7 @@ size_t zzRedMont_deep(size_t n);
 	При вычислениях используется параметр Монтгомери mont_param.
 	\pre n >= 2 && mod -- нечетное && mod имеет вид B^n - c, где 0 < c < B.
 	\pre a < mod * R.
-	\pre mont_param рассчитан с помощью функции zzCalcMontParam().
+	\pre mont_param рассчитан с помощью функции wordNegInv().
 	\pre Буфер a не пересекается с буфером mod.
 	\deep{stack} zzRedCrandMont_deep(n).
 	\safe Имеется ускоренная нерегулярная редакция.
@@ -1169,7 +1175,6 @@ word zzPowerModW(
 );
 
 size_t zzPowerModW_deep();
-
 
 #ifdef __cplusplus
 } /* extern "C" */
