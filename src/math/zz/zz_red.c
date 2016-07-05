@@ -118,7 +118,7 @@ size_t zzRedCrand_deep(size_t n)
 *******************************************************************************
 Редукция Барретта
 
-[pre]       \mu <- B^{2n} / mod
+[pretime]   \mu <- B^{2n} / mod
 [realtime]  q <- (a \div B^{n - 1} * \mu) \div B^{n + 1} (\approx a \div m)
             a <- a \mod B^{n + 1} - (q * mod) \mod B^{n + 1}
             if (a < 0)
@@ -148,8 +148,8 @@ size_t zzRedBarrStart_deep(size_t n)
 	return O_OF_W(2 * n + 1) + zzDiv_deep(2 * n + 1, n);
 }
 
-void zzRedBarr(word a[], const word mod[], size_t n, const word barr_param[],
-	void* stack)
+void FAST(zzRedBarr)(word a[], const word mod[], size_t n, 
+    const word barr_param[], void* stack)
 {
 	// переменные в stack
 	word* q = (word*)stack;
@@ -165,9 +165,48 @@ void zzRedBarr(word a[], const word mod[], size_t n, const word barr_param[],
 	zzMul(qm, q + n + 1, n + 2, mod, n, stack);
 	// a <- [n + 1]a - [n + 1]qm
 	zzSub2(a, qm, n + 1);
-	// пока a >= m: a <- a - m
+	// пока a >= mod: a <- a - mod
 	while (wwCmp2(a, n + 1, mod, n) >= 0)
 		a[n] -= zzSub2(a, mod, n);
+}
+
+void SAFE(zzRedBarr)(word a[], const word mod[], size_t n, 
+    const word barr_param[], void* stack)
+{
+	register word w;
+	size_t i;
+	// переменные в stack
+	word* q = (word*)stack;
+	word* qm = q + (n + 1) + (n + 2);
+	stack = qm + (n + 2) + n;
+	// pre
+	ASSERT(wwIsDisjoint2(a, 2 * n, mod, n));
+	ASSERT(wwIsDisjoint2(a, 2 * n, barr_param, n + 2));
+	ASSERT(n > 0 && mod[n - 1] != 0);
+	// q <- (a \div B^{n - 1}) * barr_param
+	zzMul(q, a + n - 1, n + 1, barr_param, n + 2, stack);
+	// qm <- (q \div B^{n + 1}) * mod
+	zzMul(qm, q + n + 1, n + 2, mod, n, stack);
+	// a <- [n + 1]a - [n + 1]qm
+	zzSub2(a, qm, n + 1);
+	// a >= mod? => a -= mod
+	for (i = 0, w = 1; i < n; ++i)
+	{
+		w &= wordEq01(mod[i], a[i]);
+		w |= wordLess01(mod[i], a[i]);
+	}
+	w |= a[n], w = WORD_0 - w;
+	a[n] -= zzSubAndW(a, mod, n, w);
+	// a >= mod? => a -= mod
+	for (i = 0, w = 1; i < n; ++i)
+	{
+		w &= wordEq01(mod[i], a[i]);
+		w |= wordLess01(mod[i], a[i]);
+	}
+	w |= a[n], w = WORD_0 - w;
+	zzSubAndW(a, mod, n, w);
+	// очистка
+	w = 0;
 }
 
 size_t zzRedBarr_deep(size_t n)
@@ -185,7 +224,7 @@ size_t zzRedBarr_deep(size_t n)
 В функции zzModMont() реазизован алгоритм из работы 
 [Dusse S. R., Kaliski B. S. A cryptographic library for the Motorola
 DSP56000. Advances in Cryptology -- EUROCRYPT 90, LNCS 473, 230–244. 1990]:
-[pre]        m* <- -mod[0]^{-1} \bmod B
+[pretime]    m* <- -mod[0]^{-1} \bmod B
 [realtime]   for (i = 0; i < n; ++i)
                t <- a[i] * m* \mod B
                a <- a + t * mod * B^i
@@ -263,7 +302,7 @@ size_t zzRedMont_deep(size_t n)
 Редукция Крэндалла-Монтгомери
 
 Редукция Монтгомери для модуля mod = B^n - c, 0 < c < B, n >= 2, упрощается:
-[pre]        m* <- c^{-1} \bmod B
+[pretime]    m* <- c^{-1} \bmod B
 [realtime]   carry <- 0, borrow <- 0
              for (i = 0; i < n; ++i)
                t1 <- a[i] * m* \mod B

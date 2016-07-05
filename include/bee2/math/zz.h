@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.22
-\version 2016.07.04
+\version 2016.07.05
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -560,7 +560,7 @@ size_t zzIsCoprime_deep(size_t n, size_t m);
 
 /*!	\brief Наименьшее общее кратное
 
-	Определяется наименьшее общее кратное [max(n, m)]d чисел [n]a и [m]b:
+	Определяется наименьшее общее кратное [n + m]d чисел [n]a и [m]b:
 	\code
 		d <- \lcm[a, b].
 	\endcode
@@ -1057,7 +1057,7 @@ size_t zzRedBarrStart_deep(size_t n);
 	\pre Буфер a не пересекается с буфером mod.
 	\expect barr_param рассчитан с помощью функции zzRedBarrStart().
 	\deep{stack} zzRedBarr_deep(n).
-	\safe todo
+	\safe Имеется ускоренная нерегулярная редакция.
 */
 void zzRedBarr(
 	word a[],					/*!< [in/out] делимое / остаток */
@@ -1066,6 +1066,9 @@ void zzRedBarr(
 	const word barr_param[],	/*!< [in] параметр Барретта */
 	void* stack					/*!< [in] вспомогательная память */
 );
+
+void FAST(zzRedBarr)(word a[], const word mod[], size_t n, 
+	const word barr_param[], void* stack);
 
 size_t zzRedBarr_deep(size_t n);
 

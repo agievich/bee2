@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.22
-\version 2016.07.02
+\version 2016.07.05
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -42,13 +42,19 @@ version 3. See Copyright Notices in bee2/info.h.
 	{
 		пока (u -- четное)
 			u <- u / 2
-			если (da0 -- четное) // db0 также четное
+			если (da0 и db0 -- четные)
 				da0 <- da0 / 2, db0 <- db0 / 2
-			иначе
+			иначе 
+[
+	Пусть da0 -- четное, db0 -- нечетное. Поскольку da0 aa + db0 bb -- четное,
+	bb -- четное. Но aa и bb не могут быть одновременно четными. 
+	Поэтому aa -- нечетное. В конце концов, da0 + bb и db0 + aa -- четные.
+	Аналогично рассматриваются другие варианты четности da0 и db0.
+]
 				da0 <- (da0 + bb) / 2, db0 <- (db0 + aa) / 2
 		пока (v -- четное)
 			v <- v / 2
-			если (da -- четное) // db также четное
+			если (da и db -- четные)
 				da <- da / 2, db <- db / 2
 			иначе
 				da <- (da + bb) / 2, db <- (db + aa) / 2
@@ -73,12 +79,11 @@ version 3. See Copyright Notices in bee2/info.h.
 				если (da > bb)
 					da <- da - bb, db <- db - aa				(**)
 	}
-	Корректировки (*), (**) гарантируют, что da0, da < bb, а db0, db < aa.
+	Корректировки (*), (**) гарантируют, что da0, da < bb и db0, db < aa.
 
-\todo Эксперименты с различными реализациями алгоритма Евклида.
-Проведенные эксперименты: бинарный алгоритм опережает обычный
-(полные деления) примерно в 2 раза и опережает смешанный (полные деления
-и деления на 2) примерно в 1.5 раза.
+\remark Эксперименты с различными реализациями алгоритма Евклида:
+1) бинарный алгоритм опережает обычный (полные деления) примерно в 2 раза и 
+2) опережает смешанный (полные деления и деления на 2) примерно в 1.5 раза.
 
 \todo Регуляризация?
 *******************************************************************************
@@ -163,13 +168,14 @@ void zzLCM(word d[], const word a[], size_t n, const word b[], size_t m,
 	// переменные в stack
 	word* prod = (word*)stack;
 	word* gcd = prod + n + m;
-	stack = gcd + MIN2(n, m);
+	word* r = gcd + MIN2(n, m);
+	stack = r + MIN2(n, m);
 	// pre
 	ASSERT(wwIsDisjoint2(a, n, d, MAX2(n, m)));
 	ASSERT(wwIsDisjoint2(b, m, d, MAX2(n, m)));
 	ASSERT(!wwIsZero(a, n) && !wwIsZero(b, m));
 	// d <- 0
-	wwSetZero(d, MAX2(n, m));
+	wwSetZero(d, n + m);
 	// нормализация
 	n = wwWordSize(a, n);
 	m = wwWordSize(b, m);
@@ -182,13 +188,13 @@ void zzLCM(word d[], const word a[], size_t n, const word b[], size_t m,
 		SWAP(n, m);
 	n += m;
 	m = wwWordSize(gcd, m);
-	// d <- prod \mod gcd
-	zzMod(d, prod, n, gcd, m, stack);
+	// d <- prod \div gcd
+	zzDiv(d, r, prod, n, gcd, m, stack);
 }
 
 size_t zzLCM_deep(size_t n, size_t m)
 {
-	return O_OF_W(n + m + MIN2(n, m)) +
+	return O_OF_W(n + m + MIN2(n, m) + MIN2(n, m)) +
 		utilMax(3, 
 			zzMul_deep(n, m), 
 			zzGCD_deep(n, m), 
@@ -237,35 +243,35 @@ int zzExGCD(word d[], word da[], word db[], const word a[], size_t n,
 	do
 	{
 		// пока u четное
-		for (; wwTestBit(u, 0) == 0; wwShLo(u, nu, 1))
-			if (wwTestBit(da0, 0) == 0)
+		for (; u[0] % 2 == 0; wwShLo(u, nu, 1))
+			if (da0[0] % 2 == 0 && db0[0] % 2 == 0)
 			{
 				// da0 <- da0 / 2, db0 <- db0 / 2
 				wwShLo(da0, m, 1);
-				ASSERT(wwTestBit(db0, 0) == 0);
 				wwShLo(db0, n, 1);
 			}
 			else
 			{
+				ASSERT((da0[0] + bb[0]) % 2 == 0);
+				ASSERT((db0[0] + aa[0]) % 2 == 0);
 				// da0 <- (da0 + bb) / 2, db0 <- (db0 + aa) / 2
 				wwShLoCarry(da0, m, 1, zzAdd2(da0, bb, m));
-				ASSERT(wwTestBit(db0, 0) == 1);
 				wwShLoCarry(db0, n, 1, zzAdd2(db0, aa, n));
 			}
 		// пока v четное
-		for (; wwTestBit(v, 0) == 0; wwShLo(v, mv, 1))
-			if (wwTestBit(da, 0) == 0)
+		for (; v[0] % 2 == 0; wwShLo(v, mv, 1))
+			if (da[0] % 2 == 0 && db[0] % 2 == 0)
 			{
 				// da <- da / 2, db <- db / 2
 				wwShLo(da, m, 1);
-				ASSERT(wwTestBit(db, 0) == 0);
 				wwShLo(db, n, 1);
 			}
 			else
 			{
+				ASSERT((da[0] + bb[0]) % 2 == 0);
+				ASSERT((db[0] + aa[0]) % 2 == 0);
 				// da <- (da + bb) / 2, db <- (db + aa) / 2
 				wwShLoCarry(da, m, 1, zzAdd2(da, bb, m));
-				ASSERT(wwTestBit(db, 0) == 1);
 				wwShLoCarry(db, n, 1, zzAdd2(db, aa, n));
 			}
 		// нормализация
@@ -384,16 +390,16 @@ void zzDivMod(word b[], const word divident[], const word a[],
 	while (!wwIsZero(u, nu))
 	{
 		// пока u -- четное
-		for (; wwTestBit(u, 0) == 0; wwShLo(u, nu, 1))
-			if (wwTestBit(da0, 0) == 0)
+		for (; u[0] % 2 == 0; wwShLo(u, nu, 1))
+			if (da0[0] % 2 == 0)
 				// da0 <- da0 / 2
 				wwShLo(da0, n, 1);
 			else
 				// da0 <- (da0 + mod) / 2
 				wwShLoCarry(da0, n, 1, zzAdd2(da0, mod, n));
 		// пока v -- четное
-		for (; wwTestBit(v, 0) == 0; wwShLo(v, nv, 1))
-			if (wwTestBit(da, 0) == 0)
+		for (; v[0] % 2 == 0; wwShLo(v, nv, 1))
+			if (da[0] % 2 == 0)
 				// da <- da / 2
 				wwShLo(da, n, 1);
 			else

@@ -67,7 +67,7 @@ void zzAddAndW(word b[], const word a[], size_t n, register word w)
 	prod = w = carry = 0;
 }
 
-void zzSubAndW(word b[], const word a[], size_t n, register word w)
+word zzSubAndW(word b[], const word a[], size_t n, register word w)
 {
 	register word borrow = 0;
 	register word prod;
@@ -81,7 +81,8 @@ void zzSubAndW(word b[], const word a[], size_t n, register word w)
 		borrow |= wordLess01(b[i], prod);
 		b[i] -= prod;
 	}
-	prod = w = borrow = 0;
+	prod = w = 0;
+	return borrow;
 }
 
 /*

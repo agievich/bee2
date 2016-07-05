@@ -203,6 +203,11 @@ static bool_t zzTestMod()
 	ASSERT(zzSqrMod_deep(n) <= sizeof(stack));
 	ASSERT(zzMod_deep(n, n) <= sizeof(stack));
 	ASSERT(zzJacobi_deep(n, n) <= sizeof(stack));
+	ASSERT(zzGCD_deep(n, n) <= sizeof(stack));
+	ASSERT(zzIsCoprime_deep(n, n) <= sizeof(stack));
+	ASSERT(zzDivMod_deep(n) <= sizeof(stack));
+	ASSERT(zzInvMod_deep(n) <= sizeof(stack));
+	ASSERT(zzAlmostInvMod_deep(n) <= sizeof(stack));
 	// инициализировать генератор COMBO
 	ASSERT(prngCOMBO_keep() <= sizeof(combo_state));
 	prngCOMBOStart(combo_state, utilNonce32());
@@ -221,6 +226,7 @@ static bool_t zzTestMod()
 	// сложение / вычитание
 	for (reps = 0; reps < 1000; ++reps)
 	{
+		size_t k;
 		// генерация
 		prngCOMBOStepG(mod, O_OF_W(n), combo_state);
 		prngCOMBOStepG(a, O_OF_W(n), combo_state);
@@ -263,6 +269,91 @@ static bool_t zzTestMod()
 			return FALSE;
 		if (zzJacobi(t1, n, mod, n, stack) == -1)
 			return FALSE;
+		// zzMulMod / zzDivMod / zzInvMod
+		zzGCD(t, a, n, mod, n, stack);
+		if (wwCmpW(t, n, 1) != 0)
+			continue;
+		if (!zzIsCoprime(a, n, mod, n, stack))
+			return FALSE;
+		zzInvMod(t, a, mod, n, stack);
+		zzMulMod(t, t, b, mod, n, stack);
+		zzDivMod(t1, b, a, mod, n, stack);
+		if (!wwEq(t, t1, n))
+			return FALSE;
+		zzMulMod(t1, t1, a, mod, n, stack);
+		if (!wwEq(t1, b, n))
+			return FALSE;
+		// zzAlmostInvMod
+		k = zzAlmostInvMod(t, a, mod, n, stack);
+		while (k--)
+			zzHalfMod(t, t, mod, n);
+		zzInvMod(t1, a, mod, n, stack);
+		if (!wwEq(t, t1, n))
+			return FALSE;
+
+	}
+	// все нормально
+	return TRUE;
+}
+
+static bool_t zzTestGCD()
+{
+	const size_t n = 8;
+	size_t reps;
+	word a[8];
+	word b[8];
+	word t[8];
+	word t1[16];
+	word p[16];
+	word p1[24];
+	octet combo_state[32];
+	octet stack[2048];
+	// pre
+	ASSERT(COUNT_OF(a) >= n);
+	ASSERT(COUNT_OF(b) >= n);
+	ASSERT(COUNT_OF(t) >= n);
+	ASSERT(COUNT_OF(t1) >= 2 * n);
+	ASSERT(COUNT_OF(p) >= 2 * n);
+	ASSERT(COUNT_OF(p1) >= 3 * n);
+	ASSERT(zzMul_deep(n, n) <= sizeof(stack));
+	ASSERT(zzGCD_deep(n, n) <= sizeof(stack));
+	ASSERT(zzLCM_deep(n, n) <= sizeof(stack));
+	ASSERT(zzExGCD_deep(n, n) <= sizeof(stack));
+	// инициализировать генератор COMBO
+	ASSERT(prngCOMBO_keep() <= sizeof(combo_state));
+	prngCOMBOStart(combo_state, utilNonce32());
+	// эксперименты
+	for (reps = 0; reps < 100; ++reps)
+	{
+		size_t na, nb;
+		// генерация
+		prngCOMBOStepG(a, O_OF_W(n), combo_state);
+		prngCOMBOStepG(b, O_OF_W(n), combo_state);
+		a[0] = a[0] ? a[0] : 1;
+		b[0] = b[0] ? b[0] : 2;
+		// цикл по длинами
+		for (na = 1; na < n; ++na)
+		for (nb = 1; nb < n; ++nb)
+		{
+			int sign;
+			// zzGCD / zzLCM / zzMul
+			zzGCD(t, a, na, b, nb, stack);
+			zzLCM(t1, a, na, b, nb, stack);
+			zzMul(p, a, na, b, nb, stack);
+			zzMul(p1, t, MIN2(na, nb), t1, na + nb, stack);
+			if (wwCmp2(p, na + nb, p1, na + nb + MIN2(na, nb)) != 0)
+				return FALSE;
+			// zzExGCD / zzMul
+			sign = zzExGCD(t, t1, t1 + n, a, na, b, nb, stack);
+			zzMul(p, t1, nb, a, na, stack);
+			zzMul(p1, t1 + n, na, b, nb, stack);
+			if (sign == 1)
+				zzSub2(p, p1, na + nb);
+			else 
+				zzSub(p, p1, p, na + nb);
+			if (wwCmp2(p, na + nb, t, MIN2(na, nb)) != 0)
+				return FALSE;
+		}
 	}
 	// все нормально
 	return TRUE;
@@ -341,6 +432,7 @@ static bool_t zzTestRed()
 
 bool_t zzTest()
 {
-	return zzTestAdd() && zzTestMul() && zzTestMod() && zzTestRed();
+	return zzTestAdd() && zzTestMul() && zzTestMod() && zzTestGCD() && 
+		zzTestRed();
 }
 

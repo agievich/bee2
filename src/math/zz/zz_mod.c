@@ -6,7 +6,7 @@
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \author (C) Stanislav Poruchnik [poruchnikstanislav@gmail.com]
 \created 2012.04.22
-\version 2016.07.02
+\version 2016.07.05
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -26,6 +26,8 @@ version 3. See Copyright Notices in bee2/info.h.
 В первом проходе функции SAFE(zzAddMod)() выполняется сложение и 
 одновременно проверяется, не превосходит ли сумма модуль. Во втором проходе 
 выполняется вычитание либо собственно модуля, либо нуля.
+
+Примерно так регуляризированы и другие функции.
 *******************************************************************************
 */
 
@@ -306,18 +308,18 @@ void FAST(zzHalfMod)(word b[], const word a[], const word mod[], size_t n)
 	ASSERT(zzIsOdd(mod, n) && mod[n - 1] != 0);
 	ASSERT(wwCmp(a, mod, n) < 0);
 	// a -- нечетное? => b <- (a + p) / 2
-	if (wwTestBit(b, 0))
+	if (zzIsOdd(a, n))
 	{
 		carry = zzAdd(b, a, mod, n);
 		while (n--)
-			lo = b[n] & 1,
+			lo = b[n] & WORD_1,
 			b[n] = b[n] >> 1 | carry << (B_PER_W - 1),
 			carry = lo;
 	}
 	// a -- четное? => b <- a / 2
 	else
 		while (n--)
-			lo = a[n] & 1,
+			lo = a[n] & WORD_1,
 			b[n] = a[n] >> 1 | carry << (B_PER_W - 1),
 			carry = lo;
 	// очистка

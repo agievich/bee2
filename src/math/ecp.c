@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.06.26
-\version 2015.01.30
+\version 2016.07.05
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -502,7 +502,7 @@ static size_t ecpAddJ_deep(size_t n, size_t f_deep)
 			ecpDblJ_deep(n, f_deep));
 }
 
-// [3n]c <- [3n]a + [2n]b (J <- J + A)
+// [3n]c <- [3n]a + [2n]b (P <- P + A)
 static void ecpAddAJ(word c[], const word a[], const word b[], const ec_o* ec,
 	void* stack)
 {
@@ -637,7 +637,7 @@ static size_t ecpSubAJ_deep(size_t n, size_t f_deep)
 	return O_OF_W(2 * n) + ecpAddAJ_deep(n, f_deep);
 }
 
-// [3n]b <- 3[3n]a (J <- 3J)
+// [3n]b <- 3[3n]a (P <- 3P)
 static void ecpTplJ(word b[], const word a[], const ec_o* ec, void* stack)
 {
 	const size_t n = ec->f->n;
@@ -722,7 +722,7 @@ static size_t ecpTplJ_deep(size_t n, size_t f_deep)
 	return O_OF_W(8 * n) + f_deep;
 }
 
-// [3n]b <- 3[3n]a (J <- 3J)
+// [3n]b <- 3[3n]a (P <- 3P)
 static void ecpTplJA3(word b[], const word a[], const ec_o* ec, void* stack)
 {
 	const size_t n = ec->f->n;
