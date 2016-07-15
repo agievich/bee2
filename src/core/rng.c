@@ -63,7 +63,7 @@ static bool_t rngHasTRNG()
 }
 
 #define rdrand_eax	__asm _emit 0x0F __asm _emit 0xC7 __asm _emit 0xF0
-#define rdseed_eax	__asm _emit 0x66 __asm _emit 0x0F __asm _emit 0xC7
+#define rdseed_eax	__asm _emit 0x0F __asm _emit 0xC7 __asm _emit 0xF8
 
 static err_t rngReadTRNG(size_t* read, void* buf, size_t count)
 {
@@ -146,7 +146,7 @@ static err_t rngReadTRNG(size_t* read, void* buf, size_t count)
 			i -= count - 4;
 			rand = (u32*)((octet*)buf + i);
 		}
-		asm(".byte 0x66, 0x0F, 0xC7;\n" //< rdseed eax
+		asm(".byte 0x0F, 0xC7, 0xF8;\n" //< rdseed eax
 			"setc %1; " 
 			: "=a" (*rand), "=qm" (ok)
 			:
