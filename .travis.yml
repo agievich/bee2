@@ -46,9 +46,9 @@ script:
   - make test
 
 after_success:
-  - if ["$BUILD_TYPE" == "Coverage"]; then 
-      gcov ./*/*/*/*.o
-      gcov ./*/*/*/*/*.o
-      gcov ./*/*/*/*/*/*.o
-      bash <(curl -s https://codecov.io/bash) 
+  - if ["${BUILD_TYPE}" == "Coverage"]; then 
+      gcov ./*/*/*/*.o;
+      gcov ./*/*/*/*/*.o;
+      gcov ./*/*/*/*/*/*.o;
+      bash <(curl -s https://codecov.io/bash);
     fi
