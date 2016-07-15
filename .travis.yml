@@ -37,16 +37,18 @@ addons:
       name: "agievich/bee2"
       description: "Build submitted via Travis CI"
     notification_email: agievich@gmail.com
-    build_command_prepend: mkdir coverity && cd coverity && cmake -DBUILD_TYPE=Debug -DBUILD_FAST=OFF ..
+    build_command_prepend: mkdir coverity && cd coverity && cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_FAST=OFF ..
     build_command: make
     branch_pattern: master
 
 script: 
   - mkdir build && cd build 
-  - cmake -DBUILD_TYPE=$BUILD_TYPE -DBUILD_FAST=$BUILD_FAST ..
+  - cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_FAST=$BUILD_FAST ..
   - make
   - make test
   - sudo make install
 
 after_success:
-  - bash <(curl -s https://codecov.io/bash)
+  if [$BUILD_TYPE == Coverage]; then 
+    bash <(curl -s https://codecov.io/bash)
+  fi
