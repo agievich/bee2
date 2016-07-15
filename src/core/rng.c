@@ -40,7 +40,7 @@ version 3. See Copyright Notices in bee2/info.h.
 \todo Используется команда rdseed -- без криптографической постобработки.
 В команде rdrand постобработка выполняется. Код команды: 0x0F, 0xC7, 0xF0.
 
-\todo Некоторые сборки gcc не поддерживают ассемблерную команду rdrand.
+\todo Некоторые сборки gcc не поддерживают ассемблерную команду rdseed.
 *******************************************************************************
 */
 
@@ -146,11 +146,7 @@ static err_t rngReadTRNG(size_t* read, void* buf, size_t count)
 			i -= count - 4;
 			rand = (u32*)((octet*)buf + i);
 		}
-		asm(".byte 0x0F, 0xC7, 0xF8;\n" //< rdseed eax
-			"setc %1; " 
-			: "=a" (*rand), "=qm" (ok)
-			:
-			: "cc");
+		asm("rdseed %0; setc %1" : "=r" (*rand), "=qm" (ok));
 		if (!ok)
 			break;
 	}
