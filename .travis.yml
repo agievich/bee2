@@ -3,8 +3,6 @@
 
 language: c
 
-sudo: required
-
 branches:
   only:
     - master
@@ -31,24 +29,21 @@ matrix:
       compiler: gcc
       env: BUILD_TYPE=Coverage BUILD_FAST=OFF
 
-addons:
-  coverity_scan:
-    project:
-      name: "agievich/bee2"
-      description: "Build submitted via Travis CI"
-    notification_email: agievich@gmail.com
-    build_command_prepend: mkdir coverity && cd coverity && cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_FAST=OFF ..
-    build_command: make
-    branch_pattern: master
+#addons:
+#  coverity_scan:
+#    project:
+#      name: "agievich/bee2"
+#      description: "Build submitted via Travis CI"
+#    notification_email: agievich@gmail.com
+#    build_command_prepend: mkdir coverity && cd coverity && cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_FAST=OFF ..
+#    build_command: make
+#    branch_pattern: master
 
 script: 
   - mkdir build && cd build 
   - cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_FAST=$BUILD_FAST ..
   - make
-  - make test
-  - sudo make install
+  - ctest -V
 
 after_success:
-  if [$BUILD_TYPE == Coverage]; then 
-    bash <(curl -s https://codecov.io/bash)
-  fi
+  - if ["$BUILD_TYPE" == "Coverage"]; then bash <(curl -s https://codecov.io/bash); fi
