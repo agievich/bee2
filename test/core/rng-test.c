@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.10
-\version 2015.10.29
+\version 2016.07.15
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -86,9 +86,17 @@ bool_t rngTest()
 	// работа с ГСЧ
 	if (rngCreate(0, 0) != ERR_OK)
 		return FALSE;
-	rngStepG(buf, 2500, 0);
+	rngStepR(buf, 2500, 0);
 	hexFrom(hex, buf, 16);
 	printf("rngStepR:       %s... [FIPS: 1%c 2%c 3%c 4%c]\n",
+		hex,
+		rngTestFIPS1(buf) ? '+' : '-',
+		rngTestFIPS2(buf) ? '+' : '-',
+		rngTestFIPS3(buf) ? '+' : '-',
+		rngTestFIPS4(buf) ? '+' : '-');
+	rngStepR2(buf, 2500, 0);
+	hexFrom(hex, buf, 16);
+	printf("rngStepR2:      %s... [FIPS: 1%c 2%c 3%c 4%c]\n",
 		hex,
 		rngTestFIPS1(buf) ? '+' : '-',
 		rngTestFIPS2(buf) ? '+' : '-',

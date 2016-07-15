@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2016.04.22
+\version 2016.07.15
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -37,8 +37,10 @@ version 3. See Copyright Notices in bee2/info.h.
 
 \todo Протестировать.
 
-\todo Используется rdrand (криптографическая постобработка), 
-хотя можно попробовать и rdseed.
+\todo Используется команда rdseed -- без криптографической постобработки.
+В команде rdrand постобработка выполняется. Код команды: 0x0F, 0xC7, 0xF0.
+
+\todo Некоторые сборки gcc не поддерживают ассемблерную команду rdrand.
 *******************************************************************************
 */
 
@@ -61,10 +63,11 @@ static bool_t rngHasTRNG()
 }
 
 #define rdrand_eax	__asm _emit 0x0F __asm _emit 0xC7 __asm _emit 0xF0
+#define rdseed_eax	__asm _emit 0x66 __asm _emit 0x0F __asm _emit 0xC7
 
 static err_t rngReadTRNG(size_t* read, void* buf, size_t count)
 {
-	word* rand = (word*)buf;
+	u32* rand = (u32*)buf;
 	size_t i;
 	// pre
 	ASSERT(memIsValid(read, sizeof(size_t)));
@@ -79,9 +82,9 @@ static err_t rngReadTRNG(size_t* read, void* buf, size_t count)
 		return ERR_OK;
 	}
 	// генерация
-	for (i = 0; i < count; i += O_PER_W, ++rand)
+	for (i = 0; i < count; i += 4, ++rand)
 	{
-		if (i + O_PER_W > count)
+		if (i + 4 > count)
 		{
 			i -= count - O_PER_W;
 			rand = (word*)((octet*)buf + i);
@@ -89,7 +92,7 @@ static err_t rngReadTRNG(size_t* read, void* buf, size_t count)
 		__asm {
 			xor eax, eax
 			xor edx, edx
-			rdrand_eax
+			rdseed_eax
 			jnc rngSeedTRNG_break
 			mov edx, rand
 			mov [edx], eax
@@ -120,7 +123,7 @@ static bool_t rngHasTRNG()
 
 static err_t rngReadTRNG(size_t* read, void* buf, size_t count)
 {
-	word* rand = (word*)buf;
+	u32* rand = (u32*)buf;
 	size_t i;
 	octet ok;
 	// pre
@@ -136,14 +139,18 @@ static err_t rngReadTRNG(size_t* read, void* buf, size_t count)
 		return ERR_OK;
 	}
 	// генерация
-	for (i = 0; i < count; i += O_PER_W, ++rand)
+	for (i = 0; i < count; i += 4, ++rand)
 	{
-		if (i + O_PER_W > count)
+		if (i + 4 > count)
 		{
-			i -= count - O_PER_W;
-			rand = (word*)((octet*)buf + i);
+			i -= count - 4;
+			rand = (u32*)((octet*)buf + i);
 		}
-		asm volatile ("rdrand %0; setc %1" : "=r" (*rand), "=qm" (ok));
+		asm(".byte 0x66, 0x0F, 0xC7;\n" //< rdseed eax
+			"setc %1; " 
+			: "=a" (*rand), "=qm" (ok)
+			:
+			: "cc");
 		if (!ok)
 			break;
 	}
@@ -435,6 +442,10 @@ err_t rngReadSource(size_t* read, void* buf, size_t count,
 /*
 *******************************************************************************
 Создание / закрытие генератора
+
+\warning CoverityScan выдает предупреждение по функции rngCreate(): 
+	"Call to RngReadSource might sleep while holding lock _mtx".
+См. пояснения в комментариях к функции rngStepR().
 *******************************************************************************
 */
 
@@ -535,29 +546,57 @@ void rngClose()
 /*
 *******************************************************************************
 Генерация
+
+\warning CoverityScan выдает предупреждение по функции rngStepR(): 
+	"Call to RngReadSource might sleep while holding lock _mtx"
+с объяснениями: 
+	"The lock will prevent other threads from making progress for 
+	an indefinite period of time; may be mistaken for deadlock. In rngStepR: 
+	A lock is held while waiting for a long running or blocking operation 
+	to complete (CWE-667)".
+Проблема в том, что в источнике timer многократно вызывается 
+функция mtSleep(0).
 *******************************************************************************
 */
 
-void rngStepG(void* buf, size_t count, void* state)
+void rngStepR2(void* buf, size_t count, void* state)
 {
-	size_t read;
+	ASSERT(rngIsValid());
+	mtMtxLock(_mtx);
+	brngCTRStepR(buf, count, _state->alg_state);
+	mtMtxUnlock(_mtx);
+}
+
+void rngStepR(void* buf, size_t count, void* state)
+{
+	octet* buf1;
+	size_t read, t;
 	ASSERT(rngIsValid());
 	// блокировать генератор
 	mtMtxLock(_mtx);
-	// опросить источники случайности
+	// опросить trng
 	if (rngReadSource(&read, buf, count, "trng") != ERR_OK)
 		read = 0;
+	// опросить timer
 	if (read < count)
 	{
-		octet* buf1 = (octet*)buf + read;
-		size_t t;
+		buf1 = (octet*)buf + read;
 		if (rngReadSource(&t, buf1, count - read, "timer") != ERR_OK)
 			t = 0;
-		if ((read += t) < count)
-			rngReadSource(&t, buf1 + t, count - read, "sys");
+		read += t;
+	}
+	// опросить sys
+	if (read < count)
+	{
+		buf1 = (octet*)buf + read;
+		// проверка возврата снимает претензии сканеров
+		if (rngReadSource(&t, buf1, count - read, "sys") != ERR_OK)
+			t = 0;
+		read += t;
 	}
 	// генерация
 	brngCTRStepR(buf, count, _state->alg_state);
+	read = t = 0, buf1 = 0;
 	// снять блокировку
 	mtMtxUnlock(_mtx);
 }

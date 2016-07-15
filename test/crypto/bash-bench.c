@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.15
-\version 2015.11.23
+\version 2016.07.15
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -36,7 +36,7 @@ bool_t bashBench()
 	// заполнить buf псевдослучайными числами
 	ASSERT(prngCOMBO_keep() <= sizeof(combo_state));
 	prngCOMBOStart(combo_state, utilNonce32());
-	prngCOMBOStepG(buf, sizeof(buf), combo_state);
+	prngCOMBOStepR(buf, sizeof(buf), combo_state);
 	// оценить скорость хэширования
 	{
 		const size_t reps = 2000;

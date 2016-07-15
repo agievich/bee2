@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.08
-\version 2015.10.29
+\version 2016.07.15
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -115,7 +115,7 @@ bool_t pfokTest()
 	// сгенерировать ключи
 	ASSERT(prngCOMBO_keep() <= sizeof(combo_state));
 	prngCOMBOStart(combo_state, utilNonce32());
-	if (pfokGenKeypair(ua, vb, params, prngCOMBOStepG, combo_state) != ERR_OK ||
+	if (pfokGenKeypair(ua, vb, params, prngCOMBOStepR, combo_state) != ERR_OK ||
 		pfokValPubkey(params, vb) != ERR_OK ||
 		pfokCalcPubkey(yb, params, ua) != ERR_OK ||
 		!memEq(vb, yb, O_OF_B(params->l)))

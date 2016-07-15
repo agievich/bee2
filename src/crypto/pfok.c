@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.01
-\version 2016.04.22
+\version 2016.07.15
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -536,7 +536,7 @@ err_t pfokGenParams(pfok_params* params, const pfok_seed* seed,
 		{
 			do
 			{
-				prngSTBStepG(qi + offset, O_OF_B(lt[i]), stb_state);
+				prngSTBStepR(qi + offset, O_OF_B(lt[i]), stb_state);
 				wwTrimHi(qi + offset, W_OF_B(lt[i]), lt[i] - 1);
 				wwSetBit(qi + offset, lt[i] - 1, 1);
 			}
@@ -554,8 +554,8 @@ err_t pfokGenParams(pfok_params* params, const pfok_seed* seed,
 				base_count = priBaseSize();
 			// не удается построить новое простое?
 			if (!priExtendPrime(qi + offset, lt[i], 
-				qi + offset + W_OF_B(lt[i]), W_OF_B(lt[i + 1]), 
-				trials, base_count, prngSTBStepG, stb_state, stack))
+					qi + offset + W_OF_B(lt[i]), W_OF_B(lt[i + 1]), 
+					trials, base_count, prngSTBStepR, stb_state, stack))
 			{
 				// к предыдущему простому
 				offset += W_OF_B(lt[i++]);

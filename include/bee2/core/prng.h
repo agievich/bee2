@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.05.02
-\version 2015.08.27
+\version 2016.07.15
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -39,7 +39,7 @@ extern "C" {
 его состояний имеет порядок 2^60.
 
 Работа с генератором COMBO состоит в однократном вызове функции
-prngCOMBOStart() и последующих многократных вызовах prngCOMBOStepG().
+prngCOMBOStart() и последующих многократных вызовах prngCOMBOStepR().
 Состояние автомата состоит из prngCOMBO_keep() октетов и
 интерпретируется как общий стек указанных функций. Состояние не должно
 изменяться между обращениями к функциям.
@@ -69,10 +69,10 @@ void prngCOMBOStart(
 	В буфер [count]buf записываются псевдослучайные октеты, построенные 
 	с помощью генератора COMBO с состоянием state. Состояние state изменяется
 	при генерации.
-	\expect prngCOMBOStart() < prngCOMBOStepG()*.
-	\remark Поддержан интерфейс prng_i (defs.h).
+	\expect prngCOMBOStart() < prngCOMBOStepR()*.
+	\remark Поддержан интерфейс gen_i (defs.h).
 */
-void prngCOMBOStepG(
+void prngCOMBOStepR(
 	void* buf,				/*!< [out] буфер */
 	size_t count,			/*!< [in] размер буфера (в октетах) */
 	void* state				/*!< [in/out] состояние COMBO */
@@ -118,10 +118,10 @@ void prngEchoStart(
 	В буфер [count]buf записываются октеты, построенные с помощью 
 	эхо-генератора с состоянием state. Состояние state изменяется
 	при генерации.
-	\expect prngEchoStart() < prngEchoStepG()*.
-	\remark Поддержан интерфейс prng_i (defs.h).
+	\expect prngEchoStart() < prngEchoStepR()*.
+	\remark Поддержан интерфейс gen_i (defs.h).
 */
-void prngEchoStepG(
+void prngEchoStepR(
 	void* buf,				/*!< [out] буфер */
 	size_t count,			/*!< [in] размер буфера (в октетах) */
 	void* state				/*!< [in/out] состояние */
@@ -163,10 +163,10 @@ void prngSTBStart(
 	В буфер [count]buf записываются октеты, построенные с помощью 
 	генератора СТБ с состоянием state. Состояние state изменяется
 	при генерации.
-	\expect prngSTBStart() < prngSTBStepG()*.
-	\remark Поддержан интерфейс prng_i.
+	\expect prngSTBStart() < prngSTBStepR()*.
+	\remark Поддержан интерфейс gen_i (defs.h).
 */
-void prngSTBStepG(
+void prngSTBStepR(
 	void* buf,				/*!< [out] буфер */
 	size_t count,			/*!< [in] размер буфера (в октетах) */
 	void* state				/*!< [in/out] состояние */

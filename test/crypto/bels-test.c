@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.06.27
-\version 2015.11.06
+\version 2016.07.15
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -55,13 +55,13 @@ bool_t belsTest()
 	}
 	// сгенерировать общие ключи
 	prngCOMBOStart(combo_state, utilNonce32());
-	if (belsGenM0(m0, 16, prngCOMBOStepG, combo_state) != ERR_OK ||
+	if (belsGenM0(m0, 16, prngCOMBOStepR, combo_state) != ERR_OK ||
 		belsValM(m0, 16) != ERR_OK)
 		return FALSE;
-	if (belsGenM0(m0, 24, prngCOMBOStepG, combo_state) != ERR_OK ||
+	if (belsGenM0(m0, 24, prngCOMBOStepR, combo_state) != ERR_OK ||
 		belsValM(m0, 24) != ERR_OK)
 		return FALSE;
-	if (belsGenM0(m0, 32, prngCOMBOStepG, combo_state) != ERR_OK ||
+	if (belsGenM0(m0, 32, prngCOMBOStepR, combo_state) != ERR_OK ||
 		belsValM(m0, 32) != ERR_OK)
 		return FALSE;
 	// тест Б.1
@@ -89,7 +89,7 @@ bool_t belsTest()
 	for (len = 16; len <= 32; len += 8)
 	{
 		belsStdM(m0, len, 0);
-		if (belsGenMi(mi, len, m0, prngCOMBOStepG, combo_state) != ERR_OK || 
+		if (belsGenMi(mi, len, m0, prngCOMBOStepR, combo_state) != ERR_OK || 
 			belsValM(mi, len) != ERR_OK)
 			return FALSE;
 	}
@@ -106,7 +106,7 @@ bool_t belsTest()
 		// инициализировать эхо-генератор
 		prngEchoStart(echo_state, beltH() + 128, 128);
 		// разделить секрет (тесты Б.2 -- Б.4)
-		if (belsShare(si, 5, 3, len, beltH(), m0, mi, prngEchoStepG, 
+		if (belsShare(si, 5, 3, len, beltH(), m0, mi, prngEchoStepR, 
 			echo_state) != ERR_OK)
 			return FALSE;
 		if (len == 16 && !hexEq(si,

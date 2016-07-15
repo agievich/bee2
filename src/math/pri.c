@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.08.13
-\version 2015.11.09
+\version 2016.07.15
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -634,7 +634,7 @@ bool_t priRMTest(const word a[], size_t n, size_t iter, void* stack)
 		i = 0;
 		do
 			if (i++ * 45 > B_PER_IMPOSSIBLE * 10 || 
-				!zzRandNZMod(base, a, n, prngCOMBOStepG, combo_state))
+				!zzRandNZMod(base, a, n, prngCOMBOStepR, combo_state))
 			{
 				s = m = 0;
 				return FALSE;

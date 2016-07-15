@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.11.18
-\version 2015.01.23
+\version 2016.07.15
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -39,9 +39,9 @@ bool_t beltBench()
 	// псевдослучайная генерация объектов
 	ASSERT(prngCOMBO_keep() <= sizeof(combo_state));
 	prngCOMBOStart(combo_state, utilNonce32());
-	prngCOMBOStepG(buf, sizeof(buf), combo_state);
-	prngCOMBOStepG(theta, sizeof(theta), combo_state);
-	prngCOMBOStepG(iv, sizeof(iv), combo_state);
+	prngCOMBOStepR(buf, sizeof(buf), combo_state);
+	prngCOMBOStepR(theta, sizeof(theta), combo_state);
+	prngCOMBOStepR(iv, sizeof(iv), combo_state);
 	// cкорость belt-ecb
 	ASSERT(beltECB_keep() <= sizeof(belt_state));
 	beltECBStart(belt_state, theta, 32);

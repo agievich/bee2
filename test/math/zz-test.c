@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.15
-\version 2016.07.04
+\version 2016.07.15
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -45,8 +45,8 @@ static bool_t zzTestAdd()
 	for (reps = 0; reps < 1000; ++reps)
 	{
 		word carry;
-		prngCOMBOStepG(a, O_OF_W(n), combo_state);
-		prngCOMBOStepG(b, O_OF_W(n), combo_state);
+		prngCOMBOStepR(a, O_OF_W(n), combo_state);
+		prngCOMBOStepR(b, O_OF_W(n), combo_state);
 		// zzAdd / zzSub / zzIsSumEq
 		carry = zzAdd(c, a, b, n);
 		if (zzSub(c1, c, b, n) != carry || 
@@ -117,8 +117,8 @@ static bool_t zzTestMul()
 	{
 		size_t na, nb;
 		word w;
-		prngCOMBOStepG(a, O_OF_W(n), combo_state);
-		prngCOMBOStepG(b, O_OF_W(n), combo_state);
+		prngCOMBOStepR(a, O_OF_W(n), combo_state);
+		prngCOMBOStepR(b, O_OF_W(n), combo_state);
 		// zzSqr / zzMul
 		for (na = 1; na <= n; ++na)
 		{
@@ -131,7 +131,7 @@ static bool_t zzTestMul()
 		for (na = 1; na <= n; ++na)
 		{
 			a[na - 1] = a[na - 1] ? a[na - 1] : WORD_1;
-			zzRandMod(r, a, na, prngCOMBOStepG, combo_state);
+			zzRandMod(r, a, na, prngCOMBOStepR, combo_state);
 			for (nb = 1; nb <= n; ++nb)
 			{
 				zzMul(c, a, na, b, nb, stack);
@@ -215,7 +215,7 @@ static bool_t zzTestMod()
 	wwRepW(mod, n, WORD_MAX);
 	if (!zzIsOdd(mod, n) || zzIsEven(mod, n))
 		return FALSE;
-	if (!zzRandMod(a, mod, n, prngCOMBOStepG, combo_state))
+	if (!zzRandMod(a, mod, n, prngCOMBOStepR, combo_state))
 		return FALSE;
 	b[0] = 3;
 	zzPowerMod(t, a, n, b, 1, mod, stack);
@@ -228,9 +228,9 @@ static bool_t zzTestMod()
 	{
 		size_t k;
 		// генерация
-		prngCOMBOStepG(mod, O_OF_W(n), combo_state);
-		prngCOMBOStepG(a, O_OF_W(n), combo_state);
-		prngCOMBOStepG(b, O_OF_W(n), combo_state);
+		prngCOMBOStepR(mod, O_OF_W(n), combo_state);
+		prngCOMBOStepR(a, O_OF_W(n), combo_state);
+		prngCOMBOStepR(b, O_OF_W(n), combo_state);
 		if (mod[n - 1] == 0)
 			mod[n - 1] = WORD_MAX;
 		zzMod(a, a, n, mod, n, stack);
@@ -327,8 +327,8 @@ static bool_t zzTestGCD()
 	{
 		size_t na, nb;
 		// генерация
-		prngCOMBOStepG(a, O_OF_W(n), combo_state);
-		prngCOMBOStepG(b, O_OF_W(n), combo_state);
+		prngCOMBOStepR(a, O_OF_W(n), combo_state);
+		prngCOMBOStepR(b, O_OF_W(n), combo_state);
 		a[0] = a[0] ? a[0] : 1;
 		b[0] = b[0] ? b[0] : 2;
 		// цикл по длинами
@@ -388,8 +388,8 @@ static bool_t zzTestRed()
 	for (reps = 0; reps < 1000; ++reps)
 	{
 		// генерация
-		prngCOMBOStepG(mod, O_OF_W(n), combo_state);
-		prngCOMBOStepG(a, O_OF_W(2 * n), combo_state);
+		prngCOMBOStepR(mod, O_OF_W(n), combo_state);
+		prngCOMBOStepR(a, O_OF_W(2 * n), combo_state);
 		mod[n - 1] = mod[n - 1] ? mod[n - 1] : 1;
 		// zzRed / zzRedBarr
 		wwCopy(t, a, 2 * n);

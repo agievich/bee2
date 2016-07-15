@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.05.02
-\version 2015.11.17
+\version 2016.07.15
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -69,7 +69,7 @@ void prngCOMBOStart(void* state, u32 seed)
 	s->reserved = 0;
 }
 
-void prngCOMBOStepG(void* buf, size_t count, void* state)
+void prngCOMBOStepR(void* buf, size_t count, void* state)
 {
 	prng_combo_st* s = (prng_combo_st*)state;
 	ASSERT(memIsValid(buf, count));
@@ -135,7 +135,7 @@ void prngEchoStart(void* state, const void* seed, size_t seed_len)
 	s->pos = 0;
 }
 
-void prngEchoStepG(void* buf, size_t count, void* state)
+void prngEchoStepR(void* buf, size_t count, void* state)
 {
 	prng_echo_st* s = (prng_echo_st*)state;
 	ASSERT(memIsValid(s, sizeof(prng_echo_st)));
@@ -213,7 +213,7 @@ void prngSTBStart(void* state, const u16 z[31])
 		_prngSTBClock(s);
 }
 
-void prngSTBStepG(void* buf, size_t count, void* state)
+void prngSTBStepR(void* buf, size_t count, void* state)
 {
 	register u16 u;
 	prng_stb_st* s = (prng_stb_st*)state;

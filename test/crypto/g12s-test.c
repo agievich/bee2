@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.04.07
-\version 2015.10.29
+\version 2016.07.15
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -45,7 +45,7 @@ bool_t g12sTest()
 		"1B60961F49397EEE1D19CE9891EC3B28");
 	ASSERT(sizeof(echo) >= prngEcho_keep());
 	prngEchoStart(echo, buf, 32);
-	if (g12sGenKeypair(privkey, pubkey, params, prngEchoStepG, echo) 
+	if (g12sGenKeypair(privkey, pubkey, params, prngEchoStepR, echo) 
 		!= ERR_OK ||
 		!hexEqRev(privkey, 
 			"7A929ADE789BB9BE10ED359DD39A72C1"
@@ -63,7 +63,7 @@ bool_t g12sTest()
 	hexToRev(buf, 
 		"77105C9B20BCD3122823C8CF6FCC7B95"
 		"6DE33814E95B7FE64FED924594DCEAB3");
-	if (g12sSign(sig, params, hash, privkey, prngEchoStepG, echo) != ERR_OK ||
+	if (g12sSign(sig, params, hash, privkey, prngEchoStepR, echo) != ERR_OK ||
 		!hexEq(sig, 
 			"41AA28D2F1AB148280CD9ED56FEDA419"
 			"74053554A42767B83AD043FD39DC0493"
@@ -86,7 +86,7 @@ bool_t g12sTest()
 		"A2636B7BFD18AADFC62967821FA18DD4");
 	ASSERT(sizeof(echo) >= prngEcho_keep());
 	prngEchoStart(echo, buf, 64);
-	if (g12sGenKeypair(privkey, pubkey, params, prngEchoStepG, echo) 
+	if (g12sGenKeypair(privkey, pubkey, params, prngEchoStepR, echo) 
 		!= ERR_OK ||
 		!hexEqRev(privkey, 
 			"0BA6048AADAE241BA40936D47756D7C9"
@@ -114,7 +114,7 @@ bool_t g12sTest()
 		"946312120B39D019D455986E364F3658"
 		"86748ED7A44B3E794434006011842286"
 		"212273A6D14CF70EA3AF71BB1AE679F1");
-	if (g12sSign(sig, params, hash, privkey, prngEchoStepG, echo) 
+	if (g12sSign(sig, params, hash, privkey, prngEchoStepR, echo) 
 		!= ERR_OK ||
 		!hexEq(sig, 
 			"2F86FA60A081091A23DD795E1E3C689E"

@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.07
-\version 2015.11.09
+\version 2016.07.15
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -104,7 +104,7 @@ bool_t priTest()
 	ASSERT(priBaseSize() >= 10);
 	ASSERT(priExtendPrime_deep(289, W_OF_B(256), 0) <= sizeof(stack));
 	ASSERT(priIsPrime_deep(W_OF_B(256)) <= sizeof(stack));
-	if (!priExtendPrime(p, 289, a, W_OF_B(256), SIZE_MAX, 0, prngCOMBOStepG, 
+	if (!priExtendPrime(p, 289, a, W_OF_B(256), SIZE_MAX, 0, prngCOMBOStepR, 
 		combo_state, stack) || !priIsPrime(p, W_OF_B(289), stack))
 		return FALSE;
 	// удостовериться, что в интервале (2^256 - 188, 2^256 - 1) нет простых
@@ -123,7 +123,7 @@ bool_t priTest()
 	ASSERT(priExtendPrime_deep(5, 1, 10) <= sizeof(stack));
 	a[0] = 11;
 	if (!priExtendPrime(p, 5, a, 1, SIZE_MAX, 0, 
-		prngCOMBOStepG, combo_state, stack) || p[0] != 23)
+		prngCOMBOStepR, combo_state, stack) || p[0] != 23)
 		return FALSE;
 	// все нормально
 	return TRUE;

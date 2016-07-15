@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.04.23
-\version 2016.04.22
+\version 2016.07.15
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -228,7 +228,7 @@ bool_t bakeTest()
 	memSetZero(settingsb, sizeof(bake_settings));
 	settingsa->kca = settingsa->kcb = TRUE;
 	settingsb->kca = settingsb->kcb = TRUE;
-	settingsa->rng = settingsb->rng = prngEchoStepG;
+	settingsa->rng = settingsb->rng = prngEchoStepR;
 	settingsa->rng_state = echoa;
 	settingsb->rng_state = echob;
 	// загрузить личные ключи

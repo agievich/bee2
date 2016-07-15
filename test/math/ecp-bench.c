@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.10.17
-\version 2015.04.25
+\version 2016.07.15
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -67,7 +67,7 @@ bool_t ecpBench()
 		// эксперимент
 		for (i = 0, ticks = tmTicks(); i < reps; ++i)
 		{
-			prngCOMBOStepG(d, ec->f->no, combo_state);
+			prngCOMBOStepR(d, ec->f->no, combo_state);
 			ecMulA(pt, ec->base, ec, d, ec->f->n, stack);
 		}
 		ticks = tmTicks() - ticks;

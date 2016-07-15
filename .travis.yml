@@ -18,10 +18,10 @@ matrix:
     - os: linux
       compiler: gcc
       env: BUILD_TYPE=Release BUILD_FAST=OFF
-    - os: linux
+    - os: osx
       compiler: clang
       env: BUILD_TYPE=Debug BUILD_FAST=ON
-    - os: osx
+    - os: linux
       compiler: gcc
       env: BUILD_TYPE=ASan BUILD_FAST=OFF
     - os: osx
