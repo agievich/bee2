@@ -35,10 +35,11 @@ version 3. See Copyright Notices in bee2/info.h.
 -	по материалам https://software.intel.com/en-us/articles/
 	intel-digital-random-number-generator-drng-software-implementation-guide.
 
-\todo Протестировать.
+Используется команда rdrand -- с криптографической постобработкой.
+В команде rdseed постобработка не выполняется. Эту команда предпочтительнее,
+но ее не поддерживают многие версии gcc.
 
-\todo Используется команда rdseed -- без криптографической постобработки.
-В команде rdrand постобработка выполняется. Код команды: 0x0F, 0xC7, 0xF0.
+\todo Протестировать.
 
 \todo Некоторые сборки gcc не поддерживают ассемблерную команду rdseed.
 *******************************************************************************
@@ -92,7 +93,7 @@ static err_t rngReadTRNG(size_t* read, void* buf, size_t count)
 		__asm {
 			xor eax, eax
 			xor edx, edx
-			rdseed_eax
+			rdrand_eax
 			jnc rngSeedTRNG_break
 			mov edx, rand
 			mov [edx], eax
@@ -146,7 +147,7 @@ static err_t rngReadTRNG(size_t* read, void* buf, size_t count)
 			i -= count - 4;
 			rand = (u32*)((octet*)buf + i);
 		}
-		asm("rdseed %0; setc %1" : "=r" (*rand), "=qm" (ok));
+		asm volatile("rdrand %0; setc %1" : "=r" (*rand), "=qm" (ok));
 		if (!ok)
 			break;
 	}
