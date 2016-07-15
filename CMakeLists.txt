@@ -51,10 +51,10 @@ endif(CMAKE_COMPILER_IS_CLANG)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
   if(CMAKE_COMPILER_IS_GNUCC)
-    set(CMAKE_SHARED_LINKER_FLAGS "--coverage")
+    set(CMAKE_SHARED_LINKER_FLAGS "-fprofile-arcs -ftest-coverage")
   endif(CMAKE_COMPILER_IS_GNUCC)
   if(CMAKE_COMPILER_IS_CLANG)
-    set(CMAKE_SHARED_LINKER_FLAGS "--coverage")
+    set(CMAKE_SHARED_LINKER_FLAGS "-fprofile-arcs -ftest-coverage")
   endif(CMAKE_COMPILER_IS_CLANG)
 endif(CMAKE_BUILD_TYPE STREQUAL "Coverage")
 
