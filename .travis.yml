@@ -28,6 +28,8 @@ matrix:
     - os: linux
       compiler: gcc
       env: BUILD_TYPE=Coverage BUILD_FAST=OFF
+      after_success:
+      - bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
 
 #addons:
 #  coverity_scan:
@@ -44,11 +46,3 @@ script:
   - cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_FAST=$BUILD_FAST ..
   - make
   - make test
-
-after_success:
-  - if ["${BUILD_TYPE}" == "Coverage"]; then 
-      gcov ./*/*/*/*.o;
-      gcov ./*/*/*/*/*.o;
-      gcov ./*/*/*/*/*/*.o;
-      bash <(curl -s https://codecov.io/bash);
-    fi
