@@ -6,7 +6,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.02.25
-\version 2016.04.22
+\version 2016.07.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -58,7 +58,7 @@ static err_t beeReadAndCalcStamp(octet stampRead[STAMP_SIZE],
 	}
 	// проецировать файл в память
 	hMapping = CreateFileMappingA(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
-	if (hMapping == INVALID_HANDLE_VALUE)
+	if (hMapping == NULL)
 	{
 		CloseHandle(hFile);
 		return ERR_SYS;

@@ -5,7 +5,7 @@
 \project bee2/apps/stamp
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2011.10.18
-\version 2016.04.22
+\version 2016.07.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -129,7 +129,7 @@ void stampSet(const char* name)
 	}
 	// проецировать файл в память
 	hMapping = CreateFileMappingA(hFile, NULL, PAGE_READWRITE, 0, 0, NULL);
-	if (hMapping == INVALID_HANDLE_VALUE)
+	if (hMapping == NULL)
 	{
 		CloseHandle(hFile);
 		printf("Error processing the file \"%s\".\n", name);
@@ -209,7 +209,7 @@ void stampCheck(const char* name)
 	}
 	// проецировать файл в память
 	hMapping = CreateFileMappingA(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
-	if (hMapping == INVALID_HANDLE_VALUE)
+	if (hMapping == NULL)
 	{
 		CloseHandle(hFile);
 		printf("Error processing the file \"%s\".\n", name);

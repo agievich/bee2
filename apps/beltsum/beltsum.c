@@ -5,29 +5,18 @@
 \project bee2/apps/beltsum 
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.28
-\version 2015.10.29
+\version 2016.07.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-/*
-*******************************************************************************
-В Windows вычисленное хэш-значение дополнительно помещается в буфер 
-обмена (формат CF_TEXT).
-*******************************************************************************
-*/
-
 #include <stdio.h>
+#include <locale.h>
 #include <bee2/core/mem.h>
 #include <bee2/core/hex.h>
 #include <bee2/core/util.h>
 #include <bee2/crypto/belt.h>
-
-#ifdef OS_WIN
-	#include <locale.h>
-	#include <windows.h>
-#endif
 
 static void beltsumUsage()
 {
@@ -35,11 +24,8 @@ static void beltsumUsage()
 		"bee2/beltsum: STB 34.101.31 hashing\n"
 		"[bee2 version %s]\n"
 		"Usage: beltsum [file_name]\n"
-		"    file_name -- file to hash\n"
-#ifdef OS_WIN
-		"\\remark resulting hash value is copied to the clipboard\n"
-#endif
-        , utilVersion());
+		"    file_name -- file to hash\n", 
+		utilVersion());
 }
 
 int main(int argc, char* argv[])
@@ -49,10 +35,8 @@ int main(int argc, char* argv[])
 	octet hash_buf[4096];
 	size_t count;
 	char szHash[8 * 8 + 8];
-#ifdef OS_WIN
 	// поддержка русских имен файлов
 	setlocale(LC_ALL, "russian_belarus.1251");
-#endif
 	// разобрать командную строку
 	if (argc != 2)
 	{
@@ -100,19 +84,6 @@ int main(int argc, char* argv[])
 		szHash[44] = szHash[53] = szHash[62] = ' ';
 	// печать на консоль
 	printf("%s & %s\n", argv[1], szHash);
-#ifdef OS_WIN
-	// печать в буфер обмена
-	{
-		HANDLE hData = GlobalAlloc(GMEM_MOVEABLE | GMEM_SHARE, sizeof(szHash));
-		PVOID pData = GlobalLock(hData);
-		memCopy(pData, szHash, sizeof(szHash));
-		GlobalUnlock(hData);
-		OpenClipboard(NULL);
-		EmptyClipboard();
-		SetClipboardData(CF_TEXT, hData);
-		CloseClipboard();
-	}
-#endif
 	// завершение
 	return 0;
 }
