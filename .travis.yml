@@ -18,7 +18,17 @@ matrix:
       env: BUILD_TYPE=Release BUILD_FAST=OFF
     - os: osx
       compiler: clang
-      env: BUILD_TYPE=Debug BUILD_FAST=ON
+      env: 
+      - BUILD_TYPE=Debug 
+      - BUILD_FAST=ON
+      - COVERITY_SCAN_PROJECT_NAME="$TRAVIS_REPO_SLUG"
+      - COVERITY_SCAN_BRANCH_PATTERN="master"
+      - COVERITY_SCAN_NOTIFICATION_EMAIL="agievich@gmail.com"
+      - COVERITY_SCAN_BUILD_COMMAND="make"
+      before_script:
+      - curl -s 'https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh' 
+      build_command_prepend: 
+      - mkdir coverity && cd coverity && cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_FAST=OFF ..
     - os: linux
       compiler: gcc
       env: BUILD_TYPE=MemSan BUILD_FAST=OFF
@@ -28,18 +38,22 @@ matrix:
     - os: linux
       compiler: gcc
       env: BUILD_TYPE=Coverage BUILD_FAST=OFF
+      install:
+      - gem install coveralls-lcov
       after_success:
-      - bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
+      - coveralls-lcov $(make showbuilddir)/coverage.info.src
+      - coveralls-lcov $(make showbuilddir)/coverage.info.vpi
+      - bash <(curl -s https://codecov.io/bash) -f $(make showbuilddir)/coverage.info.src -f $(make showbuilddir)/coverage.info
 
-addons:
-  coverity_scan:
-    project:
-      name: "agievich/bee2"
-      description: "Build submitted via Travis CI"
-    notification_email: agievich@gmail.com
-    build_command_prepend: mkdir coverity && cd coverity && cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_FAST=OFF ..
-    build_command: make
-    branch_pattern: master
+#addons:
+#  coverity_scan:
+#    project:
+#      name: "agievich/bee2"
+#      description: "Build submitted via Travis CI"
+#    notification_email: agievich@gmail.com
+#    build_command_prepend: mkdir coverity && cd coverity && cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_FAST=OFF ..
+#    build_command: make
+#    branch_pattern: master
 
 script: 
   - mkdir build && cd build 
