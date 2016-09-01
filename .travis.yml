@@ -16,6 +16,11 @@ matrix:
     - os: linux
       compiler: gcc
       env: BUILD_TYPE=Release BUILD_FAST=OFF
+      script: 
+      - mkdir build && cd build 
+      - cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_FAST=OFF ..
+      - make
+      - make test
     - os: linux
       compiler: clang
       env: 
@@ -24,25 +29,41 @@ matrix:
       - COVERITY_SCAN_PROJECT_NAME="$TRAVIS_REPO_SLUG"
       - COVERITY_SCAN_BRANCH_PATTERN="master"
       - COVERITY_SCAN_NOTIFICATION_EMAIL="agievich@gmail.com"
+      - COVERITY_SCAN_BUILD_COMMAND_PREPEND="cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_FAST=ON"
       - COVERITY_SCAN_BUILD_COMMAND="make"
       before_script:
       - curl -s 'https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh' | bash || true
     - os: linux
       compiler: gcc
       env: BUILD_TYPE=MemSan BUILD_FAST=OFF
+      script: 
+      - mkdir build && cd build 
+      - cmake -DCMAKE_BUILD_TYPE=MemSan -DBUILD_FAST=OFF ..
+      - make
+      - make test
     - os: osx
       compiler: clang
       env: BUILD_TYPE=Check BUILD_FAST=ON
+      script: 
+      - mkdir build && cd build 
+      - cmake -DCMAKE_BUILD_TYPE=Check -DBUILD_FAST=ON ..
+      - make
+      - make test
     - os: linux
       compiler: gcc
       env: BUILD_TYPE=Coverage BUILD_FAST=OFF
       install:
       - gem install coveralls-lcov
+      script: 
+      - mkdir build && cd build 
+      - cmake -DCMAKE_BUILD_TYPE=Coverage -DBUILD_FAST=OFF ..
+      - make
+      - make test
       after_success:
-      - ls build
-      - coveralls-lcov build/coverage.info.src
-      - coveralls-lcov build/coverage.info.vpi
-      - bash <(curl -s https://codecov.io/bash) -f build/coverage.info.src -f build/coverage.info.vpi
+      - ls 
+      - coveralls-lcov coverage.info.src
+      - coveralls-lcov coverage.info.vpi
+      - bash <(curl -s https://codecov.io/bash) -f coverage.info.src -f coverage.info.vpi
 
 #addons:
 #  coverity_scan:
