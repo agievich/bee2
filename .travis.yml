@@ -27,7 +27,7 @@ matrix:
       - COVERITY_SCAN_NOTIFICATION_EMAIL="agievich@gmail.com"
       - COVERITY_SCAN_BUILD_COMMAND_PREPEND="cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_FAST=ON"
       - COVERITY_SCAN_BUILD_COMMAND="make"
-      before_script:
+      script:
       - curl -s 'https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh' | bash || true
     - os: linux
       compiler: gcc
@@ -51,7 +51,7 @@ matrix:
       - cmake -DCMAKE_BUILD_TYPE=Coverage -DBUILD_FAST=OFF ..
       - make && make test
       after_success:
-      - ls Testing
+      - ls -R
       - coveralls-lcov Testing/coverage.info.src
       - coveralls-lcov coverage.info.vpi
       - bash <(curl -s https://codecov.io/bash) -f Testing/coverage.info.src -f coverage.info.vpi
