@@ -26,9 +26,7 @@ matrix:
       - COVERITY_SCAN_NOTIFICATION_EMAIL="agievich@gmail.com"
       - COVERITY_SCAN_BUILD_COMMAND="make"
       before_script:
-      - curl -s 'https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh' 
-      build_command_prepend: 
-      - mkdir coverity && cd coverity && cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_FAST=OFF ..
+      - curl -s 'https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh' | bash || true
     - os: linux
       compiler: gcc
       env: BUILD_TYPE=MemSan BUILD_FAST=OFF
@@ -41,9 +39,8 @@ matrix:
       install:
       - gem install coveralls-lcov
       after_success:
-      - coveralls-lcov $(make showbuilddir)/coverage.info.src
-      - coveralls-lcov $(make showbuilddir)/coverage.info.vpi
-      - bash <(curl -s https://codecov.io/bash) -f $(make showbuilddir)/coverage.info.src -f $(make showbuilddir)/coverage.info
+      - coveralls-lcov coverage.info
+      - bash <(curl -s https://codecov.io/bash) -f coverage.info
 
 #addons:
 #  coverity_scan:

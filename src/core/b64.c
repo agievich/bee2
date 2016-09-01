@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2016.06.16
-\version 2016.06.19
+\version 2016.09.01
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -19,6 +19,8 @@ version 3. See Copyright Notices in bee2/info.h.
 /*
 *******************************************************************************
 Таблицы
+
+\todo Кодировка base64url: + меняется на -, / меняется на _.
 *******************************************************************************
 */
 
