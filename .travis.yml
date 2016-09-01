@@ -15,17 +15,13 @@ matrix:
   include:
     - os: linux
       compiler: gcc
-      env: BUILD_TYPE=Release BUILD_FAST=OFF
       script: 
       - mkdir build && cd build 
       - cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_FAST=OFF ..
-      - make
-      - make test
+      - make && make test
     - os: linux
       compiler: clang
       env: 
-      - BUILD_TYPE=Debug 
-      - BUILD_FAST=ON
       - COVERITY_SCAN_PROJECT_NAME="$TRAVIS_REPO_SLUG"
       - COVERITY_SCAN_BRANCH_PATTERN="master"
       - COVERITY_SCAN_NOTIFICATION_EMAIL="agievich@gmail.com"
@@ -35,48 +31,27 @@ matrix:
       - curl -s 'https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh' | bash || true
     - os: linux
       compiler: gcc
-      env: BUILD_TYPE=MemSan BUILD_FAST=OFF
       script: 
       - mkdir build && cd build 
       - cmake -DCMAKE_BUILD_TYPE=MemSan -DBUILD_FAST=OFF ..
-      - make
-      - make test
+      - make && make test
     - os: osx
       compiler: clang
       env: BUILD_TYPE=Check BUILD_FAST=ON
       script: 
       - mkdir build && cd build 
       - cmake -DCMAKE_BUILD_TYPE=Check -DBUILD_FAST=ON ..
-      - make
-      - make test
+      - make && make test
     - os: linux
       compiler: gcc
-      env: BUILD_TYPE=Coverage BUILD_FAST=OFF
       install:
       - gem install coveralls-lcov
       script: 
       - mkdir build && cd build 
       - cmake -DCMAKE_BUILD_TYPE=Coverage -DBUILD_FAST=OFF ..
-      - make
-      - make test
+      - make && make test
       after_success:
-      - ls 
-      - coveralls-lcov coverage.info.src
+      - ls Testing
+      - coveralls-lcov Testing/coverage.info.src
       - coveralls-lcov coverage.info.vpi
-      - bash <(curl -s https://codecov.io/bash) -f coverage.info.src -f coverage.info.vpi
-
-#addons:
-#  coverity_scan:
-#    project:
-#      name: "agievich/bee2"
-#      description: "Build submitted via Travis CI"
-#    notification_email: agievich@gmail.com
-#    build_command_prepend: mkdir coverity && cd coverity && cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_FAST=OFF ..
-#    build_command: make
-#    branch_pattern: master
-
-script: 
-  - mkdir build && cd build 
-  - cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_FAST=$BUILD_FAST ..
-  - make
-  - make test
+      - bash <(curl -s https://codecov.io/bash) -f Testing/coverage.info.src -f coverage.info.vpi
