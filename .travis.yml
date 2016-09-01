@@ -16,7 +16,7 @@ matrix:
     - os: linux
       compiler: gcc
       env: BUILD_TYPE=Release BUILD_FAST=OFF
-    - os: osx
+    - os: linux
       compiler: clang
       env: 
       - BUILD_TYPE=Debug 
@@ -39,8 +39,10 @@ matrix:
       install:
       - gem install coveralls-lcov
       after_success:
-      - coveralls-lcov coverage.info
-      - bash <(curl -s https://codecov.io/bash) -f coverage.info
+      - ls build
+      - coveralls-lcov build/coverage.info.src
+      - coveralls-lcov build/coverage.info.vpi
+      - bash <(curl -s https://codecov.io/bash) -f build/coverage.info.src -f build/coverage.info.vpi
 
 #addons:
 #  coverity_scan:
