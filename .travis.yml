@@ -62,7 +62,6 @@ matrix:
       sudo: required
       install:
       - sudo apt-get install -y lcov
-#      - gem install coveralls-lcov
       script: 
       - mkdir build && cd build 
       - cmake -DCMAKE_BUILD_TYPE=Coverage -DBUILD_FAST=ON ..
@@ -72,5 +71,4 @@ matrix:
       - test/testbee2
       - lcov -d . -c -o coverage_test.info
       - lcov -a coverage_base.info -a coverage_test.info -o coverage.info
-#      - coveralls-lcov coverage.info
       - bash <(curl -s https://codecov.io/bash) -f coverage.info
