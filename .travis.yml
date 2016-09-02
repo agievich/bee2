@@ -15,12 +15,6 @@ matrix:
   include:
     - os: linux
       compiler: gcc
-      script: 
-      - mkdir build && cd build 
-      - cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_FAST=OFF ..
-      - make && make test
-    - os: linux
-      compiler: clang
       env: 
       - COVERITY_SCAN_PROJECT_NAME="$TRAVIS_REPO_SLUG"
       - COVERITY_SCAN_BRANCH_PATTERN="master"
@@ -29,29 +23,54 @@ matrix:
       - COVERITY_SCAN_BUILD_COMMAND="make"
       script:
       - curl -s 'https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh' | bash || true
+    - os: osx
+      compiler: clang
+      env: 
+      - COVERITY_SCAN_PROJECT_NAME="$TRAVIS_REPO_SLUG"
+      - COVERITY_SCAN_BRANCH_PATTERN="master"
+      - COVERITY_SCAN_NOTIFICATION_EMAIL="agievich@gmail.com"
+      - COVERITY_SCAN_BUILD_COMMAND_PREPEND="cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_FAST=OFF"
+      - COVERITY_SCAN_BUILD_COMMAND="make"
+      script:
+      - curl -s 'https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh' | bash || true
+    - os: osx
+      compiler: clang
+      script: 
+      - mkdir build && cd build 
+      - cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_FAST=ON ..
+      - make && make test
     - os: linux
       compiler: gcc
       script: 
       - mkdir build && cd build 
       - cmake -DCMAKE_BUILD_TYPE=MemSan -DBUILD_FAST=OFF ..
       - make && make test
-    - os: osx
-      compiler: clang
-      env: BUILD_TYPE=Check BUILD_FAST=ON
+    - os: linux
+      compiler: gcc
       script: 
       - mkdir build && cd build 
-      - cmake -DCMAKE_BUILD_TYPE=Check -DBUILD_FAST=ON ..
+      - cmake -DCMAKE_BUILD_TYPE=ASan -DBUILD_FAST=ON ..
+      - make && make test
+    - os: osx
+      compiler: clang
+      script: 
+      - mkdir build && cd build 
+      - cmake -DCMAKE_BUILD_TYPE=Check -DBUILD_FAST=OFF ..
       - make && make test
     - os: linux
       compiler: gcc
+      sudo: required
       install:
+      - sudo apt-get install -y lcov
       - gem install coveralls-lcov
       script: 
       - mkdir build && cd build 
-      - cmake -DCMAKE_BUILD_TYPE=Coverage -DBUILD_FAST=OFF ..
-      - make && make test
+      - cmake -DCMAKE_BUILD_TYPE=Coverage -DBUILD_FAST=ON ..
+      - make
       after_success:
-      - ls -R
-      - coveralls-lcov Testing/coverage.info.src
-      - coveralls-lcov coverage.info.vpi
-      - bash <(curl -s https://codecov.io/bash) -f Testing/coverage.info.src -f coverage.info.vpi
+      - lcov -c -i -d . -o coverage_base.info
+      - test/testbee2
+      - lcov -d . -c -o coverage_test.info
+      - lcov -a coverage_base.info -a coverage_test.info -o coverage.info
+      - coveralls-lcov coverage.info
+      - bash <(curl -s https://codecov.io/bash) -f coverage.info
