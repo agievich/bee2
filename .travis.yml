@@ -33,6 +33,12 @@ matrix:
       - COVERITY_SCAN_BUILD_COMMAND="make"
       script:
       - curl -s 'https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh' | bash || true
+    - os: linux
+      compiler: gcc
+      script: 
+      - mkdir build && cd build 
+      - cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_FAST=ON ..
+      - make && make test
     - os: osx
       compiler: clang
       script: 
