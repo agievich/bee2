@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.01
-\version 2016.07.15
+\version 2016.09.07
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -46,15 +46,15 @@ priNextPrimeVal(), которая находит гарантированно п
 static u32 const _ls[] = 
 {
 	638, 702, 766, 862, 958, 1022, 1118, 
-    1214, 1310, 1438, 1534, 1662, 1790, 1918, 
-    2046, 2174, 2334, 2462, 2622, 2782, 2942, 
+	1214, 1310, 1438, 1534, 1662, 1790, 1918, 
+	2046, 2174, 2334, 2462, 2622, 2782, 2942, 
 };
 
 static u32 const _rs[] = 
 {
 	130, 136, 141, 149, 154, 161, 168,
-    175, 181, 188, 194, 201, 208, 214,
-    221, 225, 234, 240, 246, 253, 259, 
+	175, 181, 188, 194, 201, 208, 214,
+	221, 225, 234, 240, 246, 253, 259, 
 };
 
 /*

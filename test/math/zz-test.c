@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.15
-\version 2016.07.15
+\version 2016.09.12
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -42,7 +42,7 @@ static bool_t zzTestAdd()
 	ASSERT(prngCOMBO_keep() <= sizeof(combo_state));
 	prngCOMBOStart(combo_state, utilNonce32());
 	// сложение / вычитание
-	for (reps = 0; reps < 1000; ++reps)
+	for (reps = 0; reps < 500; ++reps)
 	{
 		word carry;
 		prngCOMBOStepR(a, O_OF_W(n), combo_state);
@@ -64,7 +64,8 @@ static bool_t zzTestAdd()
 		carry = zzAddW(c, a, n, b[0]);
 		if (zzSubW(c1, c, n, b[0]) != carry || 
 			!wwEq(c1, a, n) ||
-			zzIsSumWEq(c, a, n, b[0]) != wordEq(carry, 0))
+			SAFE(zzIsSumWEq)(c, a, n, b[0]) != wordEq(carry, 0) ||
+			FAST(zzIsSumWEq)(c, a, n, b[0]) != wordEq(carry, 0))
 			return FALSE;
 		// zzAddW2 / zzSubW2
 		wwCopy(c1, a, n);
@@ -113,7 +114,7 @@ static bool_t zzTestMul()
 	ASSERT(prngCOMBO_keep() <= sizeof(combo_state));
 	prngCOMBOStart(combo_state, utilNonce32());
 	// умножение / деление
-	for (reps = 0; reps < 1000; ++reps)
+	for (reps = 0; reps < 500; ++reps)
 	{
 		size_t na, nb;
 		word w;
@@ -224,7 +225,7 @@ static bool_t zzTestMod()
 	if (wwCmp(t, t1, n) != 0)
 		return FALSE;
 	// сложение / вычитание
-	for (reps = 0; reps < 1000; ++reps)
+	for (reps = 0; reps < 500; ++reps)
 	{
 		size_t k;
 		// генерация
@@ -235,32 +236,59 @@ static bool_t zzTestMod()
 			mod[n - 1] = WORD_MAX;
 		zzMod(a, a, n, mod, n, stack);
 		zzMod(b, b, n, mod, n, stack);
-		// zzAddMod / zzSubMod
-		zzAddMod(t, a, b, mod, n);
-		zzSubMod(t1, t, b, mod, n);
-		if (!wwEq(t1, a, n))
+		// SAFE(zzAddMod) / SAFE(zzSubMod)
+		SAFE(zzAddMod)(t, a, b, mod, n);
+		SAFE(zzSubMod)(t1, t, b, mod, n);
+		if (!SAFE(wwEq)(t1, a, n))
 			return FALSE;
-		zzSubMod(t1, t, a, mod, n);
-		if (!wwEq(t1, b, n))
+		SAFE(zzSubMod)(t1, t, a, mod, n);
+		if (!SAFE(wwEq)(t1, b, n))
 			return FALSE;
-		// zzAddModW / zzSubModW
-		zzAddWMod(t, a, b[0], mod, n);
-		zzSubWMod(t1, t, b[0], mod, n);
-		if (!wwEq(t1, a, n))
+		// SAFE(zzAddMod) / SAFE(zzSubMod)
+		FAST(zzAddMod)(t, a, b, mod, n);
+		FAST(zzSubMod)(t1, t, b, mod, n);
+		if (!FAST(wwEq)(t1, a, n))
 			return FALSE;
-		// zzNegMod
-		zzNegMod(t, a, mod, n);
-		zzAddMod(t1, t, a, mod, n);
-		if (!wwIsZero(t1, n))
+		FAST(zzSubMod)(t1, t, a, mod, n);
+		if (!FAST(wwEq)(t1, b, n))
 			return FALSE;
-		zzNegMod(t1, t1, mod, n);
-		if (!wwIsZero(t1, n))
+		// SAFE(zzAddWMod) / SAFE(zzSubWMod)
+		SAFE(zzAddWMod)(t, a, b[0], mod, n);
+		SAFE(zzSubWMod)(t1, t, b[0], mod, n);
+		if (!SAFE(wwEq)(t1, a, n))
 			return FALSE;
-		// zzDoubleMod / zzHalfMod
+		// FAST(zzAddWMod) / FAST(zzSubWMod)
+		FAST(zzAddWMod)(t, a, b[0], mod, n);
+		FAST(zzSubWMod)(t1, t, b[0], mod, n);
+		if (!FAST(wwEq)(t1, a, n))
+			return FALSE;
+		// SAFE(zzNegMod)
+		SAFE(zzNegMod)(t, a, mod, n);
+		SAFE(zzAddMod)(t1, t, a, mod, n);
+		if (!SAFE(wwIsZero)(t1, n))
+			return FALSE;
+		SAFE(zzNegMod)(t1, t1, mod, n);
+		if (!SAFE(wwIsZero)(t1, n))
+			return FALSE;
+		// FAST(zzNegMod)
+		FAST(zzNegMod)(t, a, mod, n);
+		FAST(zzAddMod)(t1, t, a, mod, n);
+		if (!FAST(wwIsZero)(t1, n))
+			return FALSE;
+		FAST(zzNegMod)(t1, t1, mod, n);
+		if (!FAST(wwIsZero)(t1, n))
+			return FALSE;
+		// SAFE(zzDoubleMod) / SAFE(zzHalfMod)
 		mod[0] |= 1;
-		zzHalfMod(t, a, mod, n);
-		zzDoubleMod(t1, t, mod, n);
-		if (!wwEq(t1, a, n))
+		SAFE(zzHalfMod)(t, a, mod, n);
+		SAFE(zzDoubleMod)(t1, t, mod, n);
+		if (!SAFE(wwEq)(t1, a, n))
+			return FALSE;
+		// FAST(zzDoubleMod) / FAST(zzHalfMod)
+		mod[0] |= 1;
+		FAST(zzHalfMod)(t, a, mod, n);
+		FAST(zzDoubleMod)(t1, t, mod, n);
+		if (!FAST(wwEq)(t1, a, n))
 			return FALSE;
 		// zzMulMod / zzSqrMod
 		zzMulMod(t, a, a, mod, n, stack);
@@ -385,44 +413,69 @@ static bool_t zzTestRed()
 	ASSERT(prngCOMBO_keep() <= sizeof(combo_state));
 	prngCOMBOStart(combo_state, utilNonce32());
 	// редукция
-	for (reps = 0; reps < 1000; ++reps)
+	for (reps = 0; reps < 500; ++reps)
 	{
 		// генерация
 		prngCOMBOStepR(mod, O_OF_W(n), combo_state);
 		prngCOMBOStepR(a, O_OF_W(2 * n), combo_state);
 		mod[n - 1] = mod[n - 1] ? mod[n - 1] : 1;
-		// zzRed / zzRedBarr
+		// zzRed / SAFE(zzRedBarr)
 		wwCopy(t, a, 2 * n);
-		wwCopy(t1, a, 2 * n);
 		zzRed(t, mod, n, stack);
 		zzRedBarrStart(barr_param, mod, n, stack);
-		zzRedBarr(t1, mod, n, barr_param, stack);
+		wwCopy(t1, a, 2 * n);
+		SAFE(zzRedBarr)(t1, mod, n, barr_param, stack);
 		if (!wwEq(t1, t, n))
 			return FALSE;
-		// zzRed / zzRedMont
+		// zzRed / FAST(zzRedBarr)
+		wwCopy(t1, a, 2 * n);
+		FAST(zzRedBarr)(t1, mod, n, barr_param, stack);
+		if (!wwEq(t1, t, n))
+			return FALSE;
+		// zzRed / SAFE(zzRedMont)
 		mod[0] |= 1;
 		wwCopy(t, a, 2 * n);
-		wwCopy(t1, a, 2 * n);
 		zzRed(t, mod, n, stack);
-		zzRedMont(t1, mod, n, wordNegInv(mod[0]), stack);
+		wwCopy(t1, a, 2 * n);
+		SAFE(zzRedMont)(t1, mod, n, wordNegInv(mod[0]), stack);
 		wwCopy(t1 + n, t1, n);
 		wwSetZero(t1, n);
 		zzRed(t1, mod, n, stack);
 		if (!wwEq(t1, t, n))
 			return FALSE;
-		// zzRed / zzRedCrand
-		wwRepW(mod + 1, n - 1, WORD_MAX);
-		wwCopy(t, a, 2 * n);
+		// zzRed / SAFE(zzRedMont)
 		wwCopy(t1, a, 2 * n);
-		zzRed(t, mod, n, stack);
-		zzRedCrand(t1, mod, n, stack);
+		FAST(zzRedMont)(t1, mod, n, wordNegInv(mod[0]), stack);
+		wwCopy(t1 + n, t1, n);
+		wwSetZero(t1, n);
+		zzRed(t1, mod, n, stack);
 		if (!wwEq(t1, t, n))
 			return FALSE;
-		// zzRedMont / zzRedCrandMont
+		// zzRed / SAFE(zzRedCrand)
+		wwRepW(mod + 1, n - 1, WORD_MAX);
+		wwCopy(t, a, 2 * n);
+		zzRed(t, mod, n, stack);
+		wwCopy(t1, a, 2 * n);
+		SAFE(zzRedCrand)(t1, mod, n, stack);
+		if (!wwEq(t1, t, n))
+			return FALSE;
+		// zzRed / SAFE(zzRedCrand)
+		wwCopy(t1, a, 2 * n);
+		FAST(zzRedCrand)(t1, mod, n, stack);
+		if (!wwEq(t1, t, n))
+			return FALSE;
+		// SAFE(zzRedMont) / SAFE(zzRedCrandMont)
 		wwCopy(t, a, 2 * n);
 		wwCopy(t1, a, 2 * n);
-		zzRedMont(t, mod, n, wordNegInv(mod[0]), stack);
-		zzRedCrandMont(t1, mod, n, wordNegInv(mod[0]), stack);
+		SAFE(zzRedMont)(t, mod, n, wordNegInv(mod[0]), stack);
+		SAFE(zzRedCrandMont)(t1, mod, n, wordNegInv(mod[0]), stack);
+		if (!wwEq(t1, t, n))
+			return FALSE;
+		// FAST(zzRedMont) / FAST(zzRedCrandMont)
+		wwCopy(t, a, 2 * n);
+		wwCopy(t1, a, 2 * n);
+		FAST(zzRedMont)(t, mod, n, wordNegInv(mod[0]), stack);
+		FAST(zzRedCrandMont)(t1, mod, n, wordNegInv(mod[0]), stack);
 		if (!wwEq(t1, t, n))
 			return FALSE;
 	}
@@ -432,7 +485,10 @@ static bool_t zzTestRed()
 
 bool_t zzTest()
 {
-	return zzTestAdd() && zzTestMul() && zzTestMod() && zzTestGCD() && 
+	return zzTestAdd() && 
+		zzTestMul() && 
+		zzTestMod() && 
+		zzTestGCD() && 
 		zzTestRed();
 }
 

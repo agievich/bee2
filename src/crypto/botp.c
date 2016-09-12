@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.11.02
-\version 2016.04.22
+\version 2016.09.12
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -343,7 +343,6 @@ err_t botpTOTPVerify(const char* otp, const octet key[], size_t key_len,
 
 typedef struct botp_ocra_st
 {
-	char suite[64];		/*< описатель */
 	size_t digit;		/*< число цифр в пароле */
 	octet ctr[8];		/*< счетчик */
 	octet ctr1[8];		/*< копия счетчика */
@@ -377,15 +376,13 @@ bool_t botpOCRAStart(void* state, const char* suite, const octet key[],
 	size_t key_len)
 {
 	botp_ocra_st* s = (botp_ocra_st*)state;
+	const char* suite_save = suite;
 	// pre
 	ASSERT(strIsValid(suite));
 	ASSERT(memIsDisjoint2(suite, strLen(suite) + 1, s, botpOCRA_keep()));
 	ASSERT(memIsDisjoint2(key, key_len, s, botpOCRA_keep()));
 	// подготовить state
 	memSetZero(s, botpOCRA_keep());
-	// разбор suite: длина
-	if (strLen(suite) >= sizeof(s->suite))
-		return FALSE;
 	// разбор suite: префикс
 	if (!strStartsWith(suite, ocra_prefix))
 		return FALSE;
@@ -423,8 +420,7 @@ bool_t botpOCRAStart(void* state, const char* suite, const octet key[],
 	default:
 		return FALSE;
 	}
-	if (suite[0] < '0' || suite[0] > '9' || 
-		suite[1] < '0' || suite[1] > '9')
+	if (suite[0] < '0' || suite[0] > '9' || suite[1] < '0' || suite[1] > '9')
 		return FALSE;
 	s->q_max = (size_t)(suite[0] - '0');
 	s->q_max *= 10, s->q_max += (size_t)(suite[1] - '0');
@@ -505,9 +501,9 @@ bool_t botpOCRAStart(void* state, const char* suite, const octet key[],
 	// разбор suite: окончание
 	if (*suite)
 		return FALSE;
-	memCopy(s->suite, suite, strLen(suite) + 1);
 	// запуск HMAC 
 	beltHMACStart(s->stack + beltHMAC_keep(), key, key_len);
+	beltHMACStepA(suite_save, strLen(suite_save) + 1, s->stack);
 	return TRUE;
 }
 
@@ -549,7 +545,6 @@ void botpOCRAStepR(char* otp, const octet q[], size_t q_len, tm_time_t t,
 	ASSERT(t != TIME_ERR);
 	// вычислить имитовставку
 	memCopy(s->stack, s->stack + beltHMAC_keep(), beltHMAC_keep());
-	beltHMACStepA(s->suite, strLen(s->suite) + 1, s->stack);
 	if (s->ctr_len)
 		beltHMACStepA(s->ctr, 8, s->stack), botpCtrNext(s->ctr);
 	memSetZero(s->q + q_len, sizeof(s->q) - q_len);

@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.11.06
-\version 2016.04.22
+\version 2016.09.12
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -115,7 +115,7 @@ bool_t botpTest()
 	strCopy(q + strLen(q), otp2);
 	botpOCRAStepR(otp, (const octet*)q, strLen(q), ++t, state);
 	hexFrom(str, ctr, 8);
-	printf("OCRA.2:\n\tQ = %s\n\tC = %s\n\tT = %u\n\tR = %s\n", 
+	printf("OCRA.3:\n\tQ = %s\n\tC = %s\n\tT = %u\n\tR = %s\n", 
 		q, str, (unsigned)t, otp);
 	// все нормально
 	return TRUE;
