@@ -51,7 +51,7 @@ matrix:
     - os: linux
       compiler: gcc
       sudo: required
-      env: BUILD_TYPE="Coverage" BUILD_FAST="ON"
+      env: BUILD_TYPE="Coverage" BUILD_FAST="OFF"
       install:
       - sudo apt-get install -y lcov
       after_success:
