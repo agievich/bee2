@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.16
-\version 2015.10.29
+\version 2016.09.16
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -84,14 +84,37 @@ extern "C" {
 /*!	Буфер [count]buf обнуляется. */
 #define memSetZero(buf, count) memSet(buf, 0, count)
 
-/*!	Выделяется size октетов динамической памяти. */
-#define memAlloc(size) malloc(size)
+/*!	\brief Выделение блока памяти
+	Выделяется блок динамической памяти из count октетов.
+	\return Указатель на блок памяти или 0, если памяти не хватает.
+	\remark Блок выделяется, даже если count == 0.
+*/
+void* memAlloc(
+	size_t count		/*!< [in] размер блока */
+);
 
-/*!	Размер блока динамической памяти memblock устанавливается равным size. */
-#define memRealloc(memblock, size) realloc(memblock, size)
+/*!	\brief Изменение размера блока памяти
+	Размер блока динамической памяти buf устанавливается равным count. 
+	При необходимости блок перемещается в памяти. Содержимое блока 
+	максимально сохраняется. 
+	\return Указатель на блок памяти с новым размером 
+	или 0, если count == 0 или памяти не хватает.
+	\remark memRealloc(buf, 0) равносильно memFree(buf).
+*/
+void* memRealloc(
+	void* buf,		/*!< [in] блок памяти */
+	size_t count	/*!< [in] размер блока */
+);
 
-/*!	Освобождается блок динамической памяти memblock. */
-#define memFree(memblock) free(memblock)
+/*!	\brief Освобождение блока памяти
+
+	Освобождается блок динамической памяти buf.
+	\pre buf выделен с помощью memAlloc() или memRealloc().
+*/
+void memFree(
+	void* buf		/*!< [in] буфер */
+);
+
 
 /*
 *******************************************************************************

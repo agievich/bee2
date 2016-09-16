@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2015.10.29
+\version 2016.09.16
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -15,6 +15,27 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/core/str.h"
 #include "bee2/core/util.h"
 #include "bee2/core/word.h"
+
+/*
+*******************************************************************************
+Стандартные функции 
+*******************************************************************************
+*/
+
+void* memAlloc(size_t count)
+{
+	return malloc(count);
+}
+
+void* memRealloc(void* buf, size_t count)
+{
+	return realloc(buf, count);
+}
+
+void memFree(void* buf)
+{
+	free(buf);
+}
 
 /*
 *******************************************************************************
