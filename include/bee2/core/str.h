@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.02.04
-\version 2016.04.28
+\version 2016.09.19
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -40,14 +40,24 @@ extern "C" {
 *******************************************************************************
 */
 
-/*!	Определяется длина строки (число символов до завершающего нулевого).
-*/
-#define strLen(str) strlen(str)
+/*!	\brief Длина строки
 
-/*!	Возвращается strLen(str), если strLen(str) < count, или count в противном
-	случае.
+	Определяется длина строки str -- число символов до завершающего нулевого.
+	\return Длина строки
 */
-#define strLen2(str, count) strnlen(str, count)
+size_t strLen(
+  const char* str		/*< [in] строка */
+);
+
+/*!	\brief Ограниченная длина строки
+
+	Определяется длина строки str в пределах окна из count первых символов.
+	\return MIN2(strLen(str), count).
+*/
+size_t strLen2(
+  const char* str,		/*< [in] строка */
+  size_t count			/*< [in] длина префикса */
+);
 
 /*!	\brief Корректная строка?
 

@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.16
-\version 2016.09.16
+\version 2016.09.19
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -24,11 +24,6 @@ version 3. See Copyright Notices in bee2/info.h.
 #include <memory.h>
 #include <string.h>
 #include "bee2/defs.h"
-#ifndef OS_APPLE
-	#include <malloc.h>
-#else
-	#include <stdlib.h>
-#endif
 #include "bee2/core/safe.h"
 
 #ifdef __cplusplus
@@ -64,22 +59,41 @@ extern "C" {
 
 /*
 *******************************************************************************
-Псевдонимы стандартных функций
+Стандартные функции
 *******************************************************************************
 */
 
-/*!	Октеты буфера [count]src переписываются в буфер [count]dest.
+/*!	\brief Копировать буфер памяти
+
+	Октеты буфера [count]src переписываются в буфер [count]dest.
 	\pre Буферы src и dest не пересекаются.
 */
-#define memCopy(dest, src, count) memcpy(dest, src, count)
+void memCopy( 
+	void* dest,			/*< [out] буфер-назначение */
+	const void* src,	/*< [in] буфер-источник */
+	size_t count		/*< [in] число октетов */
+);
 
-/*!	Октеты буфера [count]src переписываются в буфер [count]dest.
-	\remark Буферы src и dest могут пересекаться.
+/*!	\brief Переместить буфер памяти
+
+	Октеты буфера [count]src перемещаются в буфер [count]dest.
+	\pre Буферы src и dest могут пересекаться.
 */
-#define memMove(dest, src, count) memmove(dest, src, count)
+void memMove( 
+	void* dest,			/*< [out] буфер-назначение */
+	const void* src,	/*< [in] буфер-источник */
+	size_t count		/*< [in] число октетов */
+);
 
-/*!	Буфер [count]buf заполняется октетом c. */
-#define memSet(buf, c, count) memset(buf, c, count)
+/*!	\brief Заполнить буфер памяти
+
+	Буфер [count]buf заполняется октетом c.
+*/
+void memSet( 
+	void* buf,			/*< [out] буфер */
+	octet c,			/*< [in] октет-значение */
+	size_t count		/*< [in] число октетов */
+);
 
 /*!	Буфер [count]buf обнуляется. */
 #define memSetZero(buf, count) memSet(buf, 0, count)
@@ -114,7 +128,6 @@ void* memRealloc(
 void memFree(
 	void* buf		/*!< [in] буфер */
 );
-
 
 /*
 *******************************************************************************

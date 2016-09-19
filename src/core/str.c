@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.02.04
-\version 2016.04.28
+\version 2016.09.19
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -17,15 +17,26 @@ version 3. See Copyright Notices in bee2/info.h.
 
 /*
 *******************************************************************************
-Проверка
+Характеристики / проверка
 
 \warning В strLen() нельзя вызывать strIsValid() -- будет рекурсия.
 *******************************************************************************
 */
 
+size_t strLen(const char* str)
+{
+	return str ? strlen(str) : SIZE_0;
+}
+
+size_t strLen2(const char* str, size_t count)
+{
+	ASSERT(strIsValid(str));
+	return str ? strnlen(str, count) : SIZE_0;
+}
+
 bool_t strIsValid(const char* str)
 {
-	return memIsValid(str, strLen(str) + 1);
+	return memIsValid(str, strLen(str) + (str ? 1 : 0));
 }
 
 /*

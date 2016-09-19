@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2016.09.16
+\version 2016.09.19
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -16,15 +16,70 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/core/util.h"
 #include "bee2/core/word.h"
 
+#ifndef OS_APPLE
+	#include <malloc.h>
+#else
+	#include <stdlib.h>
+#endif
+#ifdef OS_WIN
+	#include <windows.h>
+#endif
+
 /*
 *******************************************************************************
-Стандартные функции 
+Проверка
+
+\todo Реализовать полноценную проверку корректности памяти.
 *******************************************************************************
 */
 
+bool_t memIsValid(const void* buf, size_t count)
+{
+	return count == 0 || buf != 0;
+}
+
+/*
+*******************************************************************************
+Стандартные функции
+
+\remark Перед вызовом memcpy(), memmove(), memset() проверяется, 
+что count != 0: при count == 0 поведение стандартных функций непредсказуемо
+(см. https://www.imperialviolet.org/2016/06/26/nonnull.html).
+
+\remark Прямое обращение к функции ядра HeapAlloc() решает проблему 
+с освобождением памяти в плагине bee2evp, связывающем bee2 с OpenSSL (1.1.0).
+*******************************************************************************
+*/
+
+void memCopy(void* dest, const void* src, size_t count)
+{
+	ASSERT(memIsDisjoint(src, dest, count));
+	if (count)
+		memcpy(dest, src, count);
+}
+
+void memMove(void* dest, const void* src, size_t count)
+{
+	ASSERT(memIsValid(src, count));
+	ASSERT(memIsValid(dest, count));
+	if (count)
+		memmove(dest, src, count);
+}
+
+void memSet(void* buf, octet c, size_t count)
+{
+	ASSERT(memIsValid(buf, count));
+	if (count)
+		memset(buf, c, count);
+}
+
 void* memAlloc(size_t count)
 {
+#ifdef OS_WIN
+	return HeapAlloc(GetProcessHeap(), 0, count);
+#else
 	return malloc(count);
+#endif
 }
 
 void* memRealloc(void* buf, size_t count)
@@ -34,7 +89,11 @@ void* memRealloc(void* buf, size_t count)
 
 void memFree(void* buf)
 {
+#ifdef OS_WIN
+	HeapFree(GetProcessHeap(), 0, buf);
+#else
 	free(buf);
+#endif
 }
 
 /*
@@ -68,11 +127,6 @@ void memFree(void* buf)
 \todo Реализовать полноценную проверку корректности памяти.
 *******************************************************************************
 */
-
-bool_t memIsValid(const void* buf, size_t count)
-{
-	return count == 0 || buf != 0;
-}
 
 bool_t SAFE(memEq)(const void* buf1, const void* buf2, size_t count)
 {
