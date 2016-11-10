@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.11.02
-\version 2016.09.12
+\version 2016.11.10
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -47,16 +47,16 @@ mac.
 */
 
 static const u32 powers_of_10[10] = {
-	1,
-	10,
-	100,
-	1000,
-	10000,
-	100000,
-	1000000,
-	10000000,
-	100000000,
-	1000000000,
+	1u,
+	10u,
+	100u,
+	1000u,
+	10000u,
+	100000u,
+	1000000u,
+	10000000u,
+	100000000u,
+	1000000000u,
 };
 
 void botpDT(char* otp, size_t digit, const octet mac[], size_t mac_len)

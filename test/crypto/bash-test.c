@@ -60,11 +60,21 @@ bool_t bashTest()
 		"114C3DFAE373D9BCBC3602D6386F2D6A"
 		"2059BA1BF9048DBAA5146A6CB775709D"))
 		return FALSE;
+	bash256Start(state);
+	bash256StepH(beltH(), 0, state);
+	bash256StepG(buf, state);
+	if (!memEq(hash, buf, 32))
+		return FALSE;
 	// тест A.2.2
 	bash256Hash(hash, beltH(), 127);
 	if (!hexEq(hash, 
 		"3D7F4EFA00E9BA33FEED259986567DCF"
 		"5C6D12D51057A968F14F06CC0F905961"))
+		return FALSE;
+	bash256Start(state);
+	bash256StepH(beltH(), 127, state);
+	bash256StepG(buf, state);
+	if (!memEq(hash, buf, 32))
 		return FALSE;
 	// тест A.2.3
 	bash256Hash(hash, beltH(), 128);
@@ -84,6 +94,11 @@ bool_t bashTest()
 		"64334AF830D33F63E9ACDFA184E32522"
 		"103FFF5C6860110A2CD369EDBC04387C"
 		"501D8F92F749AE4DE15A8305C353D64D"))
+		return FALSE;
+	bash384Start(state);
+	bash384StepH(beltH(), 95, state);
+	bash384StepG(buf, state);
+	if (!memEq(hash, buf, 48))
 		return FALSE;
 	// тест A.2.6
 	bash384Hash(hash, beltH(), 96);
@@ -106,6 +121,11 @@ bool_t bashTest()
 		"F19955EAF0808B2AD705E249220845E2"
 		"0F4786FB6765D0B5C48984B1B16556EF"
 		"19EA8192B985E4233D9C09508D6339E7"))
+		return FALSE;
+	bash512Start(state);
+	bash512StepH(beltH(), 63, state);
+	bash512StepG(buf, state);
+	if (!memEq(hash, buf, 64))
 		return FALSE;
 	// тест A.2.9
 	bash512Hash(hash, beltH(), 64);

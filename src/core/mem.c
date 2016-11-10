@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2016.09.19
+\version 2016.09.20
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -123,8 +123,6 @@ void memFree(void* buf)
 \remark На платформе Windows есть функции SecureZeroMemory()
 и RtlSecureZeroMemory(), которые, как и memWipe(), выполняют
 гарантированную очистку памяти.
-
-\todo Реализовать полноценную проверку корректности памяти.
 *******************************************************************************
 */
 

@@ -9,7 +9,7 @@ branches:
 
 env:
   global:
-    - secure: "rBbnGfVs2g9bhAIX6hAjQMKfqT4dTEaa65sMmAp3EJUT9VVtRiRb7EtlsIy9IwLXx4w15a/myGMhDynGWzLvV+ydcKzhMgvT3dIhWm/J4noPFXT+fSPXcnAS1gPyhuMIk1cuyn5TRmvaXokihEeril/6wUHXDsfhrdMwl3A2D+OTqdaDgwj2wbTHfgmOq0uQzVBD6l3YtnmLAzo2/hdOteyy+FbWN3bjLOReh3+Xfuj2llj9OGeaSFvOe/6MASx0rkqznQ1s3t4I8Id1P9athgP51RvDFJAeY3NXPgMNAGwYObkpAz5Vywz/abX09xiDZOt4MSC+iXuKmK4OcOthrHv8CoQqnUxrCiq3hGxg+kQkAeqFuQA+iKAD3If550ABGN6AB8/uie3TZHAE6jMnHRld+ob9qvIASHbAMeIpITadqu9ceMSap5LK28zV2czSyKd2h9J2bHt3wHm5U4goP0mmV4A2LGcAH7Yo1ysl/VEYTLGrebGM0ugw2ulI+rmMxVrDEGZ8GHP7TS8mCa9lalE1HoiHkhlu0dyyFjqcLZOQGNaUykSqZjDM1v953gtOqZ2suMXnFhSSGjnlUtJrszWV22OgjNA35d2/fc2P1sMboc71zUnUVycPPy9KtyFOFuYxFWiGc23Z49KPZbbO+gYQFvuhUcpx9rPBKEEd524="
+    - secure: "NrH9YMK7hLXQD63bj2AHc3aEN8GbaXndTc/SXVL0dVfPa4Z//LQehOcrRkjn7GyX/RPY0pNCYPVEErB6kZ2DJ70KSxdtS9OctkH+oGRqGdnfh2AcaOiVcVZZwIp3ZFd6pzH7jn8nNc4lvZvCjv9UteRZ9jO1YWPvhJNUzwK4RFPFuMYANT9w3IV8pVe2JuUO3qMJWgxrb4yI15Yj+kxkpqRr6mHusaAQpu0dzKGvpbIT+B4dzAtCIvkDRwlmNtqObDiFIoyxJsYtAi8ez3SGAO4+eTKJsIQ1nkK2QrqWf2eRndAdsxAd5t8FlHB40befC95LkJhB4AF0uhnqcyjDTBN7faLuCDOzDfCsWwaLkR2xZADC0WAlBxgrifluOZ3NSKc+ArlAA4gCiJ7ES9r18SuEHW2A2RjZVQ7M4RO1lCrtYSEP9Xy9UjKkgWa7GFE+9nk7QKeonijfeD6n6KvB6lldWK+49kUSuDuYl52aOgm0TexL8ciFYYvWXpJ3lYgKasvdEvA93oHHDpk8cJ+1EvMb12V3hAciAxeIhipeQQnS4pQX2co22IhCIKrGzFzzp42H80jqEtrCu/xlTiI4SEX7kvKjMQaHDkpXzSTuXgg4ydyW/5TIlHqaQDRI4ek9IosAutbW+DQ8CBPrfWpskTDg3XZAcgflglFwbFOVVZ4="
 
 matrix:
   include:
@@ -55,9 +55,9 @@ matrix:
       install:
       - sudo apt-get install -y lcov
       after_success:
-      - lcov -c -i -d . -o coverage_base.info
+      - lcov -c -i -d src -o coverage_base.info
       - test/testbee2
-      - lcov -d . -c -o coverage_test.info
+      - lcov -c -d src -o coverage_test.info
       - lcov -a coverage_base.info -a coverage_test.info -o coverage.info
       - bash <(curl -s https://codecov.io/bash) -f coverage.info
 

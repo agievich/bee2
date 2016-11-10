@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.04.23
-\version 2016.07.15
+\version 2016.11.10
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -35,7 +35,7 @@ typedef struct
 	size_t len;			/* длина содержимого */
 } msg_t;
 
-msg_t _msgs[4];
+static msg_t _msgs[4];
 
 typedef struct
 {
@@ -207,8 +207,8 @@ bool_t bakeTest()
 	bake_settings settingsb[1];
 	octet da[32];
 	octet db[32];
-	octet certdataa[5 + 64];
-	octet certdatab[3 + 64];
+	octet certdataa[5 /* Alice */ + 64 + 3 /* align */];
+	octet certdatab[3 /* Bob */ + 64 + 5 /* align */];
 	bake_cert certa[1];
 	bake_cert certb[1];
 	file_msg_st filea[1];
@@ -216,8 +216,8 @@ bool_t bakeTest()
 	const char pwd[] = "8086";
 	octet keya[32];
 	octet keyb[32];
-	octet secret[64];
-	octet iv[128];
+	octet secret[32];
+	octet iv[64];
 	// загрузить долговременные параметры
 	if (bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK)
 		return FALSE;

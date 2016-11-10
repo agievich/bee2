@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.06.27
-\version 2016.07.15
+\version 2016.11.10
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -28,8 +28,6 @@ version 3. See Copyright Notices in bee2/info.h.
 -#	Номера тестов соответствуют номерам таблиц приложения.
 *******************************************************************************
 */
-
-#include <stdio.h>
 
 bool_t belsTest()
 {

@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.08
-\version 2016.07.15
+\version 2016.11.10
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -33,6 +33,11 @@ static void _on_q(const word q[], size_t n, size_t num)
 	printf("\rq%u", (unsigned)num);
 }
 
+static void _on_q_silent(const word q[], size_t n, size_t num)
+{
+}
+
+
 /*
 *******************************************************************************
 Самотестирование
@@ -41,18 +46,27 @@ static void _on_q(const word q[], size_t n, size_t num)
 *******************************************************************************
 */
 
-bool_t pfokTestStdParams()
+bool_t pfokTestTestParams()
 {
 	pfok_params params[1];
 	pfok_params params1[1];
 	pfok_seed seed[1];
 	// тест PFOK.GENP.1
 	if (pfokStdParams(params, seed, "test") != ERR_OK ||
-		pfokGenParams(params1, seed, _on_q) != ERR_OK ||
+		pfokGenParams(params1, seed, _on_q_silent) != ERR_OK ||
 		pfokValParams(params1) != ERR_OK ||
 		!memEq(params->p, params1->p, O_OF_B(params->l)) ||
 		params->l != params1->l || params->r != params1->r)
 		return FALSE;
+	// все нормально
+	return TRUE;
+}
+
+bool_t pfokTestStdParams()
+{
+	pfok_params params[1];
+	pfok_params params1[1];
+	pfok_seed seed[1];
 	// тест PFOK.GENP.2
 	if (pfokStdParams(params, seed, "1.2.112.0.2.0.1176.2.3.3.2") != ERR_OK ||
 		pfokValParams(params1) != ERR_OK ||
@@ -85,6 +99,9 @@ bool_t pfokTest()
 	octet vb[O_OF_B(638)];
 	octet yb[O_OF_B(638)];
 	octet key[32];
+	// тест PFOK.GENP.1
+	if (!pfokTestTestParams())
+		return FALSE;
 	// тест PFOK.GENG.1
 	if (pfokStdParams(params, 0, "test") != ERR_OK ||
 		pfokValParams(params) != ERR_OK ||
