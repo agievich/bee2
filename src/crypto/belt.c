@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2016.05.24
+\version 2017.01.11
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -1550,7 +1550,7 @@ err_t beltDWPWrap(void* dest, octet mac[8], const void* src1, size_t count1,
 	state = blobCreate(beltDWP_keep());
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	// установить защиту
+	// установить защиту (I перед E из-за разрешенного пересечения src2 и dest)
 	beltDWPStart(state, theta, len, iv);
 	beltDWPStepI(src2, count2, state);
 	memMove(dest, src1, count1);

@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.27
-\version 2015.08.27
+\version 2017.01.11
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -65,7 +65,7 @@ p[0] >= p[1] >= p[2] >= p[3].
 где кофактор c >= 2. Таким образом, порядок dstu_params::n укладывается 
 в O_OF_B(m) октетов и даже, может быть, в меньшее число октетов.
 
-\remark Кофактор c >= 2, поскольку точка (0, \sqrt{dstu_params::B}) лежит 
+\remark Кофактор c >= 2, поскольку точка (0, \sqrt(dstu_params::B)) лежит 
 на кривой и имеет порядок 2. 
 
 \remark Для стандартных кривых, заданных в приложении Г, 

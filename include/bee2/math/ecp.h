@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.06.24
-\version 2014.04.17
+\version 2017.01.11
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -105,7 +105,7 @@ size_t ecpIsValid_deep(size_t n, size_t f_deep);
 	Проверяется корректность описания группы точек эллиптической кривой ec.
 	Описание корректно, если:
 	-	ecIsOperableGroup(ec) == TRUE;
-	-	|ec->order * ec->cofactor - (p + 1)| <= 2 * \sqrt{p} (границы Хассе);
+	-	|ec->order * ec->cofactor - (p + 1)| <= 2 * \sqrt(p) (границы Хассе);
 	-	точка ec->base лежит на ec.
 	.
 	\pre Описание ec работоспособно.

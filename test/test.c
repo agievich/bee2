@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.04.02
-\version 2016.06.16
+\version 2017.01.11
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -29,6 +29,9 @@ extern bool_t oidTest();
 extern bool_t prngTest();
 extern bool_t rngTest();
 extern bool_t tmTest();
+extern bool_t u16Test();
+extern bool_t u32Test();
+extern bool_t u64Test();
 
 int testCore()
 {
@@ -43,6 +46,9 @@ int testCore()
 	printf("genTest: %s\n", (code = prngTest()) ? "OK" : "Err"), ret |= !code;
 	printf("rngTest: %s\n", (code = rngTest()) ? "OK" : "Err"), ret |= !code;
 	printf("tmTest: %s\n", (code = tmTest()) ? "OK" : "Err"), ret |= !code;
+	printf("u16Test: %s\n", (code = u16Test()) ? "OK" : "Err"), ret |= !code;
+	printf("u32Test: %s\n", (code = u32Test()) ? "OK" : "Err"), ret |= !code;
+	printf("u64Test: %s\n", (code = u64Test()) ? "OK" : "Err"), ret |= !code;
 	return ret;
 }
 

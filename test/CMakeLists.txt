@@ -8,6 +8,9 @@ add_executable(testbee2
 	core/prng-test.c
 	core/rng-test.c
 	core/tm-test.c
+	core/u16-test.c
+	core/u32-test.c
+	core/u64-test.c
 	crypto/bake-test.c
 	crypto/bash-bench.c
 	crypto/bash-test.c
