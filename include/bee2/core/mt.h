@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.10
-\version 2015.08.27
+\version 2017.01.11
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -109,7 +109,9 @@ void mtMtxUnlock(
 /*!	\brief Закрытие мьютекса
 
 	Мьютекс mtx закрывается.
-	\pre Мьютекс корректен.
+	\pre Мьютекс корректен и не заблокирован.
+	\remark Закрытие заблокированного мьютекса может привести к непредсказуемым
+	последствиям.
 */
 void mtMtxClose(
 	mt_mtx_t* mtx		/*!< [in] мьютекс */

@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2016.07.15
+\version 2017.01.11
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -479,6 +479,7 @@ err_t rngCreate(read_i source, void* source_state)
 	_state = (rng_state_st*)blobCreate(rngCreate_keep());
 	if (!_state)
 	{
+		mtMtxUnlock(_mtx);
 		mtMtxClose(_mtx);
 		return ERR_OUTOFMEMORY;
 	}
@@ -508,6 +509,7 @@ err_t rngCreate(read_i source, void* source_state)
 	if (count < 32)
 	{
 		blobClose(_state);
+		mtMtxUnlock(_mtx);
 		mtMtxClose(_mtx);
 		return ERR_BAD_ENTROPY;
 	}
