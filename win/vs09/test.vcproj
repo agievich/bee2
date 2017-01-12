@@ -430,6 +430,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\test\core\str-test.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\test\core\tm-test.c"
 					>
 				</File>

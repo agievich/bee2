@@ -28,6 +28,7 @@ extern bool_t objTest();
 extern bool_t oidTest();
 extern bool_t prngTest();
 extern bool_t rngTest();
+extern bool_t strTest();
 extern bool_t tmTest();
 extern bool_t u16Test();
 extern bool_t u32Test();
@@ -45,6 +46,7 @@ int testCore()
 	printf("oidTest: %s\n", (code = oidTest()) ? "OK" : "Err"), ret |= !code;
 	printf("genTest: %s\n", (code = prngTest()) ? "OK" : "Err"), ret |= !code;
 	printf("rngTest: %s\n", (code = rngTest()) ? "OK" : "Err"), ret |= !code;
+	printf("strTest: %s\n", (code = strTest()) ? "OK" : "Err"), ret |= !code;
 	printf("tmTest: %s\n", (code = tmTest()) ? "OK" : "Err"), ret |= !code;
 	printf("u16Test: %s\n", (code = u16Test()) ? "OK" : "Err"), ret |= !code;
 	printf("u32Test: %s\n", (code = u32Test()) ? "OK" : "Err"), ret |= !code;

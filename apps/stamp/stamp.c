@@ -5,7 +5,7 @@
 \project bee2/apps/stamp
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2011.10.18
-\version 2016.07.22
+\version 2017.01.12
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -155,7 +155,7 @@ void stampSet(const char* name)
 		return;
 	}
 	// подготовить место для контрольной характеристики
-	ASSERT(STAMP_SIZE >= 32);
+	CASSERT(STAMP_SIZE >= 32);
 	memSetZero(image + offset, STAMP_SIZE);
 	// стек хэширования
 	hash_state = blobCreate(beltHash_keep());
@@ -235,7 +235,7 @@ void stampCheck(const char* name)
 		return;
 	}
 	// подготовить место для контрольной характеристики
-	ASSERT(STAMP_SIZE >= 32);
+	CASSERT(STAMP_SIZE >= 32);
 	memSet(stamp, 0, STAMP_SIZE);
 	// состояние хэширования
 	hash_state = blobCreate(beltHash_keep());

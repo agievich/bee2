@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2016.09.20
+\version 2017.01.12
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -84,7 +84,19 @@ void* memAlloc(size_t count)
 
 void* memRealloc(void* buf, size_t count)
 {
+#ifdef OS_WIN
+	if (!count)
+	{
+		HeapFree(GetProcessHeap(), 0, buf);
+	    return 0;
+	}
+	else if (!buf)
+		return HeapAlloc(GetProcessHeap(), 0, count);
+	else
+		return HeapReAlloc(GetProcessHeap(), 0, buf, count);
+#else
 	return realloc(buf, count);
+#endif
 }
 
 void memFree(void* buf)

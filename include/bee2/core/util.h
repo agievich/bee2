@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.16
-\version 2015.08.27
+\version 2017.01.12
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -21,7 +21,6 @@ version 3. See Copyright Notices in bee2/info.h.
 #ifndef __BEE2_UTIL_H
 #define __BEE2_UTIL_H
 
-#include <assert.h>
 #include "bee2/defs.h"
 
 #ifdef __cplusplus
@@ -42,17 +41,32 @@ extern "C" {
 */
 #define LAST_OF(a) ((a)[COUNT_OF(a) - 1])
 
+/*!	\brief Компиляция с проверкой условия
+	
+	Для отладочной версии вычислить e и завершить компиляцию, если e == 0.
+*/
+#ifdef NDEBUG
+	#define CASSERT(e) ((void)0)
+#else
+	#define CASSERT(e) ((void)sizeof(char[1 - 2 * !(e)]))
+#endif
+
 /*!	\brief Предполагается выполнение условия
 	
-	Вычислить a (при отладке) и завершить работу, если a == 0 (при отладке). 
+	Для отладочной версии вычислить e и завершить выполнение, если e == 0.
 */
-#define ASSERT(a) assert(a)
+#ifdef NDEBUG
+	#define ASSERT(e) ((void)0)
+#else
+	#include <assert.h>
+	#define ASSERT(e) assert(e)
+#endif
 
 /*!	\brief Проверяется выполнение условия
 
-	Вычислить a (всегда) и завершить работу, если a == 0 (при отладке). 
+	Вычислить e (всегда) и завершить выполнение, если a == 0 (при отладке). 
 */
-#define VERIFY(a) {if (!(a)) ASSERT(0);}
+#define VERIFY(e) {if (!(e)) ASSERT(0);}
 
 /*!	\brief Ожидается выполнение условия
 

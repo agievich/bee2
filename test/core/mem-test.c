@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.02.01
-\version 2016.09.19
+\version 2017.01.12
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -26,11 +26,27 @@ bool_t memTest()
 {
 	octet buf[1024];
 	octet buf1[1024];
+	void* p;
+	void* p1;
 	size_t i;
 	// pre
 	ASSERT(sizeof(buf) == sizeof(buf1));
 	if (!memIsValid(buf, sizeof(buf)) || !memIsValid(0, 0))
 		return FALSE;
+	// alloc (считаем, что памяти хватает)
+	p = memAlloc(100);
+	if (!p)
+		return FALSE;
+	memSet(p, 7, 100);
+	if (!(p1 = memRealloc(p, 102)) || 
+		!memIsRep(p = p1, 100, 7) ||
+		!(p1 = memRealloc(p, 90)) || 
+		!memIsRep(p = p1, 90, 7) ||
+		memRealloc(p, 0))
+	{
+		memFree(p);
+		return FALSE;
+	}
 	// заполнение / копирование
 	memSet(buf, 12, sizeof(buf));
 	memCopy(buf1, buf, sizeof(buf));
@@ -52,7 +68,9 @@ bool_t memTest()
 	// сравнение
 	hexTo(buf, "000102030405060708090A0B0C0D0E0F");
 	hexTo(buf1, "F00102030405060708090A0B0C0D0EFF");
-	if (memEq(buf + 1, buf1 + 1, 15) ||
+	if (memIsZero(buf, 15) ||
+		FAST(memIsZero)(buf, 15) ||
+		memEq(buf + 1, buf1 + 1, 15) ||
 		FAST(memEq)(buf + 1, buf1 + 1, 15) ||
 		memEq(buf + 8, buf1 + 8, 8) ||
 		FAST(memEq)(buf + 8, buf1 + 8, 8) ||
@@ -75,6 +93,9 @@ bool_t memTest()
 		memCmp(buf + 1, buf1 + 1, 14) != 0 ||
 		FAST(memCmp)(buf + 1, buf1 + 1, 14) != 0)
 		return FALSE;
+	memRev(buf, 15);
+	if (memNonZeroSize(buf, 15) != 14)
+		return FALSE;
 	hexTo(buf, "F001020304050607");
 	hexTo(buf1, "00010203040506F7");
 	if (memCmp(buf, buf1, 8) != -1 ||
@@ -91,6 +112,19 @@ bool_t memTest()
 		FAST(memIsRep)(buf, 9, 0x01) != TRUE ||
 		memIsRep(buf, 10, 0x01) == TRUE ||
 		FAST(memIsRep)(buf, 10, 0x01) == TRUE)
+		return FALSE;
+	// join
+	hexTo(buf, "0001020304050607");
+	memJoin(buf, buf + 1, 3, buf + 3, 4);
+	if (!hexEq(buf, "01020303040506"))
+		return FALSE;
+	hexTo(buf, "0001020304050607");
+	memJoin(buf, buf + 1, 3, buf + 1, 4);
+	if (!hexEq(buf, "01020301020304"))
+		return FALSE;
+	hexTo(buf, "0001020304050607");
+	memJoin(buf, buf + 3, 4, buf + 2, 2);
+	if (!hexEq(buf, "030405060203"))
 		return FALSE;
 	// все нормально
 	return TRUE;

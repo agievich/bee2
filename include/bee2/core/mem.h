@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.16
-\version 2016.09.19
+\version 2017.01.12
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -240,8 +240,7 @@ bool_t FAST(memIsRep)(const void* buf, size_t count, octet o);
 
 /*!	\brief Объединение двух буферов
 
-	В буфер dest записывается сначала count1 октетов src1, а затем 
-	count2 октетов src2.
+	В dest записывается блок [count1]src1 || [count2]src2.
 	\pre По адресам src1, src2, dest зарезервировано count1, count2 и
 	count1 +  count2 октетов памяти соответственно.
 	\remark Буферы src1, src2 и dest могут пересекаться.
