@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.02.01
-\version 2017.01.12
+\version 2017.01.13
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -24,8 +24,9 @@ version 3. See Copyright Notices in bee2/info.h.
 
 bool_t memTest()
 {
-	octet buf[1024];
-	octet buf1[1024];
+	octet buf[16];
+	octet buf1[16];
+	octet buf2[16];
 	void* p;
 	void* p1;
 	size_t i;
@@ -42,11 +43,12 @@ bool_t memTest()
 		!memIsRep(p = p1, 100, 7) ||
 		!(p1 = memRealloc(p, 90)) || 
 		!memIsRep(p = p1, 90, 7) ||
-		memRealloc(p, 0))
+		(p = memRealloc(p, 0)))
 	{
 		memFree(p);
 		return FALSE;
 	}
+	memFree(p);
 	// заполнение / копирование
 	memSet(buf, 12, sizeof(buf));
 	memCopy(buf1, buf, sizeof(buf));
@@ -70,6 +72,7 @@ bool_t memTest()
 	hexTo(buf1, "F00102030405060708090A0B0C0D0EFF");
 	if (memIsZero(buf, 15) ||
 		FAST(memIsZero)(buf, 15) ||
+		FAST(memIsZero)(buf, 3) ||
 		memEq(buf + 1, buf1 + 1, 15) ||
 		FAST(memEq)(buf + 1, buf1 + 1, 15) ||
 		memEq(buf + 8, buf1 + 8, 8) ||
@@ -125,6 +128,20 @@ bool_t memTest()
 	hexTo(buf, "0001020304050607");
 	memJoin(buf, buf + 3, 4, buf + 2, 2);
 	if (!hexEq(buf, "030405060203"))
+		return FALSE;
+	hexTo(buf, "0001020304050607");
+	memJoin(buf + 2, buf, 4, buf + 4, 2);
+	if (!hexEq(buf + 2, "000102030405"))
+		return FALSE;
+	// xor
+	hexTo(buf, "000102030405060708");
+	hexTo(buf1, "F0F1F2F3F4F5F6F7F8");
+	memXor(buf2, buf, buf1, 9);
+	if (!memIsRep(buf2, 9, 0xF0))
+		return FALSE;
+	memXor2(buf2, buf1, 9);
+	memXor2(buf2, buf, 8);
+	if (!memIsRep(buf2, 8, 0) || buf2[8] != 0x08)
 		return FALSE;
 	// все нормально
 	return TRUE;
