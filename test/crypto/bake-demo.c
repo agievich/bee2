@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.05.03
-\version 2016.07.15
+\version 2017.01.17
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -370,7 +370,7 @@ bool_t bakeDemo()
 	// тест Б.2
 	hexTo(randa, _bmqv_randa);
 	hexTo(randb, _bmqv_randb);
-	ASSERT(sizeof(file_data) >= strlen(_bmqv_data) / 2);
+	ASSERT(sizeof(file_data) >= sizeof(_bmqv_data) / 2);
 	hexTo(file_data, _bmqv_data);
 	if (fileCreate(filea, file_data, strlen(_bmqv_data) / 2) != ERR_OK ||
 		fileCreate(fileb, file_data, strlen(_bmqv_data) / 2) != ERR_OK)

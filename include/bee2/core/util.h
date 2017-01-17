@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.16
-\version 2017.01.12
+\version 2017.01.17
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -54,12 +54,16 @@ extern "C" {
 /*!	\brief Предполагается выполнение условия
 	
 	Для отладочной версии вычислить e и завершить выполнение, если e == 0.
+	\remark Используется собственная редакция макроса assert(). В стандартной 
+	редакции есть проверка условия. При правильной работе программы условие
+	никогда не выполняется и анализаторы покрытия тестами могут показывать 
+	частичное покрытие.
 */
 #ifdef NDEBUG
 	#define ASSERT(e) ((void)0)
 #else
-	#include <assert.h>
-	#define ASSERT(e) assert(e)
+	extern void utilAssert(int e, const char* file, int line);
+	#define ASSERT(e) utilAssert(!!(e), __FILE__, __LINE__)
 #endif
 
 /*!	\brief Проверяется выполнение условия

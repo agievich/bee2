@@ -449,6 +449,10 @@
 					RelativePath="..\..\test\core\u64-test.c"
 					>
 				</File>
+				<File
+					RelativePath="..\..\test\core\util-test.c"
+					>
+				</File>
 			</Filter>
 			<Filter
 				Name="math"

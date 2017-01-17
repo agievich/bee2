@@ -5,13 +5,16 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.05.10
-\version 2015.08.27
+\version 2017.01.17
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
+#include <assert.h>
 #include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "bee2/info.h"
 #include "bee2/core/mem.h"
 #include "bee2/core/tm.h"
@@ -26,6 +29,21 @@ version 3. See Copyright Notices in bee2/info.h.
 const char* utilVersion()
 {
 	return BEE2_VERSION;
+}
+
+/*
+*******************************************************************************
+Assert
+*******************************************************************************
+*/
+
+void utilAssert(int b, const char* file, int line)
+{
+	if (!b)
+	{
+		fprintf(stderr, "Assertion in %s::%d\n", file, line);
+		abort();
+	}
 }
 
 /*

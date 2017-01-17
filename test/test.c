@@ -33,6 +33,7 @@ extern bool_t tmTest();
 extern bool_t u16Test();
 extern bool_t u32Test();
 extern bool_t u64Test();
+extern bool_t utilTest();
 
 int testCore()
 {
@@ -51,6 +52,7 @@ int testCore()
 	printf("u16Test: %s\n", (code = u16Test()) ? "OK" : "Err"), ret |= !code;
 	printf("u32Test: %s\n", (code = u32Test()) ? "OK" : "Err"), ret |= !code;
 	printf("u64Test: %s\n", (code = u64Test()) ? "OK" : "Err"), ret |= !code;
+	printf("utilTest: %s\n", (code = utilTest()) ? "OK" : "Err"), ret |= !code;
 	return ret;
 }
 

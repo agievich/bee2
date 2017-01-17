@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.02.01
-\version 2017.01.13
+\version 2017.01.17
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -31,7 +31,7 @@ bool_t memTest()
 	void* p1;
 	size_t i;
 	// pre
-	ASSERT(sizeof(buf) == sizeof(buf1));
+	CASSERT(sizeof(buf) == sizeof(buf1));
 	if (!memIsValid(buf, sizeof(buf)) || !memIsValid(0, 0))
 		return FALSE;
 	// alloc (считаем, что памяти хватает)

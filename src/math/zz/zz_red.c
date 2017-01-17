@@ -6,7 +6,7 @@
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \author (C) Stanislav Poruchnik [poruchnikstanislav@gmail.com]
 \created 2012.04.22
-\version 2016.09.06
+\version 2017.01.17
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -266,7 +266,7 @@ void SAFE(zzRedMont)(word a[], const word mod[], size_t n,
 	register word mont_param, void* stack)
 {
 	register word carry = 0;
-	register word w;
+	register word w = 0;
 	size_t i;
 	// pre
 	ASSERT(wwIsDisjoint2(a, 2 * n, mod, n));

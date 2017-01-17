@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.04.14
-\version 2016.04.22
+\version 2017.01.17
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -59,7 +59,7 @@ err_t bakeKDF(octet key[32], const octet secret[], size_t secret_len,
 	// key <- beltKRP(Y, 1^96, num)
 	memSet(block, 0xFF, 12);
 	beltKRPStart(state, key, 32, block);
-	ASSERT(B_PER_S <= 128);
+	CASSERT(B_PER_S <= 128);
 	memCopy(block, &num, sizeof(size_t));
 #if (OCTET_ORDER == BIG_ENDIAN)
 	memRev(block, sizeof(size_t));

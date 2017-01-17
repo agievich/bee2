@@ -6,7 +6,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.02.25
-\version 2016.07.22
+\version 2017.01.17
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -80,7 +80,7 @@ static err_t beeReadAndCalcStamp(octet stampRead[STAMP_SIZE],
 	// сохранить характеристику
 	memCopy(stampRead, image + offset, STAMP_SIZE);
 	// вычислить характеристику
-	ASSERT(STAMP_SIZE >= 32);
+	CASSERT(STAMP_SIZE >= 32);
 	memSetZero(stampCalc, STAMP_SIZE);
 	hash_state = blobCreate(beltHash_keep());
 	if (hash_state)
