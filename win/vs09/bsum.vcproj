@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
-	Name="beltsum"
+	Version="9.00"
+	Name="bsum"
 	ProjectGUID="{FBF42734-F8BB-47D2-B964-1017CB32597D}"
-	RootNamespace="beltsum"
+	RootNamespace="bsum"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
@@ -353,7 +353,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\apps\beltsum\beltsum.c"
+				RelativePath="..\..\apps\bsum\bsum.c"
 				>
 			</File>
 		</Filter>

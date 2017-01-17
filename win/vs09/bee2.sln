@@ -12,7 +12,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libbee2", "libbee2.vcproj",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test", "test.vcproj", "{EFA32A17-0F7F-468B-88E5-455296084B8D}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "beltsum", "beltsum.vcproj", "{FBF42734-F8BB-47D2-B964-1017CB32597D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bsum", "bsum.vcproj", "{FBF42734-F8BB-47D2-B964-1017CB32597D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
