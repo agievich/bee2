@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.08.27
-\version 2015.11.06
+\version 2017.01.26
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -361,12 +361,38 @@ bool_t bignTest()
 		"C2DFC53F78ECEA6C33B4C3C1E6183AD6"
 		"D8A18CFAF540976E1022B89DBA32DA18"))
 		return FALSE;
+	// тест E.5 [new]
+	beltPBKDF2(theta, (const octet*)pwd, strLen(pwd), iter, 
+		beltH() + 128 + 64, 8);
+	if (!hexEq(theta,
+		"3D331BBBB1FBBB40E4BF22F6CB9A689E"
+		"F13A77DC09ECF93291BFE42439A72E7D"))
+		return FALSE;
+	beltKWPWrap(token, privkey, 32, 0, theta, 32);
+	if (!hexEq(token,
+		"4EA289D5F718087DD8EDB305BA1CE898"
+		"0E5EC3E0B56C8BF9D5C3E909CF4C14F0"
+		"7B8204E67841A165E924945CD07F37E7"))
+		return FALSE;
 	// дополнительный тест: транспорт ключа из 16 октетов
 	if (bignKeyWrap(token, params, beltH(), 16, beltH() + 64,
 		pubkey, brngCTRXStepR, brng_state) != ERR_OK ||
 		bignKeyUnwrap(token, params, token, 32 + 16 + 16, beltH() + 64,
 		privkey) != ERR_OK ||
 		!memEq(token, beltH(), 16))
+		return FALSE;
+	// дополнительные тесты (vs OpenSSL)
+	hexTo(theta, "49FEFF8076CD9480");
+	beltPBKDF2(theta, "zed", 3, 2048, theta, 8);
+	if (!hexEq(theta,
+		"7249B4785FE68B1586D189A23E3842E4"
+		"8705C080A3248D8F0E8C3D63A93B2670"))
+		return FALSE;
+	hexTo(theta, "C65017E4F108BCF0");
+	beltPBKDF2(theta, "zed", 3, 10000, theta, 8);
+	if (!hexEq(theta,
+		"E48329259BC1211DDAC2EF1DADFFC993"
+		"2702A92F1DD66C14A9BA1D7300C8713C"))
 		return FALSE;
 	// все нормально
 	return TRUE;

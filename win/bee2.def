@@ -78,6 +78,7 @@ EXPORTS
 	beltHMACStepV2				@173
 	beltHMAC					@174
 	beltPBKDF					@175
+	beltPBKDF2					@176
 	
 	bignStdParams				@201
 	bignValParams				@202

@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2017.01.11
+\version 2017.01.26
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -2198,7 +2198,7 @@ void beltHMACStart(void* state, const octet theta[], size_t len)
 	s->filled = 0;
 	// сформировать key ^ opad [0x36 ^ 0x5C == 0x6A]
 	for (; len--; )
-	s->block[len] ^= 0x6A;
+		s->block[len] ^= 0x6A;
 	// начать внешнее хэширование [будет хэшироваться ровно два блока]
 	beltBlockSetZero(s->ls_out);
 	beltBlockAddBitSizeU32(s->ls_out, 32 * 2);
@@ -2385,6 +2385,42 @@ err_t beltPBKDF(octet theta[32], const octet pwd[], size_t pwd_len,
 		beltHMACStart(state, pwd, pwd_len);
 		beltHMACStepA(theta, 32, state);
 		beltHMACStepG(theta, state);
+	}
+	// завершить
+	blobClose(state);
+	return ERR_OK;
+}
+
+err_t beltPBKDF2(octet theta[32], const octet pwd[], size_t pwd_len,
+	size_t iter, const octet salt[], size_t salt_len)
+{
+	void* state;
+	octet* t;
+	// проверить входные данные
+	if (iter == 0 ||
+		!memIsValid(pwd, pwd_len) ||
+		!memIsValid(salt, salt_len) ||
+		!memIsValid(theta, 32))
+		return ERR_BAD_INPUT;
+	// создать состояние
+	state = blobCreate(beltHMAC_keep() + 32);
+	if (state == 0)
+		return ERR_OUTOFMEMORY;
+	t = (octet*)state + beltHMAC_keep();
+	// theta <- HMAC(pwd, salt || 00000001)
+	beltHMACStart(state, pwd, pwd_len);
+	beltHMACStepA(salt, salt_len, state);
+	*(u32*)theta = 0, theta[3] = 1;
+	beltHMACStepA(theta, 4, state);
+	beltHMACStepG(theta, state);
+	// пересчитать theta
+	memCopy(t, theta, 32);
+	while (--iter)
+	{
+		beltHMACStart(state, pwd, pwd_len);
+		beltHMACStepA(t, 32, state);
+		beltHMACStepG(t, state);
+		memXor2(theta, t, 32);
 	}
 	// завершить
 	blobClose(state);

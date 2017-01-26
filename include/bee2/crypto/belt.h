@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2015.11.06
+\version 2017.01.26
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -1265,7 +1265,8 @@ err_t beltHMAC(
 	\return ERR_OK, если ключ успешно построен, и код ошибки
 	в противном случае.
 	\remark Рекомендуется использовать iter >= 10000 и salt_len >= 8.
-	\remark Реализованный алгоритм соответствует PKCS#5 (механизм PBKDF2).
+	\remark Реализован алгоритм E.2.3, определенный в СТБ 34.101.45. 
+	Этот алгоритм отличается от алгоритма PBKDF2, определенного в PKCS#5.
 */
 err_t beltPBKDF(
 	octet theta[32],		/*!< [out] ключ */
@@ -1275,6 +1276,27 @@ err_t beltPBKDF(
 	const octet salt[],		/*!< [in] синхропосылка ("соль") */
 	size_t salt_len			/*!< [in] длина синхропосылки (в октетах) */
 );
+
+/*!	\brief Построение ключа по паролю
+
+	По паролю [pwd_len]pwd строится ключ theta. Для усложнения словарных атак 
+	используется синхропосылка [salt_len]salt. Для усложнения перебора паролей 
+	ключ пересчитывается iter > 0 раз.
+	\expect{ERR_BAD_INPUT} iter != 0.
+	\return ERR_OK, если ключ успешно построен, и код ошибки в противном 
+	случае.
+	\remark Рекомендуется использовать iter >= 10000 и salt_len >= 8.
+	\remark Реализован алгоритм PBKDF2, определенный в PKCS#5.
+*/
+err_t beltPBKDF2(
+	octet theta[32],		/*!< [out] ключ */
+	const octet pwd[],		/*!< [in] пароль */
+	size_t pwd_len,			/*!< [in] длина пароля (в октетах) */
+	size_t iter,			/*!< [in] число итераций */
+	const octet salt[],		/*!< [in] синхропосылка ("соль") */
+	size_t salt_len			/*!< [in] длина синхропосылки (в октетах) */
+);
+
 
 #ifdef __cplusplus
 } /* extern "C" */

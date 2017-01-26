@@ -245,7 +245,7 @@
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="../../include;../../src"
-				PreprocessorDefinitions="SAFE_FAST;WIN32;NDEBUG"
+				PreprocessorDefinitions="WIN32;NDEBUG"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
