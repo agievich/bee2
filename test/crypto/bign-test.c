@@ -383,13 +383,13 @@ bool_t bignTest()
 		return FALSE;
 	// дополнительные тесты (vs OpenSSL)
 	hexTo(theta, "49FEFF8076CD9480");
-	beltPBKDF2(theta, "zed", 3, 2048, theta, 8);
+	beltPBKDF2(theta, (const octet*)"zed", 3, 2048, theta, 8);
 	if (!hexEq(theta,
 		"7249B4785FE68B1586D189A23E3842E4"
 		"8705C080A3248D8F0E8C3D63A93B2670"))
 		return FALSE;
 	hexTo(theta, "C65017E4F108BCF0");
-	beltPBKDF2(theta, "zed", 3, 10000, theta, 8);
+	beltPBKDF2(theta, (const octet*)"zed", 3, 10000, theta, 8);
 	if (!hexEq(theta,
 		"E48329259BC1211DDAC2EF1DADFFC993"
 		"2702A92F1DD66C14A9BA1D7300C8713C"))
