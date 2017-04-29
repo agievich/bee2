@@ -44,16 +44,16 @@ LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 *******************************************************************************
 */
 
-BEELOGO DIALOGEX 10, 10, 326, 100
+BEELOGO DIALOGEX 10, 10, 306, 100
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
 	WS_SYSMENU
 CAPTION "Bee2: A Cryptographic Library"
 FONT 8, "MS Shell Dlg", 405, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,262,165,50,14
-    CONTROL         101,IDC_STATIC,"Static",SS_BITMAP,7,7,112,62
-    GROUPBOX        "Build info",IDC_STATIC,123,7,194,83
-    EDITTEXT        102,130,20,178,63, WS_VSCROLL | ES_AUTOHSCROLL | 
+    DEFPUSHBUTTON   "OK",IDOK,232,165,50,14
+    CONTROL         101,IDC_STATIC,"Static",SS_BITMAP,10,12,80,80
+    GROUPBOX        "Build info",IDC_STATIC,104,7,194,83
+    EDITTEXT        102,110,20,178,63, WS_VSCROLL | ES_AUTOHSCROLL | 
 					ES_AUTOVSCROLL | ES_READONLY | ES_MULTILINE
 END
 
@@ -63,7 +63,7 @@ END
 *******************************************************************************
 */
 
-101 BITMAP "bee2.bmp"
+101 BITMAP "../img/bee2.bmp"
 
 /*
 *******************************************************************************
