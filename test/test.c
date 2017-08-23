@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.04.02
-\version 2017.01.11
+\version 2017.07.11
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -65,6 +65,7 @@ int testCore()
 extern bool_t priTest();
 extern bool_t zzTest();
 extern bool_t wordTest();
+extern bool_t ecpTest();
 extern bool_t ecpBench();
 
 int testMath()
@@ -74,6 +75,7 @@ int testMath()
 	printf("priTest: %s\n", (code = priTest()) ? "OK" : "Err"), ret |= !code;
 	printf("zzTest: %s\n", (code = zzTest()) ? "OK" : "Err"), ret |= !code;
 	printf("wordTest: %s\n", (code = wordTest()) ? "OK" : "Err"), ret |= !code;
+	printf("ecpTest: %s\n", (code = ecpTest()) ? "OK" : "Err"), ret |= !code;
 	code = ecpBench(), ret |= !code;
 	return ret;
 }

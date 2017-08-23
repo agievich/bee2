@@ -250,8 +250,8 @@ err_t bignStart(void* state, const bign_params* params)
 	size_t f_keep;
 	size_t ec_keep;
 	// состояние
-	qr_o* f;			/* поле */
-	ec_o* ec;			/* кривая */
+	qr_o* f;		/* поле */
+	ec_o* ec;		/* кривая */
 	void* stack;	/* вложенный стек */
 	// pre
 	ASSERT(memIsValid(params, sizeof(bign_params)));

@@ -25,10 +25,11 @@ add_executable(testbee2
 	crypto/dstu-test.c
 	crypto/g12s-test.c
 	crypto/pfok-test.c
-	math/ecp-bench.c
 	math/pri-test.c
 	math/zz-test.c
 	math/word-test.c
+	math/ecp-test.c
+	math/ecp-bench.c
 	test.c
 )
 target_link_libraries(testbee2 bee2_static)

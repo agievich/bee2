@@ -462,6 +462,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\test\math\ecp-test.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\test\math\pri-test.c"
 					>
 				</File>
