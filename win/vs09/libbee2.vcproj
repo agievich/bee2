@@ -662,10 +662,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\src\crypto\belt.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\src\crypto\bign.c"
 					>
 				</File>
@@ -693,6 +689,70 @@
 					RelativePath="..\..\src\crypto\pfok.c"
 					>
 				</File>
+				<Filter
+					Name="belt"
+					>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_block.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_cbc.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_cfb.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_ctr.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_dwp.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_ecb.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_fmt.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_hash.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_hmac.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_int.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_int.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_krp.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_kwp.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_mac.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_pbkdf.c"
+						>
+					</File>
+				</Filter>
 			</Filter>
 		</Filter>
 	</Files>

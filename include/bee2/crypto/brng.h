@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.01.31
-\version 2014.12.03
+\version 2017.09.28
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -230,7 +230,7 @@ void brngHMACStepR(
 /*!	\brief Генерация в режиме HMAC
 
 	В буфер [count]buf записываются псевдослучайные данные, сгенерированные 
-	в режиме CTR на ключе [key_len]key при использовании 
+	в режиме HMAC на ключе [key_len]key при использовании 
 	синхропосылки [iv_len]iv.
 	\expect{ERR_BAD_INPUT} Буферы buf и iv не пересекаются.
 	\return ERR_OK, если данные успешно сгенерированы, и код ошибки

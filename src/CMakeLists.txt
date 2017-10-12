@@ -21,7 +21,20 @@ set(src
   crypto/bake.c
   crypto/bash.c
   crypto/bels.c
-  crypto/belt.c
+  crypto/belt/belt_block.c
+  crypto/belt/belt_cbc.c
+  crypto/belt/belt_cfb.c
+  crypto/belt/belt_ctr.c
+  crypto/belt/belt_dwp.c
+  crypto/belt/belt_ecb.c
+  crypto/belt/belt_fmt.c
+  crypto/belt/belt_hash.c
+  crypto/belt/belt_hmac.c
+  crypto/belt/belt_int.c
+  crypto/belt/belt_krp.c
+  crypto/belt/belt_kwp.c
+  crypto/belt/belt_mac.c
+  crypto/belt/belt_pbkdf.c
   crypto/bign.c
   crypto/botp.c
   crypto/brng.c

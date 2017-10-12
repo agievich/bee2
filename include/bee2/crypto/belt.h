@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2017.01.26
+\version 2017.10.12
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -49,6 +49,7 @@ extern "C" {
 -	DWP ---  шифрование и имитозащита данных;
 -	KWP ---  шифрование и имитозащита ключей;
 -	Hash --- хэширование;
+-	FMT ---	 шифрование с сохранением формата;
 -	KRP ---  преобразование ключей;
 -	HMAC --- имитозащита на основе хэширования.
 
@@ -63,6 +64,13 @@ extern "C" {
 блоками по 16 октетов.
 
 В механизмах Hash, HMAC данные обрабатываются блоками по 32 октета.
+
+В механизме FMT обрабатываются строки длины count в алфавите 
+ZZ_mod = {0, 1,..., mod - 1}. Здесь mod -- размер алфавита или модуль.
+Должны выполняться следующие ограничения:
+-	2 <= mod && mod <= 65536;
+-	2 <= count && count <= 512.
+Последнее ограничение -- ограничение реализации.
 
 На вход основных и вспомогательных функций данные и ключи подаются
 либо как void-массивы (неформатированные данные, по умолчанию),
@@ -140,26 +148,26 @@ const octet* beltH();
 
 /*!	\brief Расширение ключа
 
-	Ключ [len]theta расширяется до ключа key.
+	Ключ [len]key расширяется до ключа key_.
 	\pre len == 16 || len == 24 || len == 32.
-	\remark Буферы key и theta могут пересекаться.
+	\remark Буферы key и key_ могут пересекаться.
 */
 void beltKeyExpand(
-	octet key[32],			/*!< [out] расширенный ключ */
-	const octet theta[],	/*!< [in] первоначальный ключ */
-	size_t len				/*!< [in] длина theta в октетах */
+	octet key_[32],		/*!< [out] расширенный ключ */
+	const octet key[],	/*!< [in] первоначальный ключ */
+	size_t len			/*!< [in] длина key в октетах */
 );
 
 /*!	\brief Расширение и форматирование ключа
 
-	Ключ [len]theta форматируется и расширяется до ключа key.
+	Ключ [len]key форматируется и расширяется до ключа key_.
 	\pre len == 16 || len == 24 || len == 32.
-	\remark Буферы key и theta могут пересекаться.
+	\remark Буферы key и key_ могут пересекаться.
 */
 void beltKeyExpand2(
-	u32 key[8],				/*!< [out] расширенный форматированный ключ */
-	const octet theta[],	/*!< [in] первоначальный ключ */
-	size_t len				/*!< [in] длина ключа в октетах */
+	u32 key_[8],		/*!< [out] расширенный форматированный ключ */
+	const octet key[],	/*!< [in] первоначальный ключ */
+	size_t len			/*!< [in] длина ключа в октетах */
 );
 
 /*
@@ -225,15 +233,15 @@ size_t beltECB_keep();
 
 /*!	\brief Инициализация шифрования в режиме ECB
 
-	По ключу [len]theta в state формируются структуры данных, необходимые для 
+	По ключу [len]key в state формируются структуры данных, необходимые для 
 	шифрования в режиме ECB.
 	\pre len == 16 || len == 24 || len == 32.
 	\pre По адресу state зарезервировано beltECB_keep() октетов.
-	\remark Буферы theta и state могут пересекаться.
+	\remark Буферы key и state могут пересекаться.
 */
 void beltECBStart(
 	void* state,			/*!< [out] состояние */
-	const octet theta[],	/*!< [in] ключ */
+	const octet key[],		/*!< [in] ключ */
 	size_t len				/*!< [in] длина ключа в октетах */
 );
 
@@ -273,7 +281,7 @@ void beltECBStepD(
 
 /*!	\brief Зашифрование в режиме ECB
 
-	Буфер [count]src зашифровывается на ключе [len]theta октетов.
+	Буфер [count]src зашифровывается на ключе [len]key октетов.
 	Результат зашифрования размещается в буфере [count]dest.
 	\expect{ERR_BAD_INPUT}
 	-	len == 16 || len == 24 || len == 32;
@@ -286,13 +294,13 @@ err_t beltECBEncr(
 	void* dest,				/*!< [out] шифртекст */
 	const void* src,		/*!< [in] открытый текст */
 	size_t count,			/*!< [in] число октетов текста */
-	const octet theta[],	/*!< [in] ключ */
+	const octet key[],		/*!< [in] ключ */
 	size_t len				/*!< [in] длина ключа */
 );
 
 /*!	\brief Расшифрование в режиме ECB
 
-	Буфер src из count октетов расшифровывается на ключе [len]theta.
+	Буфер src из count октетов расшифровывается на ключе [len]key.
 	Результат расшифрования размещается в буфере dest.
 	\expect{ERR_BAD_INPUT}
 	-	len == 16 || len == 24 || len == 32;
@@ -305,7 +313,7 @@ err_t beltECBDecr(
 	void* dest,				/*!< [out] открытый текст */
 	const void* src,		/*!< [in] шифртекст */
 	size_t count,			/*!< [in] число октетов текста */
-	const octet theta[],	/*!< [in] ключ */
+	const octet key[],		/*!< [in] ключ */
 	size_t len				/*!< [in] длина ключа */
 );
 
@@ -324,15 +332,15 @@ size_t beltCBC_keep();
 
 /*!	\brief Инициализация шифрования в режиме CBC
 
-	По ключу [len]theta и синхропосылке iv в state формируются
+	По ключу [len]key и синхропосылке iv в state формируются
 	структуры данных, необходимые для шифрования в режиме CBC.
 	\pre len == 16 || len == 24 || len == 32.
 	\pre По адресу state зарезервировано beltCBC_keep() октетов.
-	\remark Буферы theta и state могут пересекаться.
+	\remark Буферы key и state могут пересекаться.
 */
 void beltCBCStart(
 	void* state,			/*!< [out] состояние */
-	const octet theta[],	/*!< [in] ключ */
+	const octet key[],		/*!< [in] ключ */
 	size_t len,				/*!< [in] длина ключа в октетах */
 	const octet iv[16]		/*!< [in] синхропосылка */
 );
@@ -373,7 +381,7 @@ void beltCBCStepD(
 
 /*!	\brief Зашифрование в режиме CBC
 
-	Буфер [count]src зашифровывается на ключе [len]theta с использованием 
+	Буфер [count]src зашифровывается на ключе [len]key с использованием 
 	синхропосылки iv. Результат зашифрования размещается в буфере [count]dest.
 	\expect{ERR_BAD_INPUT}
 	-	len == 16 || len == 24 || len == 32;
@@ -387,14 +395,14 @@ err_t beltCBCEncr(
 	void* dest,				/*!< [out] шифртекст */
 	const void* src,		/*!< [in] открытый текст */
 	size_t count,			/*!< [in] число октетов текста */
-	const octet theta[],	/*!< [in] ключ */
+	const octet key[],		/*!< [in] ключ */
 	size_t len,				/*!< [in] длина ключа */
 	const octet iv[16]		/*!< [in] синхропосылка */
 );
 
 /*!	\brief Расшифрование в режиме CBC
 
-	Буфер [count]src расшифровывается на ключе [len]theta с использованием 
+	Буфер [count]src расшифровывается на ключе [len]key с использованием 
 	синхропосылки iv. Результат расшифрования размещается в буфере [count]dest.
 	\expect{ERR_BAD_INPUT}
 	-	len == 16 || len == 24 || len == 32;
@@ -408,7 +416,7 @@ err_t beltCBCDecr(
 	void* dest,				/*!< [out] открытый текст */
 	const void* src,		/*!< [in] шифртекст */
 	size_t count,			/*!< [in] число октетов текста */
-	const octet theta[],	/*!< [in] ключ */
+	const octet key[],		/*!< [in] ключ */
 	size_t len,				/*!< [in] длина ключа */
 	const octet iv[16]		/*!< [in] синхропосылка */
 );
@@ -429,15 +437,15 @@ size_t beltCFB_keep();
 
 /*!	\brief Инициализация шифрования в режиме CFB
 
-	По ключу [len]theta и синхропосылке iv в state формируются
+	По ключу [len]key и синхропосылке iv в state формируются
 	структуры данных, необходимые для шифрования в режиме CFB.
 	\pre len == 16 || len == 24 || len == 32.
 	\pre По адресу state зарезервировано beltCFB_keep() октетов.
-	\remark Буферы theta и state могут пересекаться.
+	\remark Буферы key и state могут пересекаться.
 */
 void beltCFBStart(
 	void* state,			/*!< [out] состояние */
-	const octet theta[],	/*!< [in] ключ */
+	const octet key[],		/*!< [in] ключ */
 	size_t len,				/*!< [in] длина ключа в октетах */
 	const octet iv[16]		/*!< [in] синхропосылка */
 );
@@ -468,7 +476,7 @@ void beltCFBStepD(
 
 /*!	\brief Зашифрование в режиме CFB
 
-	Буфер [count]src зашифровывается на ключе [len]theta с использованием 
+	Буфер [count]src зашифровывается на ключе [len]key с использованием 
 	синхропосылки iv. Результат зашифрования размещается в буфере [count]dest.
 	\expect{ERR_BAD_INPUT} len == 16 || len == 24 || len == 32.
 	\return ERR_OK, если данные успешно зашифрованы, и код ошибки
@@ -479,14 +487,14 @@ err_t beltCFBEncr(
 	void* dest,				/*!< [out] шифртекст */
 	const void* src,		/*!< [in] открытый текст */
 	size_t count,			/*!< [in] число октетов текста */
-	const octet theta[],	/*!< [in] ключ */
+	const octet key[],		/*!< [in] ключ */
 	size_t len,				/*!< [in] длина ключа */
 	const octet iv[16]		/*!< [in] синхропосылка */
 );
 
 /*!	\brief Расшифрование в режиме CFB
 
-	Буфер [count]src расшифровывается на ключе [len]theta с использованием 
+	Буфер [count]src расшифровывается на ключе [len]key с использованием 
 	синхропосылки iv. Результат расшифрования размещается в буфере [count]dest.
 	\expect{ERR_BAD_INPUT} len == 16 || len == 24 || len == 32.
 	\return ERR_OK, если данные успешно расшифрованы, и код ошибки
@@ -497,7 +505,7 @@ err_t beltCFBDecr(
 	void* dest,				/*!< [out] открытый текст */
 	const void* src,		/*!< [in] шифртекст */
 	size_t count,			/*!< [in] число октетов текста */
-	const octet theta[],	/*!< [in] ключ */
+	const octet key[],		/*!< [in] ключ */
 	size_t len,				/*!< [in] длина ключа */
 	const octet iv[16]		/*!< [in] синхропосылка */
 );
@@ -517,15 +525,15 @@ size_t beltCTR_keep();
 
 /*!	\brief Инициализация шифрования в режиме CTR
 
-	По ключу [len]theta и синхропосылке iv в state формируются
+	По ключу [len]key и синхропосылке iv в state формируются
 	структуры данных, необходимые для шифрования в режиме CTR.
 	\pre len == 16 || len == 24 || len == 32.
 	\pre По адресу state зарезервировано beltCTR_keep() октетов.
-	\remark Буферы theta и state могут пересекаться.
+	\remark Буферы key и state могут пересекаться.
 */
 void beltCTRStart(
 	void* state,			/*!< [out] состояние */
-	const octet theta[],	/*!< [in] ключ */
+	const octet key[],		/*!< [in] ключ */
 	size_t len,				/*!< [in] длина ключа в октетах */
 	const octet iv[16]		/*!< [in] синхропосылка */
 );
@@ -550,7 +558,7 @@ void beltCTRStepE(
 /*!	\brief Шифрование в режиме CTR
 
 	Буфер [count]src зашифровывается или расшифровывается на ключе
-	[len]theta с использованием синхропосылки iv. Результат шифрования 
+	[len]key с использованием синхропосылки iv. Результат шифрования 
 	размещается в буфере [count]dest.
 	\expect{ERR_BAD_INPUT} len == 16 || len == 24 || len == 32.
 	\return ERR_OK, если шифрование завершено успешно, и код ошибки
@@ -561,7 +569,7 @@ err_t beltCTR(
 	void* dest,				/*!< [out] шифртекст / открытый текст */
 	const void* src,		/*!< [in] открытый текст / шифртекст */
 	size_t count,			/*!< [in] число октетов текста */
-	const octet theta[],	/*!< [in] ключ */
+	const octet key[],		/*!< [in] ключ */
 	size_t len,				/*!< [in] длина ключа */
 	const octet iv[16]		/*!< [in] синхропосылка */
 );
@@ -581,15 +589,15 @@ size_t beltMAC_keep();
 
 /*!	\brief Инициализация функций MAC
 
-	По ключу [len]theta в state формируются структуры данных, необходимые для 
+	По ключу [len]key в state формируются структуры данных, необходимые для 
 	имитозащиты в режиме MAC.
 	\pre len == 16 || len == 24 || len == 32.
 	\pre По адресу state зарезервировано beltMAC_keep() октетов.
-	\remark Буферы theta и state могут пересекаться.
+	\remark Буферы key и state могут пересекаться.
 */
 void beltMACStart(
 	void* state,			/*!< [out] состояние */
-	const octet theta[],	/*!< [in] ключ */
+	const octet key[],		/*!< [in] ключ */
 	size_t len				/*!< [in] длина ключа в октетах */
 );
 
@@ -663,7 +671,7 @@ bool_t beltMACStepV2(
 
 /*!	\brief Имитозащита в режиме MAC
 
-	На ключе [len]theta определяется имитовставка mac буфера [count]src.
+	На ключе [len]key определяется имитовставка mac буфера [count]src.
 	\expect{ERR_BAD_INPUT} len == 16 || len == 24 || len == 32.
 	\return ERR_OK, если имитовставка успешно вычислена, и код ошибки
 	в противном случае.
@@ -673,7 +681,7 @@ err_t beltMAC(
 	octet mac[8],			/*!< [out] имитовставка */
 	const void* src,		/*!< [in] данные */
 	size_t count,			/*!< [in] число октетов данных */
-	const octet theta[],	/*!< [in] ключ */
+	const octet key[],		/*!< [in] ключ */
 	size_t len				/*!< [in] длина ключа */
 );
 
@@ -692,15 +700,15 @@ size_t beltDWP_keep();
 
 /*!	\brief Инициализация функций DWP
 
-	По ключу [len]theta и синхропосылке iv в state формируются
+	По ключу [len]key и синхропосылке iv в state формируются
 	структуры данных, необходимые для шифрования и имитозащиты в режиме DWP.
 	\pre len == 16 || len == 24 || len == 32.
 	\pre По адресу state зарезервировано beltDWP_keep() октетов.
-	\remark Буферы theta и state могут пересекаться.
+	\remark Буферы key и state могут пересекаться.
 */
 void beltDWPStart(
 	void* state,			/*!< [out] состояние */
-	const octet theta[],	/*!< [in] ключ */
+	const octet key[],		/*!< [in] ключ */
 	size_t len,				/*!< [in] длина ключа в октетах */
 	const octet iv[16]		/*!< [in] синхропосылка */
 );
@@ -791,7 +799,7 @@ void beltDWPStepD(
 
 /*!	\brief Установка защиты в режиме DWP
 
-	На ключе [len]theta с использованием имитовставки iv устанавливается 
+	На ключе [len]key с использованием имитовставки iv устанавливается 
 	защита критических данных [count1]src1 и открытых данных [count2]src2. 
 	При установке защиты критические данные зашифровываются и сохраняются 
 	в буфере [count1]dest. Кроме этого определяется имитовставка mac 
@@ -811,14 +819,14 @@ err_t beltDWPWrap(
 	size_t count1,			/*!< [in] число октетов критических данных */
 	const void* src2,		/*!< [in] открытые данные */
 	size_t count2,			/*!< [in] число октетов открытых данных */
-	const octet theta[],	/*!< [in] ключ */
+	const octet key[],		/*!< [in] ключ */
 	size_t len,				/*!< [in] длина ключа */
 	const octet iv[16]		/*!< [in] синхропосылка */
 );
 
 /*!	\brief Снятие защиты в режиме DWP
 
-	На ключе [len]theta октетов с использованием имитовставки iv
+	На ключе [len]key октетов с использованием имитовставки iv
 	снимается защита зашифрованных критических данных [count1]src1 
 	и открытых данных [count2]src2. При снятии защиты проверяется
 	целостность пары (src1, src2) с помощью имитовставки mac. Если
@@ -836,7 +844,7 @@ err_t beltDWPUnwrap(
 	const void* src2,		/*!< [in] открытые данные */
 	size_t count2,			/*!< [in] число октетов открытых данных */
 	const octet mac[8],		/*!< [in] имитовставка */
-	const octet theta[],	/*!< [in] ключ */
+	const octet key[],		/*!< [in] ключ */
 	size_t len,				/*!< [in] длина ключа */
 	const octet iv[16]		/*!< [in] синхропосылка */
 );
@@ -856,15 +864,15 @@ size_t beltKWP_keep();
 
 /*!	\brief Инициализация функций KWP
 
-	По ключу [len]theta в state формируются структуры данных,
+	По ключу [len]key в state формируются структуры данных,
 	необходимые для шифрования и имитозащиты в режиме KWP.
 	\pre len == 16 || len == 24 || len == 32.
 	\pre По адресу state зарезервировано beltKWP_keep() октетов.
-	\remark Буферы theta и state могут пересекаться.
+	\remark Буферы key и state могут пересекаться.
 */
 void beltKWPStart(
 	void* state,			/*!< [out] состояние */
-	const octet theta[],	/*!< [in] ключ */
+	const octet key[],		/*!< [in] ключ */
 	size_t len				/*!< [in] длина ключа в октетах */
 );
 
@@ -937,7 +945,7 @@ void beltKWPStepD2(
 
 /*!	\brief Установка защиты в режиме KWP
 
-	На ключе [len]theta устанавливается защита ключа [count]src с заголовком 
+	На ключе [len]key устанавливается защита ключа [count]src с заголовком 
 	header. В результате определяется защищенный ключ [count + 16]dest.
 	\expect{ERR_BAD_INPUT}
 	-	len == 16 || len == 24 || len == 32;
@@ -953,13 +961,13 @@ err_t beltKWPWrap(
 	const octet src[],		/*!< [in] защищаемый ключ */
 	size_t count,			/*!< [in] длина src в октетах */
 	const octet header[16],	/*!< [in] заголовок ключа */
-	const octet theta[],	/*!< [in] ключ защиты */
-	size_t len				/*!< [in] длина theta в октетах */
+	const octet key[],		/*!< [in] ключ защиты */
+	size_t len				/*!< [in] длина key в октетах */
 );
 
 /*!	\brief Снятие защиты в режиме KWP
 
-	На ключе [len]theta снимается защита с ключа [count]src. В результате 
+	На ключе [len]key снимается защита с ключа [count]src. В результате 
 	определяется первоначальный ключ [count - 16]dest с заголовком header.
 	\expect{ERR_BAD_INPUT} 
 	-	len == 16 || len == 24 || len == 32;
@@ -974,8 +982,8 @@ err_t beltKWPUnwrap(
 	const octet src[],		/*!< [in] защищенный ключ */
 	size_t count,			/*!< [in] длина src в октетах */
 	const octet header[16],	/*!< [in] заголовок ключа */
-	const octet theta[],	/*!< [in] ключ защиты */
-	size_t len				/*!< [in] длина theta в октетах */
+	const octet key[],		/*!< [in] ключ защиты */
+	size_t len				/*!< [in] длина key в октетах */
 );
 
 /*
@@ -986,7 +994,7 @@ err_t beltKWPUnwrap(
 
 /*!	\brief Длина состояния функции хэширования
 
-	Возвращается длина состояния (в октетах) функций хэширования.
+	Возвращается длина состояния (в октетах) функции хэширования.
 	\return Длина состояния.
 */
 size_t beltHash_keep();
@@ -1082,6 +1090,131 @@ err_t beltHash(
 
 /*
 *******************************************************************************
+Шифрование с сохранением формата (FMT, алгоритмы 6.10.4, 6.10.5)
+*******************************************************************************
+*/
+
+/*!	\brief Длина состояния функций шифрования
+
+	Возвращается длина состояния (в октетах) функций шифрования при обработке
+	слов длины count в алфавите {0, 1,..., mod - 1}.
+	\pre 2 <= mod && mod <= 65536.
+	\pre 2 <= count && count <= 1024.
+	\return Длина состояния.
+*/
+size_t beltFMT_keep(
+	u32 mod,			/*!< [in] размер алфавита */
+	size_t count		/*!< [in] длина слов */
+);
+
+/*!	\brief Инициализация шифрования в режиме FMT
+
+	По размеру алфавита mod, длине слов count и ключу [len]key в state 
+	формируются структуры данных, необходимые для шифрования в режиме FMT.
+	\pre 2 <= mod && mod <= 65536.
+	\pre 2 <= count && count <= 1024.
+	\pre len == 16 || len == 24 || len == 32.
+	\pre По адресу state зарезервировано beltFMT_keep() октетов.
+	\remark Буферы key и state могут пересекаться.
+*/
+void beltFMTStart(
+	void* state,		/*!< [in/out] состояние */
+	u32 mod,			/*!< [in] размер алфавита */
+	size_t count,		/*!< [in] длина слов */
+	const octet key[],	/*!< [in] ключ */
+	size_t len			/*!< [in] длина key в октетах */
+);
+
+/*!	\brief Шаг зашифрования в режиме FMT
+
+	Строка [count]buf зашифровывается на ключе, размещенном в state,
+	и синхропосылке iv. Здесь count -- длина строки, предварительно 
+	установленная в state функцией beltFMTStart(). Результат зашифрования 
+	сохраняется в buf.
+	\expect beltFMTStart() < beltFMTStepE()*.
+	\expect Символы строки принадлежат алфавиту {0,1,..., mod - 1}, размер 
+	mod которого предварительно установлен в state функцией beltFMTStart().
+	\remark При нулевом указателе iv используется нулевая синхропосылка.
+*/
+void beltFMTStepE(
+	u16 buf[],				/*!< [in/out] открытый текст / шифртекст  */
+	const octet iv[16],		/*!< [in] синхропосылка */
+	void* state				/*!< [in/out] состояние */
+);
+
+/*!	\brief Шаг расшифрования в режиме FMT
+
+	Строка [count]buf расшифровывается на ключе, размещенном в state,
+	и синхропосылке iv. Здесь count -- длина строки, предварительно 
+	установленная в state функцией beltFMTStart(). Результат расшифрования 
+	сохраняется в buf.
+	\expect beltFMTStart() < beltFMTStepD()*.
+	\expect Символы строки принадлежат алфавиту {0,1,..., mod - 1}, размер 
+	mod которого предварительно установлен в state функцией beltFMTStart().
+	\remark При нулевом указателе iv используется нулевая синхропосылка.
+*/
+void beltFMTStepD(
+	u16 buf[],				/*!< [in/out] шифртекст / открытый текст */
+	const octet iv[16],		/*!< [in] синхропосылка */
+	void* state				/*!< [in/out] состояние */
+);
+
+/*!	\brief Зашифрование в режиме FMT
+
+	Строка [count]src в алфавите {0, 1,..., mod - 1} зашифровывается на ключе 
+	[len]key и синхропосылке iv. Результат зашифрования размещается в буфере 
+	[count]dest. При нулевом указателе iv используется нулевая синхропосылка.
+	\expect{ERR_BAD_INPUT}
+	- 2 <= mod && mod <= 65536;
+	- 2 <= count;
+	- len == 16 || len == 24 || len == 32;
+	- если iv ненулевой, то буферы iv и [count]dest не пересекаются.
+	.
+	\expect{ERR_NOT_IMPLEMENTED} count <= 1024.
+	\expect Символы src принадлежат алфавиту {0, 1,..., mod - 1}.
+	\return ERR_OK, если зашифрование успешно выполнено, и код ошибки в 
+	противном случае.
+	\remark Все буферы, кроме iv и [count]dest, могут пересекаться.
+*/
+err_t beltFMTEncrypt(
+	u16 dest[],				/*!< [out] шифртекст */
+	u32 mod,				/*!< [in] размер алфавита */
+	const u16 src[],		/*!< [in] открытый текст */
+	size_t count,			/*!< [in] длина открытого текста / шифртекста */
+	const octet key[],		/*!< [in] ключ */
+	size_t len,				/*!< [in] длина key в октетах */
+	const octet iv[16]		/*!< [in] синхропосылка */
+);
+
+/*!	\brief Расшифрование в режиме FMT
+
+	Строка [count]src в алфавите {0, 1,..., mod - 1} расшифровывается на ключе
+	[len]key и синхропосылке iv. Результат расшифрования размещается в буфере 
+	[count]dest. При нулевом указателе iv используется нулевая синхропосылка.
+	\expect{ERR_BAD_INPUT}
+	- 2 <= mod && mod <= 65536;
+	- 2 <= count;
+	- len == 16 || len == 24 || len == 32;
+	- если iv ненулевой, то буферы iv и [count]dest не пересекаются.
+	.
+	\expect{ERR_NOT_IMPLEMENTED} count <= 1024.
+	\expect Символы src принадлежат алфавиту {0, 1,..., mod - 1}.
+	\return ERR_OK, если расшифрование успешно выполнено, и код ошибки в 
+	противном случае.
+	\remark Все буферы, кроме iv и [count]dest, могут пересекаться.
+*/
+err_t beltFMTDecrypt(
+	u16 dest[],				/*!< [out] открытый текст */
+	u32 mod,				/*!< [in] размер алфавита */
+	const u16 src[],		/*!< [in] шифртекст */
+	size_t count,			/*!< [in] длина шифртекста / открытого текста */
+	const octet key[],		/*!< [in] ключ */
+	size_t len,				/*!< [in] длина key в октетах */
+	const octet iv[16]		/*!< [in] синхропосылка */
+);
+
+/*
+*******************************************************************************
 Преобразование ключа (KeyRep, алгоритм 7.2.3)
 *******************************************************************************
 */
@@ -1095,30 +1228,30 @@ size_t beltKRP_keep();
 
 /*!	\brief Инициализация функций преобразования ключа
 
-	По ключу [len]theta, который принадлежит уровню level, в state формируются 
+	По ключу [len]key, который принадлежит уровню level, в state формируются 
 	структуры данных, необходимые для преобразования этого ключа.
 	\pre len == 16 || len == 24 || len == 32.
 	\pre По адресу state зарезервировано beltKRP_keep() октетов.
-	\remark Буферы theta и state могут пересекаться.
+	\remark Буферы key и state могут пересекаться.
 */
 void beltKRPStart(
 	void* state,			/*!< [out] состояние */
-	const octet theta[],	/*!< [in] ключ */
+	const octet key[],		/*!< [in] ключ */
 	size_t len,				/*!< [in] длина ключа в октетах */
 	const octet level[12]	/*!< [in] уровень */
 );
 
 /*!	\brief Тиражирование ключа
 
-	Ключ [len]theta, размещенный в state функцией beltKRPStart(), 
-	преобразуется в ключ [ke_len]key, который имеет заголовок header.
+	Ключ [len]key, размещенный в state функцией beltKRPStart(), 
+	преобразуется в ключ [key_len]key_, который имеет заголовок header.
 	\pre (key_len == 16 || key_len == 24 || key_len == 32) && key_len <= len.
 	\expect beltKRPStart() < beltKRPStepG()*.
 */
 void beltKRPStepG(
-	octet key[],			/*!< [out] преобразованный ключ */
+	octet key_[],			/*!< [out] преобразованный ключ */
 	size_t key_len,			/*!< [in] длина key в октетах */
-	const octet header[16],	/*!< [in] заголовок key */
+	const octet header[16],	/*!< [in] заголовок key_ */
 	void* state				/*!< [in/out] состояние */
 );
 
@@ -1159,14 +1292,14 @@ size_t beltHMAC_keep();
 
 /*!	\brief Инициализация функций HMAC
 
-	По ключу [len]theta в state формируются структуры данных, необходимые для 
+	По ключу [len]key в state формируются структуры данных, необходимые для 
 	имитозащиты в режиме HMAC.
 	\pre По адресу state зарезервировано beltHMAC_keep() октетов.
 	\remark Рекомендуется использовать ключ из 32 октетов.
 */
 void beltHMACStart(
 	void* state,			/*!< [out] состояние */
-	const octet theta[],	/*!< [in] ключ */
+	const octet key[],		/*!< [in] ключ */
 	size_t len				/*!< [in] длина ключа в октетах */
 );
 
@@ -1237,7 +1370,7 @@ bool_t beltHMACStepV2(
 
 /*!	\brief Имитозащита в режиме HMAC
 
-	На ключе [len]theta определяется имитовставка mac буфера [count]src.
+	На ключе [len]key определяется имитовставка mac буфера [count]src.
 	\return ERR_OK, если имитовставка успешно вычислена, и код ошибки
 	в противном случае.
 	\remark Буферы могут пересекаться.
@@ -1246,7 +1379,7 @@ err_t beltHMAC(
 	octet mac[32],			/*!< [out] имитовставка */
 	const void* src,		/*!< [in] данные */
 	size_t count,			/*!< [in] число октетов данных */
-	const octet theta[],	/*!< [in] ключ */
+	const octet key[],		/*!< [in] ключ */
 	size_t len				/*!< [in] длина ключа */
 );
 
@@ -1258,7 +1391,7 @@ err_t beltHMAC(
 
 /*!	\brief Построение ключа по паролю
 
-	По паролю [pwd_len]pwd строится ключ theta. Для усложнения словарных атак 
+	По паролю [pwd_len]pwd строится ключ key. Для усложнения словарных атак 
 	используется синхропосылка [salt_len]salt. Для усложнения перебора паролей 
 	ключ пересчитывается iter > 0 раз.
 	\expect{ERR_BAD_INPUT} iter != 0.
@@ -1269,7 +1402,7 @@ err_t beltHMAC(
 	Этот алгоритм отличается от алгоритма PBKDF2, определенного в PKCS#5.
 */
 err_t beltPBKDF(
-	octet theta[32],		/*!< [out] ключ */
+	octet key[32],			/*!< [out] ключ */
 	const octet pwd[],		/*!< [in] пароль */
 	size_t pwd_len,			/*!< [in] длина пароля (в октетах) */
 	size_t iter,			/*!< [in] число итераций */
@@ -1279,7 +1412,7 @@ err_t beltPBKDF(
 
 /*!	\brief Построение ключа по паролю
 
-	По паролю [pwd_len]pwd строится ключ theta. Для усложнения словарных атак 
+	По паролю [pwd_len]pwd строится ключ key. Для усложнения словарных атак 
 	используется синхропосылка [salt_len]salt. Для усложнения перебора паролей 
 	ключ пересчитывается iter > 0 раз.
 	\expect{ERR_BAD_INPUT} iter != 0.
@@ -1289,7 +1422,7 @@ err_t beltPBKDF(
 	\remark Реализован алгоритм PBKDF2, определенный в PKCS#5.
 */
 err_t beltPBKDF2(
-	octet theta[32],		/*!< [out] ключ */
+	octet key[32],			/*!< [out] ключ */
 	const octet pwd[],		/*!< [in] пароль */
 	size_t pwd_len,			/*!< [in] длина пароля (в октетах) */
 	size_t iter,			/*!< [in] число итераций */

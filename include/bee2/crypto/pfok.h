@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.06.30
-\version 2015.08.31
+\version 2017.10.10
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -67,7 +67,7 @@ extern "C" {
 	умножения Монтгомери: 
 	\code
 		a \circ b = a b R^{-1} \bmod p, R = 2^{l + 2};
-	\endcode;
+	\endcode
 	Возведение в степень в B_p обозначается круглыми скобками: a^(b) --- 
 	произведение Монтгомери b экземпляров элемента a;
 -	0 < g < p;

@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.09
-\version 2016.04.22
+\version 2017.10.09
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -31,11 +31,7 @@ extern "C" {
 *******************************************************************************
 \file err.h
 
-Коды системных ошибок выбираются из диапазона 1 -- 3199. Коды системных
-ошибок соответствуют кодам Windows. Код 32000 соответствует
-неклассифицированной системной ошибке.
-
-Обработка ошибок может быть ускорена с помощью макросов ERR_CALL_XXX.
+Обработка ошибок может быть упрощена с помощью макросов ERR_CALL_XXX.
 *******************************************************************************
 */
 
@@ -71,6 +67,8 @@ Sys
 #define ERR_BUSY					_ERR_REG(111)
 /* таймаут */
 #define ERR_TIMEOUT					_ERR_REG(112)
+/* не реализовано */
+#define ERR_NOT_IMPLEMENTED			_ERR_REG(113)
 
 /*
 *******************************************************************************
@@ -116,51 +114,51 @@ Core
 
 /*
 *******************************************************************************
-Crypto
-*******************************************************************************
-*/
-
-/* некорректные долговременные параметры */
-#define ERR_BAD_PARAMS				_ERR_REG(401)
-/* некорректный секретный ключ */
-#define ERR_BAD_SECKEY				_ERR_REG(402)
-/* некорректный личный ключ */
-#define ERR_BAD_PRIVKEY				_ERR_REG(403)
-/* некорректный открытый ключ */
-#define ERR_BAD_PUBKEY				_ERR_REG(404)
-/* некорректный сертификат (открытого ключа) */
-#define ERR_BAD_CERT				_ERR_REG(405)
-/* некорректный общий ключ */
-#define ERR_BAD_SHAREKEY			_ERR_REG(406)
-/* некорректное хэш-значение */
-#define ERR_BAD_HASH				_ERR_REG(407)
-/* некорректная ЭЦП */
-#define ERR_BAD_SIG					_ERR_REG(408)
-/* некорректная имитовставка */
-#define ERR_BAD_MAC					_ERR_REG(409)
-/* некорректный токен ключа */
-#define ERR_BAD_KEYTOKEN			_ERR_REG(410)
-/* ошибка аутентификации */
-#define ERR_BAD_AUTH				_ERR_REG(411)
-/* неверная логика (протокола) */
-#define ERR_BAD_LOGIC				_ERR_REG(412)
-/* неверный пароль */
-#define ERR_BAD_PWD					_ERR_REG(413)
-
-/*
-*******************************************************************************
 Math
 *******************************************************************************
 */
 
 /* некорректная точка эллиптической кривой */
-#define ERR_BAD_POINT				_ERR_REG(32019)
+#define ERR_BAD_POINT				_ERR_REG(401)
 /* нарушена простота */
-#define ERR_NOT_PRIME				_ERR_REG(32020)
+#define ERR_NOT_PRIME				_ERR_REG(402)
 /* нарушена взаимная простота */
-#define ERR_NOT_COPRIME				_ERR_REG(32021)
+#define ERR_NOT_COPRIME				_ERR_REG(403)
 /* многочлен не является неприводимым */
-#define ERR_NOT_IRRED				_ERR_REG(32022)
+#define ERR_NOT_IRRED				_ERR_REG(404)
+
+/*
+*******************************************************************************
+Crypto
+*******************************************************************************
+*/
+
+/* некорректные долговременные параметры */
+#define ERR_BAD_PARAMS				_ERR_REG(501)
+/* некорректный секретный ключ */
+#define ERR_BAD_SECKEY				_ERR_REG(502)
+/* некорректный личный ключ */
+#define ERR_BAD_PRIVKEY				_ERR_REG(503)
+/* некорректный открытый ключ */
+#define ERR_BAD_PUBKEY				_ERR_REG(504)
+/* некорректный сертификат (открытого ключа) */
+#define ERR_BAD_CERT				_ERR_REG(505)
+/* некорректный общий ключ */
+#define ERR_BAD_SHAREKEY			_ERR_REG(506)
+/* некорректное хэш-значение */
+#define ERR_BAD_HASH				_ERR_REG(507)
+/* некорректная ЭЦП */
+#define ERR_BAD_SIG					_ERR_REG(508)
+/* некорректная имитовставка */
+#define ERR_BAD_MAC					_ERR_REG(509)
+/* некорректный токен ключа */
+#define ERR_BAD_KEYTOKEN			_ERR_REG(510)
+/* ошибка аутентификации */
+#define ERR_BAD_AUTH				_ERR_REG(511)
+/* неверная логика (протокола) */
+#define ERR_BAD_LOGIC				_ERR_REG(512)
+/* неверный пароль */
+#define ERR_BAD_PWD					_ERR_REG(513)
 
 /*
 *******************************************************************************
