@@ -448,24 +448,24 @@ bool_t beltTest()
 	{
 		u16 str[17] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
 		u16 str1[17];
-		beltFMTEncrypt(str1, 9, str, 9, beltH() + 128, 32, 0);
-		beltFMTDecrypt(str1, 9, str1, 9, beltH() + 128, 32, 0);
+		beltFMTEncrypt(str1, 9, str, 9, beltH() + 128, 32, beltH() + 128);
+		beltFMTDecrypt(str1, 9, str1, 9, beltH() + 128, 32, beltH() + 128);
 		if (!memEq(str, str1, 8 * 2))
 			return FALSE;
-		beltFMTEncrypt(str1, 10, str, 10, beltH() + 128, 32, 0);
-		beltFMTDecrypt(str1, 10, str1, 10, beltH() + 128, 32, 0);
+		beltFMTEncrypt(str1, 10, str, 10, beltH() + 128, 32, beltH() + 128);
+		beltFMTDecrypt(str1, 10, str1, 10, beltH() + 128, 32, beltH() + 128);
 		if (!memEq(str, str1, 10 * 2))
 			return FALSE;
 		beltFMTEncrypt(str1, 11, str, 11, beltH() + 128, 32, 0);
 		beltFMTDecrypt(str1, 11, str1, 11, beltH() + 128, 32, 0);
 		if (!memEq(str, str1, 11 * 2))
 			return FALSE;
-		beltFMTEncrypt(str1, 256, str, 16, beltH() + 128, 32, 0);
-		beltFMTDecrypt(str1, 256, str1, 16, beltH() + 128, 32, 0);
+		beltFMTEncrypt(str1, 256, str, 16, beltH() + 128, 32, beltH() + 128);
+		beltFMTDecrypt(str1, 256, str1, 16, beltH() + 128, 32, beltH() + 128);
 		if (!memEq(str, str1, 16 * 2))
 			return FALSE;
-		beltFMTEncrypt(str1, 257, str, 17, beltH() + 128, 32, 0);
-		beltFMTDecrypt(str1, 257, str1, 17, beltH() + 128, 32, 0);
+		beltFMTEncrypt(str1, 257, str, 17, beltH() + 128, 32, beltH() + 128);
+		beltFMTDecrypt(str1, 257, str1, 17, beltH() + 128, 32, beltH() + 128);
 		if (!memEq(str, str1, 17 * 2))
 			return FALSE;
 		beltFMTEncrypt(str1, 57726, str, 17, beltH() + 128, 32, 0);

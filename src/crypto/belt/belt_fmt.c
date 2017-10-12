@@ -283,8 +283,6 @@ size_t beltFMT_keep(u32 mod, size_t count)
 	return sizeof(belt_fmt_st) + 16 * (beltFMTCalcB(mod, (count + 1) / 2) + 1);
 }
 
-#include <math.h>
-
 void beltFMTStart(void* state, u32 mod, size_t count, const octet key[], 
 	size_t len)
 {
