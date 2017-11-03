@@ -752,6 +752,10 @@
 						RelativePath="..\..\src\crypto\belt\belt_pbkdf.c"
 						>
 					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_wbl.c"
+						>
+					</File>
 				</Filter>
 			</Filter>
 		</Filter>

@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2017.09.28
+\version 2017.11.03
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -16,7 +16,6 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/core/util.h"
 #include "bee2/crypto/belt.h"
 #include "belt_int.h"
-
 
 /*
 *******************************************************************************
@@ -89,11 +88,11 @@ void beltHalfBlockAddBitSizeW(word block[W_OF_B(64)], size_t count)
 
 /*
 *******************************************************************************
-Преобразования sigma1, sigma2
+Алгоритмы belt-compr, sigma2
 
-В функции beltSigma реализованы преобразования sigma1, sigma2 (п. 6.9.2):
+Функция beltCompr() возвращает оба выхода belt-compr:
 	s <- s + sigma1(X || h), h <- sigma2(X || h).
-В функции beltSigma2 реализовано только преобразование sigma2.
+Функция beltCompr2() возвращает только второй выход.
 
 h и X разбиваются на половинки:
 	[8]h = [4]h0 || [4]h1, [8]X = [4]X0 || [4]X1.
@@ -101,11 +100,11 @@ h и X разбиваются на половинки:
 \pre Буферы s и h, s и X, h и X не пересекаются.
 
 Схема расчета глубины стека:
-		beltSigma_deep().
+		beltCompr_deep().
 *******************************************************************************
 */
 
-void beltSigma(u32 s[4], u32 h[8], const u32 X[8], void* stack)
+void beltCompr(u32 s[4], u32 h[8], const u32 X[8], void* stack)
 {
 	// [12]buf = [4]buf0 || [4]buf1 || [4]buf2
 	u32* buf = (u32*)stack;
@@ -135,7 +134,7 @@ void beltSigma(u32 s[4], u32 h[8], const u32 X[8], void* stack)
 	beltBlockXor2(h + 4, X + 4);
 }
 
-void beltSigma2(u32 h[8], const u32 X[8], void* stack)
+void beltCompr2(u32 h[8], const u32 X[8], void* stack)
 {
 	// [12]buf = [4]buf0 || [4]buf1 || [4]buf2
 	u32* buf = (u32*)stack;
@@ -163,7 +162,7 @@ void beltSigma2(u32 h[8], const u32 X[8], void* stack)
 	beltBlockXor2(h + 4, X + 4);
 }
 
-size_t beltSigma_deep()
+size_t beltCompr_deep()
 {
 	return 12 * 4;
 }

@@ -22,6 +22,8 @@ set(src
   crypto/bash.c
   crypto/bels.c
   crypto/belt/belt_block.c
+  crypto/belt/belt_wbl.c
+  crypto/belt/belt_int.c
   crypto/belt/belt_cbc.c
   crypto/belt/belt_cfb.c
   crypto/belt/belt_ctr.c
@@ -30,7 +32,6 @@ set(src
   crypto/belt/belt_fmt.c
   crypto/belt/belt_hash.c
   crypto/belt/belt_hmac.c
-  crypto/belt/belt_int.c
   crypto/belt/belt_krp.c
   crypto/belt/belt_kwp.c
   crypto/belt/belt_mac.c

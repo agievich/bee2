@@ -85,6 +85,7 @@ bool_t beltTest()
 	octet level[12];
 	octet state[1024];
 	// создать стек
+	ASSERT(sizeof(state) >= beltWBL_keep());
 	ASSERT(sizeof(state) >= beltECB_keep());
 	ASSERT(sizeof(state) >= beltCBC_keep());
 	ASSERT(sizeof(state) >= beltCFB_keep());
@@ -444,32 +445,60 @@ bool_t beltTest()
 	// zerosum
 	if (!beltZerosumTest())
 		return FALSE;
+	// wbl (experimental)
+	{
+		size_t i;
+		beltWBLStart(state, beltH() + 128, 32);
+		for (i = 17; i < 48; ++i)
+		{
+			memCopy(buf, beltH(), i);
+			beltWBLStepE(buf, i, state);
+			if (i >= 32)
+			{
+				memCopy(buf1, beltH(), i);
+				beltKWPStepE(buf1, i, state);
+				if (!memEq(buf, buf1, i))
+					return FALSE;
+			}
+			beltWBLStepD(buf, i, state);
+			if (!memEq(buf, beltH(), i))
+				return FALSE;
+			if (i >= 32)
+			{
+				memCopy(buf, buf1, i);
+				beltKWPStepD(buf, i, state);
+				beltKWPStepD2(buf1, buf1 + i - 16, i, state);
+				if (!memEq(buf, buf1, i))
+					return FALSE;
+			}
+		}
+	}
 	// fmt (experimental)
 	{
 		u16 str[17] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
 		u16 str1[17];
-		beltFMTEncrypt(str1, 9, str, 9, beltH() + 128, 32, beltH() + 128);
-		beltFMTDecrypt(str1, 9, str1, 9, beltH() + 128, 32, beltH() + 128);
+		beltFMTEncrypt(str1, 9, str, 9, beltH() + 128, 32, beltH() + 192);
+		beltFMTDecrypt(str1, 9, str1, 9, beltH() + 128, 32, beltH() + 192);
 		if (!memEq(str, str1, 8 * 2))
 			return FALSE;
-		beltFMTEncrypt(str1, 10, str, 10, beltH() + 128, 32, beltH() + 128);
-		beltFMTDecrypt(str1, 10, str1, 10, beltH() + 128, 32, beltH() + 128);
+		beltFMTEncrypt(str1, 10, str, 10, beltH() + 128, 32, beltH() + 192);
+		beltFMTDecrypt(str1, 10, str1, 10, beltH() + 128, 32, beltH() + 192);
 		if (!memEq(str, str1, 10 * 2))
 			return FALSE;
 		beltFMTEncrypt(str1, 11, str, 11, beltH() + 128, 32, 0);
 		beltFMTDecrypt(str1, 11, str1, 11, beltH() + 128, 32, 0);
 		if (!memEq(str, str1, 11 * 2))
 			return FALSE;
-		beltFMTEncrypt(str1, 256, str, 16, beltH() + 128, 32, beltH() + 128);
-		beltFMTDecrypt(str1, 256, str1, 16, beltH() + 128, 32, beltH() + 128);
+		beltFMTEncrypt(str1, 256, str, 16, beltH() + 128, 32, beltH() + 192);
+		beltFMTDecrypt(str1, 256, str1, 16, beltH() + 128, 32, beltH() + 192);
 		if (!memEq(str, str1, 16 * 2))
 			return FALSE;
-		beltFMTEncrypt(str1, 257, str, 17, beltH() + 128, 32, beltH() + 128);
-		beltFMTDecrypt(str1, 257, str1, 17, beltH() + 128, 32, beltH() + 128);
+		beltFMTEncrypt(str1, 257, str, 17, beltH() + 128, 32, beltH() + 192);
+		beltFMTDecrypt(str1, 257, str1, 17, beltH() + 128, 32, beltH() + 192);
 		if (!memEq(str, str1, 17 * 2))
 			return FALSE;
-		beltFMTEncrypt(str1, 57726, str, 17, beltH() + 128, 32, 0);
-		beltFMTDecrypt(str1, 57726, str1, 17, beltH() + 128, 32, 0);
+		beltFMTEncrypt(str1, 49667, str, 17, beltH() + 128, 32, 0);
+		beltFMTDecrypt(str1, 49667, str1, 17, beltH() + 128, 32, 0);
 		if (!memEq(str, str1, 17 * 2))
 			return FALSE;
 		beltFMTEncrypt(str1, 65536, str, 17, beltH() + 128, 32, 0);

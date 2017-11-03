@@ -23,16 +23,6 @@ matrix:
       - COVERITY_SCAN_BUILD_COMMAND="make"
       script:
       - curl -s 'https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh' | bash || true
-    - os: osx
-      compiler: clang
-      env: 
-      - COVERITY_SCAN_PROJECT_NAME="$TRAVIS_REPO_SLUG"
-      - COVERITY_SCAN_BRANCH_PATTERN="master"
-      - COVERITY_SCAN_NOTIFICATION_EMAIL="agievich@gmail.com"
-      - COVERITY_SCAN_BUILD_COMMAND_PREPEND="cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_FAST=OFF"
-      - COVERITY_SCAN_BUILD_COMMAND="make"
-      script:
-      - curl -s 'https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh' | bash || true
     - os: linux
       compiler: gcc
       env: BUILD_TYPE="Release" BUILD_FAST="ON"

@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2017.09.28
+\version 2017.11.03
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -21,8 +21,20 @@ version 3. See Copyright Notices in bee2/info.h.
 /*
 *******************************************************************************
 Шифрование и имитозащита ключей (KWP)
+
+Отдельная от WBL реализация: 
+	1) в состоянии можно не учитывать номер такта,
+	2) можно использовать тот факт, что длина блока не меньше 32 
+	и задействовать в состоянии только один временный 16-байтовый блок.
 *******************************************************************************
 */
+
+typedef struct
+{
+	u32 key[8];			/*< форматированный ключ */
+	octet block[16];	/*< вспомогательный блок */
+} belt_kwp_st;
+
 
 size_t beltKWP_keep()
 {
@@ -32,18 +44,20 @@ size_t beltKWP_keep()
 void beltKWPStart(void* state, const octet key[], size_t len)
 {
 	belt_kwp_st* s = (belt_kwp_st*)state;
-	ASSERT(memIsValid(state, beltKWP_keep()));
+	ASSERT(memIsValid(state, beltWBL_keep()));
 	beltKeyExpand2(s->key, key, len);
-	s->round = 0;
 }
 
 void beltKWPStepE(void* buf, size_t count, void* state)
 {
 	belt_kwp_st* s = (belt_kwp_st*)state;
 	word n = ((word)count + 15) / 16;
-	ASSERT(count >= 32);
-	ASSERT(memIsDisjoint2(buf, count, state, beltKWP_keep()));
-	do
+	word round;
+	// pre
+	ASSERT(count > 16);
+	ASSERT(memIsDisjoint2(buf, count, state, beltWBL_keep()));
+	// итерации
+	for (round = 1; round <= 2 * n; ++round)
 	{
 		size_t i;
 		// block <- r1 + ... + r_{n-1}
@@ -56,27 +70,35 @@ void beltKWPStepE(void* buf, size_t count, void* state)
 		beltBlockCopy((octet*)buf + count - 16, s->block);
 		// block <- beltBlockEncr(block) + <round>
 		beltBlockEncr(s->block, s->key);
-		s->round++;
 #if (OCTET_ORDER == LITTLE_ENDIAN)
-		memXor2(s->block, &s->round, O_PER_W);
+		memXor2(s->block, &round, O_PER_W);
 #else // BIG_ENDIAN
-		s->round = wordRev(s->round);
-		memXor2(s->block, &s->round, O_PER_W);
-		s->round = wordRev(s->round);
+		round = wordRev(round);
+		memXor2(s->block, &round, O_PER_W);
+		round = wordRev(round);
 #endif // OCTET_ORDER
 		// r*_до_сдвига <- r*_до_сдвига + block
 		beltBlockXor2((octet*)buf + count - 32, s->block);
 	}
-	while (s->round % (2 * n));
+}
+
+void beltWBLStepE(void* buf, size_t count, void* state)
+{
+	belt_wbl_st* s = (belt_wbl_st*)state;
+	ASSERT(memIsValid(state, beltWBL_keep()));
+	s->round = 0;
+	beltWBLStepR(buf, count, state);
 }
 
 void beltKWPStepD(void* buf, size_t count, void* state)
 {
 	belt_kwp_st* s = (belt_kwp_st*)state;
 	word n = ((word)count + 15) / 16;
+	word round;
+	// pre
 	ASSERT(count >= 32);
-	ASSERT(memIsDisjoint2(buf, count, state, beltKWP_keep()));
-	for (s->round = 2 * n; s->round; --s->round)
+	ASSERT(memIsDisjoint2(buf, count, state, beltWBL_keep()));
+	for (round = 2 * n; round; --round)
 	{
 		size_t i;
 		// block <- r*
@@ -88,11 +110,11 @@ void beltKWPStepD(void* buf, size_t count, void* state)
 		// block <- beltBlockEncr(block) + <round>
 		beltBlockEncr(s->block, s->key);
 #if (OCTET_ORDER == LITTLE_ENDIAN)
-		memXor2(s->block, &s->round, O_PER_W);
+		memXor2(s->block, &round, O_PER_W);
 #else // BIG_ENDIAN
-		s->round = wordRev(s->round);
-		memXor2(s->block, &s->round, O_PER_W);
-		s->round = wordRev(s->round);
+		round = wordRev(round);
+		memXor2(s->block, &round, O_PER_W);
+		round = wordRev(round);
 #endif // OCTET_ORDER
 		// r* <- r* + block
 		beltBlockXor2((octet*)buf + count - 16, s->block);
@@ -106,9 +128,11 @@ void beltKWPStepD2(void* buf1, void* buf2, size_t count, void* state)
 {
 	belt_kwp_st* s = (belt_kwp_st*)state;
 	word n = ((word)count + 15) / 16;
+	word round;
+	// pre
 	ASSERT(count >= 32);
 	ASSERT(memIsDisjoint3(buf1, count - 16, buf2, 16, state, beltKWP_keep()));
-	for (s->round = 2 * n; s->round; --s->round)
+	for (round = 2 * n; round; --round)
 	{
 		size_t i;
 		// block <- r*
@@ -121,11 +145,11 @@ void beltKWPStepD2(void* buf1, void* buf2, size_t count, void* state)
 		// block <- beltBlockEncr(block) + <round>
 		beltBlockEncr(s->block, s->key);
 #if (OCTET_ORDER == LITTLE_ENDIAN)
-		memXor2(s->block, &s->round, O_PER_W);
+		memXor2(s->block, &round, O_PER_W);
 #else // BIG_ENDIAN
-		s->round = wordRev(s->round);
-		memXor2(s->block, &s->round, O_PER_W);
-		s->round = wordRev(s->round);
+		round = wordRev(round);
+		memXor2(s->block, &round, O_PER_W);
+		round = wordRev(round);
 #endif // OCTET_ORDER
 		// r* <- r* + block
 		beltBlockXor2(buf2, s->block);

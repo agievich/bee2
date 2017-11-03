@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.05.10
-\version 2017.01.17
+\version 2017.10.14
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -156,9 +156,7 @@ static const u32 crc32_table[] = {
 u32 utilCRC32(const void* buf, size_t count, u32 state)
 {
 	const octet* octets = (const octet*)buf;
-	state = state ^ 0xFFFFFFFF;
-
-	while (count--)
+	for (state ^= 0xFFFFFFFF; count--; )
 		state = crc32_table[(state ^ *octets++) & 0xFF] ^ (state >> 8);
 	return state ^ 0xFFFFFFFF;
 }

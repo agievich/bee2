@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.27
-\version 2016.05.25
+\version 2017.11.03
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -913,14 +913,14 @@ err_t bignSign2(octet sig[], const bign_params* params, const octet oid_der[],
 		if (t != 0)
 			beltHashStepH(t, t_len, stack);
 		beltHashStepG(stack, stack);
-		// инициализировать beltKWP ключом theta
-		beltKWPStart(stack, stack, 32);
+		// инициализировать beltWBL ключом theta
+		beltWBLStart(stack, stack, 32);
 		// k <- H
 		memCopy(k, hash, no);
-		// k <- beltKWP(k, theta) пока k \notin {1,..., q - 1}
+		// k <- beltWBL(k, theta) пока k \notin {1,..., q - 1}
 		while (1)
 		{
-			beltKWPStepE(k, no, stack);
+			beltWBLStepE(k, no, stack);
 			wwFrom(k, k, no);
 			if (!wwIsZero(k, n) && wwCmp(k, ec->order, n) < 0)
 				break;
@@ -1613,14 +1613,14 @@ err_t bignIdSign2(octet id_sig[], const bign_params* params,
 		if (t != 0)
 			beltHashStepH(t, t_len, stack);
 		beltHashStepG(stack, stack);
-		// инициализировать beltKWP ключом theta
-		beltKWPStart(stack, stack, 32);
+		// инициализировать beltWBL ключом theta
+		beltWBLStart(stack, stack, 32);
 		// k <- H
 		memCopy(k, hash, no);
-		// k <- beltKWP(k, theta) пока k \notin {1,..., q - 1}
+		// k <- beltWBL(k, theta) пока k \notin {1,..., q - 1}
 		while (1)
 		{
-			beltKWPStepE(k, no, stack);
+			beltWBLStepE(k, no, stack);
 			wwFrom(k, k, no);
 			if (!wwIsZero(k, n) && wwCmp(k, ec->order, n) < 0)
 				break;

@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2017.09.28
+\version 2017.11.03
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -201,7 +201,7 @@ extern "C" {
 
 /*
 *******************************************************************************
-Состояния CTR и KWP (используются в DWP и FMT)
+Состояния CTR и WBL (используются в DWP, KWP и FMT)
 *******************************************************************************
 */
 
@@ -216,9 +216,10 @@ typedef struct
 typedef struct
 {
 	u32 key[8];			/*< форматированный ключ */
-	octet block[16];	/*< вспомогательный блок */
+	octet s[16];		/*< переменная s */
+	octet t[16];		/*< зашифрованная s */
 	word round;			/*< номер такта */
-} belt_kwp_st;
+} belt_wbl_st;
 
 
 /*
@@ -229,9 +230,9 @@ typedef struct
 
 void beltBlockAddBitSizeU32(u32 block[4], size_t count);
 void beltHalfBlockAddBitSizeW(word block[W_OF_B(64)], size_t count);
-void beltSigma(u32 s[4], u32 h[8], const u32 X[8], void* stack);
-void beltSigma2(u32 h[8], const u32 X[8], void* stack);
-size_t beltSigma_deep();
+void beltCompr(u32 s[4], u32 h[8], const u32 X[8], void* stack);
+void beltCompr2(u32 h[8], const u32 X[8], void* stack);
+size_t beltCompr_deep();
 
 #ifdef __cplusplus
 } /* extern "C" */

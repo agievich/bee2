@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2017.09.28
-\version 2017.10.12
+\version 2017.11.03
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -23,9 +23,9 @@ version 3. See Copyright Notices in bee2/info.h.
 
 /*
 *******************************************************************************
-Минимальное число 128-битовых блоков для размещения слова из ZZ_mod^count.
+Минимальное число 64-битовых блоков для размещения слова из ZZ_mod^count.
 
-Необходимо вычислить ceil(log2(mod) * count / 128).
+Необходимо вычислить ceil(log2(mod) * count / 64).
 
 Реализован следующий алгоритм:
 
@@ -34,21 +34,20 @@ version 3. See Copyright Notices in bee2/info.h.
 3. x <- (m - 2^k)/ 2^k.
 4. y <- x(60 + 60x + 11x^2)/(60 + 60x + 36x^2 + 3x^3) 
    (аппроксимация Паде для ln(1 + x)).
-5. b <- ceil((k + y / c) * count / 128).
+5. b <- ceil((k + y / c) * count / 64).
 6. Возвратить b.
 
 Аргумент ceil() на предпоследнем шаге можно записать следующим образом:
 \code
 	count * (4764 k (8^k + 9 4^k mod + 9 2^k mod^2 + mod^3) - 
                2291(11 8^k + 27 4^k mod - 27 2^k mod^2 - 11 mod^3)) / 
-	60972 * (8^k + 9 4^k mod + 9 2^k mod^2 + mod^3)
+	304896 * (8^k + 9 4^k mod + 9 2^k mod^2 + mod^3)
 \endcode
 
-Алгоритм правильно работает для mod <= 65536 и count <= 256.
-Алгоритм правильно работает и для count <= 512 за исключением 
+Алгоритм правильно работает для mod <= 65536 и count <= 300 за исключением
 следующих сочетаний (mod, count):
 \code
-	(35707, 347), (49667, 320), (57726, 437).
+	(49667, 160).
 \endcode
 
 Проверка:
@@ -58,10 +57,10 @@ version 3. See Copyright Notices in bee2/info.h.
 	u32 mod;
 	size_t count;
 	for (mod = 2; mod <= 65536; ++mod)
-		for (count = 1; count <= 512; ++count)
+		for (count = 1; count <= 300; ++count)
 		{
 			long double b = log(mod) / log(2.0);
-			b *= count, b /= 128.0;
+			b *= count, b /= 64.0;
 			if ((size_t)ceil(b) != beltFMTCalcB(mod, count))
 				ASSERT(0);
 		}
@@ -86,17 +85,13 @@ static size_t beltFMTCalcB(u32 mod, size_t count)
 	word* t4 = t3 + m; 
 	// pre
 	ASSERT(2 <= mod && mod <= 65536);
-	ASSERT(1 <= count && count <= 512);
+	ASSERT(1 <= count && count <= 300);
 	// обработать особые сочетания (mod, count)
-	if (mod == 35707 && count == 347)
-		return 41;
 	if (mod == 49667 && count == 320)
 		return 39;
-	if (mod == 57726 && count == 437)
-		return 55;
 	// обработать mod, который не умещается в 16 битов
 	if (mod == 65536)
-		return (16 * count + 127) / 128;
+		return (16 * count + 63) / 64;
 	// k <- ceil(log2(mod))
 	k = B_PER_W - wordCLZ((word)mod);
 	ASSERT(k > 0);
@@ -139,8 +134,8 @@ static size_t beltFMTCalcB(u32 mod, size_t count)
 	zzMulW(t0, t0, m, 25201);
 	zzSub2(num, t0, m);
 	zzMulW(num, num, m, (word)count);
-	// den <- 609792 * den
-	zzMulW(den, den, m, 1536);
+	// den <- 304896 * den
+	zzMulW(den, den, m, 768);
 	zzMulW(den, den, m, 397);
 	// num <- num + den - 1
 	zzAdd2(num, den, m);
@@ -165,7 +160,7 @@ static void beltStr2Bin(octet bin[], size_t b, u32 mod,
 	word* a;
 	size_t m;
 	// подготовить память
-	memSetZero(bin, 16 * b);
+	memSetZero(bin, 8 * b);
 	// особый случай: mod может не уложиться в word
 	if (mod == 65536)
 	{
@@ -178,7 +173,7 @@ static void beltStr2Bin(octet bin[], size_t b, u32 mod,
 	--count;
 	EXPECT(str[count] < mod);
 	a = (word*)bin;
-	m = W_OF_O(16 * b);
+	m = W_OF_O(8 * b);
 	a[0] = (word)str[count];
 	while (count--)
 	{
@@ -186,7 +181,7 @@ static void beltStr2Bin(octet bin[], size_t b, u32 mod,
 		EXPECT(str[count] < mod);
 		zzAddW2(a, m, (word)str[count]);
 	}
-	wwTo(bin, 16 * b, a);
+	wwTo(bin, 8 * b, a);
 }
 
 static void beltBin2StrAdd(u32 mod, u16 str[], size_t count, 
@@ -199,15 +194,15 @@ static void beltBin2StrAdd(u32 mod, u16 str[], size_t count,
 	if (mod == 65536)
 	{
 		u16* uu = (u16*)bin;
-		u16From(uu, bin, 16 * b);
+		u16From(uu, bin, 8 * b);
 		while (count--)
 			str[count] += uu[count];
 		return;
 	}
 	// настроить память
-	m = W_OF_O(16 * b);
+	m = W_OF_O(8 * b);
 	a = (word*)bin;
-	wwFrom(a, bin, 16 * b);
+	wwFrom(a, bin, 8 * b);
 	// конвертировать и сложить
 	ASSERT(2 <= mod && mod < 65536);
 	while (count--)
@@ -230,15 +225,15 @@ static void beltBin2StrSub(word mod, u16 str[], size_t count,
 	if (mod == 65536)
 	{
 		u16* uu = (u16*)bin;
-		u16From(uu, bin, 16 * b);
+		u16From(uu, bin, 8 * b);
 		while (count--)
 			str[count] -= uu[count];
 		return;
 	}
 	// настроить память
-	m = W_OF_O(16 * b);
+	m = W_OF_O(8 * b);
 	a = (word*)bin;
-	wwFrom(a, bin, 16 * b);
+	wwFrom(a, bin, 8 * b);
 	// конвертировать и вычесть
 	ASSERT(2 <= mod && mod <= 65536);
 	while (count--)
@@ -266,7 +261,7 @@ static void beltBin2StrSub(word mod, u16 str[], size_t count,
 
 typedef struct
 {
-	belt_kwp_st kwp[1];		/*< состояние механизма KWP */
+	belt_wbl_st wbl[1];		/*< состояние механизма WBL */
 	u32 mod;				/*< модуль */
 	size_t n1;				/*< длина левой половинки */
 	size_t n2;				/*< длина правой половинки */
@@ -279,8 +274,8 @@ typedef struct
 size_t beltFMT_keep(u32 mod, size_t count)
 {
 	ASSERT(2 <= mod && mod <= 65536);
-	ASSERT(count >= 2 && count <= 512);
-	return sizeof(belt_fmt_st) + 16 * (beltFMTCalcB(mod, (count + 1) / 2) + 1);
+	ASSERT(2 <= count && count <= 600);
+	return sizeof(belt_fmt_st) + 8 * (beltFMTCalcB(mod, (count + 1) / 2) + 1);
 }
 
 void beltFMTStart(void* state, u32 mod, size_t count, const octet key[], 
@@ -288,10 +283,10 @@ void beltFMTStart(void* state, u32 mod, size_t count, const octet key[],
 {
 	belt_fmt_st* s = (belt_fmt_st*)state;
 	ASSERT(2 <= mod && mod <= 65536);
-	ASSERT(count >= 2);
+	ASSERT(2 <= count && count <= 600);
 	ASSERT(memIsValid(state, beltFMT_keep(mod, count)));
 	// инициализировать состояние
-	beltKWPStart(s->kwp, key, len);
+	beltWBLStart(s->wbl, key, len);
 	s->mod = mod;
 	s->n1 = (count + 1) / 2;
 	s->n2 = count / 2;
@@ -313,21 +308,25 @@ void beltFMTStepE(u16 buf[], const octet iv[16], void* state)
 	else
 		memSetZero(s->iv, 16);
 	// такты
-	for (i = 0; i < 3; ++i)
+	for (i = 0; i < 1; ++i)
 	{
-		// первая половина
-		memCopy(s->buf, s->iv, 16);
-		s->buf[0] ^= beltH()[32 * i];
-		beltStr2Bin(s->buf + 16, s->b2, s->mod, buf + s->n1, s->n2);
-		s->kwp->round = 0;
-		beltKWPStepE(s->buf, 16 * s->b2 + 16, s->kwp);
+		// первая половинка
+		beltStr2Bin(s->buf, s->b2, s->mod, buf + s->n1, s->n2);
+		memCopy(s->buf + s->b2 * 8, s->iv, 8);
+		s->buf[s->b2 * 8] ^= beltH()[16 * i];
+		if (s->b2 == 1)
+			beltBlockEncr(s->buf, s->wbl->key);
+		else
+			beltWBLStepE(s->buf, 8 * s->b2 + 8, s->wbl);
 		beltBin2StrAdd(s->mod, buf, s->n1, s->buf, s->b2 + 1);
-		// вторая половина
-		memCopy(s->buf, s->iv, 16);
-		s->buf[0] ^= beltH()[32 * i + 16];
-		beltStr2Bin(s->buf + 16, s->b1, s->mod, buf, s->n1);
-		s->kwp->round = 0;
-		beltKWPStepE(s->buf, 16 * s->b1 + 16, s->kwp);
+		// вторая половинка
+		beltStr2Bin(s->buf, s->b1, s->mod, buf, s->n1);
+		memCopy(s->buf + s->b1 * 8, s->iv + 8, 8);
+		s->buf[s->b1 * 8] ^= beltH()[16 * i + 8];
+		if (s->b1 == 1)
+			beltBlockEncr(s->buf, s->wbl->key);
+		else
+			beltWBLStepE(s->buf, 8 * s->b1 + 8, s->wbl);
 		beltBin2StrAdd(s->mod, buf + s->n1, s->n2, s->buf, s->b1 + 1);
 	}
 }
@@ -346,23 +345,27 @@ void beltFMTStepD(u16 buf[], const octet iv[16], void* state)
 	else
 		memSetZero(s->iv, 16);
 	// такты
-	for (i = 3; i--;)
+	for (i = 1; i--;)
 	{
-		// вторая половина
-		memCopy(s->buf, s->iv, 16);
-		s->buf[0] ^= beltH()[32 * i + 16];
-		beltStr2Bin(s->buf + 16, s->b1, s->mod, buf, s->n1);
-		s->kwp->round = 0;
-		beltKWPStepE(s->buf, 16 * s->b1 + 16, s->kwp);
+		// вторая половинка
+		beltStr2Bin(s->buf, s->b1, s->mod, buf, s->n1);
+		memCopy(s->buf + s->b1 * 8, s->iv + 8, 8);
+		s->buf[s->b1 * 8] ^= beltH()[16 * i + 8];
+		if (s->b1 == 1)
+			beltBlockEncr(s->buf, s->wbl->key);
+		else
+			beltWBLStepE(s->buf, 8 * s->b1 + 8, s->wbl);
 		beltBin2StrSub(s->mod, buf + s->n1, s->n2, s->buf, s->b1 + 1);
 		// первая половинка
-		memCopy(s->buf, s->iv, 16);
-		s->buf[0] ^= beltH()[32 * i];
-		beltStr2Bin(s->buf + 16, s->b2, s->mod, buf + s->n1, s->n2);
-		s->kwp->round = 0;
-		beltKWPStepE(s->buf, 16 * s->b2 + 16, s->kwp);
+		beltStr2Bin(s->buf, s->b2, s->mod, buf + s->n1, s->n2);
+		memCopy(s->buf + s->b2 * 8, s->iv, 8);
+		s->buf[s->b2 * 8] ^= beltH()[16 * i];
+		if (s->b2 == 1)
+			beltBlockEncr(s->buf, s->wbl->key);
+		else
+			beltWBLStepE(s->buf, 8 * s->b2 + 8, s->wbl);
 		beltBin2StrSub(s->mod, buf, s->n1, s->buf, s->b2 + 1);
-	}
+	}	
 }
 
 err_t beltFMTEncrypt(u16 dest[], u32 mod, const u16 src[], size_t count,
@@ -378,7 +381,7 @@ err_t beltFMTEncrypt(u16 dest[], u32 mod, const u16 src[], size_t count,
 		!memIsValid(dest, 2 * count) ||
 		iv && !memIsDisjoint2(dest, 2 * count, iv, 16))
 		return ERR_BAD_INPUT;
-	if (count > 512)
+	if (count > 600)
 		return ERR_NOT_IMPLEMENTED;
 	// создать состояние
 	state = blobCreate(beltFMT_keep(mod, count));
@@ -406,7 +409,7 @@ err_t beltFMTDecrypt(u16 dest[], u32 mod, const u16 src[], size_t count,
 		!memIsValid(dest, 2 * count) ||
 		iv && !memIsDisjoint2(dest, 2 * count, iv, 16))
 		return ERR_BAD_INPUT;
-	if (count > 512)
+	if (count > 600)
 		return ERR_NOT_IMPLEMENTED;
 	// создать состояние
 	state = blobCreate(beltFMT_keep(mod, count));

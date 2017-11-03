@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2017.09.28
+\version 2017.11.03
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -30,12 +30,12 @@ typedef struct {
 	size_t len;			/*< длина первоначального ключа */
 	u32 block[8];		/*< блок r || level || header */
 	u32 key_new[8];		/*< форматированный преобразованный ключ */
-	octet stack[];		/*< стек beltSigma */
+	octet stack[];		/*< стек beltCompr */
 } belt_krp_st;
 
 size_t beltKRP_keep()
 {
-	return sizeof(belt_krp_st) + beltSigma_deep();
+	return sizeof(belt_krp_st) + beltCompr_deep();
 }
 
 void beltKRPStart(void* state, const octet key[], size_t len, 
@@ -62,10 +62,10 @@ void beltKRPStepG(octet key_[], size_t key_len, const octet header[16],
 	// полностью определить s->block
 	u32From(s->block, beltH() + 4 * (s->len - 16) + 2 * (key_len - 16), 4);
 	u32From(s->block + 4, header, 16);
-	// применить sigma2
+	// применить belt-compr2
 	beltBlockCopy(s->key_new, s->key);
 	beltBlockCopy(s->key_new + 4, s->key + 4);
-	beltSigma2(s->key_new, s->block, s->stack);
+	beltCompr2(s->key_new, s->block, s->stack);
 	// выгрузить ключ
 	u32To(key_, key_len, s->key_new);
 }

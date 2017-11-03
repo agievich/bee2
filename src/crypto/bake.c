@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.04.14
-\version 2017.01.17
+\version 2017.11.03
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -89,11 +89,11 @@ static void bakeSWU2(word W[], const ec_o* ec, const octet X[], void* stack)
 	H = (octet*)stack;
 	s = (word*)stack;
 	stack = H + ec->f->no + 16;
-	// H <- beltKWP(X, 0, 0)
+	// H <- beltWBL(X, 0, 0)
 	memSetZero(H + ec->f->no, 16);
-	beltKWPStart(stack, H + ec->f->no, 16);
+	beltWBLStart(stack, H + ec->f->no, 16);
 	memCopy(H, X, ec->f->no);
-	beltKWPStepE(H, ec->f->no + 16, stack);
+	beltWBLStepE(H, ec->f->no + 16, stack);
 	// s <- \bar H mod p
 	wwFrom(s, H, ec->f->no + 16);
 	zzMod(s, s, ec->f->n + W_OF_O(16), ec->f->mod, ec->f->n, stack);
