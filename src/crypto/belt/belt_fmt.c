@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2017.09.28
-\version 2017.11.03
+\version 2017.11.20
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -291,7 +291,11 @@ void beltFMTStart(void* state, u32 mod, size_t count, const octet key[],
 	s->n1 = (count + 1) / 2;
 	s->n2 = count / 2;
 	s->b1 = beltFMTCalcB(mod, s->n1);
+	if (s->b1 == 2) 
+		++s->b1;
 	s->b2 = beltFMTCalcB(mod, s->n2);
+	if (s->b2 == 2) 
+		++s->b2;
 }
 
 void beltFMTStepE(u16 buf[], const octet iv[16], void* state)

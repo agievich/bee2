@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2017.11.03
+\version 2017.11.20
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -22,10 +22,9 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 Шифрование и имитозащита ключей (KWP)
 
-Отдельная от WBL реализация: 
-	1) в состоянии можно не учитывать номер такта,
-	2) можно использовать тот факт, что длина блока не меньше 32 
-	и задействовать в состоянии только один временный 16-байтовый блок.
+Отдельная от WBL реализация: в состоянии можно не учитывать номер такта.
+
+todo: Упростить, через обращение к функциям WBL.
 *******************************************************************************
 */
 
@@ -34,7 +33,6 @@ typedef struct
 	u32 key[8];			/*< форматированный ключ */
 	octet block[16];	/*< вспомогательный блок */
 } belt_kwp_st;
-
 
 size_t beltKWP_keep()
 {
@@ -80,14 +78,6 @@ void beltKWPStepE(void* buf, size_t count, void* state)
 		// r*_до_сдвига <- r*_до_сдвига + block
 		beltBlockXor2((octet*)buf + count - 32, s->block);
 	}
-}
-
-void beltWBLStepE(void* buf, size_t count, void* state)
-{
-	belt_wbl_st* s = (belt_wbl_st*)state;
-	ASSERT(memIsValid(state, beltWBL_keep()));
-	s->round = 0;
-	beltWBLStepR(buf, count, state);
 }
 
 void beltKWPStepD(void* buf, size_t count, void* state)

@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2017.11.03
+\version 2017.11.20
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -216,11 +216,9 @@ typedef struct
 typedef struct
 {
 	u32 key[8];			/*< форматированный ключ */
-	octet s[16];		/*< переменная s */
-	octet t[16];		/*< зашифрованная s */
+	octet block[16];	/*< вспомогательный блок */
 	word round;			/*< номер такта */
 } belt_wbl_st;
-
 
 /*
 *******************************************************************************

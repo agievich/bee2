@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.06.20
-\version 2017.10.10
+\version 2017.11.20
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -449,28 +449,22 @@ bool_t beltTest()
 	{
 		size_t i;
 		beltWBLStart(state, beltH() + 128, 32);
-		for (i = 17; i < 48; ++i)
+		for (i = 32; i <= 48; ++i)
 		{
 			memCopy(buf, beltH(), i);
 			beltWBLStepE(buf, i, state);
-			if (i >= 32)
-			{
-				memCopy(buf1, beltH(), i);
-				beltKWPStepE(buf1, i, state);
-				if (!memEq(buf, buf1, i))
-					return FALSE;
-			}
+			memCopy(buf1, beltH(), i);
+			beltKWPStepE(buf1, i, state);
+			if (!memEq(buf, buf1, i))
+				return FALSE;
 			beltWBLStepD(buf, i, state);
 			if (!memEq(buf, beltH(), i))
 				return FALSE;
-			if (i >= 32)
-			{
-				memCopy(buf, buf1, i);
-				beltKWPStepD(buf, i, state);
-				beltKWPStepD2(buf1, buf1 + i - 16, i, state);
-				if (!memEq(buf, buf1, i))
-					return FALSE;
-			}
+			memCopy(buf, buf1, i);
+			beltKWPStepD(buf, i, state);
+			beltKWPStepD2(buf1, buf1 + i - 16, i, state);
+			if (!memEq(buf, buf1, i))
+				return FALSE;
 		}
 	}
 	// fmt (experimental)
