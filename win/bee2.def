@@ -70,20 +70,26 @@ EXPORTS
 	beltHashStepV				@165
 	beltHashStepV2				@166
 	beltHash					@167
-	beltKRP_keep				@168
-	beltKRPStart				@169
-	beltKRPStepG				@170
-	beltKRP						@171
-	beltHMAC_keep				@172
-	beltHMACStart				@173
-	beltHMACStepA				@174
-	beltHMACStepG				@175
-	beltHMACStepG2				@176
-	beltHMACStepV				@177
-	beltHMACStepV2				@178
-	beltHMAC					@179
-	beltPBKDF					@180
-	beltPBKDF2					@181
+	beltFMT_keep				@168
+	beltFMTStart				@169
+	beltFMTStepE				@170
+	beltFMTStepD				@171
+	beltFMTEncrypt				@172
+	beltFMTDecrypt				@173
+	beltKRP_keep				@174
+	beltKRPStart				@175
+	beltKRPStepG				@176
+	beltKRP						@177
+	beltHMAC_keep				@178
+	beltHMACStart				@179
+	beltHMACStepA				@180
+	beltHMACStepG				@181
+	beltHMACStepG2				@182
+	beltHMACStepV				@183
+	beltHMACStepV2				@184
+	beltHMAC					@185
+	beltPBKDF					@186
+	beltPBKDF2					@187
 	
 	bignStdParams				@201
 	bignValParams				@202
