@@ -209,7 +209,7 @@ void beltBlockEncr2(
 void beltBlockEncr3(
 	u32* a,				/*!< [in/out] слово a */
 	u32* b,				/*!< [in/out] слово b */
-	u32* с,				/*!< [in/out] слово c */
+	u32* c,				/*!< [in/out] слово c */
 	u32* d,				/*!< [in/out] слово d */
 	const u32 key[8]	/*!< [in] ключ */
 );
@@ -244,7 +244,7 @@ void beltBlockDecr2(
 void beltBlockDecr3(
 	u32* a,				/*!< [in/out] слово a */
 	u32* b,				/*!< [in/out] слово b */
-	u32* с,				/*!< [in/out] слово c */
+	u32* c,				/*!< [in/out] слово c */
 	u32* d,				/*!< [in/out] слово d */
 	const u32 key[8]	/*!< [in] ключ */
 );
