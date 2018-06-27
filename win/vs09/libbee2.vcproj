@@ -662,6 +662,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\test\crypto\belt-bench.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\src\crypto\bign.c"
 					>
 				</File>

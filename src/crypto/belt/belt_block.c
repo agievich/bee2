@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2017.09.28
+\version 2018.06.11
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -369,6 +369,12 @@ void beltBlockEncr2(u32 block[4], const u32 key[8])
 {
 	E((block + 0), (block + 1), (block + 2), (block + 3), key);
 }
+
+void beltBlockEncr3(u32* a, u32* b, u32* c, u32* d, const u32 key[8])
+{
+	E(a, b, c, d, key);
+}
+
 /*
 *******************************************************************************
 Расшифрование блока
@@ -396,4 +402,9 @@ void beltBlockDecr(octet block[16], const u32 key[8])
 void beltBlockDecr2(u32 block[4], const u32 key[8])
 {
 	D((block + 0), (block + 1), (block + 2), (block + 3), key);
+}
+
+void beltBlockDecr3(u32* a, u32* b, u32* c, u32* d, const u32 key[8])
+{
+	D(a, b, c, d, key);
 }

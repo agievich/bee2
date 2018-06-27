@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2017.09.28
-\version 2017.11.20
+\version 2018.06.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -15,6 +15,7 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/core/err.h"
 #include "bee2/core/mem.h"
 #include "bee2/core/u16.h"
+#include "bee2/core/u32.h"
 #include "bee2/core/util.h"
 #include "bee2/crypto/belt.h"
 #include "bee2/math/ww.h"
@@ -150,6 +151,29 @@ static size_t beltFMTCalcB(u32 mod, size_t count)
 
 /*
 *******************************************************************************
+belt-32block
+*******************************************************************************
+*/
+
+void belt32BlockEncr(octet block[24], const u32 key[8])
+{
+	u32* t = (u32*)block;
+	u32From(t, block, 24);
+	// round #1
+	beltBlockEncr3(t + 2, t + 3, t + 4, t + 5, key);
+	t[2] ^= 1, t[0] ^= t[2], t[1] ^= t[3];
+	// round #2
+	beltBlockEncr3(t + 4, t + 5, t + 0, t + 1, key);
+	t[4] ^= 2, t[2] ^= t[4], t[3] ^= t[5];
+	// round #3
+	beltBlockEncr3(t + 0, t + 1, t + 2, t + 3, key);
+	t[0] ^= 3, t[4] ^= t[0], t[5] ^= t[1];
+	// возврат
+	u32To(block, 24, t);
+}
+
+/*
+*******************************************************************************
 Конвертации
 *******************************************************************************
 */
@@ -267,7 +291,7 @@ typedef struct
 	size_t n2;				/*< длина правой половинки */
 	size_t b1;				/*< число блоков для обработки левой половинки */
 	size_t b2;				/*< число блоков для обработки правой половинки */
-	octet iv[16];			/*< синхропосылка */
+	octet iv[4 + 16 + 4];	/*< формат || синхропосылка || формат */
 	octet buf[];			/*< вспомогательный буфер */
 } belt_fmt_st;
 
@@ -291,11 +315,15 @@ void beltFMTStart(void* state, u32 mod, size_t count, const octet key[],
 	s->n1 = (count + 1) / 2;
 	s->n2 = count / 2;
 	s->b1 = beltFMTCalcB(mod, s->n1);
-	if (s->b1 == 2) 
-		++s->b1;
 	s->b2 = beltFMTCalcB(mod, s->n2);
-	if (s->b2 == 2) 
-		++s->b2;
+#if (OCTET_ORDER == LITTLE_ENDIAN)
+	((u16*)s->iv)[0] = (u16)mod;
+	((u16*)s->iv)[1] = (u16)count;
+#else
+	((u16*)s->iv)[0] = u16Rev((u16)mod);
+	((u16*)s->iv)[1] = u16Rev((u16)count);
+#endif
+	memCopy(s->iv + 20, s->iv, 4);
 }
 
 void beltFMTStepE(u16 buf[], const octet iv[16], void* state)
@@ -308,27 +336,31 @@ void beltFMTStepE(u16 buf[], const octet iv[16], void* state)
 	ASSERT(memIsValid(buf, 2 * s->n1 + 2 * s->n2));
 	// подготовить синхропосылку
 	if (iv)
-		memCopy(s->iv, iv, 16);
+		memCopy(s->iv + 4, iv, 16);
 	else
-		memSetZero(s->iv, 16);
+		memSetZero(s->iv + 4, 16);
 	// такты
-	for (i = 0; i < 1; ++i)
+	for (i = 0; i < 3; ++i)
 	{
 		// первая половинка
 		beltStr2Bin(s->buf, s->b2, s->mod, buf + s->n1, s->n2);
-		memCopy(s->buf + s->b2 * 8, s->iv, 8);
-		s->buf[s->b2 * 8] ^= beltH()[16 * i];
+		memCopy(s->buf + s->b2 * 8, beltH() + 4 * i, 4);
+		memCopy(s->buf + s->b2 * 8 + 4, s->iv + 4 * i, 4);
 		if (s->b2 == 1)
 			beltBlockEncr(s->buf, s->wbl->key);
+		else if (s->b2 == 2)
+			belt32BlockEncr(s->buf, s->wbl->key);
 		else
 			beltWBLStepE(s->buf, 8 * s->b2 + 8, s->wbl);
 		beltBin2StrAdd(s->mod, buf, s->n1, s->buf, s->b2 + 1);
 		// вторая половинка
 		beltStr2Bin(s->buf, s->b1, s->mod, buf, s->n1);
-		memCopy(s->buf + s->b1 * 8, s->iv + 8, 8);
-		s->buf[s->b1 * 8] ^= beltH()[16 * i + 8];
+		memCopy(s->buf + s->b1 * 8, beltH() + 4 * i + 4, 4);
+		memCopy(s->buf + s->b1 * 8 + 4, s->iv + 4 * i + 4, 4);
 		if (s->b1 == 1)
 			beltBlockEncr(s->buf, s->wbl->key);
+		else if (s->b1 == 2)
+			belt32BlockEncr(s->buf, s->wbl->key);
 		else
 			beltWBLStepE(s->buf, 8 * s->b1 + 8, s->wbl);
 		beltBin2StrAdd(s->mod, buf + s->n1, s->n2, s->buf, s->b1 + 1);
@@ -345,27 +377,31 @@ void beltFMTStepD(u16 buf[], const octet iv[16], void* state)
 	ASSERT(memIsValid(buf, 2 * s->n1 + 2 * s->n2));
 	// подготовить синхропосылку
 	if (iv)
-		memCopy(s->iv, iv, 16);
+		memCopy(s->iv + 4, iv, 16);
 	else
-		memSetZero(s->iv, 16);
+		memSetZero(s->iv + 4, 16);
 	// такты
-	for (i = 1; i--;)
+	for (i = 3; i--;)
 	{
 		// вторая половинка
 		beltStr2Bin(s->buf, s->b1, s->mod, buf, s->n1);
-		memCopy(s->buf + s->b1 * 8, s->iv + 8, 8);
-		s->buf[s->b1 * 8] ^= beltH()[16 * i + 8];
+		memCopy(s->buf + s->b1 * 8, beltH() + 4 * i + 4, 4);
+		memCopy(s->buf + s->b1 * 8 + 4, s->iv + 4 * i + 4, 4);
 		if (s->b1 == 1)
 			beltBlockEncr(s->buf, s->wbl->key);
+		else if (s->b1 == 2)
+			belt32BlockEncr(s->buf, s->wbl->key);
 		else
 			beltWBLStepE(s->buf, 8 * s->b1 + 8, s->wbl);
 		beltBin2StrSub(s->mod, buf + s->n1, s->n2, s->buf, s->b1 + 1);
 		// первая половинка
 		beltStr2Bin(s->buf, s->b2, s->mod, buf + s->n1, s->n2);
-		memCopy(s->buf + s->b2 * 8, s->iv, 8);
-		s->buf[s->b2 * 8] ^= beltH()[16 * i];
+		memCopy(s->buf + s->b2 * 8, beltH() + 4 * i, 4);
+		memCopy(s->buf + s->b2 * 8 + 4, s->iv + 4 * i, 4);
 		if (s->b2 == 1)
 			beltBlockEncr(s->buf, s->wbl->key);
+		else if (s->b2 == 2)
+			belt32BlockEncr(s->buf, s->wbl->key);
 		else
 			beltWBLStepE(s->buf, 8 * s->b2 + 8, s->wbl);
 		beltBin2StrSub(s->mod, buf, s->n1, s->buf, s->b2 + 1);

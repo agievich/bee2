@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.06.20
-\version 2017.11.20
+\version 2018.06.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -13,6 +13,7 @@ version 3. See Copyright Notices in bee2/info.h.
 
 #include <bee2/core/mem.h>
 #include <bee2/core/hex.h>
+#include <bee2/core/u32.h>
 #include <bee2/core/util.h>
 #include <bee2/crypto/belt.h>
 
@@ -82,6 +83,7 @@ bool_t beltTest()
 	octet hash[32];
 	octet hash1[32];
 	u32 key[8];
+	u32 block[4];
 	octet level[12];
 	octet state[1024];
 	// создать стек
@@ -96,12 +98,36 @@ bool_t beltTest()
 	ASSERT(sizeof(state) >= beltHash_keep());
 	ASSERT(sizeof(state) >= beltKRP_keep());
 	ASSERT(sizeof(state) >= beltHMAC_keep());
-	// тест A.1
+	// тест A.1-1
 	memCopy(buf, beltH(), 16);
 	beltKeyExpand2(key, beltH() + 128, 32);
 	beltBlockEncr(buf, key);
 	if (!hexEq(buf,
 		"69CCA1C93557C9E3D66BC3E0FA88FA6E"))
+		return FALSE;
+	beltBlockDecr(buf, key);
+	if (!memEq(buf, beltH(), 16))
+		return FALSE;
+	// тест A.1-2
+	u32From(block, beltH(), 16);
+	beltBlockEncr2(block, key);
+	u32To(buf, 16, block);
+	if (!hexEq(buf,
+		"69CCA1C93557C9E3D66BC3E0FA88FA6E"))
+		return FALSE;
+	beltBlockDecr2(block, key);
+	u32To(buf, 16, block);
+	if (!memEq(buf, beltH(), 16))
+		return FALSE;
+	// тест A.1-3
+	beltBlockEncr3(block + 0, block + 1, block + 2, block + 3, key);
+	u32To(buf, 16, block);
+	if (!hexEq(buf,
+		"69CCA1C93557C9E3D66BC3E0FA88FA6E"))
+		return FALSE;
+	beltBlockDecr3(block + 0, block + 1, block + 2, block + 3, key);
+	u32To(buf, 16, block);
+	if (!memEq(buf, beltH(), 16))
 		return FALSE;
 	// тест A.4
 	memCopy(buf, beltH() + 64, 16);
@@ -469,15 +495,27 @@ bool_t beltTest()
 	}
 	// fmt (experimental)
 	{
-		u16 str[17] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
-		u16 str1[17];
-		beltFMTEncrypt(str1, 9, str, 9, beltH() + 128, 32, beltH() + 192);
-		beltFMTDecrypt(str1, 9, str1, 9, beltH() + 128, 32, beltH() + 192);
-		if (!memEq(str, str1, 8 * 2))
-			return FALSE;
+		u16 str[21] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,};
+		u16 str1[21];
+		// official: belt-block
 		beltFMTEncrypt(str1, 10, str, 10, beltH() + 128, 32, beltH() + 192);
 		beltFMTDecrypt(str1, 10, str1, 10, beltH() + 128, 32, beltH() + 192);
 		if (!memEq(str, str1, 10 * 2))
+			return FALSE;
+		// official: base58, на стыке belt-block и belt-32block
+		beltFMTEncrypt(str1, 58, str, 21, beltH() + 128, 32, beltH() + 192);
+		beltFMTDecrypt(str1, 58, str1, 21, beltH() + 128, 32, beltH() + 192);
+		if (!memEq(str, str1, 21 * 2))
+			return FALSE;
+		// official: на стыке belt-32block и belt-wblock
+		beltFMTEncrypt(str1, 65536, str, 17, beltH() + 128, 32, beltH() + 192);
+		beltFMTDecrypt(str1, 65536, str1, 17, beltH() + 128, 32, beltH() + 192);
+		if (!memEq(str, str1, 17 * 2))
+			return FALSE;
+
+		beltFMTEncrypt(str1, 9, str, 9, beltH() + 128, 32, beltH() + 192);
+		beltFMTDecrypt(str1, 9, str1, 9, beltH() + 128, 32, beltH() + 192);
+		if (!memEq(str, str1, 9 * 2))
 			return FALSE;
 		beltFMTEncrypt(str1, 11, str, 11, beltH() + 128, 32, 0);
 		beltFMTDecrypt(str1, 11, str1, 11, beltH() + 128, 32, 0);
@@ -491,13 +529,9 @@ bool_t beltTest()
 		beltFMTDecrypt(str1, 257, str1, 17, beltH() + 128, 32, beltH() + 192);
 		if (!memEq(str, str1, 17 * 2))
 			return FALSE;
-		beltFMTEncrypt(str1, 49667, str, 17, beltH() + 128, 32, 0);
-		beltFMTDecrypt(str1, 49667, str1, 17, beltH() + 128, 32, 0);
-		if (!memEq(str, str1, 17 * 2))
-			return FALSE;
-		beltFMTEncrypt(str1, 65536, str, 17, beltH() + 128, 32, 0);
-		beltFMTDecrypt(str1, 65536, str1, 17, beltH() + 128, 32, 0);
-		if (!memEq(str, str1, 17 * 2))
+		beltFMTEncrypt(str1, 49667, str, 9, beltH() + 128, 32, beltH() + 192);
+		beltFMTDecrypt(str1, 49667, str1, 9, beltH() + 128, 32, beltH() + 192);
+		if (!memEq(str, str1, 9 * 2))
 			return FALSE;
 	}
 	// все нормально

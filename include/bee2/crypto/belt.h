@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2017.11.03
+\version 2018.06.11
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -200,6 +200,20 @@ void beltBlockEncr2(
 	const u32 key[8]		/*!< [in] ключ */
 );
 
+/*!	\brief Зашифрование блока из четверки слов
+
+	Выполняется зашифрование форматированного блока (a, b, c, d), заданного 
+	четверкой последовательных 32-разрядных слов, на форматированном ключе key.
+	Результат зашифрования возвращается через входные слова.
+*/
+void beltBlockEncr3(
+	u32* a,				/*!< [in/out] слово a */
+	u32* b,				/*!< [in/out] слово b */
+	u32* с,				/*!< [in/out] слово c */
+	u32* d,				/*!< [in/out] слово d */
+	const u32 key[8]	/*!< [in] ключ */
+);
+
 /*!	\brief Расшифрование блока
 
 	Выполняется расшифрование блока данных block на форматированном ключе key.
@@ -219,6 +233,20 @@ void beltBlockDecr(
 void beltBlockDecr2(
 	u32 block[4],			/*!< [in/out] блок */
 	const u32 key[8]		/*!< [in] ключ */
+);
+
+/*!	\brief Расшифрование блока из четверки слов
+
+	Выполняется расшифрование форматированного блока (a, b, c, d), заданного 
+	четверкой последовательных 32-разрядных слов, на форматированном ключе key.
+	Результат расшифрования возвращается через входные слова.
+*/
+void beltBlockDecr3(
+	u32* a,				/*!< [in/out] слово a */
+	u32* b,				/*!< [in/out] слово b */
+	u32* с,				/*!< [in/out] слово c */
+	u32* d,				/*!< [in/out] слово d */
+	const u32 key[8]	/*!< [in] ключ */
 );
 
 /*
