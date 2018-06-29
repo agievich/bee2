@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.06.20
-\version 2018.06.27
+\version 2018.06.29
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -492,6 +492,43 @@ bool_t beltTest()
 			if (!memEq(buf, buf1, i))
 				return FALSE;
 		}
+	}
+	// bde (experimental)
+	{
+		// тест 1
+		memCopy(buf, beltH(), 48);
+		beltBDEStart(state, beltH() + 128, 32, beltH() + 192);
+		beltBDEStepE(buf, 32, state);
+		beltBDEStepE(buf + 32, 48 - 32, state);
+		if (!hexEq(buf,
+			"E9CAB32D879CC50C10378EB07C10F263"
+			"07257E2DBE2B854CBC9F38282D59D6A7"
+			"7F952001C5D1244F53210A27C216D4BB"))
+			return FALSE;
+		beltBDEEncr(buf1, beltH(), 48, beltH() + 128, 32, beltH() + 192);
+		if (!memEq(buf, buf1, 48))
+			return FALSE;
+		beltBDEDecr(buf1, buf1, 48, beltH() + 128, 32, beltH() + 192);
+		if (!memEq(buf1, beltH(), 48))
+			return FALSE;
+		// тест 2
+		memCopy(buf, beltH() + 64, 48);
+		beltBDEStart(state, beltH() + 128 + 32, 32, beltH() + 192 + 16);
+		beltBDEStepD(buf, 16, state);
+		beltBDEStepD(buf + 16, 48 - 16, state);
+		if (!hexEq(buf,
+			"7041BC226352C706D00EA8EF23CFE46A"
+			"FAE118577D037FACDC36E4ECC1F65746"
+			"09F236943FB809E1BEE4A1C686C13ACC"))
+			return FALSE;
+		beltBDEDecr(buf1, beltH() + 64, 48, beltH() + 128 + 32, 32,
+			beltH() + 192 + 16);
+		if (!memEq(buf, buf1, 48))
+			return FALSE;
+		beltBDEEncr(buf, buf1, 48, beltH() + 128 + 32, 32,
+			beltH() + 192 + 16);
+		if (!memEq(buf, beltH() + 64, 48))
+			return FALSE;
 	}
 	// fmt (experimental)
 	{

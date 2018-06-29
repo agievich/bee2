@@ -662,10 +662,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\test\crypto\belt-bench.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\src\crypto\bign.c"
 					>
 				</File>
@@ -696,6 +692,10 @@
 				<Filter
 					Name="belt"
 					>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_bde.c"
+						>
+					</File>
 					<File
 						RelativePath="..\..\src\crypto\belt\belt_block.c"
 						>
