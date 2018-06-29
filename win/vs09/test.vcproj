@@ -393,66 +393,6 @@
 					RelativePath="..\..\test\crypto\pfok-test.c"
 					>
 				</File>
-				<Filter
-					Name="core"
-					>
-					<File
-						RelativePath="..\..\test\core\b64-test.c"
-						>
-					</File>
-					<File
-						RelativePath="..\..\test\core\dec-test.c"
-						>
-					</File>
-					<File
-						RelativePath="..\..\test\core\hex-test.c"
-						>
-					</File>
-					<File
-						RelativePath="..\..\test\core\mem-test.c"
-						>
-					</File>
-					<File
-						RelativePath="..\..\test\core\obj-test.c"
-						>
-					</File>
-					<File
-						RelativePath="..\..\test\core\oid-test.c"
-						>
-					</File>
-					<File
-						RelativePath="..\..\test\core\prng-test.c"
-						>
-					</File>
-					<File
-						RelativePath="..\..\test\core\rng-test.c"
-						>
-					</File>
-					<File
-						RelativePath="..\..\test\core\str-test.c"
-						>
-					</File>
-					<File
-						RelativePath="..\..\test\core\tm-test.c"
-						>
-					</File>
-					<File
-						RelativePath="..\..\test\core\u16-test.c"
-						>
-					</File>
-					<File
-						RelativePath="..\..\test\core\u32-test.c"
-						>
-					</File>
-					<File
-						RelativePath="..\..\test\core\u64-test.c"
-						>
-					</File>
-					<File
-						RelativePath="..\..\test\core\util-test.c"
-						>
-					</File>
-				</Filter>
 			</Filter>
 			<Filter
 				Name="math"
@@ -475,6 +415,66 @@
 				</File>
 				<File
 					RelativePath="..\..\test\math\zz-test.c"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="core"
+				>
+				<File
+					RelativePath="..\..\test\core\b64-test.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\test\core\dec-test.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\test\core\hex-test.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\test\core\mem-test.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\test\core\obj-test.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\test\core\oid-test.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\test\core\prng-test.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\test\core\rng-test.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\test\core\str-test.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\test\core\tm-test.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\test\core\u16-test.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\test\core\u32-test.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\test\core\u64-test.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\test\core\util-test.c"
 					>
 				</File>
 			</Filter>

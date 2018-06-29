@@ -693,6 +693,10 @@
 					Name="belt"
 					>
 					<File
+						RelativePath="..\..\src\crypto\belt\belt_bde.c"
+						>
+					</File>
+					<File
 						RelativePath="..\..\src\crypto\belt\belt_block.c"
 						>
 					</File>
