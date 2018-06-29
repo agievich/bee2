@@ -270,7 +270,7 @@ err_t bignSign2(
 	const octet hash[],			/*!< [in] хэш-значение */
 	const octet privkey[],		/*!< [in] личный ключ */
 	const void* t,				/*!< [in] дополнительные данные */
-	size_t t_len				/*!< [in] состояние генератора */
+	size_t t_len				/*!< [in] размер дополнительных данных */
 );
 
 /*!	\brief Проверка ЭЦП

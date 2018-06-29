@@ -266,7 +266,13 @@ void brngHMACStepR(void* buf, size_t count, void* state)
 		beltHMACStepG(s->r, s->state_ex);
 		// Y_t <- left(beltHMAC(key, r || iv))
 		beltHMACStepA(s->iv, s->iv_len, s->state_ex);
-		beltHMACStepG2(buf, count, s->state_ex);
+
+		// ошибка, не сохраняется никаких данных в s->block, который используется для сохранения неиспользованных данных
+		//beltHMACStepG2(buf, count, s->state_ex);
+
+		beltHMACStepG(s->block, s->state_ex);
+		memCopy(buf, s->block, count);
+
 		// next
 		s->reserved = 32 - count;
 	}
