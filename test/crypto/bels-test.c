@@ -44,13 +44,13 @@ bool_t belsTest()
 	ASSERT(sizeof(combo_state) >= prngCOMBO_keep());
 	// проверить таблицы A.1 -- A.4
 	for (len = 16; len <= 32; len += 8)
-	for (num = 0; num <= 16; ++num)
-	{
-		if (belsStdM(mi, len, num) != ERR_OK)
-			return FALSE;
-		if (belsValM(mi, len) != ERR_OK)
-			return FALSE;
-	}
+        for (num = 0; num <= 16; ++num)
+        {
+            if (belsStdM(mi, len, num) != ERR_OK)
+                return FALSE;
+            if (belsValM(mi, len) != ERR_OK)
+                return FALSE;
+        }
 	// сгенерировать общие ключи
 	prngCOMBOStart(combo_state, utilNonce32());
 	if (belsGenM0(m0, 16, prngCOMBOStepR, combo_state) != ERR_OK ||
@@ -135,8 +135,8 @@ bool_t belsTest()
 			"5BCE1F1865D3886ED4DD7D9EFEF77F39"
 			"62EFAD2544718293262E2CB74A396B50"
 			"B6D8843DF5E2F0EEFFFE6CD18722765E"
-			"71ADE959FC88CCBB1C521FA9A1168C184"
-			"619832AB66265E08A65DD48EE406418"))
+			"71ADE959FC88CCBB1C521FA9A1168C18"
+			"4619832AB66265E08A65DD48EE406418"))
 			return FALSE;
 		// восстановить секрет
 		if (belsRecover(s, 1, len, si, m0, mi) != ERR_OK ||

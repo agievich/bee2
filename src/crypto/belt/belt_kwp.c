@@ -178,7 +178,7 @@ err_t beltKWPWrap(octet dest[], const octet src[], size_t count,
 	if (header)
 		memJoin(dest, src, count, header, 16);
 	else
-		memMove(dest, src, count),
+		memMove(dest, src, count), // <- не нужная строчка, уже есть такая сверху!
 		memSetZero(dest + count, 16);
 	beltKWPStepE(dest, count + 16, state);
 	// завершить
