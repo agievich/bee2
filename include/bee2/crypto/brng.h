@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.01.31
-\version 2017.09.28
+\version 2018.07.04
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -130,7 +130,13 @@ void brngCTRStart(
 	дополняясь нулевыми октетами.
 	\remark Если работает буферизация и возвращаются данные сгенерированного
 	ранее блока, то соответствующие октеты buf не используются
-	для формирования слова X, эти октеты пропускаются.
+	для формирования слова X, эти октеты пропускаются. Поэтому, в частности,
+	строки
+	\code 
+		brngCTRStepR(buf + 16, 16, state), brngCTRStepR(buf + 16, 16, state);
+		brngCTRStepR(buf, 32, state);
+	\endcode
+	вызываемые сразу после brngCTRStart(), не эквивалентны друг другу.
 */
 void brngCTRStepR(
 	void* buf,			/*!< [in/out] дополн. / псевдослучайные данные */

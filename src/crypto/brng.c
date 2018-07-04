@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.01.31
-\version 2016.04.22
+\version 2018.07.04
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -61,7 +61,7 @@ static void brngBlockInc(octet block[32])
 *******************************************************************************
 Генерация в режиме CTR
 
-В brng_ctr_st::state_ex размещаются два beltHMAC-состояния:
+В brng_ctr_st::state_ex размещаются два beltHash-состояния:
 -	вспомогательное состояние;
 -	состояние beltHash(key ||....).
 *******************************************************************************
@@ -266,13 +266,8 @@ void brngHMACStepR(void* buf, size_t count, void* state)
 		beltHMACStepG(s->r, s->state_ex);
 		// Y_t <- left(beltHMAC(key, r || iv))
 		beltHMACStepA(s->iv, s->iv_len, s->state_ex);
-
-		// ошибка, не сохраняется никаких данных в s->block, который используется для сохранения неиспользованных данных
-		//beltHMACStepG2(buf, count, s->state_ex);
-
 		beltHMACStepG(s->block, s->state_ex);
 		memCopy(buf, s->block, count);
-
 		// next
 		s->reserved = 32 - count;
 	}

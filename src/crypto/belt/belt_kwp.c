@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2017.11.20
+\version 2018.07.04
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -178,7 +178,6 @@ err_t beltKWPWrap(octet dest[], const octet src[], size_t count,
 	if (header)
 		memJoin(dest, src, count, header, 16);
 	else
-		memMove(dest, src, count), // <- не нужная строчка, уже есть такая сверху!
 		memSetZero(dest + count, 16);
 	beltKWPStepE(dest, count + 16, state);
 	// завершить

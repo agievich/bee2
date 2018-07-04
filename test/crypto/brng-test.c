@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.04.01
-\version 2015.11.06
+\version 2018.07.04
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -45,7 +45,8 @@ bool_t brngTest()
 	memCopy(buf, beltH(), 256);
 	brngCTRStart(state, beltH() + 128, beltH() + 128 + 64);
 	brngCTRStepR(buf, 32, state);
-	brngCTRStepR(buf + 32, 64, state);
+	brngCTRStepR(buf + 32, 32, state);
+	brngCTRStepR(buf + 64, 32, state);
 	brngCTRStepG(iv, state);
 	brngCTRStepR(buf + 96, 256 - 96, state);
 	if (!hexEq(buf, 
@@ -78,7 +79,10 @@ bool_t brngTest()
 	// тест Б.4
 	brngHMACStart(state, beltH() + 128, 32, beltH() + 128 + 64, 32);
 	brngHMACStepR(buf, 32, state);
-	brngHMACStepR(buf + 32, 64, state);
+	brngHMACStepR(buf + 32, 11, state);
+	brngHMACStepR(buf + 32 + 11, 19, state);
+	brngHMACStepR(buf + 32 + 30, 2, state);
+	brngHMACStepR(buf + 64, 32, state);
 	if (!hexEq(buf, 
 		"AF907A0E470A3A1B268ECCCCC0B90F23"
 		"9FE94A2DC6E014179FC789CB3C3887E4"

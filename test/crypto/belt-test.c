@@ -534,22 +534,22 @@ bool_t beltTest()
 	{
 		u16 str[21] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,};
 		u16 str1[21];
-		// official: belt-block
+		// тест 1: belt-block
 		beltFMTEncrypt(str1, 10, str, 10, beltH() + 128, 32, beltH() + 192);
 		beltFMTDecrypt(str1, 10, str1, 10, beltH() + 128, 32, beltH() + 192);
 		if (!memEq(str, str1, 10 * 2))
 			return FALSE;
-		// official: base58, на стыке belt-block и belt-32block
+		// тест 2: base58, на стыке belt-block и belt-32block
 		beltFMTEncrypt(str1, 58, str, 21, beltH() + 128, 32, beltH() + 192);
 		beltFMTDecrypt(str1, 58, str1, 21, beltH() + 128, 32, beltH() + 192);
 		if (!memEq(str, str1, 21 * 2))
 			return FALSE;
-		// official: на стыке belt-32block и belt-wblock
+		// тест 3: на стыке belt-32block и belt-wblock
 		beltFMTEncrypt(str1, 65536, str, 17, beltH() + 128, 32, beltH() + 192);
 		beltFMTDecrypt(str1, 65536, str1, 17, beltH() + 128, 32, beltH() + 192);
 		if (!memEq(str, str1, 17 * 2))
 			return FALSE;
-
+		// non-official
 		beltFMTEncrypt(str1, 9, str, 9, beltH() + 128, 32, beltH() + 192);
 		beltFMTDecrypt(str1, 9, str1, 9, beltH() + 128, 32, beltH() + 192);
 		if (!memEq(str, str1, 9 * 2))
