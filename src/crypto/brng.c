@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.01.31
-\version 2018.07.04
+\version 2018.07.09
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -194,7 +194,7 @@ err_t brngCTRRand(void* buf, size_t count, const octet key[32], octet iv[32])
 typedef struct
 {
 	const octet* iv;			/*< указатель на синхропосылку */
-	octet iv_buf[64];			/*< если размер синхропосылки не более 64 байта, то ее копия */
+	octet iv_buf[64];			/*< синхропосылка (если укладывается) */
 	size_t iv_len;				/*< длина синхропосылки в октетах */
 	octet r[32];				/*< переменная r */
 	octet block[32];			/*< блок выходных данных */
@@ -214,14 +214,13 @@ void brngHMACStart(void* state, const octet key[], size_t key_len,
 	ASSERT(memIsDisjoint2(s, brngHMAC_keep(), key, key_len));
 	ASSERT(memIsDisjoint2(s, brngHMAC_keep(), iv, iv_len));
 	// запомнить iv
-    if (iv_len <= 64) {
-        memcpy(s->iv_buf, iv, iv_len);
-        s->iv = s->iv_buf;
-        s->iv_len = iv_len;
-    } else {
-        s->iv = iv;
-        s->iv_len = iv_len;
-    }
+	if ((s->iv_len = iv_len) <= 64) 
+	{
+		memCopy(s->iv_buf, iv, iv_len);
+		s->iv = s->iv_buf;
+	}
+    else
+		s->iv = iv;
 	// обработать key
 	beltHMACStart(s->state_ex + beltHMAC_keep(), key, key_len);
 	// r <- beltHMAC(key, iv)

@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.04.01
-\version 2018.07.04
+\version 2018.07.09
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -35,7 +35,7 @@ bool_t brngTest()
 {
 	octet buf[256];
 	octet buf1[256];
-	octet iv[32];
+	octet iv[128];
 	octet iv1[32];
 	octet state[1024];
 	// создать стек
@@ -103,6 +103,19 @@ bool_t brngTest()
 		return FALSE;
 	if (!hexEq(buf, 
 		"42B1"))
+		return FALSE;
+	// дополнительный тест: длинный ключ, длинная синхропосылка
+	memCopy(iv, beltH(), 127);
+	brngHMACStart(state, beltH() + 128, 127, iv, 127);
+	brngHMACStepR(buf, 256, state);
+	brngHMACRand(buf1, 256, beltH() + 128, 127, iv, 127);
+	if (!memEq(buf, buf1, 256))
+		return FALSE;
+	// дополнительный тест: длинная волатильная синхропосылки
+	brngHMACStart(state, beltH() + 128, 127, iv, 127);
+	iv[0]++;
+	brngHMACStepR(buf, 256, state);
+	if (memEq(buf, buf1, 256))
 		return FALSE;
 	// все нормально
 	return TRUE;
