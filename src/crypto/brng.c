@@ -193,7 +193,8 @@ err_t brngCTRRand(void* buf, size_t count, const octet key[32], octet iv[32])
 */
 typedef struct
 {
-	const octet* iv;			/*< синхропосылка */
+	const octet* iv;			/*< указатель на синхропосылку */
+	octet iv_buf[64];			/*< если размер синхропосылки не более 64 байта, то ее копия */
 	size_t iv_len;				/*< длина синхропосылки в октетах */
 	octet r[32];				/*< переменная r */
 	octet block[32];			/*< блок выходных данных */
@@ -207,14 +208,20 @@ size_t brngHMAC_keep()
 }
 
 void brngHMACStart(void* state, const octet key[], size_t key_len, 
-	const octet iv[32], size_t iv_len)
+	const octet iv[], size_t iv_len)
 {
 	brng_hmac_st* s = (brng_hmac_st*)state;
 	ASSERT(memIsDisjoint2(s, brngHMAC_keep(), key, key_len));
 	ASSERT(memIsDisjoint2(s, brngHMAC_keep(), iv, iv_len));
 	// запомнить iv
-	s->iv = iv;
-	s->iv_len = iv_len;
+    if (iv_len <= 64) {
+        memcpy(s->iv_buf, iv, iv_len);
+        s->iv = s->iv_buf;
+        s->iv_len = iv_len;
+    } else {
+        s->iv = iv;
+        s->iv_len = iv_len;
+    }
 	// обработать key
 	beltHMACStart(s->state_ex + beltHMAC_keep(), key, key_len);
 	// r <- beltHMAC(key, iv)
