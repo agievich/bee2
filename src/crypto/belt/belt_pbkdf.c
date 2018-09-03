@@ -22,38 +22,6 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-err_t beltPBKDF(octet key[32], const octet pwd[], size_t pwd_len,
-	size_t iter, const octet salt[], size_t salt_len)
-{
-	void* state;
-	// проверить входные данные
-	if (iter == 0 ||
-		!memIsValid(pwd, pwd_len) ||
-		!memIsValid(salt, salt_len) ||
-		!memIsValid(key, 32))
-		return ERR_BAD_INPUT;
-	// создать состояние
-	state = blobCreate(beltHMAC_keep());
-	if (state == 0)
-		return ERR_OUTOFMEMORY;
-	// key <- HMAC(pwd, salt || 00000001)
-	beltHMACStart(state, pwd, pwd_len);
-	beltHMACStepA(salt, salt_len, state);
-	*(u32*)key = 0, key[3] = 1;
-	beltHMACStepA(key, 4, state);
-	beltHMACStepG(key, state);
-	// пересчитать key
-	while (iter--)
-	{
-		beltHMACStart(state, pwd, pwd_len);
-		beltHMACStepA(key, 32, state);
-		beltHMACStepG(key, state);
-	}
-	// завершить
-	blobClose(state);
-	return ERR_OK;
-}
-
 err_t beltPBKDF2(octet key[32], const octet pwd[], size_t pwd_len,
 	size_t iter, const octet salt[], size_t salt_len)
 {

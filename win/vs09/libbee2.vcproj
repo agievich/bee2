@@ -757,6 +757,10 @@
 						>
 					</File>
 					<File
+						RelativePath="..\..\src\crypto\belt\belt_sde.c"
+						>
+					</File>
+					<File
 						RelativePath="..\..\src\crypto\belt\belt_wbl.c"
 						>
 					</File>

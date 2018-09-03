@@ -30,6 +30,7 @@ set(src
   crypto/belt/belt_dwp.c
   crypto/belt/belt_ecb.c
   crypto/belt/belt_bde.c
+  crypto/belt/belt_sde.c
   crypto/belt/belt_fmt.c
   crypto/belt/belt_hash.c
   crypto/belt/belt_hmac.c

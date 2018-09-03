@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2017.09.28
-\version 2018.06.27
+\version 2018.08.31
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -408,7 +408,7 @@ void beltFMTStepD(u16 buf[], const octet iv[16], void* state)
 	}	
 }
 
-err_t beltFMTEncrypt(u16 dest[], u32 mod, const u16 src[], size_t count,
+err_t beltFMTEncr(u16 dest[], u32 mod, const u16 src[], size_t count,
 	const octet key[], size_t len, const octet iv[16])
 {
 	void* state;
@@ -436,7 +436,7 @@ err_t beltFMTEncrypt(u16 dest[], u32 mod, const u16 src[], size_t count,
 	return ERR_OK;
 }
 
-err_t beltFMTDecrypt(u16 dest[], u32 mod, const u16 src[], size_t count,
+err_t beltFMTDecr(u16 dest[], u32 mod, const u16 src[], size_t count,
 	const octet key[], size_t len, const octet iv[16])
 {
 	void* state;

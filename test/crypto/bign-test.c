@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.08.27
-\version 2017.01.26
+\version 2018.08.31
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -349,19 +349,6 @@ bool_t bignTest()
 		return FALSE;
 	id_pubkey[0] ^= 1;
 	// тест E.5
-	beltPBKDF(theta, (const octet*)pwd, strLen(pwd), iter, 
-		beltH() + 128 + 64, 16);
-	if (!hexEq(theta,
-		"D902472482130F3B77D0930303DD7E4E"
-		"68630CC02B56A8B2AFA74F096BCAC971"))
-		return FALSE;
-	beltKWPWrap(token, privkey, 32, 0, theta, 32);
-	if (!hexEq(token,
-		"248E0CD7639B123776F1CEC1FCECE708"
-		"C2DFC53F78ECEA6C33B4C3C1E6183AD6"
-		"D8A18CFAF540976E1022B89DBA32DA18"))
-		return FALSE;
-	// тест E.5 [new]
 	beltPBKDF2(theta, (const octet*)pwd, strLen(pwd), iter, 
 		beltH() + 128 + 64, 8);
 	if (!hexEq(theta,

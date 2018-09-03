@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2018.07.04
+\version 2018.09.01
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -21,139 +21,8 @@ version 3. See Copyright Notices in bee2/info.h.
 /*
 *******************************************************************************
 Шифрование и имитозащита ключей (KWP)
-
-Отдельная от WBL реализация: в состоянии можно не учитывать номер такта.
-
-todo: Упростить, через обращение к функциям WBL.
 *******************************************************************************
 */
-
-typedef struct
-{
-	u32 key[8];			/*< форматированный ключ */
-	octet block[16];	/*< вспомогательный блок */
-} belt_kwp_st;
-
-size_t beltKWP_keep()
-{
-	return sizeof(belt_kwp_st);
-}
-
-void beltKWPStart(void* state, const octet key[], size_t len)
-{
-	belt_kwp_st* s = (belt_kwp_st*)state;
-	ASSERT(memIsValid(state, beltWBL_keep()));
-	beltKeyExpand2(s->key, key, len);
-}
-
-void beltKWPStepE(void* buf, size_t count, void* state)
-{
-	belt_kwp_st* s = (belt_kwp_st*)state;
-	word n = ((word)count + 15) / 16;
-	word round;
-	// pre
-	ASSERT(count > 16);
-	ASSERT(memIsDisjoint2(buf, count, state, beltWBL_keep()));
-	// итерации
-	for (round = 1; round <= 2 * n; ++round)
-	{
-		size_t i;
-		// block <- r1 + ... + r_{n-1}
-		beltBlockCopy(s->block, buf);
-		for (i = 16; i + 16 < count; i += 16)
-			beltBlockXor2(s->block, (octet*)buf + i);
-		// r <- ShLo^128(r)
-		memMove(buf, (octet*)buf + 16, count - 16);
-		// r* <- block
-		beltBlockCopy((octet*)buf + count - 16, s->block);
-		// block <- beltBlockEncr(block) + <round>
-		beltBlockEncr(s->block, s->key);
-#if (OCTET_ORDER == LITTLE_ENDIAN)
-		memXor2(s->block, &round, O_PER_W);
-#else // BIG_ENDIAN
-		round = wordRev(round);
-		memXor2(s->block, &round, O_PER_W);
-		round = wordRev(round);
-#endif // OCTET_ORDER
-		// r*_до_сдвига <- r*_до_сдвига + block
-		beltBlockXor2((octet*)buf + count - 32, s->block);
-	}
-}
-
-void beltKWPStepD(void* buf, size_t count, void* state)
-{
-	belt_kwp_st* s = (belt_kwp_st*)state;
-	word n = ((word)count + 15) / 16;
-	word round;
-	// pre
-	ASSERT(count >= 32);
-	ASSERT(memIsDisjoint2(buf, count, state, beltWBL_keep()));
-	for (round = 2 * n; round; --round)
-	{
-		size_t i;
-		// block <- r*
-		beltBlockCopy(s->block, (octet*)buf + count - 16);
-		// r <- ShHi^128(r)
-		memMove((octet*)buf + 16, buf, count - 16);
-		// r1 <- block
-		beltBlockCopy(buf, s->block);
-		// block <- beltBlockEncr(block) + <round>
-		beltBlockEncr(s->block, s->key);
-#if (OCTET_ORDER == LITTLE_ENDIAN)
-		memXor2(s->block, &round, O_PER_W);
-#else // BIG_ENDIAN
-		round = wordRev(round);
-		memXor2(s->block, &round, O_PER_W);
-		round = wordRev(round);
-#endif // OCTET_ORDER
-		// r* <- r* + block
-		beltBlockXor2((octet*)buf + count - 16, s->block);
-		// r1 <- r1 + r2 + ... + r_{n-1}
-		for (i = 16; i + 16 < count; i += 16)
-			beltBlockXor2(buf, (octet*)buf + i);
-	}
-}
-
-void beltKWPStepD2(void* buf1, void* buf2, size_t count, void* state)
-{
-	belt_kwp_st* s = (belt_kwp_st*)state;
-	word n = ((word)count + 15) / 16;
-	word round;
-	// pre
-	ASSERT(count >= 32);
-	ASSERT(memIsDisjoint3(buf1, count - 16, buf2, 16, state, beltKWP_keep()));
-	for (round = 2 * n; round; --round)
-	{
-		size_t i;
-		// block <- r*
-		beltBlockCopy(s->block, buf2);
-		// r <- ShHi^128(r)
-		memCopy(buf2, (octet*)buf1 + count - 32, 16);
-		memMove((octet*)buf1 + 16, buf1, count - 32);
-		// r1 <- block
-		beltBlockCopy(buf1, s->block);
-		// block <- beltBlockEncr(block) + <round>
-		beltBlockEncr(s->block, s->key);
-#if (OCTET_ORDER == LITTLE_ENDIAN)
-		memXor2(s->block, &round, O_PER_W);
-#else // BIG_ENDIAN
-		round = wordRev(round);
-		memXor2(s->block, &round, O_PER_W);
-		round = wordRev(round);
-#endif // OCTET_ORDER
-		// r* <- r* + block
-		beltBlockXor2(buf2, s->block);
-		// r1 <- r1 + r2 + ... + r_{n-1}
-		for (i = 16; i + 32 < count; i += 16)
-			beltBlockXor2(buf1, (octet*)buf1 + i);
-		ASSERT(i + 16 <= count && i + 32 >= count);
-		if (i + 16 < count)
-		{
-			memXor2(buf1, (octet*)buf1 + i, count - 16 - i);
-			memXor2((octet*)buf1 + count - 16 - i, buf2, 32 + i - count);
-		}
-	}
-}
 
 err_t beltKWPWrap(octet dest[], const octet src[], size_t count,
 	const octet header[16], const octet key[], size_t len)

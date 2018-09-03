@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.06.20
-\version 2018.06.29
+\version 2018.09.02
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -19,15 +19,21 @@ version 3. See Copyright Notices in bee2/info.h.
 
 /*
 *******************************************************************************
-Самотестирование
+Внутренние функции модуля belt (для тестирования belt-compress)
+*******************************************************************************
+*/
 
--#	Выполняются тесты из приложения A к СТБ 34.101.31 и из приложения Б
-	к СТБ 34.101.47.
--#	Номера тестов соответствуют номерам таблиц приложений.
--#	Дополнительно выполняется тест на основе задачи 
-	http://apmi.bsu.by/resources/tasks#60: найти 128-битовые блоки 
-	X_0,..., X_127 такие, что
-		X_0 ^ ... ^ X_127 ^ Belt_0(X_0) ^ ... ^ Belt_0(X_127) = 0.
+extern void beltCompr(u32 s[4], u32 h[8], const u32 X[8], void* stack);
+extern void beltCompr2(u32 h[8], const u32 X[8], void* stack);
+extern size_t beltCompr_deep();
+
+/*
+*******************************************************************************
+Специальный тест Zerosum
+
+Тест основан на задаче http://apmi.bsu.by/resources/tasks#60: 
+найти 128-битовые блоки X_0,..., X_127 такие, что
+	X_0 ^ ... ^ X_127 ^ Belt_0(X_0) ^ ... ^ Belt_0(X_127) = 0.
 *******************************************************************************
 */
 
@@ -74,10 +80,21 @@ static bool_t beltZerosumTest()
 	return sum[0] == 0 && sum[1] == 0 && sum[2] == 0 && sum[3] == 0;
 }
 
+/*
+*******************************************************************************
+Самотестирование
+
+-#	Выполняются тесты из приложения A к СТБ 34.101.31 (редакция 2018 года) 
+	и из приложения Б к СТБ 34.101.47.
+-#	Номера тестов соответствуют номерам таблиц приложений.
+-#	Дополнительно выполняется тест Zerosum.
+*******************************************************************************
+*/
+
 bool_t beltTest()
 {
-	octet buf[48];
-	octet buf1[48];
+	octet buf[128];
+	octet buf1[128];
 	octet mac[8];
 	octet mac1[8];
 	octet hash[32];
@@ -86,8 +103,10 @@ bool_t beltTest()
 	u32 block[4];
 	octet level[12];
 	octet state[1024];
+	size_t count;
 	// создать стек
 	ASSERT(sizeof(state) >= beltWBL_keep());
+	ASSERT(sizeof(state) >= beltCompr_deep());
 	ASSERT(sizeof(state) >= beltECB_keep());
 	ASSERT(sizeof(state) >= beltCBC_keep());
 	ASSERT(sizeof(state) >= beltCFB_keep());
@@ -96,9 +115,11 @@ bool_t beltTest()
 	ASSERT(sizeof(state) >= beltDWP_keep());
 	ASSERT(sizeof(state) >= beltKWP_keep());
 	ASSERT(sizeof(state) >= beltHash_keep());
+	ASSERT(sizeof(state) >= beltBDE_keep());
+	ASSERT(sizeof(state) >= beltFMT_keep(65536, 17));
 	ASSERT(sizeof(state) >= beltKRP_keep());
 	ASSERT(sizeof(state) >= beltHMAC_keep());
-	// тест A.1-1
+	// belt-block: тест A.1-1
 	memCopy(buf, beltH(), 16);
 	beltKeyExpand2(key, beltH() + 128, 32);
 	beltBlockEncr(buf, key);
@@ -108,7 +129,7 @@ bool_t beltTest()
 	beltBlockDecr(buf, key);
 	if (!memEq(buf, beltH(), 16))
 		return FALSE;
-	// тест A.1-2
+	// belt-block: тест A.1-2
 	u32From(block, beltH(), 16);
 	beltBlockEncr2(block, key);
 	u32To(buf, 16, block);
@@ -119,7 +140,7 @@ bool_t beltTest()
 	u32To(buf, 16, block);
 	if (!memEq(buf, beltH(), 16))
 		return FALSE;
-	// тест A.1-3
+	// belt-block: тест A.1-3
 	beltBlockEncr3(block + 0, block + 1, block + 2, block + 3, key);
 	u32To(buf, 16, block);
 	if (!hexEq(buf,
@@ -129,14 +150,82 @@ bool_t beltTest()
 	u32To(buf, 16, block);
 	if (!memEq(buf, beltH(), 16))
 		return FALSE;
-	// тест A.4
+	// belt-block: тест A.4
 	memCopy(buf, beltH() + 64, 16);
 	beltKeyExpand2(key, beltH() + 128 + 32, 32);
 	beltBlockDecr(buf, key);
 	if (!hexEq(buf,
 		"0DC5300600CAB840B38448E5E993F421"))
 		return FALSE;
-	// тест A.6
+	// belt-wblock: тест A.6
+	memCopy(buf, beltH(), 48);
+	beltWBLStart(state, beltH() + 128, 32);
+	beltWBLStepE(buf, 48, state);
+	if (!hexEq(buf,
+		"49A38EE108D6C742E52B774F00A6EF98"
+		"B106CBD13EA4FB0680323051BC04DF76"
+		"E487B055C69BCF541176169F1DC9F6C8"))
+		return FALSE;
+	// belt-wblock: тест A.7
+	memCopy(buf, beltH(), 47);
+	beltWBLStart(state, beltH() + 128, 32);
+	beltWBLStepE(buf, 47, state);
+	if (!hexEq(buf,
+		"F08EF22DCAA06C81FB12721974221CA7"
+		"AB82C62856FCF2F9FCA006E019A28F16"
+		"E5821A51F573594625DBAB8F6A5C94"))
+		return FALSE;
+	// belt-wblock: тест A.8
+	memCopy(buf, beltH() + 64, 48);
+	beltWBLStart(state, beltH() + 128 + 32, 32);
+	beltWBLStepD(buf, 48, state);
+	if (!hexEq(buf,
+		"92632EE0C21AD9E09A39343E5C07DAA4"
+		"889B03F2E6847EB152EC99F7A4D9F154"
+		"B5EF68D8E4A39E567153DE13D72254EE"))
+		return FALSE;
+	// belt-wblock: тест A.9
+	memCopy(buf, beltH() + 64, 36);
+	beltWBLStart(state, beltH() + 128 + 32, 32);
+	beltWBLStepD(buf, 36, state);
+	if (!hexEq(buf,
+		"DF3F882230BAAFFC92F0566032117231"
+		"0E3CB2182681EF43102E67175E177BD7"
+		"5E93E4E8"))
+		return FALSE;
+	// belt-wblock: special
+	beltWBLStart(state, beltH() + 128, 32);
+	for (count = 32; count <= 128; ++count)
+	{
+		memCopy(buf, beltH(), count);
+		beltWBLStepE(buf, count, state);
+		memCopy(buf1, buf, count);
+		beltWBLStepD(buf, count, state);
+		if (!memEq(buf, beltH(), count))
+			return FALSE;
+		beltWBLStepD2(buf1, buf1 + count - 16, count, state);
+		if (!memEq(buf1, beltH(), count))
+			return FALSE;
+	}
+	// belt-compr: тест A.10
+	u32From((u32*)buf, beltH(), 32);
+	u32From((u32*)hash, beltH() + 32, 32);
+	beltCompr((u32*)hash1, (u32*)hash, (u32*)buf, state);
+	u32To(hash1, 16, (u32*)hash1);
+	u32To(hash, 32, (u32*)hash);
+	if (!hexEq(hash1,
+		"8A32B8E9057D4D278D1322F2BEDAF196"))
+		return FALSE;
+	if (!hexEq(hash,
+		"ED2F5481D593F40D87FCE37D6BC1A2E1"
+		"B7D1A2CC975C82D3C0497488C90D99D8"))
+		return FALSE;
+	u32From((u32*)hash1, beltH() + 32, 32);
+	beltCompr2((u32*)hash1, (u32*)buf, state);
+	u32To(hash1, 32, (u32*)hash1);
+	if (!memEq(hash, hash1, 32))
+		return FALSE;
+	// belt-ecb: тест A.11
 	memCopy(buf, beltH(), 48);
 	beltECBStart(state, beltH() + 128, 32);
 	beltECBStepE(buf, 32, state);
@@ -149,21 +238,20 @@ bool_t beltTest()
 	beltECBEncr(buf1, beltH(), 48, beltH() + 128, 32);
 	if (!memEq(buf, buf1, 48))
 		return FALSE;
-	// тест A.7
+	// belt-ecb: тест A.12
 	memCopy(buf, beltH(), 47);
 	beltECBStart(state, beltH() + 128, 32);
 	beltECBStepE(buf, 16, state);
 	beltECBStepE(buf + 16, 47 - 16, state);
 	if (!hexEq(buf,
-		"69CCA1C93557C9E3D66BC3E0FA88FA"
-		"6E36F00CFED6D1CA1498C12798F4BE"
-		"B2075F23102EF109710775017F7380"
-		"6DA9"))
+		"69CCA1C93557C9E3D66BC3E0FA88FA6E"
+		"36F00CFED6D1CA1498C12798F4BEB207"
+		"5F23102EF109710775017F73806DA9"))
 		return FALSE;
 	beltECBEncr(buf1, beltH(), 47, beltH() + 128, 32);
 	if (!memEq(buf, buf1, 47))
 		return FALSE;
-	// тест A.8
+	// belt-ecb: тест A.13
 	memCopy(buf, beltH() + 64, 48);
 	beltECBStart(state, beltH() + 128 + 32, 32);
 	beltECBStepD(buf, 16, state);
@@ -176,7 +264,7 @@ bool_t beltTest()
 	beltECBDecr(buf1, beltH() + 64, 48, beltH() + 128 + 32, 32);
 	if (!memEq(buf, buf1, 48))
 		return FALSE;
-	// тест A.9
+	// belt-cbc: тест A.14
 	memCopy(buf, beltH() + 64, 36);
 	beltECBStart(state, beltH() + 128 + 32, 32);
 	beltECBStepD(buf, 36, state);
@@ -188,7 +276,7 @@ bool_t beltTest()
 	beltECBDecr(buf1, beltH() + 64, 36, beltH() + 128 + 32, 32);
 	if (!memEq(buf, buf1, 36))
 		return FALSE;
-	// тест A.10
+	// belt-cbc: тест A.15
 	memCopy(buf, beltH(), 48);
 	beltCBCStart(state, beltH() + 128, 32, beltH() + 192);
 	beltCBCStepE(buf, 32, state);
@@ -201,7 +289,7 @@ bool_t beltTest()
 	beltCBCEncr(buf1, beltH(), 48, beltH() + 128, 32, beltH() + 192);
 	if (!memEq(buf, buf1, 48))
 		return FALSE;
-	// тест A.11
+	// belt-cbc: тест A.16
 	memCopy(buf, beltH(), 36);
 	beltCBCStart(state, beltH() + 128, 32, beltH() + 192);
 	beltCBCStepE(buf, 16, state);
@@ -214,7 +302,7 @@ bool_t beltTest()
 	beltCBCEncr(buf1, beltH(), 36, beltH() + 128, 32, beltH() + 192);
 	if (!memEq(buf, buf1, 36))
 		return FALSE;
-	// тест A.12
+	// belt-cbc: тест A.17
 	memCopy(buf, beltH() + 64, 48);
 	beltCBCStart(state, beltH() + 128 + 32, 32, beltH() + 192 + 16);
 	beltCBCStepD(buf, 16, state);
@@ -228,7 +316,7 @@ bool_t beltTest()
 		beltH() + 192 + 16);
 	if (!memEq(buf, buf1, 48))
 		return FALSE;
-	// тест A.13
+	// belt-cbc: тест A.18
 	memCopy(buf, beltH() + 64, 36);
 	beltCBCStart(state, beltH() + 128 + 32, 32, beltH() + 192 + 16);
 	beltCBCStepD(buf, 16, state);
@@ -242,7 +330,7 @@ bool_t beltTest()
 		beltH() + 192 + 16);
 	if (!memEq(buf, buf1, 36))
 		return FALSE;
-	// тест A.14
+	// belt-cfb: тест A.19
 	memCopy(buf, beltH(), 48);
 	beltCFBStart(state, beltH() + 128, 32, beltH() + 192);
 	beltCFBStepE(buf, 16, state);
@@ -256,7 +344,7 @@ bool_t beltTest()
 	beltCFBEncr(buf1, beltH(), 48, beltH() + 128, 32, beltH() + 192);
 	if (!memEq(buf, buf1, 48))
 		return FALSE;
-	// тест A.15
+	// belt-cfb: тест A.20
 	memCopy(buf, beltH() + 64, 48);
 	beltCFBStart(state, beltH() + 128 + 32, 32, beltH() + 192 + 16);
 	beltCFBStepD(buf, 15, state);
@@ -271,7 +359,7 @@ bool_t beltTest()
 		beltH() + 192 + 16);
 	if (!memEq(buf, buf1, 48))
 		return FALSE;
-	// тест A.16
+	// belt-ctr: тест A.21
 	memCopy(buf, beltH(), 48);
 	beltCTRStart(state, beltH() + 128, 32, beltH() + 192);
 	beltCTRStepE(buf, 15, state);
@@ -285,7 +373,7 @@ bool_t beltTest()
 	beltCTR(buf1, beltH(), 48, beltH() + 128, 32, beltH() + 192);
 	if (!memEq(buf, buf1, 48))
 		return FALSE;
-	// тест A.17
+	// belt-mac: тест A.22
 	beltMACStart(state, beltH() + 128, 32);
 	beltMACStepA(beltH(), 13, state);
 	hexTo(buf, "7260DA60138F96C9");
@@ -294,7 +382,7 @@ bool_t beltTest()
 	beltMAC(buf1, beltH(), 13, beltH() + 128, 32);
 	if (!memEq(buf, buf1, 8))
 		return FALSE;
-	// тест A.18 [+ инкрементальность]
+	// belt-mac: тест A.23 [+ инкрементальность]
 	beltMACStart(state, beltH() + 128, 32);
 	beltMACStepA(beltH(), 27, state);
 	beltMACStepG(buf, state);
@@ -306,7 +394,7 @@ bool_t beltTest()
 	beltMAC(buf1, beltH(), 48, beltH() + 128, 32);
 	if (!memEq(buf, buf1, 8))
 		return FALSE;
-	// тест A.20
+	// belt-dwp: тест A.25
 	beltDWPStart(state, beltH() + 128, 32, beltH() + 192);
 	memCopy(buf, beltH(), 16);
 	beltDWPStepE(buf, 16, state);
@@ -323,7 +411,7 @@ bool_t beltTest()
 		beltH() + 128, 32, beltH() + 192);
 	if (!memEq(buf, buf1, 16) || !memEq(mac, mac1, 8))
 		return FALSE;
-	// тест A.21
+	// belt-dwp: тест A.26
 	beltDWPStart(state, beltH() + 128 + 32, 32, beltH() + 192 + 16);
 	memCopy(buf, beltH() + 64, 16);
 	beltDWPStepI(beltH() + 64 + 16, 32, state);
@@ -340,7 +428,7 @@ bool_t beltTest()
 		mac, beltH() + 128 + 32, 32, beltH() + 192 + 16) != ERR_OK ||
 		!memEq(buf, buf1, 16))
 		return FALSE;
-	// тест A.22
+	// belt-kwp: тест A.27
 	beltKWPStart(state, beltH() + 128, 32);
 	memCopy(buf, beltH(), 32);
 	memCopy(buf + 32, beltH() + 32, 16);
@@ -353,7 +441,7 @@ bool_t beltTest()
 	beltKWPWrap(buf1, beltH(), 32, beltH() + 32, beltH() + 128, 32);
 	if (!memEq(buf, buf1, 48))
 		return FALSE;
-	// тест A.23
+	// belt-kwp: тест A.28
 	beltKWPStart(state, beltH() + 128 + 32, 32);
 	memCopy(buf, beltH() + 64, 48);
 	beltKWPStepD(buf, 48, state);
@@ -368,7 +456,7 @@ bool_t beltTest()
 		beltH() + 128 + 32, 32) != ERR_OK ||
 		!memEq(buf, buf1, 32))
 		return FALSE;
-	// тест A.24
+	// belt-hash: тест A.29
 	beltHashStart(state);
 	beltHashStepH(beltH(), 13, state);
 	beltHashStepG(hash, state);
@@ -379,7 +467,7 @@ bool_t beltTest()
 	beltHash(hash1, beltH(), 13);
 	if (!memEq(hash, hash1, 32))
 		return FALSE;
-	// тест A.25
+	// belt-hash: тест A.30
 	beltHashStart(state);
 	beltHashStepH(beltH(), 32, state);
 	hexTo(hash, 
@@ -390,7 +478,7 @@ bool_t beltTest()
 	beltHash(hash1, beltH(), 32);
 	if (!memEq(hash, hash1, 32))
 		return FALSE;
-	// тест A.26 [+ инкрементальность]
+	// belt-hash: тест A.31 [+ инкрементальность]
 	beltHashStart(state);
 	beltHashStepH(beltH(), 11, state);
 	beltHashStepG2(hash, 32, state);
@@ -403,7 +491,112 @@ bool_t beltTest()
 	beltHash(hash1, beltH(), 48);
 	if (!memEq(hash, hash1, 32))
 		return FALSE;
-	// тест A.29
+	// belt-bde: тест A.32-1
+	memCopy(buf, beltH(), 48);
+	beltBDEStart(state, beltH() + 128, 32, beltH() + 192);
+	beltBDEStepE(buf, 32, state);
+	beltBDEStepE(buf + 32, 48 - 32, state);
+	if (!hexEq(buf,
+		"E9CAB32D879CC50C10378EB07C10F263"
+		"07257E2DBE2B854CBC9F38282D59D6A7"
+		"7F952001C5D1244F53210A27C216D4BB"))
+		return FALSE;
+	beltBDEEncr(buf1, beltH(), 48, beltH() + 128, 32, beltH() + 192);
+	if (!memEq(buf, buf1, 48))
+		return FALSE;
+	beltBDEDecr(buf1, buf1, 48, beltH() + 128, 32, beltH() + 192);
+	if (!memEq(buf1, beltH(), 48))
+		return FALSE;
+	// belt-bde: тест A.33-1
+	memCopy(buf, beltH() + 64, 48);
+	beltBDEStart(state, beltH() + 128 + 32, 32, beltH() + 192 + 16);
+	beltBDEStepD(buf, 16, state);
+	beltBDEStepD(buf + 16, 48 - 16, state);
+	if (!hexEq(buf,
+		"7041BC226352C706D00EA8EF23CFE46A"
+		"FAE118577D037FACDC36E4ECC1F65746"
+		"09F236943FB809E1BEE4A1C686C13ACC"))
+		return FALSE;
+	beltBDEDecr(buf1, beltH() + 64, 48, beltH() + 128 + 32, 32,
+		beltH() + 192 + 16);
+	if (!memEq(buf, buf1, 48))
+		return FALSE;
+	beltBDEEncr(buf, buf1, 48, beltH() + 128 + 32, 32, beltH() + 192 + 16);
+	if (!memEq(buf, beltH() + 64, 48))
+		return FALSE;
+	// belt-sde: тест A.32-2
+	memCopy(buf, beltH(), 48);
+	beltSDEStart(state, beltH() + 128, 32);
+	beltSDEStepE(buf, 48, beltH() + 192, state);
+	if (!hexEq(buf,
+		"1FCBB01852003D60B66024C508608BAA"
+		"2C21AF1E884CF31154D3077D4643CF22"
+		"49EB2F5A68E4BA019D90211A81D690D9"))
+		return FALSE;
+	beltSDEEncr(buf1, beltH(), 48, beltH() + 128, 32, beltH() + 192);
+	if (!memEq(buf, buf1, 48))
+		return FALSE;
+	beltSDEDecr(buf1, buf1, 48, beltH() + 128, 32, beltH() + 192);
+	if (!memEq(buf1, beltH(), 48))
+		return FALSE;
+	// belt-sde: тест A.33-2
+	memCopy(buf, beltH() + 64, 48);
+	beltSDEStart(state, beltH() + 128 + 32, 32);
+	beltSDEStepD(buf, 48, beltH() + 192 + 16, state);
+	if (!hexEq(buf,
+		"E9FDF3F788657332E6C46FCF5251B8A6"
+		"D43543A93E3233837DB1571183A6EF4D"
+		"7FEB5CDF999E1A3F51A5A3381BEB7FA5"))
+		return FALSE;
+	beltSDEDecr(buf1, beltH() + 64, 48, beltH() + 128 + 32, 32,
+		beltH() + 192 + 16);
+	if (!memEq(buf, buf1, 48))
+		return FALSE;
+	beltSDEEncr(buf, buf1, 48, beltH() + 128 + 32, 32, beltH() + 192 + 16);
+	if (!memEq(buf, beltH() + 64, 48))
+		return FALSE;
+	// belt-fmt: тест A.34
+	{
+		u16 str[21] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,};
+		u16 str1[21];
+		// субтест 1: belt-block
+		beltFMTEncr(str1, 10, str, 10, beltH() + 128, 32, beltH() + 192);
+		beltFMTDecr(str1, 10, str1, 10, beltH() + 128, 32, beltH() + 192);
+		if (!memEq(str, str1, 10 * 2))
+			return FALSE;
+		// субтест 2: base58, на стыке belt-block и belt-32block
+		beltFMTEncr(str1, 58, str, 21, beltH() + 128, 32, beltH() + 192);
+		beltFMTDecr(str1, 58, str1, 21, beltH() + 128, 32, beltH() + 192);
+		if (!memEq(str, str1, 21 * 2))
+			return FALSE;
+		// субтест 3: на стыке belt-32block и belt-wblock
+		beltFMTEncr(str1, 65536, str, 17, beltH() + 128, 32, beltH() + 192);
+		beltFMTDecr(str1, 65536, str1, 17, beltH() + 128, 32, beltH() + 192);
+		if (!memEq(str, str1, 17 * 2))
+			return FALSE;
+		// другие тесты
+		beltFMTEncr(str1, 9, str, 9, beltH() + 128, 32, beltH() + 192);
+		beltFMTDecr(str1, 9, str1, 9, beltH() + 128, 32, beltH() + 192);
+		if (!memEq(str, str1, 9 * 2))
+			return FALSE;
+		beltFMTEncr(str1, 11, str, 11, beltH() + 128, 32, 0);
+		beltFMTDecr(str1, 11, str1, 11, beltH() + 128, 32, 0);
+		if (!memEq(str, str1, 11 * 2))
+			return FALSE;
+		beltFMTEncr(str1, 256, str, 16, beltH() + 128, 32, beltH() + 192);
+		beltFMTDecr(str1, 256, str1, 16, beltH() + 128, 32, beltH() + 192);
+		if (!memEq(str, str1, 16 * 2))
+			return FALSE;
+		beltFMTEncr(str1, 257, str, 17, beltH() + 128, 32, beltH() + 192);
+		beltFMTDecr(str1, 257, str1, 17, beltH() + 128, 32, beltH() + 192);
+		if (!memEq(str, str1, 17 * 2))
+			return FALSE;
+		beltFMTEncr(str1, 49667, str, 9, beltH() + 128, 32, beltH() + 192);
+		beltFMTDecr(str1, 49667, str1, 9, beltH() + 128, 32, beltH() + 192);
+		if (!memEq(str, str1, 9 * 2))
+			return FALSE;
+	}
+	// belt-keyexpand: тест A.35
 	memSetZero(level, 12);
 	level[0] = 1;
 	beltKRPStart(state, beltH() + 128, 32, level);
@@ -414,7 +607,7 @@ bool_t beltTest()
 	beltKRP(buf1, 16, beltH() + 128, 32, level, beltH() + 32);
 	if (!memEq(buf, buf1, 16))
 		return FALSE;
-	// тест A.30
+	// belt-keyexpand: тест A.36
 	beltKRPStepG(buf, 24, beltH() + 32, state);
 	if (!hexEq(buf,
 		"9A2532A18CBAF145398D5A95FEEA6C82"
@@ -423,7 +616,7 @@ bool_t beltTest()
 	beltKRP(buf1, 24, beltH() + 128, 32, level, beltH() + 32);
 	if (!memEq(buf, buf1, 24))
 		return FALSE;
-	// тест A.31
+	// belt-keyrep: тест A.37
 	beltKRPStepG(buf, 32, beltH() + 32, state);
 	if (!hexEq(buf,
 		"76E166E6AB21256B6739397B672B8796"
@@ -432,7 +625,7 @@ bool_t beltTest()
 	beltKRP(buf1, 32, beltH() + 128, 32, level, beltH() + 32);
 	if (!memEq(buf, buf1, 32))
 		return FALSE;
-	// тест Б.1-1
+	// belt-hmac: тест Б.1-1
 	beltHMACStart(state, beltH() + 128, 29);
 	beltHMACStepA(beltH() + 128 + 64, 32, state);
 	beltHMACStepG(hash, state);
@@ -443,7 +636,7 @@ bool_t beltTest()
 	beltHMAC(hash1, beltH() + 128 + 64, 32, beltH() + 128, 29);
 	if (!memEq(hash, hash1, 32))
 		return FALSE;
-	// тест Б.1-2
+	// belt-hmac: тест Б.1-2
 	beltHMACStart(state, beltH() + 128, 32);
 	beltHMACStepA(beltH() + 128 + 64, 32, state);
 	hexTo(hash, 
@@ -454,7 +647,7 @@ bool_t beltTest()
 	beltHMAC(hash1, beltH() + 128 + 64, 32, beltH() + 128, 32);
 	if (!memEq(hash, hash1, 32))
 		return FALSE;
-	// тест Б.1-3 [+ икрементальность]
+	// belt-hmac: тест Б.1-3 [+ икрементальность]
 	beltHMACStart(state, beltH() + 128, 42);
 	beltHMACStepA(beltH() + 128 + 64, 17, state);
 	beltHMACStepG(hash, state);
@@ -471,106 +664,6 @@ bool_t beltTest()
 	// zerosum
 	if (!beltZerosumTest())
 		return FALSE;
-	// wbl (experimental)
-	{
-		size_t i;
-		beltWBLStart(state, beltH() + 128, 32);
-		for (i = 32; i <= 48; ++i)
-		{
-			memCopy(buf, beltH(), i);
-			beltWBLStepE(buf, i, state);
-			memCopy(buf1, beltH(), i);
-			beltKWPStepE(buf1, i, state);
-			if (!memEq(buf, buf1, i))
-				return FALSE;
-			beltWBLStepD(buf, i, state);
-			if (!memEq(buf, beltH(), i))
-				return FALSE;
-			memCopy(buf, buf1, i);
-			beltKWPStepD(buf, i, state);
-			beltKWPStepD2(buf1, buf1 + i - 16, i, state);
-			if (!memEq(buf, buf1, i))
-				return FALSE;
-		}
-	}
-	// bde (experimental)
-	{
-		// тест 1
-		memCopy(buf, beltH(), 48);
-		beltBDEStart(state, beltH() + 128, 32, beltH() + 192);
-		beltBDEStepE(buf, 32, state);
-		beltBDEStepE(buf + 32, 48 - 32, state);
-		if (!hexEq(buf,
-			"E9CAB32D879CC50C10378EB07C10F263"
-			"07257E2DBE2B854CBC9F38282D59D6A7"
-			"7F952001C5D1244F53210A27C216D4BB"))
-			return FALSE;
-		beltBDEEncr(buf1, beltH(), 48, beltH() + 128, 32, beltH() + 192);
-		if (!memEq(buf, buf1, 48))
-			return FALSE;
-		beltBDEDecr(buf1, buf1, 48, beltH() + 128, 32, beltH() + 192);
-		if (!memEq(buf1, beltH(), 48))
-			return FALSE;
-		// тест 2
-		memCopy(buf, beltH() + 64, 48);
-		beltBDEStart(state, beltH() + 128 + 32, 32, beltH() + 192 + 16);
-		beltBDEStepD(buf, 16, state);
-		beltBDEStepD(buf + 16, 48 - 16, state);
-		if (!hexEq(buf,
-			"7041BC226352C706D00EA8EF23CFE46A"
-			"FAE118577D037FACDC36E4ECC1F65746"
-			"09F236943FB809E1BEE4A1C686C13ACC"))
-			return FALSE;
-		beltBDEDecr(buf1, beltH() + 64, 48, beltH() + 128 + 32, 32,
-			beltH() + 192 + 16);
-		if (!memEq(buf, buf1, 48))
-			return FALSE;
-		beltBDEEncr(buf, buf1, 48, beltH() + 128 + 32, 32,
-			beltH() + 192 + 16);
-		if (!memEq(buf, beltH() + 64, 48))
-			return FALSE;
-	}
-	// fmt (experimental)
-	{
-		u16 str[21] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,};
-		u16 str1[21];
-		// тест 1: belt-block
-		beltFMTEncrypt(str1, 10, str, 10, beltH() + 128, 32, beltH() + 192);
-		beltFMTDecrypt(str1, 10, str1, 10, beltH() + 128, 32, beltH() + 192);
-		if (!memEq(str, str1, 10 * 2))
-			return FALSE;
-		// тест 2: base58, на стыке belt-block и belt-32block
-		beltFMTEncrypt(str1, 58, str, 21, beltH() + 128, 32, beltH() + 192);
-		beltFMTDecrypt(str1, 58, str1, 21, beltH() + 128, 32, beltH() + 192);
-		if (!memEq(str, str1, 21 * 2))
-			return FALSE;
-		// тест 3: на стыке belt-32block и belt-wblock
-		beltFMTEncrypt(str1, 65536, str, 17, beltH() + 128, 32, beltH() + 192);
-		beltFMTDecrypt(str1, 65536, str1, 17, beltH() + 128, 32, beltH() + 192);
-		if (!memEq(str, str1, 17 * 2))
-			return FALSE;
-		// non-official
-		beltFMTEncrypt(str1, 9, str, 9, beltH() + 128, 32, beltH() + 192);
-		beltFMTDecrypt(str1, 9, str1, 9, beltH() + 128, 32, beltH() + 192);
-		if (!memEq(str, str1, 9 * 2))
-			return FALSE;
-		beltFMTEncrypt(str1, 11, str, 11, beltH() + 128, 32, 0);
-		beltFMTDecrypt(str1, 11, str1, 11, beltH() + 128, 32, 0);
-		if (!memEq(str, str1, 11 * 2))
-			return FALSE;
-		beltFMTEncrypt(str1, 256, str, 16, beltH() + 128, 32, beltH() + 192);
-		beltFMTDecrypt(str1, 256, str1, 16, beltH() + 128, 32, beltH() + 192);
-		if (!memEq(str, str1, 16 * 2))
-			return FALSE;
-		beltFMTEncrypt(str1, 257, str, 17, beltH() + 128, 32, beltH() + 192);
-		beltFMTDecrypt(str1, 257, str1, 17, beltH() + 128, 32, beltH() + 192);
-		if (!memEq(str, str1, 17 * 2))
-			return FALSE;
-		beltFMTEncrypt(str1, 49667, str, 9, beltH() + 128, 32, beltH() + 192);
-		beltFMTDecrypt(str1, 49667, str1, 9, beltH() + 128, 32, beltH() + 192);
-		if (!memEq(str, str1, 9 * 2))
-			return FALSE;
-	}
 	// все нормально
 	return TRUE;
 }

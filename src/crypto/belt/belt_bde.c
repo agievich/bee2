@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2018.06.28
-\version 2018.06.29
+\version 2018.09.01
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -105,7 +105,7 @@ err_t beltBDEEncr(void* dest, const void* src, size_t count,
 {
 	void* state;
 	// проверить входные данные
-	if (count % 16 != 0 ||
+	if (count % 16 != 0 || count < 16 ||
 		len != 16 && len != 24 && len != 32 ||
 		!memIsValid(src, count) ||
 		!memIsValid(key, len) ||
@@ -130,7 +130,7 @@ err_t beltBDEDecr(void* dest, const void* src, size_t count,
 {
 	void* state;
 	// проверить входные данные
-	if (count % 16 != 0 ||
+	if (count % 16 != 0 || count < 16 ||
 		len != 16 && len != 24 && len != 32 ||
 		!memIsValid(src, count) ||
 		!memIsValid(key, len) ||
@@ -138,7 +138,7 @@ err_t beltBDEDecr(void* dest, const void* src, size_t count,
 		!memIsValid(dest, count))
 		return ERR_BAD_INPUT;
 	// создать состояние
-	state = blobCreate(beltCBC_keep());
+	state = blobCreate(beltBDE_keep());
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// расшифровать
