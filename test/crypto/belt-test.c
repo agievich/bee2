@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.06.20
-\version 2018.09.02
+\version 2018.09.03
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -16,16 +16,13 @@ version 3. See Copyright Notices in bee2/info.h.
 #include <bee2/core/u32.h>
 #include <bee2/core/util.h>
 #include <bee2/crypto/belt.h>
+#include <../src/crypto/belt/belt_int.h>
 
 /*
 *******************************************************************************
 Внутренние функции модуля belt (для тестирования belt-compress)
 *******************************************************************************
 */
-
-extern void beltCompr(u32 s[4], u32 h[8], const u32 X[8], void* stack);
-extern void beltCompr2(u32 h[8], const u32 X[8], void* stack);
-extern size_t beltCompr_deep();
 
 /*
 *******************************************************************************
@@ -210,11 +207,12 @@ bool_t beltTest()
 	// belt-compr: тест A.10
 	u32From((u32*)buf, beltH(), 32);
 	u32From((u32*)hash, beltH() + 32, 32);
+	memSetZero(hash1, 16);
 	beltCompr((u32*)hash1, (u32*)hash, (u32*)buf, state);
 	u32To(hash1, 16, (u32*)hash1);
 	u32To(hash, 32, (u32*)hash);
 	if (!hexEq(hash1,
-		"8A32B8E9057D4D278D1322F2BEDAF196"))
+		"46FE7425C9B181EB41DFEE3E72163D5A"))
 		return FALSE;
 	if (!hexEq(hash,
 		"ED2F5481D593F40D87FCE37D6BC1A2E1"
@@ -559,18 +557,29 @@ bool_t beltTest()
 	{
 		u16 str[21] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,};
 		u16 str1[21];
+		const u16 test_fmt1[] = {9,1,6,1,8,9,0,0,3,2};
+		const u16 test_fmt2[] = {54,57,12,33,7,45,52,13,36,7,7,15,10,26,9,53,
+			30,51,39,19,51};
+		const u16 test_fmt3[] = {10699,44372,28885,6592,7111,60658,33096,8253,
+			61778,315,19436,35582,15517,61117,59921,55117,50041};
 		// субтест 1: belt-block
 		beltFMTEncr(str1, 10, str, 10, beltH() + 128, 32, beltH() + 192);
+		if (!memEq(str1, test_fmt1, 10 * 2))
+			return FALSE;
 		beltFMTDecr(str1, 10, str1, 10, beltH() + 128, 32, beltH() + 192);
 		if (!memEq(str, str1, 10 * 2))
 			return FALSE;
 		// субтест 2: base58, на стыке belt-block и belt-32block
 		beltFMTEncr(str1, 58, str, 21, beltH() + 128, 32, beltH() + 192);
+		if (!memEq(str1, test_fmt2, 21 * 2))
+			return FALSE;
 		beltFMTDecr(str1, 58, str1, 21, beltH() + 128, 32, beltH() + 192);
 		if (!memEq(str, str1, 21 * 2))
 			return FALSE;
 		// субтест 3: на стыке belt-32block и belt-wblock
 		beltFMTEncr(str1, 65536, str, 17, beltH() + 128, 32, beltH() + 192);
+		if (!memEq(str1, test_fmt3, 17 * 2))
+			return FALSE;
 		beltFMTDecr(str1, 65536, str1, 17, beltH() + 128, 32, beltH() + 192);
 		if (!memEq(str, str1, 17 * 2))
 			return FALSE;

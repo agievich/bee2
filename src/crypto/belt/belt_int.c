@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2017.11.03
+\version 2018.09.03
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -98,6 +98,9 @@ h и X разбиваются на половинки:
 	[8]h = [4]h0 || [4]h1, [8]X = [4]X0 || [4]X1.
 
 \pre Буферы s и h, s и X, h и X не пересекаются.
+
+\warning Для получения точного первого выхода в beltCompr() следует обнулить
+буфер s перед обращением.
 
 Схема расчета глубины стека:
 		beltCompr_deep().
