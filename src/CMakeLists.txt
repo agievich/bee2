@@ -19,7 +19,9 @@ set(src
   core/util.c
   core/word.c
   crypto/bake.c
-  crypto/bash.c
+  crypto/bash/bash_f.c
+  crypto/bash/bash_hash.c
+  crypto/bash/bash_ae.c
   crypto/bels.c
   crypto/belt/belt_block.c
   crypto/belt/belt_wbl.c

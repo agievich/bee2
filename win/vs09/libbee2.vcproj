@@ -654,10 +654,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\src\crypto\bash.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\src\crypto\bels.c"
 					>
 				</File>
@@ -762,6 +758,22 @@
 					</File>
 					<File
 						RelativePath="..\..\src\crypto\belt\belt_wbl.c"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="bash"
+					>
+					<File
+						RelativePath="..\..\src\crypto\bash\bash_ae.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\bash\bash_f.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\bash\bash_hash.c"
 						>
 					</File>
 				</Filter>

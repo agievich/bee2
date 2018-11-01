@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.15
-\version 2016.07.15
+\version 2018.11.01
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -82,6 +82,51 @@ bool_t bashBench()
 		printf("bashBench::bash512:   %3u cycles / byte [%5u kBytes / sec]\n",
 			(unsigned)(ticks / 1024 / reps),
 			(unsigned)tmSpeed(reps, ticks));
+		// cкорость bash-ae128
+		ASSERT(bashAE_keep() <= sizeof(bash_state));
+		bashAEStart(bash_state, hash, 16, 0, 0);
+		bashAEEncrStart(bash_state);
+		for (i = 0, ticks = tmTicks(); i < reps; ++i)
+			bashAEEncrStep(buf, 1024, bash_state);
+		bashAEEncrStop(bash_state);
+		bashAEDecrStart(bash_state);
+		for (i = 0, ticks = tmTicks(); i < reps; ++i)
+			bashAEDecrStep(buf, 1024, bash_state);
+		bashAEDecrStop(bash_state);
+		ticks = tmTicks() - ticks;
+		printf("bashBench::bash-ae128:  %3u cycles / byte [%5u kBytes / sec]\n",
+			(unsigned)(ticks / 2048 / reps),
+			(unsigned)tmSpeed(2 * reps, ticks));
+		// cкорость bash-ae192
+		ASSERT(bashAE_keep() <= sizeof(bash_state));
+		bashAEStart(bash_state, hash, 24, 0, 0);
+		bashAEEncrStart(bash_state);
+		for (i = 0, ticks = tmTicks(); i < reps; ++i)
+			bashAEEncrStep(buf, 1024, bash_state);
+		bashAEEncrStop(bash_state);
+		bashAEDecrStart(bash_state);
+		for (i = 0, ticks = tmTicks(); i < reps; ++i)
+			bashAEDecrStep(buf, 1024, bash_state);
+		bashAEDecrStop(bash_state);
+		ticks = tmTicks() - ticks;
+		printf("bashBench::bash-ae192:  %3u cycles / byte [%5u kBytes / sec]\n",
+			(unsigned)(ticks / 2048 / reps),
+			(unsigned)tmSpeed(2 * reps, ticks));
+		// cкорость bash-ae256
+		ASSERT(bashAE_keep() <= sizeof(bash_state));
+		bashAEStart(bash_state, hash, 32, 0, 0);
+		bashAEEncrStart(bash_state);
+		for (i = 0, ticks = tmTicks(); i < reps; ++i)
+			bashAEEncrStep(buf, 1024, bash_state);
+		bashAEEncrStop(bash_state);
+		bashAEDecrStart(bash_state);
+		for (i = 0, ticks = tmTicks(); i < reps; ++i)
+			bashAEDecrStep(buf, 1024, bash_state);
+		bashAEDecrStop(bash_state);
+		ticks = tmTicks() - ticks;
+		printf("bashBench::bash-ae192:  %3u cycles / byte [%5u kBytes / sec]\n",
+			(unsigned)(ticks / 2048 / reps),
+			(unsigned)tmSpeed(2 * reps, ticks));
 	}
 	// все нормально
 	return TRUE;

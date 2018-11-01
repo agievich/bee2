@@ -84,8 +84,8 @@ int bsumHashFile(octet hash[], size_t hid, const char* filename)
 	}
 	// хэшировать
 	ASSERT(beltHash_keep() <= sizeof(state));
-	ASSERT(bash_keep() <= sizeof(state));
-	hid ? bashStart(state, hid / 2) : beltHashStart(state);
+	ASSERT(bashHash_keep() <= sizeof(state));
+	hid ? bashHashStart(state, hid / 2) : beltHashStart(state);
 	while (1)
 	{
 		count = fread(buf, 1, sizeof(buf), fp);
@@ -99,11 +99,12 @@ int bsumHashFile(octet hash[], size_t hid, const char* filename)
 			}
 			break;
 		}
-		hid ? bashStepH(buf, count, state) : beltHashStepH(buf, count, state);
+		hid ? bashHashStepH(buf, count, state) : 
+			beltHashStepH(buf, count, state);
 	}
 	// завершить
 	fclose(fp);
-	hid ? bashStepG(hash, hid / 8, state) : beltHashStepG(hash, state);
+	hid ? bashHashStepG(hash, hid / 8, state) : beltHashStepG(hash, state);
 	return 0;
 }
 

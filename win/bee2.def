@@ -162,12 +162,30 @@ EXPORTS
 	bakeBPACERunB				@529
 	bakeBPACERunA				@530
 
-	bash_keep					@601
-	bashStart					@602
-	bashStepH					@603
-	bashStepG					@604
-	bashStepV					@605
+	bashHash_keep				@601
+	bashHashStart				@602
+	bashHashStepH				@603
+	bashHashStepG				@604
+	bashHashStepV				@605
 	bashHash					@606
+	bashAE_keep					@607
+	bashAEStart					@608
+	bashAEAbsorbStart			@609
+	bashAEAbsorbStep			@610
+	bashAEAbsorbStop			@611
+	bashAEAbsorb				@612
+	bashAESqueezeStart			@613
+	bashAESqueezeStep			@614
+	bashAESqueezeStop			@615
+	bashAESqueeze				@616
+	bashAEEncrStart				@617
+	bashAEEncrStep				@618
+	bashAEEncrStop				@619
+	bashAEEncr					@620
+	bashAEDecrStart				@621
+	bashAEDecrStep				@622
+	bashAEDecrStop				@623
+	bashAEDecr					@624
 	
 	botpDT						@701
 	botpCtrNext					@702

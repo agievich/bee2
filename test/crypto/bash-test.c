@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.09.22
-\version 2016.05.25
+\version 2018.11.01
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -37,6 +37,7 @@ bool_t bashTest()
 	ASSERT(sizeof(state) >= bash256_keep());
 	ASSERT(sizeof(state) >= bash384_keep());
 	ASSERT(sizeof(state) >= bash512_keep());
+	ASSERT(sizeof(state) >= bashAE_keep());
 	// тест A.1
 	memCopy(buf, beltH(), 192);
 	bashF(buf);
@@ -150,6 +151,23 @@ bool_t bashTest()
 		"A70ABA3444F214C763D93CD6D19FCFDE"
 		"6C3D3931857C4FF6CCCD49BD99852FE9"
 		"EAA7495ECCDD96B571E0EDCF47F89768"))
+		return FALSE;
+	// AE.1: buf <- [8]iv || [12]data || [15]text || [8]mac
+	memCopy(buf, beltH(), 8 + 12 + 15);
+	bashAEStart(state, beltH() + 128, 32, buf, 8);
+	bashAEAbsorb(BASH_AE_DATA, buf + 8, 12, state);
+	bashAEEncr(buf + 8 + 12, 15, state);
+	bashAESqueeze(BASH_AE_MAC, buf + 8 + 12 + 15, 8, state);
+	if (!hexEq(buf + 20, 
+		"FEC2A158AA464A81E7AC5B0E204D7F93"
+		"9F242538755D18"))
+		return FALSE;
+	bashAEStart(state, beltH() + 128, 32, buf, 8);
+	bashAEAbsorb(BASH_AE_DATA, buf + 8, 12, state);
+	bashAEDecr(buf + 8 + 12, 15, state);
+	bashAESqueeze(BASH_AE_MAC, hash, 8, state);
+	if (!memEq(buf + 8 + 12, beltH() + 8 + 12, 15) ||
+		!memEq(buf + 8 + 12 + 15, hash, 8))
 		return FALSE;
 	// все нормально
 	return TRUE;
