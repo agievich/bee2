@@ -124,7 +124,7 @@ bool_t bashBench()
 			bashAEDecrStep(buf, 1024, bash_state);
 		bashAEDecrStop(bash_state);
 		ticks = tmTicks() - ticks;
-		printf("bashBench::bash-ae192:  %3u cycles / byte [%5u kBytes / sec]\n",
+		printf("bashBench::bash-ae256:  %3u cycles / byte [%5u kBytes / sec]\n",
 			(unsigned)(ticks / 2048 / reps),
 			(unsigned)tmSpeed(2 * reps, ticks));
 	}

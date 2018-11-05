@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2018.10.30
-\version 2018.11.01
+\version 2018.11.05
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -49,8 +49,8 @@ typedef struct {
 
 static void bashAECtrl(bash_ae_st* s, octet mask, octet val)
 {
-	(s->s)[s->block_len] &= mask;
-	(s->s)[s->block_len] |= val;
+	s->s[s->block_len] &= mask;
+	s->s[s->block_len] |= val;
 }
 
 #define bashAECtrlA(s, a) bashAECtrl(s, 0x7F, (a) << 7)
@@ -75,9 +75,9 @@ void bashAEStart(void* state, const octet key[], size_t key_len,
 	memCopy(s->s, key, key_len); 
 	memCopy(s->s + key_len, iv, iv_len);
 	memSetZero(s->s + key_len + iv_len, 192 - key_len - iv_len);
-	(s->s)[key_len + iv_len] = 0x80;
+	s->s[key_len + iv_len] = 0x80;
 	// s[1472..) <- <l / 4 + 1>_{64}
-	s->s[184] = (octet)(key_len * 2 + 1);
+	s->s[192 - 8] = (octet)(key_len * 2 + 1);
 	// длина блока
 	s->block_len = 192 - key_len * 2;
 	// накопленные данные 
@@ -150,7 +150,7 @@ void bashAEAbsorbStop(void* state)
 	// подготовить отложенный блок к завершению текущей операции
 	memSetZero(s->s + s->filled, s->block_len - s->filled);
 	// можем попасть в октет управления, но это не важно
-	(s->s)[s->filled] = 0x80;
+	s->s[s->filled] = 0x80;
 }
 
 void bashAEAbsorb(octet code, const void* buf, size_t count, void* state)
@@ -322,7 +322,7 @@ void bashAEEncrStop(void* state)
 	// подготовить отложенный блок к завершению текущей операции
 	memSetZero(s->s + s->filled, s->block_len - s->filled);
 	// можем попасть в октет управления, но это не важно
-	(s->s)[s->filled] = 0x80;
+	s->s[s->filled] = 0x80;
 }
 
 void bashAEEncr(void* buf, size_t count, void* state)
@@ -410,7 +410,7 @@ void bashAEDecrStop(void* state)
 	// подготовить отложенный блок к завершению текущей операции
 	memSetZero(s->s + s->filled, s->block_len - s->filled);
 	// можем попасть в октет управления, но это не важно
-	(s->s)[s->filled] = 0x80;
+	s->s[s->filled] = 0x80;
 }
 
 void bashAEDecr(void* buf, size_t count, void* state)

@@ -6,7 +6,7 @@
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2014.07.15
-\version 2018.10.30
+\version 2018.11.05
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -143,7 +143,7 @@ static const u64 c24 = 0xDE8082CD72DEBC78;
 *******************************************************************************
 */
 
-void bashF0(u64 s[24])
+static void bashF0(u64 s[24])
 {
 	register u64 t0;
 	register u64 t1;
