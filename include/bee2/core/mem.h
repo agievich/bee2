@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.16
-\version 2017.01.12
+\version 2018.11.30
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -97,6 +97,15 @@ void memSet(
 
 /*!	Буфер [count]buf обнуляется. */
 #define memSetZero(buf, count) memSet(buf, 0, count)
+
+/*!	\brief Инвертировать буфер памяти
+
+	Все биты буфера [count]buf инвертируются.
+*/
+void memNeg( 
+	void* buf,			/*< [in/out] буфер */
+	size_t count		/*< [in] число октетов */
+);
 
 /*!	\brief Выделение блока памяти
 	Выделяется блок динамической памяти из count октетов.

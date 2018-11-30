@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2017.11.03
+\version 2018.11.30
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -65,7 +65,7 @@ void beltKRPStepG(octet key_[], size_t key_len, const octet header[16],
 	// применить belt-compr2
 	beltBlockCopy(s->key_new, s->key);
 	beltBlockCopy(s->key_new + 4, s->key + 4);
-	beltCompr2(s->key_new, s->block, s->stack);
+	beltCompr(s->key_new, s->block, s->stack);
 	// выгрузить ключ
 	u32To(key_, key_len, s->key_new);
 }

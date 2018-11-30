@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.05.14
-\version 2015.08.31
+\version 2018.11.30
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -214,6 +214,28 @@ err_t belsShare(
 	const octet mi[],		/*!< [in] открытые ключи пользователей */
 	gen_i rng,				/*!< [in] генератор случайных чисел */
 	void* rng_state			/*!< [in/out] состояние генератора */
+);
+
+/*!	\brief Детерминированное разделение секрета
+
+	Секрет [len]s разделяется с порогом threshold на count частичных секретов, 
+	которые записываются в массив [count * len]si. При разделении используется 
+	стандартные открытые ключи belsStdM(m, len, i), i \in [0, count).
+	\expect{ERR_BAD_INPUT}
+	-	len == 16 || len == 24 || len == 32;
+	-	0 < threshold <= count <= 16.
+	.
+	\return ERR_OK, если секрет успешно разделен, и код ошибки
+	в противном случае.
+	\remark Реализованы алгоритм 7.3 и алгоритм генерации одноразового ключа.
+	\warning Экспериментальный режим.
+*/
+err_t belsShare2(
+	octet si[],				/*!< [out] частичные секреты */
+	size_t count,			/*!< [in] число пользователей */
+	size_t threshold,		/*!< [in] пороговое число */
+	size_t len,				/*!< [in] длина секрета в октетах */
+	const octet s[]			/*!< [in] секрет */
 );
 
 /*!	\brief Восстановление секрета

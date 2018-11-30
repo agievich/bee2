@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.05.14
-\version 2016.05.25
+\version 2018.11.30
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -21,6 +21,8 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/math/pp.h"
 #include "bee2/math/ww.h"
 #include "bee2/math/zz.h"
+
+#include "bee2/core/rng.h"
 
 /*
 *******************************************************************************
@@ -313,6 +315,78 @@ err_t belsShare(octet si[], size_t count, size_t threshold, size_t len,
 		// f(x) <- x^l + mi(x)
 		EXPECT(belsValM(mi + i * len, len) == ERR_OK);
 		wwFrom(f, mi + i * len, len);
+		f[n] = 1;
+		// si(x) <- c(x) mod f(x)
+		ppMod(f, c, threshold * n, f, n + 1, stack);
+		wwTo(si + i * len, len, f);
+	}
+	// завершение
+	blobClose(state);
+	return ERR_OK;
+}
+
+err_t belsShare2(octet si[], size_t count, size_t threshold, size_t len, 
+	const octet s[])
+{
+	size_t n, i;
+	void* state;
+	word* f;
+	u32* K;
+	octet* iv;
+	word* k;
+	word* c;
+	void* stack;
+	// проверить входные данные
+	if ((len != 16 && len != 24 && len != 32) || 
+		threshold == 0 || count < threshold || count > 16 ||
+		!memIsValid(s, len) || !memIsValid(si, len * count))
+		return ERR_BAD_INPUT;
+	// создать состояние
+	n = W_OF_O(len);
+	state = blobCreate(O_OF_W(2 * threshold * n + 1) + 
+		utilMax(4,
+			beltCTR_keep(),
+			32 + beltCompr_deep(),
+			ppMul_deep(threshold * n - n, n),
+			ppMod_deep(threshold * n, n + 1)));
+	if (state == 0)
+		return ERR_OUTOFMEMORY;
+	// раскладка состояния
+	f = (word*)state;
+	iv = (octet*)state;
+	k = f + n + 1;
+	c = k + threshold * n - n;
+	stack = c + threshold * n;
+	K = (u32*)stack;
+	// K <- belt-keyexpand(s)
+	beltKeyExpand2(K, s, len);
+	// K <- belt-compress(~K || K)
+	memCopy(f, K, 32);
+	memNeg(K, 32);
+	beltCompr(K, (u32*)f, (octet*)stack + 32);
+	u32To(stack, 32, K);
+	// iv <- <n> || <t> || 0
+	memSetZero(iv, 16);
+	iv[0] = (octet)count;
+	iv[4] = (octet)threshold;
+	// k <- belt-ctr(0, K, iv)
+	beltCTRStart(stack, stack, 32, iv);
+	memSetZero(k, threshold * len - len);
+	beltCTRStepE(k, threshold * len - len, stack);
+	wwFrom(k, k, threshold * len - len);
+	// c(x) <- (x^l + m0(x))k(x) + s(x)
+	belsStdM(stack, len, 0);
+	wwFrom(f, stack, len);
+	ppMul(c, k, threshold * n - n, f, n, stack);
+	wwXor2(c + n, k, threshold * n - n);
+	wwFrom(f, s, len);
+	wwXor2(c, f, n);
+	// цикл по пользователям
+	for (i = 0; i < count; ++i)
+	{
+		// f(x) <- x^l + mi(x)
+		belsStdM(stack, len, i + 1);
+		wwFrom(f, stack, len);
 		f[n] = 1;
 		// si(x) <- c(x) mod f(x)
 		ppMod(f, c, threshold * n, f, n + 1, stack);

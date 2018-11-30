@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2017.11.03
+\version 2018.11.30
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -76,7 +76,7 @@ void beltHashStepH(const void* buf, size_t count, void* state)
 		beltBlockRevU32(s->block);
 		beltBlockRevU32(s->block + 16);
 #endif
-		beltCompr(s->ls + 4, s->h, (u32*)s->block, s->stack);
+		beltCompr2(s->ls + 4, s->h, (u32*)s->block, s->stack);
 		s->filled = 0;
 	}
 	// цикл по полным блокам
@@ -88,7 +88,7 @@ void beltHashStepH(const void* buf, size_t count, void* state)
 		beltBlockRevU32(s->block);
 		beltBlockRevU32(s->block + 16);
 #endif
-		beltCompr(s->ls + 4, s->h, (u32*)s->block, s->stack);
+		beltCompr2(s->ls + 4, s->h, (u32*)s->block, s->stack);
 		buf = (const octet*)buf + 32;
 		count -= 32;
 	}
@@ -114,14 +114,14 @@ static void beltHashStepG_internal(void* state)
 		beltBlockRevU32(s->block);
 		beltBlockRevU32(s->block + 16);
 #endif
-		beltCompr(s->ls + 4, s->h1, (u32*)s->block, s->stack);
+		beltCompr2(s->ls + 4, s->h1, (u32*)s->block, s->stack);
 #if (OCTET_ORDER == BIG_ENDIAN)
 		beltBlockRevU32(s->block + 16);
 		beltBlockRevU32(s->block);
 #endif
 	}
 	// последний блок
-	beltCompr2(s->h1, s->ls, s->stack);
+	beltCompr(s->h1, s->ls, s->stack);
 	// восстановить сохраненную часть s->ls
 	beltBlockCopy(s->ls + 4, s->s1);
 }

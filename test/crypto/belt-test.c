@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.06.20
-\version 2018.09.03
+\version 2018.11.30
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -16,7 +16,6 @@ version 3. See Copyright Notices in bee2/info.h.
 #include <bee2/core/u32.h>
 #include <bee2/core/util.h>
 #include <bee2/crypto/belt.h>
-#include <../src/crypto/belt/belt_int.h>
 
 /*
 *******************************************************************************
@@ -208,7 +207,7 @@ bool_t beltTest()
 	u32From((u32*)buf, beltH(), 32);
 	u32From((u32*)hash, beltH() + 32, 32);
 	memSetZero(hash1, 16);
-	beltCompr((u32*)hash1, (u32*)hash, (u32*)buf, state);
+	beltCompr2((u32*)hash1, (u32*)hash, (u32*)buf, state);
 	u32To(hash1, 16, (u32*)hash1);
 	u32To(hash, 32, (u32*)hash);
 	if (!hexEq(hash1,
@@ -219,7 +218,7 @@ bool_t beltTest()
 		"B7D1A2CC975C82D3C0497488C90D99D8"))
 		return FALSE;
 	u32From((u32*)hash1, beltH() + 32, 32);
-	beltCompr2((u32*)hash1, (u32*)buf, state);
+	beltCompr((u32*)hash1, (u32*)buf, state);
 	u32To(hash1, 32, (u32*)hash1);
 	if (!memEq(hash, hash1, 32))
 		return FALSE;

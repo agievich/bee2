@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2017.01.13
+\version 2018.11.30
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -71,6 +71,21 @@ void memSet(void* buf, octet c, size_t count)
 	ASSERT(memIsValid(buf, count));
 	if (count)
 		memset(buf, c, count);
+}
+
+void memNeg(void* buf, size_t count)
+{
+	ASSERT(memIsValid(buf, count));
+	for (; count >= O_PER_W; count -= O_PER_W)
+	{
+		*(word*)buf = ~*(word*)buf;
+		buf = (word*)buf + 1;
+	}
+	while (count--)
+	{
+		*(octet*)buf = ~*(octet*)buf;
+		buf = (octet*)buf + 1;
+	}
 }
 
 void* memAlloc(size_t count)

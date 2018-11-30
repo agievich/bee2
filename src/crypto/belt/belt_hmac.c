@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2017.11.03
+\version 2018.11.30
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -72,7 +72,7 @@ void beltHMACStart(void* state, const octet key[], size_t len)
 			beltBlockRevU32(s->block);
 			beltBlockRevU32(s->block + 16);
 #endif
-			beltCompr(s->ls_in + 4, s->h_in, (u32*)s->block, s->stack);
+			beltCompr2(s->ls_in + 4, s->h_in, (u32*)s->block, s->stack);
 			key += 32;
 			len -= 32;
 		}
@@ -84,9 +84,9 @@ void beltHMACStart(void* state, const octet key[], size_t len)
 			beltBlockRevU32(s->block);
 			beltBlockRevU32(s->block + 16);
 #endif
-			beltCompr(s->ls_in + 4, s->h_in, (u32*)s->block, s->stack);
+			beltCompr2(s->ls_in + 4, s->h_in, (u32*)s->block, s->stack);
 		}
-		beltCompr2(s->h_in, s->ls_in, s->stack);
+		beltCompr(s->h_in, s->ls_in, s->stack);
 		beltBlockCopy(s->block, s->h_in);
 		beltBlockCopy(s->block + 16, s->h_in + 4);
 	}
@@ -98,7 +98,7 @@ void beltHMACStart(void* state, const octet key[], size_t len)
 	beltBlockAddBitSizeU32(s->ls_in, 32);
 	beltBlockSetZero(s->ls_in + 4);
 	u32From(s->h_in, beltH(), 32);
-	beltCompr(s->ls_in + 4, s->h_in, (u32*)s->block, s->stack);
+	beltCompr2(s->ls_in + 4, s->h_in, (u32*)s->block, s->stack);
 	s->filled = 0;
 	// сформировать key ^ opad [0x36 ^ 0x5C == 0x6A]
 	for (; len--; )
@@ -108,7 +108,7 @@ void beltHMACStart(void* state, const octet key[], size_t len)
 	beltBlockAddBitSizeU32(s->ls_out, 32 * 2);
 	beltBlockSetZero(s->ls_out + 4);
 	u32From(s->h_out, beltH(), 32);
-	beltCompr(s->ls_out + 4, s->h_out, (u32*)s->block, s->stack);
+	beltCompr2(s->ls_out + 4, s->h_out, (u32*)s->block, s->stack);
 }
 
 void beltHMACStepA(const void* buf, size_t count, void* state)
@@ -133,7 +133,7 @@ void beltHMACStepA(const void* buf, size_t count, void* state)
 		beltBlockRevU32(s->block);
 		beltBlockRevU32(s->block + 16);
 #endif
-		beltCompr(s->ls_in + 4, s->h_in, (u32*)s->block, s->stack);
+		beltCompr2(s->ls_in + 4, s->h_in, (u32*)s->block, s->stack);
 		s->filled = 0;
 	}
 	// цикл по полным блокам
@@ -145,7 +145,7 @@ void beltHMACStepA(const void* buf, size_t count, void* state)
 		beltBlockRevU32(s->block);
 		beltBlockRevU32(s->block + 16);
 #endif
-		beltCompr(s->ls_in + 4, s->h_in, (u32*)s->block, s->stack);
+		beltCompr2(s->ls_in + 4, s->h_in, (u32*)s->block, s->stack);
 		buf = (const octet*)buf + 32;
 		count -= 32;
 	}
@@ -171,14 +171,14 @@ static void beltHMACStepG_internal(void* state)
 		beltBlockRevU32(s->block);
 		beltBlockRevU32(s->block + 16);
 #endif
-		beltCompr(s->ls_in + 4, s->h1_in, (u32*)s->block, s->stack);
+		beltCompr2(s->ls_in + 4, s->h1_in, (u32*)s->block, s->stack);
 #if (OCTET_ORDER == BIG_ENDIAN)
 		beltBlockRevU32(s->block + 16);
 		beltBlockRevU32(s->block);
 #endif
 	}
 	// последний блок внутреннего хэширования
-	beltCompr2(s->h1_in, s->ls_in, s->stack);
+	beltCompr(s->h1_in, s->ls_in, s->stack);
 	// восстановить сохраненную часть s->ls_in
 	beltBlockCopy(s->ls_in + 4, s->s1);
 	// создать копии второй части s->ls_out и s->h_out
@@ -186,9 +186,9 @@ static void beltHMACStepG_internal(void* state)
 	beltBlockCopy(s->h1_out, s->h_out);
 	beltBlockCopy(s->h1_out + 4, s->h_out + 4);
 	// обработать блок s->h1_in
-	beltCompr(s->ls_out + 4, s->h1_out, s->h1_in, s->stack);
+	beltCompr2(s->ls_out + 4, s->h1_out, s->h1_in, s->stack);
 	// последний блок внешнего хэширования
-	beltCompr2(s->h1_out, s->ls_out, s->stack);
+	beltCompr(s->h1_out, s->ls_out, s->stack);
 	// восстановить сохраненную часть s->ls_out
 	beltBlockCopy(s->ls_out + 4, s->s1);
 }

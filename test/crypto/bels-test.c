@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.06.27
-\version 2018.07.04
+\version 2018.11.30
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -272,6 +272,36 @@ bool_t belsTest()
 			len == 32 && !hexEq(s, 
 			"00DD41CD32684FE7564F67FC51B0AD87"
 			"003EEBDF90E803BA37CBA4FF8D9A724F"))
+			return FALSE;
+	}
+	// проверка belsShare2
+	for (len = 16; len <= 32; len += 8)
+	{
+		// загрузить открытые ключи
+		belsStdM(m0, len, 0);
+		belsStdM(mi + 0 * len, len, 1);
+		belsStdM(mi + 1 * len, len, 2);
+		belsStdM(mi + 2 * len, len, 3);
+		belsStdM(mi + 3 * len, len, 4);
+		belsStdM(mi + 4 * len, len, 5);
+		// разделить секрет
+		if (belsShare2(si, 5, 3, len, beltH()) != ERR_OK)
+			return FALSE;
+		// восстановить секрет
+		if (belsRecover(s, 1, len, si, m0, mi) != ERR_OK ||
+			memEq(s, beltH(), len))
+			return FALSE;
+		if (belsRecover(s, 2, len, si, m0, mi) != ERR_OK ||
+			memEq(s, beltH(), len))
+			return FALSE;
+		if (belsRecover(s, 3, len, si, m0, mi) != ERR_OK ||
+			!memEq(s, beltH(), len))
+			return FALSE;
+		if (belsRecover(s, 4, len, si, m0, mi) != ERR_OK ||
+			!memEq(s, beltH(), len))
+			return FALSE;
+		if (belsRecover(s, 5, len, si, m0, mi) != ERR_OK ||
+			!memEq(s, beltH(), len))
 			return FALSE;
 	}
 	// все нормально
