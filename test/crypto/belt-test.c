@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.06.20
-\version 2018.11.30
+\version 2019.01.28
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -15,6 +15,7 @@ version 3. See Copyright Notices in bee2/info.h.
 #include <bee2/core/hex.h>
 #include <bee2/core/u32.h>
 #include <bee2/core/util.h>
+#include <bee2/core/word.h>
 #include <bee2/crypto/belt.h>
 
 /*
@@ -22,6 +23,39 @@ version 3. See Copyright Notices in bee2/info.h.
 Внутренние функции модуля belt (для тестирования belt-compress)
 *******************************************************************************
 */
+
+/*
+*******************************************************************************
+Generating the Belt S-box H
+
+Algorithm:
+	H[10] = 0,
+	H[11 + x) % 256] = 0x8E * 0x02^{116 x}, x = 0,1,...,254.
+Here octets are interpreted as binary polynomials: 
+	0x8E = z^7 + z^3 + z^2 + z^1, 0x02 = z.
+The multiplication is performed in the ring of such polynomials modulo 
+	f = 0x163 = z^8 + z^7 + z^6 + z + 1.
+
+1.	Since f is irreducible, this factor-ring is a field.
+2.	\alpha = 0x02 is a primitive element of the field.
+3.	116 and 255 are coprime and \alpha^116 is also primitive.
+4.	Therefore, the elements 0x8E * 0x02^{116 x} are pairwise distinct. They 
+	are also nonzero and H is bijective.
+*******************************************************************************
+*/
+
+void beltGenH(octet H[256])
+{
+	size_t x, i;
+	H[10] = 0, H[11] = 0x8E;
+	for (x = 12; x < 10 + 256; ++x)
+	{
+		word t = H[(x - 1) % 256];
+		for (i = 0; i < 116; ++i)
+			t = t >> 1 | wordParity(t & 0x63) << 7;
+		H[x % 256] = (octet)t;
+	}
+}
 
 /*
 *******************************************************************************
@@ -101,6 +135,7 @@ bool_t beltTest()
 	octet state[1024];
 	size_t count;
 	// создать стек
+	ASSERT(sizeof(state) >= 256);
 	ASSERT(sizeof(state) >= beltWBL_keep());
 	ASSERT(sizeof(state) >= beltCompr_deep());
 	ASSERT(sizeof(state) >= beltECB_keep());
@@ -115,6 +150,10 @@ bool_t beltTest()
 	ASSERT(sizeof(state) >= beltFMT_keep(65536, 17));
 	ASSERT(sizeof(state) >= beltKRP_keep());
 	ASSERT(sizeof(state) >= beltHMAC_keep());
+	// belt-H
+	beltGenH(state);
+	if (!memEq(state, beltH(), 256))
+		return FALSE;
 	// belt-block: тест A.1-1
 	memCopy(buf, beltH(), 16);
 	beltKeyExpand2(key, beltH() + 128, 32);
