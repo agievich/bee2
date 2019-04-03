@@ -19,7 +19,6 @@ set(src
   core/util.c
   core/word.c
   crypto/bake.c
-  crypto/bash/bash_f.c
   crypto/bash/bash_hash.c
   crypto/bash/bash_ae.c
   crypto/bels.c
@@ -65,6 +64,15 @@ set(src
   math/zz/zz_pow.c
   math/zz/zz_red.c
 )
+if(BASH_32)
+  set(src ${src} crypto/bash/bash_f32.c)
+elseif(BASH_AVX2)
+  set(src ${src} crypto/bash/bash_favx2.c)
+elseif(BASH_AVX512)
+  set(src ${src} crypto/bash/bash_favx512.c)
+else()
+  set(src ${src} crypto/bash/bash_f.c)
+endif()
 
 add_library(bee2_static STATIC ${src})
 set_target_properties(bee2_static PROPERTIES OUTPUT_NAME bee2_static)
