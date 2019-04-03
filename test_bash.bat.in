@@ -1,0 +1,43 @@
+@echo off
+set PATH=C:\mingw-w64\x86_64-8.1.0-win32-seh-rt_v6-rev0\mingw64\bin;C:\MinGW\msys\1.0\bin;C:\Program Files\CMake\bin;C:\bin\sde-external-8.33.0-2019-02-07-win;C:\Windows\system32
+set cmake=cmake -DBUILD_SHARED_LIBS=0 -DBUILD_APPS=0 -DBUILD_TESTS=1 -DBUILD_DOC=0 -DINSTALL_HEADERS=0
+
+mkdir .build_gcc_bash_avx512
+pushd .build_gcc_bash_avx512
+%cmake% -G "Unix Makefiles" -DBASH_32=0 -DBASH_AVX2=0 -DBASH_AVX512=1 ..
+make
+sde -- test\testbee2
+popd
+goto :eof
+
+mkdir .build_gcc_bash_avx2
+pushd .build_gcc_bash_avx2
+%cmake% -G "Unix Makefiles" -DBASH_32=0 -DBASH_AVX2=1 -DBASH_AVX512=0 ..
+make
+test\testbee2
+popd
+goto :eof
+
+mkdir .build_gcc_bash_32
+pushd .build_gcc_bash_32
+%cmake% -G "Unix Makefiles" -DBASH_32=1 -DBASH_AVX2=0 -DBASH_AVX512=0 ..
+make
+test\testbee2
+popd
+goto :eof
+
+
+mkdir .build_msvc_bash_32
+pushd .build_msvc_bash_32
+%cmake% -G "Visual Studio 12 2013 Win64" -DBASH_32=0 -DBASH_AVX2=0 -DBASH_AVX512=1 ..
+testbee2
+popd
+goto :eof
+
+mkdir .build_msvc_bash_avx2
+pushd .build_msvc_bash_avx2
+%cmake% -G "Visual Studio 12 2013 Win64" -DBASH_32=0 -DBASH_AVX2=0 -DBASH_AVX512=1 ..
+testbee2
+popd
+goto :eof
+
