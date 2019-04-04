@@ -6,7 +6,7 @@
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2019.04.03
-\version 2019.04.03
+\version 2019.04.04
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -16,7 +16,6 @@ version 3. See Copyright Notices in bee2/info.h.
 #error "The compiler does not support AVX512F intrinsics."
 #endif
 
-#include <intrin.h>
 #include <immintrin.h>
 
 #include "bee2/core/u64.h"
@@ -223,8 +222,6 @@ STORE.
     bashR1(22); \
     bashR2(23); \
   } while (0)
-
-#include <stdint.h>
 
 /*
 *******************************************************************************
