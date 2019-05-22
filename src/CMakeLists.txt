@@ -79,12 +79,12 @@ if(BUILD_SHARED_LIBS)
     add_library(bee2 SHARED ${src})
   else()
     if(MSVC)
-      # disable the security warnings for sprintf() in bee2.c
+      # disable security warnings for sprintf() in bee2.c
       add_definitions(/D _CRT_SECURE_NO_WARNINGS)
     endif()
     add_library(bee2 SHARED ${src} 
       ../win/bee2.def
-      ../win/bee2.bmp
+      ../img/bee2.bmp
       ../win/bee2.rc
       ../win/bee2.c
     )
