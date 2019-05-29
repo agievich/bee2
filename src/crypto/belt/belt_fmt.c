@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2017.09.28
-\version 2018.08.31
+\version 2019.05.29
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -344,8 +344,8 @@ void beltFMTStepE(u16 buf[], const octet iv[16], void* state)
 	{
 		// первая половинка
 		beltStr2Bin(s->buf, s->b2, s->mod, buf + s->n1, s->n2);
-		memCopy(s->buf + s->b2 * 8, beltH() + 4 * i, 4);
-		memCopy(s->buf + s->b2 * 8 + 4, s->iv + 4 * i, 4);
+		memCopy(s->buf + s->b2 * 8, beltH() + 8 * i, 4);
+		memCopy(s->buf + s->b2 * 8 + 4, s->iv + 8 * i, 4);
 		if (s->b2 == 1)
 			beltBlockEncr(s->buf, s->wbl->key);
 		else if (s->b2 == 2)
@@ -355,8 +355,8 @@ void beltFMTStepE(u16 buf[], const octet iv[16], void* state)
 		beltBin2StrAdd(s->mod, buf, s->n1, s->buf, s->b2 + 1);
 		// вторая половинка
 		beltStr2Bin(s->buf, s->b1, s->mod, buf, s->n1);
-		memCopy(s->buf + s->b1 * 8, beltH() + 4 * i + 4, 4);
-		memCopy(s->buf + s->b1 * 8 + 4, s->iv + 4 * i + 4, 4);
+		memCopy(s->buf + s->b1 * 8, beltH() + 8 * i + 4, 4);
+		memCopy(s->buf + s->b1 * 8 + 4, s->iv + 8 * i + 4, 4);
 		if (s->b1 == 1)
 			beltBlockEncr(s->buf, s->wbl->key);
 		else if (s->b1 == 2)
@@ -385,8 +385,8 @@ void beltFMTStepD(u16 buf[], const octet iv[16], void* state)
 	{
 		// вторая половинка
 		beltStr2Bin(s->buf, s->b1, s->mod, buf, s->n1);
-		memCopy(s->buf + s->b1 * 8, beltH() + 4 * i + 4, 4);
-		memCopy(s->buf + s->b1 * 8 + 4, s->iv + 4 * i + 4, 4);
+		memCopy(s->buf + s->b1 * 8, beltH() + 8 * i + 4, 4);
+		memCopy(s->buf + s->b1 * 8 + 4, s->iv + 8 * i + 4, 4);
 		if (s->b1 == 1)
 			beltBlockEncr(s->buf, s->wbl->key);
 		else if (s->b1 == 2)
@@ -396,8 +396,8 @@ void beltFMTStepD(u16 buf[], const octet iv[16], void* state)
 		beltBin2StrSub(s->mod, buf + s->n1, s->n2, s->buf, s->b1 + 1);
 		// первая половинка
 		beltStr2Bin(s->buf, s->b2, s->mod, buf + s->n1, s->n2);
-		memCopy(s->buf + s->b2 * 8, beltH() + 4 * i, 4);
-		memCopy(s->buf + s->b2 * 8 + 4, s->iv + 4 * i, 4);
+		memCopy(s->buf + s->b2 * 8, beltH() + 8 * i, 4);
+		memCopy(s->buf + s->b2 * 8 + 4, s->iv + 8 * i, 4);
 		if (s->b2 == 1)
 			beltBlockEncr(s->buf, s->wbl->key);
 		else if (s->b2 == 2)
