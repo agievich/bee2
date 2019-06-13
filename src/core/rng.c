@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2017.01.11
+\version 2019.06.13
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -170,7 +170,7 @@ static err_t rngReadTRNG(size_t* read, void* buf, size_t count)
 *******************************************************************************
 Источник-таймер
 
-Реаилзовано предложение [Jessie Walker, Seeding Random Number Generator]:
+Реализовано предложение [Jessie Walker, Seeding Random Number Generator]:
 наблюдением является разность между показаниями высокоточного таймера
 (регистра RDTSC) при приостановке потока на 0 мс, т.е. при передаче
 управления ядру.

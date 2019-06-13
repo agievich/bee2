@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.04.14
-\version 2016.06.16
+\version 2019.06.13
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -48,7 +48,7 @@ bignStdParams(), проверить --- с помощью функции bignVal
 проверку открытого ключа --- с помощью функции bignValPubkey(),
 построение открытого ключа по личному --- с помощью bignCalcPubkey().
 
-Найстройки протоколов описываются структурой типа bake_settings. В этих 
+Настройки протоколов описываются структурой типа bake_settings. В этих 
 настройках задаются:
 -	признак kca подтверждения ключа стороной A;
 -	признак kcb подтверждения ключа стороной B;

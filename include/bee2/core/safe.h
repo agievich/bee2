@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.10.07
-\version 2015.10.29
+\version 2019.06.13
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -74,7 +74,7 @@ extern "C" {
 \remark Флуктуации при загрузке данных из массивов пока не считаются факторами
 нерегулярности.
 
-\remark Отладочные версии заведом нерегулярны.
+\remark Отладочные версии заведомо нерегулярны.
 *******************************************************************************
 */
 

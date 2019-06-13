@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.01
-\version 2016.06.16
+\version 2019.06.13
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -530,7 +530,7 @@ typedef err_t (*read_i)(
 \brief Интерфейс записи
 
 Функция интерфейса write_i записывает буфер [count]buf в файл file.
-По адресу written возвращается число прочитанных октетов.
+По адресу written возвращается число записанных в файл октетов.
 \pre Указатель written корректен.
 \pre Буфер buf корректен.
 \pre Файл file корректен.
