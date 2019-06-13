@@ -47,7 +47,9 @@ version 3. See Copyright Notices in bee2/info.h.
 функциях арифметики возникают с вероятностями, близкими к 1 / 2^B_PER_W.
 
 \remark При разборе платформ для определения порядка октетов использован код
-Брайана Гладмана (Brian Gladman, http://www.gladman.me.uk/).
+Брайана Гладмана (Brian Gladman, http://www.gladman.me.uk/). Дополнительная 
+платформа EMSCRIPTEN (https://emscripten.org) является виртуальной, на ней 
+выполняется компиляция в JavaScript. 
 
 \section defs-arrays Массивы
 
@@ -131,12 +133,11 @@ T == octet.
 	defined(__i386__) || defined(_M_I86)  || defined(_M_IX86) ||\
 	defined(_M_IA64) || defined(__ia64__) || defined(_M_X64) ||\
 	defined(_M_AMD64) || defined(__amd64__) || defined(__amd64) ||\
-	defined(__x86_64__) ||\
-	defined(_M_ALPHA) || defined(__alpha__) || defined(__alpha) ||\
-    defined(__arm__) ||\
-    defined(__MIPS__) || defined(__mips__) || defined(__mips) ||\
-	defined(__OS2__) || defined(sun386) || defined(__TURBOC__) ||\
-	defined(vax) || defined(vms) || defined(VMS) || defined(__VMS)
+	defined(__x86_64__) || defined(_M_ALPHA) || defined(__alpha__) ||\
+	defined(__alpha) || defined(__arm__) || defined(__MIPS__) ||\
+	defined(__mips__) || defined(__mips) || defined(__OS2__) ||\
+	defined(sun386) || defined(__TURBOC__) || defined(vax) || defined(vms) ||\
+	defined(VMS) || defined(__VMS) || defined(__EMSCRIPTEN__)
 	#define OCTET_ORDER LITTLE_ENDIAN
 #elif defined(__powerpc__) || defined(__ppc__) || defined(__PPC__) ||\
 	defined(__powerpc64__) || defined(__ppc64__) || defined(__PPC64__) ||\

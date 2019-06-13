@@ -29,6 +29,8 @@ Contributors*
   - code review
 - Mikhail Novik
   - doc review
+- Oleg Vasilyev
+  - code review
 
 ---
 *in chronological order of the first contribution

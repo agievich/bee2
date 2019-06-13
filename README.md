@@ -17,12 +17,11 @@ Bee2 fully supports the following standards
 
 1. STB 34.101.31 (belt): data encryption and integrity algorithms.
 2. STB 34.101.45 (bign): digital signature and key transport algorithms 
-   based on elliptic curves.
+   over elliptic curves.
 3. STB 34.101.47 (brng): cryptographic algorithms of pseudorandom number 
    generation + one-time passwords.
 4. STB 34.101.60 (bels): secret sharing algorithms.
-5. STB 34.101.66 (bake): key establishment protocols based on elliptic 
-   curves. 
+5. STB 34.101.66 (bake): key establishment protocols over elliptic curves. 
 6. STB 34.101.77 (bash): hashing algorithms. 
 
 Additionally, Bee2 implements digital signature algorithms standardized in 
