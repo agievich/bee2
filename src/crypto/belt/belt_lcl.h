@@ -1,18 +1,18 @@
 /*
 *******************************************************************************
-\file belt_int.h
-\brief STB 34.101.31 (belt): internal definitions
+\file belt_lcl.h
+\brief STB 34.101.31 (belt): local definitions
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2018.11.30
+\version 2019.06.26
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifndef __BELT_INT_H
-#define __BELT_INT_H
+#ifndef __BELT_LCL_H
+#define __BELT_LCL_H
 
 #include "bee2/core/word.h"
 #include "bee2/core/u32.h"
@@ -234,4 +234,4 @@ void beltHalfBlockAddBitSizeW(word block[W_OF_B(64)], size_t count);
 } /* extern "C" */
 #endif
 
-#endif /* __BELT_INT_H */
+#endif /* __BELT_LCL_H */

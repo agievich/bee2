@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.10.28
-\version 2015.11.17
+\version 2019.06.27
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -17,15 +17,114 @@ version 3. See Copyright Notices in bee2/info.h.
 
 /*
 *******************************************************************************
-Преобразования
+Операции
+
+Реализованные алгоритмы прокомментированы в u32.c.
 *******************************************************************************
 */
+
+u16 u16Rev(u16 w)
+{
+	return w << 8 | w >> 8;
+}
 
 void u16Rev2(u16 buf[], size_t count)
 {
 	ASSERT(memIsValid(buf, count * 2));
 	while (count--)
 		buf[count] = u16Rev(buf[count]);
+}
+
+size_t u16Weight(register u16 w)
+{
+	w -= ((w >> 1) & 0x5555);
+	w = (w & 0x3333) + ((w >> 2) & 0x3333);
+	w = (w + (w >> 4)) & 0x0F0F;
+	w += w >> 8;
+	return (size_t)(w & 0x001F);
+}
+
+bool_t u16Parity(register u16 w)
+{
+	w ^= w >> 1;
+	w ^= w >> 2;
+	w ^= w >> 4;
+	w ^= w >> 8;
+	return (bool_t)(w & U16_1);
+}
+
+size_t SAFE(u16CTZ)(register u16 w)
+{
+	return 16 - u16Weight(w | (U16_0 - w));
+}
+
+size_t FAST(u16CTZ)(register u16 w)
+{
+	register size_t l = 16;
+	register u16 t;
+	if (t = w << 8)
+		l -= 8, w = t;
+	if (t = w << 4)
+		l -= 4, w = t;
+	if (t = w << 2)
+		l -= 2, w = t;
+	t = 0;
+	return ((u16)(w << 1)) ? l - 2 : l - (w ? 1 : 0);
+}
+
+size_t SAFE(u16CLZ)(register u16 w)
+{
+	w = w | w >> 1;
+	w = w | w >> 2;
+	w = w | w >> 4;
+	w = w | w >> 8;
+	return u16Weight(~w);
+}
+
+size_t FAST(u16CLZ)(register u16 w)
+{
+	register size_t l = 16;
+	register u16 t;
+	if (t = w >> 8)
+		l -= 8, w = t;
+	if (t = w >> 4)
+		l -= 4, w = t;
+	if (t = w >> 2)
+		l -= 2, w = t;
+	t = 0;
+	return (w >> 1) ? l - 2 : l - (w ? 1 : 0);
+}
+
+u16 u16Shuffle(register u16 w)
+{
+	register u16 t;
+	t = (w ^ (w >> 1)) & 0x2222, w ^= t ^ (t << 1);
+	t = (w ^ (w >> 2)) & 0x0C0C, w ^= t ^ (t << 2);
+	t = (w ^ (w >> 4)) & 0x00F0, w ^= t ^ (t << 4);
+	t = 0;
+	return w;
+}
+
+u16 u16Deshuffle(register u16 w)
+{
+	register u16 t;
+	t = (w ^ (w >> 4)) & 0x00F0, w ^= t ^ (t << 4);
+	t = (w ^ (w >> 2)) & 0x0C0C, w ^= t ^ (t << 2);
+	t = (w ^ (w >> 1)) & 0x2222, w ^= t ^ (t << 1);
+	t = 0;
+	return w;
+}
+
+u16 u16NegInv(register u16 w)
+{
+	register u16 ret = w;
+	ASSERT(w & 1);
+	ret = ret * (w * ret + 2);
+	ret = ret * (w * ret + 2);
+	ret = ret * (w * ret + 2);
+	ret = ret * (w * ret + 2);
+	w = 0;
+	return ret;
 }
 
 void u16From(u16 dest[], const void* src, size_t count)

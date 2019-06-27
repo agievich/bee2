@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2017.09.28
+\version 2019.06.26
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -18,7 +18,7 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/crypto/belt.h"
 #include "bee2/math/pp.h"
 #include "bee2/math/ww.h"
-#include "belt_int.h"
+#include "belt_lcl.h"
 
 /*
 *******************************************************************************

@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.16
-\version 2018.11.30
+\version 2019.06.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -173,6 +173,7 @@ bool_t memEq(
 	size_t count		/*!< [in] размер буферов */
 );
 
+bool_t SAFE(memEq)(const void* buf1, const void* buf2, size_t count);
 bool_t FAST(memEq)(const void* buf1, const void* buf2, size_t count);
 
 /*!	\brief Сравнение
@@ -193,6 +194,7 @@ int memCmp(
 	size_t count		/*!< [in] размер буферов */
 );
 
+int SAFE(memCmp)(const void* buf1, const void* buf2, size_t count);
 int FAST(memCmp)(const void* buf1, const void* buf2, size_t count);
 
 /*!	\brief Очистить буфер памяти
@@ -217,6 +219,7 @@ bool_t memIsZero(
 	size_t count		/*!< [in] размер буфера */
 );
 
+bool_t SAFE(memIsZero)(const void* buf, size_t count);
 bool_t FAST(memIsZero)(const void* buf, size_t count);
 
 /*!	\brief Размер значащей части буфера
@@ -245,6 +248,7 @@ bool_t memIsRep(
 	octet o				/*!< [in] значение */
 );
 
+bool_t SAFE(memIsRep)(const void* buf, size_t count, octet o);
 bool_t FAST(memIsRep)(const void* buf, size_t count, octet o);
 
 /*!	\brief Объединение двух буферов

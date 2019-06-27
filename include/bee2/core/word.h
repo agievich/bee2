@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.18
-\version 2015.11.09
+\version 2019.06.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -34,17 +34,6 @@ extern "C" {
 
 Реализованы быстрые манипуляции с машинными словами.
 
-Использованы алгоритмы из следующих источников:
-[1]	Уоррен Генри Мл. Алгоритмические трюки для программистов, 
-	М.: Издательский дом <<Вильямс>>, 2003.
-[2]	Andersen S.A. Bit Twidding Hacks. Avail. at:
-	http://graphics.stanford.edu/~seander/bithacks.html, 1997-2005.
-
-Слово может интерпретироваться как вычет по модулю 2^{B_PER_W}.
-
-\remark Вторая редакция [1], дополнительные материалы: 
-http://www.hackersdelight.org/.
-
 \remark Манипуляции с массивами машинных слов реализованы в модуле ww.
 *******************************************************************************
 */
@@ -59,72 +48,64 @@ http://www.hackersdelight.org/.
 
 #if (B_PER_W == 16)
 	#include "bee2/core/u16.h"
+	#define wordRotHi u16RotHi
+	#define wordRotLo u16RotLo
 	#define wordRev u16Rev
+	#define wordWeight u16Weight
+	#define wordParity u16Parity
+	#define wordCTZ u16CTZ
+	#define wordCLZ u16CLZ
+	#ifdef SAFE_FAST
+		#define wordCTZ_safe u16CTZ_safe
+		#define wordCLZ_safe u16CLZ_safe
+	#else
+		#define wordCTZ_fast u16CTZ_fast
+		#define wordCLZ_fast u16CLZ_fast
+	#endif
+	#define	wordShuffle u16Shuffle
+	#define	wordDeshuffle u16Deshuffle
+	#define	wordNegInv u16NegInv
 #elif (B_PER_W == 32)
 	#include "bee2/core/u32.h"
+	#define wordRotHi u32RotHi
+	#define wordRotLo u32RotLo
 	#define wordRev u32Rev
+	#define wordWeight u32Weight
+	#define wordParity u32Parity
+	#define wordCTZ u32CTZ
+	#define wordCLZ u32CLZ
+	#ifdef SAFE_FAST
+		#define wordCTZ_safe u32CTZ_safe
+		#define wordCLZ_safe u32CLZ_safe
+	#else
+		#define wordCTZ_fast u32CTZ_fast
+		#define wordCLZ_fast u32CLZ_fast
+	#endif
+	#define	wordShuffle u32Shuffle
+	#define	wordDeshuffle u32Deshuffle
+	#define	wordNegInv u32NegInv
 #elif (B_PER_W == 64)
 	#include "bee2/core/u64.h"
+	#define wordRotHi u64RotHi
+	#define wordRotLo u64RotLo
 	#define wordRev u64Rev
+	#define wordWeight u64Weight
+	#define wordParity u64Parity
+	#define wordCTZ u64CTZ
+	#define wordCLZ u64CLZ
+	#ifdef SAFE_FAST
+		#define wordCTZ_safe u64CTZ_safe
+		#define wordCLZ_safe u64CLZ_safe
+	#else
+		#define wordCTZ_fast u64CTZ_fast
+		#define wordCLZ_fast u64CLZ_fast
+	#endif
+	#define	wordShuffle u64Shuffle
+	#define	wordDeshuffle u64Deshuffle
+	#define	wordNegInv u64NegInv
 #else
 	#error "Unsupported word size"
 #endif /* B_PER_W */
-
-/*!	\brief Вес
-
-	Определяется число ненулевых битов в машинном слове w.
-	\return Число ненулевых битов.
-*/
-size_t wordWeight(
-	register word w		/*!< [in] машинное слово */
-);
-
-/*!	\brief Четность
-
-	Определяется сумма по модулю 2 битов машинного слова w.
-	\return Сумма битов.
-*/
-bool_t wordParity(
-	register word w		/*!< [in] машинное слово */
-);
-
-/*!	\brief Число младших нулевых битов
-
-	Определяется длина серии из нулевых младших битов машинного слова w.
-	\return Длина серии.
-	\remark CTZ == Count of Trailing Zeros
-	\safe Имеется ускоренная нерегулярная редакция.
-*/
-size_t wordCTZ(
-	register word w		/*!< [in] машинное слово */
-);
-
-size_t FAST(wordCTZ)(register word w);
-
-/*!	\brief Число старших нулевых битов
-
-	Определяется длина серии из нулевых старших битов машинного слова w.
-	\return Длина серии.
-	\remark CLZ == Count of Leading Zeros
-	\safe Имеется ускоренная нерегулярная редакция.
-*/
-size_t wordCLZ(
-	register word w		/*!< [in] машинное слово */
-);
-
-size_t FAST(wordCLZ)(register word w);
-
-/*!	\brief Аддитивно-мультипликативное обращение
-
-	Выполняется адиттивное и мультипликативное обращение 
-	слова-как-числа w по модулю 2^B_PER_W.
-	\pre w -- нечетное.
-	\return - w^{-1} \mod 2^B_PER_W.
-	\remark Вычисляемое слово используется в редукции Монтгомери.
-*/
-word wordNegInv(
-	register word w		/*!< [in] слово */
-);
 
 /*!
 *******************************************************************************
