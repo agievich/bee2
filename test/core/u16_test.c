@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2017.01.11
-\version 2019.06.26
+\version 2019.07.08
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -54,11 +54,11 @@ bool_t u16Test()
 		)
 		return FALSE;
 	// shuffle
-	if (u16Shuffle(0) != 0 || u16Shuffle(1) != 1 ||
-		u16Shuffle(2) != 0x0100 ||
-		u16Shuffle(0xAAAA) != 0xFF00 || 
-		u16Deshuffle(u16Shuffle(0x3210)) != 0x3210 ||
-		u16Shuffle(u16Deshuffle(0xDCBA)) != 0xDCBA)
+	if (u16Deshuffle(0) != 0 || u16Deshuffle(1) != 1 ||
+		u16Deshuffle(2) != 0x0100 ||
+		u16Deshuffle(0xAAAA) != 0xFF00 || 
+		u16Shuffle(u16Deshuffle(0x3210)) != 0x3210 ||
+		u16Deshuffle(u16Shuffle(0xDCBA)) != 0xDCBA)
 		return FALSE;
 	// negInv
 	if (u16NegInv(1) != U16_MAX ||

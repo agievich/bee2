@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.10.28
-\version 2019.06.27
+\version 2019.07.08
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -121,21 +121,21 @@ size_t u32CLZ(
 size_t SAFE(u32CLZ)(register u32 w);
 size_t FAST(u32CLZ)(register u32 w);
 
-/*!	\brief Группировка четных и нечетных битов
+/*!	\brief Тасование битов
 
-	Четные биты u32-слова w группируются в его младшей половинке, 
-	нечетные -- в старшей.
-	\return Слово с группированными битами.
+	Биты младшей половинки u32-слова w перемещаются в четные позиции,
+	биты старшей половинки -- в нечетные.
+	\return Слово с растасованными битами.
 */
 u32 u32Shuffle(
 	register u32 w		/*!< [in] слово */
 );
 
-/*!	\brief Расгруппировка четных и нечетных битов
+/*!	\brief Обратное тасование битов
 
-	Четные биты u32-слова w строятся по его младщей половинке,
-	нечетные -- по старшей.
-	\return Слово с расгруппированными битами.
+	Четные биты u32-слова w группируются в его младшей половинке, 
+	нечетные -- в старшей.
+	\return Слово с группированными битами.
 */
 u32 u32Deshuffle(
 	register u32 w		/*!< [in] слово */

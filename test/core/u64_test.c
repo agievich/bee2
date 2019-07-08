@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2017.01.11
-\version 2019.06.26
+\version 2019.07.08
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -68,11 +68,11 @@ bool_t u64Test()
 		FAST(u64CLZ)(0x0000003FFDDF8000) != 26)
 		return FALSE;
 	// shuffle
-	if (u64Shuffle(0) != 0 || u64Shuffle(1) != 1 ||
-		u64Shuffle(2) != 0x0000000100000000 ||
-		u64Shuffle(0xAAAAAAAAAAAAAAAA) != 0xFFFFFFFF00000000 ||
-		u64Deshuffle(u64Shuffle(0xFEDCBA9876543210)) != 0xFEDCBA9876543210 ||
-		u64Shuffle(u64Deshuffle(0x9876543210FEDCBA)) != 0x9876543210FEDCBA)
+	if (u64Deshuffle(0) != 0 || u64Deshuffle(1) != 1 ||
+		u64Deshuffle(2) != 0x0000000100000000 ||
+		u64Deshuffle(0xAAAAAAAAAAAAAAAA) != 0xFFFFFFFF00000000 ||
+		u64Shuffle(u64Deshuffle(0xFEDCBA9876543210)) != 0xFEDCBA9876543210 ||
+		u64Deshuffle(u64Shuffle(0x9876543210FEDCBA)) != 0x9876543210FEDCBA)
 		return FALSE;
 	// negInv
 	if (u64NegInv(1) != U64_MAX ||
@@ -82,6 +82,11 @@ bool_t u64Test()
 	// from / to
 	u64To(b, 15, a), u64From(a, b, 15);
 	if (a[0] != w || a[1] != 0x0007060504030201)
+		return FALSE;
+	// shuffle (константы crypto/bash-f)
+	w = 0x3BF5080AC8BA94B1;
+	w = u64Deshuffle(w);
+	if ((u32)w != 0x5F008465 || (u32)(w >> 32) != 0x7C23AF8C)
 		return FALSE;
 #endif
 	// все нормально

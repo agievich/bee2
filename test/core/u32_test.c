@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2017.01.11
-\version 2019.06.27
+\version 2019.07.08
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -57,11 +57,11 @@ bool_t u32Test()
 		SAFE(u32CLZ)(0x7FFFE000) != 1 || FAST(u32CLZ)(0x7FFFE000) != 1)
 		return FALSE;
 	// shuffle
-	if (u32Shuffle(0) != 0 || u32Shuffle(1) != 1 || 
-		u32Shuffle(2) != 0x00010000 ||
-		u32Shuffle(0xAAAAAAAA) != 0xFFFF0000 ||
-		u32Deshuffle(u32Shuffle(0x76543210)) != 0x76543210 ||
-		u32Shuffle(u32Deshuffle(0x10FEDCBA)) != 0x10FEDCBA)
+	if (u32Deshuffle(0) != 0 || u32Deshuffle(1) != 1 || 
+		u32Deshuffle(2) != 0x00010000 ||
+		u32Deshuffle(0xAAAAAAAA) != 0xFFFF0000 ||
+		u32Shuffle(u32Deshuffle(0x76543210)) != 0x76543210 ||
+		u32Deshuffle(u32Shuffle(0x10FEDCBA)) != 0x10FEDCBA)
 		return FALSE;
 	// negInv
 	if (u32NegInv(1) != U32_MAX || 

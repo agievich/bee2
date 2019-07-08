@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.11.02
-\version 2016.11.10
+\version 2019.07.08
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -473,7 +473,7 @@ bool_t botpOCRAStart(void* state, const char* suite, const octet key[],
 	if (strStartsWith(suite, "-T"))
 	{
 		suite += 2;
-		if (*suite < '1' || *suite > '5')
+		if (*suite < '1' || *suite > '9')
 			return FALSE;
 		s->ts = (size_t)(*suite++ - '0');
 		if (*suite >= '0' && *suite <= '9')
@@ -547,8 +547,8 @@ void botpOCRAStepR(char* otp, const octet q[], size_t q_len, tm_time_t t,
 	memCopy(s->stack, s->stack + beltHMAC_keep(), beltHMAC_keep());
 	if (s->ctr_len)
 		beltHMACStepA(s->ctr, 8, s->stack), botpCtrNext(s->ctr);
-	memSetZero(s->q + q_len, sizeof(s->q) - q_len);
-	beltHMACStepA(s->q, q_len, s->stack);
+	memSetZero(s->q + q_len, 128 - q_len);
+	beltHMACStepA(s->q, 128, s->stack);
 	if (s->p_len)
 		beltHMACStepA(s->p, s->p_len, s->stack);
 	if (s->s_len)

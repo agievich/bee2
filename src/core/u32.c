@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.10.28
-\version 2019.06.27
+\version 2019.07.08
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -153,10 +153,10 @@ size_t FAST(u32CLZ)(register u32 w)
 u32 u32Shuffle(register u32 w)
 {
 	register u32 t;
-	t = (w ^ (w >> 1)) & 0x22222222, w ^= t ^ (t << 1);
-	t = (w ^ (w >> 2)) & 0x0C0C0C0C, w ^= t ^ (t << 2);
-	t = (w ^ (w >> 4)) & 0x00F000F0, w ^= t ^ (t << 4);
 	t = (w ^ (w >> 8)) & 0x0000FF00, w ^= t ^ (t << 8);
+	t = (w ^ (w >> 4)) & 0x00F000F0, w ^= t ^ (t << 4);
+	t = (w ^ (w >> 2)) & 0x0C0C0C0C, w ^= t ^ (t << 2);
+	t = (w ^ (w >> 1)) & 0x22222222, w ^= t ^ (t << 1);
 	t = 0;
 	return w;
 }
@@ -164,10 +164,10 @@ u32 u32Shuffle(register u32 w)
 u32 u32Deshuffle(register u32 w)
 {
 	register u32 t;
-	t = (w ^ (w >> 8)) & 0x0000FF00, w ^= t ^ (t << 8);
-	t = (w ^ (w >> 4)) & 0x00F000F0, w ^= t ^ (t << 4);
-	t = (w ^ (w >> 2)) & 0x0C0C0C0C, w ^= t ^ (t << 2);
 	t = (w ^ (w >> 1)) & 0x22222222, w ^= t ^ (t << 1);
+	t = (w ^ (w >> 2)) & 0x0C0C0C0C, w ^= t ^ (t << 2);
+	t = (w ^ (w >> 4)) & 0x00F000F0, w ^= t ^ (t << 4);
+	t = (w ^ (w >> 8)) & 0x0000FF00, w ^= t ^ (t << 8);
 	t = 0;
 	return w;
 }

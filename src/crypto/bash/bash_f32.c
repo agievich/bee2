@@ -6,7 +6,7 @@
 \author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2019.04.03
-\version 2019.06.27
+\version 2019.07.08
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -32,8 +32,8 @@ version 3. See Copyright Notices in bee2/info.h.
 /* w <- Interleaving(w) */
 static void u32x2Inter(u32 w[2])
 {
-	register u32 t0 = u32Shuffle(w[0]);
-	register u32 t1 = u32Shuffle(w[1]);
+	register u32 t0 = u32Deshuffle(w[0]);
+	register u32 t1 = u32Deshuffle(w[1]);
 	w[0] = (t0 & 0x0000FFFF) | (t1 << 16);
 	w[1] = (t0 >> 16) | (t1 & 0xFFFF0000);
 	t0 = t1 = 0;
@@ -43,8 +43,8 @@ static void u32x2Inter(u32 w[2])
 static void u32x2Deinter(u32 w[2])
 {
 	register u32 t = (w[0] & 0x0000FFFF) | (w[1] << 16);
-	w[1] = u32Deshuffle((w[0] >> 16) | (w[1] & 0xFFFF0000));
-	w[0] = u32Deshuffle(t);
+	w[1] = u32Shuffle((w[0] >> 16) | (w[1] & 0xFFFF0000));
+	w[0] = u32Shuffle(t);
 	t = 0;
 }
 
@@ -114,57 +114,64 @@ Bash-S
 /*
 *******************************************************************************
 Тактовые константы в "interleaved" представлении
+
+Рассчитаны следующим образом:
+\code
+	ci_0 = (u32)u64Desuffle(ci);
+	ci_1 = (u32)(u64Desuffle(ci) >> 32);
+\endcode
+Здесь ci -- стандартные константы из bash_f64.c.
 *******************************************************************************
 */
 
-#define c32_0_0  0x5f008465
-#define c32_1_0  0x7c23af8c
-#define c32_0_1  0x9db6574e
-#define c32_1_1  0x884a3e9d
-#define c32_0_2  0x884a3e9d
-#define c32_1_2  0x4edb2ba7
-#define c32_0_3  0xaf4ed365
-#define c32_1_3  0xe3ef63e1
-#define c32_0_4  0x027a9b23
-#define c32_1_4  0xf06d151d
-#define c32_0_5  0x11f8eddf
-#define c32_1_5  0xa6f7313e
-#define c32_0_6  0x4762c9fc
-#define c32_1_6  0xaf360a40
-#define c32_0_7  0xaf360a40
-#define c32_1_7  0x23b164fe
-#define c32_0_8  0x23b164fe
-#define c32_1_8  0x579b0520
-#define c32_0_9  0x579b0520
-#define c32_1_9  0x11d8b27f
-#define c32_0_10 0x11d8b27f
-#define c32_1_10 0x2bcd8290
-#define c32_0_11 0xca587a52
-#define c32_1_11 0xaf262590
-#define c32_0_12 0xaf262590
-#define c32_1_12 0x652c3d29
-#define c32_0_13 0x652c3d29
-#define c32_1_13 0x579312c8
-#define c32_0_14 0xb606ea0a
-#define c32_1_14 0x955c623b
-#define c32_0_15 0x955c623b
-#define c32_1_15 0x5b037505
-#define c32_0_16 0xba968dc7
-#define c32_1_16 0xed644db2
-#define c32_0_17 0x0cf1b570
-#define c32_1_17 0xfa813a4c
-#define c32_0_18 0xfa813a4c
-#define c32_1_18 0x0678dab8
-#define c32_0_19 0x0678dab8
-#define c32_1_19 0x7d409d26
-#define c32_0_20 0x7d409d26
-#define c32_1_20 0x033c6d5c
-#define c32_0_21 0x033c6d5c
-#define c32_1_21 0x3ea04e93
-#define c32_0_22 0x3ea04e93
-#define c32_1_22 0x019e36ae
-#define c32_0_23 0xe00bce6c
-#define c32_1_23 0xb89a5be6
+#define c1_0  0x5F008465
+#define c1_1  0x7C23AF8C
+#define c2_0  0x9DB6574E
+#define c2_1  0x884A3E9D
+#define c3_0  0x884A3E9D
+#define c3_1  0x4EDB2BA7
+#define c4_0  0xAF4ED365
+#define c4_1  0xE3EF63E1
+#define c5_0  0x027A9B23
+#define c5_1  0xF06D151D
+#define c6_0  0x11F8EDDF
+#define c6_1  0xA6F7313E
+#define c7_0  0x4762C9FC
+#define c7_1  0xAF360A40
+#define c8_0  0xAF360A40
+#define c8_1  0x23B164FE
+#define c9_0  0x23B164FE
+#define c9_1  0x579B0520
+#define c10_0 0x579B0520
+#define c10_1 0x11D8B27F
+#define c11_0 0x11D8B27F
+#define c11_1 0x2BCD8290
+#define c12_0 0xCA587A52
+#define c12_1 0xAF262590
+#define c13_0 0xAF262590
+#define c13_1 0x652C3D29
+#define c14_0 0x652C3D29
+#define c14_1 0x579312C8
+#define c15_0 0xB606EA0A
+#define c15_1 0x955C623B
+#define c16_0 0x955C623B
+#define c16_1 0x5B037505
+#define c17_0 0xBA968DC7
+#define c17_1 0xED644DB2
+#define c18_0 0x0CF1B570
+#define c18_1 0xFA813A4C
+#define c19_1 0x0678DAB8
+#define c19_0 0xFA813A4C
+#define c20_0 0x0678DAB8
+#define c20_1 0x7D409D26
+#define c21_0 0x7D409D26
+#define c21_1 0x033C6D5C
+#define c22_0 0x033C6D5C
+#define c22_1 0x3EA04E93
+#define c23_0 0x3EA04E93
+#define c23_1 0x019E36AE
+#define c24_0 0xE00BCE6C
+#define c24_1 0xB89A5BE6
 
 /*
 *******************************************************************************
@@ -173,27 +180,28 @@ Bash-S
 */
 
 #define bashC32(s, i)\
-  s(2,7)[0] ^= c32_0_##i,\
-  s(2,7)[1] ^= c32_1_##i
+  s(2,7)[0] ^= c##i##_0,\
+  s(2,7)[1] ^= c##i##_1
 
 /*
 *******************************************************************************
-Тактовая подстановка
+Навигация по словам состояния s (u64[3][8] = u32[3][8][2]):
+	sk(i, j) = P^k(s)[i][j]
 *******************************************************************************
 */
 
 #define up(i) (((i) + 1) % 3)
-#define shuffle1(i, j)\
+#define p1(i, j)\
 	((i == 0) ? (j + 2 * (j & 1) + 7) % 8 : \
 	((i == 1) ? (j ^ 1) : (5 * j + 6) % 8))
-#define shuffle3(j)\
+#define p3(j)\
 	(8 * (j / 8) + (j % 8 + 4) % 8)
 #define s0(i, j) s[i][j]
-#define s1(i, j) s0(up(i), shuffle1(i, j))
-#define s2(i, j) s1(up(i), shuffle1(i, j))
-#define s3(i, j) s0(   i , shuffle3(   j))
-#define s4(i, j) s3(up(i), shuffle1(i, j))
-#define s5(i, j) s4(up(i), shuffle1(i, j))
+#define s1(i, j) s0(up(i), p1(i, j))
+#define s2(i, j) s1(up(i), p1(i, j))
+#define s3(i, j) s0(   i , p3(   j))
+#define s4(i, j) s3(up(i), p1(i, j))
+#define s5(i, j) s4(up(i), p1(i, j))
 
 /*
 *******************************************************************************
@@ -207,30 +215,30 @@ static void bashF32(u32 s[3][8][2])
   u32 t1[2];
   u32 t2[2];
   ASSERT(memIsValid(s, 192));
-  bashR32(s0);  bashC32(s1, 0);
-  bashR32(s1);  bashC32(s2, 1);
-  bashR32(s2);  bashC32(s3, 2);
-  bashR32(s3);  bashC32(s4, 3);
-  bashR32(s4);  bashC32(s5, 4);
-  bashR32(s5);  bashC32(s0, 5);
-  bashR32(s0);  bashC32(s1, 6);
-  bashR32(s1);  bashC32(s2, 7);
-  bashR32(s2);  bashC32(s3, 8);
-  bashR32(s3);  bashC32(s4, 9);
-  bashR32(s4);  bashC32(s5, 10);
-  bashR32(s5);  bashC32(s0, 11);
-  bashR32(s0);  bashC32(s1, 12);
-  bashR32(s1);  bashC32(s2, 13);
-  bashR32(s2);  bashC32(s3, 14);
-  bashR32(s3);  bashC32(s4, 15);
-  bashR32(s4);  bashC32(s5, 16);
-  bashR32(s5);  bashC32(s0, 17);
-  bashR32(s0);  bashC32(s1, 18);
-  bashR32(s1);  bashC32(s2, 19);
-  bashR32(s2);  bashC32(s3, 20);
-  bashR32(s3);  bashC32(s4, 21);
-  bashR32(s4);  bashC32(s5, 22);
-  bashR32(s5);  bashC32(s0, 23);
+  bashR32(s0);  bashC32(s1, 1);
+  bashR32(s1);  bashC32(s2, 2);
+  bashR32(s2);  bashC32(s3, 3);
+  bashR32(s3);  bashC32(s4, 4);
+  bashR32(s4);  bashC32(s5, 5);
+  bashR32(s5);  bashC32(s0, 6);
+  bashR32(s0);  bashC32(s1, 7);
+  bashR32(s1);  bashC32(s2, 8);
+  bashR32(s2);  bashC32(s3, 9);
+  bashR32(s3);  bashC32(s4, 10);
+  bashR32(s4);  bashC32(s5, 11);
+  bashR32(s5);  bashC32(s0, 12);
+  bashR32(s0);  bashC32(s1, 13);
+  bashR32(s1);  bashC32(s2, 14);
+  bashR32(s2);  bashC32(s3, 15);
+  bashR32(s3);  bashC32(s4, 16);
+  bashR32(s4);  bashC32(s5, 17);
+  bashR32(s5);  bashC32(s0, 18);
+  bashR32(s0);  bashC32(s1, 19);
+  bashR32(s1);  bashC32(s2, 20);
+  bashR32(s2);  bashC32(s3, 21);
+  bashR32(s3);  bashC32(s4, 22);
+  bashR32(s4);  bashC32(s5, 23);
+  bashR32(s5);  bashC32(s0, 24);
   t0[0] = t1[0] = t2[0] = 0;
   t0[1] = t1[1] = t2[1] = 0;
 }

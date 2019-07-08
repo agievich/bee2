@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.10.28
-\version 2019.06.27
+\version 2019.07.08
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -98,9 +98,9 @@ size_t FAST(u16CLZ)(register u16 w)
 u16 u16Shuffle(register u16 w)
 {
 	register u16 t;
-	t = (w ^ (w >> 1)) & 0x2222, w ^= t ^ (t << 1);
-	t = (w ^ (w >> 2)) & 0x0C0C, w ^= t ^ (t << 2);
 	t = (w ^ (w >> 4)) & 0x00F0, w ^= t ^ (t << 4);
+	t = (w ^ (w >> 2)) & 0x0C0C, w ^= t ^ (t << 2);
+	t = (w ^ (w >> 1)) & 0x2222, w ^= t ^ (t << 1);
 	t = 0;
 	return w;
 }
@@ -108,9 +108,9 @@ u16 u16Shuffle(register u16 w)
 u16 u16Deshuffle(register u16 w)
 {
 	register u16 t;
-	t = (w ^ (w >> 4)) & 0x00F0, w ^= t ^ (t << 4);
-	t = (w ^ (w >> 2)) & 0x0C0C, w ^= t ^ (t << 2);
 	t = (w ^ (w >> 1)) & 0x2222, w ^= t ^ (t << 1);
+	t = (w ^ (w >> 2)) & 0x0C0C, w ^= t ^ (t << 2);
+	t = (w ^ (w >> 4)) & 0x00F0, w ^= t ^ (t << 4);
 	t = 0;
 	return w;
 }

@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.11.06
-\version 2016.11.10
+\version 2019.07.08
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -100,7 +100,8 @@ bool_t botpTest()
 		botpOCRAStart(state, "OCRA-1:HOTP-HBELT-8:QN08-SA13", beltH(), 32) ||
 		botpOCRAStart(state, "OCRA-1:HOTP-HBELT-8:QN08-T1N", beltH(), 32) ||
 		botpOCRAStart(state, "OCRA-1:HOTP-HBELT-8:QN08-T61S", beltH(), 32) ||
-		botpOCRAStart(state, "OCRA-1:HOTP-HBELT-8:QN08-T51H", beltH(), 32))
+		botpOCRAStart(state, "OCRA-1:HOTP-HBELT-8:QN08-T51H", beltH(), 32) ||
+		!botpOCRAStart(state, "OCRA-1:HOTP-HBELT-9:QN08-T8S", beltH(), 32))
 		return FALSE;
 	// OCRA.1
 	beltHash(p, beltH(), 13);
@@ -112,14 +113,14 @@ bool_t botpTest()
 	t /= 60;
 	strCopy(q, otp1);
 	botpOCRAStepR(otp, (const octet*)q, strLen(q), t += 3, state);
-	if (!strEq(otp, "77614623"))
+	if (!strEq(otp, "41607895"))
 		return FALSE;
 	botpOCRAStepS(state, ctr, p, beltH());
 	if (!botpOCRAStepV(otp, (const octet*)q, strLen(q), t, state))
 		return FALSE;
 	botpOCRARand(otp, suite, beltH() + 128, 32, (const octet*)q, strLen(q), 
 		ctr, p, beltH(), t);
-	if (!strEq(otp, "77614623"))
+	if (!strEq(otp, "41607895"))
 		return FALSE;
 	if (botpOCRAVerify(otp, suite, beltH() + 128, 32, (const octet*)q, strLen(q), 
 		ctr, p, beltH(), t) != ERR_OK)
@@ -128,13 +129,13 @@ bool_t botpTest()
 	strCopy(q, otp2);
 	strCopy(q + strLen(q), otp3);
 	botpOCRAStepR(otp, (const octet*)q, strLen(q), t += 10, state);
-	if (!strEq(otp, "99509664"))
+	if (!strEq(otp, "11185837"))
 		return FALSE;
 	// OCRA.3
 	strCopy(q, otp3);
 	strCopy(q + strLen(q), otp2);
 	botpOCRAStepR(otp, (const octet*)q, strLen(q), ++t, state);
-	if (!strEq(otp, "75687625"))
+	if (!strEq(otp, "52962597"))
 		return FALSE;
 	// все нормально
 	return TRUE;
