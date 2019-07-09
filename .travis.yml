@@ -37,7 +37,7 @@ matrix:
       env: BUILD_TYPE="Check" BUILD_FAST="OFF" BASH_PLATFORM="BASH_64"
     - os: linux
       compiler: gcc
-      env: BUILD_TYPE="Check" BUILD_FAST="ON" BASH_PLATFORM="BASH_AVX512F"
+      env: BUILD_TYPE="Check" BUILD_FAST="ON" BASH_PLATFORM="BASH_AVX512"
     - os: linux
       compiler: gcc
       sudo: required
