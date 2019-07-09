@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.09.22
-\version 2018.11.01
+\version 2019.07.09
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -22,9 +22,7 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 Самотестирование
 
-Создаются тесты для приложения А к СТБ 34.101.bash.
-
-\todo Использовать state, или убрать.
+Тесты из приложения А к СТБ 34.101.bash.
 *******************************************************************************
 */
 
@@ -34,13 +32,14 @@ bool_t bashTest()
 	octet hash[64];
 	octet state[1024];
 	// создать стек
+	ASSERT(sizeof(state) >= bashF_deep());
 	ASSERT(sizeof(state) >= bash256_keep());
 	ASSERT(sizeof(state) >= bash384_keep());
 	ASSERT(sizeof(state) >= bash512_keep());
 	ASSERT(sizeof(state) >= bashAE_keep());
 	// тест A.1
 	memCopy(buf, beltH(), 192);
-	bashF(buf);
+	bashF(buf, state);
 	if (!hexEq(buf, 
 		"8FE727775EA7F140B95BB6A200CBB28C"
 		"7F0809C0C0BC68B7DC5AEDC841BD94E4"

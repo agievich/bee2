@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2018.11.30
+\version 2019.07.09
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -37,6 +37,12 @@ bool_t memIsValid(const void* buf, size_t count)
 {
 	return count == 0 || buf != 0;
 }
+
+bool_t memIsAligned(const void* buf, size_t size)
+{
+	return (size_t)buf % size == 0;
+}
+
 
 /*
 *******************************************************************************

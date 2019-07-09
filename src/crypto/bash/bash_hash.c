@@ -6,7 +6,7 @@
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2014.07.15
-\version 2018.11.05
+\version 2019.07.09
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -30,11 +30,12 @@ typedef struct {
 	octet s1[192];		/*< копия s */
 	size_t block_len;	/*< длина блока */
 	size_t filled;		/*< накоплено октетов в блоке */
+	octet stack[];		/*< [[bashF_deep()] стек bashF */
 } bash_hash_st;
 
 size_t bashHash_keep()
 {
-	return sizeof(bash_hash_st);
+	return sizeof(bash_hash_st) + bashF_deep();
 }
 
 void bashHashStart(void* state, size_t l)
@@ -54,7 +55,7 @@ void bashHashStart(void* state, size_t l)
 void bashHashStepH(const void* buf, size_t count, void* state)
 {
 	bash_hash_st* s = (bash_hash_st*)state;
-	ASSERT(memIsDisjoint2(buf, count, s, sizeof(bash_hash_st)));
+	ASSERT(memIsDisjoint2(buf, count, s, bashHash_keep()));
 	// есть накопленные данные?
 	if (s->filled)
 	{
@@ -67,14 +68,14 @@ void bashHashStepH(const void* buf, size_t count, void* state)
 		memCopy(s->s + s->filled, buf, s->block_len - s->filled);
 		count -= s->block_len - s->filled;
 		buf = (const octet*)buf + s->block_len - s->filled;
-		bashF(s->s);
+		bashF(s->s, s->stack);
 		s->filled = 0;
 	}
 	// цикл по полным блокам
 	while (count >= s->block_len)
 	{
 		memCopy(s->s, buf, s->block_len);
-		bashF(s->s);
+		bashF(s->s, s->stack);
 		buf = (const octet*)buf + s->block_len;
 		count -= s->block_len;
 	}
@@ -87,7 +88,7 @@ static void bashHashStepG_internal(size_t hash_len, void* state)
 {
 	bash_hash_st* s = (bash_hash_st*)state;
 	// pre
-	ASSERT(memIsValid(s, sizeof(bash_hash_st)));
+	ASSERT(memIsValid(s, bashHash_keep()));
 	ASSERT(s->block_len + hash_len * 2 <= 192);
 	// создать копию s->s
 	memCopy(s->s1, s->s, sizeof(s->s));
@@ -104,7 +105,7 @@ static void bashHashStepG_internal(size_t hash_len, void* state)
 		s->s1[0] = 0x40;
 	}
 	// последний шаг
-	bashF(s->s1);
+	bashF(s->s1, s->stack);
 }
 
 void bashHashStepG(octet hash[], size_t hash_len, void* state)

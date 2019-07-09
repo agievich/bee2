@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.10.28
-\version 2015.11.09
+\version 2019.07.08
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -22,6 +22,7 @@ version 3. See Copyright Notices in bee2/info.h.
 #define __BEE2_U64_H
 
 #include "bee2/defs.h"
+#include "bee2/core/safe.h"
 
 #ifndef U64_SUPPORT
 	#error "Can't proceed without u64"
@@ -50,31 +51,119 @@ extern "C" {
 	\pre 0 < d < 64.
 */
 #define u64RotHi(w, d)\
-	((u64)((w) << d | (w) >> (64 - d)))
+	((u64)((w) << (d) | (w) >> (64 - (d))))
 
 /*!	\def u64RotLo
-	\brief Циклический сдвиг слова u32 на d позиций в сторону младших разрядов
+	\brief Циклический сдвиг слова u64 на d позиций в сторону младших разрядов
 	\pre 0 < d < 64.
 */
 #define u64RotLo(w, d)\
-	((u64)((w) >> d | (w) << (64 - d)))
+	((u64)((w) >> (d) | (w) << (64 - (d))))
 
 /*!	\def u64Rev
 	\brief Реверс октетов слова u64
 */
-#define u64Rev(w)\
+#define u64Rev_(w)\
 	((u64)((w) << 56 | ((w) & 0xFF00) << 40 | ((w) & 0xFF0000) << 24 |\
 	((w) & 0xFF000000) << 8 | ((w) >> 8 & 0xFF000000) |\
 	((w) >> 24 & 0xFF0000) | ((w) >> 40 & 0xFF00) | (w) >> 56))
 
-/*!	\brief Реверс октетов
+/*!	\brief Реверс октетов слова
 
-	Выполняется реверс октетов слов u64 массива [count]buf.
+	Выполняется реверс октетов u64-слова w.
+	\return Слово с переставленными октетами.
+*/
+u64 u64Rev(
+	register u64 w		/*!< [in] слово */
+);
+
+/*!	\brief Реверс октетов массива слов
+
+	Выполняется реверс октетов массива [count]buf из u64-слов.
 */
 void u64Rev2(
-	u64 buf[],			/*!< [in/out] приемник */
+	u64 buf[],			/*!< [in/out] массив слов */
 	size_t count		/*!< [in] число элементов */
 );
+
+/*!	\brief Вес
+
+	Определяется число ненулевых битов в u64-слове w.
+	\return Число ненулевых битов.
+*/
+size_t u64Weight(
+	register u64 w		/*!< [in] слово */
+);
+
+/*!	\brief Четность
+
+	Определяется сумма по модулю 2 битов u64-слова w.
+	\return Сумма битов.
+*/
+bool_t u64Parity(
+	register u64 w		/*!< [in] слово */
+);
+
+/*!	\brief Число младших нулевых битов
+
+	Определяется длина серии из нулевых младших битов u64-слова w.
+	\return Длина серии.
+	\remark CTZ == Count of Trailing Zeros
+	\safe Имеется ускоренная нерегулярная редакция.
+*/
+size_t u64CTZ(
+	register u64 w		/*!< [in] слово */
+);
+
+size_t SAFE(u64CTZ)(register u64 w);
+size_t FAST(u64CTZ)(register u64 w);
+
+/*!	\brief Число старших нулевых битов
+
+	Определяется длина серии из нулевых старших битов машинного слова w.
+	\return Длина серии.
+	\remark CLZ == Count of Leading Zeros
+	\safe Имеется ускоренная нерегулярная редакция.
+*/
+size_t u64CLZ(
+	register u64 w		/*!< [in] слово */
+);
+
+size_t SAFE(u64CLZ)(register u64 w);
+size_t FAST(u64CLZ)(register u64 w);
+
+/*!	\brief Тасование битов
+
+	Биты младшей половинки u64-слова w перемещаются в четные позиции,
+	биты старшей половинки -- в нечетные.
+	\return Слово с растасованными битами.
+*/
+u64 u64Shuffle(
+	register u64 w		/*!< [in] слово */
+);
+
+/*!	\brief Обратное тасование битов
+
+	Четные биты u64-слова w группируются в его младшей половинке,
+	нечетные -- в старшей.
+	\return Слово с группированными битами.
+*/
+u64 u64Deshuffle(
+	register u64 w		/*!< [in] слово */
+);
+
+/*!	\brief Аддитивно-мультипликативное обращение
+
+	Выполняется адиттивное и мультипликативное обращение
+	u64-слова-как-числа w по модулю 2^64.
+	\pre w -- нечетное.
+	\return - w^{-1} \mod 2^64.
+	\remark Вычисляемое слово используется в редукции Монтгомери.
+*/
+u64 u64NegInv(
+	register u64 w		/*!< [in] слово */
+);
+
 
 /*!	\brief Загрузка из буфера памяти
 

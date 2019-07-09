@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.01
-\version 2019.06.13
+\version 2019.06.18
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -49,7 +49,7 @@ version 3. See Copyright Notices in bee2/info.h.
 \remark При разборе платформ для определения порядка октетов использован код
 Брайана Гладмана (Brian Gladman, http://www.gladman.me.uk/). Дополнительная 
 платформа EMSCRIPTEN (https://emscripten.org) является виртуальной, на ней 
-выполняется компиляция в JavaScript. 
+выполняется компиляция в asm.js. 
 
 \section defs-arrays Массивы
 

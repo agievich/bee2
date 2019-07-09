@@ -25,23 +25,23 @@ matrix:
       - curl -s 'https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh' | bash || true
     - os: linux
       compiler: gcc
-      env: BUILD_TYPE="Release" BUILD_FAST="ON"
+      env: BUILD_TYPE="Release" BUILD_FAST="ON"  BASH_PLATFORM="BASH_64"
     - os: osx
       compiler: clang
-      env: BUILD_TYPE="Release" BUILD_FAST="OFF"
+      env: BUILD_TYPE="Release" BUILD_FAST="OFF" BASH_PLATFORM="BASH_32"
     - os: linux
       compiler: gcc
-      env: BUILD_TYPE="MemSan" BUILD_FAST="ON"
+      env: BUILD_TYPE="MemSan" BUILD_FAST="ON" BASH_PLATFORM="BASH_AVX2" 
     - os: osx
       compiler: clang
-      env: BUILD_TYPE="Check" BUILD_FAST="OFF"
+      env: BUILD_TYPE="Check" BUILD_FAST="OFF" BASH_PLATFORM="BASH_64"
     - os: linux
       compiler: gcc
-      env: BUILD_TYPE="Check" BUILD_FAST="ON"
+      env: BUILD_TYPE="Check" BUILD_FAST="ON" BASH_PLATFORM="BASH_AVX512F"
     - os: linux
       compiler: gcc
       sudo: required
-      env: BUILD_TYPE="Coverage" BUILD_FAST="OFF"
+      env: BUILD_TYPE="Coverage" BUILD_FAST="OFF" BASH_PLATFORM="BASH_64"
       install:
       - sudo apt-get install -y lcov
       after_success:

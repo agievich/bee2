@@ -6,7 +6,7 @@
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \author (C) Stanislav Poruchnik [poruchnikstanislav@gmail.com]
 \created 2012.04.22
-\version 2017.01.17
+\version 2019.06.26
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -17,7 +17,7 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/core/word.h"
 #include "bee2/math/ww.h"
 #include "bee2/math/zz.h"
-#include "zz_int.h"
+#include "zz_lcl.h"
 
 /*
 *******************************************************************************

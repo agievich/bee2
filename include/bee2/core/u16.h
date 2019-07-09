@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.10.28
-\version 2015.11.09
+\version 2019.07.08
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -22,6 +22,7 @@ version 3. See Copyright Notices in bee2/info.h.
 #define __BEE2_U16_H
 
 #include "bee2/defs.h"
+#include "bee2/core/safe.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,32 +43,113 @@ extern "C" {
 #define U16_MAX ((u16)(U16_0 - U16_1))
 
 /*!	\def u16RotHi
-	\brief Циклический сдвиг слова u16 на d позиций в сторону старших разрядов
+	\brief Циклический сдвиг u16-слова на d позиций в сторону старших разрядов
 	\pre 0 < d < 16.
 */
 #define u16RotHi(w, d)\
-	((u16)((w) << d | (w) >> (16 - d)))
+	((u16)((w) << (d) | (w) >> (16 - (d))))
 
 /*!	\def u16RotLo
-	\brief Циклический сдвиг слова u16 на d позиций в сторону младших разрядов
+	\brief Циклический сдвиг u16-слова на d позиций в сторону младших разрядов
 	\pre 0 < d < 16.
 */
 #define u16RotLo(w, d)\
-	((u16)((w) >> d | (w) << (16 - d)))
-
-/*!	\def u16Rev
-	\brief Реверс октетов слова u16
-*/
-#define u16Rev(w)\
-	((u16)((w) << 8 | (w) >> 8))
+	((u16)((w) >> (d) | (w) << (16 - (d))))
 
 /*!	\brief Реверс октетов
 
-	Выполняется реверс октетов слов u16 массива [count]buf.
+	Выполняется реверс октетов u16-слова w.
+	\return Слово с переставленными октетами.
+*/
+u16 u16Rev(
+	register u16 w		/*!< [in] слово */
+);
+
+/*!	\brief Реверс октетов массива слов
+
+	Выполняется реверс октетов массива [count]buf из u16-слов.
 */
 void u16Rev2(
 	u16 buf[],			/*!< [in/out] приемник */
 	size_t count		/*!< [in] число элементов */
+);
+
+/*!	\brief Вес
+
+	Определяется число ненулевых битов в u16-слове w.
+	\return Число ненулевых битов.
+*/
+size_t u16Weight(
+	register u16 w		/*!< [in] слово */
+);
+
+/*!	\brief Четность
+
+	Определяется сумма по модулю 2 битов u16-слова w.
+	\return Сумма битов.
+*/
+bool_t u16Parity(
+	register u16 w		/*!< [in] слово */
+);
+
+/*!	\brief Число младших нулевых битов
+
+	Определяется длина серии из нулевых младших битов u16-слова w.
+	\return Длина серии.
+	\remark CTZ == Count of Trailing Zeros
+	\safe Имеется ускоренная нерегулярная редакция.
+	*/
+size_t u16CTZ(
+	register u16 w		/*!< [in] слово */
+);
+
+size_t SAFE(u16CTZ)(register u16 w);
+size_t FAST(u16CTZ)(register u16 w);
+
+/*!	\brief Число старших нулевых битов
+
+	Определяется длина серии из нулевых старших битов машинного слова w.
+	\return Длина серии.
+	\remark CLZ == Count of Leading Zeros
+	\safe Имеется ускоренная нерегулярная редакция.
+*/
+size_t u16CLZ(
+	register u16 w		/*!< [in] слово */
+);
+
+size_t SAFE(u16CLZ)(register u16 w);
+size_t FAST(u16CLZ)(register u16 w);
+
+/*!	\brief Тасование битов
+
+	Биты младшей половинки u16-слова w перемещаются в четные позиции,
+	биты старшей половинки -- в нечетные.
+	\return Слово с растасованными битами.
+*/
+u16 u16Shuffle(
+	register u16 w		/*!< [in] слово */
+);
+
+/*!	\brief Обратное тасование битов
+
+	Четные биты u16-слова w группируются в его младшей половинке,
+	нечетные -- в старшей.
+	\return Слово с группированными битами.
+*/
+u16 u16Deshuffle(
+	register u16 w		/*!< [in] слово */
+);
+
+/*!	\brief Аддитивно-мультипликативное обращение
+
+	Выполняется адиттивное и мультипликативное обращение
+	u16-слова-как-числа w по модулю 2^16.
+	\pre w -- нечетное.
+	\return - w^{-1} \mod 2^16.
+	\remark Вычисляемое слово используется в редукции Монтгомери.
+*/
+u16 u16NegInv(
+	register u16 w		/*!< [in] слово */
 );
 
 /*!	\brief Загрузка из буфера памяти

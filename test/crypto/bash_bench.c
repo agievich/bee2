@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.15
-\version 2018.11.01
+\version 2019.07.09
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -26,6 +26,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
+extern const char bash_platform[];
+
 bool_t bashBench()
 {
 	octet belt_state[256];
@@ -37,6 +39,8 @@ bool_t bashBench()
 	ASSERT(prngCOMBO_keep() <= sizeof(combo_state));
 	prngCOMBOStart(combo_state, utilNonce32());
 	prngCOMBOStepR(buf, sizeof(buf), combo_state);
+	// платформа
+	printf("bashBench::platform = %s\n", bash_platform);
 	// оценить скорость хэширования
 	{
 		const size_t reps = 2000;

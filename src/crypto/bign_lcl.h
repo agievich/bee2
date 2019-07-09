@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-\file bign_lcl.c
+\file bign_lcl.h
 \brief STB 34.101.45 (bign): local definitions
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]

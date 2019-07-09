@@ -1,18 +1,18 @@
 /*
 *******************************************************************************
-\file zz_int.h
-\brief Multiple-precision unsigned integers: internal definitions
+\file zz_lcl.h
+\brief Multiple-precision unsigned integers: local definitions
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2016.07.01
-\version 2016.07.05
+\version 2019.06.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifndef __ZZ_INT_H
-#define __ZZ_INT_H
+#ifndef __ZZ_LCL_H
+#define __ZZ_LCL_H
 
 #include "bee2/defs.h"
 
@@ -97,4 +97,4 @@ _MUL_LO:
 } /* extern "C" */
 #endif
 
-#endif /* __ZZ_INT_H */
+#endif /* __ZZ_LCL_H */

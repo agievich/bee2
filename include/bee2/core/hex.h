@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.10.29
-\version 2016.06.16
+\version 2019.06.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -94,6 +94,7 @@ bool_t hexEq(
 	const char* hex		/*!< [in] шестнадцатеричная строка */
 );
 
+bool_t SAFE(hexEq)(const void* buf, const char* hex);
 bool_t FAST(hexEq)(const void* buf, const char* hex);
 
 /*!	\brief Совпадает с обратной шестнадцатеричной строкой?
@@ -118,6 +119,7 @@ bool_t hexEqRev(
 	const char* hex		/*!< [in] шестнадцатеричная строка */
 );
 
+bool_t SAFE(hexEqRev)(const void* buf, const char* hex);
 bool_t FAST(hexEqRev)(const void* buf, const char* hex);
 
 /*!	\brief Кодирование буфера памяти

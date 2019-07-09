@@ -25,7 +25,7 @@ set(src
   crypto/bels.c
   crypto/belt/belt_block.c
   crypto/belt/belt_wbl.c
-  crypto/belt/belt_int.c
+  crypto/belt/belt_lcl.c
   crypto/belt/belt_cbc.c
   crypto/belt/belt_cfb.c
   crypto/belt/belt_compr.c
