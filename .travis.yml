@@ -53,6 +53,6 @@ matrix:
 
 script: 
   - mkdir build && cd build 
-  - cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_FAST=$BUILD_FAST ..
+  - cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_FAST=$BUILD_FAST -DBASH_PLATFORM=$BASH_PLATFORM ..
   - make
-  - make test
+  - ctest --verbose
