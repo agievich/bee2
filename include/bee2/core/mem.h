@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.16
-\version 2019.06.27
+\version 2019.07.09
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -160,6 +160,17 @@ bool_t memIsValid(
 */
 #define memIsNullOrValid(buf, count)\
 	((buf) == 0 || memIsValid(buf, count))
+
+/*!	\brief Буфер выровнен на границу?
+
+	Проверяется, что buf выровнен на границу size-байтового блока.
+	\return Проверяемый признак.
+*/
+bool_t memIsAligned(
+	const void* buf,	/*!< [in] буфер */
+	size_t size			/*!< [in] длина блока */
+);
+
 
 /*!	\brief Проверка совпадения
 

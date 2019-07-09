@@ -170,30 +170,32 @@ EXPORTS
 	bakeBPACERunB				@529
 	bakeBPACERunA				@530
 
-	bashHash_keep				@601
-	bashHashStart				@602
-	bashHashStepH				@603
-	bashHashStepG				@604
-	bashHashStepV				@605
-	bashHash					@606
-	bashAE_keep					@607
-	bashAEStart					@608
-	bashAEAbsorbStart			@609
-	bashAEAbsorbStep			@610
-	bashAEAbsorbStop			@611
-	bashAEAbsorb				@612
-	bashAESqueezeStart			@613
-	bashAESqueezeStep			@614
-	bashAESqueezeStop			@615
-	bashAESqueeze				@616
-	bashAEEncrStart				@617
-	bashAEEncrStep				@618
-	bashAEEncrStop				@619
-	bashAEEncr					@620
-	bashAEDecrStart				@621
-	bashAEDecrStep				@622
-	bashAEDecrStop				@623
-	bashAEDecr					@624
+	bashF_deep					@601
+	bashF						@602
+	bashHash_keep				@603
+	bashHashStart				@604
+	bashHashStepH				@605
+	bashHashStepG				@606
+	bashHashStepV				@607
+	bashHash					@608
+	bashAE_keep					@609
+	bashAEStart					@610
+	bashAEAbsorbStart			@611
+	bashAEAbsorbStep			@612
+	bashAEAbsorbStop			@613
+	bashAEAbsorb				@614
+	bashAESqueezeStart			@615
+	bashAESqueezeStep			@616
+	bashAESqueezeStop			@617
+	bashAESqueeze				@618
+	bashAEEncrStart				@619
+	bashAEEncrStep				@620
+	bashAEEncrStop				@621
+	bashAEEncr					@622
+	bashAEDecrStart				@623
+	bashAEDecrStep				@624
+	bashAEDecrStop				@625
+	bashAEDecr					@626
 	
 	botpDT						@701
 	botpCtrNext					@702

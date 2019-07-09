@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2018.10.30
-\version 2018.11.05
+\version 2019.07.09
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -45,6 +45,7 @@ typedef struct {
 	size_t block_len;	/*< длина блока */
 	size_t filled;		/*< загружено/выгружено октетов в блок/из блока */
 	octet code;			/*< код текущего типа данных */
+	octet stack[];		/*< [[bashF_deep()] стек bashF */
 } bash_ae_st;
 
 static void bashAECtrl(bash_ae_st* s, octet mask, octet val)
@@ -60,7 +61,7 @@ static void bashAECtrl(bash_ae_st* s, octet mask, octet val)
 
 size_t bashAE_keep()
 {
-	return sizeof(bash_ae_st);
+	return sizeof(bash_ae_st) + bashF_deep();
 }
 
 void bashAEStart(void* state, const octet key[], size_t key_len, 
@@ -96,13 +97,13 @@ void bashAEAbsorbStart(octet code, void* state)
 {
 	bash_ae_st* s = (bash_ae_st*)state;
 	ASSERT(code == BASH_AE_KEY || code == BASH_AE_DATA);
-	ASSERT(memIsValid(s, sizeof(bash_ae_st)));
+	ASSERT(memIsValid(s, bashAE_keep()));
 	// обработать отложенный блок
 	bashAECtrlA(s, s->filled == s->block_len); /* полный? */
 	bashAECtrlB(s, 0); /* заключительный */
 	bashAECtrlC(s, s->code);
 	bashAECtrlD(s, code);
-	bashF(s->s);
+	bashF(s->s, s->stack);
 	s->filled = 0;
 	// запомнить код
 	s->code = code;
@@ -111,7 +112,7 @@ void bashAEAbsorbStart(octet code, void* state)
 void bashAEAbsorbStep(const void* buf, size_t count, void* state)
 {
 	bash_ae_st* s = (bash_ae_st*)state;
-	ASSERT(memIsDisjoint2(buf, count, s, sizeof(bash_ae_st)));
+	ASSERT(memIsDisjoint2(buf, count, s, bashAE_keep()));
 	// не накопится на полный блок?
 	if (count < s->block_len - s->filled)
 	{
@@ -132,7 +133,7 @@ void bashAEAbsorbStep(const void* buf, size_t count, void* state)
 		bashAECtrlB(s, 1); /* промежуточный */
 		bashAECtrlC(s, s->code);
 		bashAECtrlD(s, s->code);
-		bashF(s->s);
+		bashF(s->s, s->stack);
 		// новый полный блок
 		memCopy(s->s, buf, s->block_len);
 		buf = (const octet*)buf + s->block_len;
@@ -146,7 +147,7 @@ void bashAEAbsorbStep(const void* buf, size_t count, void* state)
 void bashAEAbsorbStop(void* state)
 {
 	bash_ae_st* s = (bash_ae_st*)state;
-	ASSERT(memIsValid(s, sizeof(bash_ae_st)));
+	ASSERT(memIsValid(s, bashAE_keep()));
 	// подготовить отложенный блок к завершению текущей операции
 	memSetZero(s->s + s->filled, s->block_len - s->filled);
 	// можем попасть в октет управления, но это не важно
@@ -170,13 +171,13 @@ void bashAESqueezeStart(octet code, void* state)
 {
 	bash_ae_st* s = (bash_ae_st*)state;
 	ASSERT(code == BASH_AE_PRN || code == BASH_AE_MAC);
-	ASSERT(memIsValid(s, sizeof(bash_ae_st)));
+	ASSERT(memIsValid(s, bashAE_keep()));
 	// обработать отложенный блок
 	bashAECtrlA(s, s->filled == s->block_len); /* полный? */
 	bashAECtrlB(s, 0); /* заключительный */ 
 	bashAECtrlC(s, s->code);
 	bashAECtrlD(s, code);
-	bashF(s->s);
+	bashF(s->s, s->stack);
 	s->filled = 0;
 	// запомнить код
 	s->code = code;
@@ -185,7 +186,7 @@ void bashAESqueezeStart(octet code, void* state)
 void bashAESqueezeStep(void* buf, size_t count, void* state)
 {
 	bash_ae_st* s = (bash_ae_st*)state;
-	ASSERT(memIsDisjoint2(buf, count, s, sizeof(bash_ae_st)));
+	ASSERT(memIsDisjoint2(buf, count, s, bashAE_keep()));
 	// есть остаток в буфере?
 	if (s->filled < s->block_len)
 	{
@@ -209,7 +210,7 @@ void bashAESqueezeStep(void* buf, size_t count, void* state)
 		bashAECtrlB(s, 1); /* промежуточный */
 		bashAECtrlC(s, s->code);
 		bashAECtrlD(s, s->code);
-		bashF(s->s);
+		bashF(s->s, s->stack);
 		// новый полный блок
 		memCopy(buf, s->s, s->block_len);
 		buf = (octet*)buf + s->block_len;
@@ -223,7 +224,7 @@ void bashAESqueezeStep(void* buf, size_t count, void* state)
 		bashAECtrlB(s, 1); /* промежуточный */
 		bashAECtrlC(s, s->code);
 		bashAECtrlD(s, s->code);
-		bashF(s->s);
+		bashF(s->s, s->stack);
 		// новый полный блок
 		memCopy(buf, s->s, s->filled = count);
 	}
@@ -232,7 +233,7 @@ void bashAESqueezeStep(void* buf, size_t count, void* state)
 void bashAESqueezeStop(void* state)
 {
 	bash_ae_st* s = (bash_ae_st*)state;
-	ASSERT(memIsValid(s, sizeof(bash_ae_st)));
+	ASSERT(memIsValid(s, bashAE_keep()));
 	// чтобы считали, что был неполный блок
 	s->filled = 0;
 }
@@ -253,13 +254,13 @@ Encr (Зашифрование)
 void bashAEEncrStart(void* state)
 {
 	bash_ae_st* s = (bash_ae_st*)state;
-	ASSERT(memIsValid(s, sizeof(bash_ae_st)));
+	ASSERT(memIsValid(s, bashAE_keep()));
 	// обработать отложенный блок
 	bashAECtrlA(s, s->filled == s->block_len); /* полный? */
 	bashAECtrlB(s, 0); /* заключительный */
 	bashAECtrlC(s, s->code);
 	bashAECtrlD(s, BASH_AE_TEXT);
-	bashF(s->s);
+	bashF(s->s, s->stack);
 	s->filled = 0;
 	// запомнить код
 	s->code = BASH_AE_TEXT;
@@ -268,7 +269,7 @@ void bashAEEncrStart(void* state)
 void bashAEEncrStep(void* buf, size_t count, void* state)
 {
 	bash_ae_st* s = (bash_ae_st*)state;
-	ASSERT(memIsDisjoint2(buf, count, s, sizeof(bash_ae_st)));
+	ASSERT(memIsDisjoint2(buf, count, s, bashAE_keep()));
 	// есть остаток в буфере?
 	if (s->filled < s->block_len)
 	{
@@ -293,7 +294,7 @@ void bashAEEncrStep(void* buf, size_t count, void* state)
 		bashAECtrlB(s, 1); /* промежуточный */
 		bashAECtrlC(s, s->code);
 		bashAECtrlD(s, s->code);
-		bashF(s->s);
+		bashF(s->s, s->stack);
 		// новый полный блок
 		memXor2(buf, s->s, s->block_len);
 		memXor2(s->s, buf, s->block_len);
@@ -308,7 +309,7 @@ void bashAEEncrStep(void* buf, size_t count, void* state)
 		bashAECtrlB(s, 1); /* промежуточный */
 		bashAECtrlC(s, s->code);
 		bashAECtrlD(s, s->code);
-		bashF(s->s);
+		bashF(s->s, s->stack);
 		// новый полный блок
 		memXor2(buf, s->s, count);
 		memXor2(s->s, buf, s->filled = count);
@@ -318,7 +319,7 @@ void bashAEEncrStep(void* buf, size_t count, void* state)
 void bashAEEncrStop(void* state)
 {
 	bash_ae_st* s = (bash_ae_st*)state;
-	ASSERT(memIsValid(s, sizeof(bash_ae_st)));
+	ASSERT(memIsValid(s, bashAE_keep()));
 	// подготовить отложенный блок к завершению текущей операции
 	memSetZero(s->s + s->filled, s->block_len - s->filled);
 	// можем попасть в октет управления, но это не важно
@@ -341,13 +342,13 @@ Decr (Расшифрование)
 void bashAEDecrStart(void* state)
 {
 	bash_ae_st* s = (bash_ae_st*)state;
-	ASSERT(memIsValid(s, sizeof(bash_ae_st)));
+	ASSERT(memIsValid(s, bashAE_keep()));
 	// обработать отложенный блок
 	bashAECtrlA(s, s->filled == s->block_len); /* полный? */
 	bashAECtrlB(s, 0); /* заключительный */
 	bashAECtrlC(s, s->code);
 	bashAECtrlD(s, BASH_AE_TEXT);
-	bashF(s->s);
+	bashF(s->s, s->stack);
 	s->filled = 0;
 	// запомнить код
 	s->code = BASH_AE_TEXT;
@@ -356,7 +357,7 @@ void bashAEDecrStart(void* state)
 void bashAEDecrStep(void* buf, size_t count, void* state)
 {
 	bash_ae_st* s = (bash_ae_st*)state;
-	ASSERT(memIsDisjoint2(buf, count, s, sizeof(bash_ae_st)));
+	ASSERT(memIsDisjoint2(buf, count, s, bashAE_keep()));
 	// есть остаток в буфере?
 	if (s->filled < s->block_len)
 	{
@@ -381,7 +382,7 @@ void bashAEDecrStep(void* buf, size_t count, void* state)
 		bashAECtrlB(s, 1); /* промежуточный */
 		bashAECtrlC(s, s->code);
 		bashAECtrlD(s, s->code);
-		bashF(s->s);
+		bashF(s->s, s->stack);
 		// новый полный блок
 		memXor2(buf, s->s, s->block_len);
 		memCopy(s->s, buf, s->block_len);
@@ -396,7 +397,7 @@ void bashAEDecrStep(void* buf, size_t count, void* state)
 		bashAECtrlB(s, 1); /* промежуточный */
 		bashAECtrlC(s, s->code);
 		bashAECtrlD(s, s->code);
-		bashF(s->s);
+		bashF(s->s, s->stack);
 		// новый полный блок
 		memXor2(buf, s->s, count);
 		memCopy(s->s, buf, s->filled = count);
@@ -406,7 +407,7 @@ void bashAEDecrStep(void* buf, size_t count, void* state)
 void bashAEDecrStop(void* state)
 {
 	bash_ae_st* s = (bash_ae_st*)state;
-	ASSERT(memIsValid(s, sizeof(bash_ae_st)));
+	ASSERT(memIsValid(s, bashAE_keep()));
 	// подготовить отложенный блок к завершению текущей операции
 	memSetZero(s->s + s->filled, s->block_len - s->filled);
 	// можем попасть в октет управления, но это не важно

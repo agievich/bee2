@@ -6,7 +6,7 @@
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2014.07.15
-\version 2018.11.05
+\version 2019.07.09
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -139,7 +139,7 @@ static const u64 c24 = 0xDE8082CD72DEBC78;
 
 /*
 *******************************************************************************
-Алгоритм bash-f (шаговая функция)
+Bash-f (sponge-функция)
 *******************************************************************************
 */
 
@@ -148,7 +148,6 @@ static void bashF0(u64 s[24])
 	register u64 t0;
 	register u64 t1;
 	register u64 t2;
-	ASSERT(memIsValid(s, 192));
 	bashR(s, P0, P1,  1, t0, t1, t2);
 	bashR(s, P1, P2,  2, t0, t1, t2);
 	bashR(s, P2, P3,  3, t0, t1, t2);
@@ -176,9 +175,10 @@ static void bashF0(u64 s[24])
 	t0 = t1 = t2 = 0;
 }
 
-void bashF(octet block[192])
+void bashF(octet block[192], void* stack)
 {
 	u64* s = (u64*)block;
+	ASSERT(memIsDisjoint2(block, 192, stack, bashF_deep()));
 #if (OCTET_ORDER == BIG_ENDIAN)
 	u64Rev2(s, 24);
 #endif
@@ -188,3 +188,7 @@ void bashF(octet block[192])
 #endif
 }
 
+size_t bashF_deep()
+{
+	return 0;
+}
