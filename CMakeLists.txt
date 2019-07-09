@@ -101,6 +101,10 @@ if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
   endif(CMAKE_COMPILER_IS_CLANG)
 endif(CMAKE_BUILD_TYPE STREQUAL "Coverage")
 
+if(BUILD_FAST)
+  add_definitions(-DSAFE_FAST)
+endif()
+
 if(NOT LIB_INSTALL_DIR)
   set(LIB_INSTALL_DIR lib)
 endif()
@@ -114,10 +118,6 @@ include_directories(src/)
 
 add_subdirectory(include)
 add_subdirectory(src)
-
-if(BUILD_FAST)
-  add_definitions(-DSAFE_FAST)
-endif()
 
 if(BUILD_APPS)
   add_subdirectory(apps)

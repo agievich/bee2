@@ -1,7 +1,7 @@
 /*
 *******************************************************************************
 \file bash.h
-\brief STB 34.101.77 (bash): sponge-function based algorithms
+\brief STB 34.101.77 (bash): sponge-based algorithms
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.15

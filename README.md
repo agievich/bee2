@@ -22,31 +22,38 @@ Bee2 fully supports the following standards
    generation + one-time passwords.
 4. STB 34.101.60 (bels): secret sharing algorithms.
 5. STB 34.101.66 (bake): key establishment protocols over elliptic curves. 
-6. STB 34.101.77 (bash): hashing algorithms. 
+6. STB 34.101.77 (bash): sponge-based algorithms. 
 
 Additionally, Bee2 implements digital signature algorithms standardized in 
 Russia and Ukraine.
 
 Build
 -----
+```
+mkdir build
+cd build
+cmake [-DCMAKE_BUILD_TYPE={Release|Debug|Coverage|ASan|ASanDbg|MemSan|MemSanDbg|Check}]\
+      [-DBUILD_FAST=ON]\
+      [-DBASH_PLATFORM={BASH_32|BASH_64|BASH_AVX2|BASH_AVX512}]\
+      ..
+make
+[make test]
+[make install]
+```
 
-    mkdir build
-    cd build
-    cmake [-DCMAKE_BUILD_TYPE={Release|Debug|Coverage|ASan|ASanDbg|MemSan|MemSanDbg|Check}]\
-          [-DBUILD_FAST=ON] ..
-    make
-    [make test]
-    [make install]
-
-Build types (Release by default):
+Build types (`Release` by default):
    
-*  Coverage -- test coverage,
-*  ASan, ASanDbg -- [address sanitizer](http://en.wikipedia.org/wiki/AddressSanitizer),
-*  MemSan, MemSanDbg -- [memory sanitizer](http://code.google.com/p/memory-sanitizer/),
-*  Check -- strict compile rules.
+*  `Coverage` — test coverage,
+*  `ASan`, `ASanDbg` — [address sanitizer](http://en.wikipedia.org/wiki/AddressSanitizer),
+*  `MemSan`, `MemSanDbg` — [memory sanitizer](http://code.google.com/p/memory-sanitizer/),
+*  `Check` — strict compile rules.
 
-The BUILD_FAST option (OFF by default) switches from safe (constant-time) 
+The `BUILD_FAST` option (`OFF` by default) switches from safe (constant-time) 
 functions to fast (non-constant-time) ones.
+
+The `BASH_PLATFORM` option (`BASH_64` by default) requests to use a specific 
+implementation of the STB 34.101.77 algorithms optimized for a given hardware platform. 
+The request may be rejected if it conflicts with other options.
 
 License
 -------
