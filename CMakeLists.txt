@@ -4,7 +4,8 @@ project(BEE2 C)
 set(BEE2_VERSION_MAJOR "2")
 set(BEE2_VERSION_MINOR "0")
 set(BEE2_VERSION_PATCH "5")
-set(BEE2_VERSION "${BEE2_VERSION_MAJOR}.${BEE2_VERSION_MINOR}.${BEE2_VERSION_PATCH}")
+set(BEE2_VERSION 
+  "${BEE2_VERSION_MAJOR}.${BEE2_VERSION_MINOR}.${BEE2_VERSION_PATCH}")
 
 option(BUILD_SHARED_LIBS "Build shared libraries." ON)
 option(BUILD_FAST "Build with the SAFE_FAST directive." OFF)
@@ -20,11 +21,13 @@ string(REGEX MATCH "Clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER_ID}")
 
 if(CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE}
-      CACHE STRING "Choose the type of build: Release Debug Coverage ASan ASanDbg MemSan MemSanDbg Check"
+      CACHE STRING 
+      "Choose the type of build: Release Debug Coverage ASan ASanDbg MemSan MemSanDbg Check"
       FORCE)
 else()
   set(CMAKE_BUILD_TYPE Release
-      CACHE STRING "Choose the type of build: Release Debug Coverage ASan ASanDbg MemSan MemSanDbg Check"
+      CACHE STRING 
+      "Choose the type of build: Release Debug Coverage ASan ASanDbg MemSan MemSanDbg Check"
       FORCE)
 endif()
 
@@ -42,7 +45,7 @@ if (BASH_PLATFORM)
     set(BASH_AVX512 ON BOOL)
     add_definitions(-DBASH_AVX512)
   elseif(NOT ${BASH_PLATFORM} STREQUAL BASH_64)
-    message(WARNING "Unknown BASH_PLATFORM (${BASH_PLATFORM}). Ignore this option") 
+    message(WARNING "Unknown BASH_PLATFORM (${BASH_PLATFORM}). This option will be ignored") 
     unset(BASH_PLATFORM CACHE)
   endif()
 endif()
@@ -51,8 +54,11 @@ if (BASH_PLATFORM)
   message(STATUS "Requested BASH_PLATFORM: ${BASH_PLATFORM}")
 endif()
 
+set(CMAKE_C_WARNINGS
+  "-Wall -Wextra -W -Wdeclaration-after-statement -Wwrite-strings -Wlogical-op -Wno-parentheses -Wno-logical-op-parentheses -Wno-bitwise-op-parentheses -Wno-unused-parameter -Wno-strict-aliasing")
+
 if(${CMAKE_C_COMPILER_ID} STREQUAL GNU)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -W -Wdeclaration-after-statement -Wwrite-strings -Wlogical-op -Wno-parentheses -Wno-unused-parameter -Wno-strict-aliasing")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_WARNINGS}")
   if(BASH_AVX2)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mavx2")
   elseif(BASH_AVX512)
@@ -67,7 +73,7 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL GNU)
 endif(${CMAKE_C_COMPILER_ID} STREQUAL GNU)
 
 if(${CMAKE_C_COMPILER_ID} STREQUAL CLANG)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -W -Wdeclaration-after-statement -Wwrite-strings -Wpointer-arith -Wno-parentheses -Wno-unused-parameter -Wno-strict-aliasing")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_WARNINGS}")
   if(BASH_AVX2)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mavx2")
   elseif(BASH_AVX512)
