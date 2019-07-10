@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2018.11.30
+\version 2019.07.10
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -380,7 +380,7 @@ void beltCompr(
 	\deep{stack} beltCompr_deep().
 */
 void beltCompr2(
-	u32 s[8],			/*!< [in/out] сумма */
+	u32 s[4],			/*!< [in/out] сумма */
 	u32 h[8],			/*!< [in/out] первая часть входа/выход */
 	const u32 X[8],		/*!< [in] вторая часть входа */
 	void* stack			/*!< [in/out] стек */

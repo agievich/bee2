@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2019.06.13
+\version 2019.07.10
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -340,10 +340,9 @@ bool_t rngTestFIPS1(const octet buf[2500])
 	ASSERT(memIsValid(buf, 2500));
 	if (O_OF_W(count) > 2500)
 	{
-		word w;
+		ASSERT(B_PER_W == 64);
+		s = u32Weight(*(const u32*)(buf + 2496));
 		--count;
-		wwFrom(&w, buf + O_OF_W(count), 2500 - O_OF_W(count));
-		s = wordWeight(w);
 	}
 	while (count--)
 		s += wordWeight(((const word*)buf)[count]);

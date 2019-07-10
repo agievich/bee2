@@ -1,28 +1,34 @@
 /*
 *******************************************************************************
 \file bash_favx512.c
-\brief STB 34.101.77 (bash): bash-f optimized for AVX512F
+\brief STB 34.101.77 (bash): bash-f optimized for AVX512
+\remark AVX512 is interpreted here only as AVX512F
 \project bee2 [cryptographic library]
 \author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2019.04.03
-\version 2019.07.09
+\version 2019.07.10
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
+/*
+*******************************************************************************
+Архитектура AVX512 интерпретируется как AVX512F
+*******************************************************************************
+*/
+
 #if !defined(__AVX512F__)
-#error "The compiler does not support AVX512F intrinsics"
+	#error "The compiler does not support AVX512 intrinsics"
 #endif
 
 #if (OCTET_ORDER == BIG_ENDIAN)
-#error "AVX512F contradicts big-endianness"
+	#error "AVX512 contradicts big-endianness"
 #endif
 
 
 #include <immintrin.h>
-
 #include "bee2/core/mem.h"
 #include "bee2/core/u64.h"
 #include "bee2/core/util.h"
