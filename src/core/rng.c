@@ -19,6 +19,7 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/core/str.h"
 #include "bee2/core/tm.h"
 #include "bee2/core/rng.h"
+#include "bee2/core/u32.h"
 #include "bee2/core/util.h"
 #include "bee2/core/word.h"
 #include "bee2/crypto/belt.h"

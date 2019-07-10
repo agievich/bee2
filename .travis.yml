@@ -38,8 +38,8 @@ matrix:
     compiler: clang
     env: BUILD_TYPE="Check" BUILD_FAST="OFF" BASH_PLATFORM="BASH_64"
   - os: linux
-    compiler: gcc
     dist: trusty
+    compiler: clang
     env: BUILD_TYPE="Check" BUILD_FAST="ON" BASH_PLATFORM="BASH_AVX512"
     install:
     - export "SDE_VERSION_NAME=sde-external-8.16.0-2018-01-30-lin"
