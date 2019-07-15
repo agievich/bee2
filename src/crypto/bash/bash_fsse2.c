@@ -6,7 +6,7 @@
 \author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2019.07.12
-\version 2019.07.12
+\version 2019.07.15
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
