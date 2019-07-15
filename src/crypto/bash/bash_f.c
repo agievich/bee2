@@ -20,6 +20,9 @@ version 3. See Copyright Notices in bee2/info.h.
 #elif defined(__AVX2__) && defined(BASH_AVX2)
 	#include "bash_favx2.c"
 	const char bash_platform[] = "BASH_AVX2";
+#elif defined(__SSE2__) && defined(BASH_SSE2)
+	#include "bash_fsse2.c"
+	const char bash_platform[] = "BASH_SSE2";
 #elif !defined(U64_SUPPORT) || defined(BASH_32)
 	#include "bash_f32.c"
 	const char bash_platform[] = "BASH_32";
