@@ -118,8 +118,8 @@ static void u32x2RotHi(u32 t[2], const u32 w[2], size_t m)
 
 Схема расчета (ci -- стандартные константы, см. bash_f64.c):
 \code
-	ci_0 = (u32)u64Desuffle(ci);
-	ci_1 = (u32)(u64Desuffle(ci) >> 32);
+	ci_0 = (u32)u64Deshuffle(ci);
+	ci_1 = (u32)(u64Deshuffle(ci) >> 32);
 \endcode
 *******************************************************************************
 */
