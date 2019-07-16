@@ -36,7 +36,7 @@ matrix:
     env: BUILD_TYPE="MemSan" BUILD_FAST="ON" BASH_PLATFORM="BASH_AVX2" 
   - os: osx
     compiler: clang
-    env: BUILD_TYPE="Check" BUILD_FAST="OFF" BASH_PLATFORM="BASH_64"
+    env: BUILD_TYPE="Check" BUILD_FAST="OFF" BASH_PLATFORM="BASH_SSE2"
   - os: linux
     dist: xenial
     compiler: gcc

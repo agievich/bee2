@@ -5,9 +5,8 @@
 \remark AVX512 is interpreted here only as AVX512F
 \project bee2 [cryptographic library]
 \author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2019.04.03
-\version 2019.07.10
+\version 2019.07.16
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -95,8 +94,6 @@ https://www.felixcloutier.com/x86/vzeroall
 
 \remark Расширения AVX512 содержат инструкцию тернарной логики, которая
 позволяет упростить вычисление значений bash-s.
-
-\todo Оптимальные формулы?
 *******************************************************************************
 */
 

@@ -4,20 +4,19 @@
 \brief STB 34.101.77 (bash): bash-f optimized for SSE2
 \project bee2 [cryptographic library]
 \author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2019.07.12
-\version 2019.07.15
+\version 2019.07.16
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
 #ifndef __SSE2__
-#error "The compiler does not support SSE2 intrinsics"
+	#error "The compiler does not support SSE2 intrinsics"
 #endif
 
 #if (OCTET_ORDER == BIG_ENDIAN)
-#error "SSE2 contradicts big-endianness"
+	#error "SSE2 contradicts big-endianness"
 #endif
 
 #include <emmintrin.h>
@@ -47,13 +46,13 @@ STORE.
 #define STORE(s,w) _mm_store_si128((__m128i *)(s), (w))
 #define STOREU(s,w) _mm_storeu_si128((__m128i *)(s), (w))
 
-#if defined(_MSC_VER) && _MSC_VER<1900 /*&& !defined(_WIN64)*/
+#if defined(_MSC_VER) && _MSC_VER < 1900 /*&& !defined(_WIN64)*/
 static __inline __m128i _mm_set_epi64x(__int64 _I1, __int64 _I0)
 {
-  __m128i i;
-  i.m128i_i64[0] = _I0;
-  i.m128i_i64[1] = _I1;
-  return i;
+	__m128i i;
+	i.m128i_i64[0] = _I0;
+	i.m128i_i64[1] = _I1;
+	return i;
 }
 #endif
 #define S2(w0,w1) _mm_set_epi64x(w1,w0)
@@ -148,20 +147,20 @@ Cлова на входах тактов 2, 4, ... перемешаны отно
 *******************************************************************************
 */
 
-#define bashP10(W0,W1,W2) \
-  W0 = P2_10(W0);\
-  W1 = P2_10(W1);\
-  W2 = P2_10(W2)
+#define bashP10(W0,W1,W2)\
+	W0 = P2_10(W0);\
+	W1 = P2_10(W1);\
+	W2 = P2_10(W2)
 
 #define bashPP(W0,W1,W2,W3,W4,W5)\
-  T0 = W4;\
-  T1 = W5;\
-  W4 = P2_02(W0, W1);\
-  W5 = P2_13(W0, W1);\
-  W1 = P2_02(W2, W3);\
-  W0 = P2_13(W2, W3);\
-  W2 = T0;\
-  W3 = T1
+	T0 = W4;\
+	T1 = W5;\
+	W4 = P2_02(W0, W1);\
+	W5 = P2_13(W0, W1);\
+	W1 = P2_02(W2, W3);\
+	W0 = P2_13(W2, W3);\
+	W2 = T0;\
+	W3 = T1
 
 /* W0 [S0 ,S1 ] W1 [S2 ,S3 ] W2 [S4 ,S5 ] W3 [S6 ,S7 ]
    W4 [S8 ,S9 ] W5 [S10,S11] W6 [S12,S13] W7 [S14,S15]
@@ -170,10 +169,10 @@ Cлова на входах тактов 2, 4, ... перемешаны отно
    W4 [S16,S17] W5 [S19,S18] W6 [S21,S20] W7 [S22,S23]
    W8 [S3 ,S6 ] W9 [S0 ,S5 ] W10[S2 ,S7 ] W11[S1 ,S4 ] */
 #define bashP0\
-  bashP10(W1, W6, W10);\
-  bashPP(W1, W3, W4, W6, W8, W10);\
-  bashP10(W2, W5, W9);\
-  bashPP(W0, W2, W5, W7, W9, W11)
+	bashP10(W1, W6, W10);\
+	bashPP(W1, W3, W4, W6, W8, W10);\
+	bashP10(W2, W5, W9);\
+	bashPP(W0, W2, W5, W7, W9, W11)
 
 /* W0 [S0 ,S1 ] W1 [S2 ,S3 ] W2 [S4 ,S5 ] W3 [S6 ,S7 ]
    W4 [S8 ,S9 ] W5 [S10,S11] W6 [S12,S13] W7 [S14,S15]
@@ -182,10 +181,10 @@ Cлова на входах тактов 2, 4, ... перемешаны отно
    W4 [S16,S17] W5 [S19,S18] W6 [S21,S20] W7 [S22,S23]
    W8 [S7 ,S3 ] W9 [S1 ,S5 ] W10[S2 ,S6 ] W11[S4 ,S0 ] */
 #define bashP1\
-  bashPP(W3, W1, W6, W4, W10, W8);\
-  bashP10(W1, W6, W10);\
-  bashPP(W2, W0, W7, W5, W11, W9);\
-  bashP10(W2, W5, W9)
+	bashPP(W3, W1, W6, W4, W10, W8);\
+	bashP10(W1, W6, W10);\
+	bashPP(W2, W0, W7, W5, W11, W9);\
+	bashP10(W2, W5, W9)
 
 /*
 *******************************************************************************
@@ -326,36 +325,35 @@ R2_X_1(a,i) = R2_X_0(a,delta(i)).
 
 void bashF(octet block[192], void* stack)
 {
-  register u128 Z1, Z2, T0, T1, T2, U0, U1, U2;
-  register u128 W0, W1, W2, W3, W4, W5,
-    W6, W7, W8, W9, W10, W11;
+	register u128 Z1, Z2, T0, T1, T2, U0, U1, U2;
+	register u128 W0, W1, W2, W3, W4, W5, W6, W7, W8, W9, W10, W11;
 
-  ASSERT(memIsDisjoint2(block, 192, stack, bashF_deep()));
-  W0 = LOADU(block + 0);
-  W1 = LOADU(block + 16);
-  W2 = LOADU(block + 32);
-  W3 = LOADU(block + 48);
-  W4 = LOADU(block + 64);
-  W5 = LOADU(block + 80);
-  W6 = LOADU(block + 96);
-  W7 = LOADU(block + 112);
-  W8 = LOADU(block + 128);
-  W9 = LOADU(block + 144);
-  W10 = LOADU(block + 160);
-  W11 = LOADU(block + 176);
-  bashF0;
-  STOREU(block + 0, W0);
-  STOREU(block + 16, W1);
-  STOREU(block + 32, W2);
-  STOREU(block + 48, W3);
-  STOREU(block + 64, W4);
-  STOREU(block + 80, W5);
-  STOREU(block + 96, W6);
-  STOREU(block + 112, W7);
-  STOREU(block + 128, W8);
-  STOREU(block + 144, W9);
-  STOREU(block + 160, W10);
-  STOREU(block + 176, W11);
+	ASSERT(memIsDisjoint2(block, 192, stack, bashF_deep()));
+	W0 = LOADU(block + 0);
+	W1 = LOADU(block + 16);
+	W2 = LOADU(block + 32);
+	W3 = LOADU(block + 48);
+	W4 = LOADU(block + 64);
+	W5 = LOADU(block + 80);
+	W6 = LOADU(block + 96);
+	W7 = LOADU(block + 112);
+	W8 = LOADU(block + 128);
+	W9 = LOADU(block + 144);
+	W10 = LOADU(block + 160);
+	W11 = LOADU(block + 176);
+	bashF0;
+	STOREU(block + 0, W0);
+	STOREU(block + 16, W1);
+	STOREU(block + 32, W2);
+	STOREU(block + 48, W3);
+	STOREU(block + 64, W4);
+	STOREU(block + 80, W5);
+	STOREU(block + 96, W6);
+	STOREU(block + 112, W7);
+	STOREU(block + 128, W8);
+	STOREU(block + 144, W9);
+	STOREU(block + 160, W10);
+	STOREU(block + 176, W11);
 }
 
 size_t bashF_deep()
@@ -371,34 +369,33 @@ Bash-f на выровненной памяти
 
 void bashF2(octet block[192], void* stack)
 {
-  register u128 Z1, Z2, T0, T1, T2, U0, U1, U2;
-  register u128 W0, W1, W2, W3, W4, W5,
-    W6, W7, W8, W9, W10, W11;
+	register u128 Z1, Z2, T0, T1, T2, U0, U1, U2;
+	register u128 W0, W1, W2, W3, W4, W5, W6, W7, W8, W9, W10, W11;
 
-  ASSERT(memIsDisjoint2(block, 192, stack, bashF_deep()));
-  W0 = LOAD(block + 0);
-  W1 = LOAD(block + 16);
-  W2 = LOAD(block + 32);
-  W3 = LOAD(block + 48);
-  W4 = LOAD(block + 64);
-  W5 = LOAD(block + 80);
-  W6 = LOAD(block + 96);
-  W7 = LOAD(block + 112);
-  W8 = LOAD(block + 128);
-  W9 = LOAD(block + 144);
-  W10 = LOAD(block + 160);
-  W11 = LOAD(block + 176);
-  bashF0;
-  STORE(block + 0, W0);
-  STORE(block + 16, W1);
-  STORE(block + 32, W2);
-  STORE(block + 48, W3);
-  STORE(block + 64, W4);
-  STORE(block + 80, W5);
-  STORE(block + 96, W6);
-  STORE(block + 112, W7);
-  STORE(block + 128, W8);
-  STORE(block + 144, W9);
-  STORE(block + 160, W10);
-  STORE(block + 176, W11);
+	ASSERT(memIsDisjoint2(block, 192, stack, bashF_deep()));
+	W0 = LOAD(block + 0);
+	W1 = LOAD(block + 16);
+	W2 = LOAD(block + 32);
+	W3 = LOAD(block + 48);
+	W4 = LOAD(block + 64);
+	W5 = LOAD(block + 80);
+	W6 = LOAD(block + 96);
+	W7 = LOAD(block + 112);
+	W8 = LOAD(block + 128);
+	W9 = LOAD(block + 144);
+	W10 = LOAD(block + 160);
+	W11 = LOAD(block + 176);
+	bashF0;
+	STORE(block + 0, W0);
+	STORE(block + 16, W1);
+	STORE(block + 32, W2);
+	STORE(block + 48, W3);
+	STORE(block + 64, W4);
+	STORE(block + 80, W5);
+	STORE(block + 96, W6);
+	STORE(block + 112, W7);
+	STORE(block + 128, W8);
+	STORE(block + 144, W9);
+	STORE(block + 160, W10);
+	STORE(block + 176, W11);
 }

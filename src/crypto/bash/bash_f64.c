@@ -6,7 +6,7 @@
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2014.07.15
-\version 2019.07.09
+\version 2019.07.16
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -62,30 +62,30 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-static const u64 c1 =  0x3BF5080AC8BA94B1;
-static const u64 c2 =  0xC1D1659C1BBD92F6;
-static const u64 c3 =  0x60E8B2CE0DDEC97B;
-static const u64 c4 =  0xEC5FB8FE790FBC13;
-static const u64 c5 =  0xAA043DE6436706A7;
-static const u64 c6 =  0x8929FF6A5E535BFD;
-static const u64 c7 =  0x98BF1E2C50C97550;
-static const u64 c8 =  0x4C5F8F162864BAA8;
-static const u64 c9 =  0x262FC78B14325D54;
-static const u64 c10 = 0x1317E3C58A192EAA;
-static const u64 c11 = 0x098BF1E2C50C9755;
-static const u64 c12 = 0xD8EE19681D669304;
-static const u64 c13 = 0x6C770CB40EB34982;
-static const u64 c14 = 0x363B865A0759A4C1;
-static const u64 c15 = 0xC73622B47C4C0ACE;
-static const u64 c16 = 0x639B115A3E260567;
-static const u64 c17 = 0xEDE6693460F3DA1D;
-static const u64 c18 = 0xAAD8D5034F9935A0;
-static const u64 c19 = 0x556C6A81A7CC9AD0;
-static const u64 c20 = 0x2AB63540D3E64D68;
-static const u64 c21 = 0x155B1AA069F326B4;
-static const u64 c22 = 0x0AAD8D5034F9935A;
-static const u64 c23 = 0x0556C6A81A7CC9AD;
-static const u64 c24 = 0xDE8082CD72DEBC78;
+#define c1  0x3BF5080AC8BA94B1ull
+#define c2  0xC1D1659C1BBD92F6ull
+#define c3  0x60E8B2CE0DDEC97Bull
+#define c4  0xEC5FB8FE790FBC13ull
+#define c5  0xAA043DE6436706A7ull
+#define c6  0x8929FF6A5E535BFDull
+#define c7  0x98BF1E2C50C97550ull
+#define c8  0x4C5F8F162864BAA8ull
+#define c9  0x262FC78B14325D54ull
+#define c10 0x1317E3C58A192EAAull
+#define c11 0x098BF1E2C50C9755ull
+#define c12 0xD8EE19681D669304ull
+#define c13 0x6C770CB40EB34982ull
+#define c14 0x363B865A0759A4C1ull
+#define c15 0xC73622B47C4C0ACEull
+#define c16 0x639B115A3E260567ull
+#define c17 0xEDE6693460F3DA1Dull
+#define c18 0xAAD8D5034F9935A0ull
+#define c19 0x556C6A81A7CC9AD0ull
+#define c20 0x2AB63540D3E64D68ull
+#define c21 0x155B1AA069F326B4ull
+#define c22 0x0AAD8D5034F9935Aull
+#define c23 0x0556C6A81A7CC9ADull
+#define c24 0xDE8082CD72DEBC78ull
 
 /*
 *******************************************************************************
