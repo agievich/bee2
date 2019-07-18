@@ -28,8 +28,6 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/core/util.h"
 #include "bee2/crypto/bash.h"
 
-typedef __m128i u128;
-
 /*
 *******************************************************************************
 Сокращения для используемых intrinsic
@@ -325,8 +323,8 @@ R2_X_1(a,i) = R2_X_0(a,delta(i)).
 
 void bashF(octet block[192], void* stack)
 {
-	register u128 Z1, Z2, T0, T1, T2, U0, U1, U2;
-	register u128 W0, W1, W2, W3, W4, W5, W6, W7, W8, W9, W10, W11;
+	register __m128i Z1, Z2, T0, T1, T2, U0, U1, U2;
+	register __m128i W0, W1, W2, W3, W4, W5, W6, W7, W8, W9, W10, W11;
 
 	ASSERT(memIsDisjoint2(block, 192, stack, bashF_deep()));
 	W0 = LOADU(block + 0);
@@ -369,8 +367,8 @@ Bash-f на выровненной памяти
 
 void bashF2(octet block[192], void* stack)
 {
-	register u128 Z1, Z2, T0, T1, T2, U0, U1, U2;
-	register u128 W0, W1, W2, W3, W4, W5, W6, W7, W8, W9, W10, W11;
+	register __m128i Z1, Z2, T0, T1, T2, U0, U1, U2;
+	register __m128i W0, W1, W2, W3, W4, W5, W6, W7, W8, W9, W10, W11;
 
 	ASSERT(memIsDisjoint2(block, 192, stack, bashF_deep()));
 	W0 = LOAD(block + 0);

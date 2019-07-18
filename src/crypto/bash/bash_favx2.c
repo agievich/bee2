@@ -28,8 +28,6 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/core/util.h"
 #include "bee2/crypto/bash.h"
 
-typedef __m256i u256;
-
 /*
 *******************************************************************************
 Сокращения для используемых intrinsic
@@ -282,8 +280,8 @@ R2_X_1(a,i) = R2_X_0(a,delta(i)).
 
 void bashF(octet block[192], void* stack)
 {
-	register u256 Z1, Z2, T0, T1, T2, U0, U1, U2;
-	register u256 W0, W1, W2, W3, W4, W5;
+	register __m256i Z1, Z2, T0, T1, T2, U0, U1, U2;
+	register __m256i W0, W1, W2, W3, W4, W5;
 
 	ASSERT(memIsDisjoint2(block, 192, stack, bashF_deep()));
 	W0 = LOADU(block + 0);
@@ -315,8 +313,8 @@ Bash-f на выровненной памяти
 
 void bashF2(octet block[192])
 {
-	register u256 Z1, Z2, T0, T1, T2, U0, U1, U2;
-	register u256 W0, W1, W2, W3, W4, W5;
+	register __m256i Z1, Z2, T0, T1, T2, U0, U1, U2;
+	register __m256i W0, W1, W2, W3, W4, W5;
 
 	ASSERT(memIsValid(block, 192));
 	ASSERT(memIsAligned(block, 32));

@@ -33,8 +33,6 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/core/util.h"
 #include "bee2/crypto/bash.h"
 
-typedef __m512i u512;
-
 /*
 *******************************************************************************
 Сокращения для используемых intrinsic
@@ -231,8 +229,8 @@ https://www.felixcloutier.com/x86/vzeroall
 
 void bashF(octet block[192], void* stack)
 {
-	register u512 U0, U1, U2;
-	register u512 W0, W1, W2;
+	register __m512i U0, U1, U2;
+	register __m512i W0, W1, W2;
 
 	ASSERT(memIsDisjoint2(block, 192, stack, bashF_deep()));
 	W0 = LOADU(block + 0);
@@ -258,8 +256,8 @@ size_t bashF_deep()
 
 void bashF2(octet block[192])
 {
-	register u512 U0, U1, U2;
-	register u512 W0, W1, W2;
+	register __m512i U0, U1, U2;
+	register __m512i W0, W1, W2;
 		
 	ASSERT(memIsValid(block, 192));
 	ASSERT(memIsAligned(block, 64));
