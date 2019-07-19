@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.15
-\version 2019.07.09
+\version 2019.07.19
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -75,6 +75,21 @@ bashAENNNStep(), bashAENNNStop(), где NNN -- имя операции.
 
 \pre Если не оговорено противное, то входные буферы функций связки 
 не пересекаются.
+
+\remark При сборке библиотеки через опцию BASH_PLATFORM можно запросить
+использование реализации bashF(), оптимизированной для одной из 5 аппаратных 
+платформ: 
+- 64-разрядной (BASH_64), 
+- 32-разрядной (BASH_32), 
+- Intel SSE2 (BASH_SSE2),
+- Intel AVX2 (BASH_AVX2),
+- Intel AVX512 (BASH_AVX512).
+По умолчанию используется реализация для платформы BASH_64 либо, если 
+64-разрядные регистры не поддерживаются, BASH_32.
+
+\safe Реализация для платформ BASH_SSE2, BASH_AVX2, BASH_AVX512 могут 
+оставлять в стеке данные, которые не помещаются в расширенные регистры 
+соответствующих архитектур.
 
 \remark При описании Absorb / Squeeze мы используем вполне уместный жаргон:
 "загрузить в состояние", "выгрузить из состояния", "зашифровать на состоянии".
