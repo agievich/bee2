@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.06.20
-\version 2019.05.29
+\version 2020.03.20
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -144,7 +144,8 @@ bool_t beltTest()
 	ASSERT(sizeof(state) >= beltCTR_keep());
 	ASSERT(sizeof(state) >= beltMAC_keep());
 	ASSERT(sizeof(state) >= beltDWP_keep());
-	ASSERT(sizeof(state) >= beltKWP_keep());
+    ASSERT(sizeof(state) >= beltCHE_keep());
+    ASSERT(sizeof(state) >= beltKWP_keep());
 	ASSERT(sizeof(state) >= beltHash_keep());
 	ASSERT(sizeof(state) >= beltBDE_keep());
 	ASSERT(sizeof(state) >= beltFMT_keep(65536, 17));
@@ -447,7 +448,24 @@ bool_t beltTest()
 		beltH() + 128, 32, beltH() + 192);
 	if (!memEq(buf, buf1, 16) || !memEq(mac, mac1, 8))
 		return FALSE;
-	// belt-dwp: тест A.26
+    // belt-che: тест A.25
+    beltCHEStart(state, beltH() + 128, 32, beltH() + 192);
+    memCopy(buf, beltH(), 16);
+    beltCHEStepE(buf, 16, state);
+    beltCHEStepI(beltH() + 16, 32, state);
+    beltCHEStepA(buf, 16, state);
+    beltCHEStepG(mac, state);
+    if (!hexEq(buf,
+        "52C9AF96FF50F64435FC43DEF56BD797"))
+        return FALSE;
+    if (!hexEq(mac,
+        "3B2E0AEB2B91854B"))
+        return FALSE;
+    beltCHEWrap(buf1, mac1, beltH(), 16, beltH() + 16, 32,
+        beltH() + 128, 32, beltH() + 192);
+    if (!memEq(buf, buf1, 16) || !memEq(mac, mac1, 8))
+        return FALSE;
+    // belt-dwp: тест A.26
 	beltDWPStart(state, beltH() + 128 + 32, 32, beltH() + 192 + 16);
 	memCopy(buf, beltH() + 64, 16);
 	beltDWPStepI(beltH() + 64 + 16, 32, state);
@@ -464,7 +482,24 @@ bool_t beltTest()
 		mac, beltH() + 128 + 32, 32, beltH() + 192 + 16) != ERR_OK ||
 		!memEq(buf, buf1, 16))
 		return FALSE;
-	// belt-kwp: тест A.27
+    // belt-che: тест A.26
+    beltCHEStart(state, beltH() + 128 + 32, 32, beltH() + 192 + 16);
+    memCopy(buf, beltH() + 64, 16);
+    beltCHEStepI(beltH() + 64 + 16, 32, state);
+    beltCHEStepA(buf, 16, state);
+    beltCHEStepD(buf, 16, state);
+    beltCHEStepG(mac, state);
+    if (!hexEq(buf,
+        "DF181ED008A20F43DCBBB93650DAD34B"))
+        return FALSE;
+    if (!hexEq(mac,
+        "6A2C2C94C4150DC0"))
+        return FALSE;
+    if (beltCHEUnwrap(buf1, beltH() + 64, 16, beltH() + 64 + 16, 32,
+        mac, beltH() + 128 + 32, 32, beltH() + 192 + 16) != ERR_OK ||
+        !memEq(buf, buf1, 16))
+        return FALSE;
+    // belt-kwp: тест A.27
 	beltKWPStart(state, beltH() + 128, 32);
 	memCopy(buf, beltH(), 32);
 	memCopy(buf + 32, beltH() + 32, 16);

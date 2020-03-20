@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.11.02
-\version 2019.07.08
+\version 2019.08.30
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -541,12 +541,13 @@ void botpOCRAStepR(char* otp, const octet q[], size_t q_len, tm_time_t t,
 	ASSERT(memIsDisjoint2(otp, s->digit + 1, state, botpOCRA_keep()) || 
 		otp == s->otp);
 	ASSERT(4 <= q_len && q_len <= 2 * s->q_max);
-	ASSERT(memIsValid(q, q_len));
+	ASSERT(memIsDisjoint2(q, q_len, state, botpOCRA_keep() || q == s->q));
 	ASSERT(t != TIME_ERR);
 	// вычислить имитовставку
 	memCopy(s->stack, s->stack + beltHMAC_keep(), beltHMAC_keep());
 	if (s->ctr_len)
 		beltHMACStepA(s->ctr, 8, s->stack), botpCtrNext(s->ctr);
+    memMove(s->q, q, q_len);
 	memSetZero(s->q + q_len, 128 - q_len);
 	beltHMACStepA(s->q, 128, s->stack);
 	if (s->p_len)

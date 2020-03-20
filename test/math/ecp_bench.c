@@ -1,4 +1,4 @@
-﻿/*
+/*
 *******************************************************************************
 \file ecp_bench.c
 \brief Benchmarks for elliptic curves over prime fields

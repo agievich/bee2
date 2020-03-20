@@ -1,4 +1,4 @@
-﻿/*
+/*
 *******************************************************************************
 \file brng.c
 \brief STB 34.101.47 (brng): algorithms of pseudorandom number generation

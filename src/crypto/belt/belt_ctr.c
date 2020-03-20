@@ -115,4 +115,3 @@ err_t beltCTR(void* dest, const void* src, size_t count,
 	blobClose(state);
 	return ERR_OK;
 }
-

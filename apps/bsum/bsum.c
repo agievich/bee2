@@ -1,4 +1,4 @@
-﻿/*
+/*
 *******************************************************************************
 \file bsum.c
 \brief A file hashing utility based on the belt-hash and bash algorithms

@@ -1,10 +1,10 @@
 /*
 *******************************************************************************
-\file belt_dwp.c
-\brief STB 34.101.31 (belt): DWP (datawrap = data encryption + authentication)
+\file belt_che.c
+\brief STB 34.101.31 (belt): CHE (Ctr-Hash-Encrypt) authenticated encryption
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
-\created 2012.12.18
+\created 2020.03.20
 \version 2020.03.20
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
@@ -21,56 +21,99 @@ version 3. See Copyright Notices in bee2/info.h.
 
 /*
 *******************************************************************************
-Шифрование и имитозащита данных (DWP)
+Аутентифицированное шифрование данных (CHE)
 *******************************************************************************
 */
 
 typedef struct
 {
-	belt_ctr_st ctr[1];		/*< состояние функций CTR */
-	word r[W_OF_B(128)];	/*< переменная r */
-	word t[W_OF_B(128)];	/*< переменная t */
-	word len[W_OF_B(128)];	/*< обработано открытых || критических данных */
-	octet block[16];		/*< блок данных */
+    u32 key[8];			    /*< форматированный ключ */
+    word s[W_OF_B(128)];	/*< переменная s */
+    word t[W_OF_B(128)];	/*< переменная t */
+    word len[W_OF_B(128)];	/*< обработано открытых || критических данных */
+    u32 ctr[4];	            /*< счетчик */
+    octet block[16];	    /*< блок данных/гаммы */
+    size_t reserved;	    /*< резерв октетов гаммы */
 	size_t filled;			/*< накоплено октетов в блоке */
 	octet mac[8];			/*< имитовставка для StepV */
 	octet stack[];			/*< стек умножения */
-} belt_dwp_st;
+} belt_che_st;
 
-size_t beltDWP_keep()
+size_t beltCHE_keep()
 {
-	return sizeof(belt_dwp_st) + beltPolyMul_deep();
+	return sizeof(belt_che_st) + beltPolyMul_deep();
 }
 
-void beltDWPStart(void* state, const octet key[], size_t len, 
+void beltCHEStart(void* state, const octet key[], size_t len, 
 	const octet iv[16])
 {
-	belt_dwp_st* s = (belt_dwp_st*)state;
-	ASSERT(memIsDisjoint2(iv, 16, state, beltDWP_keep()));
-	// настроить CTR
-	beltCTRStart(s->ctr, key, len, iv);
-	// установить r, s
-	beltBlockCopy(s->r, s->ctr->ctr);
-	beltBlockEncr2((u32*)s->r, s->ctr->key);
-#if (OCTET_ORDER == BIG_ENDIAN && B_PER_W != 32)
-	beltBlockRevU32(s->r);
-	beltBlockRevW(s->r);
+	belt_che_st* s = (belt_che_st*)state;
+	ASSERT(memIsDisjoint2(iv, 16, state, beltCHE_keep()));
+    // разобрать key и iv
+    beltKeyExpand2(s->key, key, len);
+    beltBlockCopy(s->s, iv);
+    beltBlockEncr((octet*)s->s, s->key);
+    u32From(s->ctr, s->s, 16);
+#if (OCTET_ORDER == BIG_ENDIAN)
+    beltBlockRevW(s->s);
 #endif
-	wwFrom(s->t, beltH(), 16);
-	// обнулить счетчики
-	memSetZero(s->len, sizeof(s->len));
-	s->filled = 0;
+    // подготовить t
+    wwFrom(s->t, beltH(), 16);
+    // обнулить счетчики
+    memSetZero(s->len, sizeof(s->len));
+    s->reserved = 0;
+    s->filled = 0;
 }
 
-void beltDWPStepE(void* buf, size_t count, void* state)
+void beltCHEStepE(void* buf, size_t count, void* state)
 {
-	beltCTRStepE(buf, count, state);
+    belt_che_st* s = (belt_che_st*)state;
+    ASSERT(memIsDisjoint2(buf, count, state, beltCHE_keep()));
+    // есть резерв гаммы?
+    if (s->reserved)
+    {
+        if (s->reserved >= count)
+        {
+            memXor2(buf, s->block + 16 - s->reserved, count);
+            s->reserved -= count;
+            return;
+        }
+        memXor2(buf, s->block + 16 - s->reserved, s->reserved);
+        count -= s->reserved;
+        buf = (octet*)buf + s->reserved;
+        s->reserved = 0;
+    }
+    // цикл по полным блокам
+    while (count >= 16)
+    {
+        beltBlockMulC(s->ctr), s->ctr[0] ^= 0x00000001;
+        beltBlockCopy(s->block, s->ctr);
+        beltBlockEncr2((u32*)s->block, s->key);
+#if (OCTET_ORDER == BIG_ENDIAN)
+        beltBlockRevU32(s->block);
+#endif
+        beltBlockXor2(buf, s->block);
+        buf = (octet*)buf + 16;
+        count -= 16;
+    }
+    // неполный блок?
+    if (count)
+    {
+        beltBlockMulC(s->ctr), s->ctr[0] ^= 0x00000001;
+        beltBlockCopy(s->block, s->ctr);
+        beltBlockEncr2((u32*)s->block, s->key);
+#if (OCTET_ORDER == BIG_ENDIAN)
+        beltBlockRevU32(s->block);
+#endif
+        memXor2(buf, s->block, count);
+        s->reserved = 16 - count;
+    }
 }
 
-void beltDWPStepI(const void* buf, size_t count, void* state)
+void beltCHEStepI(const void* buf, size_t count, void* state)
 {
-	belt_dwp_st* s = (belt_dwp_st*)state;
-	ASSERT(memIsDisjoint2(buf, count, state, beltDWP_keep()));
+	belt_che_st* s = (belt_che_st*)state;
+	ASSERT(memIsDisjoint2(buf, count, state, beltCHE_keep()));
 	// критические данные не обрабатывались?
 	ASSERT(count == 0 || beltHalfBlockIsZero(s->len + W_OF_B(64)));
 	// обновить длину
@@ -91,7 +134,7 @@ void beltDWPStepI(const void* buf, size_t count, void* state)
 		beltBlockRevW(s->block);
 #endif
 		beltBlockXor2(s->t, s->block);
-		beltPolyMul(s->t, s->t, s->r, s->stack);
+		beltPolyMul(s->t, s->t, s->s, s->stack);
 		s->filled = 0;
 	}
 	// цикл по полным блокам
@@ -102,7 +145,7 @@ void beltDWPStepI(const void* buf, size_t count, void* state)
 		beltBlockRevW(s->block);
 #endif
 		beltBlockXor2(s->t, s->block);
-		beltPolyMul(s->t, s->t, s->r, s->stack);
+		beltPolyMul(s->t, s->t, s->s, s->stack);
 		buf = (const octet*)buf + 16;
 		count -= 16;
 	}
@@ -111,10 +154,10 @@ void beltDWPStepI(const void* buf, size_t count, void* state)
 		memCopy(s->block, buf, s->filled = count);
 }
 
-void beltDWPStepA(const void* buf, size_t count, void* state)
+void beltCHEStepA(const void* buf, size_t count, void* state)
 {
-	belt_dwp_st* s = (belt_dwp_st*)state;
-	ASSERT(memIsDisjoint2(buf, count, state, beltDWP_keep()));
+	belt_che_st* s = (belt_che_st*)state;
+	ASSERT(memIsDisjoint2(buf, count, state, beltCHE_keep()));
 	// первый непустой фрагмент критических данных?
 	// есть необработанные открытые данные?
 	if (count && beltHalfBlockIsZero(s->len + W_OF_B(64)) && s->filled)
@@ -124,7 +167,7 @@ void beltDWPStepA(const void* buf, size_t count, void* state)
 		beltBlockRevW(s->block);
 #endif
 		beltBlockXor2(s->t, s->block);
-		beltPolyMul(s->t, s->t, s->r, s->stack);
+		beltPolyMul(s->t, s->t, s->s, s->stack);
 		s->filled = 0;
 	}
 	// обновить длину
@@ -145,7 +188,7 @@ void beltDWPStepA(const void* buf, size_t count, void* state)
 		beltBlockRevW(s->block);
 #endif
 		beltBlockXor2(s->t, s->block);
-		beltPolyMul(s->t, s->t, s->r, s->stack);
+		beltPolyMul(s->t, s->t, s->s, s->stack);
 		s->filled = 0;
 	}
 	// цикл по полным блокам
@@ -156,7 +199,7 @@ void beltDWPStepA(const void* buf, size_t count, void* state)
 		beltBlockRevW(s->block);
 #endif
 		beltBlockXor2(s->t, s->block);
-		beltPolyMul(s->t, s->t, s->r, s->stack);
+		beltPolyMul(s->t, s->t, s->s, s->stack);
 		buf = (const octet*)buf + 16;
 		count -= 16;
 	}
@@ -165,15 +208,15 @@ void beltDWPStepA(const void* buf, size_t count, void* state)
 		memCopy(s->block, buf, s->filled = count);
 }
 
-void beltDWPStepD(void* buf, size_t count, void* state)
+void beltCHEStepD(void* buf, size_t count, void* state)
 {
 	beltCTRStepD(buf, count, state);
 }
 
-static void beltDWPStepG_internal(void* state)
+static void beltCHEStepG_internal(void* state)
 {
-	belt_dwp_st* s = (belt_dwp_st*)state;
-	ASSERT(memIsValid(state, beltDWP_keep()));
+	belt_che_st* s = (belt_che_st*)state;
+	ASSERT(memIsValid(state, beltCHE_keep()));
 	// есть накопленные данные?
 	if (s->filled)
 	{
@@ -182,40 +225,40 @@ static void beltDWPStepG_internal(void* state)
 		beltBlockRevW(s->block);
 #endif
 		beltBlockXor2(s->t, s->block);
-		beltPolyMul(s->t, s->t, s->r, s->stack);
+		beltPolyMul(s->t, s->t, s->s, s->stack);
 		s->filled = 0;
 	}
 	// обработать блок длины
 	beltBlockXor2(s->t, s->len);
-	beltPolyMul(s->t, s->t, s->r, s->stack);
+	beltPolyMul(s->t, s->t, s->s, s->stack);
 #if (OCTET_ORDER == BIG_ENDIAN && B_PER_W != 32)
-	beltBlockRevW(s->s);
-	beltBlockRevU32(s->s);
+	beltBlockRevW(s->t);
+	beltBlockRevU32(s->t);
 #endif
-	beltBlockEncr2((u32*)s->t, s->ctr->key);
+	beltBlockEncr2((u32*)s->t, s->key);
 }
 
-void beltDWPStepG(octet mac[8], void* state)
+void beltCHEStepG(octet mac[8], void* state)
 {
-	belt_dwp_st* s = (belt_dwp_st*)state;
+	belt_che_st* s = (belt_che_st*)state;
 	ASSERT(memIsValid(mac, 8));
-	beltDWPStepG_internal(state);
+	beltCHEStepG_internal(state);
 	u32To(mac, 8, (u32*)s->t);
 }
 
-bool_t beltDWPStepV(const octet mac[8], void* state)
+bool_t beltCHEStepV(const octet mac[8], void* state)
 {
-	belt_dwp_st* s = (belt_dwp_st*)state;
+	belt_che_st* s = (belt_che_st*)state;
 	ASSERT(memIsValid(mac, 8));
-	beltDWPStepG_internal(state);
+	beltCHEStepG_internal(state);
 #if (OCTET_ORDER == BIG_ENDIAN)
 	s->t[0] = u32Rev(s->t[0]);
 	s->t[1] = u32Rev(s->t[1]);
 #endif
-	return memEq(mac, s->t, 8);
+	return memEq(mac, s->s, 8);
 }
 
-err_t beltDWPWrap(void* dest, octet mac[8], const void* src1, size_t count1,
+err_t beltCHEWrap(void* dest, octet mac[8], const void* src1, size_t count1,
 	const void* src2, size_t count2, const octet key[], size_t len,
 	const octet iv[16])
 {
@@ -230,22 +273,22 @@ err_t beltDWPWrap(void* dest, octet mac[8], const void* src1, size_t count1,
 		!memIsValid(mac, 8))
 		return ERR_BAD_INPUT;
 	// создать состояние
-	state = blobCreate(beltDWP_keep());
+	state = blobCreate(beltCHE_keep());
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// установить защиту (I перед E из-за разрешенного пересечения src2 и dest)
-	beltDWPStart(state, key, len, iv);
-	beltDWPStepI(src2, count2, state);
+	beltCHEStart(state, key, len, iv);
+	beltCHEStepI(src2, count2, state);
 	memMove(dest, src1, count1);
-	beltDWPStepE(dest, count1, state);
-	beltDWPStepA(dest, count1, state);
-	beltDWPStepG(mac, state);
+	beltCHEStepE(dest, count1, state);
+	beltCHEStepA(dest, count1, state);
+	beltCHEStepG(mac, state);
 	// завершить
 	blobClose(state);
 	return ERR_OK;
 }
 
-err_t beltDWPUnwrap(void* dest, const void* src1, size_t count1,
+err_t beltCHEUnwrap(void* dest, const void* src1, size_t count1,
 	const void* src2, size_t count2, const octet mac[8], const octet key[],
 	size_t len, const octet iv[16])
 {
@@ -264,16 +307,16 @@ err_t beltDWPUnwrap(void* dest, const void* src1, size_t count1,
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// снять защиту
-	beltDWPStart(state, key, len, iv);
-	beltDWPStepI(src2, count2, state);
-	beltDWPStepA(src1, count1, state);
-	if (!beltDWPStepV(mac, state))
+	beltCHEStart(state, key, len, iv);
+	beltCHEStepI(src2, count2, state);
+	beltCHEStepA(src1, count1, state);
+	if (!beltCHEStepV(mac, state))
 	{
 		blobClose(state);
 		return ERR_BAD_MAC;
 	}
 	memMove(dest, src1, count1);
-	beltDWPStepD(dest, count1, state);
+	beltCHEStepD(dest, count1, state);
 	// завершить
 	blobClose(state);
 	return ERR_OK;
