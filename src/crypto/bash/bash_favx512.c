@@ -119,14 +119,14 @@ https://www.felixcloutier.com/x86/vzeroall
 #define N2R MR8(1)
 
 #define bashS(W0,W1,W2, U0,U1,U2)\
-    U0 = XX8(W0, W1, W2);\
-    U2 = XX8(W1, SL8(N1L,U0), SR8(N1R,U0));\
-    U1 = XX8(U2, SL8(M1L,W0), SR8(M1R,W0));\
-    U2 = XX8(W2, SL8(N2L,U2), SR8(N2R,U2));\
-    U2 = XX8(U2, SL8(M2L,W2), SR8(M2R,W2));\
-    W1 = XO8(U1, U0, U2);\
-    W2 = XA8(U2, U0, U1);\
-    W0 = XNO8(U0, U2, U1)
+	U0 = XX8(W0, W1, W2);\
+	U2 = XX8(W1, SL8(N1L,U0), SR8(N1R,U0));\
+	U1 = XX8(U2, SL8(M1L,W0), SR8(M1R,W0));\
+	U2 = XX8(W2, SL8(N2L,U2), SR8(N2R,U2));\
+	U2 = XX8(U2, SL8(M2L,W2), SR8(M2R,W2));\
+	W1 = XO8(U1, U0, U2);\
+	W2 = XA8(U2, U0, U1);\
+	W0 = XNO8(U0, U2, U1)
 
 /*
 *******************************************************************************
@@ -139,9 +139,9 @@ https://www.felixcloutier.com/x86/vzeroall
 #define PI2 S8(1, 0, 3, 2, 5, 4, 7, 6)
 
 #define bashP(W0,W1,W2)\
-    W0 = P8(PI0, W0);\
-    W1 = P8(PI1, W1);\
-    W2 = P8(PI2, W2)
+	W0 = P8(PI0, W0);\
+	W1 = P8(PI1, W1);\
+	W2 = P8(PI2, W2)
 
 /*
 *******************************************************************************
@@ -202,30 +202,30 @@ https://www.felixcloutier.com/x86/vzeroall
 */
 
 #define bashF0\
-    bashR0(1);\
-    bashR1(2);\
-    bashR2(3);\
-    bashR0(4);\
-    bashR1(5);\
-    bashR2(6);\
-    bashR0(7);\
-    bashR1(8);\
-    bashR2(9);\
-    bashR0(10);\
-    bashR1(11);\
-    bashR2(12);\
-    bashR0(13);\
-    bashR1(14);\
-    bashR2(15);\
-    bashR0(16);\
-    bashR1(17);\
-    bashR2(18);\
-    bashR0(19);\
-    bashR1(20);\
-    bashR2(21);\
-    bashR0(22);\
-    bashR1(23);\
-    bashR2(24)
+	bashR0(1);\
+	bashR1(2);\
+	bashR2(3);\
+	bashR0(4);\
+	bashR1(5);\
+	bashR2(6);\
+	bashR0(7);\
+	bashR1(8);\
+	bashR2(9);\
+	bashR0(10);\
+	bashR1(11);\
+	bashR2(12);\
+	bashR0(13);\
+	bashR1(14);\
+	bashR2(15);\
+	bashR0(16);\
+	bashR1(17);\
+	bashR2(18);\
+	bashR0(19);\
+	bashR1(20);\
+	bashR2(21);\
+	bashR0(22);\
+	bashR1(23);\
+	bashR2(24)
 
 void bashF(octet block[192], void* stack)
 {

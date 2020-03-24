@@ -1,4 +1,4 @@
-﻿/*
+/*
 *******************************************************************************
 \file bels_test.c
 \brief Tests for STB 34.101.60 (bels)
@@ -44,13 +44,13 @@ bool_t belsTest()
 	ASSERT(sizeof(combo_state) >= prngCOMBO_keep());
 	// проверить таблицы A.1 -- A.4
 	for (len = 16; len <= 32; len += 8)
-        for (num = 0; num <= 16; ++num)
-        {
-            if (belsStdM(mi, len, num) != ERR_OK)
-                return FALSE;
-            if (belsValM(mi, len) != ERR_OK)
-                return FALSE;
-        }
+		for (num = 0; num <= 16; ++num)
+		{
+			if (belsStdM(mi, len, num) != ERR_OK)
+				return FALSE;
+			if (belsValM(mi, len) != ERR_OK)
+				return FALSE;
+		}
 	// сгенерировать общие ключи
 	prngCOMBOStart(combo_state, utilNonce32());
 	if (belsGenM0(m0, 16, prngCOMBOStepR, combo_state) != ERR_OK ||

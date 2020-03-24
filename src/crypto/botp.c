@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.11.02
-\version 2019.07.08
+\version 2020.03.24
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -128,58 +128,58 @@ size_t botpHOTP_keep()
 void botpHOTPStart(void* state, size_t digit, const octet key[], 
 	size_t key_len)
 {
-	botp_hotp_st* s = (botp_hotp_st*)state;
+	botp_hotp_st* st = (botp_hotp_st*)state;
 	ASSERT(6 <= digit && digit <= 8);
-	ASSERT(memIsDisjoint2(key, key_len, s, botpHOTP_keep()));
-	s->digit = digit;
-	beltHMACStart(s->stack + beltHMAC_keep(), key, key_len);
+	ASSERT(memIsDisjoint2(key, key_len, state, botpHOTP_keep()));
+	st->digit = digit;
+	beltHMACStart(st->stack + beltHMAC_keep(), key, key_len);
 }
 
 void botpHOTPStepS(void* state, const octet ctr[8])
 {
-	botp_hotp_st* s = (botp_hotp_st*)state;
-	ASSERT(memIsDisjoint2(ctr, 8, s, botpHOTP_keep()) || ctr == s->ctr);
-	memMove(s->ctr, ctr, 8);
+	botp_hotp_st* st = (botp_hotp_st*)state;
+	ASSERT(memIsDisjoint2(ctr, 8, state, botpHOTP_keep()) || ctr == st->ctr);
+	memMove(st->ctr, ctr, 8);
 }
 
 void botpHOTPStepR(char* otp, void* state)
 {
-	botp_hotp_st* s = (botp_hotp_st*)state;
+	botp_hotp_st* st = (botp_hotp_st*)state;
 	// pre
-	ASSERT(memIsDisjoint2(otp, s->digit + 1, state, botpHOTP_keep()) || 
-		otp == s->otp);
+	ASSERT(memIsDisjoint2(otp, st->digit + 1, state, botpHOTP_keep()) || 
+		otp == st->otp);
 	// вычислить имитовставку
-	memCopy(s->stack, s->stack + beltHMAC_keep(), beltHMAC_keep());
-	beltHMACStepA(s->ctr, 8, s->stack);
-	beltHMACStepG(s->mac, s->stack);
+	memCopy(st->stack, st->stack + beltHMAC_keep(), beltHMAC_keep());
+	beltHMACStepA(st->ctr, 8, st->stack);
+	beltHMACStepG(st->mac, st->stack);
 	// построить пароль
-	botpDT(otp, s->digit, s->mac, 32);
+	botpDT(otp, st->digit, st->mac, 32);
 	// инкремент счетчика
-	botpCtrNext(s->ctr);
+	botpCtrNext(st->ctr);
 }
 
 bool_t botpHOTPStepV(const char* otp, void* state)
 {
-	botp_hotp_st* s = (botp_hotp_st*)state;
+	botp_hotp_st* st = (botp_hotp_st*)state;
 	// pre
 	ASSERT(strIsValid(otp));
 	ASSERT(memIsDisjoint2(otp, strLen(otp) + 1, state, botpHOTP_keep()));
 	// сохранить счетчик
-	memCopy(s->ctr1, s->ctr, 8);
+	memCopy(st->ctr1, st->ctr, 8);
 	// проверить пароль
-	botpHOTPStepR(s->otp, state);
-	if (strEq(s->otp, otp))
+	botpHOTPStepR(st->otp, state);
+	if (strEq(st->otp, otp))
 		return TRUE;
 	// вернуться к первоначальному счетчику
-	memCopy(s->ctr, s->ctr1, 8);
+	memCopy(st->ctr, st->ctr1, 8);
 	return FALSE;
 }
 
 void botpHOTPStepG(octet ctr[8], const void* state)
 {
-	const botp_hotp_st* s = (const botp_hotp_st*)state;
-	ASSERT(memIsDisjoint2(ctr, 8, state, botpHOTP_keep()) || ctr == s->ctr);
-	memMove(ctr, s->ctr, 8);
+	const botp_hotp_st* st = (const botp_hotp_st*)state;
+	ASSERT(memIsDisjoint2(ctr, 8, state, botpHOTP_keep()) || ctr == st->ctr);
+	memMove(ctr, st->ctr, 8);
 }
 
 err_t botpHOTPRand(char* otp, size_t digit, const octet key[], size_t key_len, 
@@ -252,39 +252,39 @@ size_t botpTOTP_keep()
 void botpTOTPStart(void* state, size_t digit, const octet key[], 
 	size_t key_len)
 {
-	botp_totp_st* s = (botp_totp_st*)state;
+	botp_totp_st* st = (botp_totp_st*)state;
 	ASSERT(6 <= digit && digit <= 8);
-	ASSERT(memIsDisjoint2(key, key_len, s, botpTOTP_keep()));
-	s->digit = digit;
-	beltHMACStart(s->stack + beltHMAC_keep(), key, key_len);
+	ASSERT(memIsDisjoint2(key, key_len, state, botpTOTP_keep()));
+	st->digit = digit;
+	beltHMACStart(st->stack + beltHMAC_keep(), key, key_len);
 }
 
 void botpTOTPStepR(char* otp, tm_time_t t, void* state)
 {
-	botp_totp_st* s = (botp_totp_st*)state;
+	botp_totp_st* st = (botp_totp_st*)state;
 	// pre
 	ASSERT(t != TIME_ERR);
-	ASSERT(memIsDisjoint2(otp, s->digit + 1, state, botpHOTP_keep()) || 
-		otp == s->otp);
+	ASSERT(memIsDisjoint2(otp, st->digit + 1, state, botpHOTP_keep()) || 
+		otp == st->otp);
 	// вычислить имитовставку
-	memCopy(s->stack, s->stack + beltHMAC_keep(), beltHMAC_keep());
-	botpTimeToCtr(s->t, t);
-	beltHMACStepA(s->t, 8, s->stack);
-	beltHMACStepG(s->mac, s->stack);
+	memCopy(st->stack, st->stack + beltHMAC_keep(), beltHMAC_keep());
+	botpTimeToCtr(st->t, t);
+	beltHMACStepA(st->t, 8, st->stack);
+	beltHMACStepG(st->mac, st->stack);
 	// построить пароль
-	botpDT(otp, s->digit, s->mac, 32);
+	botpDT(otp, st->digit, st->mac, 32);
 }
 
 bool_t botpTOTPStepV(const char* otp, tm_time_t t, void* state)
 {
-	botp_totp_st* s = (botp_totp_st*)state;
+	botp_totp_st* st = (botp_totp_st*)state;
 	// pre
 	ASSERT(strIsValid(otp));
 	ASSERT(t != TIME_ERR);
 	ASSERT(memIsDisjoint2(otp, strLen(otp) + 1, state, botpTOTP_keep()));
 	// вычислить и проверить пароль
-	botpTOTPStepR(s->otp, t, state);
-	return strEq(s->otp, otp);
+	botpTOTPStepR(st->otp, t, state);
+	return strEq(st->otp, otp);
 }
 
 err_t botpTOTPRand(char* otp, size_t digit, const octet key[], size_t key_len, 
@@ -375,14 +375,14 @@ static const char ocra_sha512[] = "SHA512";
 bool_t botpOCRAStart(void* state, const char* suite, const octet key[], 
 	size_t key_len)
 {
-	botp_ocra_st* s = (botp_ocra_st*)state;
+	botp_ocra_st* st = (botp_ocra_st*)state;
 	const char* suite_save = suite;
 	// pre
 	ASSERT(strIsValid(suite));
-	ASSERT(memIsDisjoint2(suite, strLen(suite) + 1, s, botpOCRA_keep()));
-	ASSERT(memIsDisjoint2(key, key_len, s, botpOCRA_keep()));
+	ASSERT(memIsDisjoint2(suite, strLen(suite) + 1, state, botpOCRA_keep()));
+	ASSERT(memIsDisjoint2(key, key_len, state, botpOCRA_keep()));
 	// подготовить state
-	memSetZero(s, botpOCRA_keep());
+	memSetZero(st, botpOCRA_keep());
 	// разбор suite: префикс
 	if (!strStartsWith(suite, ocra_prefix))
 		return FALSE;
@@ -395,7 +395,7 @@ bool_t botpOCRAStart(void* state, const char* suite, const octet key[],
 	// разбор suite: digit
 	if (*suite < '4' || *suite > '9')
 		return FALSE;
-	s->digit = (size_t)(*suite++ - '0');
+	st->digit = (size_t)(*suite++ - '0');
 	// разбор suite: DataInput
 	if (*suite++ != ':')
 		return FALSE;
@@ -405,7 +405,7 @@ bool_t botpOCRAStart(void* state, const char* suite, const octet key[],
 		if (*++suite != '-')
 			return FALSE;
 		++suite;
-		s->ctr_len = 8;
+		st->ctr_len = 8;
 	}
 	// разбор suite: q
 	if (*suite++ != 'Q')
@@ -415,16 +415,16 @@ bool_t botpOCRAStart(void* state, const char* suite, const octet key[],
 	case 'A':
 	case 'N':
 	case 'H':
-		s->q_type = *suite++;
+		st->q_type = *suite++;
 		break;
 	default:
 		return FALSE;
 	}
 	if (suite[0] < '0' || suite[0] > '9' || suite[1] < '0' || suite[1] > '9')
 		return FALSE;
-	s->q_max = (size_t)(suite[0] - '0');
-	s->q_max *= 10, s->q_max += (size_t)(suite[1] - '0');
-	if (s->q_max < 4 || s->q_max > 64)
+	st->q_max = (size_t)(suite[0] - '0');
+	st->q_max *= 10, st->q_max += (size_t)(suite[1] - '0');
+	if (st->q_max < 4 || st->q_max > 64)
 		return FALSE;
 	suite += 2;
 	// разбор suite: p
@@ -434,22 +434,22 @@ bool_t botpOCRAStart(void* state, const char* suite, const octet key[],
 		if (strStartsWith(suite, ocra_hbelt))
 		{
 			suite += strLen(ocra_hbelt);
-			s->p_len = 32;
+			st->p_len = 32;
 		}
 		else if (strStartsWith(suite, ocra_sha1))
 		{
 			suite += strLen(ocra_sha1);
-			s->p_len = 20;
+			st->p_len = 20;
 		}
 		else if (strStartsWith(suite, ocra_sha256))
 		{
 			suite += strLen(ocra_sha256);
-			s->p_len = 32;
+			st->p_len = 32;
 		}
 		else if (strStartsWith(suite, ocra_sha512))
 		{
 			suite += strLen(ocra_sha512);
-			s->p_len = 64;
+			st->p_len = 64;
 		}
 		else
 			return FALSE;
@@ -462,10 +462,10 @@ bool_t botpOCRAStart(void* state, const char* suite, const octet key[],
 			suite[1] < '0' || suite[1] > '9' ||
 			suite[2] < '0' || suite[2] > '9')
 			return FALSE;
-		s->s_len = (size_t)(suite[0] - '0');
-		s->s_len *= 10, s->s_len += (size_t)(suite[1] - '0');
-		s->s_len *= 10, s->s_len += (size_t)(suite[2] - '0');
-		if (s->s_len > 512)
+		st->s_len = (size_t)(suite[0] - '0');
+		st->s_len *= 10, st->s_len += (size_t)(suite[1] - '0');
+		st->s_len *= 10, st->s_len += (size_t)(suite[2] - '0');
+		if (st->s_len > 512)
 			return FALSE;
 		suite += 3;
 	}
@@ -475,24 +475,24 @@ bool_t botpOCRAStart(void* state, const char* suite, const octet key[],
 		suite += 2;
 		if (*suite < '1' || *suite > '9')
 			return FALSE;
-		s->ts = (size_t)(*suite++ - '0');
+		st->ts = (size_t)(*suite++ - '0');
 		if (*suite >= '0' && *suite <= '9')
-			s->ts *= 10, s->ts += (size_t)(*suite++ - '0');
+			st->ts *= 10, st->ts += (size_t)(*suite++ - '0');
 		switch (*suite++)
 		{
 		case 'S':
-			if (s->ts > 59)
+			if (st->ts > 59)
 				return FALSE;
 			break;
 		case 'M':
-			if (s->ts > 59)
+			if (st->ts > 59)
 				return FALSE;
-			s->ts *= 60;
+			st->ts *= 60;
 			break;
 		case 'H':
-			if (s->ts > 48)
+			if (st->ts > 48)
 				return FALSE;
-			s->ts *= 3600;
+			st->ts *= 3600;
 			break;
 		default:
 			return FALSE;
@@ -502,87 +502,89 @@ bool_t botpOCRAStart(void* state, const char* suite, const octet key[],
 	if (*suite)
 		return FALSE;
 	// запуск HMAC 
-	beltHMACStart(s->stack + beltHMAC_keep(), key, key_len);
-	beltHMACStepA(suite_save, strLen(suite_save) + 1, s->stack);
+	beltHMACStart(st->stack + beltHMAC_keep(), key, key_len);
+	beltHMACStepA(suite_save, strLen(suite_save) + 1,
+		st->stack + beltHMAC_keep());
 	return TRUE;
 }
 
 void botpOCRAStepS(void* state, const octet ctr[8], const octet p[], 
 	const octet s[])
 {
-	botp_ocra_st* ss = (botp_ocra_st*)state;
+	botp_ocra_st* st = (botp_ocra_st*)state;
 	// pre
-	ASSERT(memIsValid(ss, botpOCRA_keep()));
+	ASSERT(memIsValid(state, botpOCRA_keep()));
 	// загрузить сtr
-	if (ss->ctr_len)
+	if (st->ctr_len)
 	{
-		ASSERT(memIsDisjoint2(ctr, 8, ss, botpOCRA_keep()) || ctr == ss->ctr);
-		memMove(ss->ctr, ctr, 8);
+		ASSERT(memIsDisjoint2(ctr, 8, st, botpOCRA_keep()) || ctr == st->ctr);
+		memMove(st->ctr, ctr, 8);
 	}
 	// загрузить p
-	if (ss->p_len)
+	if (st->p_len)
 	{
-		ASSERT(memIsDisjoint2(p, ss->p_len, ss, botpOCRA_keep()) || p == ss->p);
-		memMove(ss->p, p, ss->p_len);
+		ASSERT(memIsDisjoint2(p, st->p_len, st, botpOCRA_keep()) || p == st->p);
+		memMove(st->p, p, st->p_len);
 	}
 	// загрузить s
-	if (ss->s_len)
+	if (st->s_len)
 	{
-		ASSERT(memIsDisjoint2(p, ss->s_len, s, botpOCRA_keep()) || s == ss->s);
-		memMove(ss->s, s, ss->s_len);
+		ASSERT(memIsDisjoint2(p, st->s_len, s, botpOCRA_keep()) || s == st->s);
+		memMove(st->s, s, st->s_len);
 	}
 }
 
 void botpOCRAStepR(char* otp, const octet q[], size_t q_len, tm_time_t t, 
 	void* state)
 {
-	botp_ocra_st* s = (botp_ocra_st*)state;
+	botp_ocra_st* st = (botp_ocra_st*)state;
 	// pre
-	ASSERT(memIsDisjoint2(otp, s->digit + 1, state, botpOCRA_keep()) || 
-		otp == s->otp);
-	ASSERT(4 <= q_len && q_len <= 2 * s->q_max);
-	ASSERT(memIsValid(q, q_len));
+	ASSERT(memIsDisjoint2(otp, st->digit + 1, state, botpOCRA_keep()) || 
+		otp == st->otp);
+	ASSERT(4 <= q_len && q_len <= 2 * st->q_max);
+	ASSERT(memIsDisjoint2(q, q_len, state, botpOCRA_keep() || q == st->q));
 	ASSERT(t != TIME_ERR);
 	// вычислить имитовставку
-	memCopy(s->stack, s->stack + beltHMAC_keep(), beltHMAC_keep());
-	if (s->ctr_len)
-		beltHMACStepA(s->ctr, 8, s->stack), botpCtrNext(s->ctr);
-	memSetZero(s->q + q_len, 128 - q_len);
-	beltHMACStepA(s->q, 128, s->stack);
-	if (s->p_len)
-		beltHMACStepA(s->p, s->p_len, s->stack);
-	if (s->s_len)
-		beltHMACStepA(s->s, s->s_len, s->stack);
-	if (s->ts)
-		botpTimeToCtr(s->t, t), beltHMACStepA(s->t, 8, s->stack);
-	beltHMACStepG(s->mac, s->stack);
+	memCopy(st->stack, st->stack + beltHMAC_keep(), beltHMAC_keep());
+	if (st->ctr_len)
+		beltHMACStepA(st->ctr, 8, st->stack), botpCtrNext(st->ctr);
+	memMove(st->q, q, q_len);
+	memSetZero(st->q + q_len, 128 - q_len);
+	beltHMACStepA(st->q, 128, st->stack);
+	if (st->p_len)
+		beltHMACStepA(st->p, st->p_len, st->stack);
+	if (st->s_len)
+		beltHMACStepA(st->s, st->s_len, st->stack);
+	if (st->ts)
+		botpTimeToCtr(st->t, t), beltHMACStepA(st->t, 8, st->stack);
+	beltHMACStepG(st->mac, st->stack);
 	// построить пароль
-	botpDT(otp, s->digit, s->mac, 32);
+	botpDT(otp, st->digit, st->mac, 32);
 }
 
 bool_t botpOCRAStepV(const char* otp, const octet q[], size_t q_len, 
 	tm_time_t t, void* state)
 {
-	botp_ocra_st* s = (botp_ocra_st*)state;
+	botp_ocra_st* st = (botp_ocra_st*)state;
 	// pre
 	ASSERT(strIsValid(otp));
 	ASSERT(memIsDisjoint2(otp, strLen(otp) + 1, state, botpOCRA_keep()));
 	// сохранить счетчик
-	memCopy(s->ctr1, s->ctr, 8);
+	memCopy(st->ctr1, st->ctr, 8);
 	// проверить пароль
-	botpOCRAStepR(s->otp, q, q_len, t, state);
-	if (strEq(s->otp, otp))
+	botpOCRAStepR(st->otp, q, q_len, t, state);
+	if (strEq(st->otp, otp))
 		return TRUE;
 	// вернуться к первоначальному счетчику
-	memCopy(s->ctr, s->ctr1, 8);
+	memCopy(st->ctr, st->ctr1, 8);
 	return FALSE;
 }
 
 void botpOCRAStepG(octet ctr[8], const void* state)
 {
-	const botp_ocra_st* s = (const botp_ocra_st*)state;
-	ASSERT(memIsDisjoint2(ctr, 8, state, botpOCRA_keep()) || ctr == s->ctr);
-	memMove(ctr, s->ctr, 8);
+	const botp_ocra_st* st = (const botp_ocra_st*)state;
+	ASSERT(memIsDisjoint2(ctr, 8, state, botpOCRA_keep()) || ctr == st->ctr);
+	memMove(ctr, st->ctr, 8);
 }
 
 err_t botpOCRARand(char* otp, const char* suite, const octet key[],	

@@ -1,4 +1,4 @@
-﻿/*
+/*
 *******************************************************************************
 \file rng.h
 \brief Entropy sources and random number generators

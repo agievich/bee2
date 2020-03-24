@@ -1,4 +1,4 @@
-﻿/*
+/*
 *******************************************************************************
 \file brng.c
 \brief STB 34.101.47 (brng): algorithms of pseudorandom number generation
@@ -219,7 +219,7 @@ void brngHMACStart(void* state, const octet key[], size_t key_len,
 		memCopy(s->iv_buf, iv, iv_len);
 		s->iv = s->iv_buf;
 	}
-    else
+	else
 		s->iv = iv;
 	// обработать key
 	beltHMACStart(s->state_ex + beltHMAC_keep(), key, key_len);

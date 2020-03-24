@@ -1,4 +1,4 @@
-﻿/*
+/*
 *******************************************************************************
 \file tm.c
 \brief Time and timers
@@ -80,19 +80,19 @@ tm_ticks_t tmFreq()
 
 tm_ticks_t tmTicks()
 {
-    register tm_ticks_t x;
-    __asm__ volatile (".byte 0x0f, 0x31" : "=A" (x));
-    return x;
+	register tm_ticks_t x;
+	__asm__ volatile (".byte 0x0f, 0x31" : "=A" (x));
+	return x;
 }
 
 #else
 
 tm_ticks_t tmTicks()
 {
-    register u32 hi;
-    register u32 lo;
-    __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
-    return (tm_ticks_t)lo | (tm_ticks_t)hi << 32;
+	register u32 hi;
+	register u32 lo;
+	__asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
+	return (tm_ticks_t)lo | (tm_ticks_t)hi << 32;
 }
 
 #endif
@@ -119,7 +119,7 @@ tm_ticks_t tmFreq()
 
 tm_ticks_t tmTicks()
 {
-    struct timespec ts;
+	struct timespec ts;
 	tm_ticks_t ticks;
 	if (clock_gettime(CLOCK_MONOTONIC, &ts))
 		return 0;
@@ -131,7 +131,7 @@ tm_ticks_t tmTicks()
 
 tm_ticks_t tmFreq()
 {
-    struct timespec ts;
+	struct timespec ts;
 	tm_ticks_t freq;
 	if (clock_getres(CLOCK_MONOTONIC, &ts) || ts.tv_sec || !ts.tv_nsec)
 		return 0;

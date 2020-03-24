@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2019.06.26
+\version 2020.03.24
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -39,56 +39,56 @@ size_t beltCTR_keep()
 void beltCTRStart(void* state, const octet key[], size_t len, 
 	const octet iv[16])
 {
-	belt_ctr_st* s = (belt_ctr_st*)state;
+	belt_ctr_st* st = (belt_ctr_st*)state;
 	ASSERT(memIsDisjoint2(iv, 16, state, beltCTR_keep()));
-	beltKeyExpand2(s->key, key, len);
-	u32From(s->ctr, iv, 16);
-	beltBlockEncr2(s->ctr, s->key);
-	s->reserved = 0;
+	beltKeyExpand2(st->key, key, len);
+	u32From(st->ctr, iv, 16);
+	beltBlockEncr2(st->ctr, st->key);
+	st->reserved = 0;
 }
 
 void beltCTRStepE(void* buf, size_t count, void* state)
 {
-	belt_ctr_st* s = (belt_ctr_st*)state;
+	belt_ctr_st* st = (belt_ctr_st*)state;
 	ASSERT(memIsDisjoint2(buf, count, state, beltCTR_keep()));
 	// есть резерв гаммы?
-	if (s->reserved)
+	if (st->reserved)
 	{
-		if (s->reserved >= count)
+		if (st->reserved >= count)
 		{
-			memXor2(buf, s->block + 16 - s->reserved, count);
-			s->reserved -= count;
+			memXor2(buf, st->block + 16 - st->reserved, count);
+			st->reserved -= count;
 			return;
 		}
-		memXor2(buf, s->block + 16 - s->reserved, s->reserved);
-		count -= s->reserved;
-		buf = (octet*)buf + s->reserved;
-		s->reserved = 0;
+		memXor2(buf, st->block + 16 - st->reserved, st->reserved);
+		count -= st->reserved;
+		buf = (octet*)buf + st->reserved;
+		st->reserved = 0;
 	}
 	// цикл по полным блокам
 	while (count >= 16)
 	{
-		beltBlockIncU32(s->ctr);
-		beltBlockCopy(s->block, s->ctr);
-		beltBlockEncr2((u32*)s->block, s->key);
+		beltBlockIncU32(st->ctr);
+		beltBlockCopy(st->block, st->ctr);
+		beltBlockEncr2((u32*)st->block, st->key);
 #if (OCTET_ORDER == BIG_ENDIAN)
-		beltBlockRevU32(s->block);
+		beltBlockRevU32(st->block);
 #endif
-		beltBlockXor2(buf, s->block);
+		beltBlockXor2(buf, st->block);
 		buf = (octet*)buf + 16;
 		count -= 16;
 	}
 	// неполный блок?
 	if (count)
 	{
-		beltBlockIncU32(s->ctr);
-		beltBlockCopy(s->block, s->ctr);
-		beltBlockEncr2((u32*)s->block, s->key);
+		beltBlockIncU32(st->ctr);
+		beltBlockCopy(st->block, st->ctr);
+		beltBlockEncr2((u32*)st->block, st->key);
 #if (OCTET_ORDER == BIG_ENDIAN)
-		beltBlockRevU32(s->block);
+		beltBlockRevU32(st->block);
 #endif
-		memXor2(buf, s->block, count);
-		s->reserved = 16 - count;
+		memXor2(buf, st->block, count);
+		st->reserved = 16 - count;
 	}
 }
 
@@ -115,4 +115,3 @@ err_t beltCTR(void* dest, const void* src, size_t count,
 	blobClose(state);
 	return ERR_OK;
 }
-

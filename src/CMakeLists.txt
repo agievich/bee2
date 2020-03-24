@@ -31,6 +31,7 @@ set(src
   crypto/belt/belt_compr.c
   crypto/belt/belt_ctr.c
   crypto/belt/belt_dwp.c
+  crypto/belt/belt_che.c
   crypto/belt/belt_ecb.c
   crypto/belt/belt_bde.c
   crypto/belt/belt_sde.c

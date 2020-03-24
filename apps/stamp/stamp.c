@@ -1,4 +1,4 @@
-﻿/*
+/*
 *******************************************************************************
 \file stamp.c
 \brief Integrity control of Windows PE Executables

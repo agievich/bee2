@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.11.06
-\version 2019.07.08
+\version 2019.08.30
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -113,14 +113,14 @@ bool_t botpTest()
 	t /= 60;
 	strCopy(q, otp1);
 	botpOCRAStepR(otp, (const octet*)q, strLen(q), t += 3, state);
-	if (!strEq(otp, "41607895"))
+	if (!strEq(otp, "85199085"))
 		return FALSE;
 	botpOCRAStepS(state, ctr, p, beltH());
 	if (!botpOCRAStepV(otp, (const octet*)q, strLen(q), t, state))
 		return FALSE;
 	botpOCRARand(otp, suite, beltH() + 128, 32, (const octet*)q, strLen(q), 
 		ctr, p, beltH(), t);
-	if (!strEq(otp, "41607895"))
+	if (!strEq(otp, "85199085"))
 		return FALSE;
 	if (botpOCRAVerify(otp, suite, beltH() + 128, 32, (const octet*)q, strLen(q), 
 		ctr, p, beltH(), t) != ERR_OK)
@@ -129,13 +129,13 @@ bool_t botpTest()
 	strCopy(q, otp2);
 	strCopy(q + strLen(q), otp3);
 	botpOCRAStepR(otp, (const octet*)q, strLen(q), t += 10, state);
-	if (!strEq(otp, "11185837"))
+	if (!strEq(otp, "89873725"))
 		return FALSE;
 	// OCRA.3
 	strCopy(q, otp3);
 	strCopy(q + strLen(q), otp2);
 	botpOCRAStepR(otp, (const octet*)q, strLen(q), ++t, state);
-	if (!strEq(otp, "52962597"))
+	if (!strEq(otp, "21318915"))
 		return FALSE;
 	// все нормально
 	return TRUE;

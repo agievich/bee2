@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2019.06.26
+\version 2020.03.20
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -229,6 +229,11 @@ typedef struct
 
 void beltBlockAddBitSizeU32(u32 block[4], size_t count);
 void beltHalfBlockAddBitSizeW(word block[W_OF_B(64)], size_t count);
+void beltPolyMul(word c[], const word a[], const word b[], void* stack);
+size_t beltPolyMul_deep();
+void beltBlockMulC(u32 block[4]);
+
+
 
 #ifdef __cplusplus
 } /* extern "C" */

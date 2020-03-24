@@ -149,7 +149,7 @@ size_t zzRedBarrStart_deep(size_t n)
 }
 
 void FAST(zzRedBarr)(word a[], const word mod[], size_t n, 
-    const word barr_param[], void* stack)
+	const word barr_param[], void* stack)
 {
 	// переменные в stack
 	word* q = (word*)stack;
@@ -171,7 +171,7 @@ void FAST(zzRedBarr)(word a[], const word mod[], size_t n,
 }
 
 void SAFE(zzRedBarr)(word a[], const word mod[], size_t n, 
-    const word barr_param[], void* stack)
+	const word barr_param[], void* stack)
 {
 	register word w;
 	size_t i;
