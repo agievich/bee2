@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2019.06.26
+\version 2020.03.24
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -38,23 +38,23 @@ size_t beltCBC_keep()
 void beltCBCStart(void* state, const octet key[], size_t len, 
 	const octet iv[16])
 {
-	belt_cbc_st* s = (belt_cbc_st*)state;
+	belt_cbc_st* st = (belt_cbc_st*)state;
 	ASSERT(memIsDisjoint2(iv, 16, state, beltCBC_keep()));
-	beltKeyExpand2(s->key, key, len);
-	beltBlockCopy(s->block, iv);
+	beltKeyExpand2(st->key, key, len);
+	beltBlockCopy(st->block, iv);
 }
 
 void beltCBCStepE(void* buf, size_t count, void* state)
 {
-	belt_cbc_st* s = (belt_cbc_st*)state;
+	belt_cbc_st* st = (belt_cbc_st*)state;
 	ASSERT(count >= 16);
 	ASSERT(memIsDisjoint2(buf, count, state, beltCBC_keep()));
 	// цикл по полным блокам
 	while(count >= 16)
 	{
-		beltBlockXor2(s->block, buf);
-		beltBlockEncr(s->block, s->key);
-		beltBlockCopy(buf, s->block);
+		beltBlockXor2(st->block, buf);
+		beltBlockEncr(st->block, st->key);
+		beltBlockCopy(buf, st->block);
 		buf = (octet*)buf + 16;
 		count -= 16;
 	}
@@ -62,23 +62,23 @@ void beltCBCStepE(void* buf, size_t count, void* state)
 	if (count)
 	{
 		memSwap((octet*)buf - 16, buf, count);
-		memXor2((octet*)buf - 16, s->block, count);
-		beltBlockEncr((octet*)buf - 16, s->key);
+		memXor2((octet*)buf - 16, st->block, count);
+		beltBlockEncr((octet*)buf - 16, st->key);
 	}
 }
 
 void beltCBCStepD(void* buf, size_t count, void* state)
 {
-	belt_cbc_st* s = (belt_cbc_st*)state;
+	belt_cbc_st* st = (belt_cbc_st*)state;
 	ASSERT(count >= 16);
 	ASSERT(memIsDisjoint2(buf, count, state, beltCBC_keep()));
 	// цикл по полным блокам
 	while(count >= 32 || count == 16)
 	{
-		beltBlockCopy(s->block2, buf);
-		beltBlockDecr(buf, s->key);
-		beltBlockXor2(buf, s->block);
-		beltBlockCopy(s->block, s->block2);
+		beltBlockCopy(st->block2, buf);
+		beltBlockDecr(buf, st->key);
+		beltBlockXor2(buf, st->block);
+		beltBlockCopy(st->block, st->block2);
 		buf = (octet*)buf + 16;
 		count -= 16;
 	}
@@ -86,11 +86,11 @@ void beltCBCStepD(void* buf, size_t count, void* state)
 	if (count)
 	{
 		ASSERT(16 < count && count < 32);
-		beltBlockDecr(buf, s->key);
+		beltBlockDecr(buf, st->key);
 		memSwap(buf, (octet*)buf + 16, count - 16);
 		memXor2((octet*)buf + 16, buf, count - 16);
-		beltBlockDecr(buf, s->key);
-		beltBlockXor2(buf, s->block);
+		beltBlockDecr(buf, st->key);
+		beltBlockXor2(buf, st->block);
 	}
 }
 
@@ -143,4 +143,3 @@ err_t beltCBCDecr(void* dest, const void* src, size_t count,
 	blobClose(state);
 	return ERR_OK;
 }
-

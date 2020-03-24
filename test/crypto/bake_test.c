@@ -303,11 +303,11 @@ bool_t bakeTest()
 		prngEchoStart(echoa, randa, strLen(_bpace_randb) / 2);
 		prngEchoStart(echob, randb, strLen(_bpace_randb) / 2);
 		codeb = bakeBPACERunB(keyb, params, settingsb, (const octet*)pwd,
-            strLen(pwd), fileMsgRead, fileMsgWrite, fileb);
+			strLen(pwd), fileMsgRead, fileMsgWrite, fileb);
 		if (codeb != ERR_OK && codeb != ERR_FILE_NOT_FOUND)
 			return FALSE;
 		codea = bakeBPACERunA(keya, params, settingsa, (const octet*)pwd,
-            strLen(pwd), fileMsgRead, fileMsgWrite, filea);
+			strLen(pwd), fileMsgRead, fileMsgWrite, filea);
 		if (codea != ERR_OK && codea != ERR_FILE_NOT_FOUND)
 			return FALSE;
 	}

@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2019.06.26
+\version 2020.03.24
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -41,33 +41,33 @@ size_t beltKRP_keep()
 void beltKRPStart(void* state, const octet key[], size_t len, 
 	const octet level[12])
 {
-	belt_krp_st* s = (belt_krp_st*)state;
-	ASSERT(memIsDisjoint2(level, 12, s, beltKRP_keep()));
+	belt_krp_st* st = (belt_krp_st*)state;
+	ASSERT(memIsDisjoint2(level, 12, state, beltKRP_keep()));
 	// block <- ... || level || ...
-	u32From(s->block + 1, level, 12);
+	u32From(st->block + 1, level, 12);
 	// сохранить ключ
-	beltKeyExpand2(s->key, key, s->len = len);
+	beltKeyExpand2(st->key, key, st->len = len);
 }
 
 void beltKRPStepG(octet key_[], size_t key_len, const octet header[16],
 	void* state)
 {
-	belt_krp_st* s = (belt_krp_st*)state;
+	belt_krp_st* st = (belt_krp_st*)state;
 	// pre
-	ASSERT(memIsValid(s, beltKRP_keep()));
+	ASSERT(memIsValid(state, beltKRP_keep()));
 	ASSERT(key_len == 16 || key_len == 24 || key_len == 32);
-	ASSERT(key_len <= s->len);
-	ASSERT(memIsDisjoint2(key_, key_len, s, beltKRP_keep()));
-	ASSERT(memIsDisjoint2(header, 16, s, beltKRP_keep()));
-	// полностью определить s->block
-	u32From(s->block, beltH() + 4 * (s->len - 16) + 2 * (key_len - 16), 4);
-	u32From(s->block + 4, header, 16);
+	ASSERT(key_len <= st->len);
+	ASSERT(memIsDisjoint2(key_, key_len, state, beltKRP_keep()));
+	ASSERT(memIsDisjoint2(header, 16, state, beltKRP_keep()));
+	// полностью определить st->block
+	u32From(st->block, beltH() + 4 * (st->len - 16) + 2 * (key_len - 16), 4);
+	u32From(st->block + 4, header, 16);
 	// применить belt-compr2
-	beltBlockCopy(s->key_new, s->key);
-	beltBlockCopy(s->key_new + 4, s->key + 4);
-	beltCompr(s->key_new, s->block, s->stack);
+	beltBlockCopy(st->key_new, st->key);
+	beltBlockCopy(st->key_new + 4, st->key + 4);
+	beltCompr(st->key_new, st->block, st->stack);
 	// выгрузить ключ
-	u32To(key_, key_len, s->key_new);
+	u32To(key_, key_len, st->key_new);
 }
 
 err_t beltKRP(octet dest[], size_t m, const octet src[], size_t n,

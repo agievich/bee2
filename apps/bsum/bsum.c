@@ -43,11 +43,11 @@ int bsumUsage()
 	printf(
 		"bee2/bsum: STB 34.101.31/77 hashing utility [bee2 version %s]\n"
 		"Usage:\n" 
-        "  bsum [hash_alg] <file_to_hash> <file_to_hash> ...\n"
-        "  bsum [hash_alg] -c <checksum_file>\n"
+		"  bsum [hash_alg] <file_to_hash> <file_to_hash> ...\n"
+		"  bsum [hash_alg] -c <checksum_file>\n"
 		"  hash_alg:\n" 
-        "    belt-hash (STB 34.101.31, by default)\n"
-        "    bash32, bash64, ..., bash512 (STB 34.101.77)\n",
+		"    belt-hash (STB 34.101.31, by default)\n"
+		"    bash32, bash64, ..., bash512 (STB 34.101.77)\n",
 		utilVersion());
 	return -1;
 }
@@ -148,9 +148,9 @@ int bsumCheck(size_t hid, const char* filename)
 		return -1;
 	}
 	for (; fgets(str, sizeof(str), fp); ++all_lines)
-    {
+	{
 		// проверить строку
-        str_len = strLen(str);
+		str_len = strLen(str);
 		if (str_len < hash_len * 2 + 2 || 
 			str[2 * hash_len] != ' ' || 
 			str[2 * hash_len + 1] != ' ' ||
@@ -177,8 +177,8 @@ int bsumCheck(size_t hid, const char* filename)
 			continue;
 		}
 		printf("%s: OK\n", str + 2 * hash_len + 2);
-    }
-    fclose(fp);
+	}
+	fclose(fp);
 	if (bad_lines)
 		fprintf(stderr, bad_lines == 1 ? 
 			"WARNING: %lu input line (out of %lu) is improperly formatted\n" :

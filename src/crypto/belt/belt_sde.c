@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2018.09.01
-\version 2019.06.26
+\version 2020.03.24
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -37,39 +37,39 @@ size_t beltSDE_keep()
 
 void beltSDEStart(void* state, const octet key[], size_t len)
 {
-	belt_sde_st* s = (belt_sde_st*)state;
+	belt_sde_st* st = (belt_sde_st*)state;
 	ASSERT(memIsValid(state, beltSDE_keep()));
-	beltWBLStart(s->wbl, key, len);
+	beltWBLStart(st->wbl, key, len);
 }
 
 void beltSDEStepE(void* buf, size_t count, const octet iv[16], void* state)
 {
-	belt_sde_st* s = (belt_sde_st*)state;
+	belt_sde_st* st = (belt_sde_st*)state;
 	ASSERT(count % 16 == 0 && count >= 16);
 	ASSERT(memIsDisjoint2(buf, count, state, beltSDE_keep()));
 	ASSERT(memIsValid(iv, 16));
 	// зашифровать синхропосылку
-	memCopy(s->s, iv, 16);
-	beltBlockEncr(s->s, s->wbl->key);
+	memCopy(st->s, iv, 16);
+	beltBlockEncr(st->s, st->wbl->key);
 	// каскад XEX
-	beltBlockXor2(buf, s->s);
-	beltWBLStepE(buf, count, s->wbl);
-	beltBlockXor2(buf, s->s);
+	beltBlockXor2(buf, st->s);
+	beltWBLStepE(buf, count, st->wbl);
+	beltBlockXor2(buf, st->s);
 }
 
 void beltSDEStepD(void* buf, size_t count, const octet iv[16], void* state)
 {
-	belt_sde_st* s = (belt_sde_st*)state;
+	belt_sde_st* st = (belt_sde_st*)state;
 	ASSERT(count % 16 == 0 && count >= 32);
 	ASSERT(memIsDisjoint2(buf, count, state, beltSDE_keep()));
 	ASSERT(memIsValid(iv, 16));
 	// зашифровать синхропосылку
-	memCopy(s->s, iv, 16);
-	beltBlockEncr(s->s, s->wbl->key);
+	memCopy(st->s, iv, 16);
+	beltBlockEncr(st->s, st->wbl->key);
 	// каскад XEX
-	beltBlockXor2(buf, s->s);
-	beltWBLStepD(buf, count, s->wbl);
-	beltBlockXor2(buf, s->s);
+	beltBlockXor2(buf, st->s);
+	beltWBLStepD(buf, count, st->wbl);
+	beltBlockXor2(buf, st->s);
 }
 
 err_t beltSDEEncr(void* dest, const void* src, size_t count,

@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2017.09.28
+\version 2020.03.24
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -34,20 +34,20 @@ size_t beltECB_keep()
 
 void beltECBStart(void* state, const octet key[], size_t len)
 {
-	belt_ecb_st* s = (belt_ecb_st*)state;
-	ASSERT(memIsValid(s, beltECB_keep()));
-	beltKeyExpand2(s->key, key, len);
+	belt_ecb_st* st = (belt_ecb_st*)state;
+	ASSERT(memIsValid(state, beltECB_keep()));
+	beltKeyExpand2(st->key, key, len);
 }
 
 void beltECBStepE(void* buf, size_t count, void* state)
 {
-	belt_ecb_st* s = (belt_ecb_st*)state;
+	belt_ecb_st* st = (belt_ecb_st*)state;
 	ASSERT(count >= 16);
-	ASSERT(memIsDisjoint2(buf, count, s, beltECB_keep()));
+	ASSERT(memIsDisjoint2(buf, count, state, beltECB_keep()));
 	// цикл по полным блокам
 	while(count >= 16)
 	{
-		beltBlockEncr(buf, s->key);
+		beltBlockEncr(buf, st->key);
 		buf = (octet*)buf + 16;
 		count -= 16;
 	}
@@ -55,19 +55,19 @@ void beltECBStepE(void* buf, size_t count, void* state)
 	if (count)
 	{
 		memSwap((octet*)buf - 16, buf, count);
-		beltBlockEncr((octet*)buf - 16, s->key);
+		beltBlockEncr((octet*)buf - 16, st->key);
 	}
 }
 
 void beltECBStepD(void* buf, size_t count, void* state)
 {
-	belt_ecb_st* s = (belt_ecb_st*)state;
+	belt_ecb_st* st = (belt_ecb_st*)state;
 	ASSERT(count >= 16);
-	ASSERT(memIsDisjoint2(buf, count, s, beltECB_keep()));
+	ASSERT(memIsDisjoint2(buf, count, state, beltECB_keep()));
 	// цикл по полным блокам
 	while(count >= 16)
 	{
-		beltBlockDecr(buf, s->key);
+		beltBlockDecr(buf, st->key);
 		buf = (octet*)buf + 16;
 		count -= 16;
 	}
@@ -75,7 +75,7 @@ void beltECBStepD(void* buf, size_t count, void* state)
 	if (count)
 	{
 		memSwap((octet*)buf - 16, buf, count);
-		beltBlockDecr((octet*)buf - 16, s->key);
+		beltBlockDecr((octet*)buf - 16, st->key);
 	}
 }
 

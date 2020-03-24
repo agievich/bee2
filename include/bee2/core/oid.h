@@ -95,7 +95,7 @@ bool_t oidIsValid(
 */
 size_t oidToDER(
 	octet der[],		/*!< [out] DER-код */
-	const char* oid	    /*!< [in] идентификатор объекта */
+	const char* oid		/*!< [in] идентификатор объекта */
 );
 
 /*!	\brief DER-декодирование

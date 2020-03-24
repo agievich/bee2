@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2019.07.09
+\version 2020.03.24
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -43,129 +43,129 @@ size_t beltHash_keep()
 
 void beltHashStart(void* state)
 {
-	belt_hash_st* s = (belt_hash_st*)state;
-	ASSERT(memIsValid(s, beltHash_keep()));
+	belt_hash_st* st = (belt_hash_st*)state;
+	ASSERT(memIsValid(state, beltHash_keep()));
 	// len || s <- 0
-	beltBlockSetZero(s->ls);
-	beltBlockSetZero(s->ls + 4);
+	beltBlockSetZero(st->ls);
+	beltBlockSetZero(st->ls + 4);
 	// h <- B194...0D
-	u32From(s->h, beltH(), 32);
+	u32From(st->h, beltH(), 32);
 	// нет накопленнных данных
-	s->filled = 0;
+	st->filled = 0;
 }
 
 void beltHashStepH(const void* buf, size_t count, void* state)
 {
-	belt_hash_st* s = (belt_hash_st*)state;
-	ASSERT(memIsDisjoint2(buf, count, s, beltHash_keep()));
+	belt_hash_st* st = (belt_hash_st*)state;
+	ASSERT(memIsDisjoint2(buf, count, state, beltHash_keep()));
 	// обновить длину
-	beltBlockAddBitSizeU32(s->ls, count);
+	beltBlockAddBitSizeU32(st->ls, count);
 	// есть накопленные данные?
-	if (s->filled)
+	if (st->filled)
 	{
-		if (count < 32 - s->filled)
+		if (count < 32 - st->filled)
 		{
-			memCopy(s->block + s->filled, buf, count);
-			s->filled += count;
+			memCopy(st->block + st->filled, buf, count);
+			st->filled += count;
 			return;
 		}
-		memCopy(s->block + s->filled, buf, 32 - s->filled);
-		count -= 32 - s->filled;
-		buf = (const octet*)buf + 32 - s->filled;
+		memCopy(st->block + st->filled, buf, 32 - st->filled);
+		count -= 32 - st->filled;
+		buf = (const octet*)buf + 32 - st->filled;
 #if (OCTET_ORDER == BIG_ENDIAN)
-		beltBlockRevU32(s->block);
-		beltBlockRevU32(s->block + 16);
+		beltBlockRevU32(st->block);
+		beltBlockRevU32(st->block + 16);
 #endif
-		beltCompr2(s->ls + 4, s->h, (u32*)s->block, s->stack);
-		s->filled = 0;
+		beltCompr2(st->ls + 4, st->h, (u32*)st->block, st->stack);
+		st->filled = 0;
 	}
 	// цикл по полным блокам
 	while (count >= 32)
 	{
-		beltBlockCopy(s->block, buf);
-		beltBlockCopy(s->block + 16, (const octet*)buf + 16);
+		beltBlockCopy(st->block, buf);
+		beltBlockCopy(st->block + 16, (const octet*)buf + 16);
 #if (OCTET_ORDER == BIG_ENDIAN)
-		beltBlockRevU32(s->block);
-		beltBlockRevU32(s->block + 16);
+		beltBlockRevU32(st->block);
+		beltBlockRevU32(st->block + 16);
 #endif
-		beltCompr2(s->ls + 4, s->h, (u32*)s->block, s->stack);
+		beltCompr2(st->ls + 4, st->h, (u32*)st->block, st->stack);
 		buf = (const octet*)buf + 32;
 		count -= 32;
 	}
 	// неполный блок?
 	if (count)
-		memCopy(s->block, buf, s->filled = count);
+		memCopy(st->block, buf, st->filled = count);
 }
 
 static void beltHashStepG_internal(void* state)
 {
-	belt_hash_st* s = (belt_hash_st*)state;
+	belt_hash_st* st = (belt_hash_st*)state;
 	// pre
-	ASSERT(memIsValid(s, beltHash_keep()));
-	// создать копии второй части s->ls и s->h
-	beltBlockCopy(s->s1, s->ls + 4);
-	beltBlockCopy(s->h1, s->h);
-	beltBlockCopy(s->h1 + 4, s->h + 4);
+	ASSERT(memIsValid(state, beltHash_keep()));
+	// создать копии второй части st->ls и st->h
+	beltBlockCopy(st->s1, st->ls + 4);
+	beltBlockCopy(st->h1, st->h);
+	beltBlockCopy(st->h1 + 4, st->h + 4);
 	// есть необработанные данные?
-	if (s->filled)
+	if (st->filled)
 	{
-		memSetZero(s->block + s->filled, 32 - s->filled);
+		memSetZero(st->block + st->filled, 32 - st->filled);
 #if (OCTET_ORDER == BIG_ENDIAN)
-		beltBlockRevU32(s->block);
-		beltBlockRevU32(s->block + 16);
+		beltBlockRevU32(st->block);
+		beltBlockRevU32(st->block + 16);
 #endif
-		beltCompr2(s->ls + 4, s->h1, (u32*)s->block, s->stack);
+		beltCompr2(st->ls + 4, st->h1, (u32*)st->block, st->stack);
 #if (OCTET_ORDER == BIG_ENDIAN)
-		beltBlockRevU32(s->block + 16);
-		beltBlockRevU32(s->block);
+		beltBlockRevU32(st->block + 16);
+		beltBlockRevU32(st->block);
 #endif
 	}
 	// последний блок
-	beltCompr(s->h1, s->ls, s->stack);
-	// восстановить сохраненную часть s->ls
-	beltBlockCopy(s->ls + 4, s->s1);
+	beltCompr(st->h1, st->ls, st->stack);
+	// восстановить сохраненную часть st->ls
+	beltBlockCopy(st->ls + 4, st->s1);
 }
 
 void beltHashStepG(octet hash[32], void* state)
 {
-	belt_hash_st* s = (belt_hash_st*)state;
+	belt_hash_st* st = (belt_hash_st*)state;
 	ASSERT(memIsValid(hash, 32));
 	beltHashStepG_internal(state);
-	u32To(hash, 32, s->h1);
+	u32To(hash, 32, st->h1);
 }
 
 void beltHashStepG2(octet hash[], size_t hash_len, void* state)
 {
-	belt_hash_st* s = (belt_hash_st*)state;
+	belt_hash_st* st = (belt_hash_st*)state;
 	ASSERT(hash_len <= 32);
 	ASSERT(memIsValid(hash, hash_len));
 	beltHashStepG_internal(state);
-	u32To(hash, hash_len, s->h1);
+	u32To(hash, hash_len, st->h1);
 }
 
 bool_t beltHashStepV(const octet hash[32], void* state)
 {
-	belt_hash_st* s = (belt_hash_st*)state;
+	belt_hash_st* st = (belt_hash_st*)state;
 	ASSERT(memIsValid(hash, 32));
 	beltHashStepG_internal(state);
 #if (OCTET_ORDER == BIG_ENDIAN)
-	beltBlockRevU32(s->h1);
-	beltBlockRevU32(s->h1 + 4);
+	beltBlockRevU32(st->h1);
+	beltBlockRevU32(st->h1 + 4);
 #endif
-	return memEq(hash, s->h1, 32);
+	return memEq(hash, st->h1, 32);
 }
 
 bool_t beltHashStepV2(const octet hash[], size_t hash_len, void* state)
 {
-	belt_hash_st* s = (belt_hash_st*)state;
+	belt_hash_st* st = (belt_hash_st*)state;
 	ASSERT(hash_len <= 32);
 	ASSERT(memIsValid(hash, hash_len));
 	beltHashStepG_internal(state);
 #if (OCTET_ORDER == BIG_ENDIAN)
-	beltBlockRevU32(s->h1);
-	beltBlockRevU32(s->h1 + 4);
+	beltBlockRevU32(st->h1);
+	beltBlockRevU32(st->h1 + 4);
 #endif
-	return memEq(hash, s->h1, hash_len);
+	return memEq(hash, st->h1, hash_len);
 }
 
 err_t beltHash(octet hash[32], const void* src, size_t count)

@@ -215,7 +215,7 @@ int FAST(memCmp)(const void* buf1, const void* buf2, size_t count);
 	используется и включена оптимизация компиляции.
 */
 void memWipe(
-	void* buf,	        /*!< [out] буфер */
+	void* buf,			/*!< [out] буфер */
 	size_t count		/*!< [in] размер буфера */
 );
 

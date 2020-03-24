@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2019.06.26
+\version 2020.03.24
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -38,88 +38,88 @@ size_t beltCFB_keep()
 void beltCFBStart(void* state, const octet key[], size_t len, 
 	const octet iv[16])
 {
-	belt_cfb_st* s = (belt_cfb_st*)state;
+	belt_cfb_st* st = (belt_cfb_st*)state;
 	ASSERT(memIsDisjoint2(iv, 16, state, beltCFB_keep()));
-	beltKeyExpand2(s->key, key, len);
-	beltBlockCopy(s->block, iv);
-	s->reserved = 0;
+	beltKeyExpand2(st->key, key, len);
+	beltBlockCopy(st->block, iv);
+	st->reserved = 0;
 }
 
 void beltCFBStepE(void* buf, size_t count, void* state)
 {
-	belt_cfb_st* s = (belt_cfb_st*)state;
+	belt_cfb_st* st = (belt_cfb_st*)state;
 	ASSERT(memIsDisjoint2(buf, count, state, beltCFB_keep()));
 	// есть резерв гаммы?
-	if (s->reserved)
+	if (st->reserved)
 	{
-		if (s->reserved >= count)
+		if (st->reserved >= count)
 		{
-			memXor2(s->block + 16 - s->reserved, buf, count);
-			memCopy(buf, s->block + 16 - s->reserved, count);
-			s->reserved -= count;
+			memXor2(st->block + 16 - st->reserved, buf, count);
+			memCopy(buf, st->block + 16 - st->reserved, count);
+			st->reserved -= count;
 			return;
 		}
-		memXor2(s->block + 16 - s->reserved, buf, s->reserved);
-		memCopy(buf, s->block + 16 - s->reserved, s->reserved);
-		count -= s->reserved;
-		buf = (octet*)buf + s->reserved;
-		s->reserved = 0;
+		memXor2(st->block + 16 - st->reserved, buf, st->reserved);
+		memCopy(buf, st->block + 16 - st->reserved, st->reserved);
+		count -= st->reserved;
+		buf = (octet*)buf + st->reserved;
+		st->reserved = 0;
 	}
 	// цикл по полным блокам
 	while (count >= 16)
 	{
-		beltBlockEncr(s->block, s->key);
-		beltBlockXor2(s->block, buf);
-		beltBlockCopy(buf, s->block);
+		beltBlockEncr(st->block, st->key);
+		beltBlockXor2(st->block, buf);
+		beltBlockCopy(buf, st->block);
 		buf = (octet*)buf + 16;
 		count -= 16;
 	}
 	// неполный блок?
 	if (count)
 	{
-		beltBlockEncr(s->block, s->key);
-		memXor2(s->block, buf, count);
-		memCopy(buf, s->block, count);
-		s->reserved = 16 - count;
+		beltBlockEncr(st->block, st->key);
+		memXor2(st->block, buf, count);
+		memCopy(buf, st->block, count);
+		st->reserved = 16 - count;
 	}
 }
 
 void beltCFBStepD(void* buf, size_t count, void* state)
 {
-	belt_cfb_st* s = (belt_cfb_st*)state;
+	belt_cfb_st* st = (belt_cfb_st*)state;
 	ASSERT(memIsDisjoint2(buf, count, state, beltCFB_keep()));
 	// есть резерв гаммы?
-	if (s->reserved)
+	if (st->reserved)
 	{
-		if (s->reserved >= count)
+		if (st->reserved >= count)
 		{
-			memXor2(buf, s->block + 16 - s->reserved, count);
-			memXor2(s->block + 16 - s->reserved, buf, count);
-			s->reserved -= count;
+			memXor2(buf, st->block + 16 - st->reserved, count);
+			memXor2(st->block + 16 - st->reserved, buf, count);
+			st->reserved -= count;
 			return;
 		}
-		memXor2(buf, s->block + 16 - s->reserved, s->reserved);
-		memXor2(s->block + 16 - s->reserved, buf, s->reserved);
-		count -= s->reserved;
-		buf = (octet*)buf + s->reserved;
-		s->reserved = 0;
+		memXor2(buf, st->block + 16 - st->reserved, st->reserved);
+		memXor2(st->block + 16 - st->reserved, buf, st->reserved);
+		count -= st->reserved;
+		buf = (octet*)buf + st->reserved;
+		st->reserved = 0;
 	}
 	// цикл по полным блокам
 	while (count >= 16)
 	{
-		beltBlockEncr(s->block, s->key);
-		beltBlockXor2(buf, s->block);
-		beltBlockXor2(s->block, buf);
+		beltBlockEncr(st->block, st->key);
+		beltBlockXor2(buf, st->block);
+		beltBlockXor2(st->block, buf);
 		buf = (octet*)buf + 16;
 		count -= 16;
 	}
 	// неполный блок?
 	if (count)
 	{
-		beltBlockEncr(s->block, s->key);
-		memXor2(buf, s->block, count);
-		memXor2(s->block, buf, count);
-		s->reserved = 16 - count;
+		beltBlockEncr(st->block, st->key);
+		memXor2(buf, st->block, count);
+		memXor2(st->block, buf, count);
+		st->reserved = 16 - count;
 	}
 }
 

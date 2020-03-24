@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2019.06.26
+\version 2020.03.24
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -47,42 +47,42 @@ size_t beltMAC_keep()
 
 void beltMACStart(void* state, const octet key[], size_t len)
 {
-	belt_mac_st* s = (belt_mac_st*)state;
+	belt_mac_st* st = (belt_mac_st*)state;
 	ASSERT(memIsValid(state, beltMAC_keep()));
-	beltKeyExpand2(s->key, key, len);
-	beltBlockSetZero(s->s);
-	beltBlockSetZero(s->r);
-	beltBlockEncr2(s->r, s->key);
-	s->filled = 0;
+	beltKeyExpand2(st->key, key, len);
+	beltBlockSetZero(st->s);
+	beltBlockSetZero(st->r);
+	beltBlockEncr2(st->r, st->key);
+	st->filled = 0;
 }
 
 void beltMACStepA(const void* buf, size_t count, void* state)
 {
-	belt_mac_st* s = (belt_mac_st*)state;
+	belt_mac_st* st = (belt_mac_st*)state;
 	ASSERT(memIsDisjoint2(buf, count, state, beltMAC_keep()));
 	// накопить полный блок
-	if (s->filled < 16)
+	if (st->filled < 16)
 	{
-		if (count <= 16 - s->filled)
+		if (count <= 16 - st->filled)
 		{
-			memCopy(s->block + s->filled, buf, count);
-			s->filled += count;
+			memCopy(st->block + st->filled, buf, count);
+			st->filled += count;
 			return;
 		}
-		memCopy(s->block + s->filled, buf, 16 - s->filled);
-		count -= 16 - s->filled;
-		buf = (const octet*)buf + 16 - s->filled;
-		s->filled = 16;
+		memCopy(st->block + st->filled, buf, 16 - st->filled);
+		count -= 16 - st->filled;
+		buf = (const octet*)buf + 16 - st->filled;
+		st->filled = 16;
 	}
 	// цикл по полным блокам
 	while (count >= 16)
 	{
 #if (OCTET_ORDER == BIG_ENDIAN)
-		beltBlockRevU32(s->block);
+		beltBlockRevU32(st->block);
 #endif
-		beltBlockXor2(s->s, s->block);
-		beltBlockEncr2(s->s, s->key);
-		beltBlockCopy(s->block, buf);
+		beltBlockXor2(st->s, st->block);
+		beltBlockEncr2(st->s, st->key);
+		beltBlockCopy(st->block, buf);
 		buf = (const octet*)buf + 16;
 		count -= 16;
 	}
@@ -90,94 +90,94 @@ void beltMACStepA(const void* buf, size_t count, void* state)
 	if (count)
 	{
 #if (OCTET_ORDER == BIG_ENDIAN)
-		beltBlockRevU32(s->block);
+		beltBlockRevU32(st->block);
 #endif
-		beltBlockXor2(s->s, s->block);
-		beltBlockEncr2(s->s, s->key);
-		memCopy(s->block, buf, count);
-		s->filled = count;
+		beltBlockXor2(st->s, st->block);
+		beltBlockEncr2(st->s, st->key);
+		memCopy(st->block, buf, count);
+		st->filled = count;
 	}
 }
 
 static void beltMACStepG_internal(void* state)
 {
-	belt_mac_st* s = (belt_mac_st*)state;
+	belt_mac_st* st = (belt_mac_st*)state;
 	ASSERT(memIsValid(state, beltMAC_keep()));
 	// полный блок?
-	if (s->filled == 16)
+	if (st->filled == 16)
 	{
 #if (OCTET_ORDER == BIG_ENDIAN)
-		beltBlockRevU32(s->block);
+		beltBlockRevU32(st->block);
 #endif
-		beltBlockXor(s->mac, s->s, s->block);
-		s->mac[0] ^= s->r[1];
-		s->mac[1] ^= s->r[2];
-		s->mac[2] ^= s->r[3];
-		s->mac[3] ^= s->r[0] ^ s->r[1];
+		beltBlockXor(st->mac, st->s, st->block);
+		st->mac[0] ^= st->r[1];
+		st->mac[1] ^= st->r[2];
+		st->mac[2] ^= st->r[3];
+		st->mac[3] ^= st->r[0] ^ st->r[1];
 #if (OCTET_ORDER == BIG_ENDIAN)
-		beltBlockRevU32(s->block);
+		beltBlockRevU32(st->block);
 #endif
 	}
 	// неполный (в т.ч. пустой) блок?
 	else
 	{
-		s->block[s->filled] = 0x80;
-		memSetZero(s->block + s->filled + 1, 16 - s->filled - 1);
+		st->block[st->filled] = 0x80;
+		memSetZero(st->block + st->filled + 1, 16 - st->filled - 1);
 #if (OCTET_ORDER == BIG_ENDIAN)
-		beltBlockRevU32(s->block);
+		beltBlockRevU32(st->block);
 #endif
-		beltBlockXor(s->mac, s->s, s->block);
-		s->mac[0] ^= s->r[0] ^ s->r[3];
-		s->mac[1] ^= s->r[0];
-		s->mac[2] ^= s->r[1];
-		s->mac[3] ^= s->r[2];
+		beltBlockXor(st->mac, st->s, st->block);
+		st->mac[0] ^= st->r[0] ^ st->r[3];
+		st->mac[1] ^= st->r[0];
+		st->mac[2] ^= st->r[1];
+		st->mac[3] ^= st->r[2];
 #if (OCTET_ORDER == BIG_ENDIAN)
-		beltBlockRevU32(s->block);
+		beltBlockRevU32(st->block);
 #endif
 	}
-	beltBlockEncr2(s->mac, s->key);
+	beltBlockEncr2(st->mac, st->key);
 }
 
 void beltMACStepG(octet mac[8], void* state)
 {
-	belt_mac_st* s = (belt_mac_st*)state;
+	belt_mac_st* st = (belt_mac_st*)state;
 	ASSERT(memIsValid(mac, 8));
-	beltMACStepG_internal(s);
-	u32To(mac, 8, s->mac);
+	beltMACStepG_internal(state);
+	u32To(mac, 8, st->mac);
 }
 
 void beltMACStepG2(octet mac[], size_t mac_len, void* state)
 {
-	belt_mac_st* s = (belt_mac_st*)state;
+	belt_mac_st* st = (belt_mac_st*)state;
 	ASSERT(mac_len <= 8);
 	ASSERT(memIsValid(mac, mac_len));
-	beltMACStepG_internal(s);
-	u32To(mac, mac_len, s->mac);
+	beltMACStepG_internal(state);
+	u32To(mac, mac_len, st->mac);
 }
 
 bool_t beltMACStepV(const octet mac[8], void* state)
 {
-	belt_mac_st* s = (belt_mac_st*)state;
+	belt_mac_st* st = (belt_mac_st*)state;
 	ASSERT(memIsValid(mac, 8));
-	beltMACStepG_internal(s);
+	beltMACStepG_internal(state);
 #if (OCTET_ORDER == BIG_ENDIAN)
-	s->mac[0] = u32Rev(s->mac[0]);
-	s->mac[1] = u32Rev(s->mac[1]);
+	st->mac[0] = u32Rev(st->mac[0]);
+	st->mac[1] = u32Rev(st->mac[1]);
 #endif
-	return memEq(mac, s->mac, 8);
+	return memEq(mac, st->mac, 8);
 }
 
 bool_t beltMACStepV2(const octet mac[], size_t mac_len, void* state)
 {
-	belt_mac_st* s = (belt_mac_st*)state;
+	belt_mac_st* st = (belt_mac_st*)state;
 	ASSERT(mac_len <= 8);
 	ASSERT(memIsValid(mac, mac_len));
-	beltMACStepG_internal(s);
+	beltMACStepG_internal(st);
 #if (OCTET_ORDER == BIG_ENDIAN)
-	s->mac[0] = u32Rev(s->mac[0]);
-	s->mac[1] = u32Rev(s->mac[1]);
+	st->mac[0] = u32Rev(st->mac[0]);
+	st->mac[1] = u32Rev(st->mac[1]);
 #endif
-	return memEq(mac, s->mac, mac_len);
+	return memEq(mac, st->mac, mac_len);
 }
 
 err_t beltMAC(octet mac[8], const void* src, size_t count,
@@ -202,4 +202,3 @@ err_t beltMAC(octet mac[8], const void* src, size_t count,
 	blobClose(state);
 	return ERR_OK;
 }
-
