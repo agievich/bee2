@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2020.03.20
-\version 2020.03.24
+\version 2020.04.09
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -31,8 +31,8 @@ version 3. See Copyright Notices in bee2/info.h.
 typedef struct
 {
 	u32 key[8];				/*< форматированный ключ */
-	u32 ctr[4];				/*< счетчик */
-	word s[W_OF_B(128)];	/*< переменная s */
+	u32 s[4];				/*< переменная s */
+	word r[W_OF_B(128)];	/*< переменная r */
 	word t[W_OF_B(128)];	/*< переменная t */
 	word t1[W_OF_B(128)];	/*< копия t/имитовставка */
 	word len[W_OF_B(128)];	/*< обработано открытых || критических данных */
@@ -55,11 +55,11 @@ void beltCHEStart(void* state, const octet key[], size_t len,
 	ASSERT(memIsDisjoint2(iv, 16, state, beltCHE_keep()));
 	// разобрать key и iv
 	beltKeyExpand2(st->key, key, len);
-	beltBlockCopy(st->s, iv);
-	beltBlockEncr((octet*)st->s, st->key);
-	u32From(st->ctr, st->s, 16);
+	beltBlockCopy(st->r, iv);
+	beltBlockEncr((octet*)st->r, st->key);
+	u32From(st->s, st->r, 16);
 #if (OCTET_ORDER == BIG_ENDIAN)
-	beltBlockRevW(st->s);
+	beltBlockRevW(st->r);
 #endif
 	// подготовить t
 	wwFrom(st->t, beltH(), 16);
@@ -90,8 +90,8 @@ void beltCHEStepE(void* buf, size_t count, void* state)
 	// цикл по полным блокам
 	while (count >= 16)
 	{
-		beltBlockMulC(st->ctr), st->ctr[0] ^= 0x00000001;
-		beltBlockCopy(st->block1, st->ctr);
+		beltBlockMulC(st->s), st->s[0] ^= 0x00000001;
+		beltBlockCopy(st->block1, st->s);
 		beltBlockEncr2((u32*)st->block1, st->key);
 #if (OCTET_ORDER == BIG_ENDIAN)
 		beltBlockRevU32(st->block1);
@@ -103,8 +103,8 @@ void beltCHEStepE(void* buf, size_t count, void* state)
 	// неполный блок?
 	if (count)
 	{
-		beltBlockMulC(st->ctr), st->ctr[0] ^= 0x00000001;
-		beltBlockCopy(st->block1, st->ctr);
+		beltBlockMulC(st->s), st->s[0] ^= 0x00000001;
+		beltBlockCopy(st->block1, st->s);
 		beltBlockEncr2((u32*)st->block1, st->key);
 #if (OCTET_ORDER == BIG_ENDIAN)
 		beltBlockRevU32(st->block1);
@@ -138,7 +138,7 @@ void beltCHEStepI(const void* buf, size_t count, void* state)
 		beltBlockRevW(st->block);
 #endif
 		beltBlockXor2(st->t, st->block);
-		beltPolyMul(st->t, st->t, st->s, st->stack);
+		beltPolyMul(st->t, st->t, st->r, st->stack);
 		st->filled = 0;
 	}
 	// цикл по полным блокам
@@ -149,7 +149,7 @@ void beltCHEStepI(const void* buf, size_t count, void* state)
 		beltBlockRevW(st->block);
 #endif
 		beltBlockXor2(st->t, st->block);
-		beltPolyMul(st->t, st->t, st->s, st->stack);
+		beltPolyMul(st->t, st->t, st->r, st->stack);
 		buf = (const octet*)buf + 16;
 		count -= 16;
 	}
@@ -171,7 +171,7 @@ void beltCHEStepA(const void* buf, size_t count, void* state)
 		beltBlockRevW(st->block);
 #endif
 		beltBlockXor2(st->t, st->block);
-		beltPolyMul(st->t, st->t, st->s, st->stack);
+		beltPolyMul(st->t, st->t, st->r, st->stack);
 		st->filled = 0;
 	}
 	// обновить длину
@@ -192,7 +192,7 @@ void beltCHEStepA(const void* buf, size_t count, void* state)
 		beltBlockRevW(st->block);
 #endif
 		beltBlockXor2(st->t, st->block);
-		beltPolyMul(st->t, st->t, st->s, st->stack);
+		beltPolyMul(st->t, st->t, st->r, st->stack);
 		st->filled = 0;
 	}
 	// цикл по полным блокам
@@ -203,7 +203,7 @@ void beltCHEStepA(const void* buf, size_t count, void* state)
 		beltBlockRevW(st->block);
 #endif
 		beltBlockXor2(st->t, st->block);
-		beltPolyMul(st->t, st->t, st->s, st->stack);
+		beltPolyMul(st->t, st->t, st->r, st->stack);
 		buf = (const octet*)buf + 16;
 		count -= 16;
 	}
@@ -227,13 +227,13 @@ static void beltCHEStepG_internal(void* state)
 		memSetZero(st->block + st->filled, 16 - st->filled);
 		wwFrom(st->t1, st->block, 16);
 		beltBlockXor2(st->t1, st->t);
-		beltPolyMul(st->t1, st->t1, st->s, st->stack);
+		beltPolyMul(st->t1, st->t1, st->r, st->stack);
 	}
 	else
 		memCopy(st->t1, st->t, 16);
 	// обработать блок длины
 	beltBlockXor2(st->t1, st->len);
-	beltPolyMul(st->t1, st->t1, st->s, st->stack);
+	beltPolyMul(st->t1, st->t1, st->r, st->stack);
 #if (OCTET_ORDER == BIG_ENDIAN)
 	beltBlockRevW(st->t1);
 #endif
