@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.06.20
-\version 2020.03.26
+\version 2020.04.15
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -479,7 +479,7 @@ bool_t beltTest()
 	beltCHEStepE(buf + 11, 4, state);
 	beltCHEStepI(beltH() + 16, 14, state);
 	beltCHEStepG(mac, state);
-	beltCHEStepI(beltH() + 16 + 14, 16, state);
+	beltCHEStepI(beltH() + 16 + 14, 18, state);
 	beltCHEStepG(mac, state);
 	beltCHEStepA(buf, 12, state);
 	beltCHEStepG(mac, state);
@@ -489,11 +489,11 @@ bool_t beltTest()
 		"BF3DAEAF5D18D2BCC30EA62D2E70A4"))
 		return FALSE;
 	if (!hexEq(mac,
-		"77E62BD40C868C6A"))
+		"548622B844123FF7"))
 		return FALSE;
 	if (!beltCHEStepV(mac, state))
 		return FALSE;
-	beltCHEWrap(buf1, mac1, beltH(), 15, beltH() + 16, 30,
+	beltCHEWrap(buf1, mac1, beltH(), 15, beltH() + 16, 32,
 		beltH() + 128, 32, beltH() + 192);
 	if (!memEq(buf, buf1, 15) || !memEq(mac, mac1, 8))
 		return FALSE;
@@ -521,7 +521,7 @@ bool_t beltTest()
 	// belt-che: тест A.20-2
 	beltCHEStart(state, beltH() + 128 + 32, 32, beltH() + 192 + 16);
 	memCopy(buf, beltH() + 64, 20);
-	beltCHEStepI(beltH() + 64 + 16, 28, state);
+	beltCHEStepI(beltH() + 64 + 16, 32, state);
 	beltCHEStepA(buf, 20, state);
 	beltCHEStepD(buf, 20, state);
 	beltCHEStepG(mac, state);
@@ -529,13 +529,13 @@ bool_t beltTest()
 		"2BABF43EB37B5398A9068F31A3C758B762F44AA9"))
 		return FALSE;
 	if (!hexEq(mac,
-		"9CD7650C2C996AC3"))
+		"7D9D4F59D40D197D"))
 		return FALSE;
-	if (beltCHEUnwrap(buf1, beltH() + 64, 20, beltH() + 64 + 16, 28,
+	if (beltCHEUnwrap(buf1, beltH() + 64, 20, beltH() + 64 + 16, 32,
 		mac, beltH() + 128 + 32, 32, beltH() + 192 + 16) != ERR_OK ||
 		!memEq(buf, buf1, 20))
 		return FALSE;
-	beltCHEWrap(buf1, mac1, buf, 20, beltH() + 64 + 16, 28,
+	beltCHEWrap(buf1, mac1, buf, 20, beltH() + 64 + 16, 32,
 		beltH() + 128 + 32, 32, beltH() + 192 + 16);
 	if (!memEq(buf1, beltH() + 64, 20) || !memEq(mac, mac1, 8))
 		return FALSE;
