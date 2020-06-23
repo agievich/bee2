@@ -188,24 +188,21 @@ EXPORTS
 	bashHashStepG				@706
 	bashHashStepV				@707
 	bashHash					@708
-	bashAE_keep					@709
-	bashAEStart					@710
-	bashAEAbsorbStart			@711
-	bashAEAbsorbStep			@712
-	bashAEAbsorbStop			@713
-	bashAEAbsorb				@714
-	bashAESqueezeStart			@715
-	bashAESqueezeStep			@716
-	bashAESqueezeStop			@717
-	bashAESqueeze				@718
-	bashAEEncrStart				@719
-	bashAEEncrStep				@720
-	bashAEEncrStop				@721
-	bashAEEncr					@722
-	bashAEDecrStart				@723
-	bashAEDecrStep				@724
-	bashAEDecrStop				@725
-	bashAEDecr					@726
+	bashPrg_keep				@709
+	bashPrgStart				@710
+	bashPrgAbsorbStart			@711
+	bashPrgAbsorbStep			@712
+	bashPrgAbsorb				@713
+	bashPrgSqueezeStart			@714
+	bashPrgSqueezeStep			@715
+	bashPrgSqueeze				@716
+	bashPrgEncrStart			@717
+	bashPrgEncrStep				@718
+	bashPrgEncr					@719
+	bashPrgDecrStart			@720
+	bashPrgDecrStep				@721
+	bashPrgDecr					@722
+	bashPrgRatchet				@723
 	
 	botpDT						@801
 	botpCtrNext					@802

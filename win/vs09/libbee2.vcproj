@@ -773,7 +773,7 @@
 					Name="bash"
 					>
 					<File
-						RelativePath="..\..\src\crypto\bash\bash_ae.c"
+						RelativePath="..\..\src\crypto\bash\bash_prg.c"
 						>
 					</File>
 					<File

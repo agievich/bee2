@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.11.18
-\version 2019.05.23
+\version 2020.06.23
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -49,7 +49,7 @@ bool_t beltBench()
 		beltECBStepE(buf, 1024, belt_state),
 		beltECBStepD(buf, 1024, belt_state);
 	ticks = tmTicks() - ticks;
-	printf("beltBench::belt-ecb:  %3u cycles / byte [%5u kBytes / sec]\n",
+	printf("beltBench::belt-ecb:  %3u cpb [%5u kBytes/sec]\n",
 		(unsigned)(ticks / 2048 / reps),
 		(unsigned)tmSpeed(2 * reps, ticks));
 	// cкорость belt-cbc
@@ -59,7 +59,7 @@ bool_t beltBench()
 		beltCBCStepE(buf, 1024, belt_state),
 		beltCBCStepD(buf, 1024, belt_state);
 	ticks = tmTicks() - ticks;
-	printf("beltBench::belt-cbc:  %3u cycles / byte [%5u kBytes / sec]\n",
+	printf("beltBench::belt-cbc:  %3u cpb [%5u kBytes/sec]\n",
 		(unsigned)(ticks / 2048 / reps),
 		(unsigned)tmSpeed(2 * reps, ticks));
 	// cкорость belt-cfb
@@ -69,7 +69,7 @@ bool_t beltBench()
 		beltCFBStepE(buf, 1024, belt_state),
 		beltCFBStepD(buf, 1024, belt_state);
 	ticks = tmTicks() - ticks;
-	printf("beltBench::belt-cfb:  %3u cycles / byte [%5u kBytes / sec]\n",
+	printf("beltBench::belt-cfb:  %3u cpb [%5u kBytes/sec]\n",
 		(unsigned)(ticks / 2048 / reps),
 		(unsigned)tmSpeed(2 * reps, ticks));
 	// cкорость belt-ctr
@@ -79,7 +79,7 @@ bool_t beltBench()
 		beltCTRStepE(buf, 1024, belt_state),
 		beltCTRStepD(buf, 1024, belt_state);
 	ticks = tmTicks() - ticks;
-	printf("beltBench::belt-ctr:  %3u cycles / byte [%5u kBytes / sec]\n",
+	printf("beltBench::belt-ctr:  %3u cpb [%5u kBytes/sec]\n",
 		(unsigned)(ticks / 2048 / reps),
 		(unsigned)tmSpeed(2 * reps, ticks));
 	// cкорость belt-mac
@@ -89,7 +89,7 @@ bool_t beltBench()
 		beltMACStepA(buf, 1024, belt_state);
 	beltMACStepG(hash, belt_state);
 	ticks = tmTicks() - ticks;
-	printf("beltBench::belt-mac:  %3u cycles / byte [%5u kBytes / sec]\n",
+	printf("beltBench::belt-mac:  %3u cpb [%5u kBytes/sec]\n",
 		(unsigned)(ticks / 1024 / reps),
 		(unsigned)tmSpeed(reps, ticks));
 	// cкорость belt-dwp
@@ -100,7 +100,7 @@ bool_t beltBench()
 		beltDWPStepA(buf, 1024, belt_state);
 	beltDWPStepG(hash, belt_state);
 	ticks = tmTicks() - ticks;
-	printf("beltBench::belt-dwp:  %3u cycles / byte [%5u kBytes / sec]\n",
+	printf("beltBench::belt-dwp:  %3u cpb [%5u kBytes/sec]\n",
 		(unsigned)(ticks / 1024 / reps),
 		(unsigned)tmSpeed(reps, ticks));
 	// cкорость belt-hash
@@ -110,7 +110,7 @@ bool_t beltBench()
 		beltHashStepH(buf, 1024, belt_state);
 	beltHashStepG(hash, belt_state);
 	ticks = tmTicks() - ticks;
-	printf("beltBench::belt-hash: %3u cycles / byte [%5u kBytes / sec]\n",
+	printf("beltBench::belt-hash: %3u cpb [%5u kBytes/sec]\n",
 		(unsigned)(ticks / 1024 / reps),
 		(unsigned)tmSpeed(reps, ticks));
 	// все нормально

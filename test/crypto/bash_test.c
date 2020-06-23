@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.09.22
-\version 2019.07.09
+\version 2020.06.23
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -22,7 +22,7 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 Самотестирование
 
-Тесты из приложения А к СТБ 34.101.bash.
+Тесты из приложения А к СТБ 34.101.77.
 *******************************************************************************
 */
 
@@ -31,13 +31,13 @@ bool_t bashTest()
 	octet buf[192];
 	octet hash[64];
 	octet state[1024];
+	octet state1[1024];
 	// создать стек
 	ASSERT(sizeof(state) >= bashF_deep());
-	ASSERT(sizeof(state) >= bash256_keep());
-	ASSERT(sizeof(state) >= bash384_keep());
-	ASSERT(sizeof(state) >= bash512_keep());
-	ASSERT(sizeof(state) >= bashAE_keep());
-	// тест A.1
+	ASSERT(sizeof(state) >= bashHash_keep());
+	ASSERT(sizeof(state) >= bashPrg_keep());
+	ASSERT(sizeof(state) == sizeof(state1));
+	// A.2
 	memCopy(buf, beltH(), 192);
 	bashF(buf, state);
 	if (!hexEq(buf, 
@@ -54,7 +54,7 @@ bool_t bashTest()
 		"BB3F4D9F033C87CA6070E117F099C409"
 		"4972ACD9D976214B7CED8E3F8B6E058E"))
 		return FALSE;
-	// тест A.2.1
+	// A.3.1
 	bash256Hash(hash, beltH(), 0);
 	if (!hexEq(hash, 
 		"114C3DFAE373D9BCBC3602D6386F2D6A"
@@ -65,7 +65,7 @@ bool_t bashTest()
 	bash256StepG(buf, state);
 	if (!memEq(hash, buf, 32))
 		return FALSE;
-	// тест A.2.2
+	// A.3.2
 	bash256Hash(hash, beltH(), 127);
 	if (!hexEq(hash, 
 		"3D7F4EFA00E9BA33FEED259986567DCF"
@@ -76,19 +76,19 @@ bool_t bashTest()
 	bash256StepG(buf, state);
 	if (!memEq(hash, buf, 32))
 		return FALSE;
-	// тест A.2.3
+	// A.3.3
 	bash256Hash(hash, beltH(), 128);
 	if (!hexEq(hash, 
 		"D7F428311254B8B2D00F7F9EEFBD8F30"
 		"25FA87C4BABD1BDDBE87E35B7AC80DD6"))
 		return FALSE;
-	// тест A.2.4
+	// A.3.4
 	bash256Hash(hash, beltH(), 135);
 	if (!hexEq(hash, 
 		"1393FA1B65172F2D18946AEAE576FA1C"
 		"F54FDD354A0CB2974A997DC4865D3100"))
 		return FALSE;
-	// тест A.2.5
+	// A.3.5
 	bash384Hash(hash, beltH(), 95);
 	if (!hexEq(hash, 
 		"64334AF830D33F63E9ACDFA184E32522"
@@ -100,21 +100,21 @@ bool_t bashTest()
 	bash384StepG(buf, state);
 	if (!memEq(hash, buf, 48))
 		return FALSE;
-	// тест A.2.6
+	// A.3.6
 	bash384Hash(hash, beltH(), 96);
 	if (!hexEq(hash, 
 		"D06EFBC16FD6C0880CBFC6A4E3D65AB1"
 		"01FA82826934190FAABEBFBFFEDE93B2"
 		"2B85EA72A7FB3147A133A5A8FEBD8320"))
 		return FALSE;
-	// тест A.2.7
+	// A.3.7
 	bash384Hash(hash, beltH(), 108);
 	if (!hexEq(hash, 
 		"FF763296571E2377E71A1538070CC0DE"
 		"88888606F32EEE6B082788D246686B00"
 		"FC05A17405C5517699DA44B7EF5F55AB"))
 		return FALSE;
-	// тест A.2.8
+	// A.3.8
 	bash512Hash(hash, beltH(), 63);
 	if (!hexEq(hash, 
 		"2A66C87C189C12E255239406123BDEDB"
@@ -127,7 +127,7 @@ bool_t bashTest()
 	bash512StepG(buf, state);
 	if (!memEq(hash, buf, 64))
 		return FALSE;
-	// тест A.2.9
+	// A.3.9
 	bash512Hash(hash, beltH(), 64);
 	if (!hexEq(hash, 
 		"07ABBF8580E7E5A321E9B940F667AE20"
@@ -135,7 +135,7 @@ bool_t bashTest()
 		"B708233C3F5541DF8AAFC3611482FDE4"
 		"98E58B3379A6622DAC2664C9C118A162"))
 		return FALSE;
-	// тест A.2.10
+	// A.3.10
 	bash512Hash(hash, beltH(), 127);
 	if (!hexEq(hash, 
 		"526073918F97928E9D15508385F42F03"
@@ -143,7 +143,7 @@ bool_t bashTest()
 		"C09D13CFF6981101235D895746A4643F"
 		"0AA62B0A7BC98A269E4507A257F0D4EE"))
 		return FALSE;
-	// тест A.12
+	// A.3.11
 	bash512Hash(hash, beltH(), 192);
 	if (!hexEq(hash, 
 		"8724C7FF8A2A83F22E38CB9763777B96"
@@ -151,22 +151,38 @@ bool_t bashTest()
 		"6C3D3931857C4FF6CCCD49BD99852FE9"
 		"EAA7495ECCDD96B571E0EDCF47F89768"))
 		return FALSE;
-	// AE.1: buf <- [8]iv || [12]data || [15]text || [8]mac
-	memCopy(buf, beltH(), 8 + 12 + 15);
-	bashAEStart(state, beltH() + 128, 32, buf, 8);
-	bashAEAbsorb(BASH_AE_DATA, buf + 8, 12, state);
-	bashAEEncr(buf + 8 + 12, 15, state);
-	bashAESqueeze(BASH_AE_MAC, buf + 8 + 12 + 15, 8, state);
-	if (!hexEq(buf + 20, 
-		"FEC2A158AA464A81E7AC5B0E204D7F93"
-		"9F242538755D18"))
+	// A.4.alpha
+	bashPrgStart(state, 256, 2, 0, 0, beltH(), 32);
+	bashPrgAbsorb(beltH() + 32, 95, state);
+	bashPrgRatchet(state);
+	bashPrgSqueeze(hash, 16, state);
+	if (!hexEq(hash,
+		"69A3B04BF1C573728D15C26F3CC6C6F4"))
 		return FALSE;
-	bashAEStart(state, beltH() + 128, 32, buf, 8);
-	bashAEAbsorb(BASH_AE_DATA, buf + 8, 12, state);
-	bashAEDecr(buf + 8 + 12, 15, state);
-	bashAESqueeze(BASH_AE_MAC, hash, 8, state);
-	if (!memEq(buf + 8 + 12, beltH() + 8 + 12, 15) ||
-		!memEq(buf + 8 + 12 + 15, hash, 8))
+	// A.4.beta
+	bashPrgStart(state, 128, 1, beltH() + 128, 16, hash, 16);
+	memCopy(state1, state, bashPrg_keep());
+	memCopy(buf, beltH() + 128 + 32, 23);
+	bashPrgEncr(buf, 23, state);
+	if (!hexEq(buf,
+		"198351B5A8F2179F487F03970366CEAB"
+		"264D804DD6389D"))
+		return FALSE;
+	bashPrgStart(state, 128, 1, beltH() + 128, 16, hash, 16);
+	bashPrgDecr(buf, 23, state);
+	if (!memEq(buf, beltH() + 128 + 32, 23))
+		return FALSE;
+	// A.4.gamma
+	bashPrgRestart(beltH() + 128 + 16, 4, 0, 0, state1);
+	memCopy(state, state1, bashPrg_keep());
+	memCopy(buf, beltH() + 128 + 32, 23);
+	bashPrgEncr(buf, 23, state1);
+	if (!hexEq(buf,
+		"D9D7EF6538CD693BAF8F8667FA512ECE"
+		"CD2C6A87226299"))
+		return FALSE;
+	bashPrgDecr(buf, 23, state);
+	if (!memEq(buf, beltH() + 128 + 32, 23))
 		return FALSE;
 	// все нормально
 	return TRUE;

@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.15
-\version 2019.07.09
+\version 2020.06.23
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -35,6 +35,7 @@ bool_t bashBench()
 	octet combo_state[256];
 	octet buf[1024];
 	octet hash[64];
+	size_t l, d;
 	// заполнить buf псевдослучайными числами
 	ASSERT(prngCOMBO_keep() <= sizeof(combo_state));
 	prngCOMBOStart(combo_state, utilNonce32());
@@ -53,84 +54,57 @@ bool_t bashBench()
 			beltHashStepH(buf, sizeof(buf), belt_state);
 		beltHashStepG(hash, belt_state);
 		ticks = tmTicks() - ticks;
-		printf("bashBench::belt-hash: %3u cycles / byte [%5u kBytes / sec]\n",
+		printf("bashBench::belt-hash: %3u cpb [%5u kBytes/sec]\n",
 			(unsigned)(ticks / 1024 / reps),
 			(unsigned)tmSpeed(reps, ticks));
-		// эксперимент c bash256
-		ASSERT(bash256_keep() <= sizeof(bash_state));
-		bash256Start(bash_state);
-		for (i = 0, ticks = tmTicks(); i < reps; ++i)
-			bash256StepH(buf, sizeof(buf), bash_state);
-		bash256StepG(hash, bash_state);
-		ticks = tmTicks() - ticks;
-		printf("bashBench::bash256:   %3u cycles / byte [%5u kBytes / sec]\n",
-			(unsigned)(ticks / 1024 / reps),
-			(unsigned)tmSpeed(reps, ticks));
-		// эксперимент c bash384
-		ASSERT(bash384_keep() <= sizeof(bash_state));
-		bash384Start(bash_state);
-		for (i = 0, ticks = tmTicks(); i < reps; ++i)
-			bash384StepH(buf, sizeof(buf), bash_state);
-		bash384StepG(hash, bash_state);
-		ticks = tmTicks() - ticks;
-		printf("bashBench::bash384:   %3u cycles / byte [%5u kBytes / sec]\n",
-			(unsigned)(ticks / 1024 / reps),
-			(unsigned)tmSpeed(reps, ticks));
-		// эксперимент c bash512
-		ASSERT(bash512_keep() <= sizeof(bash_state));
-		bash512Start(bash_state);
-		for (i = 0, ticks = tmTicks(); i < reps; ++i)
-			bash512StepH(buf, sizeof(buf), bash_state);
-		bash512StepG(hash, bash_state);
-		ticks = tmTicks() - ticks;
-		printf("bashBench::bash512:   %3u cycles / byte [%5u kBytes / sec]\n",
-			(unsigned)(ticks / 1024 / reps),
-			(unsigned)tmSpeed(reps, ticks));
-		// cкорость bash-ae128
-		ASSERT(bashAE_keep() <= sizeof(bash_state));
-		bashAEStart(bash_state, hash, 16, 0, 0);
-		bashAEEncrStart(bash_state);
-		for (i = 0, ticks = tmTicks(); i < reps; ++i)
-			bashAEEncrStep(buf, 1024, bash_state);
-		bashAEEncrStop(bash_state);
-		bashAEDecrStart(bash_state);
-		for (i = 0, ticks = tmTicks(); i < reps; ++i)
-			bashAEDecrStep(buf, 1024, bash_state);
-		bashAEDecrStop(bash_state);
-		ticks = tmTicks() - ticks;
-		printf("bashBench::bash-ae128:  %3u cycles / byte [%5u kBytes / sec]\n",
-			(unsigned)(ticks / 2048 / reps),
-			(unsigned)tmSpeed(2 * reps, ticks));
-		// cкорость bash-ae192
-		ASSERT(bashAE_keep() <= sizeof(bash_state));
-		bashAEStart(bash_state, hash, 24, 0, 0);
-		bashAEEncrStart(bash_state);
-		for (i = 0, ticks = tmTicks(); i < reps; ++i)
-			bashAEEncrStep(buf, 1024, bash_state);
-		bashAEEncrStop(bash_state);
-		bashAEDecrStart(bash_state);
-		for (i = 0, ticks = tmTicks(); i < reps; ++i)
-			bashAEDecrStep(buf, 1024, bash_state);
-		bashAEDecrStop(bash_state);
-		ticks = tmTicks() - ticks;
-		printf("bashBench::bash-ae192:  %3u cycles / byte [%5u kBytes / sec]\n",
-			(unsigned)(ticks / 2048 / reps),
-			(unsigned)tmSpeed(2 * reps, ticks));
-		// cкорость bash-ae256
-		ASSERT(bashAE_keep() <= sizeof(bash_state));
-		bashAEStart(bash_state, hash, 32, 0, 0);
-		bashAEEncrStart(bash_state);
-		for (i = 0, ticks = tmTicks(); i < reps; ++i)
-			bashAEEncrStep(buf, 1024, bash_state);
-		bashAEEncrStop(bash_state);
-		bashAEDecrStart(bash_state);
-		for (i = 0, ticks = tmTicks(); i < reps; ++i)
-			bashAEDecrStep(buf, 1024, bash_state);
-		bashAEDecrStop(bash_state);
-		ticks = tmTicks() - ticks;
-		printf("bashBench::bash-ae256:  %3u cycles / byte [%5u kBytes / sec]\n",
-			(unsigned)(ticks / 2048 / reps),
-			(unsigned)tmSpeed(2 * reps, ticks));
+		// эксперимент c bashHashLLL
+		ASSERT(bashHash_keep() <= sizeof(bash_state));
+		for (l = 128; l <= 256; l += 64)
+		{
+			bashHashStart(bash_state, l);
+			for (i = 0, ticks = tmTicks(); i < reps; ++i)
+				bashHashStepH(buf, sizeof(buf), bash_state);
+			bashHashStepG(hash, l / 4, bash_state);
+			ticks = tmTicks() - ticks;
+			printf("bashBench::bash%u: %3u cpb [%5u kBytes/sec]\n",
+				(unsigned)(2 * l),
+				(unsigned)(ticks / sizeof(buf) / reps),
+				(unsigned)tmSpeed(reps, ticks));
+		}
+		// эксперимент с bash-prg-hashLLLD
+		ASSERT(bashPrg_keep() <= sizeof(bash_state));
+		for (l = 128; l <= 256; l += 64)
+		for (d = 1; d <= 2; ++d)
+		{
+			bashPrgStart(bash_state, l, d, hash, l / 8, 0, 0);
+			bashPrgAbsorbStart(bash_state);
+			for (i = 0, ticks = tmTicks(); i < reps; ++i)
+				bashPrgAbsorbStep(buf, 1024, bash_state);
+			bashPrgSqueeze(hash, l / 4, bash_state);
+			ticks = tmTicks() - ticks;
+			printf("bashBench::bash-prg-hash%u%u: %3u cpb [%5u kBytes/sec]\n",
+				(unsigned)(2 * l), (unsigned)d,
+				(unsigned)(ticks / sizeof(buf) / reps),
+				(unsigned)tmSpeed(reps, ticks));
+		}
+		// эксперимент с bash-prg-aeLLLD
+		ASSERT(bashPrg_keep() <= sizeof(bash_state));
+		for (l = 128; l <= 256; l += 64)
+		for (d = 1; d <= 2; ++d)
+		{
+			bashPrgStart(bash_state, l, d, 0, 0, hash, l / 8);
+			bashPrgEncrStart(bash_state);
+			for (i = 0, ticks = tmTicks(); i < reps; ++i)
+				bashPrgEncrStep(buf, 1024, bash_state);
+			bashPrgDecrStart(bash_state);
+			for (i = 0, ticks = tmTicks(); i < reps; ++i)
+				bashPrgDecrStep(buf, 1024, bash_state);
+			ticks = tmTicks() - ticks;
+			printf("bashBench::bash-prg-ae%u%u: %3u cpb [%5u kBytes/sec]\n",
+				(unsigned)l, (unsigned)d,
+				(unsigned)(ticks / (2 * sizeof(buf)) / reps),
+				(unsigned)tmSpeed(2 * reps, ticks));
+		}
 	}
 	// все нормально
 	return TRUE;

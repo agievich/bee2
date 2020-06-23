@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.15
-\version 2019.07.19
+\version 2020.06.23
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -50,24 +50,38 @@ sponge-функции bash-f, реализованной в bashF(). Sponge-фу
 
 Стандартные уровни l = 128, 192, 256 поддержаны макросами bashNNNXXX.
 
-Расширение СТБ 34.101.77 (в стадии разработки) определяет алгоритмы 
-аутентифицированного шифрования.
+Кроме алгоритмов хэширования, СТБ 34.101.77 определяет криптографический
+автомат на основе sponge-функции и программируемые алгоритмы --
+последовательности команд автомата.
 
-Алгоритмы аутентифицированного шифрования реализуются 5 операциями:
--	Start (инициализировать);
--	Absorb (загрузить / абсорбировать данные);
--	Squeeze (выгрузить данные);
--	Encr (зашифровать);
--	Decr (расшифровать).
+Перечень команд:
+-	start (инициализировать);
+-	restart (повторно инициализировать);
+-	absorb (загрузить данные);
+-	squeeze (выгрузить данные);
+-	encrypt (зашифровать, сокращается до encr);
+-	decrypt (расшифровать, сокращается до decr);
+-	ratchet (необратимо изменить автомат).
 
-Первая операция поддерживается функцией bashAEStart(). Каждая следующая 
-операция обрабатывает данные потенциально произвольного объема. 
-Поэтому предусмотрена стандартная цепочечная обработка по схеме 
-Start/Step/Stop. Схема поддерживается функциями bashAENNNStart(), 
-bashAENNNStep(), bashAENNNStop(), где NNN -- имя операции.
+Еще одна команда, commit, является внутренней, она вызывается из других команд.
 
-Константы BASH_AE_XXX описывают типы обратываемых данных. Константы 
-определены в СТБ 34.101.77.
+Команды start, restart, ratchet реализованы в функциях bashPrgStart(),
+bashPrgRestart(), bashPrgRatchet().
+
+Команды absorb, squeeze, encrypt, decrypt обрабатывают данные потенциально
+произвольного объема. Поэтому предусмотрена стандартная цепочечная обработка
+по схеме Start/Step. Схема поддерживается функциями bashPrgCmdStart(), 
+bashPrgCmdStep(), где Cmd -- имя команды. Обратим внимание, что шаг Stop
+отсутствует. Он не нужен, потому что команды автомата выполняются в отложенной
+манере --- команда завершается при запуске следующей.
+
+В функциях, реализующих команды, автомат программируемых алгоритмов
+отождествляется со своим состоянием. Используется приемлемый (и отражающий
+суть дела) жаргон: "загрузить в автомат", "выгрузить из автомата".
+
+Конкретные программируемые алгоритмы, в том числе определенные в СТБ 34.101.77,
+не реализованы. Их легко сконструировать, вызывая функции-команды
+в определенной последовательности.
 
 \expect Общее состояние связки функций не изменяется вне этих функций.
 
@@ -90,9 +104,6 @@ bashAENNNStep(), bashAENNNStop(), где NNN -- имя операции.
 \safe Реализация для платформ BASH_SSE2, BASH_AVX2, BASH_AVX512 могут 
 оставлять в стеке данные, которые не помещаются в расширенные регистры 
 соответствующих архитектур.
-
-\remark При описании Absorb / Squeeze мы используем вполне уместный жаргон:
-"загрузить в состояние", "выгрузить из состояния", "зашифровать на состоянии".
 *******************************************************************************
 */
 
@@ -115,7 +126,7 @@ void bashF(
 
 /*
 *******************************************************************************
-bashHash
+Алгоритмы хэширования (bashHash)
 *******************************************************************************
 */
 
@@ -252,218 +263,200 @@ bashHash512
 
 /*
 *******************************************************************************
-bashAE
+Программируемые алгоритмы (bashPrg)
 *******************************************************************************
 */
 
-#define BASH_AE_KEY		0
-#define BASH_AE_DATA	1
-#define BASH_AE_TEXT	2
-#define BASH_AE_PRN		5
-#define BASH_AE_MAC		6
+/*!	\brief Длина состояния автомата 
 
-/*!	\brief Длина состояния функций AE
-
-	Возвращается длина состояния (в октетах) AE-алгоритмов bash.
+	Возвращается длина состояния (в октетах) автомата программируемых
+	алгоритмов.
 	\return Длина состояния.
 */
-size_t bashAE_keep();
+size_t bashPrg_keep();
 
-/*!	\brief Инициализация AE
+/*!	\brief Инициализация автомата
 
-	В state формируются структуры данных, необходимые для аутентифицированного
-	шифрования на ключе [key_len]key и синхропосылке [iv_len]iv. 
-	\pre key_len == 16 || key_len == 24 || key_len == 32.
-	\pre iv_len <= key_len * 2.
-	\pre По адресу state зарезервировано bashAE_keep() октетов.
-	\remark Длина key_len определяет уровень стойкости l = key_len * 8.
+	По уровню стойкости l, емкости d, анонсу [ann_len]ann и ключу
+	[key_len]ley инициализуется автомат state. 
+	\pre l == 128 || l == 192 || l == 256.
+	\pre d == 1 || d == 2.
+	\pre ann_len % 4 == 0 && ann_len <= 60.
+	\pre key_len % 4 == 0 && key_len <= 60.
+	\pre key_len == 0 || key_len >= l / 8, где l --- уровень, заданный
+	в bashPrgStart().
+	\pre По адресу state зарезервировано bashPrg_keep() октетов.
+	\remark Если key_len != 0, то автомат переводится в ключевой режим.
 */
-void bashAEStart(
-	void* state,		/*!< [out] состояние */
+void bashPrgStart(
+	void* state,		/*!< [out] автомат */
+	size_t l,			/*!< [in] уровень стойкости */
+	size_t d,			/*!< [in] емкость */
+	const octet ann[],	/*!< [in] анонс */
+	size_t ann_len,		/*!< [in] длина анонса в октетах */
+	const octet key[],	/*!< [in] ключ */
+	size_t key_len		/*!< [in] длина ключа в октетах */
+);
+
+/*!	\brief Повторная инициализация автомата
+
+	По анонсу [ann_len]ann и ключу [key_len]key выполняется повторная
+	инициализация автомата state.
+	\pre ann_len % 4 == 0 && ann_len <= 60.
+	\pre key_len % 4 == 0 && key_len <= 60.
+	\pre key_len == 0 || key_len >= l / 8, 
+	\expect bashPrgStart() < bashPrgRestart()*.
+	\remark Если key_len != 0, то автомат переводится в ключевой режим.
+*/
+void bashPrgRestart(
+	const octet ann[],	/*!< [in] анонс */
+	size_t ann_len,		/*!< [in] длина анонса в октетах */
 	const octet key[],	/*!< [in] ключ */
 	size_t key_len,		/*!< [in] длина ключа в октетах */
-	const octet iv[],	/*!< [in] синхропосылка */
-	size_t iv_len		/*!< [in] длина синхропосылки в октетах */
+	void* state			/*!< [out] автомат */
 );
 
-/*!	\brief Начало загрузка
+/*!	\brief Начало загрузки данных
 
-	Инициализируется загрузка в state данных типа code.
-	\pre code == BASH_AE_KEY || code == BASH_AE_DATA.
-	\expect bashAEStart() < bashAEAbsorbStart().
+	Инициализируется загрузка данных в автомат state.
+	\expect bashPrgStart() < bashPrgAbsorbStart().
+	\remark В начале загрузки завершается предыдущая команда.
 */
-void bashAEAbsorbStart(
-	octet code,			/*!< [in] код данных */
-	void* state			/*!< [in/out] состояние */
+void bashPrgAbsorbStart(
+	void* state			/*!< [in/out] автомат */
 );
 
-/*!	\brief Шаг загрузки
+/*!	\brief Шаг загрузки данных
 
-	Выполняется абсорбирование в state фрагмента [count]buf.
-	\expect bashAEAbsorbStart() < bashAEAbsorbStep()*.
+	Выполняется загрузка в автомат state фрагмента [count]buf.
+	\expect bashPrgAbsorbStart() < bashPrgAbsorbStep()*.
 */
-void bashAEAbsorbStep(
+void bashPrgAbsorbStep(
 	const void* buf,	/*!< [in] данные */
 	size_t count,		/*!< [in] число октетов данных */
-	void* state			/*!< [in/out] состояние */
-);
-
-/*!	\brief Окончание загрузки
-
-	Завершается загрузка в state.
-	\expect bashAEAbsorbStart() < bashAEAbsorbStep()* < bashAEAbsorbStop().
-	\remark Если вызовы bashAEAbsorbStep() пропущены или во всех вызовах
-	задаются пустые фрагменты, будет загружено пустое слово. Загрузка
-	даже пустого слова требует вызова bashF().
-*/
-void bashAEAbsorbStop(
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in/out] автомат */
 );
 
 /*!	\brief Загрузка данных
 
-	В состояние state загружаются данные [count]buf типа code. 
-	\pre code == BASH_AE_KEY || code == BASH_AE_DATA.
-	\expect bashAEStart() < bashAEAbsorb()*.
+	В автомат state загружаются данные [count]buf. 
+	\expect bashPrgStart() < bashPrgAbsorb()*.
 */
-void bashAEAbsorb(
-	octet code,			/*!< [in] код данных */
+void bashPrgAbsorb(
 	const void* buf,	/*!< [in] данные */
 	size_t count,		/*!< [in] число октетов данных */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in/out] автомат */
 );
 
-/*!	\brief Начало выгрузки
+/*!	\brief Начало выгрузки данных
 
-	Инициализируется выгрузка из state данных типа code.
-	\pre code == BASH_AE_PRN || code == BASH_AE_MAC.
-	\expect bashAEStart() < bashAESqueezeStart().
+	Инициализируется выгрузка данных из автомата state.
+	\expect bashPrgStart() < bashPrgSqueezeStart().
+	\remark В начале выгрузки завершается предыдущая команда.
 */
-void bashAESqueezeStart(
-	octet code,			/*!< [in] код данных */
-	void* state			/*!< [in/out] состояние */
+void bashPrgSqueezeStart(
+	void* state			/*!< [in/out] автомат */
 );
 
-/*!	\brief Шаг выгрузки
+/*!	\brief Шаг выгрузки данных
 
-	Выполняется выгрузка из state фрагмента [count]buf.
-	\expect bashAESqueezeStart() < bashAESqueezeStep()*.
+	Выполняется выгрузка из автомата state фрагмента [count]buf.
+	\expect bashPrgSqueezeStart() < bashPrgSqueezeStep()*.
 */
-void bashAESqueezeStep(
+void bashPrgSqueezeStep(
 	void* buf,			/*!< [out] данные */
 	size_t count,		/*!< [in] число октетов данных */
-	void* state			/*!< [in/out] состояние */
-);
-
-/*!	\brief Окончание выгрузки
-
-	Завершается выгрузка из state.
-	\expect bashAESqueezeStart() < bashAESqueezeStep()* < bashAESqueezeStop().
-	\remark Если вызовы bashAESqueezeStep() пропущены или во всех вызовах
-	задаются пустые фрагменты, будет выгружено пустое слово. Выгрузка даже 
-	пустого слова требует вызова bashF().
-*/
-void bashAESqueezeStop(
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in/out] автомат */
 );
 
 /*!	\brief Выгрузка данных
 
-	Из состояния state выгружаются данные [count]buf типа code. 
-	\pre code == BASH_AE_RPN || code == BASH_AE_MAC.
-	\expect bashAEStart() < bashAESqueeze()*.
+	Из автомата state выгружаются данные [count]buf. 
+	\expect bashPrgStart() < bashPrgSqueeze()*.
 */
-void bashAESqueeze(
-	octet code,			/*!< [in] код данных */
+void bashPrgSqueeze(
 	void* buf,			/*!< [out] данные */
 	size_t count,		/*!< [in] число октетов данных */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in/out] автомат */
 );
 
 /*!	\brief Начало зашифрования
 
-	Инициализируется зашифрование на state.
-	\expect bashAEStart() < bashAEEncrStart().
+	Инициализируется зашифрование с помощью автомата state.
+	\expect bashPrgStart() < bashPrgEncrStart().
+	\pre Автомат находится в ключевом режиме.
+	\remark В начале зашифрования завершается предыдущая команда.
 */
-void bashAEEncrStart(
-	void* state			/*!< [in/out] состояние */
+void bashPrgEncrStart(
+	void* state			/*!< [in/out] автомат */
 );
 
 /*!	\brief Шаг зашифрования
 
-	Выполняется зашифрование из state фрагмента [count]buf.
-	\expect bashAEEncrStart() < bashAEEncrStep()*.
+	Выполняется зашифрование с помощью автомата state
+	фрагмента [count]buf.
+	\expect bashPrgEncrStart() < bashPrgEncrStep()*.
 */
-void bashAEEncrStep(
+void bashPrgEncrStep(
 	void* buf,			/*!< [in/out] данные */
 	size_t count,		/*!< [in] число октетов данных */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in/out] автомат */
 );
 
-/*!	\brief Окончание зашифрования
+/*!	\brief Зашифрование
 
-	Завершается зашифрование state.
-	\expect bashAEEncrStart() < bashAEEncrStep()* < bashAEEncrStop().
-	\remark Если вызовы bashAEEncrStep() пропущены или во всех вызовах
-	задаются пустые фрагменты, будет зашифровано пустое слово. 
-	Зашифрование даже пустого слова требует вызова bashF().
+	С помощью автомата state зашифровываются данные [count]buf.
+	\pre Автомат находится в ключевом режиме.
+	\expect bashPrgStart() < bashPrgEncr()*.
 */
-void bashAEEncrStop(
-	void* state			/*!< [in/out] состояние */
-);
-
-/*!	\brief Зашифрование данных
-
-	На состоянии state зашифровываются данные [count]buf. 
-	\expect bashAEStart() < bashAEEncr()*.
-*/
-void bashAEEncr(
+void bashPrgEncr(
 	void* buf,			/*!< [in/out] данные */
 	size_t count,		/*!< [in] число октетов данных */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in/out] автомат */
 );
 
 /*!	\brief Начало расшифрования
 
-	Инициализируется расшифрование на state.
-	\expect bashAEStart() < bashAEDecrStart().
+	Инициализируется расшифрование данных с помощью автомата state.
+	\pre Автомат находится в ключевом режиме.
+	\expect bashPrgStart() < bashPrgDecrStart().
+	\remark В начале расшифрования завершается предыдущая команда.
 */
-void bashAEDecrStart(
-	void* state			/*!< [in/out] состояние */
+void bashPrgDecrStart(
+	void* state			/*!< [in/out] автомат */
 );
 
 /*!	\brief Шаг расшифрования
 
-	Выполняется расшифрование на state фрагмента [count]buf.
-	\expect bashAEDecrStart() < bashAEDecrStep()*.
+	Выполняется расшифрование с помощью автомата state фрагмента [count]buf.
+	\expect bashPrgDecrStart() < bashPrgDecrStep()*.
 */
-void bashAEDecrStep(
+void bashPrgDecrStep(
 	void* buf,			/*!< [in/out] данные */
 	size_t count,		/*!< [in] число октетов данных */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in/out] автомат */
 );
 
-/*!	\brief Окончание расшифрования
+/*!	\brief Расшифрование
 
-	Завершается расшифрование state.
-	\expect bashAEDecrStart() < bashAEDecrStep()* < bashAEDecrStop().
-	\remark Если вызовы bashAEDecrStep() пропущены или во всех вызовах
-	задаются пустые фрагменты, будет расшифровано пустое слово. 
-	Расшифрование даже пустого слова требует вызова bashF().
+	С помощью автомата state расшифровываются данные [count]buf. 
+	\pre Автомат находится в ключевом режиме.
+	\expect bashPrgStart() < bashPrgDecr()*.
 */
-void bashAEDecrStop(
-	void* state			/*!< [in/out] состояние */
-);
-
-/*!	\brief Расшифрование данных
-
-	На состоянии state расшифровываются данные [count]buf. 
-	\expect bashAEStart() < bashAEDecr()*.
-*/
-void bashAEDecr(
+void bashPrgDecr(
 	void* buf,			/*!< [in/out] данные */
 	size_t count,		/*!< [in] число октетов данных */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in/out] автомат */
+);
+
+/*!	\brief Необратимое изменение автомата
+
+	Автомат state меняется так, что по новому состоянию трудно определить
+	предыдущее.
+	\expect bashPrgStart() < bashPrgRatchet().
+*/
+void bashPrgRatchet(
+	void* state			/*!< [in/out] автомат */
 );
 
 #ifdef __cplusplus
