@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2018.10.30
-\version 2020.06.23
+\version 2020.06.24
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -61,12 +61,13 @@ typedef struct {
 	octet s[192];		/*< состояние */
 	size_t buf_len;		/*< длина буфера */
 	size_t pos;			/*< позиция в буфере */
-	octet stack[];		/*< max(bashF_deep(), 192) стек bashF/ratchet */
+	octet t[192];		/*< копия состояния (для ratchet) */
+	octet stack[];		/*< [bashF_deep()] стек bashF */
 } bash_prg_st;
 
 size_t bashPrg_keep()
 {
-	return sizeof(bash_prg_st) + MAX2(bashF_deep(), 192);
+	return sizeof(bash_prg_st) + bashF_deep();
 }
 
 /*
@@ -382,7 +383,7 @@ void bashPrgRatchet(void* state)
 	// завершить предыдущую команду
 	bashPrgCommit(BASH_PRG_NULL, state);
 	// необратимо изменить
-	memCopy(st->stack, st->s, 192);
+	memCopy(st->t, st->s, 192);
 	bashF(st->s, st->stack);
-	memXor2(st->s, st->stack, 192);
+	memXor2(st->s, st->t, 192);
 }

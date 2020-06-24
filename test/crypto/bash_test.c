@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.09.22
-\version 2020.06.23
+\version 2020.06.24
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -32,6 +32,7 @@ bool_t bashTest()
 	octet hash[64];
 	octet state[1024];
 	octet state1[1024];
+	size_t pos;
 	// создать стек
 	ASSERT(sizeof(state) >= bashF_deep());
 	ASSERT(sizeof(state) >= bashHash_keep());
@@ -183,6 +184,113 @@ bool_t bashTest()
 		return FALSE;
 	bashPrgDecr(buf, 23, state);
 	if (!memEq(buf, beltH() + 128 + 32, 23))
+		return FALSE;
+	// A.5.1
+	bashPrgStart(state, 128, 2, 0, 0, 0, 0);
+	bashPrgAbsorb(beltH(), 0, state);
+	bashPrgSqueeze(hash, 32, state);
+	if (!hexEq(hash,
+		"36FA075EC15721F250B9A641A8CB99A3"
+		"33A9EE7BA8586D0646CBAC3686C03DF3"))
+		return FALSE;
+	// A.5.2
+	bashPrgStart(state, 128, 2, 0, 0, 0, 0);
+	bashPrgAbsorb(beltH(), 127, state);
+	bashPrgSqueeze(hash, 32, state);
+	if (!hexEq(hash,
+		"C930FF427307420DA6E4182969AA1FFC"
+		"3310179B8A0EDB3E20BEC285B568BA17"))
+		return FALSE;
+	// A.5.3
+	bashPrgStart(state, 128, 2, 0, 0, 0, 0);
+	bashPrgAbsorb(beltH(), 128, state);
+	bashPrgSqueeze(hash, 32, state);
+	if (!hexEq(hash,
+		"92AD1402C2007191F2F7CFAD6A2F8807"
+		"BB0C50F73DFF95EF1B8AF08504D54007"))
+		return FALSE;
+	// A.5.4
+	bashPrgStart(state, 128, 2, 0, 0, 0, 0);
+	bashPrgAbsorb(beltH(), 150, state);
+	bashPrgSqueeze(hash, 32, state);
+	if (!hexEq(hash,
+		"48DB61832CA1009003BC0D8BDE67893A"
+		"9DC683C48A5BC23AC884EB4613B480A6"))
+		return FALSE;
+	bashPrgStart(state, 128, 2, 0, 0, 0, 0);
+	bashPrgAbsorbStart(state);
+	bashPrgAbsorbStep(beltH(), 0, state);
+	bashPrgAbsorbStep(beltH(), 50, state);
+	bashPrgAbsorbStep(beltH() + 50, 50, state);
+	bashPrgAbsorbStep(beltH() + 100, 50, state);
+	bashPrgSqueezeStart(state);
+	bashPrgSqueezeStep(buf, 13, state);
+	bashPrgSqueezeStep(buf + 13, 32 - 13, state);
+	if (!memEq(hash, buf, 32))
+		return FALSE;
+	// A.5.5
+	bashPrgStart(state, 192, 1, 0, 0, 0, 0);
+	bashPrgAbsorb(beltH(), 143, state);
+	bashPrgSqueeze(hash, 48, state);
+	if (!hexEq(hash,
+		"6166032D6713D401A6BC687CCFFF2E60"
+		"3287143A84C78D2C62C71551E0E2FB2A"
+		"F6B799EE33B5DECD7F62F190B1FBB052"))
+		return FALSE;
+	// A.5.6
+	bashPrgStart(state, 192, 1, 0, 0, 0, 0);
+	bashPrgAbsorb(beltH(), 144, state);
+	bashPrgSqueeze(hash, 48, state);
+	if (!hexEq(hash,
+		"8D84C82ECD0AB6468CC451CFC5EEB3B2"
+		"98DFD381D200DA69FBED5AE67D26BAD5"
+		"C727E2652A225BF465993043039E338B"))
+		return FALSE;
+	// A.5.7
+	bashPrgStart(state, 192, 1, 0, 0, 0, 0);
+	bashPrgAbsorb(beltH(), 150, state);
+	bashPrgSqueeze(hash, 48, state);
+	if (!hexEq(hash,
+		"47529F9D499AB6AB8AD72B1754C90C39"
+		"E7DA237BEB16CDFC00FE87934F5AFC11"
+		"01862DFA50560F062A4DAC859CC13DBC"))
+		return FALSE;
+	// A.6.encr
+	bashPrgStart(state, 256, 1, beltH(), 16, beltH() + 32, 32);
+	bashPrgAbsorb(beltH() + 64, 49, state);
+	memSetZero(buf, 192);
+	bashPrgEncr(buf, 192, state);
+	if (!hexEq(buf,
+		"690673766C3E848CAC7C05169FFB7B77"
+		"51E52A011040E5602573FAF991044A00"
+		"4329EEF7BED8E6875830A91854D1BD2E"
+		"DC6FC2FF37851DBAC249DF400A0549EA"
+		"2E0C811D499E1FF1E5E32FAE7F0532FA"
+		"4051D0F9E300D9B1DBF119AC8CFFC48D"
+		"D3CBF1CA0DBA5DD97481C88DF0BE4127"
+		"85E40988B31585537948B80F5A9C49E0"
+		"8DD684A7DCA871C380DFDC4C4DFBE61F"
+		"50D2D0FBD24D8B9D32974A347247D001"
+		"BAD5B168440025693967E77394DC088B"
+		"0ECCFA8D291BA13D44F60B06E2EDB351"))
+		return FALSE;
+	bashPrgSqueeze(hash, 32, state);
+	if (!hexEq(hash,
+		"CDE5AF6EF9A14B7D0C191B869A6343ED"
+		"6A4E9AAB4EE00A579E9E682D0EC051E3"))
+		return FALSE;
+	// A.6.decr
+	bashPrgStart(state, 256, 1, beltH(), 16, beltH() + 32, 32);
+	bashPrgAbsorb(beltH() + 64, 49, state);
+	bashPrgDecrStart(state);
+	for (pos = 0; pos < 192; pos += 192 / 6)
+		bashPrgDecrStep(buf + pos, 192 / 6, state);
+	if (!memIsZero(buf, 192))
+		return FALSE;
+	bashPrgSqueezeStart(state);
+	bashPrgSqueezeStep(buf, 14, state);
+	bashPrgSqueezeStep(buf + 14, 32 - 14, state);
+	if (!memEq(buf, hash, 32))
 		return FALSE;
 	// все нормально
 	return TRUE;
