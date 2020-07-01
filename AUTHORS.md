@@ -31,6 +31,8 @@ Contributors*
   - doc review
 - Oleg Vasilyev
   - code review
+- Yury Kashcheyeu
+  - [RPM packages](https://copr.fedorainfracloud.org/coprs/kashcheyeu/bee2/)
 
 ---
 *in chronological order of the first contribution
