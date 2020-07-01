@@ -137,7 +137,8 @@ T == octet.
 	defined(__alpha) || defined(__arm__) || defined(__MIPS__) ||\
 	defined(__mips__) || defined(__mips) || defined(__OS2__) ||\
 	defined(sun386) || defined(__TURBOC__) || defined(vax) || defined(vms) ||\
-	defined(VMS) || defined(__VMS) || defined(__EMSCRIPTEN__)
+	defined(VMS) || defined(__VMS) || defined(__EMSCRIPTEN__) ||\
+	defined(__aarch64__)
 	#define OCTET_ORDER LITTLE_ENDIAN
 #elif defined(__powerpc__) || defined(__ppc__) || defined(__PPC__) ||\
 	defined(__powerpc64__) || defined(__ppc64__) || defined(__PPC64__) ||\
