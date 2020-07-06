@@ -94,9 +94,9 @@ if(BUILD_SHARED_LIBS)
   target_link_libraries(bee2 ${libs})
 
 # uncomment next lines to keep track of bee2.so with version numbers
-# set_target_properties(bee2 PROPERTIES 
-#   VERSION ${BEE2_VERSION_MAJOR}.${BEE2_VERSION_MINOR}.${BEE2_VERSION_PATCH}
-#   SOVERSION 2.0)
+set_target_properties(bee2 PROPERTIES 
+  VERSION ${BEE2_VERSION_MAJOR}.${BEE2_VERSION_MINOR}.${BEE2_VERSION_PATCH}
+  SOVERSION 2.0)
 
   install(TARGETS bee2
     DESTINATION ${LIB_INSTALL_DIR}
