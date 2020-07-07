@@ -62,6 +62,7 @@ int testCore()
 *******************************************************************************
 */
 
+extern bool_t wwTest();
 extern bool_t priTest();
 extern bool_t zzTest();
 extern bool_t wordTest();
@@ -75,6 +76,7 @@ int testMath()
 	printf("priTest: %s\n", (code = priTest()) ? "OK" : "Err"), ret |= !code;
 	printf("zzTest: %s\n", (code = zzTest()) ? "OK" : "Err"), ret |= !code;
 	printf("wordTest: %s\n", (code = wordTest()) ? "OK" : "Err"), ret |= !code;
+	printf("wwTest: %s\n", (code = wwTest()) ? "OK" : "Err"), ret |= !code;
 	printf("ecpTest: %s\n", (code = ecpTest()) ? "OK" : "Err"), ret |= !code;
 	code = ecpBench(), ret |= !code;
 	return ret;
