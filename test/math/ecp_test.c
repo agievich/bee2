@@ -53,7 +53,7 @@ bool_t ecpTest()
 	const size_t ec_deep = ecpCreateJ_deep(n, f_deep);
 	// состояние и стек
 	octet state[2048];
-	octet stack[2048];
+	octet stack[4096];
 	octet t[96];
 	// поле и эк
 	qr_o* f;
