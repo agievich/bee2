@@ -252,16 +252,17 @@ bool_t SAFE(ecMulA)(word b[], const word a[], const ec_o* ec, const word d[],
 	const size_t point_size = ec->f->n * ec->d;
 		
 	//window width of recording
-	const size_t odd_recording_width = ecNAFWidth(B_OF_W(m));
+	//todo resolve width by used sm_mult algorithm and l size
+	const size_t window_width = ecNAFWidth(B_OF_W(m));
 	
-	//number of elements in set of available values for recording |{+-1, +-3, ..., +-(2^w - 1)}| = 2^w  
-	const size_t odd_recording_count = SIZE_1 << odd_recording_width;
+	//set size of small multiples |{+-1, +-3, ..., +-(2^w - 1)}| = 2^w  
+	const size_t odd_recording_set_size = SIZE_1 << window_width;
 
 	//2^w, required for positive/negative decoding of recording
-	const word hi_bit = WORD_1 << odd_recording_width;
+	const word hi_bit = WORD_1 << window_width;
 	
-	//number of elements in actual recording of d
-	const size_t odd_recording_size = wwOddRecording_size(m, odd_recording_width);
+	//number of elements in actual odd recording of d
+	const size_t odd_recording_size = wwOddRecording_size(m, window_width);
 	
 	register int i;
 	register word w;
@@ -281,24 +282,22 @@ bool_t SAFE(ecMulA)(word b[], const word a[], const ec_o* ec, const word d[],
 	
 	// раскладка stack
 	odd_recording = (word*)stack;
-	t = odd_recording + W_OF_B(odd_recording_size * (odd_recording_width + 1));
+	t = odd_recording + W_OF_B(odd_recording_size * (window_width + 1));
 	pre = t + 2 * point_size;
-	q = pre + odd_recording_count * point_size;
+	q = pre + odd_recording_set_size * point_size;
 	temp = q + point_size;
 	stack = temp + m;
 	
-	// расчет pre[i]: pre[2i] = pre[2i - 2] + 2a, pre[2i + 1] = -pre[2i]
-	ASSERT(odd_recording_count > 1);
-	ASSERT(odd_recording_width >= 2);
-	// pre[0] <- a, pre[1] <- -a
-	ecFromA(pre, a, ec, stack);
-	ecNeg(pre + point_size, pre, ec, stack);	
+	ASSERT(window_width >= 2);
+
 	//t[0] <- 2a
 	ecDblA(t, a, ec, stack);
-	for (i = 1; (unsigned)i <= odd_recording_count/2 - 1; ++i) {
-		ecAdd(pre + 2 * i * point_size, pre + (2 * i - 2) * point_size, t, ec, stack);
-		ecNeg(pre + (2 * i + 1) * point_size, pre + 2 * i * point_size, ec, stack);
-	}
+
+
+	// расчет pre[i]: pre[2i] = pre[2i - 2] + 2a, pre[2i + 1] = -pre[2i], i > 0
+	// pre[0] <- a, pre[1] <- -a
+	ecFromA(pre, a, ec, stack);
+	sm_mult_add(pre, t, window_width, ec, stack);
 
 	// переход к нечетной кратности
 	delta += d[0] & WORD_1;	
@@ -324,12 +323,12 @@ bool_t SAFE(ecMulA)(word b[], const word a[], const ec_o* ec, const word d[],
 	t += delta;
 	
 	// расчет Odd_Recording
-	ASSERT(odd_recording_width >= 3);
-	wwOddRecording(odd_recording, W_OF_B(odd_recording_size * (odd_recording_width + 1)),
-					temp, m, odd_recording_size, odd_recording_width);
+	ASSERT(window_width >= 3);
+	wwOddRecording(odd_recording, W_OF_B(odd_recording_size * (window_width + 1)),
+					temp, m, odd_recording_size, window_width);
 	
 	// q <- odd_recording[k-1] * a
-	w = wwGetBits(odd_recording, (odd_recording_size - 1) * (odd_recording_width + 1), odd_recording_width + 1);
+	w = wwGetBits(odd_recording, (odd_recording_size - 1) * (window_width + 1), window_width + 1);
 		
 	//calculate index
 	ASSERT((w & 1) && (w & hi_bit) == 0);
@@ -339,18 +338,18 @@ bool_t SAFE(ecMulA)(word b[], const word a[], const ec_o* ec, const word d[],
 	
 	for (i = odd_recording_size - 2; i >= 0; --i) {
 		//Q <- 2^odd_recording_width * Q
-		w = odd_recording_width;
+		w = window_width;
 		while (w) {
 			ecDbl(q, q, ec, stack);
 			--w;
 		}
 
-		w = wwGetBits(odd_recording, i * (odd_recording_width + 1), odd_recording_width + 1);
+		w = wwGetBits(odd_recording, i * (window_width + 1), window_width + 1);
 		// calculate index
 		sign = w & hi_bit;
 		w ^= sign;	
 		ASSERT((w & 1) && (w & hi_bit) == 0);
-		sign >>= odd_recording_width;
+		sign >>= window_width;
 		sign = ~sign;
 		sign &= WORD_1;
 		w ^= sign;
@@ -387,6 +386,32 @@ size_t SAFE(ecMulA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 		O_OF_W(m) +
 		ec_deep;
 }
+
+
+/*
+Вычисление малых кратных P, -P, 3P, -3P, ... , -(2^w - 1)P
+Вычисление через сложение P + 2P, 3P + 2P, ...
+На входе pre[0] = P
+todo продумать общий интерфейс для вычисления малых кратных
+*/
+bool_t sm_mult_add(word* pre, const word * dblP, const word w, const ec_o* ec, void* stack) {
+	const size_t point_size = ec->f->n * ec->d;
+
+	//set size of small multiples |{+-1, +-3, ..., +-(2^w - 1)}| = 2^w  
+	const size_t odd_recording_set_size = SIZE_1 << w;
+
+	register int i;
+
+	ecNeg(pre + point_size, pre, ec, stack);
+
+
+	for (i = 1; (unsigned)i <= odd_recording_set_size / 2 - 1; ++i) {
+		ecAdd(pre + 2 * i * point_size, pre + (2 * i - 2) * point_size, dblP, ec, stack);
+		ecNeg(pre + (2 * i + 1) * point_size, pre + 2 * i * point_size, ec, stack);
+	}
+
+}
+
 
 /*
 *******************************************************************************
