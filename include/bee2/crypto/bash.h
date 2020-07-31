@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.15
-\version 2020.06.23
+\version 2020.07.28
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -179,7 +179,7 @@ void bashHashStepG(
 
 /*!	\brief Проверка хэш-значения
 
-	Прооверяется, что первые октеты окончательного хэш-значения 
+	Проверяется, что первые октеты окончательного хэш-значения 
 	всех данных, обработанных до этого функцией bashHashStepH(),
 	совпадают с [hash_len]hash.
 	\pre hash_len <= l / 4, где l -- уровень стойкости, ранее переданный 

@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2020.03.20
-\version 2020.04.09
+\version 2020.07.31
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -22,9 +22,6 @@ version 3. See Copyright Notices in bee2/info.h.
 /*
 *******************************************************************************
 Аутентифицированное шифрование данных (CHE)
-
-\remark Режим get-then-continue реализован, но пока не рекомендован
-(вплоть до завершения оценки надежности).
 *******************************************************************************
 */
 
