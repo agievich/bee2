@@ -1267,3 +1267,187 @@ size_t ecpSWU_deep(size_t n, size_t f_deep)
 			f_deep,
 			qrPower_deep(n, n, f_deep));
 }
+
+
+/*
+*******************************************************************************
+
+Вычисление малых кратных в афинных координатах с помощью полиномов деления.
+
+Входная точка [2n]a в афинных коордитанах
+
+w - ширина окна. Вообще говоря, зависит только от стойкости. (Сохранить значеие в кривой ec_o для предвычисленных малых кратных?)
+
+sm_mults - выходной массив малых кратных
+
+\safe алгоритм регулярен
+
+*******************************************************************************
+*/
+
+bool_t smMultsA_divPoly(word* sm_mults, const word a[], const word w, const ec_o* ec, void* stack) {
+
+	//todo проверки?
+	word ec_f_n;
+	int i;
+	word* x = ecX(a);
+	word* y = ecY(a, ec->f->n);
+	word* xx;
+	word* bx;
+	word* aa;
+	word* bb;
+	word* ax;
+	word* xxx;
+	word* dblYSq;
+
+	word* tmp;
+	word* tmp2;
+
+	word* W;
+	word* WW;
+	word* WWd2; //W{i} * W{i+2}
+	word* WWd2_dblYSq; //W{i} * W{i+2} * (2y)^2
+
+	word* WWd2_dblYPow4; //W_{n+2}W_{n−1}^2 − W_{n−2}W_{n+1}^2
+
+
+	//раскладка в stack
+	xx = (word*)stack;
+	bx = xx + ec->f->n;
+	aa = bx + ec->f->n;
+	bb = aa + ec->f->n;
+	ax = bb + ec->f->n;
+	xxx = ax + ec->f->n;
+	dblYSq = xxx + ec->f->n;
+	tmp = dblYSq + ec->f->n;
+	tmp2 = tmp + ec->f->n;
+
+	//todo посчитать количество элементов
+	W = tmp2 + ec->f->n * ;				//полиномы деления начиная с третьего, W[0] = W_3
+	WW = W + ec->f->n*;					//квадраты полиномов деления начиная c третьего
+	WWd2 = WW + ec->f->n* ;				//произведения W_{n}W_{n+2}, c n = 1
+	WWd2_dblYSq = WWd2 + ec->f->n* ;    //произведения (2y)^2 W_{n}W_{n+2}, начиная с n = 2
+	WWd2_dblYPow4 = WWd2_dblYSq + ec->f->n* ; //значения (2y)^4 W_{n}W_{n+2}, начиная с n = 2
+	stack = WWd2_dblYPow4 + ec->f->n*;
+
+	//Вспомогательные значения
+	ec_f_n = ec->f->n;
+	qrSqr(xx, x, ec->f, stack); 
+	qrMul(bx, ec->B, x, ec->f, stack);
+	qrSqr(aa, ec->A, ec->f, stack);
+	qrSqr(bb, ec->B, ec->f, stack);
+	qrMul(ax, ec->A, x, ec->f, stack);
+	qrMul(xxx, xx, x, ec->f, stack);
+
+	gfpDouble(dblYSq, y, ec->f);
+	qrSqr(dblYSq, dblYSq, ec->f, stack);
+
+	//Вычислить W_3 = 3 (x^2 + a)^2 − 4 (a^2 − 3 bx)
+	qrAdd(tmp, xx, ec->A, ec->f);  // x^2 + a
+	qrSqr(tmp, tmp, ec->f, stack);		  // (x^2 + a)^2	
+	gfpDouble(tmp2, tmp, ec->f);   // 2 (x^2 + a)^2
+	qrAdd(W, tmp, tmp2, ec->f);    // 3 (x^2 + a)^2
+
+	gfpDouble(tmp, bx, ec->f);	  //2 bx
+	qrAdd(tmp, tmp, bx, ec->f);	  //3 bx
+	qrSub(tmp, aa, tmp, ec->f);   //a^2 − 3 bx
+	gfpDouble(tmp, tmp, ec->f);	  //2 (a^2 − 3 bx)
+	gfpDouble(tmp, tmp, ec->f);	  //4 (a^2 − 3 bx)
+
+	qrSub(W, W, tmp, ec->f);	  //W_3 = 3 (x^2 + a)^2 − 4 (a^2 − 3 bx)
+
+	//Вычислить W_4
+	qrSqr(W + ec_f_n, xxx, ec->f, stack);		//(x^3)^2
+
+	gfpDouble(tmp, xx, ec->f);					//2 x^2
+	gfpDouble(tmp, tmp, ec->f);					//4 x^2
+	qrAdd(tmp, tmp, xx, ec->f);					//5 x^2
+	qrSub(tmp, tmp, ec->A, ec->f);				//5 x^2 - a
+	qrMul(tmp, bx, tmp, ec->f, stack);			//bx (5 x^2 - a)
+	gfpDouble(tmp, tmp, ec->f);					//2 bx (5 x^2 - a)
+	gfpDouble(tmp, tmp, ec->f);					//4 bx (5 x^2 - a)
+
+	qrAdd(W + ec->f->n, W + ec_f_n, tmp, ec->f); //(x^3)^2 + 4 bx (5 x^2 - a)
+
+	qrSub(tmp, xxx, ax, ec->f);					//x^3 - ax
+	qrMul(tmp, tmp, ax, ec->f, stack);			//ax (x^3 - ax)
+	gfpDouble(tmp2, tmp, ec->f);				//2 ax (x^3 - ax)
+	gfpDouble(tmp2, tmp2, ec->f);				//4 ax (x^3 - ax)
+	qrAdd(tmp, tmp, tmp2, ec->f);				//5 ax (x^3 - ax)
+
+	qrAdd(W + ec_f_n, W + ec_f_n, tmp, ec->f); //(x^3)^2 + 4 bx (5 x^2 - a) + 5 ax (x^3 - ax)
+
+	gfpDouble(tmp, bb, ec->f);					//2 b^2
+	gfpDouble(tmp, tmp, ec->f);					//4 b^2
+	gfpDouble(tmp, tmp, ec->f);					//8 b^2
+
+	qrSub(W + ec_f_n, W + ec_f_n, tmp, ec->f); //(x^3)^2 + 4 bx (5 x^2 - a) + 5 ax (x^3 - ax) - 8 b^2
+
+	qrMul(tmp, aa, a, ec->f, stack);				//a^3
+
+	qrSub(W + ec_f_n, W + ec_f_n, tmp, ec->f); //(x^3)^2 + 4 bx (5 x^2 - a) + 5 ax (x^3 - ax) - 8 b^2 - a^3
+
+	gfpDouble(W + ec_f_n, W + ec_f_n, ec->f);	//W_4 = 2 ((x^3)^2 + 4 bx (5 x^2 - a) + 5 ax (x^3 - ax) - 8 b^2 - a^3)
+
+
+	//(2y)^2
+	gfpDouble(dblYSq, y, ec->f);
+	qrSqr(dblYSq, dblYSq, ec->f, stack);
+
+	//(W_3)^2
+	qrSqr(WW, W, ec->f, stack);
+
+	//(W_4)^2
+	qrSqr(WW + ec_f_n, W + ec_f_n, ec->f, stack);
+
+	//W_{1}W_{3} = W{3}
+	qrCopy(WWd2, W, ec->f);
+
+	//W_{2}W_{4} = W{4}
+	qrCopy(WWd2 + ec_f_n, w + ec_f_n, ec->f);
+
+	//[(2y)2W2W4]
+	qrMul(WWd2_dblYSq, WWd2 + ec_f_n, dblYSq, ec->f, stack);
+
+	//[(2y)4W2W4]
+	qrMul(WWd2_dblYPow4, WWd2_dblYSq, dblYSq, ec->f, stack);
+
+	//[W5] ← [(2y)4W2W4] −[W1W3] ·[W_{3}^2]
+	qrMul(tmp, WWd2, WW, ec->f, stack);
+	qrSub(W + 2 * ec_f_n, WWd2_dblYPow4, tmp, ec->f, stack);
+
+	//[W5 ^2] ←([W5])2
+	qrSqr(WW + 2 * ec_f_n, W + 2 * ec_f_n, ec->f, stack);
+
+	//i 3 = .. 2^{w-1}
+	for (i = 3; i <= (1 << (w - 1)); ++i) {
+		//[WnWn+2] ← (([Wn] + [Wn+2])^2 − [W2n] −[W2 n + 2]) / 2
+		qrAdd(tmp, W + ec_f_n * (i - 3), W + ec_f_n * (i - 1), ec->f, stack);
+		qrSqr(tmp, tmp, ec->f, stack);
+		qrSub(tmp, tmp, WW + ec_f_n * (i - 3), ec->f);
+		qrSub(tmp, tmp, WW + ec_f_n * (i - 1), ec->f);
+		gfpHalf(WWd2 + ec_f_n * (i-1), tmp, ec->f);
+
+		if (i == 3) {
+			//[W2n] ← [WnWn+2] − [Wn−2Wn] · [W2 n + 1]: 1M + 1A
+			qrMul(tmp, WWd2  + ec_f_n * (i - 1 - 2), WW + ec_f_n * (i - 3 + 1), ec->f, stack);
+			qrSub(W + ec_f_n * (2 * i - 3), WWd2 + ec_f_n * (i - 1), tmp, ec->f, stack);
+		}
+		else {
+			//[W2n] ← [WnWn+2] · [W2 n−1] −[Wn−2Wn] ·[W2 n + 1]: 2M + 1A
+			qrMul(tmp, WWd2 + ec_f_n * (i - 1 - 2), WW + ec_f_n * (i - 3 + 1), ec->f, stack);
+			qrMul(tmp2, WWd2 + ec_f_n * (i - 1), WW + ec_f_n * (i - 3 - 1), ec->f, stack);
+			qrSub(W + ec_f_n * (2 * i - 3),tmp2 , tmp, ec->f, stack);
+		}
+
+		//i нечетное?
+		if (i & 1 == 1) {
+			//[W2n+1] ← [WnWn+2] · [W2 n] −[(2y)4Wn−1Wn + 1] ·[W2 n + 1]
+
+ 		}
+		else {
+
+		}
+	}
+
+}
