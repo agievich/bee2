@@ -6,7 +6,7 @@
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.06.26
 \version 2021.06.30
-\license This program is released under the GNU General Public License 
+\license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
@@ -81,11 +81,11 @@ on a 16-bit Microcomputer. Public Key Cryptography, 1998].
 \todo Сравнить dbl-1998-hnm2 с dbl-2001-b, сложность которого
 	3M +5S + 8add + 1*4 + 2*8 + 1*3.
 
-В функции ecpDblAJ() выполняется удвоение P <- 2A. Реализован алгоритм 
+В функции ecpDblAJ() выполняется удвоение P <- 2A. Реализован алгоритм
 mdbl-2007-bl [Bernstein-Lange, 2007]. Сложность алгоритма:
 	1M + 5S + 7add + 1*8 + 3*2 + 1*3 \approx 6M.
 
-В функции ecpAddJ() выполняется сложение P <- P + P. Реализован алгоритм 
+В функции ecpAddJ() выполняется сложение P <- P + P. Реализован алгоритм
 add-2007-bl [Bernstein-Lange, 2007]. Сложность алгоритма:
 	11M + 5S + 9add + 4*2 \approx 16M.
 
@@ -98,16 +98,16 @@ Guide to Elliptic Curve Cryptography, Springer, 2004].
 Сложность алгоритма:
 	8M + 3S + 6add + 1*2 \approx 11M.
 
-В функции ecpTplJ() выполняется утроение P <- 3P. Реализован алгоритм 
+В функции ecpTplJ() выполняется утроение P <- 3P. Реализован алгоритм
 tpl-2007-bl [Bernstein-Lange, 2007]. Сложность алгоритма
 	5M + 10S + 1*A + 15add + 2*4 + 1*6 + 1*8 + 1*16 + 1*3 \approx 15M.
 
-В функции ecpTplJA3() выполняется утроение P <- 3P для случая A = -3. 
-Реализован алгоритм tpl-2007-bl-2 [Bernstein-Lange, 2007]. 
+В функции ecpTplJA3() выполняется утроение P <- 3P для случая A = -3.
+Реализован алгоритм tpl-2007-bl-2 [Bernstein-Lange, 2007].
 Сложность алгоритма
 	7M + 7S + 13add + 2*4 + 1*8 + 1*12 + 1*16 + 1*3 \approx 14M.
 
-Целевые функции ci(l), определенные в описании реализации ecMul() в ec.c, 
+Целевые функции ci(l), определенные в описании реализации ecMul() в ec.c,
 принимают следующий вид:
 	c1(l) = l/3 11;
 	c2(l, w) = 103 + (2^{w-2} - 2)102 + l/(w + 1) 11;
@@ -496,7 +496,7 @@ static void ecpAddJ(word c[], const word a[], const word b[], const ec_o* ec,
 
 static size_t ecpAddJ_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(4 * n) + 
+	return O_OF_W(4 * n) +
 		utilMax(2,
 			f_deep,
 			ecpDblJ_deep(n, f_deep));
@@ -692,7 +692,7 @@ static void ecpTplJ(word b[], const word a[], const ec_o* ec, void* stack)
 	qrSqr(ecZ(b, n), ecZ(b, n), ec->f, stack);
 	zmSub(ecZ(b, n), ecZ(b, n), t2, ec->f);
 	zmSub(ecZ(b, n), ecZ(b, n), t7, ec->f);
-	// t2 <- (t4 + t6)^2 - t5 - t7 - t3 [U] 
+	// t2 <- (t4 + t6)^2 - t5 - t7 - t3 [U]
 	zmAdd(t2, t4, t6, ec->f);
 	qrSqr(t2, t2, ec->f, stack);
 	zmSub(t2, t2, t5, ec->f);
@@ -772,7 +772,7 @@ static void ecpTplJA3(word b[], const word a[], const ec_o* ec, void* stack)
 	qrSqr(ecZ(b, n), ecZ(b, n), ec->f, stack);
 	zmSub(ecZ(b, n), ecZ(b, n), t2, ec->f);
 	zmSub(ecZ(b, n), ecZ(b, n), t7, ec->f);
-	// t2 <- (t4 + t6)^2 - t5 - t7 - t3 [U] 
+	// t2 <- (t4 + t6)^2 - t5 - t7 - t3 [U]
 	zmAdd(t2, t4, t6, ec->f);
 	qrSqr(t2, t2, ec->f, stack);
 	zmSub(t2, t2, t5, ec->f);
@@ -802,7 +802,7 @@ size_t ecpTplJA3_deep(size_t n, size_t f_deep)
 	return O_OF_W(7 * n) + f_deep;
 }
 
-bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[], 
+bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	void* stack)
 {
 	register bool_t bA3;
@@ -810,7 +810,7 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	// pre
 	ASSERT(memIsValid(ec, sizeof(ec_o)));
 	ASSERT(gfpIsOperable(f));
-	ASSERT(memIsValid(A, f->no)); 
+	ASSERT(memIsValid(A, f->no));
 	ASSERT(memIsValid(B, f->no));
 	// f->mod > 3?
 	if (wwCmpW(f->mod, f->n, 3) <= 0)
@@ -888,7 +888,7 @@ size_t ecpCreateJ_deep(size_t n, size_t f_deep)
 
 /*
 *******************************************************************************
-Свойства кривой 
+Свойства кривой
 *******************************************************************************
 */
 
@@ -909,7 +909,7 @@ bool_t ecpIsValid(const ec_o* ec, void* stack)
 		!gfpIsValid(ec->f, stack) ||
 		wwCmpW(ec->f->mod, ec->f->n, 3) <= 0 ||
 		ec->deep < ec->f->deep ||
-		!zmIsIn(ec->A, ec->f) || 
+		!zmIsIn(ec->A, ec->f) ||
 		!zmIsIn(ec->B, ec->f))
 		return FALSE;
 	// t1 <- 4 A^3
@@ -932,7 +932,7 @@ bool_t ecpIsValid(const ec_o* ec, void* stack)
 
 size_t ecpIsValid_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(3 * n) + 
+	return O_OF_W(3 * n) +
 		utilMax(2,
 			f_deep,
 			gfpIsValid_deep(n));
@@ -982,8 +982,8 @@ bool_t ecpSeemsValidGroup(const ec_o* ec, void* stack)
 
 size_t ecpSeemsValidGroup_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(4 * n + 3) + 
-		utilMax(2, 
+	return O_OF_W(4 * n + 3) +
+		utilMax(2,
 			ecpIsOnA_deep(n, f_deep),
 			zzSqr_deep(n));
 }
@@ -1109,7 +1109,7 @@ bool_t ecpAddAA(word c[], const word a[], const word b[], const ec_o* ec,
 	else
 	{
 		// ya != yb или yb == 0 => a == -b => a + b == O
-		if (qrCmp(ecY(a, n), ecY(b, n), ec->f) != 0 || 
+		if (qrCmp(ecY(a, n), ecY(b, n), ec->f) != 0 ||
 			qrIsZero(ecY(b, n), ec->f))
 			return FALSE;
 		// t2 <- 3 xa^2 + A
@@ -1216,7 +1216,7 @@ void ecpSWU(word b[], const word a[], const ec_o* ec, void* stack)
 	word* x1 = t + n;
 	word* x2 = x1 + n;
 	word* y = x2 + n;
-	word* s = y + n; 
+	word* s = y + n;
 	stack = s + n;
 	// pre
 	ASSERT(ecIsOperable(ec));
@@ -1229,7 +1229,7 @@ void ecpSWU(word b[], const word a[], const ec_o* ec, void* stack)
 	// s <- p - 2
 	wwCopy(s, ec->f->mod, n);
 	zzSubW2(s, n, 2);
-	// x1 <- -B(1 + t + t^2)(A(t + t^2))^{p - 2} 
+	// x1 <- -B(1 + t + t^2)(A(t + t^2))^{p - 2}
 	qrSqr(x2, t, ec->f, stack);
 	qrAdd(x2, x2, t, ec->f);
 	qrMul(x1, x2, ec->A, ec->f, stack);
@@ -1268,8 +1268,192 @@ void ecpSWU(word b[], const word a[], const ec_o* ec, void* stack)
 
 size_t ecpSWU_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(5 * n) + 
+	return O_OF_W(5 * n) +
 		utilMax(2,
 			f_deep,
 			qrPower_deep(n, n, f_deep));
+}
+
+
+/*
+*******************************************************************************
+
+Вычисление малых кратных в афинных координатах с помощью полиномов деления.
+
+Входная точка [2n]a в афинных коордитанах
+
+w - ширина окна. Вообще говоря, зависит только от стойкости. (Сохранить значеие в кривой ec_o для предвычисленных малых кратных?)
+
+sm_mults - выходной массив малых кратных
+
+\safe алгоритм регулярен
+
+*******************************************************************************
+*/
+
+bool_t smMultsA_divPoly(word* sm_mults, const word a[], const word w, const ec_o* ec, void* stack) {
+
+	//todo проверки?
+	word ec_f_n;
+	int i;
+	word* x = ecX(a);
+	word* y = ecY(a, ec->f->n);
+	word* xx;
+	word* bx;
+	word* aa;
+	word* bb;
+	word* ax;
+	word* xxx;
+	word* dblYSq;
+
+	word* tmp;
+	word* tmp2;
+
+	word* W;
+	word* WW;
+	word* WWd2; //W{i} * W{i+2}
+	word* WWd2_dblYSq; //W{i} * W{i+2} * (2y)^2
+
+	word* WWd2_dblYPow4; //W_{n+2}W_{n−1}^2 − W_{n−2}W_{n+1}^2
+
+
+	//раскладка в stack
+	xx = (word*)stack;
+	bx = xx + ec->f->n;
+	aa = bx + ec->f->n;
+	bb = aa + ec->f->n;
+	ax = bb + ec->f->n;
+	xxx = ax + ec->f->n;
+	dblYSq = xxx + ec->f->n;
+	tmp = dblYSq + ec->f->n;
+	tmp2 = tmp + ec->f->n;
+
+	//todo посчитать количество элементов
+	W = tmp2 + ec->f->n * ;				//полиномы деления начиная с третьего, W[0] = W_3
+	WW = W + ec->f->n*;					//квадраты полиномов деления начиная c третьего
+	WWd2 = WW + ec->f->n* ;				//произведения W_{n}W_{n+2}, c n = 1
+	WWd2_dblYSq = WWd2 + ec->f->n* ;    //произведения (2y)^2 W_{n}W_{n+2}, начиная с n = 2
+	WWd2_dblYPow4 = WWd2_dblYSq + ec->f->n* ; //значения (2y)^4 W_{n}W_{n+2}, начиная с n = 2
+	stack = WWd2_dblYPow4 + ec->f->n*;
+
+	//Вспомогательные значения
+	ec_f_n = ec->f->n;
+	qrSqr(xx, x, ec->f, stack);
+	qrMul(bx, ec->B, x, ec->f, stack);
+	qrSqr(aa, ec->A, ec->f, stack);
+	qrSqr(bb, ec->B, ec->f, stack);
+	qrMul(ax, ec->A, x, ec->f, stack);
+	qrMul(xxx, xx, x, ec->f, stack);
+
+	gfpDouble(dblYSq, y, ec->f);
+	qrSqr(dblYSq, dblYSq, ec->f, stack);
+
+	//Вычислить W_3 = 3 (x^2 + a)^2 − 4 (a^2 − 3 bx)
+	qrAdd(tmp, xx, ec->A, ec->f);  // x^2 + a
+	qrSqr(tmp, tmp, ec->f, stack);		  // (x^2 + a)^2
+	gfpDouble(tmp2, tmp, ec->f);   // 2 (x^2 + a)^2
+	qrAdd(W, tmp, tmp2, ec->f);    // 3 (x^2 + a)^2
+
+	gfpDouble(tmp, bx, ec->f);	  //2 bx
+	qrAdd(tmp, tmp, bx, ec->f);	  //3 bx
+	qrSub(tmp, aa, tmp, ec->f);   //a^2 − 3 bx
+	gfpDouble(tmp, tmp, ec->f);	  //2 (a^2 − 3 bx)
+	gfpDouble(tmp, tmp, ec->f);	  //4 (a^2 − 3 bx)
+
+	qrSub(W, W, tmp, ec->f);	  //W_3 = 3 (x^2 + a)^2 − 4 (a^2 − 3 bx)
+
+	//Вычислить W_4
+	qrSqr(W + ec_f_n, xxx, ec->f, stack);		//(x^3)^2
+
+	gfpDouble(tmp, xx, ec->f);					//2 x^2
+	gfpDouble(tmp, tmp, ec->f);					//4 x^2
+	qrAdd(tmp, tmp, xx, ec->f);					//5 x^2
+	qrSub(tmp, tmp, ec->A, ec->f);				//5 x^2 - a
+	qrMul(tmp, bx, tmp, ec->f, stack);			//bx (5 x^2 - a)
+	gfpDouble(tmp, tmp, ec->f);					//2 bx (5 x^2 - a)
+	gfpDouble(tmp, tmp, ec->f);					//4 bx (5 x^2 - a)
+
+	qrAdd(W + ec->f->n, W + ec_f_n, tmp, ec->f); //(x^3)^2 + 4 bx (5 x^2 - a)
+
+	qrSub(tmp, xxx, ax, ec->f);					//x^3 - ax
+	qrMul(tmp, tmp, ax, ec->f, stack);			//ax (x^3 - ax)
+	gfpDouble(tmp2, tmp, ec->f);				//2 ax (x^3 - ax)
+	gfpDouble(tmp2, tmp2, ec->f);				//4 ax (x^3 - ax)
+	qrAdd(tmp, tmp, tmp2, ec->f);				//5 ax (x^3 - ax)
+
+	qrAdd(W + ec_f_n, W + ec_f_n, tmp, ec->f); //(x^3)^2 + 4 bx (5 x^2 - a) + 5 ax (x^3 - ax)
+
+	gfpDouble(tmp, bb, ec->f);					//2 b^2
+	gfpDouble(tmp, tmp, ec->f);					//4 b^2
+	gfpDouble(tmp, tmp, ec->f);					//8 b^2
+
+	qrSub(W + ec_f_n, W + ec_f_n, tmp, ec->f); //(x^3)^2 + 4 bx (5 x^2 - a) + 5 ax (x^3 - ax) - 8 b^2
+
+	qrMul(tmp, aa, a, ec->f, stack);				//a^3
+
+	qrSub(W + ec_f_n, W + ec_f_n, tmp, ec->f); //(x^3)^2 + 4 bx (5 x^2 - a) + 5 ax (x^3 - ax) - 8 b^2 - a^3
+
+	gfpDouble(W + ec_f_n, W + ec_f_n, ec->f);	//W_4 = 2 ((x^3)^2 + 4 bx (5 x^2 - a) + 5 ax (x^3 - ax) - 8 b^2 - a^3)
+
+
+	//(2y)^2
+	gfpDouble(dblYSq, y, ec->f);
+	qrSqr(dblYSq, dblYSq, ec->f, stack);
+
+	//(W_3)^2
+	qrSqr(WW, W, ec->f, stack);
+
+	//(W_4)^2
+	qrSqr(WW + ec_f_n, W + ec_f_n, ec->f, stack);
+
+	//W_{1}W_{3} = W{3}
+	qrCopy(WWd2, W, ec->f);
+
+	//W_{2}W_{4} = W{4}
+	qrCopy(WWd2 + ec_f_n, w + ec_f_n, ec->f);
+
+	//[(2y)2W2W4]
+	qrMul(WWd2_dblYSq, WWd2 + ec_f_n, dblYSq, ec->f, stack);
+
+	//[(2y)4W2W4]
+	qrMul(WWd2_dblYPow4, WWd2_dblYSq, dblYSq, ec->f, stack);
+
+	//[W5] ← [(2y)4W2W4] −[W1W3] ·[W_{3}^2]
+	qrMul(tmp, WWd2, WW, ec->f, stack);
+	qrSub(W + 2 * ec_f_n, WWd2_dblYPow4, tmp, ec->f, stack);
+
+	//[W5 ^2] ←([W5])2
+	qrSqr(WW + 2 * ec_f_n, W + 2 * ec_f_n, ec->f, stack);
+
+	//i 3 = .. 2^{w-1}
+	for (i = 3; i <= (1 << (w - 1)); ++i) {
+		//[WnWn+2] ← (([Wn] + [Wn+2])^2 − [W2n] −[W2 n + 2]) / 2
+		qrAdd(tmp, W + ec_f_n * (i - 3), W + ec_f_n * (i - 1), ec->f, stack);
+		qrSqr(tmp, tmp, ec->f, stack);
+		qrSub(tmp, tmp, WW + ec_f_n * (i - 3), ec->f);
+		qrSub(tmp, tmp, WW + ec_f_n * (i - 1), ec->f);
+		gfpHalf(WWd2 + ec_f_n * (i-1), tmp, ec->f);
+
+		if (i == 3) {
+			//[W2n] ← [WnWn+2] − [Wn−2Wn] · [W2 n + 1]: 1M + 1A
+			qrMul(tmp, WWd2  + ec_f_n * (i - 1 - 2), WW + ec_f_n * (i - 3 + 1), ec->f, stack);
+			qrSub(W + ec_f_n * (2 * i - 3), WWd2 + ec_f_n * (i - 1), tmp, ec->f, stack);
+		}
+		else {
+			//[W2n] ← [WnWn+2] · [W2 n−1] −[Wn−2Wn] ·[W2 n + 1]: 2M + 1A
+			qrMul(tmp, WWd2 + ec_f_n * (i - 1 - 2), WW + ec_f_n * (i - 3 + 1), ec->f, stack);
+			qrMul(tmp2, WWd2 + ec_f_n * (i - 1), WW + ec_f_n * (i - 3 - 1), ec->f, stack);
+			qrSub(W + ec_f_n * (2 * i - 3),tmp2 , tmp, ec->f, stack);
+		}
+
+		//i нечетное?
+		if (i & 1 == 1) {
+			//[W2n+1] ← [WnWn+2] · [W2 n] −[(2y)4Wn−1Wn + 1] ·[W2 n + 1]
+
+ 		}
+		else {
+
+		}
+	}
+
 }

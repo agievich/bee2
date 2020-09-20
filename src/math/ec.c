@@ -293,11 +293,9 @@ bool_t SAFE(ecMulA)(word b[], const word a[], const ec_o* ec, const word d[],
 	//t[0] <- 2a
 	ecDblA(t, a, ec, stack);
 
-
 	// расчет pre[i]: pre[2i] = pre[2i - 2] + 2a, pre[2i + 1] = -pre[2i], i > 0
 	// pre[0] <- a, pre[1] <- -a
-	ecFromA(pre, a, ec, stack);
-	sm_mult_add(pre, t, window_width, ec, stack);
+	sm_mult_add(pre, a, t, window_width, ec, stack);
 
 	// переход к нечетной кратности
 	delta += d[0] & WORD_1;	
@@ -393,8 +391,12 @@ size_t SAFE(ecMulA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 Вычисление через сложение P + 2P, 3P + 2P, ...
 На входе pre[0] = P
 todo продумать общий интерфейс для вычисления малых кратных
+[2n]p - в афинных координатах,
+[3n]dblP - в проективных координатах
+
 */
-bool_t sm_mult_add(word* pre, const word * dblP, const word w, const ec_o* ec, void* stack) {
+bool_t sm_mult_add(word pre[], const word p[], const word dblP
+	[], const word w, const ec_o* ec, void* stack) {
 	const size_t point_size = ec->f->n * ec->d;
 
 	//set size of small multiples |{+-1, +-3, ..., +-(2^w - 1)}| = 2^w  
@@ -402,6 +404,7 @@ bool_t sm_mult_add(word* pre, const word * dblP, const word w, const ec_o* ec, v
 
 	register int i;
 
+	ecFromA(pre, p, ec, stack);
 	ecNeg(pre + point_size, pre, ec, stack);
 
 
@@ -411,7 +414,6 @@ bool_t sm_mult_add(word* pre, const word * dblP, const word w, const ec_o* ec, v
 	}
 
 }
-
 
 /*
 *******************************************************************************
