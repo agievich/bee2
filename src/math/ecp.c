@@ -1288,8 +1288,9 @@ sm_mults - выходной массив малых кратных
 bool_t smMultsA_divPoly(word* sm_mults, const word a[], const word w, const ec_o* ec, void* stack) {
 
 	//todo проверки?
-	word ec_f_n;
+	const word ec_f_n = ec->f->n;
 	int i;
+	int t;
 	word* x = ecX(a);
 	word* y = ecY(a, ec->f->n);
 	word* xx;
@@ -1303,12 +1304,17 @@ bool_t smMultsA_divPoly(word* sm_mults, const word a[], const word w, const ec_o
 	word* tmp;
 	word* tmp2;
 
-	word* W;
-	word* WW;
-	word* WWd2; //W{i} * W{i+2}
-	word* WWd2_dblYSq; //W{i} * W{i+2} * (2y)^2
+	word* W;				//полиномы деления начиная с третьего, W[0] = W_3
+	word* WW;				//квадраты полиномов деления начиная c третьего
+	word* WWd2;				//произведения W_{n}W_{n+2}, c n = 1
+	word* WWd2_dblYSq;		//произведения (2y)^2 W_{n}W_{n+2}, начиная с n = 2
+	word* WWd2_dblYPow4;	//значения (2y)^4 W_{n}W_{n+2}, начиная с n = 2
 
-	word* WWd2_dblYPow4; //W_{n+2}W_{n−1}^2 − W_{n−2}W_{n+1}^2
+	const int W_idx_shift = -3;
+	const int WW_idx_shift = -3;
+	const int WWd2_idx_shift = -1;
+	const int WWd2_dblYSq_idx_shift = -2;
+	const int WWd2_dblYPow4_idx_shift = -2;
 
 
 	//раскладка в stack
@@ -1323,15 +1329,14 @@ bool_t smMultsA_divPoly(word* sm_mults, const word a[], const word w, const ec_o
 	tmp2 = tmp + ec->f->n;
 
 	//todo посчитать количество элементов
-	W = tmp2 + ec->f->n * ;				//полиномы деления начиная с третьего, W[0] = W_3
-	WW = W + ec->f->n*;					//квадраты полиномов деления начиная c третьего
-	WWd2 = WW + ec->f->n* ;				//произведения W_{n}W_{n+2}, c n = 1
-	WWd2_dblYSq = WWd2 + ec->f->n* ;    //произведения (2y)^2 W_{n}W_{n+2}, начиная с n = 2
-	WWd2_dblYPow4 = WWd2_dblYSq + ec->f->n* ; //значения (2y)^4 W_{n}W_{n+2}, начиная с n = 2
+	W = tmp2 + ec->f->n * ;				
+	WW = W + ec->f->n*;					
+	WWd2 = WW + ec->f->n* ;				
+	WWd2_dblYSq = WWd2 + ec->f->n* ;    
+	WWd2_dblYPow4 = WWd2_dblYSq + ec->f->n* ; 
 	stack = WWd2_dblYPow4 + ec->f->n*;
 
 	//Вспомогательные значения
-	ec_f_n = ec->f->n;
 	qrSqr(xx, x, ec->f, stack); 
 	qrMul(bx, ec->B, x, ec->f, stack);
 	qrSqr(aa, ec->A, ec->f, stack);
@@ -1420,33 +1425,51 @@ bool_t smMultsA_divPoly(word* sm_mults, const word a[], const word w, const ec_o
 	qrSqr(WW + 2 * ec_f_n, W + 2 * ec_f_n, ec->f, stack);
 
 	//i 3 = .. 2^{w-1}
-	for (i = 3; i <= (1 << (w - 1)); ++i) {
+	t = (1 << (w - 1));
+	for (i = 3; i <= t; ++i) {
 		//[WnWn+2] ← (([Wn] + [Wn+2])^2 − [W2n] −[W2 n + 2]) / 2
-		qrAdd(tmp, W + ec_f_n * (i - 3), W + ec_f_n * (i - 1), ec->f, stack);
+		qrAdd(tmp, W + ec_f_n * (i + W_idx_shift), W + ec_f_n * (i + W_idx_shift + 2), ec->f, stack);
 		qrSqr(tmp, tmp, ec->f, stack);
-		qrSub(tmp, tmp, WW + ec_f_n * (i - 3), ec->f);
-		qrSub(tmp, tmp, WW + ec_f_n * (i - 1), ec->f);
+		qrSub(tmp, tmp, WW + ec_f_n * (i + WW_idx_shift), ec->f);
+		qrSub(tmp, tmp, WW + ec_f_n * (i + WW_idx_shift + 2), ec->f);
 		gfpHalf(WWd2 + ec_f_n * (i-1), tmp, ec->f);
 
 		if (i == 3) {
 			//[W2n] ← [WnWn+2] − [Wn−2Wn] · [W2 n + 1]: 1M + 1A
-			qrMul(tmp, WWd2  + ec_f_n * (i - 1 - 2), WW + ec_f_n * (i - 3 + 1), ec->f, stack);
-			qrSub(W + ec_f_n * (2 * i - 3), WWd2 + ec_f_n * (i - 1), tmp, ec->f, stack);
+			qrMul(tmp, WWd2  + ec_f_n * (i + WWd2_idx_shift - 2), WW + ec_f_n * (i + WW_idx_shift + 1), ec->f, stack);
+			qrSub(W + ec_f_n * (2 * i + W_idx_shift), WWd2 + ec_f_n * (i - 1), tmp, ec->f, stack);
 		}
 		else {
-			//[W2n] ← [WnWn+2] · [W2 n−1] −[Wn−2Wn] ·[W2 n + 1]: 2M + 1A
-			qrMul(tmp, WWd2 + ec_f_n * (i - 1 - 2), WW + ec_f_n * (i - 3 + 1), ec->f, stack);
-			qrMul(tmp2, WWd2 + ec_f_n * (i - 1), WW + ec_f_n * (i - 3 - 1), ec->f, stack);
-			qrSub(W + ec_f_n * (2 * i - 3),tmp2 , tmp, ec->f, stack);
+			//[W2n] ← [WnWn+2] · [W2 n−1] −[Wn−2Wn] ·[W2 n + 1]
+			qrMul(tmp, WWd2 + ec_f_n * (i + WWd2_idx_shift - 2), WW + ec_f_n * (i + WW_idx_shift + 1), ec->f, stack);
+			qrMul(tmp2, WWd2 + ec_f_n * (i + WWd2_idx_shift), WW + ec_f_n * (i + WW_idx_shift - 1), ec->f, stack);
+			qrSub(W + ec_f_n * (2 * i + W_idx_shift), tmp2, tmp, ec->f, stack);
 		}
 
 		//i нечетное?
-		if (i & 1 == 1) {
-			//[W2n+1] ← [WnWn+2] · [W2 n] −[(2y)4Wn−1Wn + 1] ·[W2 n + 1]
-
+		if (i & 1 == 1)
+		{
+			//[W2n+1] ← [WnWn+2] · [W2 n] − [(2y)4Wn−1Wn + 1] ·[W2 n + 1]
+			qrMul(tmp, WWd2 + ec_f_n * (i + WWd2_idx_shift), WW + ec_f_n * (i + WW_idx_shift), ec->f, stack);
+			qrMul(tmp2, WWd2_dblYPow4 + ec_f_n * (i + WWd2_dblYPow4_idx_shift - 1), WW + ec_f_n * (i + WW_idx_shift + 1), ec->f, stack);
+			qrSub(W + ec_f_n * (2*i + 1 + W_idx_shift), tmp, tmp2, ec->f);
  		}
 		else {
+			//(a) [(2y)2WnWn + 2] ←[(2y)2] ·[WnWn + 2]: 1M
+			qrMul(WWd2_dblYSq + ec_f_n * (i + WWd2_dblYSq_idx_shift), dblYSq, WWd2 + ec_f_n * (i + WWd2_idx_shift), ec->f, stack);
 
+			//(b)[(2y)4WnWn + 2] ←[(2y)2] ·[(2y)2WnWn + 2]: 1M
+			qrMul(WWd2_dblYPow4 + ec_f_n * (i + WWd2_dblYPow4_idx_shift), dblYSq, WWd2_dblYSq + ec_f_n * (i + WWd2_dblYSq_idx_shift), ec->f, stack);
+
+			//(c) [W2n+1] ← [(2y)4WnWn + 2] ·[W2n] −[Wn−1Wn + 1] ·[W2 n + 1]: 2M + 1A
+			qrMul(tmp, WWd2_dblYPow4 + ec_f_n * (i + WWd2_dblYPow4_idx_shift), WW + ec_f_n * (i + WW_idx_shift), ec->f, stack);
+			qrMul(tmp2, WWd2 + ec_f_n * (i - 1 + WWd2_idx_shift), WW + ec_f_n * (i + WW_idx_shift + 1), ec->f, stack);
+			qrSub(W + ec_f_n * (2 * i + 1 + W_idx_shift), tmp, tmp2, ec->f);
+		}
+
+		if (i != t) {
+			//[W2 2n + 1] ←([W2n + 1])2
+			qrSqr(WW + ec_f_n * (2 * i + 1 + WW_idx_shift), W + ec_f_n * (2 * i + 1 + W_idx_shift), ec->f, stack);
 		}
 	}
 
