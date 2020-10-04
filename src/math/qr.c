@@ -183,3 +183,34 @@ size_t qrPower_deep(size_t n, size_t m, size_t r_deep)
 	const size_t powers_count = SIZE_1 << (qrCalcSlideWidth(m) - 1);
 	return O_OF_W(n + n * powers_count) + r_deep;
 }
+
+
+void qrMontInv(word c[], const word u[], size_t m,	const qr_o* r, void* stack)
+{
+	ASSERT(qrIsOperable(r));
+	ASSERT(wwIsValid(u, r->n *m));
+	ASSERT(wwIsSameOrDisjoint(c, u, m * r->n));
+
+	size_t i;
+	word* p;
+	word* v;
+
+	p = (word*)stack;
+	v = p + m * r->n;
+	stack = v + r->n;
+
+	qrCopy(p, u, r);
+	for (i = 1; i < m; ++i) {
+		qrMul(p + i * r->n, p + (i - 1) * r->n, u + i * r->n, r, stack);
+	}
+	qrInv(v, p + (m - 1) * r->n, r, stack);
+	for (i = m - 1; i > 0; --i) {
+		qrMul(c + i * r->n, p + (i - 1) * r->n, v, r, stack);
+		qrMul(v, v, c + i * r->n, r, stack);
+	}
+	qrCopy(c, v, r);
+}
+
+size_t qrMontInv_deep(size_t n, size_t m, size_t r_deep) {
+	return O_OF_W((m + 1) * n) + r_deep;
+}
