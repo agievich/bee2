@@ -1278,7 +1278,7 @@ size_t ecpSWU_deep(size_t n, size_t f_deep)
 
 w - ширина окна. Вообще говоря, зависит только от стойкости. (Сохранить значеие в кривой ec_o для предвычисленных малых кратных?)
 
-sm_mults - выходной массив малых кратных
+sm_mults - выходной массив малых кратных X3,Y3,X5,Y5... в афинных координатах
 
 \safe алгоритм регулярен
 
@@ -1289,8 +1289,9 @@ bool_t smMultsA_divPoly(word* sm_mults, const word a[], const word w, const ec_o
 
 	//todo проверки?
 	const word ec_f_n = ec->f->n;
-	int i;
-	int t;
+	const word aff_point_size = ec->f->n * 2;
+	size_t i;
+	size_t t;
 	word* x = ecX(a);
 	word* y = ecY(a, ec->f->n);
 	word* xx;
@@ -1309,6 +1310,7 @@ bool_t smMultsA_divPoly(word* sm_mults, const word a[], const word w, const ec_o
 	word* WWd2;				//произведения W_{n}W_{n+2}, c n = 1
 	word* WWd2_dblYSq;		//произведения (2y)^2 W_{n}W_{n+2}, начиная с n = 2
 	word* WWd2_dblYPow4;	//значения (2y)^4 W_{n}W_{n+2}, начиная с n = 2
+	word* WW_odd_inv;	    //обратные к нечетным квадратам полиномов деления: W_{n}^{-2}, n = 3, 5, ...
 
 	const int W_idx_shift = -3;
 	const int WW_idx_shift = -3;
@@ -1333,8 +1335,9 @@ bool_t smMultsA_divPoly(word* sm_mults, const word a[], const word w, const ec_o
 	WW = W + ec->f->n*;					
 	WWd2 = WW + ec->f->n* ;				
 	WWd2_dblYSq = WWd2 + ec->f->n* ;    
-	WWd2_dblYPow4 = WWd2_dblYSq + ec->f->n* ; 
-	stack = WWd2_dblYPow4 + ec->f->n*;
+	WWd2_dblYPow4 = WWd2_dblYSq + ec->f->n* ;
+	WW_odd_inv = WWd2_dblYPow4 + ec->f->n*;
+	stack = WW_odd_inv + ec->f->n*;
 
 	//Вспомогательные значения
 	qrSqr(xx, x, ec->f, stack); 
@@ -1425,7 +1428,7 @@ bool_t smMultsA_divPoly(word* sm_mults, const word a[], const word w, const ec_o
 	qrSqr(WW + 2 * ec_f_n, W + 2 * ec_f_n, ec->f, stack);
 
 	//i 3 = .. 2^{w-1}
-	t = (1 << (w - 1));
+	t = (SIZE_1 << (w - 1));
 	for (i = 3; i <= t; ++i) {
 		//[WnWn+2] ← (([Wn] + [Wn+2])^2 − [W2n] −[W2 n + 2]) / 2
 		qrAdd(tmp, W + ec_f_n * (i + W_idx_shift), W + ec_f_n * (i + W_idx_shift + 2), ec->f, stack);
@@ -1471,6 +1474,34 @@ bool_t smMultsA_divPoly(word* sm_mults, const word a[], const word w, const ec_o
 			//[W2 2n + 1] ←([W2n + 1])2
 			qrSqr(WW + ec_f_n * (2 * i + 1 + WW_idx_shift), W + ec_f_n * (2 * i + 1 + W_idx_shift), ec->f, stack);
 		}
+	}
+
+	//обратить квадраты нечетных малых кратных
+	for (i = 0; i < t; ++i) {
+		//WW_odd_inv <- W_n^2, n = 3, 5, ... 2^w - 1
+		qrCopy(WW_odd_inv + ec_f_n * i, WW + ec_f_n * (i * 2 + 3 + WW_idx_shift), ec->f);
+	}
+	//WW_odd_inv <- W_n^(-2), n = 3, 5, ... 2^w - 1
+	qrMontInv(WW_odd_inv, WW_odd_inv, t - 1, ec->f, stack);
+
+	for (int i = 3; i <= t + 1; i += 2) {
+		//[X'n] ← x −[(2y)2 Wn−1Wn + 1] ·[W−2 n]
+		qrMul(tmp, WWd2_dblYSq + ec_f_n * (i - 1 + WWd2_dblYSq_idx_shift), WW_odd_inv + ec_f_n * ((i - 3) / 2), ec->f, stack);
+		qrSub(ecX(sm_mults + aff_point_size * ((i - 3) / 2)), x, tmp, ec->f);
+	}
+
+	for (int i = t + 3; i <= t * 2 - 1; i += 2) {
+		//tmp ←(([Wn−1] + [Wn + 1])2 −[W2 n−1] −[W2n + 1]) / 2
+		qrAdd(tmp, W + ec_f_n * (i - 1 + W_idx_shift), W + ec_f_n * (i + 1 + W_idx_shift), ec->f, stack);
+		qrSqr(tmp, tmp, ec->f, stack);
+		qrSub(tmp, tmp, WW + ec_f_n * (i - 1 + WW_idx_shift), ec->f);
+		qrSub(tmp, tmp, WW + ec_f_n * (i + 1 + WW_idx_shift ), ec->f);
+		gfpHalf(tmp, tmp, ec->f);
+
+		//[X'n] ← x −[(2y)2] · tmp ·[W−2 n]
+		qrMul(tmp, tmp, WW_odd_inv + ec_f_n * ((i - 3) / 2), ec->f, stack);
+		qrMul(tmp, dblYSq, tmp, ec->f, stack);
+		qrSub(ecX(sm_mults + aff_point_size * ((i - 3) / 2)), x, tmp, ec->f);
 	}
 
 }

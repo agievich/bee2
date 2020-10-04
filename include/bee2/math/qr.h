@@ -446,6 +446,29 @@ void qrPower(
 
 size_t qrPower_deep(size_t n, size_t m, size_t r_deep);
 
+/*! \brief Вычисление обратных элеметнов в кольце вычетов для нескольких элементов сразу
+
+
+//todo описаниие (ссылка на статью, больше деталей)
+	В кольце вычетов r вычисляются обратные елементы c помощью алгоритма Монтгомери
+	
+	\pre Описание кольца r работоспособно.
+	\pre буфферы c и u совпадают или не пересекаются
+	\expect Описание кольца r корректно.
+	\deep{stack} qrMontInv_deep(r->n, m, r->deep).
+	\safe алгоритм регулярен
+*/
+void qrMontInv(
+	word c[],				/*!< [out] обратные элементы */
+	const word u[],			/*!< [in] входные элементы */
+	size_t m,				/*!< [in] количиство входных элементов */
+	const qr_o* r,			/*!< [in] описание кольца */
+	void* stack				/*!< [in] вспомогательная память */
+);
+
+size_t qrMontInv_deep(size_t n, size_t m, size_t r_deep);
+
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
