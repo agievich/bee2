@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.09.22
-\version 2020.06.24
+\version 2020.08.03
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -158,7 +158,7 @@ bool_t bashTest()
 	bashPrgRatchet(state);
 	bashPrgSqueeze(hash, 16, state);
 	if (!hexEq(hash,
-		"69A3B04BF1C573728D15C26F3CC6C6F4"))
+		"71CC358A0D5082173DE04803F7E905CB"))
 		return FALSE;
 	// A.4.beta
 	bashPrgStart(state, 128, 1, beltH() + 128, 16, hash, 16);
@@ -166,8 +166,8 @@ bool_t bashTest()
 	memCopy(buf, beltH() + 128 + 32, 23);
 	bashPrgEncr(buf, 23, state);
 	if (!hexEq(buf,
-		"198351B5A8F2179F487F03970366CEAB"
-		"264D804DD6389D"))
+		"51ED3B28D345FFD1AD22815B86ECC17C"
+		"278C8FE8920214"))
 		return FALSE;
 	bashPrgStart(state, 128, 1, beltH() + 128, 16, hash, 16);
 	bashPrgDecr(buf, 23, state);
@@ -179,8 +179,8 @@ bool_t bashTest()
 	memCopy(buf, beltH() + 128 + 32, 23);
 	bashPrgEncr(buf, 23, state1);
 	if (!hexEq(buf,
-		"D9D7EF6538CD693BAF8F8667FA512ECE"
-		"CD2C6A87226299"))
+		"28FE0998BFC010F13B260685A27AFB36"
+		"CCF580F753521B"))
 		return FALSE;
 	bashPrgDecr(buf, 23, state);
 	if (!memEq(buf, beltH() + 128 + 32, 23))

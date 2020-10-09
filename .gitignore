@@ -62,5 +62,7 @@
 
 # Specific files
 _docs
+backup
 build
+support
 clear.cmd

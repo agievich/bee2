@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2018.10.30
-\version 2020.06.24
+\version 2020.08.03
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -380,10 +380,10 @@ void bashPrgRatchet(void* state)
 {
 	bash_prg_st* st = (bash_prg_st*)state;
 	ASSERT(memIsValid(st, bashPrg_keep()));
+	// сохранить состояние
+	memCopy(st->t, st->s, 192);
 	// завершить предыдущую команду
 	bashPrgCommit(BASH_PRG_NULL, state);
 	// необратимо изменить
-	memCopy(st->t, st->s, 192);
-	bashF(st->s, st->stack);
 	memXor2(st->s, st->t, 192);
 }
