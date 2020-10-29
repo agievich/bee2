@@ -49,11 +49,8 @@ STORE.
 
 #define S2(w0,w1) vsetq_lane_u64(w0, vmovq_n_u64(w1), 0)
 #define X2(w1,w2) veorq_u64(w1,w2)
-#ifdef __aarch64__
-#define X3(w1,w2,w3) veor3q_u64(w1,w2,w3)
-#else
+//#define X3(w1,w2,w3) veor3q_u64(w1,w2,w3)
 #define X3(w1,w2,w3) X2(w1,X2(w2,w3))
-#endif
 #define O2(w1,w2) vorrq_u64(w1,w2)
 #define A2(w1,w2) vandq_u64(w1,w2)
 #define NO2(w1,w2) vornq_u64(w1,w2)
