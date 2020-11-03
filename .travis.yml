@@ -39,6 +39,11 @@ matrix:
     env: BUILD_TYPE="Check" BUILD_FAST="OFF" BASH_PLATFORM="BASH_SSE2"
   - os: linux
     dist: xenial
+    arch: arm64
+    compiler: gcc
+    env: BUILD_TYPE="Release" BUILD_FAST="ON" BASH_PLATFORM="BASH_NEON" 
+  - os: linux
+    dist: xenial
     compiler: gcc
     env: BUILD_TYPE="Check" BUILD_FAST="ON" BASH_PLATFORM="BASH_AVX512"
     install:
