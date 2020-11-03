@@ -81,7 +81,8 @@ _MUL_LO:
 *******************************************************************************
 */
 
-#if defined(_MSC_VER) && (B_PER_W == 32)
+#if defined(_MSC_VER) && (B_PER_W == 32) &&\
+	(defined(_M_IX86) || defined(_M_X64))
 	#include <intrin.h>
 	#define _MUL(c, a, b)\
 		(c) = __emulu((word)(a), (word)(b))

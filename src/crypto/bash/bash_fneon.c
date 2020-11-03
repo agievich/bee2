@@ -5,22 +5,17 @@
 \project bee2 [cryptographic library]
 \author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2020.10.26
-\version 2020.10.26
+\version 2020.11.03
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-// It's hard to detect ARM NEON as different compilers set different macros, gcc especially
-#if 0 && !(defined(__ARM_NEON__) || defined(__ARM_NEON))
-	#error "The compiler does not support ARM NEON target platform"
+#ifndef _M_ARM64
+	#include <arm_neon.h>
+#else
+	#include <arm64_neon.h>
 #endif
-
-#if (OCTET_ORDER == BIG_ENDIAN)
-	#error "ARM NEON contradicts big-endianness"
-#endif
-
-#include <arm_neon.h>
 
 #include "bee2/core/blob.h"
 #include "bee2/core/err.h"
