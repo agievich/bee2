@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2020.10.26
-\version 2020.11.03
+\version 2020.11.04
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -29,22 +29,16 @@ version 3. See Copyright Notices in bee2/info.h.
 Сокращения для используемых intrinsic
 
 \remark Указатель на память при загрузке и выгрузке в LOAD и STORE должен быть
-выровнен на границу 256 бит (32 байт). LOADU и STOREU могут принимать
-невыровненный указатель, но имеют большую латентность по сравнению с LOAD и
-STORE.
+выровнен на границу 64 бит (8 байт).
 *******************************************************************************
 */
 
 #define LOAD(s) vld1q_u64((uint64_t const *) (s))
 #define STORE(s,w) vst1q_u64((uint64_t *)(s), (w))
-#if 0 && defined(__aarch64__)
-#define LOAD(s) vld4q_u64((uint64_t const *) (s))
-#define STORE(s,w) vst4q_u64((uint64_t *)(s), (w))
-#endif
 
 #define S2(w0,w1) vsetq_lane_u64(w0, vmovq_n_u64(w1), 0)
 #define X2(w1,w2) veorq_u64(w1,w2)
-//#define X3(w1,w2,w3) veor3q_u64(w1,w2,w3)
+/*#define X3(w1,w2,w3) veor3q_u64(w1,w2,w3)*/
 #define X3(w1,w2,w3) X2(w1,X2(w2,w3))
 #define O2(w1,w2) vorrq_u64(w1,w2)
 #define A2(w1,w2) vandq_u64(w1,w2)
@@ -89,7 +83,7 @@ Bash-S
 1, 3, ...., P1 -- на тактах 2, 4, ..... P0 и P1 удобно выбирать так, что
 P0 = delta P, P1 = P delta, а delta^2 = id.
 
-Инструкции SSE2 имеют ограничения по перемешиванию 64-битных слов в регистрах.
+Инструкции NEON имеют ограничения по перемешиванию 64-битных слов в регистрах.
 delta, переставляющая столбцы по правилу: 01234567 -> 10234576, позволяет
 сократить число инструкций по сравнению с тривиальной реализацией.
 
@@ -274,14 +268,16 @@ R2_X_1(a,i) = R2_X_0(a,delta(i)).
 	bashR0(23);\
 	bashR1(24)
 
-#if 1
-void bashF(octet block_unaligned[192], void* stack)
+/*
+*******************************************************************************
+Bash-f на памяти, выровненной на границу 8 байт, stack не используется
+*******************************************************************************
+*/
+
+static void bashF2(octet block[192], void* stack)
 {
 	register uint64x2_t Z1, Z2, T0, T1, T2, U0, U1, U2;
 	register uint64x2_t W0, W1, W2, W3, W4, W5, W6, W7, W8, W9, W10, W11;
-	octet *block = (octet *)((((uintptr_t)stack) + 7) & ~((uintptr_t)7));
-	ASSERT(memIsDisjoint2(block_unaligned, 192, stack, bashF_deep()));
-	memCopy(block, block_unaligned, 192);
 
 	W0 = LOAD(block + 0);
 	W1 = LOAD(block + 16);
@@ -308,74 +304,18 @@ void bashF(octet block_unaligned[192], void* stack)
 	STORE(block + 144, W9);
 	STORE(block + 160, W10);
 	STORE(block + 176, W11);
-	memCopy(block_unaligned, block, 192);
 }
-#endif
+
+void bashF(octet block_unaligned[192], void* stack)
+{
+	octet *block_aligned = (octet *)((((uintptr_t)stack) + 7) & ~((uintptr_t)7));
+	ASSERT(memIsDisjoint2(block_unaligned, 192, stack, bashF_deep()));
+	memCopy(block_aligned, block_unaligned, 192);
+	bashF2(block_aligned, (octet *)stack + bashF_deep());
+	memCopy(block_unaligned, block_aligned, 192);
+}
 
 size_t bashF_deep()
 {
 	return 192+8;
 }
-
-#if 0
-#include <assert.h>
-void bashF(octet block[192], void* stack)
-{
-  uint64_t const u[2] = { 0x8000000170000001ull, 0xf000000180000002ull, };
-  uint64_t const ul[2] = { 0x00000002e0000002ull, 0xe000000300000004ull, };
-  uint64_t const ur[2] = { 0x40000000b8000000ull, 0x78000000c0000001ull, };
-  uint64_t const urot[2] = { 0x00000002e0000003ull, 0xc00000060000000bull, };
-  uint64_t v[2];
-  uint64x2_t a = S2(0x8000000170000001ull, 0xf000000180000002ull), b, c;
-  uint64x2x4_t w[3];
-  STORE(v, a);
-  assert(u[0] == v[0] && u[1] == v[1]);
-  a = LOAD(u);
-  STORE(v, a);
-  assert(u[0] == v[0] && u[1] == v[1]);
-  b = X2(a, a);
-  STORE(v, b);
-  assert(0ull == v[0] && 0ull == v[1]);
-  b = O2(a, a);
-  STORE(v, b);
-  assert(u[0] == v[0] && u[1] == v[1]);
-  b = A2(a, a);
-  STORE(v, b);
-  assert(u[0] == v[0] && u[1] == v[1]);
-  b = A2(a, X2(a, a));
-  STORE(v, b);
-  assert(0ull == v[0] && 0ull == v[1]);
-
-  b = NO2(a, X2(a, a));
-  STORE(v, b);
-  assert(~0ull == v[0] && ~0ull == v[1]);
-  b = NO2(X2(a, a), a);
-  STORE(v, b);
-  assert(~u[0] == v[0] && ~u[1] == v[1]);
-
-  b = SL2(1, a);
-  STORE(v, b);
-  assert(ul[0] == v[0] && ul[1] == v[1]);
-  b = SR2(1, a);
-  STORE(v, b);
-  assert(ur[0] == v[0] && ur[1] == v[1]);
-
-  b = P2_10(a);
-  STORE(v, b);
-  assert(u[1] == v[0] && u[0] == v[1]);
-  b = P2_02(SL2(1,a), SR2(1,a));
-  STORE(v, b);
-  assert(ul[0] == v[0] && ur[0] == v[1]);
-  b = P2_13(SL2(1,a), SR2(1,a));
-  STORE(v, b);
-  assert(ul[1] == v[0] && ur[1] == v[1]);
-
-  b = R2(a,1,2);
-  STORE(v, b);
-  assert(urot[0] == v[0] && urot[1] == v[1]);
-
-  b = LOAD(block);
-  b = LOAD(block+1);
-  STORE(block, b);
-}
-#endif
