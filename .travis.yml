@@ -43,6 +43,10 @@ matrix:
     compiler: gcc
     env: BUILD_TYPE="Release" BUILD_FAST="ON" BASH_PLATFORM="BASH_NEON" 
   - os: linux
+    arch: s390x
+    compiler: gcc
+    env: BUILD_TYPE="Release" BUILD_FAST="ON" 
+  - os: linux
     dist: xenial
     compiler: gcc
     env: BUILD_TYPE="Check" BUILD_FAST="ON" BASH_PLATFORM="BASH_AVX512"

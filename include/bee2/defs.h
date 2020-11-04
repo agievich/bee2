@@ -47,9 +47,10 @@ version 3. See Copyright Notices in bee2/info.h.
 функциях арифметики возникают с вероятностями, близкими к 1 / 2^B_PER_W.
 
 \remark При разборе платформ для определения порядка октетов использован код
-Брайана Гладмана (Brian Gladman, http://www.gladman.me.uk/). Дополнительная 
-платформа EMSCRIPTEN (https://emscripten.org) является виртуальной, на ней 
-выполняется компиляция в asm.js. 
+Брайана Гладмана (Brian Gladman, http://www.gladman.me.uk/). 
+
+\remark Платформа EMSCRIPTEN (https://emscripten.org) является виртуальной, на 
+ней выполняется компиляция в asm.js. 
 
 \section defs-arrays Массивы
 
@@ -148,7 +149,8 @@ T == octet.
 	defined(__MRC__) || defined(__MVS__) || defined(__MWERKS__) ||\
 	defined(sparc) || defined(__sparc) || defined(SYMANTEC_C) ||\
 	defined(__VOS__) || defined(__TIGCC__) || defined(__TANDEM) ||\
-	defined(THINK_C) || defined(__VMCMS__) || defined(_AIX)
+	defined(THINK_C) || defined(__VMCMS__) || defined(_AIX) ||\
+	defined(__s390__) || defined(__s390x__) || defined(__zarch__)
 	#define OCTET_ORDER BIG_ENDIAN
 #else
 	#error "Platform undefined"

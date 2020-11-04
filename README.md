@@ -34,7 +34,7 @@ mkdir build
 cd build
 cmake [-DCMAKE_BUILD_TYPE={Release|Debug|Coverage|ASan|ASanDbg|MemSan|MemSanDbg|Check}]\
       [-DBUILD_FAST=ON]\
-      [-DBASH_PLATFORM={BASH_32|BASH_64|BASH_AVX2|BASH_AVX512}]\
+      [-DBASH_PLATFORM={BASH_32|BASH_64|BASH_AVX2|BASH_AVX512|BASH_NEON}]\
       ..
 make
 [make test]
