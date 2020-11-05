@@ -30,6 +30,8 @@ version 3. See Copyright Notices in bee2/info.h.
 
 \remark Указатель на память при загрузке и выгрузке в LOAD и STORE должен быть
 выровнен на границу 64 бит (8 байт).
+
+\todo На AArch64 использовать vld4q_u64 и vld4q_u64 для загрузки и выгрузки.
 *******************************************************************************
 */
 
@@ -38,7 +40,7 @@ version 3. See Copyright Notices in bee2/info.h.
 
 #define S2(w0,w1) vsetq_lane_u64(w0, vmovq_n_u64(w1), 0)
 #define X2(w1,w2) veorq_u64(w1,w2)
-/*#define X3(w1,w2,w3) veor3q_u64(w1,w2,w3)*/
+/* \todo На AArch64 использовать veor3q_u64 для X3. */
 #define X3(w1,w2,w3) X2(w1,X2(w2,w3))
 #define O2(w1,w2) vorrq_u64(w1,w2)
 #define A2(w1,w2) vandq_u64(w1,w2)
@@ -47,6 +49,7 @@ version 3. See Copyright Notices in bee2/info.h.
 #define SL2(m,a) vshlq_n_u64(a,m)
 #define SR2(m,a) vshrq_n_u64(a,m)
 
+/* \todo Использовать vtbl4_u8 и vtbx4_u8 для более реализации перестановки. */
 #define P2_10(w) vextq_u64(w, w, 1)
 #define P2_02(w0,w1) vsetq_lane_u64(vgetq_lane_u64(w1, 0), w0, 1)
 #define P2_13(w0,w1) vsetq_lane_u64(vgetq_lane_u64(w0, 1), w1, 0)
