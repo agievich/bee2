@@ -131,14 +131,15 @@ T == octet.
 	#define BIG_ENDIAN 4321
 #endif
 
-#if defined(__LITTLE_ENDIAN__) ||\
+#if defined(__BYTE_ORDER) && (__BYTE_ORDER == __LITTLE_ENDIAN) ||\
+	defined(__LITTLE_ENDIAN__) ||\
 	defined(__M_IX86) || defined(_X86_) || defined(i386) ||\
 	defined(__i386__) || defined(_M_I86)  || defined(_M_IX86) ||\
 	defined(_M_IA64) || defined(__ia64__) || defined(_M_X64) ||\
 	defined(_M_AMD64) || defined(__amd64__) || defined(__amd64) ||\
 	defined(__x86_64__) ||\
-	defined(_MIPSEB) || defined (__MIPSEB) || defined (__MIPSEB__) ||\
-	defined(__arm__) || defined(__ARMEB__) || defined(__AARCH64EB__) ||\
+	defined(_MIPSEL) || defined (__MIPSEL) || defined (__MIPSEL__) ||\
+	defined(__arm__) || defined(__ARMEL__) || defined(__AARCH64EL__) ||\
 	defined(_M_ARM) || defined(_M_ARM64) ||\
 	defined (__THUMBEB__) ||\
 	defined(_M_ALPHA) || defined(__alpha__) || defined(__alpha) ||\
@@ -146,10 +147,11 @@ T == octet.
 	defined(vms) || defined(VMS) || defined(__VMS) ||\
 	defined(__EMSCRIPTEN__)
 	#define OCTET_ORDER LITTLE_ENDIAN
-#elif defined(__BIG_ENDIAN__) ||\
-	defined(_MIPSEL) || defined (__MIPSEL) || defined (__MIPSEL__) ||\
-	defined(__ARMEL__) || defined(__AARCH64EL__) ||\
-	defined(__THUMBEL__) ||\
+#elif defined(__BYTE_ORDER) && (__BYTE_ORDER == __BIG_ENDIAN) ||\
+	defined(__BIG_ENDIAN__) ||\
+	defined(_MIPSEB) || defined (__MIPSEB) || defined (__MIPSEB__) ||\
+	defined(__ARMEB__) || defined(__AARCH64EB__) ||\
+	defined(__THUMBEB__) ||\
 	defined(__s390__) || defined(__s390x__) || defined(__zarch__) ||\
 	defined(__powerpc__) || defined(__ppc__) || defined(__PPC__) ||\
 	defined(__powerpc64__) || defined(__ppc64__) || defined(__PPC64__) ||\
