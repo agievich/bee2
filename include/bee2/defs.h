@@ -131,7 +131,7 @@ T == octet.
 	#define BIG_ENDIAN 4321
 #endif
 
-#if defined(__BIG_ENDIAN__) ||\
+#if defined(__LITTLE_ENDIAN__) ||\
 	defined(__M_IX86) || defined(_X86_) || defined(i386) ||\
 	defined(__i386__) || defined(_M_I86)  || defined(_M_IX86) ||\
 	defined(_M_IA64) || defined(__ia64__) || defined(_M_X64) ||\
@@ -145,7 +145,7 @@ T == octet.
 	defined(vms) || defined(VMS) || defined(__VMS) ||\
 	defined(__EMSCRIPTEN__)
 	#define OCTET_ORDER LITTLE_ENDIAN
-#elif defined(__LITTLE_ENDIAN__) ||\
+#elif defined(__BIG_ENDIAN__) ||\
 	defined(_MIPSEL) || defined (__MIPSEL) || defined (__MIPSEL__) ||\
 	defined(__ARMEL__) || defined(__THUMBEL__) || defined(__AARCH64EL__) ||\\
 	defined(__s390__) || defined(__s390x__) || defined(__zarch__) ||\
