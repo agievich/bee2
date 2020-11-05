@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.01
-\version 2016.09.07
+\version 2020.11.05
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -537,6 +537,7 @@ err_t pfokGenParams(pfok_params* params, const pfok_seed* seed,
 			do
 			{
 				prngSTBStepR(qi + offset, O_OF_B(lt[i]), stb_state);
+				wwFrom(qi + offset, qi + offset, O_OF_B(lt[i]));
 				wwTrimHi(qi + offset, W_OF_B(lt[i]), lt[i] - 1);
 				wwSetBit(qi + offset, lt[i] - 1, 1);
 			}

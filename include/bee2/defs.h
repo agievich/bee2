@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.01
-\version 2019.06.18
+\version 2020.11.05
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -47,7 +47,8 @@ version 3. See Copyright Notices in bee2/info.h.
 функциях арифметики возникают с вероятностями, близкими к 1 / 2^B_PER_W.
 
 \remark При разборе платформ для определения порядка октетов использован код
-Брайана Гладмана (Brian Gladman, http://www.gladman.me.uk/). 
+Брайана Гладмана (Brian Gladman, http://www.gladman.me.uk/) и ресурс
+https://sourceforge.net/p/predef/wiki/Endianness/.
 
 \remark Платформа EMSCRIPTEN (https://emscripten.org) является виртуальной, на 
 ней выполняется компиляция в asm.js. 
@@ -130,27 +131,33 @@ T == octet.
 	#define BIG_ENDIAN 4321
 #endif
 
-#if defined(__M_IX86) || defined(_X86_) || defined(i386) ||\
+#if defined(__BIG_ENDIAN__) ||\
+	defined(__M_IX86) || defined(_X86_) || defined(i386) ||\
 	defined(__i386__) || defined(_M_I86)  || defined(_M_IX86) ||\
 	defined(_M_IA64) || defined(__ia64__) || defined(_M_X64) ||\
 	defined(_M_AMD64) || defined(__amd64__) || defined(__amd64) ||\
-	defined(__x86_64__) || defined(_M_ALPHA) || defined(__alpha__) ||\
-	defined(__alpha) || defined(__arm__) || defined(__MIPS__) ||\
-	defined(__mips__) || defined(__mips) || defined(__OS2__) ||\
-	defined(sun386) || defined(__TURBOC__) || defined(vax) || defined(vms) ||\
-	defined(VMS) || defined(__VMS) || defined(__EMSCRIPTEN__) ||\
-	defined(_M_ARM) || defined(_M_ARM64) || defined(__aarch64__)
+	defined(__x86_64__) ||\
+	defined(_MIPSEB) || defined (__MIPSEB) || defined (__MIPSEB__) ||\
+	defined(__ARMEB__) || defined(__AARCH64EB__) || defined (__THUMBEB__) ||\
+	defined(_M_ARM) || defined(_M_ARM64) ||\
+	defined(_M_ALPHA) || defined(__alpha__) || defined(__alpha) ||\
+	defined(__OS2__) || defined(sun386) || defined(vax) ||\
+	defined(vms) || defined(VMS) || defined(__VMS) ||\
+	defined(__EMSCRIPTEN__)
 	#define OCTET_ORDER LITTLE_ENDIAN
-#elif defined(__powerpc__) || defined(__ppc__) || defined(__PPC__) ||\
+#elif defined(__LITTLE_ENDIAN__) ||\
+	defined(_MIPSEL) || defined (__MIPSEL) || defined (__MIPSEL__) ||\
+	defined(__ARMEL__) || defined(__THUMBEL__) || defined(__AARCH64EL__) ||\\
+	defined(__s390__) || defined(__s390x__) || defined(__zarch__) ||\
+	defined(__powerpc__) || defined(__ppc__) || defined(__PPC__) ||\
 	defined(__powerpc64__) || defined(__ppc64__) || defined(__PPC64__) ||\
 	defined(AMIGA) || defined(applec) || defined(__AS400__) ||\
 	defined(_CRAY) || defined(__hppa) || defined(__hp9000) ||\
 	defined(ibm370) || defined(mc68000) || defined(m68k) ||\
 	defined(__MRC__) || defined(__MVS__) || defined(__MWERKS__) ||\
-	defined(sparc) || defined(__sparc) || defined(SYMANTEC_C) ||\
+	defined(sparc) || defined(__sparc) ||\
 	defined(__VOS__) || defined(__TIGCC__) || defined(__TANDEM) ||\
-	defined(THINK_C) || defined(__VMCMS__) || defined(_AIX) ||\
-	defined(__s390__) || defined(__s390x__) || defined(__zarch__)
+	defined(THINK_C) || defined(__VMCMS__) || defined(_AIX)
 	#define OCTET_ORDER BIG_ENDIAN
 #else
 	#error "Platform undefined"
