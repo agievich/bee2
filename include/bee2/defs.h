@@ -138,8 +138,9 @@ T == octet.
 	defined(_M_AMD64) || defined(__amd64__) || defined(__amd64) ||\
 	defined(__x86_64__) ||\
 	defined(_MIPSEB) || defined (__MIPSEB) || defined (__MIPSEB__) ||\
-	defined(__ARMEB__) || defined(__AARCH64EB__) || defined (__THUMBEB__) ||\
+	defined(__arm__) || defined(__ARMEB__) || defined(__AARCH64EB__) ||\
 	defined(_M_ARM) || defined(_M_ARM64) ||\
+	defined (__THUMBEB__) ||\
 	defined(_M_ALPHA) || defined(__alpha__) || defined(__alpha) ||\
 	defined(__OS2__) || defined(sun386) || defined(vax) ||\
 	defined(vms) || defined(VMS) || defined(__VMS) ||\
@@ -147,7 +148,8 @@ T == octet.
 	#define OCTET_ORDER LITTLE_ENDIAN
 #elif defined(__BIG_ENDIAN__) ||\
 	defined(_MIPSEL) || defined (__MIPSEL) || defined (__MIPSEL__) ||\
-	defined(__ARMEL__) || defined(__THUMBEL__) || defined(__AARCH64EL__) ||\\
+	defined(__ARMEL__) || defined(__AARCH64EL__) ||\
+	defined(__THUMBEL__) ||\
 	defined(__s390__) || defined(__s390x__) || defined(__zarch__) ||\
 	defined(__powerpc__) || defined(__ppc__) || defined(__PPC__) ||\
 	defined(__powerpc64__) || defined(__ppc64__) || defined(__PPC64__) ||\
