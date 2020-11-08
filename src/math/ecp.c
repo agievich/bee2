@@ -1285,8 +1285,8 @@ sm_mults - выходной массив малых кратных X3,Y3,X5,Y5..
 *******************************************************************************
 */
 
-bool_t smMultsA_divPoly(word* sm_mults, const word a[], const word w, const ec_o* ec, void* stack) {
-
+bool_t smMultsA_divPoly(word* sm_mults, const word a[], const word w, const ec_o* ec, void* stack)
+{
 	//todo проверки?
 	const word ec_f_n = ec->f->n;
 	const word aff_point_size = ec->f->n * 2;
@@ -1429,7 +1429,8 @@ bool_t smMultsA_divPoly(word* sm_mults, const word a[], const word w, const ec_o
 
 	//i 3 = .. 2^{w-1}
 	t = (SIZE_1 << (w - 1));
-	for (i = 3; i <= t; ++i) {
+	for (i = 3; i <= t; ++i)
+	{
 		//[WnWn+2] ← (([Wn] + [Wn+2])^2 − [W2n] −[W2 n + 2]) / 2
 		qrAdd(tmp, W + ec_f_n * (i + W_idx_shift), W + ec_f_n * (i + W_idx_shift + 2), ec->f, stack);
 		qrSqr(tmp, tmp, ec->f, stack);
@@ -1437,12 +1438,14 @@ bool_t smMultsA_divPoly(word* sm_mults, const word a[], const word w, const ec_o
 		qrSub(tmp, tmp, WW + ec_f_n * (i + WW_idx_shift + 2), ec->f);
 		gfpHalf(WWd2 + ec_f_n * (i-1), tmp, ec->f);
 
-		if (i == 3) {
+		if (i == 3)
+		{
 			//[W2n] ← [WnWn+2] − [Wn−2Wn] · [W2 n + 1]: 1M + 1A
 			qrMul(tmp, WWd2  + ec_f_n * (i + WWd2_idx_shift - 2), WW + ec_f_n * (i + WW_idx_shift + 1), ec->f, stack);
 			qrSub(W + ec_f_n * (2 * i + W_idx_shift), WWd2 + ec_f_n * (i - 1), tmp, ec->f, stack);
 		}
-		else {
+		else
+		{
 			//[W2n] ← [WnWn+2] · [W2 n−1] −[Wn−2Wn] ·[W2 n + 1]
 			qrMul(tmp, WWd2 + ec_f_n * (i + WWd2_idx_shift - 2), WW + ec_f_n * (i + WW_idx_shift + 1), ec->f, stack);
 			qrMul(tmp2, WWd2 + ec_f_n * (i + WWd2_idx_shift), WW + ec_f_n * (i + WW_idx_shift - 1), ec->f, stack);
@@ -1457,7 +1460,8 @@ bool_t smMultsA_divPoly(word* sm_mults, const word a[], const word w, const ec_o
 			qrMul(tmp2, WWd2_dblYPow4 + ec_f_n * (i + WWd2_dblYPow4_idx_shift - 1), WW + ec_f_n * (i + WW_idx_shift + 1), ec->f, stack);
 			qrSub(W + ec_f_n * (2*i + 1 + W_idx_shift), tmp, tmp2, ec->f);
  		}
-		else {
+		else
+		{
 			//(a) [(2y)2WnWn + 2] ←[(2y)2] ·[WnWn + 2]: 1M
 			qrMul(WWd2_dblYSq + ec_f_n * (i + WWd2_dblYSq_idx_shift), dblYSq, WWd2 + ec_f_n * (i + WWd2_idx_shift), ec->f, stack);
 
@@ -1470,27 +1474,31 @@ bool_t smMultsA_divPoly(word* sm_mults, const word a[], const word w, const ec_o
 			qrSub(W + ec_f_n * (2 * i + 1 + W_idx_shift), tmp, tmp2, ec->f);
 		}
 
-		if (i != t) {
+		if (i != t)
+		{
 			//[W2 2n + 1] ←([W2n + 1])2
 			qrSqr(WW + ec_f_n * (2 * i + 1 + WW_idx_shift), W + ec_f_n * (2 * i + 1 + W_idx_shift), ec->f, stack);
 		}
 	}
 
 	//обратить квадраты нечетных малых кратных
-	for (i = 0; i < t; ++i) {
+	for (i = 0; i < t; ++i)
+	{
 		//WW_odd_inv <- W_n^2, n = 3, 5, ... 2^w - 1
 		qrCopy(WW_odd_inv + ec_f_n * i, WW + ec_f_n * (i * 2 + 3 + WW_idx_shift), ec->f);
 	}
 	//WW_odd_inv <- W_n^(-2), n = 3, 5, ... 2^w - 1
 	qrMontInv(WW_odd_inv, WW_odd_inv, t - 1, ec->f, stack);
 
-	for (int i = 3; i <= t + 1; i += 2) {
+	for (int i = 3; i <= t + 1; i += 2)
+	{
 		//[X'n] ← x −[(2y)2 Wn−1Wn + 1] ·[W−2 n]
 		qrMul(tmp, WWd2_dblYSq + ec_f_n * (i - 1 + WWd2_dblYSq_idx_shift), WW_odd_inv + ec_f_n * ((i - 3) / 2), ec->f, stack);
 		qrSub(ecX(sm_mults + aff_point_size * ((i - 3) / 2)), x, tmp, ec->f);
 	}
 
-	for (int i = t + 3; i <= t * 2 - 1; i += 2) {
+	for (int i = t + 3; i <= t * 2 - 1; i += 2)
+	{
 		//tmp ←(([Wn−1] + [Wn + 1])2 −[W2 n−1] −[W2n + 1]) / 2
 		qrAdd(tmp, W + ec_f_n * (i - 1 + W_idx_shift), W + ec_f_n * (i + 1 + W_idx_shift), ec->f, stack);
 		qrSqr(tmp, tmp, ec->f, stack);
@@ -1504,4 +1512,50 @@ bool_t smMultsA_divPoly(word* sm_mults, const word a[], const word w, const ec_o
 		qrSub(ecX(sm_mults + aff_point_size * ((i - 3) / 2)), x, tmp, ec->f);
 	}
 
+	for (i = 3; i <= t - 1; i += 2)
+	{
+		//. [Y'n] ← y ·[W2n] ·([W−2 n])2
+		qrSqr(tmp, WW_odd_inv + ec_f_n * ((i - 3) / 2), ec->f, stack);
+		qrMul(tmp, tmp, W + ec_f_n * (2 * i + W_idx_shift), ec->f, stack);
+		qrMul(ecY(sm_mults + aff_point_size * ((i - 3) / 2), ec_f_n), tmp, y, ec->f, stack);
+	}
+
+	for (i = t + 1; i <= t * 2 - 3; i += 2)
+	{
+		//[WnWn+2] ← (([Wn] + [Wn+2])^2 − [W2n] −[W2 n + 2]) / 2
+		qrAdd(tmp, W + ec_f_n * (i + W_idx_shift), W + ec_f_n * (i + W_idx_shift + 2), ec->f, stack);
+		qrSqr(tmp, tmp, ec->f, stack);
+		qrSub(tmp, tmp, WW + ec_f_n * (i + WW_idx_shift), ec->f);
+		qrSub(tmp, tmp, WW + ec_f_n * (i + WW_idx_shift + 2), ec->f);
+		gfpHalf(WWd2 + ec_f_n * (i - 1), tmp, ec->f);
+
+		//tmp2 ← [WnWn+2] · [W2 n−1] −[Wn−2Wn] ·[W2 n + 1]
+		qrMul(tmp, WWd2 + ec_f_n * (i + WWd2_idx_shift - 2), WW + ec_f_n * (i + WW_idx_shift + 1), ec->f, stack);
+		qrMul(tmp2, WWd2 + ec_f_n * (i + WWd2_idx_shift), WW + ec_f_n * (i + WW_idx_shift - 1), ec->f, stack);
+		qrSub(tmp2, tmp2, tmp, ec->f, stack);
+
+		//[Y'n] ← y · tmp2 ·([W−2 n])2
+		qrSqr(tmp, WW_odd_inv + ec_f_n * ((i - 3) / 2), ec->f, stack);
+		qrMul(tmp, tmp, tmp2, ec->f, stack);
+		qrMul(ecY(sm_mults + aff_point_size * ((i - 3) / 2), ec_f_n), tmp, y, ec->f, stack);
+	}
+
+	i = t * 2 - 1;
+	//[Y'2w−1] ← y·([W2w−1]·[W2w + 1]·[W2 2w−2]−[W2w−3W2w−1]·[W2 2w])·([W−2 2w−1])2
+
+	//tmp <- [W2w−1]·[W2w + 1]·[W2 2w−2]
+	qrMul(tmp, W + ec_f_n * (i + W_idx_shift), W + ec_f_n * (i + W_idx_shift + 2), ec->f, stack);
+	qrMul(tmp, tmp, WW + ec_f_n * (i + WW_idx_shift - 1), ec->f, stack);
+
+	//tmp2 <-[W_2w−3 W_2w−1]·[W2 2w]
+	qrMul(tmp2, WWd2 + ec_f_n * (i + WWd2_idx_shift - 2), WW + ec_f_n * (i + WW_idx_shift + 1), ec->f, stack);
+
+	//tmp <- ([W 2w−1]·[W 2w + 1]·[W2 2w−2]−[W 2w−3 W 2w−1]·[W2 2w]) = tmp - tmp2
+	qrSub(tmp, tmp, tmp2, ec->f);
+
+	//[Y'2w−1] ← y·tmp·tmp2
+	qrMul(tmp, tmp, tmp2, ec->f, stack);
+	qrMul(ecY(sm_mults + aff_point_size * ((i - 3) / 2), ec_f_n), tmp, y, ec->f, stack);
+
+	//todo cleanup
 }
