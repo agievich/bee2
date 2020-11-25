@@ -117,18 +117,19 @@ EXPORTS
 	bignValParams				@302
 	bignOidToDER				@303
 	bignGenKeypair				@304
-	bignValPubkey				@305
-	bignCalcPubkey				@306
-	bignDH						@307
-	bignSign					@308
-	bignSign2					@309
-	bignVerify					@310
-	bignKeyWrap					@311
-	bignKeyUnwrap				@312
-	bignIdExtract				@313
-	bignIdSign					@314
-	bignIdSign2					@315
-	bignIdVerify				@316
+	bignValKeypair				@305
+	bignValPubkey				@306
+	bignCalcPubkey				@307
+	bignDH						@308
+	bignSign					@309
+	bignSign2					@310
+	bignVerify					@311
+	bignKeyWrap					@312
+	bignKeyUnwrap				@313
+	bignIdExtract				@314
+	bignIdSign					@315
+	bignIdSign2					@316
+	bignIdVerify				@317
 	
 	brngCTR_keep				@401
 	brngCTRStart				@402

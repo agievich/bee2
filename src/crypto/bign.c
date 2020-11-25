@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.27
-\version 2018.07.04
+\version 2020.11.25
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -482,8 +482,7 @@ err_t bignGenKeypair(octet privkey[], octet pubkey[],
 	no  = ec->f->no;
 	n = ec->f->n;
 	// проверить входные указатели
-	if (!memIsValid(privkey, no) ||
-		!memIsValid(pubkey, 2 * no))
+	if (!memIsValid(privkey, no) || !memIsValid(pubkey, 2 * no))
 	{
 		blobClose(state);
 		return ERR_BAD_INPUT;
@@ -505,6 +504,74 @@ err_t bignGenKeypair(octet privkey[], octet pubkey[],
 		wwTo(privkey, no, d);
 		qrTo(pubkey, ecX(Q), ec->f, stack);
 		qrTo(pubkey + ec->f->no, ecY(Q, n), ec->f, stack);
+	}
+	else
+		code = ERR_BAD_PARAMS;
+	// завершение
+	blobClose(state);
+	return code;
+}
+
+static size_t bignValKeypair_deep(size_t n, size_t f_deep, size_t ec_d,
+	size_t ec_deep)
+{
+	return O_OF_W(n + 2 * n) +
+		ecMulA_deep(n, ec_d, ec_deep, n);
+}
+
+err_t bignValKeypair(const bign_params* params, const octet privkey[],
+	const octet pubkey[])
+{
+	err_t code;
+	size_t no, n;
+	// состояние
+	void* state;
+	ec_o* ec;				/* описание эллиптической кривой */
+	word* d;				/* [n] личный ключ */
+	word* Q;				/* [2n] открытый ключ */
+	void* stack;
+	// проверить params
+	if (!memIsValid(params, sizeof(bign_params)))
+		return ERR_BAD_INPUT;
+	if (params->l != 128 && params->l != 192 && params->l != 256)
+		return ERR_BAD_PARAMS;
+	// создать состояние
+	state = blobCreate(bignStart_keep(params->l, bignValKeypair_deep));
+	if (state == 0)
+		return ERR_OUTOFMEMORY;
+	// старт
+	code = bignStart(state, params);
+	ERR_CALL_HANDLE(code, blobClose(state));
+	ec = (ec_o*)state;
+	// размерности
+	no = ec->f->no;
+	n = ec->f->n;
+	// проверить входные указатели
+	if (!memIsValid(privkey, no) || !memIsValid(pubkey, 2 * no))
+	{
+		blobClose(state);
+		return ERR_BAD_INPUT;
+	}
+	// раскладка состояния
+	d = objEnd(ec, word);
+	Q = d + n;
+	stack = Q + 2 * n;
+	// d <- privkey
+	wwFrom(d, privkey, no);
+	// 0 < d < q?
+	wwFrom(Q, params->q, no);
+	if (wwIsZero(d, n) || wwCmp(d, Q, n) >= 0)
+	{
+		blobClose(state);
+		return ERR_BAD_PRIVKEY;
+	}
+	// Q <- d G
+	if (ecMulA(Q, ec->base, ec, d, n, stack))
+	{
+		// Q == pubkey?
+		wwTo(Q, 2 * no, Q);
+		if (!memEq(Q, pubkey, no))
+			code = ERR_BAD_PUBKEY;
 	}
 	else
 		code = ERR_BAD_PARAMS;

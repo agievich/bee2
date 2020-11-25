@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.27
-\version 2018.07.04
+\version 2020.11.25
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -162,6 +162,20 @@ err_t bignGenKeypair(
 	const bign_params* params,	/*!< [in] долговременные параметры */
 	gen_i rng,					/*!< [in] генератор случайных чисел */
 	void* rng_state				/*!< [in/out] состояние генератора */
+);
+
+/*!	\brief Проверка пары ключей
+
+	При долговременных параметрах params проверяется корректность
+	личного ключа [l / 8]privkey и соответствие ему открытого ключа
+	[l / 2]pubkey.
+	\expect{ERR_BAD_PARAMS} Параметры params корректны.
+	\return ERR_OK, если пара корректна, и код ошибки в противном случае.
+*/
+err_t bignValKeypair(
+	const bign_params* params,	/*!< [in] долговременные параметры */
+	const octet privkey[],		/*!< [in] личный ключ */
+	const octet pubkey[]		/*!< [in] открытый ключ */
 );
 
 /*!	\brief Проверка открытого ключа

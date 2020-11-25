@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.08.27
-\version 2018.08.31
+\version 2020.11.25
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -136,7 +136,7 @@ bool_t bignTest()
 	brngCTRXStart(beltH() + 128, beltH() + 128 + 64,
 		beltH(), 8 * 32, brng_state);
 	// тест Г.1
-	if (bignGenKeypair(privkey, pubkey, params, brngCTRXStepR, brng_state) !=
+	if (bignGenKeypair(privkey, pubkey, params, brngCTRXStepR, brng_state) != 
 		ERR_OK)
 		return FALSE;
 	if (!hexEq(privkey,
@@ -147,6 +147,8 @@ bool_t bignTest()
 		"F54CE46D0CF11E4FF87BF7A890857FD0"
 		"7AC6A60361E8C8173491686D461B2826"
 		"190C2EDA5909054A9AB84D2AB9D99A90"))
+		return FALSE;
+	if (bignValKeypair(params, privkey, pubkey) != ERR_OK)
 		return FALSE;
 	if (bignValPubkey(params, pubkey) != ERR_OK)
 		return FALSE;

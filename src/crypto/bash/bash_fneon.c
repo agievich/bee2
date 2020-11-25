@@ -320,5 +320,5 @@ void bashF(octet block_unaligned[192], void* stack)
 
 size_t bashF_deep()
 {
-	return 192+8;
+	return 192 + 8;
 }
