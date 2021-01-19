@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.02.04
-\version 2016.09.19
+\version 2021.01.19
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -61,6 +61,13 @@ int strCmp(const char* str1, const char* str2)
 	ASSERT(strIsValid(str1));
 	ASSERT(strIsValid(str2));
 	return strcmp(str1, str2);
+}
+
+void strSet(char* str, char ch)
+{
+	ASSERT(strIsValid(str));
+	while (*str)
+		*str = ch, ++str;
 }
 
 /*

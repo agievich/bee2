@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.27
-\version 2020.11.25
+\version 2021.01.19
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -242,6 +242,7 @@ err_t bignDH(
 	параметры params и генератор rng с состоянием rng_state.
 	\expect{ERR_BAD_PARAMS} Параметры params корректны.
 	\expect{ERR_BAD_OID} Идентификатор oid_der корректен.
+	\expect{ERR_BAD_INPUT} Буферы sig и hash не пересекаются.
 	\expect{ERR_BAD_PRIVKEY} Личный ключ privkey корректен.
 	\expect{ERR_BAD_RNG} Генератор rng (с состоянием rng_state) корректен.
 	\expect Генератор rng является криптографически стойким.
@@ -271,6 +272,7 @@ err_t bignSign(
 	дополнительные данные не используются.  
 	\expect{ERR_BAD_PARAMS} Параметры params корректны.
 	\expect{ERR_BAD_OID} Идентификатор oid_der корректен.
+	\expect{ERR_BAD_INPUT} Буферы sig и hash не пересекаются.
 	\expect{ERR_BAD_PRIVKEY} Личный ключ privkey корректен.
 	\return ERR_OK, если подпись выработана, и код ошибки в противном
 	случае.

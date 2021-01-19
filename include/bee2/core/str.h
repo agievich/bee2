@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.02.04
-\version 2016.09.19
+\version 2021.01.19
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -96,6 +96,15 @@ int strCmp(
 	\safe Функция нерегулярна.
 */
 #define strEq(str1, str2) (strCmp(str1, str2) == 0)
+
+/*!	\brief Заполнение символом
+
+	Строка str заполняется символом ch.
+*/
+void strSet(
+	char* str,		/*!< [in] строка */
+	char ch			/*!< [in] символ */
+);
 
 /*
 *******************************************************************************

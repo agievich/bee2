@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.27
-\version 2020.11.25
+\version 2021.01.19
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -843,7 +843,8 @@ err_t bignSign(octet sig[], const bign_params* params, const octet oid_der[],
 	// проверить входные указатели
 	if (!memIsValid(hash, no) ||
 		!memIsValid(privkey, no) ||
-		!memIsValid(sig, no + no / 2))
+		!memIsValid(sig, no + no / 2) ||
+		!memIsDisjoint2(hash, no, sig, no + no / 2))
 	{
 		blobClose(state);
 		return ERR_BAD_INPUT;
@@ -950,7 +951,8 @@ err_t bignSign2(octet sig[], const bign_params* params, const octet oid_der[],
 	// проверить входные указатели
 	if (!memIsValid(hash, no) ||
 		!memIsValid(privkey, no) ||
-		!memIsValid(sig, no + no / 2))
+		!memIsValid(sig, no + no / 2) ||
+		!memIsDisjoint2(hash, no, sig, no + no / 2))
 	{
 		blobClose(state);
 		return ERR_BAD_INPUT;
