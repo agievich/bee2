@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.27
-\version 2021.01.19
+\version 2021.01.21
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -304,14 +304,14 @@ size_t bignStart_keep(size_t l, bign_deep_i deep)
 *******************************************************************************
 Проверка параметров
 
--#	l \in {128, 192, 256} (bignCreateEc)
--#	2^{l - 1} < p, q < 2^l (bignCreateEc)
+-#	l \in {128, 192, 256} (bignValParams)
+-#	2^{l - 1} < p, q < 2^l (bignStart)
 -#	p -- простое (ecpIsValid)
 -#	q -- простое (ecpIsSafeGroup)
--#	p \equiv 3 \mod 4 (bignCreateEc)
+-#	p \equiv 3 \mod 4 (bignStart)
 -#	q != p (ecpIsSafeGroup)
 -#	p^m \not\equiv 1 (mod q), m = 1, 2,..., 50 (ecpIsSafeGroup)
--#	a, b < p (ecpCreateJ in bignCreateEc)
+-#	a, b < p (ecpCreateJ in bignStart)
 -#	0 != b (bignValParams)
 -#	b \equiv B (mod p) (bignValParams)
 -#	4a^3 + 27b^2 \not\equiv 0 (\mod p) (ecpIsValid)
@@ -503,7 +503,7 @@ err_t bignGenKeypair(octet privkey[], octet pubkey[],
 		// выгрузить ключи
 		wwTo(privkey, no, d);
 		qrTo(pubkey, ecX(Q), ec->f, stack);
-		qrTo(pubkey + ec->f->no, ecY(Q, n), ec->f, stack);
+		qrTo(pubkey + no, ecY(Q, n), ec->f, stack);
 	}
 	else
 		code = ERR_BAD_PARAMS;
@@ -570,7 +570,7 @@ err_t bignValKeypair(const bign_params* params, const octet privkey[],
 	{
 		// Q == pubkey?
 		wwTo(Q, 2 * no, Q);
-		if (!memEq(Q, pubkey, no))
+		if (!memEq(Q, pubkey, 2 * no))
 			code = ERR_BAD_PUBKEY;
 	}
 	else
@@ -670,8 +670,7 @@ err_t bignCalcPubkey(octet pubkey[], const bign_params* params,
 	no  = ec->f->no;
 	n = ec->f->n;
 	// проверить входные указатели
-	if (!memIsValid(privkey, no) ||
-		!memIsValid(pubkey, 2 * no))
+	if (!memIsValid(privkey, no) || !memIsValid(pubkey, 2 * no))
 	{
 		blobClose(state);
 		return ERR_BAD_INPUT;
@@ -744,7 +743,7 @@ err_t bignDH(octet key[], const bign_params* params, const octet privkey[],
 		return ERR_BAD_SHAREKEY;
 	}
 	// проверить входные указатели
-	if (!memIsValid(privkey, no) ||
+	if (!memIsValid(privkey, no) || 
 		!memIsValid(pubkey, 2 * no) ||
 		!memIsValid(key, key_len))
 	{
@@ -840,6 +839,7 @@ err_t bignSign(octet sig[], const bign_params* params, const octet oid_der[],
 	// размерности
 	no  = ec->f->no;
 	n = ec->f->n;
+	ASSERT(n % 2 == 0);
 	// проверить входные указатели
 	if (!memIsValid(hash, no) ||
 		!memIsValid(privkey, no) ||
@@ -902,9 +902,10 @@ static size_t bignSign2_deep(size_t n, size_t f_deep, size_t ec_d,
 	size_t ec_deep)
 {
 	return O_OF_W(4 * n) + beltHash_keep() +
-		utilMax(5,
+		utilMax(6,
 			beltHash_keep(),
-			beltKWP_keep(),
+			32,
+			beltWBL_keep(),
 			ecMulA_deep(n, ec_d, ec_deep, n),
 			zzMul_deep(n / 2, n),
 			zzMod_deep(n + n / 2 + 1, n));
@@ -948,6 +949,7 @@ err_t bignSign2(octet sig[], const bign_params* params, const octet oid_der[],
 	// размерности
 	no  = ec->f->no;
 	n = ec->f->n;
+	ASSERT(n % 2 == 0);
 	// проверить входные указатели
 	if (!memIsValid(hash, no) ||
 		!memIsValid(privkey, no) ||
@@ -1072,6 +1074,7 @@ err_t bignVerify(const bign_params* params, const octet oid_der[],
 	// размерности
 	no  = ec->f->no;
 	n = ec->f->n;
+	ASSERT(n % 2 == 0);
 	// проверить входные указатели
 	if (!memIsValid(hash, no) ||
 		!memIsValid(sig, no + no / 2) ||
@@ -1419,6 +1422,7 @@ err_t bignIdExtract(octet id_privkey[], octet id_pubkey[],
 	// размерности
 	no  = ec->f->no;
 	n = ec->f->n;
+	ASSERT(n % 2 == 0);
 	// проверить входные указатели
 	if (!memIsValid(id_hash, no) ||
 		!memIsValid(sig, no + no / 2) ||
@@ -1539,6 +1543,7 @@ err_t bignIdSign(octet id_sig[], const bign_params* params,
 	// размерности
 	no  = ec->f->no;
 	n = ec->f->n;
+	ASSERT(n % 2 == 0);
 	// проверить входные указатели
 	if (!memIsValid(id_hash, no) ||
 		!memIsValid(hash, no) ||
@@ -1602,9 +1607,10 @@ static size_t bignIdSign2_deep(size_t n, size_t f_deep, size_t ec_d,
 	size_t ec_deep)
 {
 	return O_OF_W(4 * n) + beltHash_keep() +
-		utilMax(5,
+		utilMax(6,
 			beltHash_keep(),
-			beltKWP_keep(),
+			32,
+			beltWBL_keep(),
 			ecMulA_deep(n, ec_d, ec_deep, n),
 			zzMul_deep(n / 2, n),
 			zzMod_deep(n + n / 2 + 1, n));
@@ -1648,6 +1654,7 @@ err_t bignIdSign2(octet id_sig[], const bign_params* params,
 	// размерности
 	no  = ec->f->no;
 	n = ec->f->n;
+	ASSERT(n % 2 == 0);
 	// проверить входные указатели
 	if (!memIsValid(id_hash, no) ||
 		!memIsValid(hash, no) ||
@@ -1780,6 +1787,7 @@ err_t bignIdVerify(const bign_params* params, const octet oid_der[],
 	// размерности
 	no  = ec->f->no;
 	n = ec->f->n;
+	ASSERT(n % 2 == 0);
 	// проверить входные указатели
 	if (!memIsValid(id_hash, no) ||
 		!memIsValid(hash, no) ||

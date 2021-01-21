@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2017.09.28
-\version 2020.03.24
+\version 2021.01.21
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -155,7 +155,7 @@ belt-32block
 *******************************************************************************
 */
 
-void belt32BlockEncr(octet block[24], const u32 key[8])
+static void belt32BlockEncr(octet block[24], const u32 key[8])
 {
 	u32* t = (u32*)block;
 	u32From(t, block, 24);
