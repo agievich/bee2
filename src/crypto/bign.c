@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.27
-\version 2021.01.21
+\version 2021.01.29
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -875,7 +875,7 @@ err_t bignSign(octet sig[], const bign_params* params, const octet oid_der[],
 		return ERR_BAD_PARAMS;
 	}
 	qrTo((octet*)R, ecX(R), ec->f, stack);
-	// s0 <- belt-hash(oid || R || H)
+	// s0 <- belt-hash(oid || R || H) mod 2^l
 	beltHashStart(stack);
 	beltHashStepH(oid_der, oid_len, stack);
 	beltHashStepH(R, no, stack);
@@ -1005,7 +1005,7 @@ err_t bignSign2(octet sig[], const bign_params* params, const octet oid_der[],
 		return ERR_BAD_PARAMS;
 	}
 	qrTo((octet*)R, ecX(R), ec->f, stack);
-	// s0 <- belt-hash(oid || R || H)
+	// s0 <- belt-hash(oid || R || H) mod 2^l
 	beltHashStepH(R, no, hash_state);
 	beltHashStepH(hash, no, hash_state);
 	beltHashStepG2(sig, no / 2, hash_state);
@@ -1096,7 +1096,7 @@ err_t bignVerify(const bign_params* params, const octet oid_der[],
 		return ERR_BAD_PUBKEY;
 	}
 	// загрузить и проверить s1
-	wwFrom(s1, sig + no / 2, O_OF_W(n));
+	wwFrom(s1, sig + no / 2, no);
 	if (wwCmp(s1, ec->order, n) >= 0)
 	{
 		blobClose(state);
@@ -1121,7 +1121,7 @@ err_t bignVerify(const bign_params* params, const octet oid_der[],
 		return ERR_BAD_SIG;
 	}
 	qrTo((octet*)R, ecX(R), ec->f, stack);
-	// s0 == belt-hash(oid || R || H)?
+	// s0 == belt-hash(oid || R || H) mod 2^l?
 	beltHashStart(stack);
 	beltHashStepH(oid_der, oid_len, stack);
 	beltHashStepH(R, no, stack);
@@ -1471,7 +1471,7 @@ err_t bignIdExtract(octet id_privkey[], octet id_pubkey[],
 		return ERR_BAD_SIG;
 	}
 	qrTo((octet*)R, ecX(R), ec->f, stack);
-	// s0 == belt-hash(oid || R || H)?
+	// s0 == belt-hash(oid || R || H) mod 2^l?
 	beltHashStart(stack);
 	beltHashStepH(oid_der, oid_len, stack);
 	beltHashStepH(R, no, stack);
@@ -1579,7 +1579,7 @@ err_t bignIdSign(octet id_sig[], const bign_params* params,
 		return ERR_BAD_PARAMS;
 	}
 	qrTo((octet*)V, ecX(V), ec->f, stack);
-	// s0 <- belt-hash(oid || V || H0 || H)
+	// s0 <- belt-hash(oid || V || H0 || H) mod 2^l
 	beltHashStart(stack);
 	beltHashStepH(oid_der, oid_len, stack);
 	beltHashStepH(V, no, stack);
@@ -1710,7 +1710,7 @@ err_t bignIdSign2(octet id_sig[], const bign_params* params,
 		return ERR_BAD_PARAMS;
 	}
 	qrTo((octet*)V, ecX(V), ec->f, stack);
-	// s0 <- belt-hash(oid || V || H0 || H)
+	// s0 <- belt-hash(oid || V || H0 || H) mod 2^l
 	beltHashStepH(V, no, hash_state);
 	beltHashStepH(id_hash, no, hash_state);
 	beltHashStepH(hash, no, hash_state);
@@ -1844,7 +1844,7 @@ err_t bignIdVerify(const bign_params* params, const octet oid_der[],
 	// belt-hash(oid...)
 	beltHashStart(hash_state);
 	beltHashStepH(oid_der, oid_len, hash_state);
-	// t <- belt-hash(oid || R || H0)
+	// t <- belt-hash(oid || R || H0) mod 2^l
 	memCopy(stack, hash_state, beltHash_keep());
 	beltHashStepH(id_pubkey, no, stack);
 	beltHashStepH(id_hash, no, stack);
@@ -1865,7 +1865,7 @@ err_t bignIdVerify(const bign_params* params, const octet oid_der[],
 		return ERR_BAD_SIG;
 	}
 	qrTo((octet*)V, ecX(V), ec->f, stack);
-	// s0 == belt-hash(oid || V || H0 || H)?
+	// s0 == belt-hash(oid || V || H0 || H) mod 2^l?
 	beltHashStepH(V, no, hash_state);
 	beltHashStepH(id_hash, no, hash_state);
 	beltHashStepH(hash, no, hash_state);
