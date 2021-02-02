@@ -106,11 +106,11 @@ Assert
 *******************************************************************************
 */
 
-void utilAssert(int b, const char* file, int line)
+void utilAssert(int b, const char* file, int line, char const *msg)
 {
 	if (!b)
 	{
-		fprintf(stderr, "Assertion in %s::%d\n", file, line);
+		fprintf(stderr, "Assertion in %s::%d: %s\n", file, line, msg);
 		abort();
 	}
 }

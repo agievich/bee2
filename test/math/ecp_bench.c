@@ -4,9 +4,10 @@
 \brief Benchmarks for elliptic curves over prime fields
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2013.10.17
-\version 2020.02.05
-\license This program is released under the GNU General Public License 
+\version 2020.12.20
+\license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
@@ -27,7 +28,7 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-static size_t _ecpBench_deep(size_t n, size_t f_deep, size_t ec_d, 
+static size_t _ecpBench_deep(size_t n, size_t f_deep, size_t ec_d,
 	size_t ec_deep)
 {
 	return O_OF_W(3 * n) + prngCOMBO_keep() +
@@ -39,7 +40,7 @@ bool_t ecpBench()
 	// описание кривой
 	bign_params params[1];
 	// состояние
-	octet state[6000];
+	octet state[10*6000];
 	ec_o* ec;
 	octet* combo_state;
 	word* pt;
@@ -72,7 +73,7 @@ bool_t ecpBench()
 		}
 		ticks = tmTicks() - ticks;
 		// печать результатов
-		printf("ecpBench: %u cycles/mulpoint [%u mulpoints/sec]\n", 
+		printf("ecpBench: %u cycles/mulpoint [%u mulpoints/sec]\n",
 			(unsigned)(ticks / reps),
 			(unsigned)tmSpeed(reps, ticks));
 	}

@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-\file ww-test.c
+\file ww_test.c
 \brief Tests for arbitrary length words
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
@@ -25,11 +25,11 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-size_t checkOddRecordingResult_deep(size_t n) {
+static size_t checkOddRecordingResult_deep(size_t n) {
 	return n;
 }
 
-bool_t checkOddRecordingResult(word* odd_recording, size_t m, const word* d, size_t n, size_t k,
+static bool_t checkOddRecordingResult(word* odd_recording, size_t m, const word* d, size_t n, size_t k,
 	size_t w, void* stack) {
 	int i = 0;
 	const word hi_bit = WORD_BIT_POS(w);

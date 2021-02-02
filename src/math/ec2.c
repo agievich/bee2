@@ -557,12 +557,15 @@ bool_t ec2CreateLD(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	ec->froma = ec2FromALD;
 	ec->toa = ec2ToALD;
 	ec->neg = ec2NegLD;
+	ec->nega = ec2NegA;
 	ec->add = ec2AddLD;
 	ec->adda = ec2AddALD;
 	ec->sub = ec2SubLD;
 	ec->suba = ec2SubALD;
 	ec->dbl = ec2DblLD;
 	ec->dbla = ec2DblALD;
+	ec->smulsa = ecSmallMultAdd2A;
+	ec->smulsj = ecSmallMultAdd2J;
 	ec->deep = utilMax(8,
 		ec2ToALD_deep(f->n, f->deep),
 		ec2NegLD_deep(f->n, f->deep),

@@ -1,4 +1,4 @@
-﻿/*
+/*
 *******************************************************************************
 \file ec.h
 \brief Elliptic curves
@@ -204,6 +204,25 @@ typedef void (*ec_neg_i)(
 	void* stack				/*!< [in] вспомогательная память */
 );
 
+/*!	\brief Обратная аффинная точка
+
+	На эллиптической кривой ec определяется точка [2 * ec->f->n]b,
+	обратная к точке [2 * ec->f->n]a:
+	\code
+		b <- -a.
+	\endcode
+	\pre Описание ec работоспособно.
+	\pre Буфер b либо не пересекается, либо совпадает с буфером a.
+	\pre Координаты a лежат в базовом поле.
+	\expect Описание ec корректно.
+	\expect Точка a лежит на кривой.
+*/
+typedef void (*ec_nega_i)(
+	word b[],				/*!< [out] обратная аффинная точка */
+	const word a[],			/*!< [in] обращаемая аффинная точка */
+	const struct ec_o* ec	/*!< [in] описание эллиптической кривой */
+);
+
 /*!	\brief Сложение точек
 
 	На эллиптической кривой ec определяется сумма [ec->d * ec->f->n]c точек
@@ -353,6 +372,24 @@ typedef void (*ec_tpl_i)(
 	void* stack				/*!< [in] вспомогательная память */
 );
 
+typedef void (*ec_smulsa_i)(
+	word* c,				/*!< [out] линейный массив нечетных малых кратных (2i-1)[2n]a для i=1,2^{w-1} в аффинных координатах */
+	word d[],				/*!< [out] опционально (если d != NULL) удвоенная точка (2)[2n]a в аффинных координатах */
+	const word a[],			/*!< [in] базовая точка в аффинных координатах */
+	const size_t w,			/*!< [in] размер окна, число точек в массиве есть 2^{w-1} */
+	const struct ec_o* ec,	/*!< [in] описание эллиптической кривой */
+	void* stack				/*!< [in] вспомогательная память */
+);
+
+typedef void (*ec_smulsj_i)(
+	word* c,				/*!< [out] линейный массив нечетных малых кратных (2i-1)[2n]a для i=1,2^{w-1} в якобиевых координатах */
+	word d[],				/*!< [out] опционально (если d != NULL) удвоенная точка (2)[2n]a в якобиевых координатах */
+	const word a[],			/*!< [in] базовая точка в аффинных координатах */
+	const size_t w,			/*!< [in] размер окна, число точек в массиве есть 2^{w-1} */
+	const struct ec_o* ec,	/*!< [in] описание эллиптической кривой */
+	void* stack				/*!< [in] вспомогательная память */
+);
+
 /*!	\brief Описание эллиптической кривой
 
 	Описывается эллиптическая кривая, правила представления ее элементов,
@@ -376,6 +413,7 @@ typedef struct ec_o
 	ec_froma_i froma;		/*!< функция импорта из аффинной точки */
 	ec_toa_i toa;			/*!< функция экспорта в аффинную точку */
 	ec_neg_i neg;			/*!< функция обращения */
+	ec_nega_i nega;			/*!< функция обращения аффинной точки */
 	ec_add_i add;			/*!< функция сложения */
 	ec_adda_i adda;			/*!< функция сложения с аффинной точкой */
 	ec_sub_i sub;			/*!< функция вычитания */
@@ -383,6 +421,10 @@ typedef struct ec_o
 	ec_dbl_i dbl;			/*!< функция удвоения */
 	ec_dbla_i dbla;			/*!< функция удвоения аффинной точки */
 	ec_tpl_i tpl;			/*!< функция утроения */
+	ec_smulsa_i smulsa;		/*!< рассчет малых кратных в аффинных координатах */
+	ec_smulsj_i smulsj;		/*!< рассчет малых кратных в якобиевых координатах */
+	size_t precomp_w;		/*!< размер окна w */
+	word const *precomp_Gs;	/*!< малые нечетные кратные {(1-2^w)G, ..., -3G, -1G, 1G, 3G, .., (2^w-1)G, 2G} базовой точки G в аффинных координатах */
 	size_t deep;			/*!< максимальная глубина стека функций */
 	octet descr[];			/*!< память для размещения данных */
 } ec_o;
@@ -421,6 +463,9 @@ typedef struct ec_o
 
 #define ecNeg(b, a, ec, stack)\
 	(ec)->neg(b, a, ec, stack)
+
+#define ecNegA(b, a, ec)\
+	(ec)->nega(b, a, ec)
 
 #define ecAdd(c, a, b, ec, stack)\
 	(ec)->add(c, a, b, ec, stack)
@@ -517,6 +562,8 @@ bool_t ecCreateGroup(
 	const octet order[],	/*!< [in] порядок группы точек */
 	size_t order_len,		/*!< [in] длина order */
 	u32 cofactor,			/*!< [in] кофактор группы точек */
+	size_t w,				/*!< [in] размер окна */
+	const octet Gs[],		/*!< [in] малые нечетные кратные в аффинных координатах */
 	void* stack				/*!< [in] вспомогательная память */
 );
 
@@ -559,6 +606,33 @@ bool_t ecIsOperableGroup(
 	\safe Имеется ускоренная нерегулярная редакция.
 	\deep{stack} ecpMulA_deep(ec->f->n, ec->d, ec->f->deep, m).
 */
+bool_t SAFE(ecMulAOrig)(
+	word b[],			/*!< [out] кратная точка */
+	const word a[],		/*!< [in] базовая точка */
+	const ec_o* ec,		/*!< [in] описание кривой */
+	const word d[],		/*!< [in] кратность */
+	size_t m,			/*!< [in] длина d в машинных словах */
+	void* stack			/*!< [in] вспомогательная память */
+);
+
+size_t SAFE(ecMulAOrig_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m);
+
+bool_t FAST(ecMulAOrig)(word b[], const word a[], const ec_o* ec, const word d[],size_t m, void* stack);
+
+size_t FAST(ecMulAOrig_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m);
+
+
+bool_t FAST(ecMulA)(
+	word b[],			/*!< [out] кратная точка */
+	const word a[],		/*!< [in] базовая точка */
+	const ec_o* ec,		/*!< [in] описание кривой */
+	const word d[],		/*!< [in] кратность */
+	size_t m,			/*!< [in] длина d в машинных словах */
+	void* stack			/*!< [in] вспомогательная память */
+);
+
+size_t FAST(ecMulA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m);
+
 bool_t SAFE(ecMulA)(
 	word b[],			/*!< [out] кратная точка */
 	const word a[],		/*!< [in] базовая точка */
@@ -570,9 +644,16 @@ bool_t SAFE(ecMulA)(
 
 size_t SAFE(ecMulA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 
-bool_t FAST(ecMulA)(word b[], const word a[], const ec_o* ec, const word d[],size_t m, void* stack);
 
-size_t FAST(ecMulA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m);
+bool_t ecMulDivpJ(word b[], const word a[], const size_t w, const ec_o* ec, const word d[],
+	size_t m, void* stack);
+
+size_t ecMulDivpJ_deep(size_t n, size_t w, size_t ec_d, size_t ec_deep);
+
+bool_t ecMulDivpA(word b[], const word a[], const size_t w, const ec_o* ec, const word d[],
+	size_t m, void* stack);
+
+size_t ecMulDivpA_deep(size_t n, size_t w, size_t ec_d, size_t ec_deep);
 
 /*!	\brief Имеет порядок?
 
@@ -616,7 +697,7 @@ size_t ecHasOrderA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 	в противном случае (b == O).
 	\deep{stack} ecAddMulA_deep(ec->f->n, ec->d, ec->deep, m[1], ..., m[k]).
 */
-bool_t ecAddMulA(
+bool_t FAST(ecAddMulA)(
 	word b[],			/*!< [out] кратная точка */
 	const ec_o* ec,		/*!< [in] описание кривой */
 	void* stack,		/*!< [in] вспомогательная память */
@@ -624,7 +705,39 @@ bool_t ecAddMulA(
 	...					/*!< [in] тройки (a[i], d[i], m[i]) */
 );
 
-size_t ecAddMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t k,...);
+size_t FAST(ecAddMulA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t k,...);
+
+bool_t SAFE(ecAddMulA)(
+	word b[],			/*!< [out] кратная точка */
+	const ec_o* ec,		/*!< [in] описание кривой */
+	void* stack,		/*!< [in] вспомогательная память */
+	size_t k,			/*!< [in] число троек (a[i], d[i], m[i]) */
+	...					/*!< [in] тройки (a[i], d[i], m[i]) */
+);
+
+size_t SAFE(ecAddMulA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t k,...);
+
+void ecSmallMultAdd2J(
+	word c[],			/*!< [out] кратные якобиевы точки */
+	word d[],			/*!< [out] удвоенная якобиева точка */
+	const word a[],		/*!< [in] аффинная точка */
+	const size_t w,		/*!< [in] ширина окна */
+	const ec_o* ec,		/*!< [in] описание кривой */
+	void* stack			/*!< [in] вспомогательная память */
+);
+
+size_t ecSmallMultAdd2J_deep();
+
+void ecSmallMultAdd2A(
+	word c[],			/*!< [out] кратные аффинные точки */
+	word d[],			/*!< [out] удвоенная аффинная точка */
+	const word a[],		/*!< [in] аффинная точка */
+	const size_t w,		/*!< [in] ширина окна */
+	const ec_o* ec,		/*!< [in] описание кривой */
+	void* stack			/*!< [in] вспомогательная память */
+);
+
+size_t ecSmallMultAdd2A_deep(size_t n, size_t ec_d);
 
 #ifdef __cplusplus
 } /* extern "C" */

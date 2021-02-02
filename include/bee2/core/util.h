@@ -62,8 +62,8 @@ extern "C" {
 #ifdef NDEBUG
 	#define ASSERT(e) ((void)0)
 #else
-	extern void utilAssert(int e, const char* file, int line);
-	#define ASSERT(e) utilAssert(!!(e), __FILE__, __LINE__)
+	extern void utilAssert(int e, const char* file, int line, char const *msg);
+#define ASSERT(e) utilAssert(!!(e), __FILE__, __LINE__, #e)
 #endif
 
 /*!	\brief Проверяется выполнение условия

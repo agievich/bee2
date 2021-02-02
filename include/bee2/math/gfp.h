@@ -112,6 +112,15 @@ size_t gfpIsValid_deep(size_t n);
 #define gfpHalf(b, a, f)\
 	zzHalfMod(b, a, (f)->mod, (f)->n)
 
+#define gfpMul2(c, a, b, a2, b2, f, stack)\
+	do {\
+		qrAdd(c, a, b, f);\
+		qrSqr(c, c, f, stack);\
+		qrSub(c, c, a2, f);\
+		qrSub(c, c, b2, f);\
+		gfpHalf(c, c, f);\
+	} while(0)
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

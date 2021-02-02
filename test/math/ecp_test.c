@@ -4,8 +4,9 @@
 \brief Tests for elliptic curves over prime fields
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2017.05.29
-\version 2017.08.23
+\version 2020.12.20
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -16,6 +17,9 @@ version 3. See Copyright Notices in bee2/info.h.
 #include <bee2/core/util.h>
 #include <bee2/math/gfp.h>
 #include <bee2/math/ecp.h>
+#include <bee2/math/qr.h>
+#include <bee2/math/ww.h>
+#include <bee2/crypto/bign.h>
 
 /*
 *******************************************************************************
@@ -43,6 +47,240 @@ static u32 cofactor = 1;
 *******************************************************************************
 */
 
+static bool_t qrMontInvTest(const qr_o* qr, void* stack)
+{
+	size_t m, i;
+	word *c = (word *)stack;
+	word *u = (c + 3 * qr->n);
+	word *v = (u + 3 * qr->n);
+	word *ci, *ui;
+	stack = (void *)(v + qr->n);
+
+	// u := [2, 3, 4]
+	qrAdd(u, qr->unity, qr->unity, qr);
+	qrAdd(u + qr->n, u, qr->unity, qr);
+	qrAdd(u + 2 * qr->n, u + qr->n, qr->unity, qr);
+
+	for(m = 0; m++ < 3;)
+	{
+		qrMontInv(c, u, m, qr, stack);
+		ci = c;
+		ui = u;
+		for(i = 0; i < m; ++i)
+		{
+			qrMul(v, ci, ui, qr, stack);
+			if(0 != qrCmp(v, qr->unity, qr))
+				return FALSE;
+			ci += qr->n;
+			ui += qr->n;
+		}
+
+		wwCopy(c, u, qr->n * m);
+		qrMontInv(c, c, m, qr, stack);
+		ci = c;
+		ui = u;
+		for(i = 0; i < m; ++i)
+		{
+			qrMul(v, ci, ui, qr, stack);
+			if(0 != qrCmp(v, qr->unity, qr))
+				return FALSE;
+			ci += qr->n;
+			ui += qr->n;
+		}
+	}
+
+	return TRUE;
+}
+
+static bool_t ecMulADoubleAdd(word *c, word const *a, const ec_o *ec, word const *d, size_t m, void *stack)
+{
+	size_t i;
+	word b;
+	word *q = (word*)stack;
+	stack = (void*)(q + ec->d * ec->f->n);
+
+	ecSetO(q, ec);
+	for(i = m * B_PER_W; i--; )
+	{
+		ecDbl(q, q, ec, stack);
+		b = wwGetBits(d, i, 1);
+		if(b)
+			ecAddA(q, q, a, ec, stack);
+	}
+	return ecToA(c, q, ec, stack);
+}
+
+static bool_t ecSmallMultTest(const ec_o* ec, void *stack)
+{
+	size_t const MIN_W = 3;
+	size_t const MAX_W = 7;
+	const size_t na = ec->f->n * 2;
+	const size_t n = ec->f->n * ec->d;
+	size_t w, i, f, di;
+
+	word* bj = (word*)stack;
+	stack = (void*)(bj + n);
+	ecFromA(bj, ec->base, ec, stack);
+
+	word* d = bj + n;
+	word* p = d + n;
+	word* sa = p + n;
+	word* ta = sa + na;
+	word* c = ta + na;
+	word* ci;
+	word b[1];
+
+	for(;;)
+	{
+		for(w = MIN_W; w <= MAX_W; ++w)
+		{
+			stack = (void*)(c + (n << (w - 1)));
+
+			for(f = 0; f < 2; ++f)
+			{
+				if(f == 0)
+					ecSmallMultAdd2A(c, d, ec->base, w, ec, stack);
+				else
+					ecpSmallMultDivpA(c, d, ec->base, w, ec, stack);
+
+				if(d)
+				{
+					ecDblA(p, ec->base, ec, stack);
+					ecToA(ta, p, ec, stack);
+					if(0 != wwCmp(d, ta, na))
+						return FALSE;
+				}
+
+				ci = c;
+				*b = 1;
+				for(i = SIZE_1 << (w - 1); i--;)
+				{
+					//if(!ecMulA(ta, ec->base, ec, b, 1, stack))
+					//	return FALSE;
+					if(!ecMulADoubleAdd(ta, ec->base, ec, b, 1, stack))
+						return FALSE;
+					if(0 != wwCmp(ci, ta, na))
+						return FALSE;
+					ci += na;
+					*b += 2;
+				}
+			}
+		}
+
+		for(w = MIN_W; w <= MAX_W; ++w)
+		{
+			stack = (void*)(c + (n << (w - 1)));
+
+			for(f = 0; f < 2; ++f)
+			{
+				if(f == 0)
+					ecSmallMultAdd2J(c, d, ec->base, w, ec, stack);
+				else
+					ecpSmallMultDivpJ(c, d, ec->base, w, ec, stack);
+
+				if(d)
+				{
+					ecToA(sa, d, ec, stack);
+					ecAdd(p, bj, bj, ec, stack);
+					ecToA(ta, p, ec, stack);
+					if(0 != wwCmp(sa, ta, na))
+						return FALSE;
+				}
+
+				ci = c;
+				*b = 1;
+				for(i = SIZE_1 << (w - 1); i--;)
+				{
+					ecToA(sa, ci, ec, stack);
+					//if(!ecMulA(ta, ec->base, ec, b, 1, stack))
+					//	return FALSE;
+					if(!ecMulADoubleAdd(ta, ec->base, ec, b, 1, stack))
+						return FALSE;
+					if(0 != wwCmp(sa, ta, na))
+						return FALSE;
+					ci += n;
+					*b += 2;
+				}
+			}
+		}
+
+		if(!d) break;
+		d = NULL;
+	}
+
+	return TRUE;
+}
+
+static bool_t ecMulTest(const ec_o* ec, void *stack)
+{
+	const size_t MIN_W = 3;
+	const size_t MAX_W = 7;
+	const size_t na = ec->f->n * 2;
+
+	size_t w, k, m = ec->f->n;
+	size_t d0, dk, ik;
+	word* d = (word*)stack;
+	word* ba = d + m + 1;
+	word* sa = ba + na;
+	word* fa = sa + na;
+	bool_t sb, fb;
+	stack = (void*)(fa + na);
+
+	ecDblA(sa, ec->base, ec, stack);
+	ecToA(ba, sa, ec, stack);
+
+	{
+		wwSetZero(d, m + 1);
+		d[0] = 0x0f;
+		fb = ecMulA(fa, /*ba*/ec->base, ec, d, m, stack);
+		sb = ecMulADoubleAdd(sa, /*ba*/ec->base, ec, d, m, stack);
+		if(fb != sb)
+			return FALSE;
+		if(fb && (0 != wwCmp(sa, fa, na)))
+			return FALSE;
+	}
+
+	for(;;)
+	{
+		// w = MIN_W .. MAX_W
+		// d = d_0 + .. + d_k 2^{wk}
+		for(w = MIN_W; w <= MAX_W; ++w)
+		{
+			m = (3 * w + B_PER_W - 1) / B_PER_W;
+			const word ds[8] = { 0, 1, 2, (1<<(w-1))-1, 1<<(w-1), (1<<(w-1))+1, (1<<w)-2, (1<<w)-1, };
+			for(d0 = 0; d0 < 8; ++d0)
+			{
+				for(dk = 0; dk < 8; ++dk)
+				{
+					const size_t ks[9] = {w-1, w, w+1, w+w-1, w+w, w+w+1, (m * B_PER_W) - w-2, (m * B_PER_W) - w-1, (m * B_PER_W) - w};
+					for(ik = 0; ik < 9; ++ik)
+					{
+						wwSetZero(d, m + 1);
+						wwSetBits(d, 0, w, ds[d0]);
+						k = ks[ik];
+						wwSetBits(d, k, w, ds[dk]);
+
+						fb = ecMulA(fa, ba, ec, d, m, stack);
+						sb = ecMulADoubleAdd(sa, ba, ec, d, m, stack);
+						if(fb != sb)
+							return FALSE;
+						if(fb && (0 != wwCmp(sa, fa, na)))
+							return FALSE;
+					}
+				}
+			}
+		}
+
+		if(ba == ec->base)
+			break;
+		ba = ec->base;
+	}
+
+	return TRUE;
+}
+
+extern err_t bignStart(void* state, const bign_params* params);
+
 bool_t ecpTest()
 {
 	// размерности
@@ -53,7 +291,7 @@ bool_t ecpTest()
 	const size_t ec_deep = ecpCreateJ_deep(n, f_deep);
 	// состояние и стек
 	octet state[2048];
-	octet stack[4096];
+	octet stack[10*4096];
 	octet t[96];
 	// поле и эк
 	qr_o* f;
@@ -73,7 +311,7 @@ bool_t ecpTest()
 		return FALSE;
 	// создать группу точек ec
 	hexToRev(t, xbase), hexToRev(t + 32, ybase), hexToRev(t + 64, q);
-	if (!ecCreateGroup(ec, t, t + 32, t + 64, no, cofactor, stack))
+	if (!ecCreateGroup(ec, t, t + 32, t + 64, no, cofactor, 0, NULL, stack))
 		return FALSE;
 	// присоединить f к ec
 	objAppend(ec, f, 0);
@@ -91,8 +329,32 @@ bool_t ecpTest()
 		return FALSE;
 	// базовая точка имеет порядок q?
 	ASSERT(ecHasOrderA_deep(n, ec->d, ec_deep, n) <= sizeof(stack));
+	//TODO: ecHasOrderA uses ecMulA before it's tested
 	if (!ecHasOrderA(ec->base, ec, ec->order, n, stack))
 		return FALSE;
+	// проверить алгоритм Монтгомери инвертирования элементов поля
+	if (!qrMontInvTest(ec->f, stack))
+		return FALSE;
+	// проверить алгоритм расчета малых кратных
+	if (!ecSmallMultTest(ec, stack))
+		return FALSE;
+	// проверить алгоритм скалярного умножения
+	if (!ecMulTest(ec, stack))
+		return FALSE;
+
+	{
+		bign_params params[1];
+		char oid[] = "1.2.112.0.2.0.34.101.45.3.0";
+		for(; ++oid[sizeof(oid)-2] < '4'; )
+		{
+			bignStdParams(params, oid);
+			bignStart(ec, params);
+			if(!ecSmallMultTest(ec, stack))
+				return FALSE;
+			if(!ecMulTest(ec, stack))
+				return FALSE;
+		}
+	}
 	// все нормально
 	return TRUE;
 }
