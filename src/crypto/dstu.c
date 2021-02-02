@@ -491,7 +491,7 @@ static err_t _dstuCreateEc(
 	stack = A + f->no;
 	if (!ec2CreateLD(ec, f, A, params->B, stack) ||
 		!ecCreateGroup(ec, params->P, params->P + ec->f->no, params->n, 
-			ec->f->no, params->c, stack))
+			ec->f->no, params->c, 0, NULL, stack))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;

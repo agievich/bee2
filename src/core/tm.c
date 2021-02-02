@@ -25,7 +25,7 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#if defined(_MSC_VER)
+#if 1 || defined(_MSC_VER)
 
 #if defined(_M_IX86) || defined (_M_IA64) || defined (_M_X64)
 

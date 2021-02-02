@@ -4,8 +4,9 @@
 \brief Benchmarks for elliptic curves over prime fields
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2013.10.17
-\version 2016.07.15
+\version 2020.12.20
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -39,7 +40,7 @@ bool_t ecpBench()
 	// описание кривой
 	bign_params params[1];
 	// состояние
-	octet state[6000];
+	octet state[10*6000];
 	ec_o* ec;
 	octet* combo_state;
 	word* pt;

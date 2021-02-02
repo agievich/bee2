@@ -249,6 +249,60 @@ void ecpSWU(
 
 size_t ecpSWU_deep(size_t n, size_t f_deep);
 
+/*!	\brief Расчет малых нечетных кратных в якобиевых координатах
+
+	Для i \in \{1,2,\ldots,2^{w-1}-1\} определяются кратности (2i+1) a
+	аффинной точки [2 * ec->f->n]a кривой ec:
+	\code
+		da <- 2 a
+		c[i] <- (2i+1) a.
+	\endcode
+	Кратности помещаются в буфер [(2^{w-1}-1) * 3 * ec->f->n]c.
+	\pre Описание ec работоспособно.
+	\pre Координата a лежит в базовом поле.
+	\expect Описание ec корректно.
+	\expect Точка a лежит на ec.
+	\deep{stack} ecpOddSmall_deep(w, ec->f->n, ec->f->deep).
+	\safe Алгоритм регулрен.
+*/
+void ecpSmallMultDivpJ(
+	word c[],			/*!< [out] кратные якобиевы точки */
+	word da[],			/*!< [out] удвоенная якобиева точка */
+	const word a[],		/*!< [in] аффинная точка */
+	const size_t w,		/*!< [in] ширина окна */
+	const ec_o* ec,		/*!< [in] описание кривой */
+	void* stack			/*!< [in] вспомогательная память */
+);
+
+size_t ecpSmallMultDivpJ_deep(bool_t da, const size_t w, size_t n, size_t f_deep);
+
+/*!	\brief Расчет малых нечетных кратных в аффинных координатах
+
+	Для i \in \{1,2,\ldots,2^{w-1}-1\} определяются кратности (2i+1) a
+	аффинной точки [2 * ec->f->n]a кривой ec:
+	\code
+		da <- 2 a
+		c[i] <- (2i+1) a.
+	\endcode
+	Кратности помещаются в буфер [(2^{w-1}-1) * 2 * ec->f->n]c.
+	\pre Описание ec работоспособно.
+	\pre Координата a лежит в базовом поле.
+	\expect Описание ec корректно.
+	\expect Точка a лежит на ec.
+	\deep{stack} ecpOddSmall_deep(w, ec->f->n, ec->f->deep).
+	\safe Алгоритм регулрен.
+*/
+void ecpSmallMultDivpA(
+	word c[],			/*!< [out] кратные аффинные точки */
+	word da[],			/*!< [out] удвоенная аффинная точка */
+	const word a[],		/*!< [in] аффинная точка */
+	const size_t w,		/*!< [in] ширина окна */
+	const ec_o* ec,		/*!< [in] описание кривой */
+	void* stack			/*!< [in] вспомогательная память */
+);
+
+size_t ecpSmallMultDivpA_deep(bool_t da, const size_t w, size_t n, size_t f_deep);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

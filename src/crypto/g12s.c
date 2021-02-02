@@ -653,7 +653,7 @@ static err_t g12sCreateEc(
 	ec = (ec_o*)state;
 	if (!ecpCreateJ(ec, f, params->a, params->b, stack) ||
 		!ecCreateGroup(ec, params->xP, params->yP, params->q, 
-			params->l / 8, params->n, stack))
+			params->l / 8, params->n, 0, NULL, stack))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;

@@ -184,7 +184,7 @@ size_t qrPower_deep(size_t n, size_t m, size_t r_deep)
 	return O_OF_W(n + n * powers_count) + r_deep;
 }
 
-
+#if 0
 void qrMontInv(word c[], const word u[], size_t m,	const qr_o* r, void* stack)
 {
 	ASSERT(qrIsOperable(r));
@@ -214,3 +214,51 @@ void qrMontInv(word c[], const word u[], size_t m,	const qr_o* r, void* stack)
 size_t qrMontInv_deep(size_t n, size_t m, size_t r_deep) {
 	return O_OF_W((m + 1) * n) + r_deep;
 }
+#else
+void qrMontInv(word c[], const word a[], size_t m, const qr_o* r, void* stack)
+{
+	ASSERT(qrIsOperable(r));
+	ASSERT(wwIsValid(a, m * r->n));
+	ASSERT(wwIsSameOrDisjoint(c, a, m * r->n));
+
+	//счетчик: i = 0 .. m-1
+	size_t i;
+	//набор нарастающих произведений: b[0] = a[0]; b[i+1] = b[i] * a[i+1]
+	word* b;
+	//обратный элемент: v = 1/b[i]
+	word* v;
+
+	b = (word*)stack;
+	v = b + m * r->n;
+	stack = v + r->n;
+
+	//b[0] = a[0]
+	i = 0;
+	qrCopy(b, a, r);
+	for (; ++i < m;) {
+		a += r->n;
+		//b[i+1] = b[i] * a[i+1]
+		qrMul(b + r->n, b, a, r, stack);
+		b += r->n;
+	}
+	//v = 1/b[m-1] = 1/(a[0] * .. * a[m-1])
+	qrInv(v, b, r, stack);
+	for (c += (m - 1) * r->n; --i > 0;) {
+		//значение b[i] не используется, хранит значение a[i]/b[i] = 1/b[i-1]
+		qrMul(b, v, a, r, stack);
+		//c[i] = b[i-1]/b[i] = 1/a[i]
+		qrMul(c, b - r->n, v, r, stack);
+		//v = 1/b[i-1]
+		qrCopy(v, b, r);
+		c -= r->n;
+		b -= r->n;
+		a -= r->n;
+	}
+	//a[0] = 1/b[0]
+	qrCopy(c, v, r);
+}
+
+size_t qrMontInv_deep(size_t n, size_t m, size_t r_deep) {
+	return O_OF_W((m + 1) * n) + r_deep;
+}
+#endif
