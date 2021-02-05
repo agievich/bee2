@@ -408,7 +408,6 @@ static void brngCTRXStepR(void* buf, size_t count, void* stack)
 extern size_t testReps;
 bool_t bakeBench()
 {
-#if 1
 	err_t codea;
 	err_t codeb;
 	bign_params params[1];
@@ -488,8 +487,8 @@ bool_t bakeBench()
 			} while(codea == ERR_FILE_NOT_FOUND || codeb == ERR_FILE_NOT_FOUND);
 		}
 		ticks = tmTicks() - ticks;
-		printf("bakeBench::bakeBMQV  : %3u cycles / byte [%5u kBytes / sec]\n",
-			(unsigned)(ticks / 1024 / reps),
+		printf("bakeBench::bakeBMQV  : %3u cycles / rep [%5u reps / sec]\n",
+			(unsigned)(ticks / reps),
 			(unsigned)tmSpeed(reps, ticks));
 		// тест Б.3
 		hexTo(randa, _bsts_randa);
@@ -514,8 +513,8 @@ bool_t bakeBench()
 			} while(codea == ERR_FILE_NOT_FOUND || codeb == ERR_FILE_NOT_FOUND);
 		}
 		ticks = tmTicks() - ticks;
-		printf("bakeBench::bakeBSTS  : %3u cycles / byte [%5u kBytes / sec]\n",
-			(unsigned)(ticks / 1024 / reps),
+		printf("bakeBench::bakeBSTS  : %3u cycles / rep [%5u reps / sec]\n",
+			(unsigned)(ticks / reps),
 			(unsigned)tmSpeed(reps, ticks));
 		// тест Б.4
 		hexTo(randa, _bpace_randa);
@@ -540,10 +539,9 @@ bool_t bakeBench()
 			} while(codea == ERR_FILE_NOT_FOUND || codeb == ERR_FILE_NOT_FOUND);
 		}
 		ticks = tmTicks() - ticks;
-		printf("bakeBench::bakeBPACE : %3u cycles / byte [%5u kBytes / sec]\n",
-			(unsigned)(ticks / 1024 / reps),
+		printf("bakeBench::bakeBPACE : %3u cycles / rep [%5u reps / sec]\n",
+			(unsigned)(ticks / reps),
 			(unsigned)tmSpeed(reps, ticks));
 	}
-#endif
 	return 0;
 }

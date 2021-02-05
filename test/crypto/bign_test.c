@@ -425,8 +425,8 @@ bool_t bignBench()
 		for(i = 0, ticks = tmTicks(); i < reps; ++i)
 			bignDH(pubkey, params, privkey, pubkey, params->l / 4);
 		ticks = tmTicks() - ticks;
-		printf("bignBench::bignDH    : %3u cycles / byte [%5u kBytes / sec]\n",
-			(unsigned)(ticks / 1024 / reps),
+		printf("bignBench::bignDH    : %3u cycles / rep [%5u reps / sec]\n",
+			(unsigned)(ticks / reps),
 			(unsigned)tmSpeed(reps, ticks));
 
 		// тест Г.2
@@ -436,15 +436,15 @@ bool_t bignBench()
 			bignSign(sig, params, oid_der, oid_len, hash, privkey, brngCTRXStepR,
 				brng_state);
 		ticks = tmTicks() - ticks;
-		printf("bignBench::bignSign  : %3u cycles / byte [%5u kBytes / sec]\n",
-			(unsigned)(ticks / 1024 / reps),
+		printf("bignBench::bignSign  : %3u cycles / rep [%5u reps / sec]\n",
+			(unsigned)(ticks / reps),
 			(unsigned)tmSpeed(reps, ticks));
 
 		for(i = 0, ticks = tmTicks(); i < reps; ++i)
 			bignVerify(params, oid_der, oid_len, hash, sig, pubkey);
 		ticks = tmTicks() - ticks;
-		printf("bignBench::bignVerify: %3u cycles / byte [%5u kBytes / sec]\n",
-			(unsigned)(ticks / 1024 / reps),
+		printf("bignBench::bignVerify: %3u cycles / rep [%5u reps / sec]\n",
+			(unsigned)(ticks / reps),
 			(unsigned)tmSpeed(reps, ticks));
 	}
 
