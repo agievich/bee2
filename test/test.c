@@ -108,6 +108,7 @@ extern bool_t botpTest();
 extern bool_t bignBench();
 extern bool_t bakeBench();
 
+
 int testCrypto()
 {
 	bool_t code;
@@ -165,10 +166,7 @@ int run()
 int all()
 {
 	int ret = 0;
-	//bignPrintPrecomp();
-	//SAFE(Wnd) vs FAST(NAF)
-	//Orig vs Precomp (w=0,3..6): ecPrecomp, ecW
-	//ret |= testCore();
+	size_t i, j, k, l, m;
 	bool_t safe[] = { TRUE, FALSE, };
 	bool_t precomp[] = { TRUE, FALSE, };
 	bool_t with_precomp[] = { TRUE, FALSE, };
@@ -178,7 +176,6 @@ int all()
 	fTest = TRUE;
 	fBench = TRUE;
 
-	size_t i, j, k, l, m;
 	for(i = 0; i < countof(safe); ++i)
 	{
 		ecSafe = safe[i];
@@ -293,7 +290,10 @@ int main(int argc, char const **argv)
 		else if(!strcmp("all", *argv))
 			return all();
 		else if(!strcmp("help", *argv))
-			printf(help);
+		{
+			printf("ecsafe\n\n%s", help);
+			return 0;
+		}
 		else
 		{
 			printf("Unknown option [%s].", *argv);

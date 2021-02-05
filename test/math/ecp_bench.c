@@ -35,47 +35,81 @@ static size_t _ecpBench_deep(size_t n, size_t f_deep, size_t ec_d,
 		ecMulA_deep(n, ec_d, ec_deep, n);
 }
 
+extern size_t testReps;
+extern size_t ecW;
+extern bool_t ecPrecompA;
 bool_t ecpBench()
 {
 	// описание кривой
 	bign_params params[1];
 	// состояние
-	octet state[10*6000];
+	octet state[40*6000];
 	ec_o* ec;
 	octet* combo_state;
-	word* pt;
+	word* pt, *pta;
 	word* d;
+	size_t nj, reps;
 	void* stack;
+	char params_oid[] = "1.2.112.0.2.0.34.101.45.3.0";
 	// загрузить параметры и создать описание кривой
-	ASSERT(bignStart_keep(128, _ecpBench_deep) <= sizeof(state));
-	if (bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK ||
-		bignStart(state, params) != ERR_OK)
-		return FALSE;
-	// раскладка состояния
-	ec = (ec_o*)state;
-	ec->tpl = 0;
-	combo_state = objEnd(ec, octet);
-	pt = (word*)(combo_state + prngCOMBO_keep());
-	d = pt + 2 * ec->f->n;
-	stack = d + ec->f->n;
-	// создать генератор COMBO
-	prngCOMBOStart(combo_state, 23/*utilNonce32()*/);
-	// оценить число кратных точек в секунду
-	{
-		const size_t reps = 1000;
-		size_t i;
-		tm_ticks_t ticks;
-		// эксперимент
-		for (i = 0, ticks = tmTicks(); i < reps; ++i)
+	ASSERT(bignStart_keep(256, _ecpBench_deep) <= sizeof(state));
+	for(; ++params_oid[sizeof(params_oid)-2] < '4';) {
+		if (bignStdParams(params, params_oid) != ERR_OK ||
+			bignStart(state, params) != ERR_OK)
+			return FALSE;
+		printf("ecpBench: %s\n", params_oid);
+		// раскладка состояния
+		ec = (ec_o*)state;
+		ec->tpl = 0;
+		nj = ec->d * ec->f->n;
+		combo_state = objEnd(ec, octet);
+		pt = (word*)(combo_state + prngCOMBO_keep());
+		d = pt + 2 * ec->f->n;
+		stack = d + ec->f->n;
+		reps = testReps*1024*1024 / params->l / params->l;
+		// оценить число кратных точек в секунду
+		pta = ec->base;
+		for(;;)
 		{
-			prngCOMBOStepR(d, ec->f->no, combo_state);
-			ecMulA(pt, ec->base, ec, d, ec->f->n, stack);
+			size_t i;
+			tm_ticks_t ticks;
+			// создать генератор COMBO
+			prngCOMBOStart(combo_state, 23/*utilNonce32()*/);
+			// эксперимент
+			for (i = 0, ticks = tmTicks(); i < reps; ++i)
+			{
+				prngCOMBOStepR(d, ec->f->no, combo_state);
+				ecMulA(pt, pta, ec, d, ec->f->n, stack);
+			}
+			ticks = tmTicks() - ticks;
+			// печать результатов
+			printf("ecpBench::%s: %u cycles / mulpoint [%u mulpoints / sec]\n", 
+				pta == ec->base ? "base": "rand",
+				(unsigned)(ticks / reps),
+				(unsigned)tmSpeed(reps, ticks));
+			if(pta == pt) break;
+			pta = pt;
 		}
-		ticks = tmTicks() - ticks;
-		// печать результатов
-		printf("ecpBench: %u cycles / mulpoint [%u mulpoints / sec]\n", 
-			(unsigned)(ticks / reps),
-			(unsigned)tmSpeed(reps, ticks));
+		// скорость предвычислений
+		{
+			word *c = (word*)stack;
+			void *stack2 = (word*)(c + (nj << ecW) + nj+nj);
+			size_t i;
+			tm_ticks_t ticks;
+			// эксперимент
+			if(ecPrecompA)
+				for (i = 0, ticks = tmTicks(); i < reps; ++i)
+					ec->smulsa(c, pt, ec->base, ecW, ec, stack2);
+			else
+				for (i = 0, ticks = tmTicks(); i < reps; ++i)
+					ec->smulsj(c, pt, ec->base, ecW, ec, stack2);
+			ticks = tmTicks() - ticks;
+			// печать результатов
+			printf("ecpBench::%s: %u cycles / rep [%u reps / sec]\n", 
+				ecPrecompA ? "smulsa" : "smulsj",
+				(unsigned)(ticks / reps),
+				(unsigned)tmSpeed(reps, ticks));
+		}
 	}
 	// все нормально
 	return TRUE;
