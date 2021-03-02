@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2019.04.03
-\version 2019.07.16
+\version 2021.02.03
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -21,10 +21,7 @@ version 3. See Copyright Notices in bee2/info.h.
 
 #include <immintrin.h>
 
-#include "bee2/core/blob.h"
-#include "bee2/core/err.h"
 #include "bee2/core/mem.h"
-#include "bee2/core/u64.h"
 #include "bee2/core/util.h"
 #include "bee2/crypto/bash.h"
 

@@ -6,7 +6,7 @@
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2014.07.15
-\version 2020.06.23
+\version 2021.02.03
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -15,7 +15,6 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/core/blob.h"
 #include "bee2/core/err.h"
 #include "bee2/core/mem.h"
-#include "bee2/core/u64.h"
 #include "bee2/core/util.h"
 #include "bee2/crypto/bash.h"
 
@@ -29,7 +28,7 @@ typedef struct {
 	octet s[192];		/*< состояние */
 	octet s1[192];		/*< копия s */
 	size_t buf_len;		/*< длина буфера */
-	size_t pos;		/*< позиция в буфере (накоплено октетов) */
+	size_t pos;			/*< позиция в буфере (накоплено октетов) */
 	octet stack[];		/*< [bashF_deep()] стек bashF */
 } bash_hash_st;
 

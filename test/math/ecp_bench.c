@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.10.17
-\version 2020.06.23
+\version 2020.02.05
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -58,7 +58,7 @@ bool_t ecpBench()
 	d = pt + 2 * ec->f->n;
 	stack = d + ec->f->n;
 	// создать генератор COMBO
-	prngCOMBOStart(combo_state, 23/*utilNonce32()*/);
+	prngCOMBOStart(combo_state, utilNonce32());
 	// оценить число кратных точек в секунду
 	{
 		const size_t reps = 1000;
