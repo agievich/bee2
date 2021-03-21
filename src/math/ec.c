@@ -1347,6 +1347,18 @@ size_t ecAddMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t k, ...) {
 		;
 }
 
+void ecDblAddA(word c[], const word a[], const word b[], bool_t neg_b, const struct ec_o* ec, void* stack) {
+	//todo SAFE - memcpy b to another buffer and apply (-1)^(1+neg_b) to it?
+	ec->dbl(c, a, ec, stack);
+	if (neg_b) {
+		ec->suba(c, c, b, ec, stack);
+	}
+	else
+	{
+		ec->adda(c, c, b, ec, stack);
+	}
+}
+
 void ecSmallMultAdd2J(word* c, word d[], const word a[], const size_t w, const ec_o* ec, void* stack) {
 	const size_t n = ec->f->n * ec->d;
 	size_t k = SIZE_1 << (w - 1);

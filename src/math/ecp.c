@@ -802,6 +802,16 @@ size_t ecpTplJA3_deep(size_t n, size_t f_deep)
 	return O_OF_W(7 * n) + f_deep;
 }
 
+void ecpDblAddA(word c[], const word a[], const word b[], bool_t neg_b, const struct ec_o* ec, void* stack) {
+	//todo implement properly for ecp
+	ecDblAddA(c, a, b, neg_b, ec, stack);
+}
+
+void ecpDblAddA_deep() {
+	//todo implement properly for ecp
+	return 0;
+}
+
 bool_t ecpDivp = TRUE;
 bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	void* stack)
@@ -849,6 +859,7 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	ec->dbl = bA3 ? ecpDblJA3 : ecpDblJ;
 	ec->dbla = ecpDblAJ;
 	ec->tpl = bA3 ? ecpTplJA3 : ecpTplJ;
+	ec->dbl_adda = ecpDblAddA;
 	ec->smulsa = ecpDivp ? ecpSmallMultDivpA : ecSmallMultAdd2A;
 	ec->smulsj = ecpDivp ? ecpSmallMultDivpJ : ecSmallMultAdd2J;
 	ec->deep = utilMax(8,
@@ -859,7 +870,8 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 		ecpSubAJ_deep(f->n, f->deep),
 		bA3 ? ecpDblJA3_deep(f->n, f->deep) : ecpDblJ_deep(f->n, f->deep),
 		ecpDblAJ_deep(f->n, f->deep),
-		bA3 ? ecpTplJA3_deep(f->n, f->deep) : ecpTplJ_deep(f->n, f->deep));
+		bA3 ? ecpTplJA3_deep(f->n, f->deep) : ecpTplJ_deep(f->n, f->deep),
+		ecpDblAddA_deep);
 	ec->deep += utilMax(3,
 		ecpDivp
 		    ? ecpSmallMultDivpA_deep(TRUE, 6, f->n, f->deep)
