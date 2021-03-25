@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2020.10.26
-\version 2021.02.03
+\version 2021.03.25
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -238,7 +238,7 @@ R2_X_1(a,i) = R2_X_0(a,delta(i)).
 
 /*
 *******************************************************************************
-Алгоритм bash-f
+Bash-f
 *******************************************************************************
 */
 
@@ -279,6 +279,8 @@ static void bashF2(octet block[192], void* stack)
 	register uint64x2_t Z1, Z2, T0, T1, T2, U0, U1, U2;
 	register uint64x2_t W0, W1, W2, W3, W4, W5, W6, W7, W8, W9, W10, W11;
 
+	ASSERT(memIsValid(block, 192));
+	ASSERT(memIsAligned(block, 8));
 	W0 = LOAD(block + 0);
 	W1 = LOAD(block + 16);
 	W2 = LOAD(block + 32);

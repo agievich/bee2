@@ -6,7 +6,7 @@
 \author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2019.04.03
-\version 2021.02.03
+\version 2021.03.25
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -59,7 +59,7 @@ static void u32x2RotHi(u32 t[2], const u32 w[2], size_t m)
 
 /*
 *******************************************************************************
-Алгоритм bash-s
+Bash-s
 *******************************************************************************
 */
 
@@ -203,7 +203,7 @@ static void u32x2RotHi(u32 t[2], const u32 w[2], size_t m)
 
 /*
 *******************************************************************************
-Алгоритм bash-f (sponge-функция)
+Bash-f (sponge-функция)
 
 \todo Если объявить
 \code
