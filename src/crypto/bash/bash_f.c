@@ -6,7 +6,7 @@
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2019.06.25
-\version 2020.11.03
+\version 2021.03.25
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -19,7 +19,12 @@ version 3. See Copyright Notices in bee2/info.h.
 	defined(_M_ARM) || defined(_M_ARM64))
 	#define __ARM_NEON__
 #endif
- 
+
+#if !defined(__SSE2__) && ((_M_IX86_FP == 2) ||\
+	defined(_M_AMD64) || defined(_M_X64))
+	#define __SSE2__
+#endif
+
 #if defined(__AVX512F__) && defined(BASH_AVX512)
 	#include "bash_favx512.c"
 	const char bash_platform[] = "BASH_AVX512";
