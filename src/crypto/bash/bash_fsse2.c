@@ -30,9 +30,9 @@ version 3. See Copyright Notices in bee2/info.h.
 Сокращения для используемых intrinsic
 
 Нотация:
-- префикс W -- 128-разрядное слово;
-- префикс w -- 64-разрядное слово;
-- в W = w0 w1 слово w0 -- младшее, w1 -- старшее.
+- W (прописные буквы) -- 128-разрядное слово;
+- w (строчные буквы) -- 64-разрядное слово;
+- в W = (w0, w1) слово w0 -- младшее, w1 -- старшее.
 
 \remark Указатель на память при загрузке и выгрузке в LOAD и STORE должен быть
 выровнен на границу 256 бит (32 байт). LOADU и STOREU могут принимать
@@ -356,7 +356,7 @@ void bashF(octet block[192], void* stack)
 	register __m128i Z1, Z2, T0, T1, T2, U0, U1, U2;
 	register __m128i W0, W1, W2, W3, W4, W5, W6, W7, W8, W9, W10, W11;
 
-	ASSERT(memIsDisjoint2(block, 192, stack, bashF_deep()));
+	ASSERT(memIsValid(block, 192));
 	W0 = LOADU(block + 0);
 	W1 = LOADU(block + 16);
 	W2 = LOADU(block + 32);
@@ -402,7 +402,8 @@ void bashF2(octet block[192], void* stack)
 	register __m128i Z1, Z2, T0, T1, T2, U0, U1, U2;
 	register __m128i W0, W1, W2, W3, W4, W5, W6, W7, W8, W9, W10, W11;
 
-	ASSERT(memIsDisjoint2(block, 192, stack, bashF_deep()));
+	ASSERT(memIsValid(block, 192));
+	ASSERT(memIsAligned(block, 16));
 	W0 = LOAD(block + 0);
 	W1 = LOAD(block + 16);
 	W2 = LOAD(block + 32);

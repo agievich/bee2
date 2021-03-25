@@ -6,7 +6,7 @@
 \project bee2 [cryptographic library]
 \author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2019.04.03
-\version 2021.02.03
+\version 2021.03.25
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -36,14 +36,19 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 Сокращения для используемых intrinsic
 
+Нотация:
+- W (прописные буквы) -- 512-разрядное слово;
+- w (строчные буквы) -- 64-разрядное слово;
+- в W = (w0, w1, ... w7) слово w0 -- младшее, w7 -- старшее.
+
 Константы для инструкций тернарной логики определяются следующим образом:
 
-XX = a ^ b ^ c
-XA = a ^ (b & c)
-XO = a ^ (b | c)
-XNO = a ^ ((~b) | c)
+XX = A ^ B ^ C
+XA = A ^ (B & C)
+XO = A ^ (B | C)
+XNO = A ^ ((~B) | C)
 
-abc XX XA XO XNO
+ABC XX XA XO XNO
 000  0  0  0  1
 001  1  0  1  1
 010  1  0  1  0
@@ -67,23 +72,23 @@ https://www.felixcloutier.com/x86/vzeroall
 
 #define LOAD(s) _mm512_load_si512((void const *)(s))
 #define LOADU(s) _mm512_loadu_si512((void const *)(s))
-#define STORE(s,w) _mm512_store_si512((void *)(s), (w))
-#define STOREU(s,w) _mm512_storeu_si512((void *)(s), (w))
+#define STORE(s, W) _mm512_store_si512((void *)(s), (W))
+#define STOREU(s, W) _mm512_storeu_si512((void *)(s), (W))
 #define ZEROALL _mm256_zeroall()
 
 #define S8(w0,w1,w2,w3,w4,w5,w6,w7) _mm512_set_epi64(w7,w6,w5,w4,w3,w2,w1,w0)
 
-#define XX8(a,b,c) _mm512_ternarylogic_epi64(a,b,c,0x96)
-#define XA8(a,b,c) _mm512_ternarylogic_epi64(a,b,c,0x78)
-#define XO8(a,b,c) _mm512_ternarylogic_epi64(a,b,c,0x1e)
-#define XNO8(a,b,c) _mm512_ternarylogic_epi64(a,b,c,0x4b)
+#define XX8(A,B,C) _mm512_ternarylogic_epi64(A,B,C, 0x96)
+#define XA8(A,B,C) _mm512_ternarylogic_epi64(A,B,C, 0x78)
+#define XO8(A,B,C) _mm512_ternarylogic_epi64(A,B,C, 0x1e)
+#define XNO8(A,B,C) _mm512_ternarylogic_epi64(A,B,C, 0x4b)
 
-#define X8(w1,w2) _mm512_xor_si512(w1,w2)
+#define X8(W1, W2) _mm512_xor_si512(W1, W2)
 
-#define SL8(m,a) _mm512_sllv_epi64(a,m)
-#define SR8(m,a) _mm512_srlv_epi64(a,m)
+#define SL8(W, m) _mm512_sllv_epi64(W, m)
+#define SR8(W, m) _mm512_srlv_epi64(W, m)
 
-#define P8(i,w) _mm512_permutexvar_epi64(i,w)
+#define P8(W, idx) _mm512_permutexvar_epi64(idx, W)
 
 /*
 *******************************************************************************
@@ -119,10 +124,10 @@ https://www.felixcloutier.com/x86/vzeroall
 
 #define bashS(W0,W1,W2, U0,U1,U2)\
 	U0 = XX8(W0, W1, W2);\
-	U2 = XX8(W1, SL8(N1L,U0), SR8(N1R,U0));\
-	U1 = XX8(U2, SL8(M1L,W0), SR8(M1R,W0));\
-	U2 = XX8(W2, SL8(N2L,U2), SR8(N2R,U2));\
-	U2 = XX8(U2, SL8(M2L,W2), SR8(M2R,W2));\
+	U2 = XX8(W1, SL8(U0, N1L), SR8(U0, N1R));\
+	U1 = XX8(U2, SL8(W0, M1L), SR8(W0, M1R));\
+	U2 = XX8(W2, SL8(U2, N2L), SR8(U2, N2R));\
+	U2 = XX8(U2, SL8(W2, M2L), SR8(W2, M2R));\
 	W1 = XO8(U1, U0, U2);\
 	W2 = XA8(U2, U0, U1);\
 	W0 = XNO8(U0, U2, U1)
@@ -138,13 +143,16 @@ https://www.felixcloutier.com/x86/vzeroall
 #define PI2 S8(1, 0, 3, 2, 5, 4, 7, 6)
 
 #define bashP(W0,W1,W2)\
-	W0 = P8(PI0, W0);\
-	W1 = P8(PI1, W1);\
-	W2 = P8(PI2, W2)
+	W0 = P8(W0, PI0);\
+	W1 = P8(W1, PI1);\
+	W2 = P8(W2, PI2)
 
 /*
 *******************************************************************************
 Такт
+
+\remark Три варианта реализации с учетом того, что перестановка строк
+не выполняется явно.
 *******************************************************************************
 */
 
@@ -231,7 +239,7 @@ void bashF(octet block[192], void* stack)
 	register __m512i U0, U1, U2;
 	register __m512i W0, W1, W2;
 
-	ASSERT(memIsDisjoint2(block, 192, stack, bashF_deep()));
+	ASSERT(memIsValid(block, 192));
 	W0 = LOADU(block + 0);
 	W1 = LOADU(block + 64);
 	W2 = LOADU(block + 128);
