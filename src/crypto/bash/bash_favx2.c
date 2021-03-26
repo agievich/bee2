@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2019.04.03
-\version 2021.03.25
+\version 2021.03.26
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -160,7 +160,7 @@ S0 применяется на тактах  1, 3, ...., S1 -- на тактах
 1, 3, ...., P1 -- на тактах 2, 4, .....
 
 P0 и P1 выбраны так, что P0 = delta P, P1 = P delta, а delta^2 = id.
-Конкретнее, delta переставляет столбцы по правилу 01234567 -> 10234576.
+Конкретнее, delta переставляет столбцы по правилу 01234567 -> 72143650.
 
 Инструкции AVX2 имеют ограничения по перемешиванию 64-битных слов в регистрах.
 Использование дополнительной подстановки delta позволяет
@@ -315,7 +315,7 @@ void bashF(octet block[192], void* stack)
 	register __m256i Z1, Z2, T0, T1, T2, U0, U1, U2;
 	register __m256i W0, W1, W2, W3, W4, W5;
 
-	ASSERT(memIsDisjoint2(block, 192, stack, bashF_deep()));
+	ASSERT(memIsValid(block, 192));
 	W0 = LOADU(block + 0);
 	W1 = LOADU(block + 32);
 	W2 = LOADU(block + 64);

@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2019.07.12
-\version 2021.03.25
+\version 2021.03.26
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -95,9 +95,8 @@ static __inline __m128i _mm_set_epi64x(__int64 w1, __int64 w0)
 *******************************************************************************
 */
 
-#define R2(W, i0, i1)\
-	P2_02(X2(SL2(W, i0), SR2(W, 64 - i0)),\
-		P2_10(X2(SL2(W, i1), SR2(W, 64 - i1))))
+#define R2(W, i0,i1)\
+	P2_02(X2(SL2(W, i0), SR2(W, 64-i0)), P2_10(X2(SL2(W, i1), SR2(W, 64-i1))))
 
 /*
 *******************************************************************************
