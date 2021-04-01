@@ -8,6 +8,7 @@ set(BEE2_VERSION
   "${BEE2_VERSION_MAJOR}.${BEE2_VERSION_MINOR}.${BEE2_VERSION_PATCH}")
 
 option(BUILD_SHARED_LIBS "Build shared libraries." ON)
+option(BUILD_PIC "Build position independent code." ON)
 option(BUILD_FAST "Build with the SAFE_FAST directive." OFF)
 option(BUILD_APPS "Build apps." ON)
 option(BUILD_TESTS "Build tests." ON)
