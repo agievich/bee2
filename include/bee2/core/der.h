@@ -86,6 +86,14 @@ extern "C" {
 *******************************************************************************
 */
 
+size_t derLenT(u32 tag);
+void derEncodeT(octet der[], u32 tag, size_t t_count);
+size_t derDecodeT(u32* tag, const octet der[], size_t count);
+
+size_t derLenL(size_t len);
+size_t derEncodeL(octet der[], size_t len, size_t l_count);
+size_t derDecodeL(size_t* len, const octet der[], size_t count);
+
 /*!	\brief Кодирование
 
 	Определяется число октетов в DER-коде значения [len]value с тегом tag. 

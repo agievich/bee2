@@ -96,6 +96,7 @@ extern bool_t dstuTest();
 extern bool_t g12sTest();
 extern bool_t pfokTest();
 extern bool_t pfokTestStdParams();
+extern bool_t pkcs5Test();
 extern bool_t bakeDemo();
 extern bool_t bashTest();
 extern bool_t bashBench();
@@ -105,18 +106,19 @@ int testCrypto()
 {
 	bool_t code;
 	int ret = 0;
-	printf("beltTest: %s\n", (code = beltTest()) ? "OK" : "Err"), ret |= !code;
-	printf("bashTest: %s\n", (code = bashTest()) ? "OK" : "Err"), ret |= !code;
-	code = beltBench(),	ret |= !code;
-	code = bashBench(),	ret |= !code;
-	printf("botpTest: %s\n", (code = botpTest()) ? "OK" : "Err"), ret |= !code;
-	printf("bignTest: %s\n", (code = bignTest()) ? "OK" : "Err"), ret |= !code;
-	printf("brngTest: %s\n", (code = brngTest()) ? "OK" : "Err"), ret |= !code;
-	printf("belsTest: %s\n", (code = belsTest()) ? "OK" : "Err"), ret |= !code;
-	printf("bakeTest: %s\n", (code = bakeTest()) ? "OK" : "Err"), ret |= !code;
-	printf("dstuTest: %s\n", (code = dstuTest()) ? "OK" : "Err"), ret |= !code;
-	printf("g12sTest: %s\n", (code = g12sTest()) ? "OK" : "Err"), ret |= !code;
-	printf("pfokTest: %s\n", (code = pfokTest()) ? "OK" : "Err"), ret |= !code;
+	// printf("beltTest: %s\n", (code = beltTest()) ? "OK" : "Err"), ret |= !code;
+	// printf("bashTest: %s\n", (code = bashTest()) ? "OK" : "Err"), ret |= !code;
+	// code = beltBench(),	ret |= !code;
+	// code = bashBench(),	ret |= !code;
+	// printf("botpTest: %s\n", (code = botpTest()) ? "OK" : "Err"), ret |= !code;
+	// printf("bignTest: %s\n", (code = bignTest()) ? "OK" : "Err"), ret |= !code;
+	// printf("brngTest: %s\n", (code = brngTest()) ? "OK" : "Err"), ret |= !code;
+	// printf("belsTest: %s\n", (code = belsTest()) ? "OK" : "Err"), ret |= !code;
+	// printf("bakeTest: %s\n", (code = bakeTest()) ? "OK" : "Err"), ret |= !code;
+	// printf("dstuTest: %s\n", (code = dstuTest()) ? "OK" : "Err"), ret |= !code;
+	// printf("g12sTest: %s\n", (code = g12sTest()) ? "OK" : "Err"), ret |= !code;
+	// printf("pfokTest: %s\n", (code = pfokTest()) ? "OK" : "Err"), ret |= !code;
+	printf("pkcs5Test: %s\n", (code = pkcs5Test()) ? "OK" : "Err"), ret |= !code;
 	return ret;
 }
 
@@ -129,8 +131,8 @@ main
 int main()
 {
 	int ret = 0;
-	ret |= testCore();
-	ret |= testMath();
+	//ret |= testCore();
+	//ret |= testMath();
 	ret |= testCrypto();
 	return ret;
 }

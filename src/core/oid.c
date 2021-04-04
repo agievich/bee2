@@ -44,6 +44,26 @@ static size_t oidSIDEncode(octet* buf, u32 val)
 	return count;
 }
 
+static size_t oidSIDEquals(bool_t *eq, const octet* buf, u32 val)
+{
+	size_t count = 0;
+	u32 t = val;
+	// длина BER-кода
+	if (val)
+		for (; t; t >>= 7, count++);
+	else
+		++count;
+	// кодирование
+	if (buf)
+	{
+		size_t i = count - 1;
+		*eq = (buf[i] == ((t = val) & 127)) && *eq;
+		while (i--)
+			t >>= 7, *eq = (buf[i] == (128 | (t & 127))) && *eq;
+	}
+	return count;
+}
+
 static size_t oidSIDDecode(char* oid, u32 val)
 {
 	size_t count = 0;
@@ -179,6 +199,59 @@ size_t oidToDER(octet der[], const char* oid)
 	// очистка и выход
 	d1 = val = 0, pos = 0;
 	return count;
+}
+
+bool_t oidEqDER(octet const der[], size_t len, const char* oid)
+{
+	bool_t eq = TRUE;
+	u32 d1;
+	u32 val = 0;
+	size_t pos = 0;
+	size_t count = 0;
+	// корректен?
+	if (!oidIsValid(oid))
+		return FALSE;
+	// pre
+	ASSERT(oid[0] == '0' || oid[0] == '1' || oid[0] == '2');
+	ASSERT(oid[1] == '.');
+	// обработать d1
+	d1 = oid[0] - '0';
+	oid += 2;
+	// цикл по символам oid
+	while (1)
+	{
+		// закончили очередное число?
+		if (oid[pos] == '.' || oid[pos] == '\0')
+		{
+			// закончили d2?
+			if (d1 != 3)
+				val += 40 * d1, d1 = 3;
+			// обработать число
+			//TODO: check for buffer overflow
+			if(count + oidSIDEncode(NULL, val) > len) {
+				eq = FALSE;
+				break;
+			}
+			count += oidSIDEquals(&eq, der + count, val);
+			if(count > len) {
+				eq = FALSE;
+				break;
+			}
+			// конец строки?
+			if (oid[pos] == '\0')
+				break;
+			// к следующему числу
+			oid += ++pos, pos = 0, val = 0;
+			continue;
+		}
+		// обработать цифру
+		val *= 10;
+		val += oid[pos] - '0';
+		++pos;
+	}
+	// очистка и выход
+	d1 = val = 0, pos = 0;
+	return eq && count == len;
 }
 
 size_t oidFromDER(char* oid, const octet der[], size_t count)

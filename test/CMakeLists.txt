@@ -25,6 +25,7 @@ add_executable(testbee2
 	crypto/dstu_test.c
 	crypto/g12s_test.c
 	crypto/pfok_test.c
+	crypto/pkcs5_test.c
 	math/pri_test.c
 	math/zz_test.c
 	math/word_test.c

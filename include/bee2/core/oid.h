@@ -98,6 +98,12 @@ size_t oidToDER(
 	const char* oid		/*!< [in] идентификатор объекта */
 );
 
+bool_t oidEqDER(
+	octet const der[],
+	size_t len,
+	const char* oid
+);
+
 /*!	\brief DER-декодирование
 
 	Определяется число символов (включая завершающий нулевой) для размещения

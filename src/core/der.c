@@ -21,7 +21,7 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-static size_t derLenT(u32 tag)
+size_t derLenT(u32 tag)
 {
 	size_t t_count = 1;
 	u32 t;
@@ -45,7 +45,7 @@ static size_t derLenT(u32 tag)
 	return t_count;
 }
 
-static void derEncodeT(octet der[], u32 tag, size_t t_count)
+void derEncodeT(octet der[], u32 tag, size_t t_count)
 {
 	ASSERT(memIsValid(der, t_count));
 	ASSERT(t_count >= 1);
@@ -69,7 +69,7 @@ static void derEncodeT(octet der[], u32 tag, size_t t_count)
 	}
 }
 
-static size_t derDecodeT(u32* tag, const octet der[], size_t count)
+size_t derDecodeT(u32* tag, const octet der[], size_t count)
 {
 	size_t t_count = 1;
 	u32 t;
@@ -120,7 +120,7 @@ static size_t derDecodeT(u32* tag, const octet der[], size_t count)
 *******************************************************************************
 */
 
-static size_t derLenL(size_t len)
+size_t derLenL(size_t len)
 {
 	size_t l_count = 1;
 	// длинная форма (r | 128) || o_{r - 1} ||...|| o_0?
@@ -129,7 +129,7 @@ static size_t derLenL(size_t len)
 	return l_count;
 }
 
-static size_t derEncodeL(octet der[], size_t len, size_t l_count)
+size_t derEncodeL(octet der[], size_t len, size_t l_count)
 {
 	ASSERT(memIsValid(der, l_count));
 	// короткая форма?
@@ -150,7 +150,7 @@ static size_t derEncodeL(octet der[], size_t len, size_t l_count)
 	return l_count;
 }
 
-static size_t derDecodeL(size_t* len, const octet der[], size_t count)
+size_t derDecodeL(size_t* len, const octet der[], size_t count)
 {
 	size_t l_count = 1;
 	size_t l;
