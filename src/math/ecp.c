@@ -803,13 +803,125 @@ size_t ecpTplJA3_deep(size_t n, size_t f_deep)
 }
 
 void ecpDblAddA(word c[], const word a[], const word b[], bool_t neg_b, const struct ec_o* ec, void* stack) {
-	//todo implement properly for ecp
-	ecDblAddA(c, a, b, neg_b, ec, stack);
+	//todo test implementation
+	const size_t n = ec->f->n;
+
+	//вспомогательные переменные
+	word* t1 = ecX(a);
+	word* t2 = ecY(a, n);
+	word* t3 = ecZ(a, n);
+	word* tx = ecX(b);
+	word* ty = ecY(b, n);
+
+	// переменные в stack
+	word* t4 = (word*)stack;
+	word* t5 = t4 + n;
+	word* t6 = t5 + n;
+	stack = t6 + n;
+
+	// pre
+	ASSERT(ecIsOperable(ec) && ec->d == 3);
+	ASSERT(ecpSeemsOn3(a, ec));
+	ASSERT(ecpSeemsOnA(b, ec));
+	ASSERT(wwIsSameOrDisjoint(a, c, 3 * n));
+	//todo - P != 0 and Q != 0?
+
+	//3. t4 <- t3^2
+	qrSqr(t4, t3, ec->f, stack);
+	//4. t5 <- tx * t4
+	qrMul(t5, tx, t4, ec->f, stack);
+	//5. t5 <- t5 - t1
+	qrSub(t5, t5, t1, ec->f);
+	//6. t6 <- t3 + t5
+	qrAdd(t6, t3, t5, ec->f);
+	//7. t6 <- t6^2
+	qrSqr(t6, t6, ec->f, stack);
+	//8. t6 <- t6 - t4
+	qrSub(t6, t6, t4, ec->f);
+	//9. t4 <- t3 * t4
+	qrMul(t4, t3, t4, ec->f, stack);
+	//10. t4 <- ty * t4
+	qrMul(t4, ty, t4, ec->f, stack);
+	//10.1 t4 <- (-1)^neg_b * t4
+	zmSetSign(t4, t4, ec->f, neg_b);
+	//11. t4 <- t4 - t2
+	qrSub(t4, t4, t2, ec->f);
+	//12. t3 <- t5^2
+	t3 = ecZ(c, n);
+	qrSqr(t3, t5, ec->f, stack);
+	//13. t6 <- t6 - t3
+	qrSub(t6, t6, t3, ec->f);
+	//14. t1 <- t1 * t3
+	qrMul(ecX(c), t1, t3, ec->f, stack);
+	t1 = ecX(c);
+	//15. t1 <- 4t1
+	gfpDouble(t1, t1, ec->f);
+	gfpDouble(t1, t1, ec->f);
+	//16. t3 <- t3 * t5
+	qrMul(t3, t3, t5, ec->f, stack);
+	//17. t2 <- t2 * t3
+	qrMul(ecY(c, n), t2, t3, ec->f, stack);
+	t2 = ecY(c, n);
+	//18. t2 <- 8t2
+	gfpDouble(t2, t2, ec->f);
+	gfpDouble(t2, t2, ec->f);
+	gfpDouble(t2, t2, ec->f);
+	//19. t5 <- t4^2
+	qrSqr(t5, t4, ec->f, stack);
+	//20. t3 <- t5 - t3
+	qrSub(t3, t5, t3, ec->f);
+	//21. t3 <- 4t3
+	gfpDouble(t3, t3, ec->f);
+	gfpDouble(t3, t3, ec->f);
+	//22. t3 <- t3 - t1
+	qrSub(t3, t3, t1, ec->f);
+	//23. t3 <- t3 - t1
+	qrSub(t3, t3, t1, ec->f);
+	//24. t3 <- t3 - t1
+	qrSub(t3, t3, t1, ec->f);
+	//25. t4 <- t3 + t4
+	qrAdd(t4, t3, t4, ec->f);
+	//26. t4 <- t4^2
+	qrSqr(t4, t4, ec->f, stack);
+	//27. t4 <- t5 - t4
+	qrSub(t4, t5, t4, ec->f);
+	//28. t4 <- t4 - t2
+	qrSub(t4, t4, t2, ec->f);
+	//29. t4 <- t4 - t2
+	qrSub(t4, t4, t2, ec->f);
+	//30. t5 <- t3^2
+	qrSqr(t5, t3, ec->f, stack);
+	//31. t4 <- t4 + t5
+	qrAdd(t4, t4, t5, ec->f);
+	//32. t1 <- t1 * t5
+	qrMul(t1, t1, t5, ec->f, stack);
+	//33. t5 <- t3 * t5
+	qrMul(t5, t3, t5, ec->f, stack);
+	//34. t3 <- t3 * t6
+	qrMul(t3, t3, t6, ec->f, stack);
+	//35. t2 <- t2 * t5
+	qrMul(t2, t2, t5, ec->f, stack);
+	//36. t5 <- 3t1
+	gfpDouble(t5, t1, ec->f);
+	qrAdd(t5, t5, t1, ec->f);
+	//37. t6 <- t4^2
+	qrSqr(t6, t4, ec->f, stack);
+	//38. t6 <- t6 - t5
+	qrSub(t6, t6, t5, ec->f);
+	//39. t5 <- t5 - t6
+	qrSub(t5, t5, t6, ec->f);
+	//40. t4 <- t4 * t5
+	qrMul(t4, t4, t5, ec->f, stack);
+	//41. t2 <- t4 - t2
+	qrSub(t2, t4, t2, ec->f);
+	//42. t1 <- t1 - t5
+	qrSub(t1, t1, t5, ec->f);
+
+	//c = (t1, t2, t3)
 }
 
-void ecpDblAddA_deep() {
-	//todo implement properly for ecp
-	return 0;
+void ecpDblAddA_deep(size_t n, size_t f_deep) {
+	return O_OF_W(3 * n) + f_deep;;
 }
 
 bool_t ecpDivp = TRUE;

@@ -259,6 +259,9 @@ qr_sub_i, qr_neg_i идут прямые обращения к zzAddMod(), zzSub
 #define zmNeg(b, a, r)\
 	zzNegMod(b, a, (r)->mod, (r)->n)
 
+#define zmSetSign(b, a, r, neg)\
+	zzSetSignMod(b, a, (r)->mod, (r)->n, neg)
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

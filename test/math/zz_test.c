@@ -6,7 +6,7 @@
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.15
 \version 2021.06.30
-\license This program is released under the GNU General Public License 
+\license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
@@ -49,35 +49,35 @@ static bool_t zzTestAdd()
 		prngCOMBOStepR(b, O_OF_W(n), combo_state);
 		// zzAdd / zzSub / zzIsSumEq
 		carry = zzAdd(c, a, b, n);
-		if (zzSub(c1, c, b, n) != carry || 
+		if (zzSub(c1, c, b, n) != carry ||
 			!wwEq(c1, a, n) ||
 			SAFE(zzIsSumEq)(c, a, b, n) != wordEq(carry, 0) ||
 			FAST(zzIsSumEq)(c, a, b, n) != wordEq(carry, 0))
 			return FALSE;
 		// zzAdd2 / zzSub2
 		wwCopy(c1, a, n);
-		if (zzAdd2(c1, b, n) != carry || 
+		if (zzAdd2(c1, b, n) != carry ||
 			!wwEq(c1, c, n) ||
 			zzSub2(c1, b, n) != carry ||
 			!wwEq(c1, a, n))
 			return FALSE;
 		// zzAddW / zzSubW / zzIsSumEqW
 		carry = zzAddW(c, a, n, b[0]);
-		if (zzSubW(c1, c, n, b[0]) != carry || 
+		if (zzSubW(c1, c, n, b[0]) != carry ||
 			!wwEq(c1, a, n) ||
 			SAFE(zzIsSumWEq)(c, a, n, b[0]) != wordEq(carry, 0) ||
 			FAST(zzIsSumWEq)(c, a, n, b[0]) != wordEq(carry, 0))
 			return FALSE;
 		// zzAddW2 / zzSubW2
 		wwCopy(c1, a, n);
-		if (zzAddW2(c1, n, b[0]) != carry || 
+		if (zzAddW2(c1, n, b[0]) != carry ||
 			!wwEq(c1, c, n) ||
-			zzSubW2(c1, n, b[0]) != carry || 
+			zzSubW2(c1, n, b[0]) != carry ||
 			!wwEq(c1, a, n))
 			return FALSE;
 		// zzAddW / zzSubW / zzIsSumEqW [n <- 1]
 		carry = zzAddW(c, a, 1, b[0]);
-		if (zzSubW(c1, c, 1, b[0]) != carry || 
+		if (zzSubW(c1, c, 1, b[0]) != carry ||
 			!wwEq(c1, a, 1) ||
 			SAFE(zzIsSumWEq)(c, a, 1, b[0]) != wordEq(carry, 0) ||
 			FAST(zzIsSumWEq)(c, a, 1, b[0]) != wordEq(carry, 0))
@@ -99,6 +99,32 @@ static bool_t zzTestAdd()
 		if (zzAdd(c, a, b, n) != 1 ||
 			!wwIsZero(c, n))
 			return FALSE;
+		// zzNeg
+		zzNeg(c, a, n);
+		zzAdd(c1, a, c, n);
+		if (!wwIsZero(c1, n)) {
+			return FALSE;
+		}
+		// zzSetSign
+		zzSetSign(c, a, n, TRUE);
+		zzNeg(c1, a, n);
+		if (!wwEq(c, c1, n)) {
+			return FALSE;
+		}
+		zzSetSign(c, a, n, FALSE);
+		if (!wwEq(a, c, n)) {
+			return FALSE;
+		}
+		//FAST(zzSetSign)
+		FAST(zzSetSign)(c, a, n, TRUE);
+		zzNeg(c1, a, n);
+		if (!wwEq(c, c1, n)) {
+			return FALSE;
+		}
+		FAST(zzSetSign)(c, a, n, FALSE);
+		if (!wwEq(a, c, n)) {
+			return FALSE;
+		}
 	}
 	// все нормально
 	return TRUE;
@@ -155,7 +181,7 @@ static bool_t zzTestMul()
 			for (nb = 1; nb <= n; ++nb)
 			{
 				zzMul(c, a, na, b, nb, stack);
-				zzAddW2(c + na, nb, zzAdd2(c, r, na)); 
+				zzAddW2(c + na, nb, zzAdd2(c, r, na));
 				zzMod(r1, c, na + nb, a, na, stack);
 				if (!wwEq(r, r1, na))
 					return FALSE;
@@ -297,6 +323,36 @@ static bool_t zzTestMod()
 		FAST(zzNegMod)(t1, t1, mod, n);
 		if (!FAST(wwIsZero)(t1, n))
 			return FALSE;
+		// zzSetSign.
+		zzSetSignMod(t, a, mod, n, TRUE);
+		zzAddMod(t1, t, a, mod, n);
+		if (!wwIsZero(t1, n))
+			return FALSE;
+		zzSetSignMod(t1, t1, mod, n, TRUE);
+		if (!wwIsZero(t1, n))
+			return FALSE;
+		zzSetSignMod(t, a, mod, n, FALSE);
+		zzSubMod(t1, t, a, mod, n);
+		if (!wwIsZero(t1, n))
+			return FALSE;
+		zzSetSignMod(t1, t1, mod, n, FALSE);
+		if (!wwIsZero(t1, n))
+			return FALSE;
+		// FAST(zzSetSign)
+		FAST(zzSetSignMod)(t, a, mod, n, TRUE);
+		FAST(zzAddMod)(t1, t, a, mod, n);
+		if (!FAST(wwIsZero)(t1, n))
+			return FALSE;
+		FAST(zzSetSignMod)(t1, t1, mod, n, TRUE);
+		if (!FAST(wwIsZero)(t1, n))
+			return FALSE;
+		FAST(zzSetSignMod)(t, a, mod, n, FALSE);
+		FAST(zzSubMod)(t1, t, a, mod, n);
+		if (!FAST(wwIsZero)(t1, n))
+			return FALSE;
+		FAST(zzSetSignMod)(t1, t1, mod, n, FALSE);
+		if (!FAST(wwIsZero)(t1, n))
+			return FALSE;
 		// SAFE(zzDoubleMod) / SAFE(zzHalfMod)
 		mod[0] |= 1;
 		SAFE(zzHalfMod)(t, a, mod, n);
@@ -395,7 +451,7 @@ static bool_t zzTestGCD()
 			zzMul(p1, t1 + n, na, b, nb, stack);
 			if (sign == 1)
 				zzSub2(p, p1, na + nb);
-			else 
+			else
 				zzSub(p, p1, p, na + nb);
 			if (wwCmp2(p, na + nb, t, MIN2(na, nb)) != 0)
 				return FALSE;
@@ -559,10 +615,10 @@ static bool_t zzTestEtc()
 
 bool_t zzTest()
 {
-	return zzTestAdd() && 
-		zzTestMul() && 
-		zzTestMod() && 
-		zzTestGCD() && 
+	return zzTestAdd() &&
+		zzTestMul() &&
+		zzTestMod() &&
+		zzTestGCD() &&
 		zzTestRed() &&
 		zzTestEtc();
 }

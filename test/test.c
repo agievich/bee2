@@ -81,7 +81,7 @@ int testMath()
 	bool_t code;
 	int ret = 0;
 	//printf("priTest: %s\n", (code = priTest()) ? "OK" : "Err"), ret |= !code;
-	//printf("zzTest: %s\n", (code = zzTest()) ? "OK" : "Err"), ret |= !code;
+	printf("zzTest: %s\n", (code = zzTest()) ? "OK" : "Err"), ret |= !code;
 	//printf("wordTest: %s\n", (code = wordTest()) ? "OK" : "Err"), ret |= !code;
 	//printf("wwTest: %s\n", (code = wwTest()) ? "OK" : "Err"), ret |= !code;
 	if(fTest) printf("ecpTest: %s\n", (code = ecpTest()) ? "OK" : "Err"), ret |= !code;
