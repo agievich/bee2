@@ -80,6 +80,32 @@ static bool_t zzTestAdd()
 			!wwEq(c1, a, 1) ||
 			zzIsSumWEq(c, a, 1, b[0]) != wordEq(carry, 0))
 			return FALSE;
+		// zzNeg
+		zzNeg(c, a, n);
+		zzAdd(c1, a, c, n);
+		if (!wwIsZero(c1, n)) {
+			return FALSE;
+		}
+		// zzSetSign
+		zzSetSign(c, a, n, TRUE);
+		zzNeg(c1, a, n);
+		if (!wwEq(c, c1, n)) {
+			return FALSE;
+		}
+		zzSetSign(c, a, n, FALSE);
+		if (!wwEq(a, c, n)) {
+			return FALSE;
+		}
+		//FAST(zzSetSign)
+		FAST(zzSetSign)(c, a, n, TRUE);
+		zzNeg(c1, a, n);
+		if (!wwEq(c, c1, n)) {
+			return FALSE;
+		}
+		FAST(zzSetSign)(c, a, n, FALSE);
+		if (!wwEq(a, c, n)) {
+			return FALSE;
+		}
 	}
 	// все нормально
 	return TRUE;
@@ -276,6 +302,36 @@ static bool_t zzTestMod()
 		if (!FAST(wwIsZero)(t1, n))
 			return FALSE;
 		FAST(zzNegMod)(t1, t1, mod, n);
+		if (!FAST(wwIsZero)(t1, n))
+			return FALSE;
+		// zzSetSign.
+		zzSetSignMod(t, a, mod, n, TRUE);
+		zzAddMod(t1, t, a, mod, n);
+		if (!wwIsZero(t1, n))
+			return FALSE;
+		zzSetSignMod(t1, t1, mod, n, TRUE);
+		if (!wwIsZero(t1, n))
+			return FALSE;
+		zzSetSignMod(t, a, mod, n, FALSE);
+		zzSubMod(t1, t, a, mod, n);
+		if (!wwIsZero(t1, n))
+			return FALSE;
+		zzSetSignMod(t1, t1, mod, n, FALSE);
+		if (!wwIsZero(t1, n))
+			return FALSE;
+		// FAST(zzSetSign)
+		FAST(zzSetSignMod)(t, a, mod, n, TRUE);
+		FAST(zzAddMod)(t1, t, a, mod, n);
+		if (!FAST(wwIsZero)(t1, n))
+			return FALSE;
+		FAST(zzSetSignMod)(t1, t1, mod, n, TRUE);
+		if (!FAST(wwIsZero)(t1, n))
+			return FALSE;
+		FAST(zzSetSignMod)(t, a, mod, n, FALSE);
+		FAST(zzSubMod)(t1, t, a, mod, n);
+		if (!FAST(wwIsZero)(t1, n))
+			return FALSE;
+		FAST(zzSetSignMod)(t1, t1, mod, n, FALSE);
 		if (!FAST(wwIsZero)(t1, n))
 			return FALSE;
 		// zzDoubleMod / zzHalfMod

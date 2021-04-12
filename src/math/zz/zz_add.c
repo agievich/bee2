@@ -298,3 +298,35 @@ void zzNeg(word b[], const word a[], size_t n)
 	zzAddW2(b, n, 1);
 }
 
+void FAST(zzSetSign)(word b[], const word a[], size_t n, bool_t neg) {
+	size_t i;
+
+	ASSERT(neg == FALSE || neg == TRUE);
+	ASSERT(wwIsSameOrDisjoint(a, b, n));
+
+	if (neg)
+	{
+		zzNeg(b, a, n);
+	}
+	else
+	{
+		wwCopy(b, a, n);
+	}
+}
+
+void SAFE(zzSetSign)(word b[], const word a[], size_t n, bool_t neg) {
+	size_t i;
+	word xor_mask;
+
+	ASSERT(neg == FALSE || neg == TRUE);
+	ASSERT(wwIsSameOrDisjoint(a, b, n));
+
+	//xor_mask <- neg ? WORD_MAX : WORD_0;
+	xor_mask = WORD_0 - (word)neg;
+	
+	for (i = 0; i < n; ++i)
+		b[i] = a[i] ^ xor_mask;
+	zzAddW2(b, n, (word)neg);
+
+	xor_mask = 0;
+}
