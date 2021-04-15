@@ -1,6 +1,7 @@
 add_executable(testbee2
 	core/b64_test.c
 	core/dec_test.c
+	core/der_test.c
 	core/mem_test.c
 	core/hex_test.c
 	core/obj_test.c
@@ -20,12 +21,12 @@ add_executable(testbee2
 	crypto/belt_bench.c
 	crypto/belt_test.c
 	crypto/bign_test.c
-	crypto/brng_test.c
 	crypto/botp_test.c
+	crypto/bpki_test.c
+	crypto/brng_test.c
 	crypto/dstu_test.c
 	crypto/g12s_test.c
 	crypto/pfok_test.c
-	crypto/pkcs5_test.c
 	math/pri_test.c
 	math/zz_test.c
 	math/word_test.c

@@ -240,6 +240,9 @@
     <ClCompile Include="..\..\src\crypto\bash\bash_prg.c">
       <Filter>Source Files\crypto\bash</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\crypto\bpki.c">
+      <Filter>Source Files\crypto</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\crypto\bign_lcl.h">
@@ -382,6 +385,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\crypto\belt\belt_lcl.h">
       <Filter>Source Files\crypto\belt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\bee2\crypto\bpki.h">
+      <Filter>Header Files\crypto</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

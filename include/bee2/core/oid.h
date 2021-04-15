@@ -3,9 +3,9 @@
 \file oid.h
 \brief Object identifiers
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.02.04
-\version 2015.08.27
+\version 2021.04.12
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -96,12 +96,6 @@ bool_t oidIsValid(
 size_t oidToDER(
 	octet der[],		/*!< [out] DER-код */
 	const char* oid		/*!< [in] идентификатор объекта */
-);
-
-bool_t oidEqDER(
-	octet const der[],
-	size_t len,
-	const char* oid
 );
 
 /*!	\brief DER-декодирование

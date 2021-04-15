@@ -3,9 +3,9 @@
 \file bels_test.c
 \brief Tests for STB 34.101.60 (bels)
 \project bee2/test
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.06.27
-\version 2018.11.30
+\version 2021.04.15
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -35,7 +35,7 @@ bool_t belsTest()
 	octet m0[32];
 	octet mi[32 * 5];
 	octet s[32];
-	octet si[32 * 5];
+	octet si[33 * 5];
 	char id[] = "Alice";
 	octet echo_state[64];
 	octet combo_state[512];
@@ -274,33 +274,26 @@ bool_t belsTest()
 			"003EEBDF90E803BA37CBA4FF8D9A724F"))
 			return FALSE;
 	}
-	// проверка belsShare2
+	// разделение и сборка на стандартных открытых ключах
 	for (len = 16; len <= 32; len += 8)
 	{
-		// загрузить открытые ключи
-		belsStdM(m0, len, 0);
-		belsStdM(mi + 0 * len, len, 1);
-		belsStdM(mi + 1 * len, len, 2);
-		belsStdM(mi + 2 * len, len, 3);
-		belsStdM(mi + 3 * len, len, 4);
-		belsStdM(mi + 4 * len, len, 5);
 		// разделить секрет
-		if (belsShare2(si, 5, 3, len, beltH()) != ERR_OK)
+		if (belsShare3(si, 5, 3, len, beltH()) != ERR_OK)
 			return FALSE;
 		// восстановить секрет
-		if (belsRecover(s, 1, len, si, m0, mi) != ERR_OK ||
+		if (belsRecover2(s, 1, len, si) != ERR_OK ||
 			memEq(s, beltH(), len))
 			return FALSE;
-		if (belsRecover(s, 2, len, si, m0, mi) != ERR_OK ||
+		if (belsRecover2(s, 2, len, si) != ERR_OK ||
 			memEq(s, beltH(), len))
 			return FALSE;
-		if (belsRecover(s, 3, len, si, m0, mi) != ERR_OK ||
+		if (belsRecover2(s, 3, len, si) != ERR_OK ||
 			!memEq(s, beltH(), len))
 			return FALSE;
-		if (belsRecover(s, 4, len, si, m0, mi) != ERR_OK ||
+		if (belsRecover2(s, 4, len, si) != ERR_OK ||
 			!memEq(s, beltH(), len))
 			return FALSE;
-		if (belsRecover(s, 5, len, si, m0, mi) != ERR_OK ||
+		if (belsRecover2(s, 5, len, si) != ERR_OK ||
 			!memEq(s, beltH(), len))
 			return FALSE;
 	}

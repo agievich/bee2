@@ -356,6 +356,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\test\core\b64_test.c" />
     <ClCompile Include="..\..\test\core\dec_test.c" />
+    <ClCompile Include="..\..\test\core\der_test.c" />
     <ClCompile Include="..\..\test\core\hex_test.c" />
     <ClCompile Include="..\..\test\core\mem_test.c" />
     <ClCompile Include="..\..\test\core\obj_test.c" />
@@ -377,6 +378,7 @@
     <ClCompile Include="..\..\test\crypto\belt_test.c" />
     <ClCompile Include="..\..\test\crypto\bign_test.c" />
     <ClCompile Include="..\..\test\crypto\botp_test.c" />
+    <ClCompile Include="..\..\test\crypto\bpki_test.c" />
     <ClCompile Include="..\..\test\crypto\brng_test.c" />
     <ClCompile Include="..\..\test\crypto\dstu_test.c" />
     <ClCompile Include="..\..\test\crypto\g12s_test.c" />

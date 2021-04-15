@@ -387,6 +387,7 @@
     <ClCompile Include="..\..\src\crypto\belt\belt_sde.c" />
     <ClCompile Include="..\..\src\crypto\belt\belt_wbl.c" />
     <ClCompile Include="..\..\src\crypto\botp.c" />
+    <ClCompile Include="..\..\src\crypto\bpki.c" />
     <ClCompile Include="..\..\src\crypto\g12s.c" />
     <ClCompile Include="..\..\src\crypto\pfok.c" />
     <ClCompile Include="..\..\src\math\ec.c" />
@@ -439,6 +440,7 @@
     <ClInclude Include="..\..\include\bee2\crypto\belt.h" />
     <ClInclude Include="..\..\include\bee2\crypto\bign.h" />
     <ClInclude Include="..\..\include\bee2\crypto\botp.h" />
+    <ClInclude Include="..\..\include\bee2\crypto\bpki.h" />
     <ClInclude Include="..\..\include\bee2\crypto\brng.h" />
     <ClInclude Include="..\..\include\bee2\crypto\dstu.h" />
     <ClInclude Include="..\..\include\bee2\crypto\g12s.h" />

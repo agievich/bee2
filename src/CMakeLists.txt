@@ -43,12 +43,12 @@ set(src
   crypto/belt/belt_mac.c
   crypto/belt/belt_pbkdf.c
   crypto/bign.c
+  crypto/bpki.c
   crypto/botp.c
   crypto/brng.c
   crypto/dstu.c
   crypto/g12s.c
   crypto/pfok.c
-  crypto/pkcs5.c
   math/ec.c
   math/ec2.c
   math/ecp.c
