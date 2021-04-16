@@ -53,14 +53,9 @@ matrix:
     install:
     - export "SDE_VERSION_NAME=sde-external-8.63.0-2021-01-18-lin"
     - curl --verbose 
-       --output intel-sde-downloader.py 
-       https://raw.githubusercontent.com/marehr/intel-sde-downloader/master/intel-sde-downloader.py
-    - curl --verbose 
-       --output intel-sde-downloader-reqs.txt
-       https://raw.githubusercontent.com/marehr/intel-sde-downloader/master/requirements.txt
-    - sudo pip install -r intel-sde-downloader-reqs.txt
-    - python intel-sde-downloader.py ${SDE_VERSION_NAME}.tar.bz2
-    - tar -xf ${SDE_VERSION_NAME}.tar.bz2
+        --output sde.tar.bz2
+        https://software.intel.com/content/dam/develop/external/us/en/documents/downloads/${SDE_VERSION_NAME}.tar.bz2
+    - tar -xf sde.tar.bz2
     script: 
     - mkdir build && cd build 
     - cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_FAST=$BUILD_FAST -DBASH_PLATFORM=$BASH_PLATFORM ..
