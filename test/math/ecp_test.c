@@ -279,6 +279,65 @@ static bool_t ecMulTest(const ec_o* ec, void *stack)
 	return TRUE;
 }
 
+
+//одна и та же точка в якобиевых координатах?
+static bool_t ecIsSamePointJ(const word a[], const word b[], const ec_o* ec, void* stack) {
+	const size_t na = ec->f->n * 2;
+	const size_t n = ec->f->n * 3;
+	word* aa;
+	word* ba;
+
+	if (!wwCmp(a, b, n))
+		return TRUE;
+
+	aa = (word*)stack;
+	ba = aa + na;
+	stack = ba + na;
+
+	ecToA(aa, a, ec, stack);
+	ecToA(ba, b, ec, stack);
+
+	return wwCmp(aa, ba, na) == 0;
+}
+
+static bool_t ecpTestDblAddA(const ec_o* ec, void* stack)
+{	const size_t n = ec->f->n * 3;
+
+	size_t i;
+
+	word* a = (word*)stack;
+	word* base_dbl = a + n;
+	word* actual = base_dbl + n;
+	word* expected = actual + n;
+	stack = (void*)(expected + n);
+
+	ecDblA(base_dbl, ec->base, ec, stack);
+	wwCopy(a, base_dbl, n);
+
+	ecDbl(expected, base_dbl, ec, stack);
+	ecAddA(expected, expected, ec->base, ec, stack);
+
+	//a = [3,4,5...] * ec->base
+	//expected = [5,7, 7,9, ...] * ec->base
+	for (i = 0; i < 20; ++i)
+	{
+		ecAddA(a, a, ec->base, ec, stack);
+
+		ecpDblAddA(actual, a, ec->base, TRUE, ec, stack);
+
+		if (!ecIsSamePointJ(expected, actual, ec, stack))
+			return FALSE;
+
+		ecAdd(expected, expected, base_dbl, ec, stack);
+
+		ecpDblAddA(actual, a, ec->base, FALSE, ec, stack);
+
+		if (!ecIsSamePointJ(expected, actual, ec, stack))
+			return FALSE;
+	}
+	return TRUE;
+}
+
 extern err_t bignStart(void* state, const bign_params* params);
 
 bool_t ecpTest()
@@ -340,6 +399,9 @@ bool_t ecpTest()
 		return FALSE;
 	// проверить алгоритм скалярного умножения
 	if (!ecMulTest(ec, stack))
+		return FALSE;
+	// проверить алгоритм удвоения и вычитания/сложения с афинной точкой
+	if (!ecpTestDblAddA(ec, stack))
 		return FALSE;
 
 	{
