@@ -53,7 +53,6 @@ matrix:
     install:
     - export "SDE_VERSION_NAME=sde-external-8.63.0-2021-01-30-lin"
     - curl --verbose
-       --cookie jar.txt
        --output sde.tar.bz2
        https://software.intel.com/content/dam/develop/external/us/en/documents/downloads/${SDE_VERSION_NAME}.tar.bz2
     - tar -xf sde.tar.bz2
