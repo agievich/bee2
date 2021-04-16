@@ -6,7 +6,7 @@
 \author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \author Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2021.04.03
-\version 2021.04.15
+\version 2021.04.16
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -86,6 +86,7 @@ static size_t bpkiEncPrivkey(octet pki[], const octet privkey[],
 	size_t count = 0;
 	// проверить ключи
 	ASSERT(privkey_len == 32 || privkey_len == 48 || privkey_len == 64);
+	ASSERT(memIsNullOrValid(privkey, privkey_len));
 	// кодировать
 	derEncStep(derEncSEQStart(PKI, pki, count), pki, count);
 	 derEncStep(derEncSIZE(pki, 0), pki, count);
@@ -145,7 +146,8 @@ static size_t bpkiEncShare(octet pki[], const octet share[], size_t share_len)
 	size_t count = 0;
 	// проверить ключи
 	ASSERT(share_len == 33 || share_len == 49 || share_len == 65);
-	ASSERT(1 <= share[0] && share[0] <= 16);
+	ASSERT(memIsNullOrValid(share, share_len));
+	ASSERT(!share || 1 <= share[0] && share[0] <= 16);
 	// кодировать
 	derEncStep(derEncSEQStart(PKI, pki, count), pki, count);
 	 derEncStep(derEncSIZE(pki, 0), pki, count);

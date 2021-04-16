@@ -12,6 +12,7 @@ What is Bee2?
 
 Bee2 is a cryptographic library which implements cryptographic 
 algorithm and protocols standardized in Belarus. 
+
 Bee2 fully supports the following standards 
 (see [apmi.bsu.by/resources/std.html](http://apmi.bsu.by/resources/std.html)):
 
@@ -23,6 +24,11 @@ Bee2 fully supports the following standards
 4. STB 34.101.60 (bels): secret sharing algorithms.
 5. STB 34.101.66 (bake): key establishment protocols over elliptic curves. 
 6. STB 34.101.77 (bash): sponge-based algorithms. 
+
+Bee2 partially supports cryptographic data formats defined in the following 
+standards:
+
+7. STB 34.101.78 (bpki): a PKI profile. 
 
 Additionally, Bee2 implements digital signature algorithms standardized in 
 Russia and Ukraine.
@@ -43,9 +49,9 @@ make
 
 Build types (`Release` by default):
    
-*  `Coverage` — test coverage,
-*  `ASan`, `ASanDbg` — [address sanitizer](http://en.wikipedia.org/wiki/AddressSanitizer),
-*  `MemSan`, `MemSanDbg` — [memory sanitizer](http://code.google.com/p/memory-sanitizer/),
+*  `Coverage` — test coverage;
+*  `ASan`, `ASanDbg` — [address sanitizer](http://en.wikipedia.org/wiki/AddressSanitizer);
+*  `MemSan`, `MemSanDbg` — [memory sanitizer](http://code.google.com/p/memory-sanitizer/);
 *  `Check` — strict compile rules.
 
 The `BUILD_FAST` option (`OFF` by default) switches from safe (constant-time) 
@@ -60,6 +66,12 @@ License
 
 Bee2 is released under the terms of the GNU General Public License version 3
 (GNU GPLv3). See [LICENSE](LICENSE) for more information.
+
+Related projects
+----------------
+
+* [Bee2evp](https://github.com/bcrypto/bee2evp): an OpenSSL engine over Bee2;
+* [Bee2j](https://github.com/bcrypto/bee2j): a Java wrapper over Bee2.
 
 What is the logo?
 -----------------

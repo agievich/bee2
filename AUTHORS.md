@@ -1,15 +1,16 @@
-Authors and contributors
-========================
+Credits
+=======
 
-Bee2 is written and maintained by
+Developement lead
+-----------------
 
 - Sergey Agievich [agievich@{bsu.by|gmail.com}] 
 
-Power contributors
-------------------
+Authors
+-------
 
 - Vlad Semenov [semenov.vlad.by@gmail.com]
-  - crypto/bash
+  - core/der, crypto/bash, crypto/bpki
   - code review
 - Stanislav Poruchnik [poruchnikstanislav@gmail.com] 
   - SAFE(math/zz)

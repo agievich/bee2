@@ -6,7 +6,7 @@
 \author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \author Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2014.04.21
-\version 2021.04.14
+\version 2021.04.16
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -335,7 +335,10 @@ size_t derDecOCT2(
 *******************************************************************************
 */
 
+/*! \brief Кодирование NULL */
 #define derEncNULL(der) derEnc(der, 0x05, 0, 0)
+
+/*! \brief Проверка кода NULL */
 #define derDecNULL(der, count) derDec4(der, count, 0x05, 0, 0)
 
 /*!	\brief Кодирование OBJECT IDENTIFIER
