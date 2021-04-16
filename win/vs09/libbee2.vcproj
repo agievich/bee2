@@ -416,6 +416,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\src\crypto\bpki.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\include\bee2\crypto\brng.h"
 					>
 				</File>
@@ -773,15 +777,15 @@
 					Name="bash"
 					>
 					<File
-						RelativePath="..\..\src\crypto\bash\bash_prg.c"
-						>
-					</File>
-					<File
 						RelativePath="..\..\src\crypto\bash\bash_f.c"
 						>
 					</File>
 					<File
 						RelativePath="..\..\src\crypto\bash\bash_hash.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\bash\bash_prg.c"
 						>
 					</File>
 				</Filter>

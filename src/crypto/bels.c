@@ -3,9 +3,9 @@
 \file bels.c
 \brief STB 34.101.60 (bels): secret sharing algorithms
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.05.14
-\version 2018.11.30
+\version 2021.04.15
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -21,8 +21,6 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/math/pp.h"
 #include "bee2/math/ww.h"
 #include "bee2/math/zz.h"
-
-#include "bee2/core/rng.h"
 
 /*
 *******************************************************************************
@@ -263,6 +261,53 @@ err_t belsGenMid(octet mid[], size_t len, const octet m0[], const octet id[],
 
 /*
 *******************************************************************************
+Генерация одноразового ключа
+*******************************************************************************
+*/
+
+static size_t belsGenk_keep()
+{
+	return MAX2(beltCTR_keep(), beltCompr_deep()) + 32 + 64;
+}
+
+static void belsGenkStart(void* state, const octet s[], size_t count,
+	size_t threshold, size_t len)
+{
+	octet* key;
+	octet* iv;
+	u32* K;
+	// pre
+	ASSERT(memIsValid(state, belsGenk_keep()));
+	ASSERT(len == 16 || len == 24 || len == 32);
+	ASSERT(memIsValid(s, len));
+	// раскладка state
+	key = (octet*)state + MAX2(beltCTR_keep(), beltCompr_deep());
+	iv = key + 32;
+	K = (u32*)iv;
+	// K <- belt-keyexpand(s)
+	beltKeyExpand2(K, s, len);
+	// key <- belt-compress(~K || K)
+	memCopy(K + 8, K, 32);
+	memNeg(K, 32);
+	beltCompr((u32*)key, K, state);
+	u32To(key, 32, (u32*)key);
+	// iv <- <n>_32 || <t>_32 || 0
+	K[4] = (u32)count, K[5] = (u32)threshold;
+	u32To(iv, 4, K + 4);
+	u32To(iv + 4, 4, K + 5);
+	memSetZero(iv + 8, 8);
+	// start belt-ctr(key, iv)
+	beltCTRStart(state, key, 32, iv);
+}
+
+static void belsGenkStepR(void* buf, size_t count, void* state)
+{
+	memSetZero(buf, count);
+	beltCTRStepE(buf, count, state);
+}
+
+/*
+*******************************************************************************
 Разделение секрета
 *******************************************************************************
 */
@@ -284,7 +329,7 @@ err_t belsShare(octet si[], size_t count, size_t threshold, size_t len,
 	if ((len != 16 && len != 24 && len != 32) || 
 		threshold == 0 || count < threshold ||
 		!memIsValid(s, len) || !memIsValid(m0, len) || 
-		!memIsValid(mi, len * count) || !memIsValid(si, len * count))
+		!memIsValid(mi, len * count) || !memIsValid(si, count * len))
 		return ERR_BAD_INPUT;
 	EXPECT(belsValM(m0, len) == ERR_OK);
 	// создать состояние
@@ -325,54 +370,38 @@ err_t belsShare(octet si[], size_t count, size_t threshold, size_t len,
 	return ERR_OK;
 }
 
-err_t belsShare2(octet si[], size_t count, size_t threshold, size_t len, 
-	const octet s[])
+err_t belsShare2(octet si[], size_t count, size_t threshold, size_t len,
+	const octet s[], gen_i rng, void* rng_state)
 {
 	size_t n, i;
 	void* state;
 	word* f;
-	u32* K;
-	octet* iv;
 	word* k;
 	word* c;
 	void* stack;
+	// проверить генератор
+	if (rng == 0)
+		return ERR_BAD_RNG;
 	// проверить входные данные
-	if ((len != 16 && len != 24 && len != 32) || 
+	if ((len != 16 && len != 24 && len != 32) ||
 		threshold == 0 || count < threshold || count > 16 ||
-		!memIsValid(s, len) || !memIsValid(si, len * count))
+		!memIsValid(s, len) || !memIsValid(si, count * (len + 1)))
 		return ERR_BAD_INPUT;
 	// создать состояние
 	n = W_OF_O(len);
-	state = blobCreate(O_OF_W(2 * threshold * n + 1) + 
-		utilMax(4,
-			beltCTR_keep(),
-			32 + beltCompr_deep(),
+	state = blobCreate(O_OF_W(2 * threshold * n + 1) +
+		utilMax(2,
 			ppMul_deep(threshold * n - n, n),
 			ppMod_deep(threshold * n, n + 1)));
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// раскладка состояния
 	f = (word*)state;
-	iv = (octet*)state;
 	k = f + n + 1;
 	c = k + threshold * n - n;
 	stack = c + threshold * n;
-	K = (u32*)stack;
-	// K <- belt-keyexpand(s)
-	beltKeyExpand2(K, s, len);
-	// K <- belt-compress(~K || K)
-	memCopy(f, K, 32);
-	memNeg(K, 32);
-	beltCompr(K, (u32*)f, (octet*)stack + 32);
-	u32To(stack, 32, K);
-	// iv <- <n> || <t> || 0
-	memSetZero(iv, 16);
-	iv[0] = (octet)count;
-	iv[4] = (octet)threshold;
-	// k <- belt-ctr(0, K, iv)
-	beltCTRStart(stack, stack, 32, iv);
-	memSetZero(k, threshold * len - len);
-	beltCTRStepE(k, threshold * len - len, stack);
+	// сгенерировать k
+	rng(k, threshold * len - len, rng_state);
 	wwFrom(k, k, threshold * len - len);
 	// c(x) <- (x^l + m0(x))k(x) + s(x)
 	belsStdM(stack, len, 0);
@@ -390,11 +419,33 @@ err_t belsShare2(octet si[], size_t count, size_t threshold, size_t len,
 		f[n] = 1;
 		// si(x) <- c(x) mod f(x)
 		ppMod(f, c, threshold * n, f, n + 1, stack);
-		wwTo(si + i * len, len, f);
+		wwTo(si + i * (len + 1) + 1, len, f);
+		si[i * (len + 1)] = (octet)(i + 1);
 	}
 	// завершение
 	blobClose(state);
 	return ERR_OK;
+}
+
+err_t belsShare3(octet si[], size_t count, size_t threshold, size_t len,
+	const octet s[])
+{
+	void* state;
+	err_t code;
+	// проверить входные данные
+	if ((len != 16 && len != 24 && len != 32) || !memIsValid(s, len)) 
+		return ERR_BAD_INPUT;
+	// создать состояние
+	state = blobCreate(belsGenk_keep());
+	if (state == 0)
+		return ERR_OUTOFMEMORY;
+	// запустить генератор
+	belsGenkStart(state, s, count, threshold, len);
+	// разделить секрет
+	code = belsShare2(si, count, threshold, len, s, belsGenkStepR, state);
+	// завершение
+	blobClose(state);
+	return code;
 }
 
 /*
@@ -502,6 +553,119 @@ err_t belsRecover(octet s[], size_t count, size_t len, const octet si[],
 	}
 	// [n]s(x) <- c(x) mod (x^l + m0(x))
 	wwFrom(f, m0, len), f[n] = 1;
+	ppMod(c, c, count * n, f, n + 1, stack);
+	ASSERT(c[n] == 0);
+	wwTo(s, len, c);
+	// завершение
+	blobClose(state);
+	return ERR_OK;
+}
+
+err_t belsRecover2(octet s[], size_t count, size_t len, const octet si[])
+{
+	size_t n, i, j, deep;
+	void* state;
+	word* f;
+	word* g;
+	word* d;
+	word* u;
+	word* v;
+	word* c;
+	word* t;
+	void* stack;
+	// проверить входные данные
+	if ((len != 16 && len != 24 && len != 32) || count == 0 || count > 16 ||
+		!memIsValid(si, count * (len + 1)) || !memIsValid(s, len))
+		return ERR_BAD_INPUT;
+	// проверить номера частичных секретов
+	for (i = 0; i < count; ++i)
+	{
+		if (si[i * (len + 1)] == 0 || si[i * (len + 1)] > 16)
+			return ERR_BAD_PUBKEY;
+		for (j = i + 1; j < count; ++j)
+			if (si[i * (len + 1)] == si[j * (len + 1)])
+				return ERR_BAD_PUBKEY;
+	}
+	// расчет глубины стека
+	n = W_OF_O(len);
+	deep = utilMax(2,
+		ppMul_deep(n, n),
+		ppMod_deep(count * n, n + 1));
+	for (i = 1; i < count; ++i)
+		deep = utilMax(6,
+			deep,
+			ppExGCD_deep(n + 1, i * n + 1),
+			ppMul_deep(i * n, i * n),
+			ppMul_deep(2 * i * n, n),
+			ppMul_deep(2 * n, i * n),
+			ppMod_deep((2 * i + 1) * n, (i + 1) * n + 1));
+	deep += O_OF_W(
+		n + 1 +
+		count * n + 1 +
+		(count - 1) * n + 1 +
+		(count - 1) * n + 1 +
+		n + 1 +
+		(2 * count - 1) * n +
+		MAX2((2 * count - 2) * n, (count + 1) * n));
+	// создать состояние
+	state = blobCreate(deep);
+	if (state == 0)
+		return ERR_OUTOFMEMORY;
+	// раскладка состояния
+	f = (word*)state;
+	g = f + n + 1;
+	d = g + count * n + 1;
+	u = d + (count - 1) * n + 1;
+	v = u + (count - 1) * n + 1;
+	c = v + n + 1;
+	t = c + (2 * count - 1) * n;
+	stack = t + MAX2((2 * count - 2) * n, (count + 1) * n);
+	// [n]c(x) <- s1(x)
+	wwFrom(c, si + 1, len);
+	// [n + 1]g(x) <- x^l + m1(x)
+	belsStdM((octet*)g, len, si[0]);
+	wwFrom(g, g, len), g[n] = 1;
+	// цикл по пользователям
+	for (f[n] = 1, i = 1; i < count; ++i)
+	{
+		// [n + 1]f(x) <- x^l + mi(x)
+		belsStdM((octet*)f, len, si[i * (len + 1)]);
+		wwFrom(f, f, len);
+		// найти d(x) = \gcd(f(x), g(x)) и коэфф. Безу [i * n]u(x), [n]v(x)
+		ppExGCD(d, u, v, f, n + 1, g, i * n + 1, stack);
+		ASSERT(u[i * n] == 0 && v[n] == 0);
+		// d(x) != 1? 
+		if (wwCmpW(d, i * n + 1, 1) != 0)
+		{
+			blobClose(state);
+			return ERR_BAD_PUBKEY;
+		}
+		// [2 * i * n]c(x) <- u(x)f(x)c(x)
+		// (с помощью [2 * i * n]t)
+		ppMul(t, u, i * n, c, i * n, stack);
+		ppMul(c, t, 2 * i * n, f, n, stack);
+		wwXor2(c + n, t, 2 * i * n);
+		// c(x) <- c(x) + v(x)g(x)si(x)
+		// (с помощью [2 * n]d и [(i + 2) * n]t)
+		wwFrom(t, si + i * (len + 1) + 1, len);
+		ppMul(d, v, n, t, n, stack);
+		ppMul(t, d, 2 * n, g, i * n, stack);
+		wwXor2(t + i * n, d, 2 * n);
+		wwXor2(c, t, (i + 2) * n);
+		// [(i + 1) * n + 1]g(x) <- g(x)f(x)
+		// (с помощью [(i + 1) * n]t)
+		ppMul(t, f, n, g, i * n, stack);
+		wwXor2(t + n, g, i * n);
+		wwXor2(t + i * n, f, n);
+		wwCopy(g, t, (i + 1) * n);
+		g[(i + 1) * n] = 1;
+		// [(i + 1) * n]c(x) <- c(x) mod g(x)
+		ppMod(c, c, (2 * i + 1) * n, g, (i + 1) * n + 1, stack);
+		ASSERT(c[(i + 1) * n] == 0);
+	}
+	// [n]s(x) <- c(x) mod (x^l + m0(x))
+	belsStdM((octet*)f, len, 0);
+	wwFrom(f, f, len), f[n] = 1;
 	ppMod(c, c, count * n, f, n + 1, stack);
 	ASSERT(c[n] == 0);
 	wwTo(s, len, c);

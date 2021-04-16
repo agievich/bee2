@@ -3,9 +3,9 @@
 \file test.c
 \brief Bee2 testing
 \project bee2/test
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.04.02
-\version 2017.07.11
+\version 2021.04.15
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -22,6 +22,7 @@ version 3. See Copyright Notices in bee2/info.h.
 
 extern bool_t b64Test();
 extern bool_t decTest();
+extern bool_t derTest();
 extern bool_t memTest();
 extern bool_t hexTest();
 extern bool_t objTest();
@@ -41,6 +42,7 @@ int testCore()
 	int ret = 0;
 	printf("b64Test: %s\n", (code = b64Test()) ? "OK" : "Err"), ret |= !code;
 	printf("decTest: %s\n", (code = decTest()) ? "OK" : "Err"), ret |= !code;
+	printf("derTest: %s\n", (code = derTest()) ? "OK" : "Err"), ret |= !code;
 	printf("memTest: %s\n", (code = memTest()) ? "OK" : "Err"), ret |= !code;
 	printf("hexTest: %s\n", (code = hexTest()) ? "OK" : "Err"), ret |= !code;
 	printf("objTest: %s\n", (code = objTest()) ? "OK" : "Err"), ret |= !code;
@@ -100,6 +102,7 @@ extern bool_t bakeDemo();
 extern bool_t bashTest();
 extern bool_t bashBench();
 extern bool_t botpTest();
+extern bool_t bpkiTest();
 
 int testCrypto()
 {
@@ -107,16 +110,17 @@ int testCrypto()
 	int ret = 0;
 	printf("beltTest: %s\n", (code = beltTest()) ? "OK" : "Err"), ret |= !code;
 	printf("bashTest: %s\n", (code = bashTest()) ? "OK" : "Err"), ret |= !code;
-	code = beltBench(),	ret |= !code;
-	code = bashBench(),	ret |= !code;
-	printf("botpTest: %s\n", (code = botpTest()) ? "OK" : "Err"), ret |= !code;
+	code = beltBench(), ret |= !code;
+	code = bashBench(), ret |= !code;
 	printf("bignTest: %s\n", (code = bignTest()) ? "OK" : "Err"), ret |= !code;
+	printf("botpTest: %s\n", (code = botpTest()) ? "OK" : "Err"), ret |= !code;
 	printf("brngTest: %s\n", (code = brngTest()) ? "OK" : "Err"), ret |= !code;
 	printf("belsTest: %s\n", (code = belsTest()) ? "OK" : "Err"), ret |= !code;
 	printf("bakeTest: %s\n", (code = bakeTest()) ? "OK" : "Err"), ret |= !code;
 	printf("dstuTest: %s\n", (code = dstuTest()) ? "OK" : "Err"), ret |= !code;
 	printf("g12sTest: %s\n", (code = g12sTest()) ? "OK" : "Err"), ret |= !code;
 	printf("pfokTest: %s\n", (code = pfokTest()) ? "OK" : "Err"), ret |= !code;
+	printf("bpkiTest: %s\n", (code = bpkiTest()) ? "OK" : "Err"), ret |= !code;
 	return ret;
 }
 
@@ -134,4 +138,3 @@ int main()
 	ret |= testCrypto();
 	return ret;
 }
-

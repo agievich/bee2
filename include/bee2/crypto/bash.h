@@ -3,9 +3,9 @@
 \file bash.h
 \brief STB 34.101.77 (bash): sponge-based algorithms
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.15
-\version 2021.03.25
+\version 2021.04.21
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -13,6 +13,14 @@ version 3. See Copyright Notices in bee2/info.h.
 
 #ifndef __BEE2_BASH_H
 #define __BEE2_BASH_H
+
+/*!
+*******************************************************************************
+\file bash.h
+\brief Алгоритмы СТБ 34.101.77 (bash)
+*******************************************************************************
+*/
+
 
 #ifdef __cplusplus
 extern "C" {

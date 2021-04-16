@@ -43,6 +43,7 @@ set(src
   crypto/belt/belt_mac.c
   crypto/belt/belt_pbkdf.c
   crypto/bign.c
+  crypto/bpki.c
   crypto/botp.c
   crypto/brng.c
   crypto/dstu.c
@@ -70,6 +71,8 @@ set(src
 add_library(bee2_static STATIC ${src})
 set_target_properties(bee2_static PROPERTIES OUTPUT_NAME bee2_static)
 target_link_libraries(bee2_static ${libs})
+# enable -fPIC even for static lib if it's linked into a shared lib
+set_property(TARGET bee2_static PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_PIC})
 
 install(TARGETS bee2_static
   DESTINATION ${LIB_INSTALL_DIR}

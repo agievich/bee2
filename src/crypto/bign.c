@@ -3,9 +3,9 @@
 \file bign.c
 \brief STB 34.101.45 (bign): digital signature and key transport algorithms
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.27
-\version 2021.01.29
+\version 2021.04.15
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -1751,7 +1751,7 @@ static size_t bignIdVerify_deep(size_t n, size_t f_deep, size_t ec_d,
 }
 
 err_t bignIdVerify(const bign_params* params, const octet oid_der[], 
-	size_t oid_len, const octet* id_hash, const octet* hash, 
+	size_t oid_len, const octet id_hash[], const octet hash[], 
 	const octet id_sig[], const octet id_pubkey[], const octet pubkey[])
 {
 	err_t code;

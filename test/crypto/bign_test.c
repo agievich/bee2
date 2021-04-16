@@ -3,7 +3,7 @@
 \file bign_test.c
 \brief Tests for STB 34.101.45 (bign)
 \project bee2/test
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.08.27
 \version 2020.11.25
 \license This program is released under the GNU General Public License 
@@ -41,14 +41,14 @@ static size_t brngCTRX_keep()
 	return sizeof(brng_ctrx_st) + brngCTR_keep();
 }
 
-static void brngCTRXStart(const octet theta[32], const octet iv[32],
+static void brngCTRXStart(const octet key[32], const octet iv[32],
 	const void* X, size_t count, void* state)
 {
 	brng_ctrx_st* s = (brng_ctrx_st*)state;
 	ASSERT(memIsValid(s, sizeof(brng_ctrx_st)));
 	ASSERT(count > 0);
 	ASSERT(memIsValid(s->state_ex, brngCTR_keep()));
-	brngCTRStart(s->state_ex, theta, iv);
+	brngCTRStart(s->state_ex, key, iv);
 	s->X = (const octet*)X;
 	s->count = count;
 	s->offset = 0;
@@ -113,7 +113,7 @@ bool_t bignTest()
 	word S1[W_OF_O(32)];
 	char pwd[] = "B194BAC80A08F53B";
 	size_t iter = 10000;
-	octet theta[32];
+	octet key[32];
 	// создать стек
 	ASSERT(sizeof(brng_state) >= brngCTRX_keep());
 	ASSERT(sizeof(zz_stack) >= zzMulMod_deep(W_OF_O(32)));
@@ -351,13 +351,13 @@ bool_t bignTest()
 		return FALSE;
 	id_pubkey[0] ^= 1;
 	// тест E.5
-	beltPBKDF2(theta, (const octet*)pwd, strLen(pwd), iter, 
+	beltPBKDF2(key, (const octet*)pwd, strLen(pwd), iter, 
 		beltH() + 128 + 64, 8);
-	if (!hexEq(theta,
+	if (!hexEq(key,
 		"3D331BBBB1FBBB40E4BF22F6CB9A689E"
 		"F13A77DC09ECF93291BFE42439A72E7D"))
 		return FALSE;
-	beltKWPWrap(token, privkey, 32, 0, theta, 32);
+	beltKWPWrap(token, privkey, 32, 0, key, 32);
 	if (!hexEq(token,
 		"4EA289D5F718087DD8EDB305BA1CE898"
 		"0E5EC3E0B56C8BF9D5C3E909CF4C14F0"
@@ -371,15 +371,15 @@ bool_t bignTest()
 		!memEq(token, beltH(), 16))
 		return FALSE;
 	// дополнительные тесты (vs OpenSSL)
-	hexTo(theta, "49FEFF8076CD9480");
-	beltPBKDF2(theta, (const octet*)"zed", 3, 2048, theta, 8);
-	if (!hexEq(theta,
+	hexTo(key, "49FEFF8076CD9480");
+	beltPBKDF2(key, (const octet*)"zed", 3, 2048, key, 8);
+	if (!hexEq(key,
 		"7249B4785FE68B1586D189A23E3842E4"
 		"8705C080A3248D8F0E8C3D63A93B2670"))
 		return FALSE;
-	hexTo(theta, "C65017E4F108BCF0");
-	beltPBKDF2(theta, (const octet*)"zed", 3, 10000, theta, 8);
-	if (!hexEq(theta,
+	hexTo(key, "C65017E4F108BCF0");
+	beltPBKDF2(key, (const octet*)"zed", 3, 10000, key, 8);
+	if (!hexEq(key,
 		"E48329259BC1211DDAC2EF1DADFFC993"
 		"2702A92F1DD66C14A9BA1D7300C8713C"))
 		return FALSE;
