@@ -802,8 +802,15 @@ size_t ecpTplJA3_deep(size_t n, size_t f_deep)
 	return O_OF_W(7 * n) + f_deep;
 }
 
+/*
+*	Формулы описаны в статье https://eprint.iacr.org/2008/051.pdf (стр 7)
+*	Схема вычисления описана в статье  https://eprint.iacr.org/2008/052.pdf (стр 33) со следующей ошибкой:
+*	Шаг 36 необходимо выполнять после шага 38, так как на шаге 38 значение T5 предполагается равным theta^3,
+*	в то время как это значение было установлено на шаге 33 и перезаписано на шаге 36
+*
+*
+*/
 void ecpDblAddA(word c[], const word a[], const word b[], bool_t neg_b, const struct ec_o* ec, void* stack) {
-	//todo test implementation
 	const size_t n = ec->f->n;
 
 	//вспомогательные переменные
@@ -824,7 +831,11 @@ void ecpDblAddA(word c[], const word a[], const word b[], bool_t neg_b, const st
 	ASSERT(ecpSeemsOn3(a, ec));
 	ASSERT(ecpSeemsOnA(b, ec));
 	ASSERT(wwIsSameOrDisjoint(a, c, 3 * n));
-	//todo - P != 0 and Q != 0?
+	//todo - P != Q?
+
+	wwCopy(t1, ecX(a), n);
+	wwCopy(t2, ecY(a, n), n);
+	wwCopy(t3, ecZ(a, n), n);
 
 	//3. t4 <- t3^2
 	qrSqr(t4, t3, ec->f, stack);
@@ -901,13 +912,14 @@ void ecpDblAddA(word c[], const word a[], const word b[], bool_t neg_b, const st
 	qrMul(t3, t3, t6, ec->f, stack);
 	//35. t2 <- t2 * t5
 	qrMul(t2, t2, t5, ec->f, stack);
-	//36. t5 <- 3t1
-	gfpDouble(t5, t1, ec->f);
-	qrAdd(t5, t5, t1, ec->f);
+	//шаг 36 после шага 38
 	//37. t6 <- t4^2
 	qrSqr(t6, t4, ec->f, stack);
 	//38. t6 <- t6 - t5
 	qrSub(t6, t6, t5, ec->f);
+	//36. t5 <- 3t1
+	gfpDouble(t5, t1, ec->f);
+	qrAdd(t5, t5, t1, ec->f);
 	//39. t5 <- t5 - t6
 	qrSub(t5, t5, t6, ec->f);
 	//40. t4 <- t4 * t5
@@ -916,12 +928,10 @@ void ecpDblAddA(word c[], const word a[], const word b[], bool_t neg_b, const st
 	qrSub(t2, t4, t2, ec->f);
 	//42. t1 <- t1 - t5
 	qrSub(t1, t1, t5, ec->f);
-
-	//c = (t1, t2, t3)
 }
 
-void ecpDblAddA_deep(size_t n, size_t f_deep) {
-	return O_OF_W(3 * n) + f_deep;;
+void ecpDblAddA_deep(size_t n, size_t f_deep) {;
+	return O_OF_W(3 * n) + f_deep;
 }
 
 bool_t ecpDivp = TRUE;
