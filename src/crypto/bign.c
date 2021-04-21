@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.27
-\version 2021.04.15
+\version 2021.04.20
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -740,7 +740,7 @@ err_t bignDH(octet key[], const bign_params* params, const octet privkey[],
 	if (key_len > 2 * no)
 	{
 		blobClose(state);
-		return ERR_BAD_SHAREKEY;
+		return ERR_BAD_SHAREDKEY;
 	}
 	// проверить входные указатели
 	if (!memIsValid(privkey, no) || 

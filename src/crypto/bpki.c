@@ -6,7 +6,7 @@
 \author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \author Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2021.04.03
-\version 2021.04.16
+\version 2021.04.20
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -526,7 +526,8 @@ err_t bpkiUnwrapShare(octet share[], size_t* share_len,
 	count = bpkiDecShare(share, share_len, edata, pki_len);
 	ASSERT(count == pki_len);
 	// проверить первый октет share
-	code = !share || 1 <= share[0] && share[0] <= 16 ? ERR_OK : ERR_BAD_SECKEY;
+	code = !share || 1 <= share[0] && share[0] <= 16 ?
+		ERR_OK : ERR_BAD_SHAREKEY;
 	// завершить
 	blobClose(state);
 	return code;

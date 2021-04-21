@@ -3,9 +3,9 @@
 \file bake.c
 \brief STB 34.101.66 (bake): key establishment protocols
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.04.14
-\version 2017.11.03
+\version 2021.04.21
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -526,7 +526,7 @@ err_t bakeBMQVStep4(octet out[], const octet in[], const bake_cert* certa,
 		beltMACStart(stack, s->K1, 32);
 		beltMACStepA(block0, 16, stack);
 		if (!beltMACStepV(in + 2 * no, stack))
-			return ERR_BAD_AUTH;
+			return ERR_AUTH;
 	}
 	// Tb <- beltMAC(1^128, K1)?
 	if (s->settings->kcb)
@@ -576,7 +576,7 @@ err_t bakeBMQVStep5(const octet in[8], void* state)
 	beltMACStart(stack, s->K1, 32);
 	beltMACStepA(block1, 16, stack);
 	if (!beltMACStepV(in, stack))
-		return ERR_BAD_AUTH;
+		return ERR_AUTH;
 	// все нормально
 	return ERR_OK;
 }
@@ -1035,7 +1035,7 @@ err_t bakeBSTSStep4(octet out[], const octet in[], size_t in_len,
 	beltMACStepA(in + 2 * no, in_len - 2 * no - 8, stack);
 	beltMACStepA(block0, 16, stack);
 	if (!beltMACStepV(in + in_len - 8, stack))
-		return ERR_BAD_AUTH;
+		return ERR_AUTH;
 	// обработать Ya = [in_len - 2 * no - 8]in
 	in_len -= 2 * no + 8;
 	{
@@ -1051,7 +1051,7 @@ err_t bakeBSTSStep4(octet out[], const octet in[], size_t in_len,
 		if (wwCmp(sa, s->ec->order, n) >= 0)
 		{
 			blobClose(Ya);
-			return ERR_BAD_AUTH;
+			return ERR_AUTH;
 		}
 		// проверить certa
 		code = vala((octet*)Qa, s->params, (octet*)Ya + no, in_len - no);
@@ -1075,7 +1075,7 @@ err_t bakeBSTSStep4(octet out[], const octet in[], size_t in_len,
 	if (!ecAddMulA(Qa, s->ec, stack, 2, s->ec->base, sa, n, Qa, t, n / 2 + 1))
 		return ERR_BAD_PARAMS;
 	if (!wwEq(Qa, Va, 2 * n))
-		return ERR_BAD_AUTH;
+		return ERR_AUTH;
 	// sb <- (ub - (2^l + t)db) \mod q
 	zzMul(sb, t, n / 2, s->d, n, stack);
 	sb[n + n / 2] = zzAdd2(sb + n / 2, s->d, n);
@@ -1145,7 +1145,7 @@ err_t bakeBSTSStep5(const octet in[], size_t in_len, bake_certval_i valb,
 	beltMACStepA(in, in_len - 8, stack);
 	beltMACStepA(block1, 16, stack);
 	if (!beltMACStepV(in + in_len - 8, stack))
-		return ERR_BAD_AUTH;
+		return ERR_AUTH;
 	// обработать Yb = [in_len - 8]in
 	in_len -= 8;
 	{
@@ -1161,7 +1161,7 @@ err_t bakeBSTSStep5(const octet in[], size_t in_len, bake_certval_i valb,
 		if (wwCmp(sb, s->ec->order, n) >= 0)
 		{
 			blobClose(Yb);
-			return ERR_BAD_AUTH;
+			return ERR_AUTH;
 		}
 		// проверить certa
 		code = valb((octet*)Qb, s->params, (octet*)Yb + no, in_len - no);
@@ -1178,7 +1178,7 @@ err_t bakeBSTSStep5(const octet in[], size_t in_len, bake_certval_i valb,
 		Qb, s->t, n / 2 + 1))
 		return ERR_BAD_PARAMS;
 	if (!wwEq(Qb, s->Vb, 2 * n))
-		return ERR_BAD_AUTH;
+		return ERR_AUTH;
 	// все нормально
 	return ERR_OK;
 }
@@ -1736,7 +1736,7 @@ err_t bakeBPACEStep5(octet out[], const octet in[], void* state)
 		beltMACStart(stack, s->K1, 32);
 		beltMACStepA(block1, 16, stack);
 		if (!beltMACStepV(in + 2 * no, stack))
-			return ERR_BAD_AUTH;
+			return ERR_AUTH;
 	}
 	// Ta <- beltMAC(0^128, K1)
 	if (s->settings->kca)
@@ -1783,7 +1783,7 @@ err_t bakeBPACEStep6(const octet in[8], void* state)
 	beltMACStart(stack, s->K1, 32);
 	beltMACStepA(block0, 16, stack);
 	if (!beltMACStepV(in, stack))
-		return ERR_BAD_AUTH;
+		return ERR_AUTH;
 	// все нормально
 	return ERR_OK;
 }

@@ -6,7 +6,7 @@
 \author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \author Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2021.04.03
-\version 2021.04.16
+\version 2021.04.20
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -113,8 +113,8 @@ err_t bpkiUnwrapPrivkey(
 	[share_len]share. Ключ защищается на пароле [pwd_len]pwd.
 	Используется механизм защиты PBKDF2 с синхропосылкой ("солью") salt
 	и числом итераций iter.
-	\expect{ERR_BAD_SECKEY} share_len \in {33, 49, 65}.
-	\expect{ERR_BAD_SECKEY} Если share != 0, то 1 <= share[0] <= 16.
+	\expect{ERR_BAD_SHAREKEY} share_len \in {33, 49, 65}.
+	\expect{ERR_BAD_SHAREKEY} Если share != 0, то 1 <= share[0] <= 16.
 	\expect{ERR_BAD_INPUT} iter >= 10000.
 	\return ERR_OK, если контейнер успешно создан, и код ошибки в противном
 	случае.

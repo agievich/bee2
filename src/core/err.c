@@ -3,9 +3,9 @@
 \file err.c
 \brief Errors
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.09
-\version 2014.04.22
+\version 2021.04.21
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -17,25 +17,6 @@ version 3. See Copyright Notices in bee2/info.h.
 /*
 *******************************************************************************
 Сообщение об ошибке
-
-\todo Перебросить в header.
-*******************************************************************************
-*/
-
-/*!	brief Сообщение об ошибке
-
-	Формируется строка, которая содержит сообщение об ошибке с кодом code.
-	\return Строка с сообщением об ошибке, или 0, если ошибка нераспознана.
-*/
-const char* errMsg(
-	err_t code			/*!< [in] код ошибки */
-);
-
-/*
-*******************************************************************************
-Сообщение об ошибке
-
-\todo Разобрать коды всех ошибок.
 *******************************************************************************
 */
 
@@ -46,16 +27,65 @@ typedef struct {
 
 static const err_msg _messages[] = {
 	{ERR_OK, "Success"},
-	{ERR_BAD_UNIT, "Bad unit"},
+	// system
+	{ERR_SYS, "Unknown system error"},
+	{ERR_BAD_UNIT, "Invalid device"},
+	{ERR_BAD_FILE, "Invalid file"},
+	{ERR_BAD_FUNCTION, "Invalid function"},
+	{ERR_BAD_COMMAND, "Invalid command"},
+	{ERR_BAD_LENGTH, "Invalid length"},
+	{ERR_BAD_INPUT, "Invalid input data"},
+	{ERR_OUTOFMEMORY, "Out of memory"},
+	{ERR_ACCESS_DENIED, "Access denied"},
+	{ERR_NOT_READY, "Device is not ready"},
+	{ERR_BUSY, "Device is busy"},
+	{ERR_TIMEOUT, "Timeout"},
+	{ERR_NOT_IMPLEMENTED, "Function is not implemented"},
+	// file
+	{ERR_FILE_CREATE, "Unable to create the file"},
+	{ERR_FILE_NOT_FOUND, "Unable to find the file"},
+	{ERR_FILE_OPEN, "Unable to open the file"},
+	{ERR_FILE_EXISTS, "The file exists"},
+	{ERR_FILE_TOO_MANY_OPEN, "Too many open files"},
+	{ERR_FILE_WRITE, "Cannot write to the file"},
+	{ERR_FILE_READ, "Cannot read from the file"},
+	{ERR_FILE_EOF, "Reached the end of the file"},
+	// core
+	{ERR_BAD_OID, "Incorrect object identifier"},
+	{ERR_BAD_ENTROPY, "Insufficient entropy"},
+	{ERR_BAD_RNG, "Incorrect random number generator"},
+	{ERR_BAD_ANG, "Incorrect any number generator"},
+	{ERR_BAD_FORMAT, "Invalid format"},
+	{ERR_BAD_TIME, "Invalid time"},
+	// math
+	{ERR_BAD_POINT, "Invalid elliptic curve point"},
+	{ERR_NOT_PRIME, "The number is not prime"},
+	{ERR_NOT_COPRIME, "The items are not coprime"},
+	{ERR_NOT_IRRED, "The polynomial is not irreducible"},
+	// crypto
+	{ERR_BAD_PARAMS, "Invalid domain parameters"},
+	{ERR_BAD_SECKEY, "Invalid secret key"},
+	{ERR_BAD_PRIVKEY, "Invalid private key"},
+	{ERR_BAD_PUBKEY, "Invalid public key"},
+	{ERR_BAD_CERT, "Incorrect public key certificate"},
+	{ERR_BAD_SHAREDKEY, "Incorrect shared key"},
+	{ERR_BAD_SHAREKEY, "Incorrect secret share"},
+	{ERR_BAD_HASH, "Incorrect hash"},
+	{ERR_BAD_SIG, "Incorrect signature"},
+	{ERR_BAD_MAC, "Incorrect authentication tag"},
+	{ERR_BAD_KEYTOKEN, "Invalid key token"},
+	{ERR_BAD_LOGIC, "Incorrect (protocol) logic"},
+	{ERR_BAD_PWD, "Incorrect password"},
+	{ERR_AUTH, "Authentication failed"},
+	{ERR_SELFTEST, "Self-tests failed"},
+	{ERR_STATTEST, "Statistical tests failed"},
 };
 
 const char* errMsg(err_t code)
 {
 	size_t i;
-
 	for (i = 0; i < COUNT_OF(_messages); ++i)
 		if (_messages[i].code == code)
 			return _messages[i].msg;
 	return 0;
 }
-

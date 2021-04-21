@@ -3,9 +3,9 @@
 \file rng.c
 \brief Entropy sources and random number generators
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2019.07.10
+\version 2021.04.21
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -67,7 +67,7 @@ static bool_t rngHasTRNG()
 #define rdrand_eax	__asm _emit 0x0F __asm _emit 0xC7 __asm _emit 0xF0
 #define rdseed_eax	__asm _emit 0x0F __asm _emit 0xC7 __asm _emit 0xF8
 
-static err_t rngReadTRNG(size_t* read, void* buf, size_t count)
+static err_t rngReadTRNG(void* buf, size_t* read, size_t count)
 {
 	u32* rand = (u32*)buf;
 	size_t i;
@@ -123,7 +123,7 @@ static bool_t rngHasTRNG()
 	 return (info[2] & 0x40000000) == 0x40000000;
 }
 
-static err_t rngReadTRNG(size_t* read, void* buf, size_t count)
+static err_t rngReadTRNG(void* buf, size_t* read, size_t count)
 {
 	u32* rand = (u32*)buf;
 	size_t i;
@@ -158,7 +158,7 @@ static err_t rngReadTRNG(size_t* read, void* buf, size_t count)
 
 #else
 
-static err_t rngReadTRNG(size_t* read, void* buf, size_t count)
+static err_t rngReadTRNG(void* buf, size_t* read, size_t count)
 {
 	ASSERT(memIsValid(read, sizeof(size_t)));
 	ASSERT(memIsValid(buf, count));
@@ -209,7 +209,7 @@ static bool_t rngHasTimer()
 #endif
 }
 
-static err_t rngReadTimer(size_t* read, void* buf, size_t count)
+static err_t rngReadTimer(void* buf, size_t* read, size_t count)
 {
 	register tm_ticks_t ticks;
 	size_t i, j;
@@ -273,7 +273,7 @@ dev/urandom. Это неблокирующий источник, который 
 #include <windows.h>
 #include <wincrypt.h>
 
-static err_t rngReadSys(size_t* read, void* buf, size_t count)
+static err_t rngReadSys(void* buf, size_t* read, size_t count)
 {
 	HCRYPTPROV hprov = 0;
 	// pre
@@ -302,7 +302,7 @@ static err_t rngReadSys(size_t* read, void* buf, size_t count)
 
 #include <stdio.h>
 
-static err_t rngReadSys(size_t* read, void* buf, size_t count)
+static err_t rngReadSys(void* buf, size_t* read, size_t count)
 {
 	FILE* fp;
 	ASSERT(memIsValid(read, sizeof(size_t)));
@@ -317,7 +317,7 @@ static err_t rngReadSys(size_t* read, void* buf, size_t count)
 
 #else
 
-static err_t rngReadSys(size_t* read, void* buf, size_t count)
+static err_t rngReadSys(void* buf, size_t* read, size_t count)
 {
 	ASSERT(memIsValid(read, sizeof(size_t)));
 	ASSERT(memIsValid(buf, count));
@@ -424,15 +424,15 @@ bool_t rngTestFIPS4(const octet buf[2500])
 *******************************************************************************
 */
 
-err_t rngReadSource(size_t* read, void* buf, size_t count, 
+err_t rngReadSource(void* buf, size_t* read, size_t count,
 	const char* source_name)
 {
 	if (strEq(source_name, "trng"))
-		return rngReadTRNG(read, buf, count);
+		return rngReadTRNG(buf, read, count);
 	else if (strEq(source_name, "timer"))
-		return rngReadTimer(read, buf, count);
+		return rngReadTimer(buf, read, count);
 	else if (strEq(source_name, "sys"))
-		return rngReadSys(read, buf, count);
+		return rngReadSys(buf, read, count);
 	return ERR_FILE_NOT_FOUND;
 }
 
@@ -486,17 +486,17 @@ err_t rngCreate(read_i source, void* source_state)
 	// опрос источников случайности
 	count = 0;
 	beltHashStart(_state->alg_state);
-	if (rngReadSource(&read, _state->block, 32, "trng") == ERR_OK)
+	if (rngReadSource(_state->block, &read, 32, "trng") == ERR_OK)
 	{
 		beltHashStepH(_state->block, read, _state->alg_state);
 		count += read;
 	}
-	if (rngReadSource(&read, _state->block, 32, "timer") == ERR_OK)
+	if (rngReadSource(_state->block, &read, 32, "timer") == ERR_OK)
 	{
 		beltHashStepH(_state->block, read, _state->alg_state);
 		count += read;
 	}
-	if (rngReadSource(&read, _state->block, 32, "sys") == ERR_OK)
+	if (rngReadSource(_state->block, &read, 32, "sys") == ERR_OK)
 	{
 		beltHashStepH(_state->block, read, _state->alg_state);
 		count += read;
@@ -574,13 +574,13 @@ void rngStepR(void* buf, size_t count, void* state)
 	// блокировать генератор
 	mtMtxLock(_mtx);
 	// опросить trng
-	if (rngReadSource(&read, buf, count, "trng") != ERR_OK)
+	if (rngReadSource(buf, &read, count, "trng") != ERR_OK)
 		read = 0;
 	// опросить timer
 	if (read < count)
 	{
 		buf1 = (octet*)buf + read;
-		if (rngReadSource(&t, buf1, count - read, "timer") != ERR_OK)
+		if (rngReadSource(buf1, &t, count - read, "timer") != ERR_OK)
 			t = 0;
 		read += t;
 	}
@@ -589,7 +589,7 @@ void rngStepR(void* buf, size_t count, void* state)
 	{
 		buf1 = (octet*)buf + read;
 		// проверка возврата снимает претензии сканеров
-		if (rngReadSource(&t, buf1, count - read, "sys") != ERR_OK)
+		if (rngReadSource(buf1, &t, count - read, "sys") != ERR_OK)
 			t = 0;
 		read += t;
 	}
@@ -599,4 +599,3 @@ void rngStepR(void* buf, size_t count, void* state)
 	// снять блокировку
 	mtMtxUnlock(_mtx);
 }
-

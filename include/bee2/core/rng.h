@@ -3,9 +3,9 @@
 \file rng.h
 \brief Entropy sources and random number generators
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2016.07.15
+\version 2021.04.21
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -75,8 +75,8 @@ extern "C" {
 	\remark Поддержан интерфес read_i.
 */
 err_t rngReadSource(
-	size_t* read,			/*!< [out] число прочитанных октетов */
 	void* buf,				/*!< [out] прочитанные данные */
+	size_t* read,			/*!< [out] число прочитанных октетов */
 	size_t count,			/*!< [in] длина buf в октетах */
 	const char* source_name	/*!< [in/out] имя источника */
 );

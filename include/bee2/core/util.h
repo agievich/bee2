@@ -3,7 +3,7 @@
 \file util.h
 \brief Utilities
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.16
 \version 2017.01.17
 \license This program is released under the GNU General Public License 

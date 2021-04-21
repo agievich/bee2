@@ -3,9 +3,9 @@
 \file rng_test.c
 \brief Tests for random number generators
 \project bee2/test
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.10
-\version 2016.07.15
+\version 2021.04.21
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -30,7 +30,7 @@ bool_t rngTest()
 	char hex[33];
 	size_t read;
 	// источник-таймер
-	if (rngReadSource(&read, buf, 2500, "timer") == ERR_OK)
+	if (rngReadSource(buf, &read, 2500, "timer") == ERR_OK)
 	{
 		if (read == 2500)
 			hexFrom(hex, buf, 16),
@@ -48,7 +48,7 @@ bool_t rngTest()
 			printf("rngSourceTimer: %s\n", hex);
 	}
 	// физический источник
-	if (rngReadSource(&read, buf, 2500, "trng") == ERR_OK)
+	if (rngReadSource(buf, &read, 2500, "trng") == ERR_OK)
 	{
 		if (read == 2500)
 			hexFrom(hex, buf, 16),
@@ -66,7 +66,7 @@ bool_t rngTest()
 			printf("rngSourceTRNG:  %s\n", hex);
 	}
 	// системный источник
-	if (rngReadSource(&read, buf, 2500, "sys") == ERR_OK)
+	if (rngReadSource(buf, &read, 2500, "sys") == ERR_OK)
 	{
 		if (read == 2500)
 			hexFrom(hex, buf, 16),

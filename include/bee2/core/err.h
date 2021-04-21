@@ -3,9 +3,9 @@
 \file err.h
 \brief Errors
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.09
-\version 2017.10.09
+\version 2021.04.20
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -35,13 +35,23 @@ extern "C" {
 *******************************************************************************
 */
 
-#define _ERR_REG(err) ((err_t)(err))
+/*!	brief Сообщение об ошибке
+
+Формируется строка, которая содержит сообщение об ошибке с кодом code.
+\return Строка с сообщением об ошибке, или 0, если ошибка нераспознана.
+*/
+const char* errMsg(
+	err_t code			/*!< [in] код ошибки */
+);
+
 
 /*
 *******************************************************************************
 Sys
 *******************************************************************************
 */
+
+#define _ERR_REG(err) ((err_t)(err))
 
 /* нераспознанная системная ошибка */
 #define ERR_SYS						_ERR_REG(101)
@@ -144,21 +154,27 @@ Crypto
 /* некорректный сертификат (открытого ключа) */
 #define ERR_BAD_CERT				_ERR_REG(505)
 /* некорректный общий ключ */
-#define ERR_BAD_SHAREKEY			_ERR_REG(506)
+#define ERR_BAD_SHAREDKEY			_ERR_REG(506)
+/* некорректный частичный секрет */
+#define ERR_BAD_SHAREKEY			_ERR_REG(507)
 /* некорректное хэш-значение */
-#define ERR_BAD_HASH				_ERR_REG(507)
+#define ERR_BAD_HASH				_ERR_REG(508)
 /* некорректная ЭЦП */
-#define ERR_BAD_SIG					_ERR_REG(508)
+#define ERR_BAD_SIG					_ERR_REG(509)
 /* некорректная имитовставка */
-#define ERR_BAD_MAC					_ERR_REG(509)
+#define ERR_BAD_MAC					_ERR_REG(510)
 /* некорректный токен ключа */
-#define ERR_BAD_KEYTOKEN			_ERR_REG(510)
-/* ошибка аутентификации */
-#define ERR_BAD_AUTH				_ERR_REG(511)
+#define ERR_BAD_KEYTOKEN			_ERR_REG(511)
 /* неверная логика (протокола) */
 #define ERR_BAD_LOGIC				_ERR_REG(512)
 /* неверный пароль */
 #define ERR_BAD_PWD					_ERR_REG(513)
+/* ошибка аутентификации */
+#define ERR_AUTH					_ERR_REG(514)
+/* ошибка самотестирования */
+#define ERR_SELFTEST				_ERR_REG(515)
+/* ошибка статистического тестирования */
+#define ERR_STATTEST				_ERR_REG(516)
 
 /*
 *******************************************************************************

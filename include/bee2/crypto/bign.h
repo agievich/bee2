@@ -3,9 +3,9 @@
 \file bign.h
 \brief STB 34.101.45 (bign): digital signature and key transport algorithms
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.27
-\version 2021.01.19
+\version 2021.04.20
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -215,7 +215,7 @@ err_t bignCalcPubkey(
 	\expect{ERR_BAD_PARAMS} Параметры params корректны.
 	\expect{ERR_BAD_PRIVKEY} Личный ключ privkey корректен.
 	\expect{ERR_BAD_PUBKEY} Открытый ключ pubkey корректен.
-	\expect{ERR_BAD_SHAREKEY} key_len <= l / 2.
+	\expect{ERR_BAD_SHAREDKEY} key_len <= l / 2.
 	\return ERR_OK, если общий ключ успешно построен, и код ошибки
 	в противном случае.
 */
