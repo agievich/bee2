@@ -3,9 +3,9 @@
 \file b64.h
 \brief The Base64 encoding
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2016.06.16
-\version 2016.09.01
+\version 2021.04.21
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -89,7 +89,7 @@ void b64From(
 
 /*!	\brief Декодирование буфера памяти
 
-	Base64-строка src декодируется в строку октетов [?count]dest.
+	Base64-строка src декодируется в строку октетов [count?]dest.
 	\pre Если dest != 0, то буфер [count]dest корректен и его размер
 	достаточен для размещения декодированных данных.
 	\pre Буферы dest и src не пересекаются.

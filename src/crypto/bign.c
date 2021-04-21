@@ -432,7 +432,8 @@ err_t bignOidToDER(octet oid_der[], size_t* oid_len, const char* oid)
 	{
 		if (*oid_len < len)
 			return ERR_OUTOFMEMORY;
-		oidToDER(oid_der, oid);
+		len = oidToDER(oid_der, oid);
+		ASSERT(len != SIZE_MAX);
 	}
 	*oid_len = len;
 	return ERR_OK;

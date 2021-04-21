@@ -6,7 +6,7 @@
 \author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \author Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2014.04.21
-\version 2021.04.16
+\version 2021.04.21
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -145,7 +145,7 @@ bool_t derIsValid2(
 
 /*!	\brief Декодирование
 
-	Определяются тег tag и значение [?len]val DER-кода [<=count]der.
+	Определяются тег tag и значение [len?]val DER-кода [<=count]der.
 	При этом val указывает на буфер памяти внутри буфера der.
 	\remark Любой из указателей tag, val, len может быть нулевым, и тогда
 	возврат данных по указателю не производится.
@@ -164,7 +164,7 @@ size_t derDec(
 /*!	\brief Декодирование с проверкой тега
 
 	Проверяется, что тег DER-кода [<=count]der равняется tag и, если это так,
-	определяется закодированное значение [?len]val. При этом val указывает
+	определяется закодированное значение [len?]val. При этом val указывает
 	на буфер памяти внутри буфера der.
 	\remark Любой из указателей val, len может быть нулевым, и тогда возврат
 	данных по указателю не производится.
@@ -294,7 +294,7 @@ size_t derDecSIZE2(
 
 /*!	\brief Декодирование OCTET STRING
 
-	Определяется строка октетов [?len]buf, представленная DER-кодом
+	Определяется строка октетов [len?]buf, представленная DER-кодом
 	[<=count]der. 
 	\return Точная длина DER-кода или SIZE_MAX в случае ошибки.
 */
@@ -357,7 +357,7 @@ size_t derEncOID(
 
 /*!	\brief Декодирование OBJECT IDENTIFIER
 
-	Определяется идентификатор объекта [?len]oid,
+	Определяется идентификатор объекта [len?]oid,
 	представленный DER-кодом [<=count]der. Длина len учитывает
 	завершающий нулевой символ строки oid.
 	\return Точная длина DER-кода или SIZE_MAX в случае ошибки.
