@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2021.04.21
+\version 2021.04.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -36,136 +36,126 @@ version 3. See Copyright Notices in bee2/info.h.
 -	по материалам https://software.intel.com/en-us/articles/
 	intel-digital-random-number-generator-drng-software-implementation-guide.
 
-Используется команда rdrand -- с криптографической постобработкой.
-В команде rdseed постобработка не выполняется. Эту команда предпочтительнее,
-но ее не поддерживают многие версии gcc.
+Используется инструкция rdseed -- без криптографической постобработки, т.е.
+прямая работа с источником случайности.
 
-\todo Протестировать.
+\remark Альтернативная команда: rdrand -- с криптографической постобработкой.
+Прошлые версии gcc не поддерживали rdseed и требовалось переходить на rdseed.
+С текушими версиями проблем не возникает.
 
-\todo Некоторые сборки gcc не поддерживают ассемблерную команду rdseed.
+\remark Для переключения на rdrand нужно:
+-	_rdseed32_step заменить на _rdrand32_step;
+-	rdrand_eax заменить на rdrand_eax;
+-	в rngHasTRNG() вместо
+	\code
+		// rdseed?
+		rngCPUID(info, 7);
+		return (info[1] & 0x00040000) != 0;
+	\encode
+	писать
+	\code
+		// rdrand?
+		rngCPUID(info, 1);
+		return (info[2] & 0x40000000) != 0;
+	\encode
 *******************************************************************************
 */
 
-#if	defined(_MSC_VER) && defined(_M_IX86)
+#if	defined(_MSC_VER)
+#if (_MSC_VER >= 1600) && (defined(_M_IX86) || defined(_M_X64))
+
+#include <intrin.h>
+#include <immintrin.h>
+
+#define rngRDStep(val) _rdseed32_step(val)
+
+#elif defined(_M_IX86)
 
 #pragma intrinsic(__cpuid)
-
-static bool_t rngHasTRNG()
-{
-	u32 info[4];
-	// Intel?
-	__cpuid((int*)info, 0);
-	if (!memEq(info + 1, "Genu", 4) ||
-		!memEq(info + 3, "ineI", 4) ||
-		!memEq(info + 2, "ntel", 4))
-		return FALSE;
-	/* rdrand? */
-	__cpuid((int*)info, 1);
-	 return (info[2] & 0x40000000) == 0x40000000;
-}
 
 #define rdrand_eax	__asm _emit 0x0F __asm _emit 0xC7 __asm _emit 0xF0
 #define rdseed_eax	__asm _emit 0x0F __asm _emit 0xC7 __asm _emit 0xF8
 
-static err_t rngReadTRNG(void* buf, size_t* read, size_t count)
+static int rngRDStep(u32* val)
 {
-	u32* rand = (u32*)buf;
-	size_t i;
-	// pre
-	ASSERT(memIsValid(read, sizeof(size_t)));
-	ASSERT(memIsValid(buf, count));
-	// есть источник?
-	if (!rngHasTRNG())
-		return ERR_FILE_NOT_FOUND;
-	// короткий буфер?
-	if (count < O_PER_W)
-	{
-		*read = 0;
-		return ERR_OK;
+	__asm {
+		xor eax, eax
+		xor edx, edx
+		rdseed_eax
+		jnc err
+		mov edx, val
+		mov[edx], eax
 	}
-	// генерация
-	for (i = 0; i < count; i += 4, ++rand)
-	{
-		if (i + 4 > count)
-		{
-			i -= count - O_PER_W;
-			rand = (word*)((octet*)buf + i);
-		}
-		__asm {
-			xor eax, eax
-			xor edx, edx
-			rdrand_eax
-			jnc rngSeedTRNG_break
-			mov edx, rand
-			mov [edx], eax
-		}
-	}
-rngSeedTRNG_break:
-	*read = i;
-	return ERR_OK;
+	return 1;
+err:
+	return 0;
 }
+
+#endif
+
+#define rngCPUID(info, id) __cpuid((int*)info, id)
 
 #elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 
 #include <cpuid.h>
 
+#define rngCPUID(info, id) __cpuid(id, info[0], info[1], info[2], info[3])
+
+static int rngRDStep(u32* val)
+{
+	octet ok;
+	asm volatile("rdrand %0; setc %1" : "=r" (*val), "=qm" (ok));
+	return ok;
+}
+
+#else
+
+#define rngCPUID(info, id) memSetZero(info, 16)
+#define rngRDStep(val) 0
+
+#endif
+
 static bool_t rngHasTRNG()
 {
 	u32 info[4];
 	// Intel?
-	__cpuid(0, info[0], info[1], info[2], info[3]);
+	rngCPUID(info, 0);
 	if (!memEq(info + 1, "Genu", 4) ||
 		!memEq(info + 3, "ineI", 4) ||
 		!memEq(info + 2, "ntel", 4))
 		return FALSE;
-	/* rdrand? */
-	__cpuid(1, info[0], info[1], info[2], info[3]);
-	 return (info[2] & 0x40000000) == 0x40000000;
+	/* rdseed? */
+	rngCPUID(info, 7);
+	return (info[1] & 0x00040000) != 0;
 }
 
 static err_t rngReadTRNG(void* buf, size_t* read, size_t count)
 {
 	u32* rand = (u32*)buf;
-	size_t i;
-	octet ok;
 	// pre
-	ASSERT(memIsValid(read, sizeof(size_t)));
+	ASSERT(memIsValid(read, O_PER_S));
 	ASSERT(memIsValid(buf, count));
 	// есть источник?
 	if (!rngHasTRNG())
 		return ERR_FILE_NOT_FOUND;
 	// короткий буфер?
-	if (count < O_PER_W)
-	{
-		*read = 0;
+	*read = 0;
+	if (count < 4)
 		return ERR_OK;
-	}
 	// генерация
-	for (i = 0; i < count; i += 4, ++rand)
+	for (; *read + 4 <= count; *read += 4, ++rand)
+		if (!rngRDStep(rand))
+			return ERR_OK;
+	// неполный блок
+	if (*read < count)
 	{
-		if (i + 4 > count)
-		{
-			i -= count - 4;
-			rand = (u32*)((octet*)buf + i);
-		}
-		asm volatile("rdrand %0; setc %1" : "=r" (*rand), "=qm" (ok));
-		if (!ok)
-			break;
+		rand = (u32*)((octet*)buf + count - 4);
+		if (!rngRDStep(rand))
+			return ERR_OK;
+		*read = count;
 	}
-	*read = i;
 	return ERR_OK;
 }
-
-#else
-
-static err_t rngReadTRNG(void* buf, size_t* read, size_t count)
-{
-	ASSERT(memIsValid(read, sizeof(size_t)));
-	ASSERT(memIsValid(buf, count));
-	return ERR_FILE_NOT_FOUND;
-}
-
-#endif
 
 /*
 *******************************************************************************
