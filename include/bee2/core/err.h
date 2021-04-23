@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.09
-\version 2021.04.20
+\version 2021.04.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -169,12 +169,14 @@ Crypto
 #define ERR_BAD_LOGIC				_ERR_REG(512)
 /* неверный пароль */
 #define ERR_BAD_PWD					_ERR_REG(513)
+/* ключ не найден */
+#define ERR_KEY_NOT_FOUND			_ERR_REG(514)
 /* ошибка аутентификации */
-#define ERR_AUTH					_ERR_REG(514)
+#define ERR_AUTH					_ERR_REG(515)
 /* ошибка самотестирования */
-#define ERR_SELFTEST				_ERR_REG(515)
+#define ERR_SELFTEST				_ERR_REG(516)
 /* ошибка статистического тестирования */
-#define ERR_STATTEST				_ERR_REG(516)
+#define ERR_STATTEST				_ERR_REG(517)
 
 /*
 *******************************************************************************

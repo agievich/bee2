@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.09
-\version 2021.04.21
+\version 2021.04.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -76,6 +76,7 @@ static const err_msg _messages[] = {
 	{ERR_BAD_KEYTOKEN, "Invalid key token"},
 	{ERR_BAD_LOGIC, "Incorrect (protocol) logic"},
 	{ERR_BAD_PWD, "Incorrect password"},
+	{ERR_KEY_NOT_FOUND, "Unable to find the key"},
 	{ERR_AUTH, "Authentication failed"},
 	{ERR_SELFTEST, "Self-tests failed"},
 	{ERR_STATTEST, "Statistical tests failed"},
