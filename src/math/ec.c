@@ -567,7 +567,7 @@ bool_t SAFE(ecMulAPrecompA)(word b[], const word a[], const ec_o* ec, const word
 
 	/* Переход к нечетной кратности dd = ((d & 1) ? d : -d) \mod ec->order */
 	wwSetZero(dd, order_len);
-	wwCopy(dd, d, m);
+	wwCopy(dd, d, m); //todo регулярно ли разрешать m переменной длины, или всегда должно быть m == order_len?
 	d_is_odd = WORD_1 - (d[0] & 1);
 	zzSetSignMod(dd, dd, ec->order, order_len, d_is_odd);
 
@@ -641,18 +641,17 @@ bool_t SAFE(ecMulAPrecompA)(word b[], const word a[], const ec_o* ec, const word
 
 #undef SMULT_IDX
 
-	//todo очистка остальных переменных
-	t = v = f = d_is_odd = j = k = 0;
 #ifdef _DEBUG
 	ASSERT(*check_stack == 0xdeadbeef);
 #endif
-
 
 	//к аффинным координатам
 	ecToA(b, q, ec, stack);
 	//переход к исходной кратности
 	ec->set_sign(b, b, d_is_odd, ec);
-	//предусмотреть d = 0
+	//todo очистка остальных переменных
+	t = v = f = d_is_odd = j = k = 0;
+	//предусмотреть d == 0
 	return WORD_1 - wwIsZero(dd, order_len);
 }
 
@@ -1020,16 +1019,32 @@ bool_t ecHasOrderA(const word a[], const ec_o* ec, const word q[], size_t m,
 	void* stack)
 {
 	const size_t n = ec->f->n;
+	register bool_t f;
 	// переменные в stack
 	word* b = (word*)stack;
-	stack = b + ec->d * n;
-	// q a == O?
-	return !ecMulA(b, a, ec, q, m, stack);
+	word* qq = b + ec->d * n;
+	stack = qq + m;
+
+	zzSubW(qq, q, m, WORD_1);
+	//todo обсудить - добавить поддержку d >= q в SAFE(ecMulA) и вернуться к q a == O?
+
+	// (q - 1) a == -a?
+#ifdef SAFE_FAST
+	if (!ecMulA(b, a, ec, qq, m, stack))
+		return FALSE;
+	ecNegA(b, b, ec);
+	return wwEq(b, a, 2 * n);
+#else
+	f = ecMulA(b, a, ec, qq, m, stack);
+	ecNegA(b, b, ec);
+	f &= wwEq(b, a, 2 * n);
+	return f;
+#endif
 }
 
 size_t ecHasOrderA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 {
-	return O_OF_W(ec_d * n) + ecMulA_deep(n, ec_d, ec_deep, m);
+	return O_OF_W(ec_d * n + m) + ecMulA_deep(n, ec_d, ec_deep, m);
 }
 
 /*

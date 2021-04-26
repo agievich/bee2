@@ -398,7 +398,7 @@ bool_t ecpTest()
 		return FALSE;
 	// базовая точка имеет порядок q?
 	ASSERT(ecHasOrderA_deep(n, ec->d, ec_deep, n) <= sizeof(stack));
-	//TODO: ecHasOrderA uses ecMulA before it's tested
+	//TODO: ecHasOrderA uses ecMulA and ecNegA before they are tested
 	if (!ecHasOrderA(ec->base, ec, ec->order, n, stack))
 		return FALSE;
 	// проверить алгоритм Монтгомери инвертирования элементов поля
