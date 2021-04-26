@@ -930,9 +930,21 @@ void ecpDblAddA(word c[], const word a[], const word b[], bool_t neg_b, const st
 	qrSub(t1, t1, t5, ec->f);
 }
 
-void ecpDblAddA_deep(size_t n, size_t f_deep) {;
+void ecpDblAddA_deep(size_t n, size_t f_deep) {
 	return O_OF_W(3 * n) + f_deep;
 }
+
+void ecpSetSignA(word b[], const word a[], bool_t neg, const struct ec_o* ec, void* stack) {
+	const size_t n = ec->f->n;
+	// pre
+	ASSERT(ecIsOperable(ec));
+	ASSERT(ecpSeemsOnA(a, ec));
+	ASSERT(wwIsSameOrDisjoint(a, b, 2 * n));
+	// (xb, yb) <- (xa, -1^(neg + 1) * ya)
+	qrCopy(ecX(b), ecX(a), ec->f);
+	zmSetSign(ecY(b, n), ecY(a, n), ec->f, neg);
+}
+
 
 bool_t ecpDivp = TRUE;
 bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
@@ -979,6 +991,7 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	ec->dbla = ecpDblAJ;
 	ec->tpl = bA3 ? ecpTplJA3 : ecpTplJ;
 	ec->dbl_adda = ecpDblAddA;
+	ec->set_sign = ecpSetSignA;
 	ec->smulsa = ecpDivp ? ecpSmallMultDivpA : ecSmallMultAdd2A;
 	ec->smulsj = ecpDivp ? ecpSmallMultDivpJ : ecSmallMultAdd2J;
 	ec->deep = utilMax(8,

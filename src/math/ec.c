@@ -6,7 +6,7 @@
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.03.04
 \version 2015.11.09
-\license This program is released under the GNU General Public License 
+\license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
@@ -35,15 +35,15 @@ bool_t ecIsOperable2(const ec_o* ec)
 		wwIsValid(ec->A, ec->f->n) &&
 		wwIsValid(ec->B, ec->f->n) &&
 		ec->d >= 3 &&
-		ec->froma != 0 &&	
-		ec->toa != 0 &&	
-		ec->neg != 0 &&	
-		ec->nega != 0 &&	
-		ec->add != 0 &&	
-		ec->adda != 0 &&	
-		ec->sub != 0 &&	
-		ec->suba != 0 &&	
-		ec->dbl != 0 &&	
+		ec->froma != 0 &&
+		ec->toa != 0 &&
+		ec->neg != 0 &&
+		ec->nega != 0 &&
+		ec->add != 0 &&
+		ec->adda != 0 &&
+		ec->sub != 0 &&
+		ec->suba != 0 &&
+		ec->dbl != 0 &&
 		ec->dbla != 0;
 }
 
@@ -54,7 +54,7 @@ bool_t ecIsOperable(const ec_o* ec)
 		ec->deep >= ec->f->deep;
 }
 
-bool_t ecCreateGroup(ec_o* ec, const octet xbase[], const octet ybase[], 
+bool_t ecCreateGroup(ec_o* ec, const octet xbase[], const octet ybase[],
 	const octet order[], size_t order_len, u32 cofactor,
 	size_t w, const octet Gs[], void* stack)
 {
@@ -64,9 +64,9 @@ bool_t ecCreateGroup(ec_o* ec, const octet xbase[], const octet ybase[],
 	ASSERT(memIsNullOrValid(ybase, ec->f->no));
 	// корректное описание?
 	order_len = memNonZeroSize(order, order_len);
-	if (order_len == 0 || 
+	if (order_len == 0 ||
 		W_OF_O(order_len) > ec->f->n + 1 ||
-		cofactor == 0 || 
+		cofactor == 0 ||
 		(u32)(word)cofactor != cofactor)
 		return FALSE;
 	// установить базовую точку
@@ -80,7 +80,7 @@ bool_t ecCreateGroup(ec_o* ec, const octet xbase[], const octet ybase[],
 		return FALSE;
 	// установить порядок и кофактор
 	wwFrom(ec->order, order, order_len);
-	wwSetZero(ec->order + W_OF_O(order_len), 
+	wwSetZero(ec->order + W_OF_O(order_len),
 		ec->f->n + 1 - W_OF_O(order_len));
 	ec->cofactor = (word)cofactor;
 	// предвычисления
@@ -110,8 +110,8 @@ bool_t ecIsOperableGroup(const ec_o* ec)
 Кратная точка
 
 Для определения b = da (d-кратное точки a) используется оконный NAF с
-длиной окна w. В функции ecMulWNAF() реализован алгоритм 3.35 из 
-[Hankerson D., Menezes A., Vanstone S. Guide to Elliptic Curve Cryptography, 
+длиной окна w. В функции ecMulWNAF() реализован алгоритм 3.35 из
+[Hankerson D., Menezes A., Vanstone S. Guide to Elliptic Curve Cryptography,
 Springer, 2004].
 
 Предварительно рассчитываются малые кратные a: сначала 2a, а затем
@@ -128,7 +128,7 @@ Springer, 2004].
 3)	c3(l, w) = 1(P <- 2A) + (2^{w-2} - 2)(P <- P + P) + l/(w + 1)(P <- P + P),
 без учета общего во всех стратегиях слагаемого l(P <- 2P).
 
-Здесь 
+Здесь
 - (P <- P + A) -- время работы функций ec->adda / ec->suba;
 - (A <- 2A) -- время работы каскада (ec->dbla, ec->toa)*;
 - (A <- A + A) -- время работы каскада (ec->adda, ec->toa)*;
@@ -140,21 +140,21 @@ Springer, 2004].
 
 
 В практических диапазонах размерностей при использовании наиболее эффективных
-координат (якобиановых для кривых над GF(p) и Лопеса -- Дахаба для кривых 
-над GF(2^m)) первые две стратегии являются проигрышными. Реализована только 
-третья стратегия. 
+координат (якобиановых для кривых над GF(p) и Лопеса -- Дахаба для кривых
+над GF(2^m)) первые две стратегии являются проигрышными. Реализована только
+третья стратегия.
 
-Оптимальная длина окна выбирается как решение следующей оптимизационной 
+Оптимальная длина окна выбирается как решение следующей оптимизационной
 задачи:
 	(2^{w - 2} - 2) + l / (w + 1) -> min.
 
-\todo Усилить вторую стратегию. Рассчитать малые кратные в проективных 
-координатах, а затем быстро перейти к аффинным координатам с помощью 
+\todo Усилить вторую стратегию. Рассчитать малые кратные в проективных
+координатах, а затем быстро перейти к аффинным координатам с помощью
 трюка Монтгомери [Algorithm 11.15 Simultaneous inversion, CohenFrey, p. 209]:
 	U_1 <- Z_1
 	for t = 2,..., T: U_t <- U_{t-1} Z_t
 	V <- U_T^{-1}
-	for t = T,..., 2: 
+	for t = T,..., 2:
 		Z_t^{-1} <- V U_{t-1}
 		V <- V Z_t
 	Z_1^{-1} <- V
@@ -251,9 +251,9 @@ size_t FAST(ecMulAOrig_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 {
 	const size_t naf_width = ecNAFWidth(B_OF_W(m));
 	const size_t naf_count = SIZE_1 << (naf_width - 2);
-	return O_OF_W(2 * m + 1) + 
-		O_OF_W(ec_d * n) + 
-		O_OF_W(ec_d * n * naf_count) + 
+	return O_OF_W(2 * m + 1) +
+		O_OF_W(ec_d * n) +
+		O_OF_W(ec_d * n * naf_count) +
 		ec_deep;
 }
 
@@ -263,24 +263,24 @@ bool_t SAFE(ecMulAOrig)(word b[], const word a[], const ec_o* ec, const word d[]
 	size_t m, void* stack)
 {
 	const size_t point_size = ec->f->n * ec->d;
-		
+
 	//window width of recording
 	//todo resolve width by used sm_mult algorithm and l size
 	const size_t window_width = ecNAFWidth(B_OF_W(m));
-	
-	//set size of small multiples |{+-1, +-3, ..., +-(2^w - 1)}| = 2^w  
+
+	//set size of small multiples |{+-1, +-3, ..., +-(2^w - 1)}| = 2^w
 	const size_t odd_recording_set_size = SIZE_1 << window_width;
 
 	//2^w, required for positive/negative decoding of recording
 	const word hi_bit = WORD_1 << window_width;
-	
+
 	//number of elements in actual odd recording of d
 	const size_t odd_recording_size = wwOddRecording_size(m, window_width);
-	
+
 	register int i;
 	register word w;
 	register word sign;
-	
+
 	word delta = WORD_1;
 	word b_flag;
 
@@ -292,7 +292,7 @@ bool_t SAFE(ecMulAOrig)(word b[], const word a[], const ec_o* ec, const word d[]
 	word* temp;			/* вспомогательное число */
 	// pre
 	ASSERT(ecIsOperable(ec));
-	
+
 	// раскладка stack
 	odd_recording = (word*)stack;
 	t = odd_recording + W_OF_B(odd_recording_size * (window_width + 1));
@@ -300,7 +300,7 @@ bool_t SAFE(ecMulAOrig)(word b[], const word a[], const ec_o* ec, const word d[]
 	q = pre + odd_recording_set_size * point_size;
 	temp = q + point_size;
 	stack = temp + m;
-	
+
 	ASSERT(window_width >= 2);
 
 	//t[0] <- 2a
@@ -311,14 +311,14 @@ bool_t SAFE(ecMulAOrig)(word b[], const word a[], const ec_o* ec, const word d[]
 	sm_mult_add(pre, a, t, window_width, ec, stack);
 
 	// переход к нечетной кратности
-	delta += d[0] & WORD_1;	
+	delta += d[0] & WORD_1;
 	zzAddW(temp, d, m, delta);
 
 	//1, 0, -1
 	b_flag = wwCmp2(temp, m, ec->order, ec->f->n);
 	//-1 -> 0
 	b_flag = wordEq0M(b_flag, WORD_1);
-	
+
 	//recalculate temp
 	zzSubW2(temp, m, (delta * 2) & b_flag);
 
@@ -332,21 +332,21 @@ bool_t SAFE(ecMulAOrig)(word b[], const word a[], const ec_o* ec, const word d[]
 	delta -= b_flag;
 	delta *= point_size;
 	t += delta;
-	
+
 	// расчет Odd_Recording
 	ASSERT(window_width >= 3);
 	wwOddRecording(odd_recording, W_OF_B(odd_recording_size * (window_width + 1)),
 					temp, m, odd_recording_size, window_width);
-	
+
 	// q <- odd_recording[k-1] * a
 	w = wwGetBits(odd_recording, (odd_recording_size - 1) * (window_width + 1), window_width + 1);
-		
+
 	//calculate index
 	ASSERT((w & 1) && (w & hi_bit) == 0);
 	w ^= WORD_1;
 	//save
 	wwCopy(q, pre + w * point_size, point_size);
-	
+
 	for (i = odd_recording_size - 2; i >= 0; --i) {
 		//Q <- 2^odd_recording_width * Q
 		w = window_width;
@@ -358,7 +358,7 @@ bool_t SAFE(ecMulAOrig)(word b[], const word a[], const ec_o* ec, const word d[]
 		w = wwGetBits(odd_recording, i * (window_width + 1), window_width + 1);
 		// calculate index
 		sign = w & hi_bit;
-		w ^= sign;	
+		w ^= sign;
 		ASSERT((w & 1) && (w & hi_bit) == 0);
 		sign >>= window_width;
 		sign = ~sign;
@@ -370,15 +370,15 @@ bool_t SAFE(ecMulAOrig)(word b[], const word a[], const ec_o* ec, const word d[]
 
 	// correction
 	ecAdd(q, q, t, ec, stack);
-	
+
 	// cleanup
 	w = 0;
 	i = 0;
 	t = NULL;
 	sign = 0;
 	delta = 0;
-	b_flag = 0; 
-	
+	b_flag = 0;
+
 	// к аффинным координатам
 	return ecToA(b, q, ec, stack);
 }
@@ -472,9 +472,9 @@ size_t FAST(ecMulAPrecompA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m
 	bool_t a_is_base = FALSE;
 	const size_t naf_width = ecNAFWidth(B_OF_W(m));
 	const size_t naf_count = SIZE_1 << (naf_width - 2);
-	return O_OF_W(2 * m + 1) + 
-		O_OF_W(ec_d * n) + 
-		(a_is_base ? 0 : O_OF_W(ec_d * n * naf_count)) + 
+	return O_OF_W(2 * m + 1) +
+		O_OF_W(ec_d * n) +
+		(a_is_base ? 0 : O_OF_W(ec_d * n * naf_count)) +
 		ec_deep;
 }
 
@@ -493,22 +493,42 @@ static void ecNegPrecompA(word c[], const size_t w, const ec_o* ec)
 	}
 }
 
+static size_t ecSafeMulAWidth(const size_t l) {
+	//todo calculate actual breakpoints
+	if (l <= 256)
+	{
+		return 4;
+	}
+	return 5;
+}
+
 bool_t SAFE(ecMulAPrecompA)(word b[], const word a[], const ec_o* ec, const word d[],
 	size_t m, void* stack)
 {
 	const size_t n = ec->f->n * ec->d;
 	const size_t na = ec->f->n * 2;
-	const size_t w = ecNAFWidth(B_OF_W(m))-1;
+	const size_t order_len = ec->f->n + 1;
+
+	/*
+	* todo если есть предвычисленные малые кратные для точки a,
+	* то имеет смысл w = max(ecSafeMulAWidth(...), ec->precomp_w);
+	*/
+	const size_t w = ecSafeMulAWidth(wwBitSize(ec->order, order_len));
+
 
 	/* Текущая цифра кратности */
 	register word t;
+	/* Индекс малого кратного */
 	register size_t v;
 	/* Флаг нечётности */
 	register word f;
+	/* Флаг нечетности d */
+	register word d_is_odd;
+	/* исправленная кратность dd = ((d & 1) ? d : -d) \mod ec->order */
+	word* dd;
 	/* Текущая кратная точка */
 	word *q;
-	/* [-2]a */
-	word *da, *nda;
+
 	/* Предвычисленные в следующем порядке малые кратные:
 	[1-2^w]a, [3-2^w]a, .., [-1]a, [1]a, [3]a, .., [2^w-1]a, */
 	word *c;
@@ -518,12 +538,12 @@ bool_t SAFE(ecMulAPrecompA)(word b[], const word a[], const ec_o* ec, const word
 	// pre
 	ASSERT(ecIsOperable(ec));
 	ASSERT(3 <= w && w + 1 < B_PER_W);
+	ASSERT(m <= order_len); //todo добавить этот assert в описание
 
 	// раскладка stack
 	q = (word*)stack;
-	da = q + n;
-	nda = da + na;
-	c = nda + na;
+	dd = q + n;
+	c = dd + order_len;
 	check_stack = c + (na << w);
 #ifdef _DEBUG
 	*check_stack = 0xdeadbeef;
@@ -536,30 +556,41 @@ bool_t SAFE(ecMulAPrecompA)(word b[], const word a[], const ec_o* ec, const word
 	if(a == ec->base && ec->precomp_Gs && w <= ec->precomp_w)
 	{
 		c = (word *)ec->precomp_Gs + (na << (ec->precomp_w-1)) - (na << (w-1));
-		nda = (word *)ec->precomp_Gs + (na << ec->precomp_w);
-		da = nda + na;
 	} else
 	{
 		word *ci;
 		ci = c + (na << (w - 1));
 
-		ec->smulsa(ci, da, a, w, ec, stack);
+		ec->smulsa(ci, NULL, a, w, ec, stack);
 		ecNegPrecompA(c, w, ec);
-		ecNegA(nda, da, ec);
 	}
+
+	/* Переход к нечетной кратности dd = ((d & 1) ? d : -d) \mod ec->order */
+	wwSetZero(dd, order_len);
+	wwCopy(dd, d, m);
+	d_is_odd = WORD_1 - (d[0] & 1);
+	zzSetSignMod(dd, dd, ec->order, order_len, d_is_odd);
 
 	/* Каноническое разложение a по степеням 2^w:
 	a = a_0 + a_1 2^w + .. + a_i 2^{wi} + .. + a_k 2^{wk}
 	0 <= a_i < 2^w
-	B_PER_W * m <= wk
+	B_PER_W * order_len <= wk
 	*/
 
-	k = B_PER_W * m;
+	k = B_PER_W * order_len;
 	ASSERT(w < k);
 	if(k % w != 0)
 		j = k - (k % w);
 	else
 		j = k - w;
+
+
+	/*
+		Индекс, по которому находится необходимое малое кратное в списке предвычисленных малых кратных
+		t - значение канонического разложения на текущем шаге
+		f - флаг нечетности значения канонического разложения на предыдущей итерации
+	*/
+#define SMULT_IDX(t, f) ((t >> 1) | (f << (w - 1)))
 
 	/* Старшая часть кратности: a_k
 	1.1) a_k - нечётное:
@@ -572,14 +603,15 @@ bool_t SAFE(ecMulAPrecompA)(word b[], const word a[], const ec_o* ec, const word
 		f := -2^w
 	*/
 	t = wwGetBits(d, j, k - j);
-	v = (t >> 1) | (1 << (w - 1));
+	v = SMULT_IDX(t, 1);
 	ecFromA(q, c + v * na, ec, stack);
 	f = t & 1;
 
+
 	/* a_{k-1} .. a_1 */
 	for (; (j -= w) != 0;) {
-		/* Q <- 2^w * Q */
-		for(k = w; k--;)
+		/* Q <- 2^(w-1) * Q */
+		for(k = w - 1; k--;)
 			ecDbl(q, q, ec, stack);
 
 		/* Внутренняя часть кратности: a_i
@@ -593,68 +625,35 @@ bool_t SAFE(ecMulAPrecompA)(word b[], const word a[], const ec_o* ec, const word
 			t := a_i + 1 + f
 			f := -2^w
 		*/
-		t = wwGetBits(d, j, w);
-		v = (t >> 1) | (f << (w - 1));
-		ecAddA(q, q, c + v * na, ec, stack);
+		t = wwGetBits(dd, j, w);
+		v = SMULT_IDX(t, f);
+		ec->dbl_adda(q, q, c + v * na, FALSE, ec, stack);
 		f = t & 1;
 	}
 
-	/* Q <- 2^w * Q */
-	for(k = w; k--;)
+	/* Q <- 2^(w-1) * Q */
+	for(k = w - 1; k--;)
 		ecDbl(q, q, ec, stack);
 
-	{
-		/* Признак условия 3.1.1 */
-		register word u;
-		/* Корректирующий индекс */
-		register word x;
-		/* t += 1, 2, -2, */
-		register int dt;
-		/* q += [-1]a, [-2]a, [2]a, */
-		const word *dq[3] = { c + (na << (w - 1)) - na, nda, da, };
+	t = wwGetBits(dd, 0, w);
+	v = SMULT_IDX(t, f);
+	ec->dbl_adda(q, q, c + v * na, FALSE, ec, stack);
 
-		/* Младшая часть кратности: a_0
-		3.1) a_0 - нечётное:
-			(a_0 + f) \in \{1-2^w, 3-2^w, .., -1, 1, 3, .., 2^w-1\}
-			3.1.1) a_0 + f == 2^w-1
-				a = +2 + (a_0 + f - 2) + ..
-				t := a_i + f - 2
-				f := +2
-				x := 2
-			3.1.2) a_0 + f != 2^w-1
-				a = -2 + (a_0 + f + 2) + ..
-				t := a_i + f + 2
-				f := -2
-				x := 1
-		3.2) a_0 - чётное:
-			(a_0 + f) \in \{0-2^w, 2-2^w, -2, 0, 2, .., 2^w-2\}
-			a = -1 + (a_0 + f + 1) + ..
-			t := a_0 + f + 1
-			f := -1
-			x := 0
-		*/
-		t = wwGetBits(d, 0, w);
-		/* u = (t == 2^w-1) && (f == 1) ? 1 : 0 */
-		u = ((t | (f << w)) + 1) >> (w + 1);
-		x = u + (t & 1);
-		ASSERT(x < 3);
-		dt = ((~u + 1) << 1) + (t & 1);
-		ASSERT((x == 2 && dt == -1) || (x == 1 && dt == 1) || (x == 0 && dt == 0));
-		v = ((t | (f << w)) >> 1) + dt;
-		ASSERT(0 <= v && v < (SIZE_1 << w));
-		ecAddA(q, q, c + v * na, ec, stack);
-		ecAddA(q, q, dq[x], ec, stack);
-		u = x = dt = 0;
-	}
+#undef SMULT_IDX
 
-	t = f = 0;
-	v = 0;
+	//todo очистка остальных переменных
+	t = v = f = d_is_odd = j = k = 0;
 #ifdef _DEBUG
 	ASSERT(*check_stack == 0xdeadbeef);
 #endif
 
-	// к аффинным координатам
-	return ecToA(b, q, ec, stack);
+
+	//к аффинным координатам
+	ecToA(b, q, ec, stack);
+	//переход к исходной кратности
+	ec->set_sign(b, b, d_is_odd, ec);
+	//предусмотреть d = 0
+	return WORD_1 - wwIsZero(dd, order_len);
 }
 
 size_t SAFE(ecMulAPrecompA_deep)(size_t n, size_t w, size_t ec_d, size_t ec_deep)
@@ -745,9 +744,9 @@ size_t FAST(ecMulAPrecompJ_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m
 	bool_t a_is_base = FALSE;
 	const size_t naf_width = ecNAFWidth(B_OF_W(m));
 	const size_t naf_count = SIZE_1 << (naf_width - 2);
-	return O_OF_W(2 * m + 1) + 
-		O_OF_W(ec_d * n) + 
-		(a_is_base ? 0 : O_OF_W(ec_d * n * naf_count)) + 
+	return O_OF_W(2 * m + 1) +
+		O_OF_W(ec_d * n) +
+		(a_is_base ? 0 : O_OF_W(ec_d * n * naf_count)) +
 		ec_deep;
 }
 
@@ -995,7 +994,7 @@ bool_t sm_mult_add(word pre[], const word p[], const word dblP
 	[], const word w, const ec_o* ec, void* stack) {
 	const size_t point_size = ec->f->n * ec->d;
 
-	//set size of small multiples |{+-1, +-3, ..., +-(2^w - 1)}| = 2^w  
+	//set size of small multiples |{+-1, +-3, ..., +-(2^w - 1)}| = 2^w
 	const size_t odd_recording_set_size = SIZE_1 << w;
 
 	register int i;
@@ -1349,13 +1348,13 @@ size_t ecAddMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t k, ...) {
 
 void ecDblAddA(word c[], const word a[], const word b[], bool_t neg_b, const struct ec_o* ec, void* stack) {
 	//todo SAFE - memcpy b to another buffer and apply (-1)^(1+neg_b) to it?
-	ec->dbl(c, a, ec, stack);
+	ecDbl(c, a, ec, stack);
 	if (neg_b) {
-		ec->suba(c, c, b, ec, stack);
+		ecSubA(c, c, b, ec, stack);
 	}
 	else
 	{
-		ec->adda(c, c, b, ec, stack);
+		ecAddA(c, c, b, ec, stack);
 	}
 }
 
