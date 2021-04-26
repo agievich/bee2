@@ -7,7 +7,7 @@
 \author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2017.05.29
 \version 2020.12.20
-\license This program is released under the GNU General Public License 
+\license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
@@ -28,17 +28,17 @@ version 3. See Copyright Notices in bee2/info.h.
 */
 
 static const size_t no = 32;
-static char p[] = 
+static char p[] =
 	"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF43";
-static char a[] = 
+static char a[] =
 	"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF40";
-static char b[] = 
+static char b[] =
 	"00000000000000000000000000000000000000000000000000000000000014B8";
-static char q[] = 
+static char q[] =
 	"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D1229165911507C328526818EC4E11D";
-static char xbase[] = 
+static char xbase[] =
 	"0000000000000000000000000000000000000000000000000000000000000000";
-static char ybase[] = 
+static char ybase[] =
 	"B0E9804939D7C2E931D4CE052CCC6B6B692514CCADBA44940484EEA5F52D9268";
 static u32 cofactor = 1;
 /*
@@ -232,11 +232,21 @@ static bool_t ecMulTest(const ec_o* ec, void *stack)
 	{
 		wwSetZero(d, m + 1);
 		d[0] = 0x0f;
-		fb = ecMulA(fa, /*ba*/ec->base, ec, d, m, stack);
-		sb = ecMulADoubleAdd(sa, /*ba*/ec->base, ec, d, m, stack);
+		fb = ecMulA(fa, /*ba*/ec->base, ec, d, m + 1, stack);
+		sb = ecMulADoubleAdd(sa, /*ba*/ec->base, ec, d, m + 1, stack);
 		if(fb != sb)
 			return FALSE;
 		if(fb && (0 != wwCmp(sa, fa, na)))
+			return FALSE;
+	}
+
+	{
+		zzSubW(d, ec->order, m + 1, 1);
+		fb = ecMulA(fa, /*ba*/ec->base, ec, d, m + 1, stack);
+		sb = ecMulADoubleAdd(sa, /*ba*/ec->base, ec, d, m + 1, stack);
+		if (fb != sb)
+			return FALSE;
+		if (fb && (0 != wwCmp(sa, fa, na)))
 			return FALSE;
 	}
 
@@ -247,7 +257,7 @@ static bool_t ecMulTest(const ec_o* ec, void *stack)
 		for(w = MIN_W; w <= MAX_W; ++w)
 		{
 			m = (3 * w + B_PER_W - 1) / B_PER_W;
-			const word ds[8] = { 0, 1, 2, (1<<(w-1))-1, 1<<(w-1), (1<<(w-1))+1, (1<<w)-2, (1<<w)-1, };
+			const word ds[8] = {0, 1, 2, (1<<(w-1))-1, 1<<(w-1), (1<<(w-1))+1, (1<<w)-2, (1<<w)-1, };
 			for(d0 = 0; d0 < 8; ++d0)
 			{
 				for(dk = 0; dk < 8; ++dk)

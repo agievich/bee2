@@ -532,6 +532,16 @@ static size_t ec2SubALD_deep(size_t n, size_t f_deep)
 	return O_OF_W(2 * n) + ec2AddALD_deep(n, f_deep);
 }
 
+static void ec2SetSignA(word b[], const word a[], bool_t neg, const struct ec_o* ec)
+{
+	//todo SAFE?
+	if (neg)
+		ec2SetSignA(b, a, neg, ec);
+	else
+		wwCopy(b, a, 2 * ec->f->n);
+}
+
+
 bool_t ec2CreateLD(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	void* stack)
 {
@@ -565,6 +575,7 @@ bool_t ec2CreateLD(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	ec->dbl = ec2DblLD;
 	ec->dbla = ec2DblALD;
 	ec->dbl_adda = ecDblAddA;
+	ec->set_sign = ec2SetSignA;
 	ec->smulsa = ecSmallMultAdd2A;
 	ec->smulsj = ecSmallMultAdd2J;
 	ec->deep = utilMax(8,
