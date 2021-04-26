@@ -148,6 +148,7 @@ static bool_t ecpFromAJ(word b[], const word a[], const ec_o* ec, void* stack)
 }
 
 // [2n]b <- [3n]a (A <- P)
+//todo регуляризовать, так как используется в SAFE(ecMulA)
 static bool_t ecpToAJ(word b[], const word a[], const ec_o* ec, void* stack)
 {
 	const size_t n = ec->f->n;
