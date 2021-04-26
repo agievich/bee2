@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2021.04.22
+\version 2021.04.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -61,17 +61,19 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#if	defined(_MSC_VER)
-#if (_MSC_VER >= 1600) && (defined(_M_IX86) || defined(_M_X64))
+#if	(_MSC_VER >= 1600) && (defined(_M_IX86) || defined(_M_X64))
 
 #include <intrin.h>
 #include <immintrin.h>
 
+#define rngCPUID(info, id) __cpuid((int*)info, id)
 #define rngRDStep(val) _rdseed32_step(val)
 
-#elif defined(_M_IX86)
+#elif defined(_MSC_VER) && defined(_M_IX86)
 
 #pragma intrinsic(__cpuid)
+
+#define rngCPUID(info, id) __cpuid((int*)info, id)
 
 #define rdrand_eax	__asm _emit 0x0F __asm _emit 0xC7 __asm _emit 0xF0
 #define rdseed_eax	__asm _emit 0x0F __asm _emit 0xC7 __asm _emit 0xF8
@@ -90,10 +92,6 @@ static int rngRDStep(u32* val)
 err:
 	return 0;
 }
-
-#endif
-
-#define rngCPUID(info, id) __cpuid((int*)info, id)
 
 #elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 
