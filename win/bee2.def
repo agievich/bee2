@@ -148,7 +148,9 @@ EXPORTS
 	belsGenMid					@505
 	belsShare					@506
 	belsShare2					@507
-	belsRecover					@508
+	belsShare3					@508
+	belsRecover					@509
+	belsRecover2				@510
 	
 	bakeKDF						@601
 	bakeSWU						@602
@@ -254,3 +256,8 @@ EXPORTS
 	pfokCalcPubkey				@1306
 	pfokDH						@1307
 	pfokMTI						@1308
+
+	bpkiWrapPrivkey				@1401
+	bpkiUnwrapPrivkey			@1402
+	bpkiWrapShare				@1403
+	bpkiUnwrapShare				@1404
