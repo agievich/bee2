@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2021.04.27
+\version 2021.04.29
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -179,7 +179,7 @@ static err_t rngReadTRNG(void* buf, size_t* read, size_t count)
 2 и 8 выбраны экспериментальным путем (проверялось соответствие выходных
 последовательностей тестам FIPS). 
 
-\warning [Jessie Walker]: наблюдения зависимы, модель AR(1).
+\warning [Jessie Walker]: наблюдения зависимы, модель AR(1). 
 
 \todo Полноценная оценка энтропии.
 
@@ -200,7 +200,9 @@ static bool_t rngHasTimer()
 static err_t rngReadTimer(void* buf, size_t* read, size_t count)
 {
 	register tm_ticks_t ticks;
-	size_t i, j;
+	register tm_ticks_t t;
+	register word w;
+	size_t i, j, reps;
 	// pre
 	ASSERT(memIsValid(read, sizeof(size_t)));
 	ASSERT(memIsValid(buf, count));
@@ -210,22 +212,26 @@ static err_t rngReadTimer(void* buf, size_t* read, size_t count)
 	// генерация
 	for (i = 0; i < count; ++i)
 	{
+		((octet*)buf)[i] = 0;
 		ticks = tmTicks();
-		mtSleep(0);
-		ticks = tmTicks() - ticks;
-		((octet*)buf)[i] = wordParity((word)ticks);
-#ifdef OS_LINUX
-		for (j = 1; j < 16; ++j)
-#else
-		for (j = 1; j < 64; ++j)
-#endif
+		for (j = 0; j < 8; ++j)
 		{
-			mtSleep(0);
-			ticks = tmTicks() - ticks;
-			((octet*)buf)[i] ^= wordParity((word)ticks) << j % 8;
+			w = 0;
+#ifdef OS_LINUX
+			for (reps = 0; reps < 2; ++reps)
+#else
+			for (reps = 0; reps < 8; ++reps)
+#endif
+			{
+				mtSleep(0);
+				t = tmTicks();
+				w ^= (word)(t - ticks);
+				ticks = t;
+			}
+			((octet*)buf)[i] ^= wordParity(w) << j;
 		}
 	}
-	ticks = 0;
+	ticks = t = 0, w = 0;
 	*read = count;
 	return ERR_OK;
 }
