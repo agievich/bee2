@@ -372,9 +372,9 @@ typedef void (*ec_tpl_i)(
 	void* stack				/*!< [in] вспомогательная память */
 );
 
-/*!	\brief Удвоение якобиевой и вычитание/сложение с аффинной точкой
+/*!	\brief Удвоение проективной и вычитание/сложение с аффинной точкой
 
-	На эллиптической кривой ec определяется точка [3 * ec->f->n]с,
+	На эллиптической кривой ec определяется точка [ec->d * ec->f->n]с,
 	полученная удвоением точки [3 * ec->f->n]a и сложением с точкой ((-1) ^ (1 + neg_b)) * [2 * ec->f->n]b:
 	\code
 		c <- 2 a + ((-1) ^ (1 + neg_b)) b.
@@ -389,10 +389,10 @@ typedef void (*ec_tpl_i)(
 	\expect Точки a и b не равны.
 */
 typedef void (*ec_dbl_adda_i)(
-	word с[],				/*!< [out] результат удвоения и сложения*/
-	const word a[],			/*!< [in] первоначальная точка */
-	const word b[],			/*!< [in] первоначальная точка */
-	bool_t neg_b,			/*!< [in] флаг вычитания/сложения с точкой b*/
+	word с[],				/*!< [out] результат удвоения и сложения */
+	const word a[],			/*!< [in] первоначальная точка 1 */
+	const word b[],			/*!< [in] первоначальная точка 2 */
+	bool_t neg_b,			/*!< [in] флаг вычитания/сложения с точкой b */
 	const struct ec_o* ec,	/*!< [in] описание эллиптической кривой */
 	void* stack				/*!< [in] вспомогательная память */
 );
@@ -401,7 +401,7 @@ typedef void (*ec_dbl_adda_i)(
 /*!	\brief Условное аддитивное обращение аффинной точки
 
 	На эллиптической кривой ec определяется точка [2 * ec->f->n]b,
-	полученная умножением точки [3 * ec->f->n]a на выражение ((-1) ^ (1 + neg))
+	полученная умножением точки [2 * ec->f->n]a на выражение ((-1) ^ (1 + neg))
 	\code
 		b <- ((-1) ^ (1 + neg_b)) a.
 	\endcode
@@ -467,9 +467,9 @@ typedef struct ec_o
 	ec_dbla_i dbla;				/*!< функция удвоения аффинной точки */
 	ec_tpl_i tpl;				/*!< функция утроения */
 	ec_dbl_adda_i dbl_adda;		/*!< функция удвоения якобиевой точки и вычитания/сложения с аффинной точкой */
-	ec_set_signa_i set_sign;	/*!< функция условного аддитивного обращения точки */
-	ec_smulsa_i smulsa;			/*!< рассчет малых кратных в аффинных координатах */
-	ec_smulsj_i smulsj;			/*!< рассчет малых кратных в якобиевых координатах */
+	ec_set_signa_i set_signa;	/*!< функция условного аддитивного обращения афинной точки */
+	ec_smulsa_i smulsa;			/*!< расчет малых кратных в аффинных координатах */
+	ec_smulsj_i smulsj;			/*!< расчет малых кратных в якобиевых координатах */
 	size_t precomp_w;			/*!< размер окна w */
 	word const *precomp_Gs;		/*!< малые нечетные кратные {(1-2^w)G, ..., -3G, -1G, 1G, 3G, .., (2^w-1)G, 2G} базовой точки G в аффинных координатах */
 	size_t deep;				/*!< максимальная глубина стека функций */
@@ -532,6 +532,7 @@ typedef struct ec_o
 #define ecDblA(b, a, ec, stack)\
 	(ec)->dbla(b, a, ec, stack)
 
+//todo - also set some value to ecX and ecY because stack used for 'a' may contain values which will break ecpSeemsOnA?
 #define ecSetO(a, ec)\
 	wwSetZero(ecZ(a, (ec)->f->n), (ec)->f->n)
 
@@ -689,7 +690,7 @@ bool_t SAFE(ecMulA)(
 	void* stack			/*!< [in] вспомогательная память */
 );
 
-size_t SAFE(ecMulA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m);
+size_t SAFE(ecMulA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t order_bit_len);
 
 
 bool_t ecMulDivpJ(word b[], const word a[], const size_t w, const ec_o* ec, const word d[],

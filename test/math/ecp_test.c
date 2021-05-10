@@ -112,7 +112,7 @@ static bool_t ecMulADoubleAdd(word *c, word const *a, const ec_o *ec, word const
 
 static bool_t ecSmallMultTest(const ec_o* ec, void *stack)
 {
-	size_t const MIN_W = 3;
+	size_t const MIN_W = 2;
 	size_t const MAX_W = 7;
 	const size_t na = ec->f->n * 2;
 	const size_t n = ec->f->n * ec->d;
@@ -134,7 +134,7 @@ static bool_t ecSmallMultTest(const ec_o* ec, void *stack)
 	{
 		for(w = MIN_W; w <= MAX_W; ++w)
 		{
-			stack = (void*)(c + (n << (w - 1)));
+			stack = (void*)(c + (na << (w - 1)));
 
 			for(f = 0; f < 2; ++f)
 			{
@@ -213,7 +213,7 @@ static bool_t ecSmallMultTest(const ec_o* ec, void *stack)
 
 static bool_t ecMulTest(const ec_o* ec, void *stack)
 {
-	const size_t MIN_W = 3;
+	const size_t MIN_W = 2;
 	const size_t MAX_W = 7;
 	const size_t na = ec->f->n * 2;
 
@@ -360,7 +360,7 @@ bool_t ecpTest()
 	const size_t ec_deep = ecpCreateJ_deep(n, f_deep);
 	// состояние и стек
 	octet state[2048];
-	octet stack[10*4096];
+	octet stack[30*4096];
 	octet t[96];
 	// поле и эк
 	qr_o* f;
@@ -407,12 +407,13 @@ bool_t ecpTest()
 	// проверить алгоритм расчета малых кратных
 	if (!ecSmallMultTest(ec, stack))
 		return FALSE;
-	// проверить алгоритм скалярного умножения
-	if (!ecMulTest(ec, stack))
-		return FALSE;
 	// проверить алгоритм удвоения и вычитания/сложения с афинной точкой
 	if (!ecpTestDblAddA(ec, stack))
 		return FALSE;
+	// проверить алгоритм скалярного умножения
+	if (!ecMulTest(ec, stack))
+		return FALSE;
+
 
 	{
 		bign_params params[1];
