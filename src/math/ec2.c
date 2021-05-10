@@ -6,7 +6,7 @@
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.06.26
 \version 2014.07.15
-\license This program is released under the GNU General Public License 
+\license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
@@ -575,7 +575,7 @@ bool_t ec2CreateLD(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	ec->dbl = ec2DblLD;
 	ec->dbla = ec2DblALD;
 	ec->dbl_adda = ecDblAddA;
-	ec->set_sign = ec2SetSignA;
+	ec->set_signa = ec2SetSignA;
 	ec->smulsa = ecSmallMultAdd2A;
 	ec->smulsj = ecSmallMultAdd2J;
 	ec->deep = utilMax(8,

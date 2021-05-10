@@ -52,8 +52,9 @@ http://www.hyperelliptic.org/EFD. Там же можно найти соглаш
 #define ecpSeemsOnA(a, ec)\
 	(zmIsIn(ecX(a), (ec)->f) && zmIsIn(ecY(a, (ec)->f->n), (ec)->f))
 
+//wwIsZero для случая a == O (особая точка)
 #define ecpSeemsOn3(a, ec)\
-	(ecpSeemsOnA(a, ec) && zmIsIn(ecZ(a, (ec)->f->n), (ec)->f))
+	(wwIsZero(ecZ(a, (ec)->f->n), (ec)->f->n) || ecpSeemsOnA(a, ec) && zmIsIn(ecZ(a, (ec)->f->n), (ec)->f))
 
 /*
 *******************************************************************************
@@ -931,11 +932,11 @@ void ecpDblAddA(word c[], const word a[], const word b[], bool_t neg_b, const st
 	qrSub(t1, t1, t5, ec->f);
 }
 
-void ecpDblAddA_deep(size_t n, size_t f_deep) {
+size_t ecpDblAddA_deep(size_t n, size_t f_deep) {
 	return O_OF_W(3 * n) + f_deep;
 }
 
-void ecpSetSignA(word b[], const word a[], bool_t neg, const struct ec_o* ec, void* stack) {
+void ecpSetSignA(word b[], const word a[], bool_t neg, const struct ec_o* ec) {
 	const size_t n = ec->f->n;
 	// pre
 	ASSERT(ecIsOperable(ec));
@@ -995,10 +996,10 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	ec->dbla = ecpDblAJ;
 	ec->tpl = bA3 ? ecpTplJA3 : ecpTplJ;
 	ec->dbl_adda = ecpDblAddA;
-	ec->set_sign = ecpSetSignA;
+	ec->set_signa = ecpSetSignA;
 	ec->smulsa = ecpDivp ? ecpSmallMultDivpA : ecSmallMultAdd2A;
 	ec->smulsj = ecpDivp ? ecpSmallMultDivpJ : ecSmallMultAdd2J;
-	ec->deep = utilMax(8,
+	ec->deep = utilMax(9,
 		ecpToAJ_deep(f->n, f->deep),
 		ecpAddJ_deep(f->n, f->deep),
 		ecpAddAJ_deep(f->n, f->deep),
@@ -1007,15 +1008,12 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 		bA3 ? ecpDblJA3_deep(f->n, f->deep) : ecpDblJ_deep(f->n, f->deep),
 		ecpDblAJ_deep(f->n, f->deep),
 		bA3 ? ecpTplJA3_deep(f->n, f->deep) : ecpTplJ_deep(f->n, f->deep),
-		ecpDblAddA_deep);
-	ec->deep += utilMax(3,
-		ecpDivp
-		    ? ecpSmallMultDivpA_deep(TRUE, 6, f->n, f->deep)
-     		: ecSmallMultAdd2A_deep(f->n, ec->deep),
-		ecpDivp
-		    ? ecpSmallMultDivpJ_deep(TRUE, 6, f->n, f->deep)
-     		: ecSmallMultAdd2J_deep()
+		ecpDblAddA_deep(f->n, f->deep)
 		);
+	ec->deep += utilMax(2,
+		ecpDivp ? ecpSmallMultDivpA_deep(TRUE, 6, f->n, f->deep) : ecSmallMultAdd2A_deep(f->n, ec->deep),
+		ecpDivp ? ecpSmallMultDivpJ_deep(TRUE, 6, f->n, f->deep) : ecSmallMultAdd2J_deep()
+	);
 	// настроить
 	ec->hdr.keep = sizeof(ec_o) + O_OF_W(5 * f->n + 1);
 	ec->hdr.p_count = 6;
@@ -1505,7 +1503,6 @@ bool_t smMultsA_divPoly(word* sm_mults, const word a[], const word w, const ec_o
 	stack = WW_odd_inv + ec->f->n*;
 
 	//Вспомогательные значения
-	ec_f_n = ec->f->n;
 	qrSqr(xx, x, ec->f, stack);
 	qrMul(bx, ec->B, x, ec->f, stack);
 	qrSqr(aa, ec->A, ec->f, stack);
@@ -1857,6 +1854,8 @@ void ecpSmallMultDivpA(word* c, word da[], const word a[], const size_t w, const
 	word* pWW4;
 #define WWy4(i) (pWW4)
 
+	ASSERT(w >= 2);
+
 	stack_walloc(dy2, n);
 	stack_walloc(tmp, n);
 	stack_walloc(tmp2, n);
@@ -1881,7 +1880,7 @@ void ecpSmallMultDivpA(word* c, word da[], const word a[], const size_t w, const
 		word* bx;
 		word* aa;
 
-		xx = pW2i;
+		xx = pWW;
 		bx = xx + n;
 		aa = bx + n;
 
@@ -1939,26 +1938,27 @@ void ecpSmallMultDivpA(word* c, word da[], const word a[], const size_t w, const
 
 			gfpDouble(W(4), u, ec->f);				// W₄ = 2 (x⁶+4bx(5x²-a)+5ax(x³-ax)-8b²-a³)
 		}
-
-		// [W₃²], [W₁W₃], [W₄²], [W₂W₄], [(2y)²W₂W₄], [(2y)⁴W₂W₄]
-		qrSqr(W2(3), W(3), ec->f, stack);			// W₃²
-		qrCopy(WW(2), W(3), ec->f);					// W₁W₃ = W₃
-		qrSqr(W2(4), W(4), ec->f, stack);			// W₄²
-		qrCopy(WW(3), W(4), ec->f);					// W₂W₄ = W₄
-		qrMul(WWy2(3), dy2, WW(3), ec->f, stack);	// (2y)² W₂W₄
-		qrMul(WWy4(3), dy2, WWy2(3), ec->f, stack);	// (2y)² (2y)²W₂W₄
 	}
+	// [W₃²], [W₁W₃], [W₄²], [W₂W₄], [(2y)²W₂W₄], [(2y)⁴W₂W₄]
+	qrSqr(W2(3), W(3), ec->f, stack);			// W₃²
+	qrCopy(WW(2), W(3), ec->f);					// W₁W₃ = W₃
+	qrSqr(W2(4), W(4), ec->f, stack);			// W₄²
+	qrCopy(WW(3), W(4), ec->f);					// W₂W₄ = W₄
+	qrMul(WWy2(3), dy2, WW(3), ec->f, stack);	// (2y)² W₂W₄
+	qrMul(WWy4(3), dy2, WWy2(3), ec->f, stack);	// (2y)² (2y)²W₂W₄
+
 
 	// [W₅], [W₅²]
 	{
 		qrMul(tmp, WW(2), W2(3), ec->f, stack);		// W₁W₃ W₃²
 		qrSub(W(5), WWy4(3), tmp, ec->f);			// W₅ = (2y)⁴W₂W₄ − W₁W₃W₃²
-		qrSqr(W2(5), W(5), ec->f, stack);			// W₅ ²
+		if (w > 2)
+			qrSqr(W2(5), W(5), ec->f, stack);		// W₅ ²
 	}
 
 	// Этап 1)
 	// для i=3,4..2ʷ⁻¹: [W₂ᵢ], [W₂ᵢ₊₁], [Wᵢ Wᵢ₊₂]
-	for (i = 3;;)
+	for (i = 3; i <= SIZE_1 << (w - 1); ++i)
 	{
 		// [WᵢWᵢ₊₂] = ((Wᵢ + Wᵢ₊₂) ² - Wᵢ² - Wᵢ₊₂²) / 2
 		gfpMul2(WW(i+1), W(i), W(i+2), W2(i), W2(i+2), ec->f, stack);
@@ -1998,13 +1998,10 @@ void ecpSmallMultDivpA(word* c, word da[], const word a[], const size_t w, const
 		}
 
 		if (i != SIZE_1 << (w - 1))
-		{
 			// [W₂ᵢ₊₁²]
-			qrSqr(W2(2*i+1), W(2*i+1), ec->f, stack);		// W₂ᵢ₊₁ ²
-			++i;
-		} else
-			break;
+			qrSqr(W2(2 * i + 1), W(2 * i + 1), ec->f, stack);		// W₂ᵢ₊₁ ²
 	}
+
 
 	// [1]P
 	wwCopy(c, a, na);
@@ -2012,7 +2009,7 @@ void ecpSmallMultDivpA(word* c, word da[], const word a[], const size_t w, const
 
 	// Этап 2)
 	// [Wᵢ⁻²][,2y], i=3,5..2ʷ-1
-	qrMontInv(W2i(3), W2(3), da ? i : i - 1, ec->f, stack);
+	qrMontInv(W2i(3), W2(3), da ? i - 1 : i - 2, ec->f, stack);
 
 	// Этап 3)
 	// [2]P
@@ -2047,7 +2044,7 @@ void ecpSmallMultDivpA(word* c, word da[], const word a[], const size_t w, const
 	// Этап 5)
 #undef WW
 #define WW(i) (pWW)
-	for (;;)
+	for (; i <= (SIZE_1 << w) - 1;)
 	{
 		// i=2ʷ⁻¹+1,2ʷ⁻¹+3..2ʷ-1: [Yᵢ] = y (WᵢWᵢ₊₂ Wᵢ₋₁² - Wᵢ₋₂Wᵢ Wᵢ₊₁²) Wᵢ⁻⁴
 		qrMul(tmp, WW(i-1), W2(i+1), ec->f, stack); 						// Wᵢ₋₂Wᵢ Wᵢ₊₁²
@@ -2057,14 +2054,20 @@ void ecpSmallMultDivpA(word* c, word da[], const word a[], const size_t w, const
 		else
 			// Wᵢ₊₂² undefined
 			qrMul(WW(i+1), W(i), W(i+2), ec->f, stack);						// Wᵢ Wᵢ₊₂
-		qrMul(tmp2, WW(i+1), W2(i-1), ec->f, stack); 						// WᵢWᵢ₊₂ Wᵢ₋₁²
+
+		if (i < 4)
+			//w == 2, W2^2 = 1
+			wwCopy(tmp2, WW(i + 1), n);
+		else
+			qrMul(tmp2, WW(i+1), W2(i-1), ec->f, stack); 					// WᵢWᵢ₊₂ Wᵢ₋₁²
+
 		qrSub(tmp2, tmp2, tmp, ec->f);										// WᵢWᵢ₊₂Wᵢ₋₁² - Wᵢ₋₂WᵢWᵢ₊₁²
 		qrSqr(tmp, W2i(i), ec->f, stack);									// Wᵢ⁻² ²
 		qrMul(tmp, tmp2, tmp, ec->f, stack);								// (WᵢWᵢ₊₂Wᵢ₋₁²-Wᵢ₋₂WᵢWᵢ₊₁²) Wᵢ⁻⁴
 		qrMul(ecY(c, n), y, tmp, ec->f, stack);								// y (WᵢWᵢ₊₂Wᵢ₋₁²-Wᵢ₋₂WᵢWᵢ₊₁²)Wᵢ⁻⁴
 
+		if (i == (SIZE_1 << w) - 1) break;
 		i += 2, c += na;
-		if (i == (SIZE_1 << w) + 1) break;
 
 		// i=2ʷ⁻¹+3,2ʷ⁻¹+5..2ʷ-1: [Xᵢ] = x − (2y)² Wᵢ₋₁ Wᵢ₊₁ Wᵢ⁻²
 		gfpMul2(tmp, W(i-1), W(i+1), W2(i-1), W2(i+1), ec->f, stack);		// Wᵢ₋₁ Wᵢ₊₁
@@ -2072,6 +2075,13 @@ void ecpSmallMultDivpA(word* c, word da[], const word a[], const size_t w, const
 		qrMul(tmp, W2i(i), tmp, ec->f, stack);								// (2y)²Wᵢ₋₁Wᵢ₊₁ Wᵢ⁻²
 		qrSub(ecX(c), x, tmp, ec->f);										// x − (2y)²Wᵢ₋₁Wᵢ₊₁Wᵢ⁻²
 	}
+#ifdef _DEBUG
+	if (w == 2) {
+		//чтобы stack_wfree не ломался для w == 2, так как значение по адресу pWW + 2 * n не записывается
+		wwSetZero(pWW + 2 * n, n);
+	}
+#endif // _DEBUG
+
 
 	stack_wfree(pWW4);
 	stack_wfree(pWW2);
@@ -2206,6 +2216,8 @@ void ecpSmallMultDivpJ(word* c, word da[], const word a[], const size_t w, const
 	word* pWW4;
 #define WWy4(i) (pWW4)
 
+	ASSERT(w >= 2);
+
 	stack_walloc(dy2, n);
 	stack_walloc(tmp, n);
 	stack_walloc(tmp2, n);
@@ -2287,26 +2299,26 @@ void ecpSmallMultDivpJ(word* c, word da[], const word a[], const size_t w, const
 
 			gfpDouble(W(4), u, ec->f);				// W₄ = 2 (x⁶+4bx(5x²-a)+5ax(x³-ax)-8b²-a³)
 		}
-
-		// [W₃²], [W₁W₃], [W₄²], [W₂W₄], [(2y)²W₂W₄], [(2y)⁴W₂W₄]
-		qrSqr(W2(3), W(3), ec->f, stack);			// W₃²
-		qrCopy(WW(2), W(3), ec->f);					// W₁W₃ = W₃
-		qrSqr(W2(4), W(4), ec->f, stack);			// W₄²
-		qrCopy(WW(3), W(4), ec->f);					// W₂W₄ = W₄
-		qrMul(WWy2(3), dy2, WW(3), ec->f, stack);	// (2y)² W₂W₄
-		qrMul(WWy4(3), dy2, WWy2(3), ec->f, stack);	// (2y)² (2y)²W₂W₄
 	}
+	// [W₃²], [W₁W₃], [W₄²], [W₂W₄], [(2y)²W₂W₄], [(2y)⁴W₂W₄]
+	qrSqr(W2(3), W(3), ec->f, stack);			// W₃²
+	qrCopy(WW(2), W(3), ec->f);					// W₁W₃ = W₃
+	qrSqr(W2(4), W(4), ec->f, stack);			// W₄²
+	qrCopy(WW(3), W(4), ec->f);					// W₂W₄ = W₄
+	qrMul(WWy2(3), dy2, WW(3), ec->f, stack);	// (2y)² W₂W₄
+	qrMul(WWy4(3), dy2, WWy2(3), ec->f, stack);	// (2y)² (2y)²W₂W₄
 
 	// [W₅], [W₅²]
 	{
 		qrMul(tmp, WW(2), W2(3), ec->f, stack);		// W₁W₃ W₃²
 		qrSub(W(5), WWy4(3), tmp, ec->f);			// W₅ = (2y)⁴W₂W₄ − W₁W₃W₃²
-		qrSqr(W2(5), W(5), ec->f, stack);			// W₅ ²
+		if (w > 2)
+			qrSqr(W2(5), W(5), ec->f, stack);			// W₅ ²
 	}
 
 	// Этап 1)
 	// для i=3,4..2ʷ⁻¹: [W₂ᵢ], [W₂ᵢ₊₁], [Wᵢ Wᵢ₊₂]
-	for (i = 3;;)
+	for (i = 3; i <= SIZE_1 << (w - 1); ++i)
 	{
 		// [WᵢWᵢ₊₂] = ((Wᵢ + Wᵢ₊₂) ² - Wᵢ² - Wᵢ₊₂²) / 2
 		gfpMul2(WW(i+1), W(i), W(i+2), W2(i), W2(i+2), ec->f, stack);
@@ -2348,10 +2360,8 @@ void ecpSmallMultDivpJ(word* c, word da[], const word a[], const size_t w, const
 		if (i != SIZE_1 << (w - 1))
 		{
 			// [W₂ᵢ₊₁²]
-			qrSqr(W2(2*i+1), W(2*i+1), ec->f, stack);		// W₂ᵢ₊₁ ²
-			++i;
-		} else
-			break;
+			qrSqr(W2(2 * i + 1), W(2 * i + 1), ec->f, stack);		// W₂ᵢ₊₁ ²
+		}
 	}
 
 	// [1]P
@@ -2398,18 +2408,25 @@ void ecpSmallMultDivpJ(word* c, word da[], const word a[], const size_t w, const
 	// Этап 5)
 #undef WW
 #define WW(i) (pWW)
-	for (;;)
+	for (; i <= (SIZE_1 << w) - 1;)
 	{
 		// i=2ʷ⁻¹+1,2ʷ⁻¹+3..2ʷ-1: [Yᵢ] = y (Wᵢ₊₂ Wᵢ₋₁² - Wᵢ₋₂ Wᵢ₊₁²)
-		qrMul(tmp, W(i+2), W2(i-1), ec->f, stack);
-		qrMul(ecY(c, n), W(i-2), W2(i+1), ec->f, stack);
+		if (i < 4)
+			wwCopy(tmp, W(i+2), n);
+		else
+			qrMul(tmp, W(i+2), W2(i-1), ec->f, stack);
+		if (i < 5)
+			wwCopy(ecY(c, n), W2(i+1), n);
+		else
+			qrMul(ecY(c, n), W(i-2), W2(i+1), ec->f, stack);
+
 		qrSub(ecY(c, n), tmp, ecY(c, n), ec->f);
 		qrMul(ecY(c, n), y, ecY(c, n), ec->f, stack);
 		// [Zᵢ] = Wᵢ
 		wwCopy(ecZ(c, n), W(i), n);
 
+		if (i == (SIZE_1 << w) - 1) break;
 		i += 2, c += nj;
-		if (i == (SIZE_1 << w) + 1) break;
 
 		// i=2ʷ⁻¹+3,2ʷ⁻¹+5..2ʷ-1: [Xᵢ] = x Wᵢ² − (2y)² Wᵢ₋₁ Wᵢ₊₁
 		gfpMul2(tmp, W(i-1), W(i+1), W2(i-1), W2(i+1), ec->f, stack);		// Wᵢ₋₁ Wᵢ₊₁
