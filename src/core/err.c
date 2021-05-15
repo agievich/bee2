@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.09
-\version 2021.04.22
+\version 2021.05.15
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -41,6 +41,7 @@ static const err_msg _messages[] = {
 	{ERR_BUSY, "Device is busy"},
 	{ERR_TIMEOUT, "Timeout"},
 	{ERR_NOT_IMPLEMENTED, "Function is not implemented"},
+	{ERR_AFTER, "Aftereffect of prevoius errors"},
 	// file
 	{ERR_FILE_CREATE, "Unable to create the file"},
 	{ERR_FILE_NOT_FOUND, "Unable to find the file"},

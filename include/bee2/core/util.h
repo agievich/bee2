@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.16
-\version 2017.01.17
+\version 2021.05.15
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -133,6 +133,22 @@ extern "C" {
 	\return Версия в виде строки major.minor.patch.
 */
 const char* utilVersion();
+
+/*
+*******************************************************************************
+Завершение
+*******************************************************************************
+*/
+
+/*!	\brief Регистрация функции завершения
+
+	Регистрируется функция fn, которая будет вызвана при завершении работы
+	программы / выгрузке динамической библиотеки.
+	\return Признак успеха.
+*/
+bool_t utilOnExit(
+	void (*fn)(void)	/*!< [in] функция */
+);
 
 /*
 *******************************************************************************

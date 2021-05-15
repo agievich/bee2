@@ -121,5 +121,8 @@
     <ClCompile Include="..\..\test\crypto\bpki_test.c">
       <Filter>Source Files\crypto</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\test\core\mt_test.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

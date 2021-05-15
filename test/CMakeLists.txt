@@ -2,8 +2,9 @@ add_executable(testbee2
 	core/b64_test.c
 	core/dec_test.c
 	core/der_test.c
-	core/mem_test.c
 	core/hex_test.c
+	core/mem_test.c
+	core/mt_test.c
 	core/obj_test.c
 	core/oid_test.c
 	core/prng_test.c

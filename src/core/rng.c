@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2021.05.04
+\version 2021.05.15
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -435,14 +435,18 @@ err_t rngReadSource(void* buf, size_t* read, size_t count,
 *******************************************************************************
 */
 
+#include <stdio.h>
+
 typedef struct 
 {
 	octet block[32];			/*< дополнительные данные brngCTR */
 	octet alg_state[];			/*< [MAX(beltHash_keep(), brngCTR_keep())] */
 } rng_state_st;
 
-static size_t _lock;			/*< счетчик блокировок */
+static size_t _once;			/*< флаг для mtCallOnce() */
 static mt_mtx_t _mtx[1];		/*< мьютекс */
+static bool_t _created;			/*< мьютекс создан? */
+static size_t _ctr;				/*< счетчик вызовов rngCreate() */
 static rng_state_st* _state;	/*< состояние */
 
 size_t rngCreate_keep()
@@ -450,26 +454,47 @@ size_t rngCreate_keep()
 	return sizeof(rng_state_st) + MAX2(beltHash_keep(), brngCTR_keep());
 }
 
+static void rngDestroy(void)
+{
+	// закрыть состояние (могли забыть)
+	blobClose(_state);
+	// закрыть мьютекс
+	mtMtxClose(_mtx);
+}
+
+static void rngInit()
+{
+	ASSERT(!_created);
+	if (!mtMtxCreate(_mtx))
+		return;
+	if (!utilOnExit(rngDestroy))
+	{
+		mtMtxClose(_mtx);
+		return;
+	}
+	mtMtxLock(_mtx);
+	_created = TRUE;
+}
+
 err_t rngCreate(read_i source, void* source_state)
 {
 	size_t read;
 	size_t count;
-	// уже создан?
-	if (_lock)
+	// создать мьютекс и заблокировать его
+	if (!mtCallOnce(&_once, rngInit) || !_created)
+		return ERR_FILE_CREATE;
+	// состояние уже создано?
+	if (_ctr)
 	{
-		++_lock;
+		++_ctr;
+		mtMtxUnlock(_mtx);
 		return ERR_OK;
 	}
-	// создать мьютекс и заблокировать его
-	if (!mtMtxCreate(_mtx))
-		return ERR_FILE_CREATE;
-	mtMtxLock(_mtx);
 	// создать состояние
 	_state = (rng_state_st*)blobCreate(rngCreate_keep());
 	if (!_state)
 	{
 		mtMtxUnlock(_mtx);
-		mtMtxClose(_mtx);
 		return ERR_OUTOFMEMORY;
 	}
 	// опрос источников случайности
@@ -499,7 +524,6 @@ err_t rngCreate(read_i source, void* source_state)
 	{
 		blobClose(_state);
 		mtMtxUnlock(_mtx);
-		mtMtxClose(_mtx);
 		return ERR_BAD_ENTROPY;
 	}
 	// создать brngCTR
@@ -507,28 +531,27 @@ err_t rngCreate(read_i source, void* source_state)
 	brngCTRStart(_state->alg_state, _state->block, 0);
 	memSetZero(_state->block, 32);
 	// завершение
-	_lock = 1;
+	_ctr = 1;
 	mtMtxUnlock(_mtx);
 	return ERR_OK;
 }
 
 bool_t rngIsValid()
 {
-	return _lock > 0 && mtMtxIsValid(_mtx) && blobIsValid(_state);
+	return _created && mtMtxIsValid(_mtx) &&
+		_ctr && blobIsValid(_state);
 }
 
 void rngClose()
 {
 	ASSERT(rngIsValid());
 	mtMtxLock(_mtx);
-	if (--_lock == 0)
+	if (--_ctr == 0)
 	{
 		blobClose(_state);
-		mtMtxUnlock(_mtx);
-		mtMtxClose(_mtx);
+		_state = 0;
 	}
-	else
-		mtMtxUnlock(_mtx);
+	mtMtxUnlock(_mtx);
 }
 
 /*

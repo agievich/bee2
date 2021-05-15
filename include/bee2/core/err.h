@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.09
-\version 2021.04.22
+\version 2021.05.15
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -79,6 +79,8 @@ Sys
 #define ERR_TIMEOUT					_ERR_REG(112)
 /* не реализовано */
 #define ERR_NOT_IMPLEMENTED			_ERR_REG(113)
+/* не реализовано */
+#define ERR_AFTER					_ERR_REG(114)
 
 /*
 *******************************************************************************

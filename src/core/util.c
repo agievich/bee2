@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.05.10
-\version 2017.10.14
+\version 2021.05.15
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -29,6 +29,21 @@ version 3. See Copyright Notices in bee2/info.h.
 const char* utilVersion()
 {
 	return BEE2_VERSION;
+}
+
+/*
+*******************************************************************************
+Контроль выполнения
+
+\todo Гарантии вызова деструкторов при выгрузке динамической библиотеки
+(см. https://bugs.freedesktop.org/show_bug.cgi?id=82246).
+\todo Смягчение ограничений на количество регистрируемых функций.
+*******************************************************************************
+*/
+
+bool_t utilOnExit(void (*fn)(void))
+{
+	return atexit(fn) == 0;
 }
 
 /*
