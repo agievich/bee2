@@ -328,8 +328,8 @@ static err_t rngReadSys(void* buf, size_t* read, size_t count)
 		*read = 0;
 		return ERR_FILE_NOT_FOUND;
 	}
-	// получить данные
-	if (!CryptGenRandom(hprov, (DWORD)count, (octet*)buf))
+	// получить данные (count == 0 считается ошибкой)
+	if (count && !CryptGenRandom(hprov, (DWORD)count, (octet*)buf))
 	{
 		*read = 0;
 		CryptReleaseContext(hprov, 0);
