@@ -64,7 +64,7 @@ if (BASH_PLATFORM)
 endif()
 
 set(CMAKE_C_WARNINGS
-  "-Wall -Wextra -W -Wdeclaration-after-statement -Wwrite-strings -Wlogical-op -Wno-parentheses -Wno-logical-op-parentheses -Wno-bitwise-op-parentheses -Wno-unused-parameter -Wno-strict-aliasing")
+  "-Wall -Wextra -W -Wdeclaration-after-statement -Wwrite-strings -Wlogical-op -Wno-parentheses -Wno-parentheses-equality -Wno-logical-op-parentheses -Wno-bitwise-op-parentheses -Wno-unused-parameter -Wno-strict-aliasing")
 
 if(${CMAKE_C_COMPILER_ID} STREQUAL GNU)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_WARNINGS}")
