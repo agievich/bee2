@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="test"
 	ProjectGUID="{EFA32A17-0F7F-468B-88E5-455296084B8D}"
 	RootNamespace="test"
@@ -443,6 +443,10 @@
 				</File>
 				<File
 					RelativePath="..\..\test\core\mem_test.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\test\core\mt_test.c"
 					>
 				</File>
 				<File
