@@ -34,7 +34,7 @@ bool_t rngTest()
 	// пробежать источники
 	for (pos = 0; pos < COUNT_OF(sources); ++pos)
 	{
-		if (rngReadSource(buf, &read, 2500, sources[pos]) == ERR_OK)
+		if (rngReadSource(&read, buf, 2500, sources[pos]) == ERR_OK)
 		{
 			if (read == 2500)
 				hexFrom(hex, buf, 16),

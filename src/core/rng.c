@@ -467,7 +467,7 @@ bool_t rngTestFIPS4(const octet buf[2500])
 *******************************************************************************
 */
 
-err_t rngReadSource(void* buf, size_t* read, size_t count,
+err_t rngReadSource(size_t* read, void* buf, size_t count,
 	const char* source_name)
 {
 	if (strEq(source_name, "trng"))
@@ -490,8 +490,6 @@ err_t rngReadSource(void* buf, size_t* read, size_t count,
 См. пояснения в комментариях к функции rngStepR().
 *******************************************************************************
 */
-
-#include <stdio.h>
 
 typedef struct 
 {
@@ -535,8 +533,8 @@ static void rngInit()
 
 err_t rngCreate(read_i source, void* source_state)
 {
-	size_t read;
-	size_t count;
+	const char* sources[] = { "trng", "trng2", "sys", "timer" };
+	size_t read, count, pos;
 	// инициализировать однократно
 	if (!mtCallOnce(&_once, rngInit) || !_inited)
 		return ERR_FILE_CREATE;
@@ -563,26 +561,12 @@ err_t rngCreate(read_i source, void* source_state)
 	// опрос источников случайности
 	count = 0;
 	beltHashStart(_state->alg_state);
-	if (rngReadSource(_state->block, &read, 32, "trng") == ERR_OK)
-	{
-		beltHashStepH(_state->block, read, _state->alg_state);
-		count += read;
-	}
-	if (rngReadSource(_state->block, &read, 32, "trng2") == ERR_OK)
-	{
-		beltHashStepH(_state->block, read, _state->alg_state);
-		count += read;
-	}
-	if (rngReadSource(_state->block, &read, 32, "timer") == ERR_OK)
-	{
-		beltHashStepH(_state->block, read, _state->alg_state);
-		count += read;
-	}
-	if (rngReadSource(_state->block, &read, 32, "sys") == ERR_OK)
-	{
-		beltHashStepH(_state->block, read, _state->alg_state);
-		count += read;
-	}
+	for (pos = 0; pos < COUNT_OF(sources); ++pos)
+		if (rngReadSource(&read, _state->block, 32, sources[pos]) == ERR_OK)
+		{
+			beltHashStepH(_state->block, read, _state->alg_state);
+			count += read;
+		}
 	if (source && source(&read, _state->block, 32, source_state) == ERR_OK)
 	{
 		beltHashStepH(_state->block, read, _state->alg_state);
@@ -645,42 +629,23 @@ void rngStepR2(void* buf, size_t count, void* state)
 
 void rngStepR(void* buf, size_t count, void* state)
 {
+	const char* sources[] = {"trng", "trng2", "sys", "timer"};
 	octet* buf1;
-	size_t read, t;
+	size_t read, r, pos;
 	ASSERT(rngIsValid());
 	// блокировать генератор
 	mtMtxLock(_mtx);
-	// опросить trng
-	if (rngReadSource(buf, &read, count, "trng") != ERR_OK)
-		read = 0;
-	// опросить trng2
-	if (read < count)
+	// опросить источники
+	buf1 = (octet*)buf, read = pos = 0;
+	while (read < count && pos < COUNT_OF(sources))
 	{
-		buf1 = (octet*)buf + read;
-		// проверка возврата снимает претензии сканеров
-		if (rngReadSource(buf1, &t, count - read, "trng2") != ERR_OK)
-			t = 0;
-		read += t;
-	}
-	// опросить sys
-	if (read < count)
-	{
-		buf1 = (octet*)buf + read;
-		if (rngReadSource(buf1, &t, count - read, "sys") != ERR_OK)
-			t = 0;
-		read += t;
-	}
-	// опросить timer
-	if (read < count)
-	{
-		buf1 = (octet*)buf + read;
-		if (rngReadSource(buf1, &t, count - read, "timer") != ERR_OK)
-			t = 0;
-		read += t;
+		if (rngReadSource(&r, buf1, count, sources[pos]) != ERR_OK)
+			r = 0;
+		buf1 += r, ++pos, read += r;
 	}
 	// генерация
 	brngCTRStepR(buf, count, _state->alg_state);
-	read = t = 0, buf1 = 0;
+	read = r = pos = 0, buf1 = 0;
 	// снять блокировку
 	mtMtxUnlock(_mtx);
 }
