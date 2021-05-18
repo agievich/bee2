@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2017.01.17
-\version 2019.06.11
+\version 2021.05.18
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -43,12 +43,31 @@ const char* utilInfo()
 *******************************************************************************
 */
 
+static size_t _ctr = 5;
+
+static void destroy1()
+{
+	volatile size_t x = (_ctr == 2) ? 1 : 0;
+	// увы, результат проверки станет известен только on_exit
+	_ctr = 1 / x;
+}
+
+static void destroy2()
+{
+	_ctr--;
+}
+
 bool_t utilTest()
 {
 	printf("utilVersion: %s [%s]\n", utilVersion(), utilInfo());
 	if (utilMin(5, SIZE_1, (size_t)2, (size_t)3, SIZE_1, SIZE_0) != 0 ||
 		utilMax(5, SIZE_1, (size_t)2, (size_t)3, SIZE_1, SIZE_0) != 3)
 		return FALSE;
+	// деструкторы
+	if (!utilOnExit(destroy1) || !utilOnExit(destroy2) ||
+		!utilOnExit(destroy2) || !utilOnExit(destroy2))
+		return FALSE;
+	// контрольные суммы
 	if (utilCRC32("123456789", 9, 0) != 0xCBF43926)
 		return FALSE;
 	if (utilFNV32("3pjNqM", 6, 0x811C9DC5) != 0)

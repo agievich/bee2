@@ -5,13 +5,12 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2021.05.15
-\version 2021.05.15
+\version 2021.05.18
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#include <stdio.h>
 #include <bee2/core/mt.h>
 
 /*
@@ -20,10 +19,11 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-static size_t _init = 0;
+static size_t _once;
+static bool_t _inited;
 void init()
 {
-	_init++;
+	_inited = TRUE;
 }
 
 bool_t mtTest()
@@ -43,9 +43,9 @@ bool_t mtTest()
 	if (mtAtomicCmpSwap(ctr, 1, 0) != 1 || *ctr != SIZE_0)
 		return FALSE;
 	// однократный вызов
-	if (!mtCallOnce(ctr, init) || _init != 1)
+	if (!mtCallOnce(&_once, init) || !_inited)
 		return FALSE;
-	if (!mtCallOnce(ctr, init) || _init != 1)
+	if (!mtCallOnce(&_once, init) || !_inited)
 		return FALSE;
 	// все нормально
 	return TRUE;
