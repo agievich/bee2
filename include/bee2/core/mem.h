@@ -3,9 +3,9 @@
 \file mem.h
 \brief Memory management
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.16
-\version 2019.07.09
+\version 2021.05.18
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -73,6 +73,12 @@ void memCopy(
 	const void* src,	/*< [in] буфер-источник */
 	size_t count		/*< [in] число октетов */
 );
+
+
+/*!	Копировать [count]src в [count]dest, если указатели	src и dest ненулевые.
+*/
+#define memCopyIf(dest, src, count)\
+	((dest) && (src) ? memCopy(dest, src, count) : 0)
 
 /*!	\brief Переместить буфер памяти
 

@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2021.05.15
+\version 2021.05.18
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -28,7 +28,7 @@ version 3. See Copyright Notices in bee2/info.h.
 
 /*
 *******************************************************************************
-Физический источник
+Физические источники
 
 Поддержан ГСЧ Intel
 
@@ -36,28 +36,16 @@ version 3. See Copyright Notices in bee2/info.h.
 -	по материалам https://software.intel.com/en-us/articles/
 	intel-digital-random-number-generator-drng-software-implementation-guide.
 
-Используется инструкция rdseed -- без криптографической постобработки, т.е.
-прямая работа с источником случайности.
+Используются инструкции:
+-	rdseed -- без криптографической постобработки, т.е. прямая работа с
+	источником случайности;
+-	rdrand -- с криптографической постобработкой.
 
-\remark Альтернативная команда: rdrand -- с криптографической постобработкой.
-Прошлые версии gcc не поддерживали rdseed и требовалось переходить на rdseed.
-С текушими версиями проблем не возникает.
+Инструкция rdseed напрямую ("честнее") работает с источником случайности,
+инструкция rdrand поддержана более широко.
 
-\remark Для переключения на rdrand нужно:
--	_rdseed32_step заменить на _rdrand32_step;
--	rdrand_eax заменить на rdrand_eax;
--	в rngHasTRNG() вместо
-	\code
-		// rdseed?
-		rngCPUID(info, 7);
-		return (info[1] & 0x00040000) != 0;
-	\encode
-	писать
-	\code
-		// rdrand?
-		rngCPUID(info, 1);
-		return (info[2] & 0x40000000) != 0;
-	\encode
+Инструкция rdseed используется в основном источнике "trng",
+инструкция rdrand -- во вспомогательном источнике "trng2".
 *******************************************************************************
 */
 
@@ -68,6 +56,7 @@ version 3. See Copyright Notices in bee2/info.h.
 
 #define rngCPUID(info, id) __cpuid((int*)info, id)
 #define rngRDStep(val) _rdseed32_step(val)
+#define rngRDStep2(val) _rdrand32_step(val)
 
 #elif defined(_MSC_VER) && defined(_M_IX86)
 
@@ -75,8 +64,8 @@ version 3. See Copyright Notices in bee2/info.h.
 
 #define rngCPUID(info, id) __cpuid((int*)info, id)
 
-#define rdrand_eax	__asm _emit 0x0F __asm _emit 0xC7 __asm _emit 0xF0
 #define rdseed_eax	__asm _emit 0x0F __asm _emit 0xC7 __asm _emit 0xF8
+#define rdrand_eax	__asm _emit 0x0F __asm _emit 0xC7 __asm _emit 0xF0
 
 static int rngRDStep(u32* val)
 {
@@ -84,6 +73,21 @@ static int rngRDStep(u32* val)
 		xor eax, eax
 		xor edx, edx
 		rdseed_eax
+		jnc err
+		mov edx, val
+		mov[edx], eax
+	}
+	return 1;
+err:
+	return 0;
+}
+
+static int rngRDStep2(u32* val)
+{
+	__asm {
+		xor eax, eax
+		xor edx, edx
+		rdrand_eax
 		jnc err
 		mov edx, val
 		mov[edx], eax
@@ -102,6 +106,13 @@ err:
 static int rngRDStep(u32* val)
 {
 	octet ok;
+	asm volatile("rdseed %0; setc %1" : "=r" (*val), "=qm" (ok));
+	return ok;
+}
+
+static int rngRDStep2(u32* val)
+{
+	octet ok;
 	asm volatile("rdrand %0; setc %1" : "=r" (*val), "=qm" (ok));
 	return ok;
 }
@@ -110,6 +121,7 @@ static int rngRDStep(u32* val)
 
 #define rngCPUID(info, id) memSetZero(info, 16)
 #define rngRDStep(val) 0
+#define rngRDStep2(val) 0
 
 #endif
 
@@ -125,6 +137,20 @@ static bool_t rngHasTRNG()
 	/* rdseed? */
 	rngCPUID(info, 7);
 	return (info[1] & 0x00040000) != 0;
+}
+
+static bool_t rngHasTRNG2()
+{
+	u32 info[4];
+	// Intel?
+	rngCPUID(info, 0);
+	if (!memEq(info + 1, "Genu", 4) ||
+		!memEq(info + 3, "ineI", 4) ||
+		!memEq(info + 2, "ntel", 4))
+		return FALSE;
+	// rdrand?
+	rngCPUID(info, 1);
+	return (info[2] & 0x40000000) != 0;
 }
 
 static err_t rngReadTRNG(void* buf, size_t* read, size_t count)
@@ -149,6 +175,34 @@ static err_t rngReadTRNG(void* buf, size_t* read, size_t count)
 	{
 		rand = (u32*)((octet*)buf + count - 4);
 		if (!rngRDStep(rand))
+			return ERR_OK;
+		*read = count;
+	}
+	return ERR_OK;
+}
+
+static err_t rngReadTRNG2(void* buf, size_t* read, size_t count)
+{
+	u32* rand = (u32*)buf;
+	// pre
+	ASSERT(memIsValid(read, O_PER_S));
+	ASSERT(memIsValid(buf, count));
+	// есть источник?
+	if (!rngHasTRNG2())
+		return ERR_FILE_NOT_FOUND;
+	// короткий буфер?
+	*read = 0;
+	if (count < 4)
+		return ERR_OK;
+	// генерация
+	for (; *read + 4 <= count; *read += 4, ++rand)
+		if (!rngRDStep2(rand))
+			return ERR_OK;
+	// неполный блок
+	if (*read < count)
+	{
+		rand = (u32*)((octet*)buf + count - 4);
+		if (!rngRDStep2(rand))
 			return ERR_OK;
 		*read = count;
 	}
@@ -418,6 +472,8 @@ err_t rngReadSource(void* buf, size_t* read, size_t count,
 {
 	if (strEq(source_name, "trng"))
 		return rngReadTRNG(buf, read, count);
+	else if (strEq(source_name, "trng2"))
+		return rngReadTRNG2(buf, read, count);
 	else if (strEq(source_name, "timer"))
 		return rngReadTimer(buf, read, count);
 	else if (strEq(source_name, "sys"))
@@ -443,10 +499,10 @@ typedef struct
 	octet alg_state[];			/*< [MAX(beltHash_keep(), brngCTR_keep())] */
 } rng_state_st;
 
-static size_t _once;			/*< флаг для mtCallOnce() */
+static size_t _once;			/*< триггер однократности */
 static mt_mtx_t _mtx[1];		/*< мьютекс */
-static bool_t _created;			/*< мьютекс создан? */
-static size_t _ctr;				/*< счетчик вызовов rngCreate() */
+static bool_t _inited;			/*< мьютекс создан? */
+static size_t _ctr;				/*< счетчик обращений */
 static rng_state_st* _state;	/*< состояние */
 
 size_t rngCreate_keep()
@@ -454,7 +510,7 @@ size_t rngCreate_keep()
 	return sizeof(rng_state_st) + MAX2(beltHash_keep(), brngCTR_keep());
 }
 
-static void rngDestroy(void)
+static void rngDestroy()
 {
 	// закрыть состояние (могли забыть)
 	blobClose(_state);
@@ -464,28 +520,35 @@ static void rngDestroy(void)
 
 static void rngInit()
 {
-	ASSERT(!_created);
+	ASSERT(!_inited);
+	// создать мьютекс
 	if (!mtMtxCreate(_mtx))
 		return;
+	// зарегистрировать деструктор
 	if (!utilOnExit(rngDestroy))
 	{
 		mtMtxClose(_mtx);
 		return;
 	}
-	mtMtxLock(_mtx);
-	_created = TRUE;
+	_inited = TRUE;
 }
 
 err_t rngCreate(read_i source, void* source_state)
 {
 	size_t read;
 	size_t count;
-	// создать мьютекс и заблокировать его
-	if (!mtCallOnce(&_once, rngInit) || !_created)
+	// инициализировать однократно
+	if (!mtCallOnce(&_once, rngInit) || !_inited)
 		return ERR_FILE_CREATE;
+	// заблокировать мьютекс
+	mtMtxLock(_mtx);
 	// состояние уже создано?
 	if (_ctr)
 	{
+		// учесть дополнительный источник
+		if (source && source(&read, _state->block, 32, source_state) == ERR_OK)
+			brngCTRStepR(_state->block, 32, _state->alg_state);
+		// увеличить счетчик обращений и завершить
 		++_ctr;
 		mtMtxUnlock(_mtx);
 		return ERR_OK;
@@ -501,6 +564,11 @@ err_t rngCreate(read_i source, void* source_state)
 	count = 0;
 	beltHashStart(_state->alg_state);
 	if (rngReadSource(_state->block, &read, 32, "trng") == ERR_OK)
+	{
+		beltHashStepH(_state->block, read, _state->alg_state);
+		count += read;
+	}
+	if (rngReadSource(_state->block, &read, 32, "trng2") == ERR_OK)
 	{
 		beltHashStepH(_state->block, read, _state->alg_state);
 		count += read;
@@ -530,7 +598,7 @@ err_t rngCreate(read_i source, void* source_state)
 	beltHashStepG(_state->block, _state->alg_state);
 	brngCTRStart(_state->alg_state, _state->block, 0);
 	memSetZero(_state->block, 32);
-	// завершение
+	// завершить
 	_ctr = 1;
 	mtMtxUnlock(_mtx);
 	return ERR_OK;
@@ -538,7 +606,7 @@ err_t rngCreate(read_i source, void* source_state)
 
 bool_t rngIsValid()
 {
-	return _created && mtMtxIsValid(_mtx) &&
+	return _inited && mtMtxIsValid(_mtx) &&
 		_ctr && blobIsValid(_state);
 }
 
@@ -547,10 +615,7 @@ void rngClose()
 	ASSERT(rngIsValid());
 	mtMtxLock(_mtx);
 	if (--_ctr == 0)
-	{
-		blobClose(_state);
-		_state = 0;
-	}
+		blobClose(_state), _state = 0;
 	mtMtxUnlock(_mtx);
 }
 
@@ -588,11 +653,12 @@ void rngStepR(void* buf, size_t count, void* state)
 	// опросить trng
 	if (rngReadSource(buf, &read, count, "trng") != ERR_OK)
 		read = 0;
-	// опросить timer
+	// опросить trng2
 	if (read < count)
 	{
 		buf1 = (octet*)buf + read;
-		if (rngReadSource(buf1, &t, count - read, "timer") != ERR_OK)
+		// проверка возврата снимает претензии сканеров
+		if (rngReadSource(buf1, &t, count - read, "trng2") != ERR_OK)
 			t = 0;
 		read += t;
 	}
@@ -600,8 +666,15 @@ void rngStepR(void* buf, size_t count, void* state)
 	if (read < count)
 	{
 		buf1 = (octet*)buf + read;
-		// проверка возврата снимает претензии сканеров
 		if (rngReadSource(buf1, &t, count - read, "sys") != ERR_OK)
+			t = 0;
+		read += t;
+	}
+	// опросить timer
+	if (read < count)
+	{
+		buf1 = (octet*)buf + read;
+		if (rngReadSource(buf1, &t, count - read, "timer") != ERR_OK)
 			t = 0;
 		read += t;
 	}

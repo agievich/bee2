@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.05.10
-\version 2021.05.15
+\version 2021.05.18
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -16,7 +16,9 @@ version 3. See Copyright Notices in bee2/info.h.
 #include <stdio.h>
 #include <stdlib.h>
 #include "bee2/info.h"
+#include "bee2/core/blob.h"
 #include "bee2/core/mem.h"
+#include "bee2/core/mt.h"
 #include "bee2/core/tm.h"
 #include "bee2/core/util.h"
 
@@ -33,17 +35,69 @@ const char* utilVersion()
 
 /*
 *******************************************************************************
-Контроль выполнения
+Деструкторы
 
 \todo Гарантии вызова деструкторов при выгрузке динамической библиотеки
 (см. https://bugs.freedesktop.org/show_bug.cgi?id=82246).
-\todo Смягчение ограничений на количество регистрируемых функций.
 *******************************************************************************
 */
 
-bool_t utilOnExit(void (*fn)(void))
+typedef void (*util_onexit_t)();	/*< тип функции-деструктора */
+static size_t _once;				/*< триггер однократности */
+static mt_mtx_t _mtx[1];			/*< мьютекс */
+static bool_t _inited;				/*< флаг инициализации */
+static util_onexit_t* _fns;			/*< список декструкторов */
+
+static void utilOnExitRun(void)
 {
-	return atexit(fn) == 0;
+	size_t pos;
+	// pre
+	ASSERT(blobIsValid(_fns));
+	ASSERT(blobSize(_fns) % sizeof(util_onexit_t) == 0);
+	// вызвать зарегистрированные функции
+	for (pos = blobSize(_fns) / sizeof(util_onexit_t); pos--;)
+		_fns[pos]();
+	// закрыть список функций
+	blobClose(_fns), _fns = 0;
+	// закрыть мьютекс
+	mtMtxClose(_mtx);
+}
+
+static void utilOnExitInit()
+{
+	// создать мьютекс
+	if (!mtMtxCreate(_mtx))
+		return;
+	// зарегистрировать обработчик
+	if (atexit(utilOnExitRun) != 0)
+	{
+		mtMtxClose(_mtx);
+		return;
+	}
+	_inited = TRUE;
+}
+
+bool_t utilOnExit(void (*fn)())
+{
+	blob_t b;
+	// инициализировать однократно
+	if (!mtCallOnce(&_once, utilOnExitInit) || !_inited)
+		return FALSE;
+	// расширить список
+	mtMtxLock(_mtx);
+	ASSERT(blobIsValid(_fns));
+	b = blobResize(_fns, blobSize(_fns) + sizeof(util_onexit_t));
+	if (!b)
+	{
+		mtMtxUnlock(_mtx);
+		return FALSE;
+	}
+	ASSERT(blobSize(_fns) % sizeof(util_onexit_t) == 0);
+	_fns = (util_onexit_t*)b;
+	// добавить функцию
+	_fns[blobSize(_fns) / sizeof(util_onexit_t) - 1] = fn;
+	mtMtxUnlock(_mtx);
+	return TRUE;
 }
 
 /*

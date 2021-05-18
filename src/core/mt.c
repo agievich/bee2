@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.10
-\version 2021.05.15
+\version 2021.05.18
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -13,6 +13,8 @@ version 3. See Copyright Notices in bee2/info.h.
 
 #include "bee2/core/mem.h"
 #include "bee2/core/mt.h"
+#include "bee2/core/blob.h"
+#include "bee2/core/str.h"
 #include "bee2/core/util.h"
 
 /*
@@ -156,7 +158,7 @@ bool_t mtCallOnce(size_t* once, void (*fn)())
 	size_t t;
 	// попытки вызова
 	do
-		// удается захватить флаг?...
+		// удается захватить триггер?...
 		if ((t = mtAtomicCmpSwap(once, 0, SIZE_MAX)) == 0)
 		{
 			// ... да, обработать захват
