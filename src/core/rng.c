@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2021.05.18
+\version 2021.06.08
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -511,9 +511,9 @@ size_t rngCreate_keep()
 static void rngDestroy()
 {
 	// закрыть состояние (могли забыть)
-	blobClose(_state);
+	blobClose(_state), _state = 0;
 	// закрыть мьютекс
-	mtMtxClose(_mtx);
+	mtMtxClose(_mtx), _inited = FALSE;
 }
 
 static void rngInit()
@@ -596,11 +596,13 @@ bool_t rngIsValid()
 
 void rngClose()
 {
-	ASSERT(rngIsValid());
-	mtMtxLock(_mtx);
-	if (--_ctr == 0)
-		blobClose(_state), _state = 0;
-	mtMtxUnlock(_mtx);
+	if (_inited)
+	{
+		mtMtxLock(_mtx);
+		if (_ctr && --_ctr == 0)
+			blobClose(_state), _state = 0;
+		mtMtxUnlock(_mtx);
+	}
 }
 
 /*
