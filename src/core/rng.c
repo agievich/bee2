@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2021.06.08
+\version 2021.06.24
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -488,6 +488,11 @@ err_t rngReadSource(size_t* read, void* buf, size_t count,
 \warning CoverityScan выдает предупреждение по функции rngCreate(): 
 	"Call to RngReadSource might sleep while holding lock _mtx".
 См. пояснения в комментариях к функции rngStepR().
+
+\warning Функция rngDestroy(), зарегистрированная как деструктор,
+не обязательно будет вызвана позже rngClose(). Например, rngClose()
+может вызываться в другом зарегистрированном деструкторе, который следует
+за rngDestroy().
 *******************************************************************************
 */
 
@@ -511,9 +516,11 @@ size_t rngCreate_keep()
 static void rngDestroy()
 {
 	// закрыть состояние (могли забыть)
-	blobClose(_state), _state = 0;
+	mtMtxLock(_mtx);
+	blobClose(_state), _state = 0, _ctr = 0;
+	mtMtxUnlock(_mtx);
 	// закрыть мьютекс
-	mtMtxClose(_mtx), _inited = FALSE;
+	mtMtxClose(_mtx);
 }
 
 static void rngInit()
@@ -572,9 +579,9 @@ err_t rngCreate(read_i source, void* source_state)
 		beltHashStepH(_state->block, read, _state->alg_state);
 		count += read;
 	}
-	if (count < 32)
+	if (count < 64)
 	{
-		blobClose(_state);
+		blobClose(_state), _state = 0;
 		mtMtxUnlock(_mtx);
 		return ERR_BAD_ENTROPY;
 	}
@@ -596,11 +603,10 @@ bool_t rngIsValid()
 
 void rngClose()
 {
-	if (_inited)
+	if (mtAtomicCmpSwap(&_ctr, 1, 0) > 0)
 	{
 		mtMtxLock(_mtx);
-		if (_ctr && --_ctr == 0)
-			blobClose(_state), _state = 0;
+		(_ctr) ? --_ctr : blobClose(_state), _state = 0;
 		mtMtxUnlock(_mtx);
 	}
 }
