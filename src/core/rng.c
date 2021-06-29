@@ -647,7 +647,7 @@ void rngStepR(void* buf, size_t count, void* state)
 	buf1 = (octet*)buf, read = pos = 0;
 	while (read < count && pos < COUNT_OF(sources))
 	{
-		if (rngReadSource(&r, buf1, count, sources[pos]) != ERR_OK)
+		if (rngReadSource(&r, buf1, count - read, sources[pos]) != ERR_OK)
 			r = 0;
 		buf1 += r, ++pos, read += r;
 	}
