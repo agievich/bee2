@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.06.26
-\version 2016.07.05
+\version 2021.06.30
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -811,7 +811,10 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	ASSERT(memIsValid(ec, sizeof(ec_o)));
 	ASSERT(gfpIsOperable(f));
 	ASSERT(memIsValid(A, f->no)); 
-	ASSERT(memIsValid(B, f->no)); 
+	ASSERT(memIsValid(B, f->no));
+	// f->mod > 3?
+	if (wwCmpW(f->mod, f->n, 3) <= 0)
+		return FALSE;
 	// обнулить
 	memSetZero(ec, sizeof(ec_o));
 	// зафикисровать размерности
@@ -844,7 +847,7 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	ec->dbl = bA3 ? ecpDblJA3 : ecpDblJ;
 	ec->dbla = ecpDblAJ;
 	ec->tpl = bA3 ? ecpTplJA3 : ecpTplJ;
-	ec->deep = utilMax(9,
+	ec->deep = utilMax(8,
 		ecpToAJ_deep(f->n, f->deep),
 		ecpAddJ_deep(f->n, f->deep),
 		ecpAddAJ_deep(f->n, f->deep),
@@ -897,11 +900,14 @@ bool_t ecpIsValid(const ec_o* ec, void* stack)
 	word* t2 = t1 + n;
 	word* t3 = t2 + n;
 	stack = t3 + n;
-	// кривая работоспособна? поле ec->f корректно?
+	// кривая работоспособна?
+	// поле ec->f корректно?
+	// f->mod > 3?
 	// ec->deep >= ec->f->deep?
 	// A, B \in ec->f?
 	if (!ecIsOperable2(ec) ||
 		!gfpIsValid(ec->f, stack) ||
+		wwCmpW(ec->f->mod, ec->f->n, 3) <= 0 ||
 		ec->deep < ec->f->deep ||
 		!zmIsIn(ec->A, ec->f) || 
 		!zmIsIn(ec->B, ec->f))

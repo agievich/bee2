@@ -6,7 +6,7 @@
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \author (C) Stanislav Poruchnik [poruchnikstanislav@gmail.com]
 \created 2012.04.22
-\version 2019.06.26
+\version 2019.06.30
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -307,7 +307,7 @@ void FAST(zzHalfMod)(word b[], const word a[], const word mod[], size_t n)
 	ASSERT(wwIsDisjoint(mod, b, n));
 	ASSERT(zzIsOdd(mod, n) && mod[n - 1] != 0);
 	ASSERT(wwCmp(a, mod, n) < 0);
-	// a -- нечетное? => b <- (a + p) / 2
+	// a -- нечетное? => b <- (a + mod) / 2
 	if (zzIsOdd(a, n))
 	{
 		carry = zzAdd(b, a, mod, n);

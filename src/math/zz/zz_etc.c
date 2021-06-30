@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.22
-\version 2019.06.26
+\version 2021.06.30
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -121,7 +121,7 @@ int zzJacobi(const word a[], size_t n, const word b[], size_t m, void* stack)
 	m = wwWordSize(v, m);
 	// u <- a \mod b
 	zzMod(u, a, n, v, m, stack);
-	n = wwWordSize(u, n);
+	n = wwWordSize(u, m);
 	// основной цикл
 	while (wwCmpW(v, m, 1) > 0)
 	{
@@ -147,7 +147,7 @@ int zzJacobi(const word a[], size_t n, const word b[], size_t m, void* stack)
 			t = -t;
 		// v <- v \mod u
 		zzMod(v, v, m, u, n, stack);
-		m = wwWordSize(v, m);
+		m = wwWordSize(v, n);
 		// v <-> u
 		wwSwap(u, v, n);
 		s = m, m = n, n = s;

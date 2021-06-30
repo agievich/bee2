@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.06.24
-\version 2017.01.11
+\version 2021.06.30
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -59,6 +59,8 @@ O -- бесконечно удаленная точка.
 	Создается описание ec эллиптической кривой в якобиановых координатах
 	над полем f с коэффициентами [f->no]A и [f->no]B.
 	\return Признак успеха.
+	\pre gfpIsOperable(f) == TRUE.
+	\expect{FALSE} f->mod > 3.
 	\post ec->d == 3.
 	\post Буферы ec->order и ec->base подготовлены для ecCreateGroup().
 	\keep{ec} ecpCreateJ_keep(f->n).
@@ -87,6 +89,7 @@ size_t ecpCreateJ_deep(size_t n, size_t f_deep);
 	Описание корректно, если:
 	-	ecSeemsValid(ec) == TRUE;
 	-	gfpIsValid(ec->f) == TRUE;
+	-	ec->f->mod > 3;
 	-	A, B \in f;
 	-	4 A^3 + 27 B^2 не делится на p (гладкость).
 	.

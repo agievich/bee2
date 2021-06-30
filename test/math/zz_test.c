@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.15
-\version 2016.09.12
+\version 2021.06.30
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -51,20 +51,21 @@ static bool_t zzTestAdd()
 		carry = zzAdd(c, a, b, n);
 		if (zzSub(c1, c, b, n) != carry || 
 			!wwEq(c1, a, n) ||
-			zzIsSumEq(c, a, b, n) != wordEq(carry, 0))
+			SAFE(zzIsSumEq)(c, a, b, n) != wordEq(carry, 0) ||
+			FAST(zzIsSumEq)(c, a, b, n) != wordEq(carry, 0))
 			return FALSE;
 		// zzAdd2 / zzSub2
 		wwCopy(c1, a, n);
 		if (zzAdd2(c1, b, n) != carry || 
 			!wwEq(c1, c, n) ||
-			zzSub2(c1, b, n) != carry || 
+			zzSub2(c1, b, n) != carry ||
 			!wwEq(c1, a, n))
 			return FALSE;
 		// zzAddW / zzSubW / zzIsSumEqW
 		carry = zzAddW(c, a, n, b[0]);
 		if (zzSubW(c1, c, n, b[0]) != carry || 
 			!wwEq(c1, a, n) ||
-			zzIsSumWEq(c, a, n, b[0]) != wordEq(carry, 0) ||
+			SAFE(zzIsSumWEq)(c, a, n, b[0]) != wordEq(carry, 0) ||
 			FAST(zzIsSumWEq)(c, a, n, b[0]) != wordEq(carry, 0))
 			return FALSE;
 		// zzAddW2 / zzSubW2
@@ -78,7 +79,25 @@ static bool_t zzTestAdd()
 		carry = zzAddW(c, a, 1, b[0]);
 		if (zzSubW(c1, c, 1, b[0]) != carry || 
 			!wwEq(c1, a, 1) ||
-			zzIsSumWEq(c, a, 1, b[0]) != wordEq(carry, 0))
+			SAFE(zzIsSumWEq)(c, a, 1, b[0]) != wordEq(carry, 0) ||
+			FAST(zzIsSumWEq)(c, a, 1, b[0]) != wordEq(carry, 0))
+			return FALSE;
+		// zzAdd3 / zzAdd
+		carry = zzAdd(c, a, b, n);
+		if (zzAdd3(c1, a, n, b, n) != carry ||
+			!wwEq(c1, c, n))
+			return FALSE;
+		b[n - 1] = 0;
+		carry = zzAdd(c, a, b, n);
+		if (zzAdd3(c1, a, n, b, n - 1) != carry ||
+			!wwEq(c1, c, n) ||
+			zzAdd3(c1, b, n - 1, a, n) != carry ||
+			!wwEq(c1, c, n))
+			return FALSE;
+		// zzNeg / zzAdd
+		zzNeg(b, a, n);
+		if (zzAdd(c, a, b, n) != 1 ||
+			!wwIsZero(c, n))
 			return FALSE;
 	}
 	// все нормально
@@ -236,13 +255,13 @@ static bool_t zzTestMod()
 			mod[n - 1] = WORD_MAX;
 		zzMod(a, a, n, mod, n, stack);
 		zzMod(b, b, n, mod, n, stack);
-		// zzAddMod / zzSubMod
-		zzAddMod(t, a, b, mod, n);
-		zzSubMod(t1, t, b, mod, n);
-		if (!wwEq(t1, a, n))
+		// SAFE(zzAddMod) / SAFE(zzSubMod)
+		SAFE(zzAddMod)(t, a, b, mod, n);
+		SAFE(zzSubMod)(t1, t, b, mod, n);
+		if (!SAFE(wwEq)(t1, a, n))
 			return FALSE;
-		zzSubMod(t1, t, a, mod, n);
-		if (!wwEq(t1, b, n))
+		SAFE(zzSubMod)(t1, t, a, mod, n);
+		if (!SAFE(wwEq)(t1, b, n))
 			return FALSE;
 		// FAST(zzAddMod) / FAST(zzSubMod)
 		FAST(zzAddMod)(t, a, b, mod, n);
@@ -252,23 +271,23 @@ static bool_t zzTestMod()
 		FAST(zzSubMod)(t1, t, a, mod, n);
 		if (!FAST(wwEq)(t1, b, n))
 			return FALSE;
-		// zzAddWMod / zzSubWMod
-		zzAddWMod(t, a, b[0], mod, n);
-		zzSubWMod(t1, t, b[0], mod, n);
-		if (!wwEq(t1, a, n))
+		// SAFE(zzAddWMod) / SAFE(zzSubWMod)
+		SAFE(zzAddWMod)(t, a, b[0], mod, n);
+		SAFE(zzSubWMod)(t1, t, b[0], mod, n);
+		if (!SAFE(wwEq)(t1, a, n))
 			return FALSE;
 		// FAST(zzAddWMod) / FAST(zzSubWMod)
 		FAST(zzAddWMod)(t, a, b[0], mod, n);
 		FAST(zzSubWMod)(t1, t, b[0], mod, n);
 		if (!FAST(wwEq)(t1, a, n))
 			return FALSE;
-		// zzNegMod
-		zzNegMod(t, a, mod, n);
-		zzAddMod(t1, t, a, mod, n);
-		if (!wwIsZero(t1, n))
+		// SAFE(zzNegMod)
+		SAFE(zzNegMod)(t, a, mod, n);
+		SAFE(zzAddMod)(t1, t, a, mod, n);
+		if (!SAFE(wwIsZero)(t1, n))
 			return FALSE;
-		zzNegMod(t1, t1, mod, n);
-		if (!wwIsZero(t1, n))
+		SAFE(zzNegMod)(t1, t1, mod, n);
+		if (!SAFE(wwIsZero)(t1, n))
 			return FALSE;
 		// FAST(zzNegMod)
 		FAST(zzNegMod)(t, a, mod, n);
@@ -278,11 +297,11 @@ static bool_t zzTestMod()
 		FAST(zzNegMod)(t1, t1, mod, n);
 		if (!FAST(wwIsZero)(t1, n))
 			return FALSE;
-		// zzDoubleMod / zzHalfMod
+		// SAFE(zzDoubleMod) / SAFE(zzHalfMod)
 		mod[0] |= 1;
-		zzHalfMod(t, a, mod, n);
-		zzDoubleMod(t1, t, mod, n);
-		if (!wwEq(t1, a, n))
+		SAFE(zzHalfMod)(t, a, mod, n);
+		SAFE(zzDoubleMod)(t1, t, mod, n);
+		if (!SAFE(wwEq)(t1, a, n))
 			return FALSE;
 		// FAST(zzDoubleMod) / FAST(zzHalfMod)
 		FAST(zzHalfMod)(t, a, mod, n);
@@ -382,7 +401,6 @@ static bool_t zzTestGCD()
 				return FALSE;
 		}
 	}
-	// все нормально
 	return TRUE;
 }
 
@@ -431,12 +449,12 @@ static bool_t zzTestRed()
 		FAST(zzRedBarr)(t1, mod, n, barr_param, stack);
 		if (!wwEq(t1, t, n))
 			return FALSE;
-		// zzRed / zzRedMont
+		// zzRed / SAFE(zzRedMont)
 		mod[0] |= 1;
 		wwCopy(t, a, 2 * n);
 		zzRed(t, mod, n, stack);
 		wwCopy(t1, a, 2 * n);
-		zzRedMont(t1, mod, n, wordNegInv(mod[0]), stack);
+		SAFE(zzRedMont)(t1, mod, n, wordNegInv(mod[0]), stack);
 		wwCopy(t1 + n, t1, n);
 		wwSetZero(t1, n);
 		zzRed(t1, mod, n, stack);
@@ -450,12 +468,12 @@ static bool_t zzTestRed()
 		zzRed(t1, mod, n, stack);
 		if (!wwEq(t1, t, n))
 			return FALSE;
-		// zzRed / zzRedCrand
+		// zzRed / SAFE(zzRedCrand)
 		wwRepW(mod + 1, n - 1, WORD_MAX);
 		wwCopy(t, a, 2 * n);
 		zzRed(t, mod, n, stack);
 		wwCopy(t1, a, 2 * n);
-		zzRedCrand(t1, mod, n, stack);
+		SAFE(zzRedCrand)(t1, mod, n, stack);
 		if (!wwEq(t1, t, n))
 			return FALSE;
 		// zzRed / FAST(zzRedCrand)
@@ -463,12 +481,12 @@ static bool_t zzTestRed()
 		FAST(zzRedCrand)(t1, mod, n, stack);
 		if (!wwEq(t1, t, n))
 			return FALSE;
-		// zzRedMont / zzRedCrandMont
+		// SAFE(zzRedMont) / SAFE(zzRedCrandMont)
 		wwCopy(t, a, 2 * n);
 		wwCopy(t1, a, 2 * n);
-		zzRedMont(t, mod, n, wordNegInv(mod[0]), stack);
-		zzRedCrandMont(t1, mod, n, wordNegInv(mod[0]), stack);
-		if (!wwEq(t1, t, n))
+		SAFE(zzRedMont)(t, mod, n, wordNegInv(mod[0]), stack);
+		SAFE(zzRedCrandMont)(t1, mod, n, wordNegInv(mod[0]), stack);
+		if (!SAFE(wwEq)(t1, t, n))
 			return FALSE;
 		// FAST(zzRedMont) / FAST(zzRedCrandMont)
 		wwCopy(t, a, 2 * n);
@@ -478,8 +496,65 @@ static bool_t zzTestRed()
 		if (!FAST(wwEq)(t1, t, n))
 			return FALSE;
 	}
-	// все нормально
 	return TRUE;
+}
+
+static bool_t zzTestEtc()
+{
+	const size_t n = 8;
+	size_t reps;
+	word a[8];
+	word b[16];
+	word t[8];
+	octet combo_state[32];
+	octet stack[2048];
+	// pre
+	ASSERT(COUNT_OF(a) >= n);
+	ASSERT(COUNT_OF(b) >= 2 * n);
+	ASSERT(COUNT_OF(t) >= (2 * n + 1) / 2);
+	ASSERT(zzSqr_deep(n) <= sizeof(stack));
+	ASSERT(zzSqrt_deep(n) <= sizeof(stack));
+	ASSERT(zzJacobi_deep(2 * n, n) <= sizeof(stack));
+	// инициализировать генератор COMBO
+	ASSERT(prngCOMBO_keep() <= sizeof(combo_state));
+	prngCOMBOStart(combo_state, utilNonce32());
+	// символ Якоби
+	for (reps = 0; reps < 500; ++reps)
+	{
+		prngCOMBOStepR(a, O_OF_W(n), combo_state);
+		zzSqr(b, a, n, stack);
+		prngCOMBOStepR(t, O_OF_W(n), combo_state);
+		t[0] |= 1;
+		// (a^2 / t) != -1?
+		if (zzJacobi(b, 2 * n, t, n, stack) == -1)
+			return FALSE;
+	}
+	// квадратные корни
+	for (reps = 0; reps < 500; ++reps)
+	{
+		prngCOMBOStepR(a, O_OF_W(n), combo_state);
+		// sqrt(a^2) == a?
+		zzSqr(b, a, n, stack);
+		zzSqrt(t, b, 2 * n, stack);
+		if (!wwEq(a, t, n))
+			return FALSE;
+		// sqrt(a^2 + 1) == a?
+		zzAddW2(b, 2 * n, 1);
+		zzSqrt(t, b, 2 * n, stack);
+		if (!wwEq(a, t, n))
+			return FALSE;
+		// sqrt(a^2 - 1) + 1 == a?
+		if (wwIsZero(a, n))
+			continue;
+		zzSubW2(b, 2 * n, 2);
+		zzSqrt(t, b, 2 * n, stack);
+		if (wwEq(a, t, n))
+			return FALSE;
+		if (!zzIsSumWEq(a, t, n, 1))
+			return FALSE;
+	}
+	return TRUE;
+
 }
 
 bool_t zzTest()
@@ -488,6 +563,6 @@ bool_t zzTest()
 		zzTestMul() && 
 		zzTestMod() && 
 		zzTestGCD() && 
-		zzTestRed();
+		zzTestRed() &&
+		zzTestEtc();
 }
-

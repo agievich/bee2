@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.19
-\version 2014.04.17
+\version 2021.06.30
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -59,6 +59,7 @@ O -- бесконечно удаленная точка.
 	Создается описание ec эллиптической кривой в координатах Лопеса -- Дахаба
 	над полем f с коэффициентами [f->no]A и [f->no]B.
 	\return Признак успеха.
+	\pre gf2IsOperable(f) == TRUE.
 	\post ec->d == 3.
 	\post Буферы ec->order и ec->base подготовлены для ecCreateGroup().
 	\keep{ec} ec2CreateLD_keep(f->n).

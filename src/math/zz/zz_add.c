@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.22
-\version 2016.07.01
+\version 2021.06.28
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -22,8 +22,9 @@ version 3. See Copyright Notices in bee2/info.h.
 Аддитивные операции
 
 Функции zzAddW(), zzAddW2() регулярны -- сложение не прекращается, даже если 
-слово переноса w становится нулевым. Для ускорения сложения (с потерей)
-регулярности оператор
+слово переноса w становится нулевым. 
+
+Для ускорения сложения (с потерей регулярности) в zzAddW2() строчку
 	for (i = 0; i < n; ++i)
 следует заменить на 
 	for (i = 0; w && i < n; ++i)

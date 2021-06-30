@@ -36,6 +36,10 @@ Contributors*
   - [RPM packages](https://copr.fedorainfracloud.org/coprs/kashcheyeu/bee2/)
 - Egor Lawrenov
   - code review
+- Mikhail Maltsew
+  - code review
+- Uladzimir Palukha
+  - code review
 
 ---
 *in chronological order of the first contribution
