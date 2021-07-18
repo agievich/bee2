@@ -50,6 +50,7 @@ set(src
   crypto/g12s.c
   crypto/pfok.c
   math/ec.c
+  math/ec_smult.c
   math/ec2.c
   math/ecp.c
   math/gf2.c
