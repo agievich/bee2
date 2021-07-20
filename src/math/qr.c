@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.09.14
-\version 2014.04.17
+\version 2021.07.20
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -217,16 +217,16 @@ size_t qrMontInv_deep(size_t n, size_t m, size_t r_deep) {
 #else
 void qrMontInv(word c[], const word a[], size_t m, const qr_o* r, void* stack)
 {
-	ASSERT(qrIsOperable(r));
-	ASSERT(wwIsValid(a, m * r->n));
-	ASSERT(wwIsSameOrDisjoint(c, a, m * r->n));
-
 	//счетчик: i = 0 .. m-1
 	size_t i;
 	//набор нарастающих произведений: b[0] = a[0]; b[i+1] = b[i] * a[i+1]
 	word* b;
 	//обратный элемент: v = 1/b[i]
 	word* v;
+
+	ASSERT(qrIsOperable(r));
+	ASSERT(wwIsValid(a, m * r->n));
+	ASSERT(wwIsSameOrDisjoint(c, a, m * r->n));
 
 	b = (word*)stack;
 	v = b + m * r->n;

@@ -40,6 +40,9 @@
     <Filter Include="Source Files\crypto\bash">
       <UniqueIdentifier>{1b2655da-6d78-4597-a66c-bc67357b1340}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\crypto\bign">
+      <UniqueIdentifier>{124e617f-eb35-4338-8fe0-6d34ebd7d2f6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\math\ecp.c">
@@ -52,9 +55,6 @@
       <Filter>Source Files\math</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\crypto\bels.c">
-      <Filter>Source Files\crypto</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\crypto\bign.c">
       <Filter>Source Files\crypto</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\crypto\brng.c">
@@ -87,9 +87,9 @@
     <ClCompile Include="..\..\src\math\ec.c">
       <Filter>Source Files\math</Filter>
     </ClCompile>
-	  <ClCompile Include="..\..\src\math\ec_smult.c">
-		  <Filter>Source Files\math</Filter>
-	  </ClCompile>
+    <ClCompile Include="..\..\src\math\ec_smult.c">
+      <Filter>Source Files\math</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\math\zm.c">
       <Filter>Source Files\math</Filter>
     </ClCompile>
@@ -245,6 +245,24 @@
     </ClCompile>
     <ClCompile Include="..\..\src\crypto\bpki.c">
       <Filter>Source Files\crypto</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\bign\bign_ibs.c">
+      <Filter>Source Files\crypto\bign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\bign\bign_keys.c">
+      <Filter>Source Files\crypto\bign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\bign\bign_keyt.c">
+      <Filter>Source Files\crypto\bign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\bign\bign_misc.c">
+      <Filter>Source Files\crypto\bign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\bign\bign_params.c">
+      <Filter>Source Files\crypto\bign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\bign\bign_sign.c">
+      <Filter>Source Files\crypto\bign</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

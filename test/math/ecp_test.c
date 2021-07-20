@@ -3,10 +3,10 @@
 \file ecp_test.c
 \brief Tests for elliptic curves over prime fields
 \project bee2/test
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
-\author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
+\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2017.05.29
-\version 2020.12.20
+\version 2021.07.20
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -19,6 +19,7 @@ version 3. See Copyright Notices in bee2/info.h.
 #include <bee2/math/ecp.h>
 #include <bee2/math/qr.h>
 #include <bee2/math/ww.h>
+#include <bee2/math/zz.h>
 #include <bee2/crypto/bign.h>
 
 /*
@@ -116,11 +117,9 @@ static bool_t ecSmallMultTest(const ec_o* ec, void *stack)
 	size_t const MAX_W = 7;
 	const size_t na = ec->f->n * 2;
 	const size_t n = ec->f->n * ec->d;
-	size_t w, i, f, di;
+	size_t w, i, f;
 
 	word* bj = (word*)stack;
-	stack = (void*)(bj + n);
-	ecFromA(bj, ec->base, ec, stack);
 
 	word* d = bj + n;
 	word* p = d + n;
@@ -129,6 +128,9 @@ static bool_t ecSmallMultTest(const ec_o* ec, void *stack)
 	word* c = ta + na;
 	word* ci;
 	word b[1];
+
+	stack = (void*)(bj + n);
+	ecFromA(bj, ec->base, ec, stack);
 
 	for(;;)
 	{
@@ -256,8 +258,8 @@ static bool_t ecMulTest(const ec_o* ec, void *stack)
 		// d = d_0 + .. + d_k 2^{wk}
 		for(w = MIN_W; w <= MAX_W; ++w)
 		{
-			m = (3 * w + B_PER_W - 1) / B_PER_W;
 			const word ds[8] = {0, 1, 2, (1<<(w-1))-1, 1<<(w-1), (1<<(w-1))+1, (1<<w)-2, (1<<w)-1, };
+			m = (3 * w + B_PER_W - 1) / B_PER_W;
 			for(d0 = 0; d0 < 8; ++d0)
 			{
 				for(dk = 0; dk < 8; ++dk)

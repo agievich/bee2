@@ -3,11 +3,11 @@
 \file ec_smult.c
 \brief Elliptic curves
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
-\author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
-\author (C) Stanislav Poruchnik [poruchnikstanislav@gmail.com]
+\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author Vlad Semenov [semenov.vlad.by@gmail.com]
+\author Stanislav Poruchnik [poruchnikstanislav@gmail.com]
 \created 2021.07.18
-\version 2021.07.18
+\version 2021.07.20
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -840,7 +840,7 @@ bool_t SAFE(ecMulAPrecompJ)(word b[], const word a[], const ec_o* ec, const word
 	//к аффинным координатам
 	ecToA(b, q, ec, stack);
 	//переход к исходной кратности
-	ec->set_signa(b, b, d_is_even, ec, stack);
+	ec->set_signa(b, b, d_is_even, ec);
 	//todo очистка остальных переменных
 	t = v = f = d_is_even = j = k = 0;
 	//предусмотреть d == 0
@@ -930,7 +930,7 @@ bool_t sm_mult_add(word pre[], const word p[], const word dblP
 		ecAdd(pre + 2 * i * point_size, pre + (2 * i - 2) * point_size, dblP, ec, stack);
 		ecNeg(pre + (2 * i + 1) * point_size, pre + 2 * i * point_size, ec, stack);
 	}
-
+	return TRUE;
 }
 
 /*
@@ -1108,7 +1108,7 @@ bool_t FAST(ecAddMulAPrecompA)(word b[], const ec_o* ec, void* stack, size_t k, 
 	{
 		const word* a;
 		const word* d;
-		size_t naf_count, j;
+		size_t naf_count;
 		// a <- a[i]
 		a = va_arg(marker, const word*);
 		// d <- d[i]
@@ -1241,11 +1241,51 @@ bool_t ecAddMulA(word b[], const ec_o* ec, void* stack, size_t k, ...) {
 		;
 }
 
-size_t ecAddMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t k, ...) {
-	return ecPrecomp
-		? FAST(ecAddMulAPrecompA_deep)(n, ec_d, ec_deep, k)
-		: FAST(ecAddMulAOrig_deep)(n, ec_d, ec_deep, k)
-		;
+size_t ecAddMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t k, ...)
+{
+	size_t i, ret;
+	va_list marker;
+
+	if (ecPrecomp)
+	{
+		ret = O_OF_W(ec_d * n);
+		ret += 4 * sizeof(size_t) * k;
+		ret += 2 * sizeof(word**) * k;
+		va_start(marker, k);
+		for (i = 0; i < k; ++i)
+		{
+			size_t m = va_arg(marker, size_t);
+			size_t naf_width = ecNAFWidth(B_OF_W(m));
+			size_t naf_count = SIZE_1 << (naf_width - 2);
+			ret += O_OF_W(2 * m + 1);
+			ret += O_OF_W(ec_d * n * naf_count);
+		}
+		va_end(marker);
+		ret += ec_deep + 40 * 1024;
+		return ret;
+	}
+
+	ret = O_OF_W(ec_d * n);
+	ret += 4 * sizeof(size_t) * k;
+	ret += 2 * sizeof(word**) * k;
+	va_start(marker, k);
+	for (i = 0; i < k; ++i)
+	{
+		size_t m = va_arg(marker, size_t);
+		size_t naf_width = ecNAFWidth(B_OF_W(m));
+		size_t naf_count = SIZE_1 << (naf_width - 2);
+		ret += O_OF_W(2 * m + 1);
+		ret += O_OF_W(ec_d * n * naf_count);
+	}
+	va_end(marker);
+	ret += ec_deep;
+	return ret;
+
+//	код ниже не работает: в функции не передается "многоточие"
+//	return ecPrecomp
+//		? FAST(ecAddMulAPrecompA_deep)(n, ec_d, ec_deep, k)
+//		: FAST(ecAddMulAOrig_deep)(n, ec_d, ec_deep, k)
+//		;
 }
 
 void ecSmallMultAdd2J(word* c, word d[], const word a[], const size_t w, const ec_o* ec, void* stack) {

@@ -5,7 +5,7 @@
 \project bee2/test
 \author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.08.27
-\version 2020.11.25
+\version 2021.07.20
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -22,6 +22,9 @@ version 3. See Copyright Notices in bee2/info.h.
 #include <bee2/crypto/bign.h>
 #include <bee2/crypto/belt.h>
 #include <bee2/crypto/brng.h>
+#include <bee2/crypto/brng.h>
+#include <crypto/bign_lcl.h>
+
 
 /*
 *******************************************************************************
@@ -400,7 +403,7 @@ bool_t bignBench()
 	octet hash[64];
 	octet sig[64 + 32];
 	octet brng_state[1024];
-	char params_oid[] = "1.2.112.0.2.0.34.101.45.3.0";
+	char params_oid[] = "1.2.112.0.2.0.34.101.45.3.1";
 	// создать стек
 	ASSERT(sizeof(brng_state) >= brngCTRX_keep());
 	//

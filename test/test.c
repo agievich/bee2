@@ -142,7 +142,6 @@ main
 *******************************************************************************
 */
 
-
 size_t testReps = 2;
 extern bool_t ecSafe;
 extern bool_t ecPrecomp;

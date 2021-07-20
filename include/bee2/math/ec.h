@@ -389,7 +389,7 @@ typedef void (*ec_tpl_i)(
 	\expect Точки a и b не равны.
 */
 typedef void (*ec_dbl_adda_i)(
-	word с[],				/*!< [out] результат удвоения и сложения */
+	word c[],				/*!< [out] результат удвоения и сложения */
 	const word a[],			/*!< [in] первоначальная точка 1 */
 	const word b[],			/*!< [in] первоначальная точка 2 */
 	bool_t neg_b,			/*!< [in] флаг вычитания/сложения с точкой b */
@@ -781,7 +781,7 @@ size_t SAFE(ecAddMulA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t k,...)
 	\expect Точки a и b лежат на кривой.
 */
 void ecDblAddA(
-	word с[],				/*!< [out] результат удвоения и сложения*/
+	word c[],				/*!< [out] результат удвоения и сложения*/
 	const word a[],			/*!< [in] первоначальная точка */
 	const word b[],			/*!< [in] первоначальная точка */
 	bool_t neg_b,			/*!< [in] флаг вычитания/сложения с точкой b*/

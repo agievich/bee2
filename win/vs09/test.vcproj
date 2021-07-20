@@ -418,7 +418,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\test\math\ww-test.c"
+					RelativePath="..\..\test\math\ww_test.c"
 					>
 				</File>
 				<File

@@ -393,6 +393,12 @@
     <ClCompile Include="..\..\src\crypto\belt\belt_pbkdf.c" />
     <ClCompile Include="..\..\src\crypto\belt\belt_sde.c" />
     <ClCompile Include="..\..\src\crypto\belt\belt_wbl.c" />
+    <ClCompile Include="..\..\src\crypto\bign\bign_ibs.c" />
+    <ClCompile Include="..\..\src\crypto\bign\bign_keys.c" />
+    <ClCompile Include="..\..\src\crypto\bign\bign_keyt.c" />
+    <ClCompile Include="..\..\src\crypto\bign\bign_misc.c" />
+    <ClCompile Include="..\..\src\crypto\bign\bign_params.c" />
+    <ClCompile Include="..\..\src\crypto\bign\bign_sign.c" />
     <ClCompile Include="..\..\src\crypto\botp.c" />
     <ClCompile Include="..\..\src\crypto\bpki.c" />
     <ClCompile Include="..\..\src\crypto\g12s.c" />
@@ -409,7 +415,6 @@
     <ClCompile Include="..\..\src\math\ww.c" />
     <ClCompile Include="..\..\src\math\zm.c" />
     <ClCompile Include="..\..\src\crypto\bels.c" />
-    <ClCompile Include="..\..\src\crypto\bign.c" />
     <ClCompile Include="..\..\src\crypto\brng.c" />
     <ClCompile Include="..\..\src\crypto\dstu.c" />
     <ClCompile Include="..\..\src\math\zz\zz_add.c" />
