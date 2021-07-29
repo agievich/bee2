@@ -3,9 +3,8 @@
 \file ec.h
 \brief Elliptic curves
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.19
-\version 2019.06.13
+\version 2021.07.29
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -21,6 +20,7 @@ version 3. See Copyright Notices in bee2/info.h.
 #ifndef __BEE2_EC_H
 #define __BEE2_EC_H
 
+#include "bee2/core/safe.h"
 #include "bee2/math/qr.h"
 
 #ifdef __cplusplus
@@ -596,8 +596,8 @@ bool_t ecIsOperable2(
 	машинных слов.
 	\expect{FALSE} cofactor != 0 && cofactor укладывается в машинное слово.
 	\expect Описание ec корректно.
-	\return TRUE, если описание группы успешно задано, и FALSE в
-	противном случае.
+	\return TRUE, если описание группы успешно задано, и FALSE в противном
+	случае.
 	\remark Любой из указателей xbase, ybase может быть нулевым. При нулевом
 	указателе соответствующая координата базовой точки устанавливается равной
 	нулю.

@@ -43,11 +43,11 @@
     <Filter Include="Source Files\crypto\bign">
       <UniqueIdentifier>{124e617f-eb35-4338-8fe0-6d34ebd7d2f6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\math\ecp">
+      <UniqueIdentifier>{d671e401-a13f-466c-8a07-afd30166c291}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\math\ecp.c">
-      <Filter>Source Files\math</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\math\gf2.c">
       <Filter>Source Files\math</Filter>
     </ClCompile>
@@ -85,9 +85,6 @@
       <Filter>Source Files\crypto</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\math\ec.c">
-      <Filter>Source Files\math</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\math\ec_smult.c">
       <Filter>Source Files\math</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\math\zm.c">
@@ -264,6 +261,21 @@
     <ClCompile Include="..\..\src\crypto\bign\bign_sign.c">
       <Filter>Source Files\crypto\bign</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\math\ecp\ecp_a.c">
+      <Filter>Source Files\math\ecp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\math\ecp\ecp_j.c">
+      <Filter>Source Files\math\ecp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\math\ecp\ecp_misc.c">
+      <Filter>Source Files\math\ecp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\math\ecp\ecp_smult.c">
+      <Filter>Source Files\math\ecp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\math\ecp\ecp_todo.c">
+      <Filter>Source Files\math\ecp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\crypto\bign_lcl.h">
@@ -409,6 +421,9 @@
     </ClInclude>
     <ClInclude Include="..\..\include\bee2\crypto\bpki.h">
       <Filter>Header Files\crypto</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\math\ecp\ecp_lcl.h">
+      <Filter>Source Files\math\ecp</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

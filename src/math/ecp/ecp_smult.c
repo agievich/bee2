@@ -1,13 +1,10 @@
 /*
 *******************************************************************************
-\file ec_smult.c
-\brief Elliptic curves
+\file ecp_smult.c
+\brief Elliptic curves: scalar multiplication based on division polynomials
 \project bee2 [cryptographic library]
-\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
-\author Vlad Semenov [semenov.vlad.by@gmail.com]
-\author Stanislav Poruchnik [poruchnikstanislav@gmail.com]
 \created 2021.07.18
-\version 2021.07.20
+\version 2021.07.29
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -21,6 +18,7 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/math/ec.h"
 #include "bee2/math/ww.h"
 #include "bee2/math/zz.h"
+#include "ecp_lcl.h"
 
 
 /*
