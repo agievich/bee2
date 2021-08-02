@@ -350,6 +350,105 @@ static bool_t ecpTestDblAddA(const ec_o* ec, void* stack)
 	return TRUE;
 }
 
+extern void ecpJToH(word* c, const word a[], const ec_o* ec, void* stack);
+extern void ecpAddJJ_complete(word* c, const word a[], const word b[], const ec_o* ec, void* stack);
+extern void ecpAddJA_complete(word* c, const word a[], const word b[], const ec_o* ec, void* stack);
+extern bool_t ecpHToA(word b[], const word a[], const ec_o* ec, void* stack);
+extern bool_t ecpHToJ(word b[], const word a[], const ec_o* ec, void* stack);
+
+static bool_t ecpTestComplete(const ec_o* ec, void* stack)
+{
+	const size_t n = ec->f->n * 3;
+	const size_t na = ec->f->n * 2;
+
+	size_t i;
+
+	word* a = (word*)stack;
+	word* b = a + n;
+	word* c = b + n;
+	word* actual = c + n;
+	word* expected = actual + n;
+	stack = (void*)(expected + n);
+
+	ecFromA(expected, ec->base, ec, stack);
+
+	//test conversions only
+	ecpJToH(a, expected, ec, stack);
+	ecpHToJ(actual, a, ec, stack);
+
+	if (!ecIsSamePointJ(actual, expected, ec, stack))
+		return FALSE;
+
+	ecpHToA(actual, a, ec, stack);
+	if (wwCmp(actual, ec->base, na) != 0)
+		return FALSE;
+
+	//test affine doubling
+	ecDblA(expected, ec->base, ec, stack);
+	ecFromA(a, ec->base, ec, stack);
+	ecpAddJA_complete(b, a, ec->base, ec, stack);
+	ecpHToJ(actual, b, ec, stack);
+
+	if (!ecIsSamePointJ(actual, expected, ec, stack))
+		return FALSE;
+
+
+	//test affine addition
+	ecDblA(a, ec->base, ec, stack);
+	ecAddA(expected, a, ec->base, ec, stack);
+	ecpAddJA_complete(b, a, ec->base, ec, stack);
+	ecpHToJ(actual, b, ec, stack);
+
+	if (!ecIsSamePointJ(actual, expected, ec, stack))
+		return FALSE;
+
+
+	//test jacobian doubling
+	ecDblA(expected, ec->base, ec, stack);
+	ecFromA(a, ec->base, ec, stack);
+	ecpAddJJ_complete(b, a, a, ec, stack);
+	ecpHToJ(actual, b, ec, stack);
+
+	if (!ecIsSamePointJ(actual, expected, ec, stack))
+		return FALSE;
+
+
+	//test jacobian addition
+	ecDblA(a, ec->base, ec, stack);
+	ecFromA(c, ec->base, ec, stack);
+	ecAddA(expected, a, ec->base, ec, stack);
+	ecpAddJJ_complete(b, a, c, ec, stack);
+	ecpHToJ(actual, b, ec, stack);
+
+	if (!ecIsSamePointJ(actual, expected, ec, stack))
+		return FALSE;
+
+	//ecDbl(expected, base_dbl, ec, stack);
+	//ecAddA(expected, expected, ec->base, ec, stack);
+
+	////a = [3,4,5...] * ec->base
+	////expected = [5,7, 7,9, ...] * ec->base
+	//for (i = 0; i < 20; ++i)
+	//{
+	//	ecAddA(a, a, ec->base, ec, stack);
+
+	//	ecpDblAddA(actual, a, ec->base, TRUE, ec, stack);
+
+	//	if (!ecIsSamePointJ(expected, actual, ec, stack))
+	//		return FALSE;
+
+	//	ecAdd(expected, expected, base_dbl, ec, stack);
+
+	//	ecpDblAddA(actual, a, ec->base, FALSE, ec, stack);
+
+	//	if (!ecIsSamePointJ(expected, actual, ec, stack))
+	//		return FALSE;
+	//}
+	//return TRUE;
+}
+
+
+
 extern err_t bignStart(void* state, const bign_params* params);
 
 bool_t ecpTest()
@@ -412,6 +511,9 @@ bool_t ecpTest()
 	// проверить алгоритм удвоения и вычитания/сложения с афинной точкой
 	if (!ecpTestDblAddA(ec, stack))
 		return FALSE;
+	if (!ecpTestComplete(ec, stack)) {
+		return FALSE;
+	}
 	// проверить алгоритм скалярного умножения
 	if (!ecMulTest(ec, stack))
 		return FALSE;
