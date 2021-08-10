@@ -422,29 +422,6 @@ static bool_t ecpTestComplete(const ec_o* ec, void* stack)
 
 	if (!ecIsSamePointJ(actual, expected, ec, stack))
 		return FALSE;
-
-	//ecDbl(expected, base_dbl, ec, stack);
-	//ecAddA(expected, expected, ec->base, ec, stack);
-
-	////a = [3,4,5...] * ec->base
-	////expected = [5,7, 7,9, ...] * ec->base
-	//for (i = 0; i < 20; ++i)
-	//{
-	//	ecAddA(a, a, ec->base, ec, stack);
-
-	//	ecpDblAddA(actual, a, ec->base, TRUE, ec, stack);
-
-	//	if (!ecIsSamePointJ(expected, actual, ec, stack))
-	//		return FALSE;
-
-	//	ecAdd(expected, expected, base_dbl, ec, stack);
-
-	//	ecpDblAddA(actual, a, ec->base, FALSE, ec, stack);
-
-	//	if (!ecIsSamePointJ(expected, actual, ec, stack))
-	//		return FALSE;
-	//}
-	//return TRUE;
 }
 
 

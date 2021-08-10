@@ -16,72 +16,12 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/core/util.h"
 #include "bee2/core/word.h"
 #include "bee2/math/ec.h"
+#include "bee2/math/ecp.h"
 #include "bee2/math/ww.h"
 #include "bee2/math/zz.h"
 #include "ecp_lcl.h"
 
-
-/*
-*******************************************************************************
-Кратная точка
-
-Для определения b = da (d-кратное точки a) используется оконный NAF с
-длиной окна w. В функции ecMulWNAF() реализован алгоритм 3.35 из
-[Hankerson D., Menezes A., Vanstone S. Guide to Elliptic Curve Cryptography,
-Springer, 2004].
-
-Предварительно рассчитываются малые кратные a: сначала 2a, а затем
-точки a[i] = a[i - 1] + 2a, i = 1,\ldots, 2^{w - 1} - 2, где a[0] = a.
-
-При использовании проективных координат имеются три стратегии:
-1)	w = 2 и малые кратные вообще не рассчитываются;
-2)	w > 2 и малые кратные рассчитываются в аффинных координатах;
-3)	w > 2 и малые кратные рассчитываются в проективных координатах.
-
-Средняя общая сложность нахождения кратной точки (l = wwBitSize(d)):
-1)	c1(l) = l/3(P <- P + A);
-2)	c2(l, w) = 1(A <- 2A) + (2^{w-2} - 2)(A <- A + A) + l/(w + 1)(P <- P + A);
-3)	c3(l, w) = 1(P <- 2A) + (2^{w-2} - 2)(P <- P + P) + l/(w + 1)(P <- P + P),
-без учета общего во всех стратегиях слагаемого l(P <- 2P).
-
-Здесь
-- (P <- P + A) -- время работы функций ec->adda / ec->suba;
-- (A <- 2A) -- время работы каскада (ec->dbla, ec->toa)*;
-- (A <- A + A) -- время работы каскада (ec->adda, ec->toa)*;
-- (P <- 2A) -- время работы функции ec->dbla;
-- (P <- P + P) -- время работы функции ec->add / ec->sub;
-- (P <- 2P) -- время работы функции ec->dbl.
------------------------------------------------------
-* [или прямых вычислений в аффинных координатах]
-
-
-В практических диапазонах размерностей при использовании наиболее эффективных
-координат (якобиановых для кривых над GF(p) и Лопеса -- Дахаба для кривых
-над GF(2^m)) первые две стратегии являются проигрышными. Реализована только
-третья стратегия.
-
-Оптимальная длина окна выбирается как решение следующей оптимизационной
-задачи:
-	(2^{w - 2} - 2) + l / (w + 1) -> min.
-
-\todo Усилить вторую стратегию. Рассчитать малые кратные в проективных
-координатах, а затем быстро перейти к аффинным координатам с помощью
-трюка Монтгомери [Algorithm 11.15 Simultaneous inversion, CohenFrey, p. 209]:
-	U_1 <- Z_1
-	for t = 2,..., T: U_t <- U_{t-1} Z_t
-	V <- U_T^{-1}
-	for t = T,..., 2:
-		Z_t^{-1} <- V U_{t-1}
-		V <- V Z_t
-	Z_1^{-1} <- V
-*******************************************************************************
-*/
-
-void ecpAddJJ_complete(word* c, const word a[], const word b[], const ec_o* ec, void* stack);
-void ecpAddJA_complete(word* c, const word a[], const word b[], const ec_o* ec, void* stack);
-bool_t ecpHToA(word b[], const word a[], const ec_o* ec, void* stack);
-
-size_t ecW = 3;
+//дубликат из ec.c
 static size_t ecNAFWidth(size_t l)
 {
 #if 0
@@ -97,8 +37,63 @@ static size_t ecNAFWidth(size_t l)
 #endif
 }
 
-bool_t FAST(ecMulAOrig)(word b[], const word a[], const ec_o* ec, const word d[],
-	size_t m, void* stack)
+
+bool_t ecpHToA(word b[], const word a[], const ec_o* ec, void* stack);
+void ecpAddJA_complete(word* c, const word a[], const word b[], const ec_o* ec, void* stack);
+void ecpAddJJ_complete(word* c, const word a[], const word b[], const ec_o* ec, void* stack);
+
+
+bool_t ecpDivp = TRUE;
+void ecpSmallMultA(word* c, word d[], const word a[], const size_t w, const struct ec_o* ec, void* stack) {
+	ecpDivp ?
+		ecpSmallMultDivpA(c, d, a, w, ec, stack) :
+		ecSmallMultAdd2A(c, d, a, w, ec, stack);
+}
+
+size_t ecpSmallMultA_deep(bool_t da, const size_t w, size_t n, size_t ec_d, size_t ec_deep, size_t f_deep) {
+	return ecpDivp ?
+		ecpSmallMultDivpA_deep(FALSE, w, n, f_deep) :
+		ecSmallMultAdd2A_deep(n, ec_d, FALSE, ec_deep);
+}
+
+void ecpSmallMultJ(word* c, word d[], const word a[], const size_t w, const struct ec_o* ec, void* stack) {
+	ecpDivp ?
+		ecpSmallMultDivpJ(c, d, a, w, ec, stack) :
+		ecSmallMultAdd2J(c, d, a, w, ec, stack);
+}
+
+size_t ecpSmallMultJ_deep(bool_t da, const size_t w, size_t n, size_t f_deep, size_t ec_deep) {
+	return ecpDivp ?
+		ecpSmallMultDivpJ_deep(da, w, n, f_deep) :
+		ecSmallMultAdd2J_deep(ec_deep);
+}
+
+static void ecNegPrecompA(word c[], const size_t w, const ec_o* ec)
+{
+	const size_t na = ec->f->n * 2;
+	word* nci;
+	word* ci;
+	ci = nci = c + (na << (w - 1));
+
+	for (; nci != c;)
+	{
+		nci -= na;
+		ecNegA(nci, ci, ec);
+		ci += na;
+	}
+}
+
+static size_t ecSafeMulAWidth(const size_t l) {
+	//todo calculate actual breakpoints
+	if (l <= 256)
+	{
+		return 4;
+	}
+	return 5;
+}
+
+bool_t FAST(ecMulAPrecompA1)(word b[], const word a[], const ec_o* ec, const word d[],
+	size_t m, const word precomp_a[], const word precomp_w, void* stack)
 {
 	const size_t n = ec->f->n;
 	const size_t naf_width = ecNAFWidth(B_OF_W(m));
@@ -111,252 +106,29 @@ bool_t FAST(ecMulAOrig)(word b[], const word a[], const ec_o* ec, const word d[]
 	word* naf;			/* NAF */
 	word* t;			/* вспомогательная точка */
 	word* pre;			/* pre[i] = (2i + 1)a (naf_count элементов) */
+
 	// pre
 	ASSERT(ecIsOperable(ec));
+
 	// раскладка stack
 	naf = (word*)stack;
-	t = naf + 2 * m + 1;
-	pre = t + ec->d * n;
-	stack = pre + naf_count * ec->d * n;
+
 	// расчет NAF
 	ASSERT(naf_width >= 3);
 	naf_size = wwNAF(naf, d, m, naf_width);
+
 	// d == O => b <- O
 	if (naf_size == 0)
 		return FALSE;
-	// pre[0] <- a
-	ecFromA(pre, a, ec, stack);
-	// расчет pre[i]: t <- 2a, pre[i] <- t + pre[i - 1]
-	ASSERT(naf_count > 1);
-	ecDblA(t, pre, ec, stack);
-	ecAddA(pre + ec->d * n, t, pre, ec, stack);
-	for (i = 2; i < naf_count; ++i)
-		ecAdd(pre + i * ec->d * n, t, pre + (i - 1) * ec->d * n, ec, stack);
-	// t <- a[naf[l - 1]]
-	w = wwGetBits(naf, 0, naf_width);
-	ASSERT((w & 1) == 1 && (w & naf_hi) == 0);
-	wwCopy(t, pre + (w >> 1) * ec->d * n, ec->d * n);
-	// цикл по символам NAF
-	i = naf_width;
-	while (--naf_size)
-	{
-		w = wwGetBits(naf, i, naf_width);
-		if (w & 1)
-		{
-			// t <- 2 t
-			ecDbl(t, t, ec, stack);
-			// t <- t \pm pre[naf[w]]
-			if (w == 1)
-				ecAddA(t, t, pre, ec, stack);
-			else if (w == (naf_hi ^ 1))
-				ecSubA(t, t, pre, ec, stack);
-			else if (w & naf_hi)
-				ecSub(t, t, pre + ((w ^ naf_hi) >> 1) * ec->d * n, ec, stack);
-			else
-				ecAdd(t, t, pre + (w >> 1) * ec->d * n, ec, stack);
-			// к следующему разряду naf
-			i += naf_width;
-		}
-		else
-			ecDbl(t, t, ec, stack), ++i;
-	}
-	// очистка
-	w = 0;
-	i = 0;
-	// к аффинным координатам
-	return ecToA(b, t, ec, stack);
-}
 
-size_t FAST(ecMulAOrig_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m)
-{
-	const size_t naf_width = ecNAFWidth(B_OF_W(m));
-	const size_t naf_count = SIZE_1 << (naf_width - 2);
-	return O_OF_W(2 * m + 1) +
-		O_OF_W(ec_d * n) +
-		O_OF_W(ec_d * n * naf_count) +
-		ec_deep;
-}
-
-bool_t sm_mult_add(word pre[], const word p[], const word dblP
-	[], const word w, const ec_o* ec, void* stack);
-bool_t SAFE(ecMulAOrig)(word b[], const word a[], const ec_o* ec, const word d[],
-	size_t m, void* stack)
-{
-	const size_t point_size = ec->f->n * ec->d;
-
-	//window width of recording
-	//todo resolve width by used sm_mult algorithm and l size
-	const size_t window_width = ecNAFWidth(B_OF_W(m));
-
-	//set size of small multiples |{+-1, +-3, ..., +-(2^w - 1)}| = 2^w
-	const size_t odd_recording_set_size = SIZE_1 << window_width;
-
-	//2^w, required for positive/negative decoding of recording
-	const word hi_bit = WORD_1 << window_width;
-
-	//number of elements in actual odd recording of d
-	const size_t odd_recording_size = wwOddRecording_size(m, window_width);
-
-	register int i;
-	register word w;
-	register word sign;
-
-	word delta = WORD_1;
-	word b_flag;
-
-	// переменные в stack
-	word* odd_recording;			/* Odd Recording */
-	word* t;			/* 2 вспомогательных точки */
-	word* pre;			/* pre[i] =  (odd_recording_size элементов) */
-	word* q;			/* вспомогательная точка */
-	word* temp;			/* вспомогательное число */
-	// pre
-	ASSERT(ecIsOperable(ec));
-
-	// раскладка stack
-	odd_recording = (word*)stack;
-	t = odd_recording + W_OF_B(odd_recording_size * (window_width + 1));
-	pre = t + 2 * point_size;
-	q = pre + odd_recording_set_size * point_size;
-	temp = q + point_size;
-	stack = temp + m;
-
-	ASSERT(window_width >= 2);
-
-	//t[0] <- 2a
-	ecDblA(t, a, ec, stack);
-
-	// расчет pre[i]: pre[2i] = pre[2i - 2] + 2a, pre[2i + 1] = -pre[2i], i > 0
-	// pre[0] <- a, pre[1] <- -a
-	sm_mult_add(pre, a, t, window_width, ec, stack);
-
-	// переход к нечетной кратности
-	delta += d[0] & WORD_1;
-	zzAddW(temp, d, m, delta);
-
-	//1, 0, -1
-	b_flag = wwCmp2(temp, m, ec->order, ec->f->n);
-	//-1 -> 0
-	b_flag = wordEq0M(b_flag, WORD_1);
-
-	//recalculate temp
-	zzSubW2(temp, m, (delta * 2) & b_flag);
-
-	// save point, current sequence in stack: t[0] <- 2a, t[1] <- -2a, pre[0] = a, pre[1] = -a => t[0]=2a, t[1]=-2a, t[2]=a, t[3]=-a
-	ecNeg(t + point_size, t, ec, stack);
-	//if b_flag = 11111111_2 (binary) => need addition, add delta*a, else sub delta*a, delta = 1, 2;
-	//t += (((delta – 2) & 2) - (~b_flag)) * point_size;
-	b_flag = ~b_flag;
-	delta -= 2;
-	delta &= 2;
-	delta -= b_flag;
-	delta *= point_size;
-	t += delta;
-
-	// расчет Odd_Recording
-	ASSERT(window_width >= 3);
-	wwOddRecording(odd_recording, W_OF_B(odd_recording_size * (window_width + 1)),
-		temp, m, odd_recording_size, window_width);
-
-	// q <- odd_recording[k-1] * a
-	w = wwGetBits(odd_recording, (odd_recording_size - 1) * (window_width + 1), window_width + 1);
-
-	//calculate index
-	ASSERT((w & 1) && (w & hi_bit) == 0);
-	w ^= WORD_1;
-	//save
-	wwCopy(q, pre + w * point_size, point_size);
-
-	for (i = odd_recording_size - 2; i >= 0; --i) {
-		//Q <- 2^odd_recording_width * Q
-		w = window_width;
-		while (w) {
-			ecDbl(q, q, ec, stack);
-			--w;
-		}
-
-		w = wwGetBits(odd_recording, i * (window_width + 1), window_width + 1);
-		// calculate index
-		sign = w & hi_bit;
-		w ^= sign;
-		ASSERT((w & 1) && (w & hi_bit) == 0);
-		sign >>= window_width;
-		sign = ~sign;
-		sign &= WORD_1;
-		w ^= sign;
-		// add
-		ecAdd(q, q, pre + w * point_size, ec, stack);
-	}
-
-	// correction
-	ecAdd(q, q, t, ec, stack);
-
-	// cleanup
-	w = 0;
-	i = 0;
-	t = NULL;
-	sign = 0;
-	delta = 0;
-	b_flag = 0;
-
-	// к аффинным координатам
-	return ecToA(b, q, ec, stack);
-}
-
-size_t SAFE(ecMulAOrig_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m)
-{
-	const size_t point_size = n * ec_d;
-	const size_t odd_recording_width = ecNAFWidth(B_OF_W(m));
-	const size_t odd_recording_count = SIZE_1 << odd_recording_width;
-	const size_t odd_recording_size = wwOddRecording_size(m, odd_recording_width);
-
-	return O_OF_W(W_OF_B(odd_recording_size * (odd_recording_width + 1))) +
-		O_OF_W(2 * point_size) +
-		O_OF_W(odd_recording_count * point_size) +
-		O_OF_W(point_size) +
-		O_OF_W(m) +
-		ec_deep;
-}
-
-bool_t FAST(ecMulAPrecompA)(word b[], const word a[], const ec_o* ec, const word d[],
-	size_t m, void* stack)
-{
-	const size_t n = ec->f->n;
-	const size_t naf_width = ecNAFWidth(B_OF_W(m));
-	const size_t naf_count = SIZE_1 << (naf_width - 2);
-	const word naf_hi = WORD_1 << (naf_width - 1);
-	register size_t naf_size;
-	register size_t i;
-	register word w;
-	// переменные в stack
-	word* naf;			/* NAF */
-	word* t;			/* вспомогательная точка */
-	word* pre;			/* pre[i] = (2i + 1)a (naf_count элементов) */
-	// pre
-	ASSERT(ecIsOperable(ec));
-	// раскладка stack
-	naf = (word*)stack;
-	// расчет NAF
-	ASSERT(naf_width >= 3);
-	naf_size = wwNAF(naf, d, m, naf_width);
-	// d == O => b <- O
-	if (naf_size == 0)
-		return FALSE;
 	t = naf + 2 * m + 1;
-	if (a == ec->base && ec->precomp_Gs && naf_width <= ec->precomp_w + 1)
-	{
-		pre = (word*)ec->precomp_Gs + ((2 * n) << (ec->precomp_w - 1));
-		stack = t + ec->d * n;
-	}
-	else
-	{
-		pre = t + ec->d * n;
-		stack = pre + naf_count * 2 * n;
-		ec->smulsa(pre, t, a, naf_width - 1, ec, stack);
-	}
+	stack = t + ec->d * n;
+
+	pre = (word*)precomp_a + ((2 * n) << (precomp_w - 1));
 
 	// t <- a[naf[l - 1]]
 	w = wwGetBits(naf, 0, naf_width);
+	ASSERT(w <= precomp_w);
 	ASSERT((w & 1) == 1 && (w & naf_hi) == 0);
 	ecFromA(t, pre + (w >> 1) * 2 * n, ec, stack);
 	// цикл по символам NAF
@@ -386,44 +158,48 @@ bool_t FAST(ecMulAPrecompA)(word b[], const word a[], const ec_o* ec, const word
 	return ecToA(b, t, ec, stack);
 }
 
-size_t FAST(ecMulAPrecompA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m)
+size_t FAST(ecMulAPrecompA1_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 {
-	//TODO: сделать a_is_base аргументом функции
-	bool_t a_is_base = FALSE;
 	const size_t naf_width = ecNAFWidth(B_OF_W(m));
 	const size_t naf_count = SIZE_1 << (naf_width - 2);
+
 	return O_OF_W(2 * m + 1) +
 		O_OF_W(ec_d * n) +
-		(a_is_base ? 0 : O_OF_W(2 * n * naf_count)) +
 		ec_deep;
 }
 
-static void ecNegPrecompA(word c[], const size_t w, const ec_o* ec)
-{
-	const size_t na = ec->f->n * 2;
-	word* nci;
-	word* ci;
-	ci = nci = c + (na << (w - 1));
-
-	for (; nci != c;)
-	{
-		nci -= na;
-		ecNegA(nci, ci, ec);
-		ci += na;
-	}
-}
-
-static size_t ecSafeMulAWidth(const size_t l) {
-	//todo calculate actual breakpoints
-	if (l <= 256)
-	{
-		return 4;
-	}
-	return 5;
-}
-
-bool_t SAFE(ecMulAPrecompA)(word b[], const word a[], const ec_o* ec, const word d[],
+bool_t FAST(ecMulAPrecompA)(word b[], const word a[], const ec_o* ec, const word d[],
 	size_t m, void* stack)
+{
+	const size_t n = ec->f->n;
+	const size_t naf_width = ecNAFWidth(B_OF_W(m));
+	const size_t naf_count = SIZE_1 << (naf_width - 2);
+	word* pre;
+
+	pre = (word*)stack;
+	stack = pre + naf_count * 2 * n;
+
+	ecpSmallMultA(pre, NULL, a, naf_width - 1, ec, stack);
+
+	return FAST(ecMulAPrecompA1)(b, a, ec, d, m, pre, naf_width - 1, stack);
+}
+
+size_t FAST(ecMulAPrecompA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m)
+{
+	const size_t naf_width = ecNAFWidth(B_OF_W(m));
+	const size_t naf_count = SIZE_1 << (naf_width - 2);
+	const size_t f_deep = ec_deep; //f_deep < ec_deep todo - сделать f_deep аргументом функции?
+
+	return O_OF_W(naf_count * 2 * n)
+		+ utilMax(2,
+			ecpSmallMultA_deep(FALSE, naf_width - 1, n, ec_d, ec_deep, f_deep),
+			FAST(ecMulAPrecompA1_deep)(n, ec_d, ec_deep, m)
+		);
+}
+
+//todo другое имя
+bool_t SAFE(ecMulAPrecompA1)(word b[], const word a[], const ec_o* ec, const word d[],
+	size_t m, const word precomp_a[], word precomp_w, void* stack)
 {
 	const size_t n = ec->f->n * ec->d;
 	const size_t na = ec->f->n * 2;
@@ -459,12 +235,12 @@ bool_t SAFE(ecMulAPrecompA)(word b[], const word a[], const ec_o* ec, const word
 	ASSERT(ecIsOperable(ec));
 	ASSERT(3 <= w && w + 1 < B_PER_W);
 	ASSERT(m <= order_len); //todo добавить этот assert в описание
+	ASSERT(w <= precomp_w);
 
 	// раскладка stack
 	q = (word*)stack;
 	dd = q + n;
-	c = dd + order_len;
-	check_stack = c + (na << w);
+	check_stack = dd + order_len;
 #ifdef _DEBUG
 	* check_stack = 0xdeadbeef;
 	stack = (void*)(check_stack + 1);
@@ -472,19 +248,7 @@ bool_t SAFE(ecMulAPrecompA)(word b[], const word a[], const ec_o* ec, const word
 	stack = (void*)check_stack;
 #endif
 
-	/* Расчёт малых кратных */
-	if (a == ec->base && ec->precomp_Gs && w <= ec->precomp_w)
-	{
-		c = (word*)ec->precomp_Gs + (na << (ec->precomp_w - 1)) - (na << (w - 1));
-	}
-	else
-	{
-		word* ci;
-		ci = c + (na << (w - 1));
-
-		ec->smulsa(ci, NULL, a, w, ec, stack);
-		ecNegPrecompA(c, w, ec);
-	}
+	c = precomp_a + (na << (precomp_w - 1)) - (na << (w - 1));
 
 	/* Переход к нечетной кратности dd = ((d & 1) ? d : -d) \mod ec->order */
 	wwSetZero(dd, order_len);
@@ -576,24 +340,51 @@ bool_t SAFE(ecMulAPrecompA)(word b[], const word a[], const ec_o* ec, const word
 	return WORD_1 - wwIsZero(dd, order_len);
 }
 
-size_t SAFE(ecMulAPrecompA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t ec_order_len)
+size_t SAFE(ecMulAPrecompA1_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 {
-	const size_t na = n * 2;
-	const size_t w = ecSafeMulAWidth(B_OF_W(ec_order_len));
-
-	//TODO: сделать a_is_base аргументом функции
-	bool_t a_is_base = FALSE;
-
-	return O_OF_W(n * ec_d + n + 1 + (na << w)) + ec_deep
+	return O_OF_W(n * ec_d + n + 1)
+		+ ec_deep
 #ifdef _DEBUG
 		+ O_OF_W(1)
 #endif
 		;
 }
 
+bool_t SAFE(ecMulAPrecompA)(word b[], const word a[], const ec_o* ec, const word d[], size_t m, void* stack)
+{
+	const size_t na = ec->f->n * 2;
+	const size_t w = ecSafeMulAWidth(wwBitSize(ec->order, ec->f->n + 1));
+	const size_t half_precomp_size = ec->f->n << w; //i.e. (ec->f->n * 2) << (w - 1)
 
-bool_t FAST(ecMulAPrecompJ)(word b[], const word a[], const ec_o* ec, const word d[],
-	size_t m, void* stack)
+	word* c;
+	word* ci;
+
+	c = (word*)stack;
+	ci = c + half_precomp_size;
+	stack = ci + half_precomp_size;
+
+	ecpSmallMultA(ci, NULL, a, w, ec, stack);
+
+	ecNegPrecompA(c, w, ec);
+
+	return SAFE(ecMulAPrecompA1(b, a, ec, d, m, c, w, stack));
+}
+
+size_t SAFE(ecMulAPrecompA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t ec_order_len)
+{
+	const size_t na = n * 2;
+	const size_t w = ecSafeMulAWidth(B_OF_W(ec_order_len));
+	const size_t f_deep = ec_deep; //f_deep < ec_deep todo - сделать f_deep аргументом функции?
+
+	return O_OF_W(na << w)
+		+ utilMax(2,
+			ecpSmallMultA_deep(FALSE, w, n, ec_d, ec_deep, f_deep),
+			SAFE(ecMulAPrecompA1_deep)(n, ec_d, ec_deep, ec_order_len)
+		);
+}
+
+bool_t FAST(ecMulAPrecompJ1)(word b[], const word a[], const ec_o* ec, const word d[],
+	size_t m, const word precomp_j[], word precomp_w, void* stack)
 {
 	const size_t n = ec->f->n;
 	const size_t naf_width = ecNAFWidth(B_OF_W(m));
@@ -608,32 +399,28 @@ bool_t FAST(ecMulAPrecompJ)(word b[], const word a[], const ec_o* ec, const word
 	word* pre;			/* pre[i] = (2i + 1)a (naf_count элементов) */
 	// pre
 	ASSERT(ecIsOperable(ec));
+
 	// раскладка stack
 	naf = (word*)stack;
+
 	// расчет NAF
 	ASSERT(naf_width >= 3);
 	naf_size = wwNAF(naf, d, m, naf_width);
+
 	// d == O => b <- O
 	if (naf_size == 0)
 		return FALSE;
+
 	t = naf + 2 * m + 1;
-	if (a == ec->base && naf_width <= ec->precomp_w + 1)
-	{
-		// precomputed point in affine coordinates
-		//TODO: convert to jacobian coordinates
-		ASSERT(0);
-		pre = (word*)ec->precomp_Gs + ((2 * n) << (ec->precomp_w - 1));
-		stack = t + ec->d * n;
-	}
-	else
-	{
-		pre = t + ec->d * n;
-		stack = pre + naf_count * ec->d * n;
-		ec->smulsj(pre, t, a, naf_width - 1, ec, stack);
-	}
+	stack = t + ec->d * n;
+
+	pre = (word*)precomp_j + ((2 * n) << (precomp_w - 1));
+
 	// t <- a[naf[l - 1]]
 	w = wwGetBits(naf, 0, naf_width);
 	ASSERT((w & 1) == 1 && (w & naf_hi) == 0);
+	ASSERT(w <= precomp_w);
+
 	wwCopy(t, pre + (w >> 1) * ec->d * n, ec->d * n);
 	// цикл по символам NAF
 	i = naf_width;
@@ -662,17 +449,46 @@ bool_t FAST(ecMulAPrecompJ)(word b[], const word a[], const ec_o* ec, const word
 	return ecToA(b, t, ec, stack);
 }
 
-size_t FAST(ecMulAPrecompJ_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m)
+size_t FAST(ecMulAPrecompJ1_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 {
-	//TODO: сделать a_is_base аргументом функции
-	bool_t a_is_base = FALSE;
-	const size_t naf_width = ecNAFWidth(B_OF_W(m));
-	const size_t naf_count = SIZE_1 << (naf_width - 2);
 	return O_OF_W(2 * m + 1) +
 		O_OF_W(ec_d * n) +
-		O_OF_W(ec_d * n) +
-		(a_is_base ? 0 : O_OF_W(ec_d * n * naf_count)) +
 		ec_deep;
+}
+
+bool_t FAST(ecMulAPrecompJ)(word b[], const word a[], const ec_o* ec, const word d[],
+	size_t m, void* stack)
+{
+	const size_t n = ec->f->n;
+	const size_t naf_width = ecNAFWidth(B_OF_W(m));
+	const size_t naf_count = SIZE_1 << (naf_width - 2);
+
+	// переменные в stack
+	word* pre;			/* pre[i] = (2i + 1)a (naf_count элементов) */
+
+	pre = (word*)stack;
+	stack = pre + naf_count * ec->d * n;
+
+	// precomputed point in affine coordinates
+	//TODO: convert to jacobian coordinates
+	//ASSERT(0);
+
+	ecpSmallMultJ(pre, NULL, a, naf_width - 1, ec, stack);
+
+	return FAST(ecMulAPrecompJ1)(b, a, ec, d, m, pre, naf_width - 1, stack);
+}
+
+size_t FAST(ecMulAPrecompJ_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m)
+{
+	const size_t naf_width = ecNAFWidth(B_OF_W(m));
+	const size_t naf_count = SIZE_1 << (naf_width - 2);
+	const size_t f_deep = ec_deep; //f_deep < ec_deep todo - сделать f_deep аргументом функции?
+
+	return O_OF_W(naf_count * ec_d * n)
+		+ utilMax(2,
+			ecpSmallMultJ_deep(FALSE, naf_width - 1, n, f_deep, ec_deep),
+			FAST(ecMulAPrecompJ1_deep)(n, ec_d, ec_deep, m)
+		);
 }
 
 static void ecNegPrecompJ(word c[], const size_t w, const ec_o* ec, void* stack)
@@ -699,8 +515,8 @@ static size_t ecSafeMulJWidth(const size_t l) {
 	return 6;
 }
 
-bool_t SAFE(ecMulAPrecompJ)(word b[], const word a[], const ec_o* ec, const word d[],
-	size_t m, void* stack)
+bool_t SAFE(ecMulAPrecompJ1)(word b[], const word a[], const ec_o* ec, const word d[],
+	size_t m, const word precomp_j[], word precomp_w, void* stack)
 {
 	const size_t n = ec->f->n * ec->d;
 	const size_t order_len = ec->f->n + 1;
@@ -730,12 +546,12 @@ bool_t SAFE(ecMulAPrecompJ)(word b[], const word a[], const ec_o* ec, const word
 	ASSERT(ecIsOperable(ec));
 	ASSERT(3 <= w && w + 1 < B_PER_W);
 	ASSERT(m <= order_len); //todo добавить этот assert в описание
+	ASSERT(w <= precomp_w);
 
 	// раскладка stack
 	q = (word*)stack;
 	dd = q + n;
-	c = dd + order_len;
-	check_stack = c + (n << w);
+	check_stack = dd + order_len;
 #ifdef _DEBUG
 	* check_stack = 0xdeadbeef;
 	stack = (void*)(check_stack + 1);
@@ -743,22 +559,7 @@ bool_t SAFE(ecMulAPrecompJ)(word b[], const word a[], const ec_o* ec, const word
 	stack = (void*)check_stack;
 #endif
 
-	/* Расчёт малых кратных */
-	if (a == ec->base && ec->precomp_Gs && w <= ec->precomp_w)
-	{
-		// precomputed point in affine coordinates
-		//TODO: convert to jacobian coordinates
-		ASSERT(0);
-		c = (word*)ec->precomp_Gs + (n << (ec->precomp_w - 1)) - (n << (w - 1));
-	}
-	else
-	{
-		word* ci;
-		ci = c + (n << (w - 1));
-
-		ec->smulsj(ci, NULL, a, w, ec, stack);
-		ecNegPrecompJ(c, w, ec, stack);
-	}
+	c = precomp_j + (n << (precomp_w - 1)) - (n << (w - 1));
 
 	/* Переход к нечетной кратности dd = ((d & 1) ? d : -d) \mod ec->order */
 	wwSetZero(dd, order_len);
@@ -849,16 +650,12 @@ bool_t SAFE(ecMulAPrecompJ)(word b[], const word a[], const ec_o* ec, const word
 	return WORD_1 - wwIsZero(dd, order_len);
 }
 
-size_t SAFE(ecMulAPrecompJ_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t ec_order_len)
+size_t SAFE(ecMulAPrecompJ1_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 {
-	//TODO: сделать a_is_base аргументом функции
-	bool_t a_is_base = FALSE;
-	const size_t w = ecSafeMulJWidth(B_OF_W(ec_order_len));
 	const size_t order_len = n + 1;
 
-	return O_OF_W(n * ec_d) +
-		+O_OF_W(order_len) +
-		+O_OF_W((n * ec_d) << w)
+	return O_OF_W(n * ec_d)
+		+ O_OF_W(order_len)
 		+ ec_deep
 #ifdef _DEBUG
 		+ O_OF_W(1)
@@ -866,6 +663,43 @@ size_t SAFE(ecMulAPrecompJ_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t e
 		;
 }
 
+bool_t SAFE(ecMulAPrecompJ)(word b[], const word a[], const ec_o* ec, const word d[],
+	size_t m, void* stack)
+{
+	const size_t n = ec->f->n * ec->d;
+	const size_t order_len = ec->f->n + 1;
+	const size_t w = ecSafeMulJWidth(wwBitSize(ec->order, order_len));
+	const size_t half_precomp_size = n << (w - 1);
+	word* c;
+	word* ci;
+
+	// precomputed point in affine coordinates
+	//TODO: convert to jacobian coordinates
+	//ASSERT(0);
+
+	c = (word*)stack;
+	ci = c + half_precomp_size;
+	stack = ci + half_precomp_size;
+
+	ecpSmallMultJ(ci, NULL, a, w, ec, stack);
+
+	ecNegPrecompJ(c, w, ec, stack);
+
+	return SAFE(ecMulAPrecompJ1)(b, a, ec, d, m, c, w, stack);
+}
+
+size_t SAFE(ecMulAPrecompJ_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t ec_order_len)
+{
+	//todo сделать ec_order_len отдельным параметром фукнции?
+	const size_t w = ecSafeMulJWidth(B_OF_W(ec_order_len));
+	const size_t f_deep = ec_deep; //f_deep < ec_deep todo - сделать f_deep аргументом функции?
+
+	return  O_OF_W((n * ec_d) << w)
+		+ utilMax(2,
+			ecpSmallMultJ_deep(FALSE, w, n, f_deep, ec_deep),
+			SAFE(ecMulAPrecompJ1_deep)(n, ec_d, ec_deep, ec_order_len)
+		);
+}
 
 bool_t ecPrecomp = FALSE;
 bool_t ecPrecompA = FALSE;
@@ -888,6 +722,7 @@ bool_t ecMulA(word b[], const word a[], const ec_o* ec, const word d[],
 				: FAST(ecMulAOrig)(b, a, ec, d, m, stack)
 				);
 }
+
 size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 {
 	return ecSafe
@@ -906,33 +741,42 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 				);
 }
 
-/*
-Вычисление малых кратных P, -P, 3P, -3P, ... , -(2^w - 1)P
-Вычисление через сложение P + 2P, 3P + 2P, ...
-На входе pre[0] = P
-todo продумать общий интерфейс для вычисления малых кратных
-[2n]p - в афинных координатах,
-[3n]dblP - в проективных координатах
+bool_t ecMulAPrecomp(word b[], const word a[], const ec_o* ec, const word d[],
+	size_t m, const word precomp[], word precomp_w, void* stack)
+{
+	//todo precomp impl for ecMulAOrig
+	return ecSafe
+		? (ecPrecomp
+			? (ecPrecompA
+				? SAFE(ecMulAPrecompA1)(b, a, ec, d, m, precomp, precomp_w, stack)
+				: SAFE(ecMulAPrecompJ)(b, a, ec, d, m, precomp, precomp_w, stack)
+				)
+			: SAFE(ecMulAOrig)(b, a, ec, d, m, stack)
+			) : (ecPrecomp
+				? (ecPrecompA
+					? FAST(ecMulAPrecompA)(b, a, ec, d, m, precomp, precomp_w, stack)
+					: FAST(ecMulAPrecompJ)(b, a, ec, d, m, precomp, precomp_w, stack)
+					)
+				: FAST(ecMulAOrig)(b, a, ec, d, m, stack)
+				);
+}
 
-*/
-bool_t sm_mult_add(word pre[], const word p[], const word dblP
-	[], const word w, const ec_o* ec, void* stack) {
-	const size_t point_size = ec->f->n * ec->d;
-
-	//set size of small multiples |{+-1, +-3, ..., +-(2^w - 1)}| = 2^w
-	const size_t odd_recording_set_size = SIZE_1 << w;
-
-	register int i;
-
-	ecFromA(pre, p, ec, stack);
-	ecNeg(pre + point_size, pre, ec, stack);
-
-
-	for (i = 1; (unsigned)i <= odd_recording_set_size / 2 - 1; ++i) {
-		ecAdd(pre + 2 * i * point_size, pre + (2 * i - 2) * point_size, dblP, ec, stack);
-		ecNeg(pre + (2 * i + 1) * point_size, pre + 2 * i * point_size, ec, stack);
-	}
-	return TRUE;
+size_t ecMulAPrecomp_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
+{
+	return ecSafe
+		? (ecPrecomp
+			? (ecPrecompA
+				? SAFE(ecMulAPrecompA1_deep)(n, ec_d, ec_deep, m)
+				: SAFE(ecMulAPrecompJ1_deep)(n, ec_d, ec_deep, m)
+				)
+			: SAFE(ecMulAOrig_deep)(n, ec_d, ec_deep, m)
+			) : (ecPrecomp
+				? (ecPrecompA
+					? FAST(ecMulAPrecompA1_deep)(n, ec_d, ec_deep, m)
+					: FAST(ecMulAPrecompJ1_deep)(n, ec_d, ec_deep, m)
+					)
+				: FAST(ecMulAOrig_deep)(n, ec_d, ec_deep, m)
+				);
 }
 
 /*
@@ -1133,14 +977,15 @@ bool_t FAST(ecAddMulAPrecompA)(word b[], const ec_o* ec, void* stack, size_t k, 
 		pre[i] = (word*)stack;
 		stack = pre[i] + ec->d * n * naf_count;
 #if 1
-		if (a == ec->base && ec->precomp_Gs && naf_width[i] <= ec->precomp_w + 1)
-		{
-			pre[i] = (word*)ec->precomp_Gs + ((2 * n) << (ec->precomp_w - 1));
-		}
-		else
-		{
-			ec->smulsa(pre[i], NULL, a, naf_width[i] - 1, ec, stack);
-		}
+		//if (a == ec->base && ec->precomp_Gs && naf_width[i] <= ec->precomp_w + 1)
+		//{
+			//todo передавать как параметр
+			//pre[i] = (word*)ec->precomp_Gs + ((2 * n) << (ec->precomp_w - 1));
+		//}
+		//else
+		//{
+		ecpSmallMultA(pre[i], NULL, a, naf_width[i] - 1, ec, stack);
+		//}
 #else
 		// pre[i][0] <- a[i]
 		ecFromA(pre[i], a, ec, stack);
@@ -1189,7 +1034,7 @@ bool_t FAST(ecAddMulAPrecompA)(word b[], const ec_o* ec, void* stack, size_t k, 
 	w = 0;
 	// к аффинным координатам
 	return ecToA(b, t, ec, stack);
-}
+	}
 
 size_t FAST(ecAddMulAPrecompA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t k, ...)
 {
@@ -1283,63 +1128,11 @@ size_t ecAddMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t k, ...)
 	ret += ec_deep;
 	return ret;
 
-//	код ниже не работает: в функции не передается "многоточие"
-//	return ecPrecomp
-//		? FAST(ecAddMulAPrecompA_deep)(n, ec_d, ec_deep, k)
-//		: FAST(ecAddMulAOrig_deep)(n, ec_d, ec_deep, k)
-//		;
-}
-
-void ecSmallMultAdd2J(word* c, word d[], const word a[], const size_t w, const ec_o* ec, void* stack) {
-	const size_t n = ec->f->n * ec->d;
-	size_t k = SIZE_1 << (w - 1);
-	if (!d)
-	{
-		d = (word*)stack;
-		stack = (word*)(d + n);
-	}
-	ecDblA(d, a, ec, stack);
-	ecFromA(c, a, ec, stack);
-	ecAddA(c + n, d, a, ec, stack);
-	for (--k; --k;) {
-		c += n;
-		ecAdd(c + n, d, c, ec, stack);
-	}
-}
-
-size_t ecSmallMultAdd2J_deep()
-{
-	//TODO: da?
-	return 0;
-}
-
-void ecSmallMultAdd2A(word* c, word d[], const word a[], const size_t w, const ec_o* ec, void* stack) {
-	const size_t n = ec->f->n * ec->d;
-	const size_t na = ec->f->n * 2;
-	size_t k = SIZE_1 << (w - 1);
-	word* p = (word*)stack;
-	stack = (void*)(p + n);
-	if (!d)
-	{
-		d = (word*)stack;
-		stack = (void*)(d + na);
-	}
-
-	ecDblA(p, a, ec, stack);
-	ecToA(d, p, ec, stack);
-	wwCopy(c, a, na);
-	ecFromA(p, a, ec, stack);
-	for (; --k;) {
-		c += na;
-		//TODO: ecAddAA
-		ecAddA(p, p, d, ec, stack);
-		ecToA(c, p, ec, stack);
-	}
-}
-
-size_t ecSmallMultAdd2A_deep(size_t n, size_t ec_d)
-{
-	return O_OF_W(ec_d * n);
+	//	код ниже не работает: в функции не передается "многоточие"
+	//	return ecPrecomp
+	//		? FAST(ecAddMulAPrecompA_deep)(n, ec_d, ec_deep, k)
+	//		: FAST(ecAddMulAOrig_deep)(n, ec_d, ec_deep, k)
+	//		;
 }
 
 /* Complete формулы
@@ -1352,6 +1145,7 @@ size_t ecSmallMultAdd2A_deep(size_t n, size_t ec_d)
 
 	TODO: реализовать алгоритмы для ec->A == -3
 	TODO: добавить ecpHToA_deep или ecpHToA_deep в ecpCreateJ_deep чтобы учитывалось в ec_deep, либо передавать f_deep в ecMulA_deep
+	TODO: вынести в отдельный файл?
  */
 
 void ecpJToH(word* c, const word a[], const ec_o* ec, void* stack) {
@@ -1363,7 +1157,7 @@ void ecpJToH(word* c, const word a[], const ec_o* ec, void* stack) {
 	qrMul(ecZ(c, ec->f->n), ecZ(c, ec->f->n), ecZ(a, ec->f->n), ec->f, stack);
 }
 
-size_t ecJToH_deep(size_t f_deep) {
+size_t ecpJToH_deep(size_t f_deep) {
 	return f_deep;
 }
 
@@ -1394,7 +1188,7 @@ void ecpAddJJ_complete(word* c, const word a[], const word b[], const ec_o* ec, 
 	t3 = t2 + n;
 	t4 = t3 + n;
 	t5 = t4 + n;
-	stack = (void *)(t5 + n);
+	stack = (void*)(t5 + n);
 
 	ecpJToH(x1, a, ec, stack);
 	ecpJToH(x2, b, ec, stack);
@@ -1445,7 +1239,11 @@ void ecpAddJJ_complete(word* c, const word a[], const word b[], const ec_o* ec, 
 }
 
 size_t ecpAddJJ_complete_deep(size_t n, size_t f_deep) {
-	return O_OF_W(12 * n) + f_deep;
+	return O_OF_W(13 * n) +
+		utilMax(2,
+			f_deep,
+			ecpJToH_deep(f_deep)
+		);
 }
 
 void ecpAddJA_complete(word* c, const word a[], const word b[], const ec_o* ec, void* stack) {
@@ -1509,7 +1307,11 @@ void ecpAddJA_complete(word* c, const word a[], const word b[], const ec_o* ec, 
 }
 
 size_t ecpAddJA_complete_deep(size_t n, size_t f_deep) {
-	return O_OF_W(9 * n) + f_deep;
+	return O_OF_W(10 * n) +
+		utilMax(2,
+			f_deep,
+			ecpJToH_deep(f_deep)
+		);
 }
 
 // [2n]b <- [3n]a (A <- H)

@@ -576,8 +576,6 @@ bool_t ec2CreateLD(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	ec->dbla = ec2DblALD;
 	ec->dbl_adda = ecDblAddA;
 	ec->set_signa = ec2SetSignA;
-	ec->smulsa = ecSmallMultAdd2A;
-	ec->smulsj = ecSmallMultAdd2J;
 	ec->deep = utilMax(8,
 		ec2ToALD_deep(f->n, f->deep),
 		ec2NegLD_deep(f->n, f->deep),

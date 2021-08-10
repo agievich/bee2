@@ -418,23 +418,6 @@ typedef void (*ec_set_signa_i)(
 	const struct ec_o* ec	/*!< [in] описание эллиптической кривой */
 );
 
-typedef void (*ec_smulsa_i)(
-	word* c,				/*!< [out] линейный массив нечетных малых кратных (2i-1)[2n]a для i=1,2^{w-1} в аффинных координатах */
-	word d[],				/*!< [out] опционально (если d != NULL) удвоенная точка (2)[2n]a в аффинных координатах */
-	const word a[],			/*!< [in] базовая точка в аффинных координатах */
-	const size_t w,			/*!< [in] размер окна, число точек в массиве есть 2^{w-1} */
-	const struct ec_o* ec,	/*!< [in] описание эллиптической кривой */
-	void* stack				/*!< [in] вспомогательная память */
-);
-
-typedef void (*ec_smulsj_i)(
-	word* c,				/*!< [out] линейный массив нечетных малых кратных (2i-1)[2n]a для i=1,2^{w-1} в якобиевых координатах */
-	word d[],				/*!< [out] опционально (если d != NULL) удвоенная точка (2)[2n]a в якобиевых координатах */
-	const word a[],			/*!< [in] базовая точка в аффинных координатах */
-	const size_t w,			/*!< [in] размер окна, число точек в массиве есть 2^{w-1} */
-	const struct ec_o* ec,	/*!< [in] описание эллиптической кривой */
-	void* stack				/*!< [in] вспомогательная память */
-);
 /*!	\brief Описание эллиптической кривой
 
 	Описывается эллиптическая кривая, правила представления ее элементов,
@@ -468,10 +451,11 @@ typedef struct ec_o
 	ec_tpl_i tpl;				/*!< функция утроения */
 	ec_dbl_adda_i dbl_adda;		/*!< функция удвоения якобиевой точки и вычитания/сложения с аффинной точкой */
 	ec_set_signa_i set_signa;	/*!< функция условного аддитивного обращения афинной точки */
-	ec_smulsa_i smulsa;			/*!< расчет малых кратных в аффинных координатах */
-	ec_smulsj_i smulsj;			/*!< расчет малых кратных в якобиевых координатах */
+
+	//todo удалить precomp_w и precomp_Gs из интерфейса
 	size_t precomp_w;			/*!< размер окна w */
 	word const *precomp_Gs;		/*!< малые нечетные кратные {(1-2^w)G, ..., -3G, -1G, 1G, 3G, .., (2^w-1)G, 2G} базовой точки G в аффинных координатах */
+
 	size_t deep;				/*!< максимальная глубина стека функций */
 	octet descr[];				/*!< память для размещения данных */
 } ec_o;
@@ -800,7 +784,7 @@ void ecSmallMultAdd2J(
 	void* stack			/*!< [in] вспомогательная память */
 );
 
-size_t ecSmallMultAdd2J_deep();
+size_t ecSmallMultAdd2J_deep(size_t ec_deep);
 
 void ecSmallMultAdd2A(
 	word c[],			/*!< [out] кратные аффинные точки */
@@ -811,7 +795,7 @@ void ecSmallMultAdd2A(
 	void* stack			/*!< [in] вспомогательная память */
 );
 
-size_t ecSmallMultAdd2A_deep(size_t n, size_t ec_d);
+size_t ecSmallMultAdd2A_deep(size_t n, size_t ec_d, bool_t da, size_t ec_deep);
 
 #ifdef __cplusplus
 } /* extern "C" */

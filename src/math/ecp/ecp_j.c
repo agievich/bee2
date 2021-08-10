@@ -915,7 +915,6 @@ void ecpSetSignA(word b[], const word a[], bool_t neg, const ec_o* ec)
 }
 
 
-bool_t ecpDivp = TRUE;
 bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	void* stack)
 {
@@ -964,8 +963,6 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	ec->tpl = bA3 ? ecpTplJA3 : ecpTplJ;
 	ec->dbl_adda = ecpDblAddA;
 	ec->set_signa = ecpSetSignA;
-	ec->smulsa = ecpDivp ? ecpSmallMultDivpA : ecSmallMultAdd2A;
-	ec->smulsj = ecpDivp ? ecpSmallMultDivpJ : ecSmallMultAdd2J;
 	ec->deep = utilMax(9,
 		ecpToAJ_deep(f->n, f->deep),
 		ecpAddJ_deep(f->n, f->deep),
@@ -977,10 +974,6 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 		bA3 ? ecpTplJA3_deep(f->n, f->deep) : ecpTplJ_deep(f->n, f->deep),
 		ecpDblAddA_deep(f->n, f->deep)
 		);
-	ec->deep += utilMax(2,
-		ecpDivp ? ecpSmallMultDivpA_deep(TRUE, 6, f->n, f->deep) : ecSmallMultAdd2A_deep(f->n, ec->deep),
-		ecpDivp ? ecpSmallMultDivpJ_deep(TRUE, 6, f->n, f->deep) : ecSmallMultAdd2J_deep()
-	);
 	// настроить
 	ec->hdr.keep = sizeof(ec_o) + O_OF_W(5 * f->n + 1);
 	ec->hdr.p_count = 6;
