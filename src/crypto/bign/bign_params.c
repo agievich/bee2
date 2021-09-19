@@ -879,7 +879,6 @@ err_t bignStart(void* state, const bign_params* params)
 	void* stack;	/* вложенный стек */
 	// pre
 	ASSERT(memIsValid(params, sizeof(bign_params)));
-	ASSERT(params->l == 128 || params->l == 192  || params->l == 256);
 	ASSERT(memIsValid(state, bignStart_keep(params->l, 0)));
 	// определить размерности
 	no = O_OF_B(2 * params->l);

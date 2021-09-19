@@ -21,6 +21,8 @@ version 3. See Copyright Notices in bee2/info.h.
 #include <bee2/math/ww.h>
 #include <bee2/math/zz.h>
 #include <bee2/crypto/bign.h>
+#include <crypto/bign_lcl.h>
+
 
 /*
 *******************************************************************************
@@ -260,7 +262,7 @@ static bool_t ecMulTest(const ec_o* ec, void *stack)
 		//особая точка существует только для кривых с нечетным (q / 2^w)
 		//нечетная особая точка строится из порядка q имеет следующий вид:
 		//1. бит в позиции w выставлен в 0
-		//2. число k = младшие 0 ... w - 1 бит выставляются 2^w - k
+		//2. младшие 0 ... w - 1 бит (число k) выставляются 2^w - k
  		if (wwGetBits(ec->order, w, 1)) {
 			//построить нечетную особую точку
 			wwCopy(d, ec->order, ec->f->n + 1);
@@ -331,6 +333,71 @@ static bool_t ecMulTest(const ec_o* ec, void *stack)
 		if(ba == ec->base)
 			break;
 		ba = ec->base;
+	}
+
+	return TRUE;
+}
+
+static bool_t ecMulTestFullGroup(const ec_o* ec, void* stack)
+{
+	const size_t na = ec->f->n * 2;
+
+	size_t m = ec->f->n;
+	word* d = (word*)stack;
+	word* exp_j = d + m + 1;
+	word* exp_a = exp_j + ec->f->n * ec->d;
+	word* act_a = exp_a + na;
+	stack = (void*)(act_a + na);
+	bool_t fb;
+
+	{
+		wwSetZero(d, m + 1);
+		fb = ecMulA(act_a, ec->base, ec, d, m + 1, stack);
+		if (fb != FALSE)
+			return FALSE;
+	}
+
+	{
+		zzAddW2(d, m + 1, 1);
+		fb = ecMulA(act_a, ec->base, ec, d, m + 1, stack);
+		wwCopy(exp_a, ec->base, na);
+		if (fb == FALSE)
+			return FALSE;
+		if (0 != wwCmp(exp_a, act_a, na))
+			return FALSE;
+	}
+
+	{
+		zzAddW2(d, m + 1, 1);
+		fb = ecMulA(act_a, ec->base, ec, d, m + 1, stack);
+		if (fb == FALSE)
+			return FALSE;
+
+		ecDblA(exp_j, ec->base, ec, stack);
+		ecToA(exp_a, exp_j, ec, stack);
+
+
+		if (0 != wwCmp(exp_a, act_a, na))
+			return FALSE;
+	}
+
+	for (;;)
+	{
+		zzAddW2(d, m + 1, 1);
+		if (0 == wwCmp(d, ec->order, m + 1))
+			break;
+
+		fb = ecMulA(act_a, ec->base, ec, d, m + 1, stack);
+
+		if (fb == FALSE)
+			return FALSE;
+
+		ecAddA(exp_j, exp_j, ec->base, ec, stack);
+		ecToA(exp_a, exp_j, ec, stack);
+
+
+		if (0 != wwCmp(exp_a, act_a, na))
+			return FALSE;
 	}
 
 	return TRUE;
@@ -470,57 +537,23 @@ static bool_t ecpTestComplete(const ec_o* ec, void* stack)
 }
 
 
-
-extern err_t bignStart(void* state, const bign_params* params);
-
-bool_t ecpTest()
+//todo продумать параметры функции
+bool_t testEcp(const ec_o* ec, void* stack, const size_t sizeOfStack, const size_t n, const size_t f_deep, const size_t ec_deep)
 {
-	// размерности
-	const size_t n = W_OF_O(no);
-	const size_t f_keep = gfpCreate_keep(no);
-	const size_t f_deep = gfpCreate_deep(no);
-	const size_t ec_keep = ecpCreateJ_keep(n);
-	const size_t ec_deep = ecpCreateJ_deep(n, f_deep);
-	// состояние и стек
-	octet state[2048];
-	octet stack[30*4096];
-	octet t[96];
-	// поле и эк
-	qr_o* f;
-	ec_o* ec;
-	// хватает памяти?
-	ASSERT(f_keep + ec_keep <= sizeof(state));
-	ASSERT(ec_deep  <= sizeof(stack));
-	// создать f = GF(p)
-	hexToRev(t, p);
-	f = (qr_o*)(state + ec_keep);
-	if (!gfpCreate(f, t, no, stack))
-		return FALSE;
-	// создать ec = EC_{ab}(f)
-	hexToRev(t, a), hexToRev(t + 32, b);
-	ec = (ec_o*)state;
-	if (!ecpCreateJ(ec, f, t, t + 32, stack))
-		return FALSE;
-	// создать группу точек ec
-	hexToRev(t, xbase), hexToRev(t + 32, ybase), hexToRev(t + 64, q);
-	if (!ecCreateGroup(ec, t, t + 32, t + 64, no, cofactor, 0, NULL, stack))
-		return FALSE;
-	// присоединить f к ec
-	objAppend(ec, f, 0);
 	// корректная кривая?
-	ASSERT(ecpIsValid_deep(n, f_deep) <= sizeof(stack));
+	ASSERT(ecpIsValid_deep(n, f_deep) <= sizeOfStack);
 	if (!ecpIsValid(ec, stack))
 		return FALSE;
 	// корректная группа?
-	ASSERT(ecpSeemsValidGroup_deep(n, f_deep) <= sizeof(stack));
+	ASSERT(ecpSeemsValidGroup_deep(n, f_deep) <= sizeOfStack);
 	if (!ecpSeemsValidGroup(ec, stack))
 		return FALSE;
 	// надежная группа?
-	ASSERT(ecpIsSafeGroup_deep(n) <= sizeof(stack));
+	ASSERT(ecpIsSafeGroup_deep(n) <= sizeOfStack);
 	if (!ecpIsSafeGroup(ec, 40, stack))
 		return FALSE;
 	// базовая точка имеет порядок q?
-	ASSERT(ecHasOrderA_deep(n, ec->d, ec_deep, n) <= sizeof(stack));
+	ASSERT(ecHasOrderA_deep(n, ec->d, ec_deep, n) <= sizeOfStack);
 	//TODO: ecHasOrderA uses ecMulA and ecNegA before they are tested
 	if (!ecHasOrderA(ec->base, ec, ec->order, n, stack))
 		return FALSE;
@@ -533,27 +566,115 @@ bool_t ecpTest()
 	// проверить алгоритм удвоения и вычитания/сложения с афинной точкой
 	if (!ecpTestDblAddA(ec, stack))
 		return FALSE;
+	// проверить complete
 	if (!ecpTestComplete(ec, stack)) {
 		return FALSE;
 	}
-	// проверить алгоритм скалярного умножения
-	if (!ecMulTest(ec, stack))
-		return FALSE;
+}
 
+bool_t testStdCurves(const void* state, const void* stack)
+{
+	bign_params params[1];
+	ec_o* ec = (ec_o*)state;
+	char oid[] = "1.2.112.0.2.0.34.101.45.3.0";
+	for (; ++oid[sizeof(oid) - 2] < '4'; )
+	{
+		bignStdParams(params, oid);
+		bignStart(ec, params);
+		if (!ecSmallMultTest(ec, stack))
+			return FALSE;
+		if (!ecMulTest(ec, stack))
+			return FALSE;
+	}
+}
+
+bool_t testSmallCurves(const void* state, const void* stack, const size_t sizeOfStack)
+{
+	ec_o* ec = (ec_o*)state;
+	bign_params params[1];
+	const char* testCurveNames[] = {
+		"bign-curve8v1",
+		//остальные кривые работают довольно долго
+		//"bign-curve16v1",
+		//"bign-curve32v1",
+		//"bign-curve64v1",
+		//"bign-curve128v1",
+		//"bign-curve192v1"
+	};
+
+
+	for (int i = 0; i < sizeof(testCurveNames) / sizeof(testCurveNames[0]); ++i)
+	{
+		bignTestParams(params, testCurveNames[i]);
+		bignStart(ec, params);
+
+		if (!testEcp(ec, stack, sizeOfStack, ec->f->n, ec->f->deep, ec->deep))
+			return FALSE;
+
+		// проверить алгоритм скалярного умножения пробежав по всей группе
+		if (!ecMulTestFullGroup(ec, stack))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+
+
+extern err_t bignStart(void* state, const bign_params* params);
+
+bool_t ecpTest()
+{
+	// состояние и стек
+	octet state[2048];
+	octet stack[30*4096];
+	octet t[96];
 
 	{
-		bign_params params[1];
-		char oid[] = "1.2.112.0.2.0.34.101.45.3.0";
-		for(; ++oid[sizeof(oid)-2] < '4'; )
-		{
-			bignStdParams(params, oid);
-			bignStart(ec, params);
-			if(!ecSmallMultTest(ec, stack))
-				return FALSE;
-			if(!ecMulTest(ec, stack))
-				return FALSE;
-		}
+		// размерности
+		const size_t n = W_OF_O(no);
+		const size_t f_keep = gfpCreate_keep(no);
+		const size_t f_deep = gfpCreate_deep(no);
+		const size_t ec_keep = ecpCreateJ_keep(n);
+		const size_t ec_deep = ecpCreateJ_deep(n, f_deep);
+
+		// поле и эк
+		qr_o* f;
+		ec_o* ec;
+		// хватает памяти?
+		ASSERT(f_keep + ec_keep <= sizeof(state));
+		ASSERT(ec_deep <= sizeof(stack));
+		// создать f = GF(p)
+		hexToRev(t, p);
+		f = (qr_o*)(state + ec_keep);
+		if (!gfpCreate(f, t, no, stack))
+			return FALSE;
+		// создать ec = EC_{ab}(f)
+		hexToRev(t, a), hexToRev(t + 32, b);
+		ec = (ec_o*)state;
+		if (!ecpCreateJ(ec, f, t, t + 32, stack))
+			return FALSE;
+		// создать группу точек ec
+		hexToRev(t, xbase), hexToRev(t + 32, ybase), hexToRev(t + 64, q);
+		if (!ecCreateGroup(ec, t, t + 32, t + 64, no, cofactor, 0, NULL, stack))
+			return FALSE;
+		// присоединить f к ec
+		objAppend(ec, f, 0);
+
+		if (!testEcp(ec, stack, sizeof(stack), n, f_deep, ec_deep))
+			return FALSE;
+
+		// проверить алгоритм скалярного умножения
+		if (!ecMulTest(ec, stack))
+			return FALSE;
 	}
+
+	if(!testSmallCurves(state, stack, sizeof(stack)))
+		return FALSE;
+
+	if(!testStdCurves(state, stack))
+		return FALSE;
+
 	// все нормально
 	return TRUE;
 }
