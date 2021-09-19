@@ -213,6 +213,11 @@ static bool_t ecSmallMultTest(const ec_o* ec, void *stack)
 	return TRUE;
 }
 
+extern bool_t ecSafe;
+extern bool_t ecPrecomp;
+extern bool_t ecPrecompA;
+size_t ecSafeMulJWidth(const size_t l);
+size_t ecSafeMulAWidth(const size_t l);
 static bool_t ecMulTest(const ec_o* ec, void *stack)
 {
 	const size_t MIN_W = 2;
@@ -240,6 +245,46 @@ static bool_t ecMulTest(const ec_o* ec, void *stack)
 			return FALSE;
 		if(fb && (0 != wwCmp(sa, fa, na)))
 			return FALSE;
+	}
+
+	if (ecSafe && ecPrecomp) {
+		//протестировать особую точку для которой происходит удвоение на последнем шаге
+		if (ecPrecompA)
+		{
+			w = ecSafeMulAWidth(wwBitSize(ec->order, ec->f->n + 1));
+		}
+		else
+		{
+			w = ecSafeMulJWidth(wwBitSize(ec->order, ec->f->n + 1));
+		}
+		//особая точка существует только для кривых с нечетным (q / 2^w)
+		//нечетная особая точка строится из порядка q имеет следующий вид:
+		//1. бит в позиции w выставлен в 0
+		//2. число k = младшие 0 ... w - 1 бит выставляются 2^w - k
+ 		if (wwGetBits(ec->order, w, 1)) {
+			//построить нечетную особую точку
+			wwCopy(d, ec->order, ec->f->n + 1);
+			k = wwGetBits(d, 0, w);
+			k = (1 << w) - k;
+			wwSetBits(d, 0, w + 1, k);
+			//проверить нечетную особую точку
+			fb = ecMulA(fa, /*ba*/ec->base, ec, d, m + 1, stack);
+			sb = ecMulADoubleAdd(sa, /*ba*/ec->base, ec, d, m + 1, stack);
+			if (fb != sb)
+				return FALSE;
+			if (fb && (0 != wwCmp(sa, fa, na)))
+				return FALSE;
+
+			//четная особая точка
+			qrSub(d, ec->order, d, ec->f);
+			//проверить четную особую точку
+			fb = ecMulA(fa, /*ba*/ec->base, ec, d, m + 1, stack);
+			sb = ecMulADoubleAdd(sa, /*ba*/ec->base, ec, d, m + 1, stack);
+			if (fb != sb)
+				return FALSE;
+			if (fb && (0 != wwCmp(sa, fa, na)))
+				return FALSE;
+		}
 	}
 
 	{

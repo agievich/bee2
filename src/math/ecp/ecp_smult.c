@@ -83,7 +83,7 @@ static void ecNegPrecompA(word c[], const size_t w, const ec_o* ec)
 	}
 }
 
-static size_t ecSafeMulAWidth(const size_t l) {
+size_t ecSafeMulAWidth(const size_t l) {
 	//todo calculate actual breakpoints
 	if (l <= 256)
 	{
@@ -506,7 +506,7 @@ static void ecNegPrecompJ(word c[], const size_t w, const ec_o* ec, void* stack)
 	}
 }
 
-static size_t ecSafeMulJWidth(const size_t l) {
+size_t ecSafeMulJWidth(const size_t l) {
 	//todo calculate actual breakpoints
 	if (l <= 256)
 	{
