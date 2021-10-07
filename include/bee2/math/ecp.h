@@ -230,6 +230,10 @@ bool_t ecpSubAA(
 
 size_t ecpSubAA_deep(size_t n, size_t f_deep);
 
+void ecpSetSignA(word b[], const word a[], bool_t neg, const ec_o* ec);
+
+void ecpDblAddA(word c[], const word a[], const word b[], bool_t neg_b, const ec_o* ec, void* stack);
+
 /*!	\brief Преобразование элемента поля в аффинную точку
 
 	Элемент [ec->f->n]a поля ec->f преобразуется в аффинную точку 
@@ -294,18 +298,6 @@ size_t ecpSmallMultDivpJ_deep(bool_t da, const size_t w, size_t n, size_t f_deep
 	\deep{stack} ecpOddSmall_deep(w, ec->f->n, ec->f->deep).
 	\safe Алгоритм регулрен.
 */
-void ecpSmallMultDivpA(
-	word c[],			/*!< [out] кратные аффинные точки */
-	word da[],			/*!< [out] удвоенная аффинная точка */
-	const word a[],		/*!< [in] аффинная точка */
-	const size_t w,		/*!< [in] ширина окна */
-	const ec_o* ec,		/*!< [in] описание кривой */
-	void* stack			/*!< [in] вспомогательная память */
-);
-
-size_t ecpSmallMultDivpA_deep(bool_t da, const size_t w, size_t n, size_t f_deep);
-
-
 void ecpSmallMultA(
 	word* c,				/*!< [out] линейный массив нечетных малых кратных (2i-1)[2n]a для i=1,2^{w-1} в аффинных координатах */
 	word d[],				/*!< [out] опционально (если d != NULL) удвоенная точка (2)[2n]a в аффинных координатах */
@@ -315,7 +307,7 @@ void ecpSmallMultA(
 	void* stack				/*!< [in] вспомогательная память */
 );
 
-size_t ecpSmallMultA_deep(bool_t da, const size_t w, size_t n, size_t ec_d, size_t ec_deep, size_t f_deep);
+size_t ecpSmallMultA_deep(bool_t da, const size_t w, size_t n, size_t f_deep);
 
 void ecpSmallMultJ(
 	word* c,				/*!< [out] линейный массив нечетных малых кратных (2i-1)[2n]a для i=1,2^{w-1} в якобиевых координатах */
@@ -326,7 +318,134 @@ void ecpSmallMultJ(
 	void* stack				/*!< [in] вспомогательная память */
 );
 
-size_t ecpSmallMultJ_deep(bool_t da, const size_t w, size_t n, size_t f_deep, size_t ec_deep);
+size_t ecpSmallMultJ_deep(bool_t da, const size_t w, size_t n, size_t f_deep);
+
+/*
+*******************************************************************************
+Complete формулы
+*******************************************************************************
+
+Реализованы алгоритмы 1 и 2 из https://eprint.iacr.org/2015/1060.pdf
+
+Результирующая точка c в однородных координатах.
+Для перевода в аффинные или якобиевые координаты необходимо использовать
+ecpHToA или ecpHToJ
+
+TODO: реализовать алгоритмы для ec->A == -3
+TODO: добавить ecpHToA_deep или ecpHToA_deep в ecpCreateJ_deep чтобы учитывалось в ec_deep, либо передавать f_deep в ecMulA_deep
+TODO: вынести в отдельный файл?
+*/
+
+/*!	\brief Перевод якобиевых координат в однородные
+
+  [3n]с <- [3n]a (H <- J)
+*/
+void ecpJToH(
+	word* c,				/*!< [out] точка в однородных координатах [3n] */
+	const word a[],	/*!< [in] точка в якобиевых координатах [3n] */
+	const struct ec_o* ec,	/*!< [in] описание эллиптической кривой */
+	void* stack				/*!< [in] вспомогательная память */
+);
+
+size_t ecpJToH_deep(size_t f_deep);
+
+/*!	\brief Перевод однородных координат в аффинные
+
+  [2n]b <- [3n]a (A <- H)
+
+  \todo регуляризовать, так как используется в SAFE(ecMulA)
+*/
+bool_t ecpHToA(word b[], const word a[], const ec_o* ec, void* stack);
+
+size_t ecpHToA_deep(size_t n, size_t f_deep);
+
+
+/*!	\brief Перевод однородных координат в якобиевы
+
+  [3n]b <- [3n]a (J <- H)
+*/
+bool_t ecpHToJ(word b[], const word a[], const ec_o* ec, void* stack);
+
+size_t ecpHToJ_deep(size_t n, size_t f_deep);
+
+/*!	\brief Сложение точек в якобиевых и получение результата в аффинных координатах
+
+	Точки a и b могут быть нулевыми или равными, сумма a+b не может быть нулевой:
+  [2n]с <- [3n]a + [3n]b (A <- J+J)
+
+	Реализован алгоритм 1 из https://eprint.iacr.org/2015/1060.pdf
+	\pre a+b -- не нулевая точка
+	\pre буфферы с,a,b совпадают или не пересекаются
+*/
+void ecpAddAJJ_complete(word* c, const word a[], const word b[], const ec_o* ec, void* stack);
+
+size_t ecpAddAJJ_complete_deep(size_t n, size_t f_deep);
+
+/*!	\brief Сложение точек в якобиевых и аффинных и получение результата в аффинных координатах
+
+	Точка a может быть нулевой или равной b, сумма a+b не может быть нулевой:
+  [2n]с <- [3n]a + [2n]b (A <- J+A)
+
+	Реализован алгоритм 2 из https://eprint.iacr.org/2015/1060.pdf
+	\pre a+b -- не нулевая точка
+	\pre буфферы с,a,b совпадают или не пересекаются
+*/
+void ecpAddAJA_complete(word* c, const word a[], const word b[], const ec_o* ec, void* stack);
+
+size_t ecpAddAJA_complete_deep(size_t n, size_t f_deep);
+
+/*
+*******************************************************************************
+Smult
+*******************************************************************************
+*/
+
+size_t ecSafeMulAWidth(const size_t l);
+
+bool_t FAST(ecpMulAA1)(word b[], const word a[], const ec_o* ec, const word d[],
+	size_t m, const word precomp_a[], const word precomp_w, void* stack);
+
+size_t FAST(ecpMulAA1_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m);
+
+bool_t FAST(ecpMulAA)(word b[], const word a[], const ec_o* ec, const word d[],
+	size_t m, void* stack);
+
+size_t FAST(ecpMulAA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m);
+
+bool_t SAFE(ecpMulAA1)(word b[], const word a[], const ec_o* ec, const word d[],
+	size_t m, const word precomp_a[], word precomp_w, void* stack);
+
+size_t SAFE(ecpMulAA1_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m);
+
+bool_t SAFE(ecpMulAA)(word b[], const word a[], const ec_o* ec, const word d[], size_t m, void* stack);
+
+size_t SAFE(ecpMulAA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t ec_order_len);
+
+bool_t FAST(ecpMulAJ1)(word b[], const word a[], const ec_o* ec, const word d[],
+	size_t m, const word precomp_j[], word precomp_w, void* stack);
+
+size_t FAST(ecpMulAJ1_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m);
+
+bool_t FAST(ecpMulAJ)(word b[], const word a[], const ec_o* ec, const word d[],
+	size_t m, void* stack);
+
+size_t FAST(ecpMulAJ_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m);
+
+size_t ecSafeMulJWidth(const size_t l);
+
+bool_t SAFE(ecpMulAJ1)(word b[], const word a[], const ec_o* ec, const word d[],
+	size_t m, const word precomp_j[], word precomp_w, void* stack);
+
+size_t SAFE(ecpMulAJ1_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m);
+
+bool_t SAFE(ecpMulAJ)(word b[], const word a[], const ec_o* ec, const word d[],
+	size_t m, void* stack);
+
+size_t SAFE(ecpMulAJ_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t ec_order_len);
+
+bool_t FAST(ecpAddMulAA)(word b[], const ec_o* ec, void* stack, size_t k, ...);
+
+size_t FAST(ecpAddMulAA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t k, ...);
 
 #ifdef __cplusplus
 } /* extern "C" */

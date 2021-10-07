@@ -814,7 +814,6 @@ static const octet _curve512v1_precomp_Gs[128 * (2 + (1 << CURVE512V1_PRECOMP_W)
 *******************************************************************************
 */
 
-bool_t bignPrecomp = TRUE;
 err_t bignStdParams(bign_params* params, const char* name)
 {
 	if (!memIsValid(params, sizeof(bign_params)))
@@ -828,8 +827,8 @@ err_t bignStdParams(bign_params* params, const char* name)
 		memCopy(params->b, _curve256v1_b, 32);
 		memCopy(params->q, _curve256v1_q, 32);
 		memCopy(params->yG, _curve256v1_yG, 32);
-		params->precomp.w = bignPrecomp ? CURVE256V1_PRECOMP_W : 0;
-		params->precomp.Gs = bignPrecomp ? _curve256v1_precomp_Gs : NULL;
+		params->precomp.w = CURVE256V1_PRECOMP_W;
+		params->precomp.Gs = _curve256v1_precomp_Gs;
 		return ERR_OK;
 	}
 	if (strEq(name, _curve384v1_name))
@@ -841,8 +840,8 @@ err_t bignStdParams(bign_params* params, const char* name)
 		memCopy(params->b, _curve384v1_b, 48);
 		memCopy(params->q, _curve384v1_q, 48);
 		memCopy(params->yG, _curve384v1_yG, 48);
-		params->precomp.w = bignPrecomp ? CURVE384V1_PRECOMP_W : 0;
-		params->precomp.Gs = bignPrecomp ? _curve384v1_precomp_Gs : NULL;
+		params->precomp.w = CURVE384V1_PRECOMP_W;
+		params->precomp.Gs = _curve384v1_precomp_Gs;
 		return ERR_OK;
 	}
 	if (strEq(name, _curve512v1_name))
@@ -854,8 +853,8 @@ err_t bignStdParams(bign_params* params, const char* name)
 		memCopy(params->b, _curve512v1_b, 64);
 		memCopy(params->q, _curve512v1_q, 64);
 		memCopy(params->yG, _curve512v1_yG, 64);
-		params->precomp.w = bignPrecomp ? CURVE256V1_PRECOMP_W : 0;
-		params->precomp.Gs = bignPrecomp ? _curve512v1_precomp_Gs : NULL;
+		params->precomp.w = CURVE256V1_PRECOMP_W;
+		params->precomp.Gs = _curve512v1_precomp_Gs;
 		return ERR_OK;
 	}
 	return ERR_FILE_NOT_FOUND;
@@ -895,8 +894,7 @@ err_t bignStart(void* state, const bign_params* params)
 	// создать кривую и группу, выполнить минимальную проверку order
 	ec = (ec_o*)state;
 	if (!ecpCreateJ(ec, f, params->a, params->b, stack) ||
-		!ecCreateGroup(ec, 0, params->yG, params->q, no, 1,
-			params->precomp.w, params->precomp.Gs, stack) ||
+		!ecCreateGroup(ec, 0, params->yG, params->q, no, 1, stack) ||
 		wwBitSize(ec->order, n) != params->l * 2 ||
 		zzIsEven(ec->order, n))
 		return ERR_BAD_PARAMS;

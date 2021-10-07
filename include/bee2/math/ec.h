@@ -449,12 +449,13 @@ typedef struct ec_o
 	ec_dbl_i dbl;				/*!< функция удвоения */
 	ec_dbla_i dbla;				/*!< функция удвоения аффинной точки */
 	ec_tpl_i tpl;				/*!< функция утроения */
-	ec_dbl_adda_i dbl_adda;		/*!< функция удвоения якобиевой точки и вычитания/сложения с аффинной точкой */
-	ec_set_signa_i set_signa;	/*!< функция условного аддитивного обращения афинной точки */
+	//todo dbl_adda/set_signa используется только в ecpMulA2
+	// ec_dbl_adda_i dbl_adda;		/*!< функция удвоения якобиевой точки и вычитания/сложения с аффинной точкой */
+	// ec_set_signa_i set_signa;	/*!< функция условного аддитивного обращения афинной точки */
 
 	//todo удалить precomp_w и precomp_Gs из интерфейса
-	size_t precomp_w;			/*!< размер окна w */
-	word const *precomp_Gs;		/*!< малые нечетные кратные {(1-2^w)G, ..., -3G, -1G, 1G, 3G, .., (2^w-1)G, 2G} базовой точки G в аффинных координатах */
+	// size_t precomp_w;			/*!< размер окна w */
+	// word const *precomp_Gs;		/*!< малые нечетные кратные {(1-2^w)G, ..., -3G, -1G, 1G, 3G, .., (2^w-1)G, 2G} базовой точки G в аффинных координатах */
 
 	size_t deep;				/*!< максимальная глубина стека функций */
 	octet descr[];				/*!< память для размещения данных */
@@ -594,8 +595,6 @@ bool_t ecCreateGroup(
 	const octet order[],	/*!< [in] порядок группы точек */
 	size_t order_len,		/*!< [in] длина order */
 	u32 cofactor,			/*!< [in] кофактор группы точек */
-	size_t w,				/*!< [in] размер окна */
-	const octet Gs[],		/*!< [in] малые нечетные кратные в аффинных координатах */
 	void* stack				/*!< [in] вспомогательная память */
 );
 
@@ -638,7 +637,7 @@ bool_t ecIsOperableGroup(
 	\safe Имеется ускоренная нерегулярная редакция.
 	\deep{stack} ecpMulA_deep(ec->f->n, ec->d, ec->f->deep, m).
 */
-bool_t SAFE(ecMulAOrig)(
+bool_t ecMulA(
 	word b[],			/*!< [out] кратная точка */
 	const word a[],		/*!< [in] базовая точка */
 	const ec_o* ec,		/*!< [in] описание кривой */
@@ -647,45 +646,7 @@ bool_t SAFE(ecMulAOrig)(
 	void* stack			/*!< [in] вспомогательная память */
 );
 
-size_t SAFE(ecMulAOrig_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m);
-
-bool_t FAST(ecMulAOrig)(word b[], const word a[], const ec_o* ec, const word d[],size_t m, void* stack);
-
-size_t FAST(ecMulAOrig_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m);
-
-
-bool_t FAST(ecMulA)(
-	word b[],			/*!< [out] кратная точка */
-	const word a[],		/*!< [in] базовая точка */
-	const ec_o* ec,		/*!< [in] описание кривой */
-	const word d[],		/*!< [in] кратность */
-	size_t m,			/*!< [in] длина d в машинных словах */
-	void* stack			/*!< [in] вспомогательная память */
-);
-
-size_t FAST(ecMulA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m);
-
-bool_t SAFE(ecMulA)(
-	word b[],			/*!< [out] кратная точка */
-	const word a[],		/*!< [in] базовая точка */
-	const ec_o* ec,		/*!< [in] описание кривой */
-	const word d[],		/*!< [in] кратность */
-	size_t m,			/*!< [in] длина d в машинных словах */
-	void* stack			/*!< [in] вспомогательная память */
-);
-
-size_t SAFE(ecMulA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t order_bit_len);
-
-
-bool_t ecMulDivpJ(word b[], const word a[], const size_t w, const ec_o* ec, const word d[],
-	size_t m, void* stack);
-
-size_t ecMulDivpJ_deep(size_t n, size_t w, size_t ec_d, size_t ec_deep);
-
-bool_t ecMulDivpA(word b[], const word a[], const size_t w, const ec_o* ec, const word d[],
-	size_t m, void* stack);
-
-size_t ecMulDivpA_deep(size_t n, size_t w, size_t ec_d, size_t ec_deep);
+size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 
 /*!	\brief Имеет порядок?
 
@@ -729,7 +690,7 @@ size_t ecHasOrderA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 	в противном случае (b == O).
 	\deep{stack} ecAddMulA_deep(ec->f->n, ec->d, ec->deep, m[1], ..., m[k]).
 */
-bool_t FAST(ecAddMulA)(
+bool_t ecAddMulA(
 	word b[],			/*!< [out] кратная точка */
 	const ec_o* ec,		/*!< [in] описание кривой */
 	void* stack,		/*!< [in] вспомогательная память */
@@ -737,17 +698,7 @@ bool_t FAST(ecAddMulA)(
 	...					/*!< [in] тройки (a[i], d[i], m[i]) */
 );
 
-size_t FAST(ecAddMulA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t k,...);
-
-bool_t SAFE(ecAddMulA)(
-	word b[],			/*!< [out] кратная точка */
-	const ec_o* ec,		/*!< [in] описание кривой */
-	void* stack,		/*!< [in] вспомогательная память */
-	size_t k,			/*!< [in] число троек (a[i], d[i], m[i]) */
-	...					/*!< [in] тройки (a[i], d[i], m[i]) */
-);
-
-size_t SAFE(ecAddMulA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t k,...);
+size_t ecAddMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t k,...);
 
 /*!	\brief Удвоение якобиевой и вычитание/сложение с аффинной точкой
 

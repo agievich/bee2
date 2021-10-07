@@ -339,7 +339,7 @@ bool_t smMultsA_divPoly(word* sm_mults, const word a[], const word w, const ec_o
 #define stack_wfree(p)
 #endif
 
-void ecpSmallMultDivpA(word* c, word da[], const word a[], const size_t w, const ec_o* ec, void* stack)
+void ecpSmallMultA(word* c, word da[], const word a[], const size_t w, const ec_o* ec, void* stack)
 {
 	// размер координаты
 	const size_t n = ec->f->n;
@@ -689,7 +689,7 @@ void ecpSmallMultDivpA(word* c, word da[], const word a[], const size_t w, const
 
 }
 
-size_t ecpSmallMultDivpA_deep(bool_t da, const size_t w, size_t n, size_t f_deep)
+size_t ecpSmallMultA_deep(bool_t da, const size_t w, size_t n, size_t f_deep)
 {
 	size_t const ww = SIZE_1 << w;
 	size_t r = n * (0
@@ -714,7 +714,7 @@ size_t ecpSmallMultDivpA_deep(bool_t da, const size_t w, size_t n, size_t f_deep
 ;
 }
 
-void ecpSmallMultDivpJ(word* c, word da[], const word a[], const size_t w, const ec_o* ec, void* stack)
+void ecpSmallMultJ(word* c, word da[], const word a[], const size_t w, const ec_o* ec, void* stack)
 {
 	// размер координаты
 	const size_t n = ec->f->n;
@@ -1039,7 +1039,7 @@ void ecpSmallMultDivpJ(word* c, word da[], const word a[], const size_t w, const
 
 }
 
-size_t ecpSmallMultDivpJ_deep(bool_t da, const size_t w, size_t n, size_t f_deep)
+size_t ecpSmallMultJ_deep(bool_t da, const size_t w, size_t n, size_t f_deep)
 {
 	size_t const ww = SIZE_1 << w;
 	size_t r = n * (0

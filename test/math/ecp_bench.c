@@ -36,8 +36,6 @@ static size_t _ecpBench_deep(size_t n, size_t f_deep, size_t ec_d,
 }
 
 extern size_t testReps;
-extern size_t ecW;
-extern bool_t ecPrecompA;
 bool_t ecpBench()
 {
 	// описание кривой
@@ -93,20 +91,20 @@ bool_t ecpBench()
 		// скорость предвычислений
 		{
 			word *c = (word*)stack;
-			void *stack2 = (word*)(c + (nj << ecW) + nj+nj);
+			void *stack2 = (word*)(c + (nj << 5) + nj+nj);
 			size_t i;
 			tm_ticks_t ticks;
 			// эксперимент
-			if(ecPrecompA)
+			if(1)
 				for (i = 0, ticks = tmTicks(); i < reps; ++i)
-					ecpSmallMultA(c, pt, ec->base, ecW, ec, stack2);
+					ecpSmallMultA(c, pt, ec->base, 5, ec, stack2);
 			else
 				for (i = 0, ticks = tmTicks(); i < reps; ++i)
-					ecpSmallMultJ(c, pt, ec->base, ecW, ec, stack2);
+					ecpSmallMultJ(c, pt, ec->base, 5, ec, stack2);
 			ticks = tmTicks() - ticks;
 			// печать результатов
 			printf("ecpBench::%s: %u cycles / rep [%u reps / sec]\n",
-				ecPrecompA ? "smulsa" : "smulsj",
+				1 ? "smulsa" : "smulsj",
 				(unsigned)(ticks / reps),
 				(unsigned)tmSpeed(reps, ticks));
 		}

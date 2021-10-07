@@ -191,12 +191,7 @@ void FAST(zzSetSignMod)(word b[], const word a[], const word mod[], size_t n, bo
 	ASSERT(wwIsSameOrDisjoint(a, b, n));
 	ASSERT(wwIsDisjoint(b, mod, n));
 	ASSERT(wwCmp(a, mod, n) < 0);
-	// a != 0 => b <- mod - a
-	if (wwIsZero(a, n))
-	{
-		wwSetZero(b, n);
-	}
-	else if (neg)
+	if (neg && !wwIsZero(a, n))
 	{
 		zzSub(b, mod, a, n);
 	}

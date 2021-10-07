@@ -145,7 +145,7 @@ static bool_t ecSmallMultTest(const ec_o* ec, void *stack)
 				if(f == 0)
 					ecSmallMultAdd2A(c, d, ec->base, w, ec, stack);
 				else
-					ecpSmallMultDivpA(c, d, ec->base, w, ec, stack);
+					ecpSmallMultA(c, d, ec->base, w, ec, stack);
 
 				if(d)
 				{
@@ -180,7 +180,7 @@ static bool_t ecSmallMultTest(const ec_o* ec, void *stack)
 				if(f == 0)
 					ecSmallMultAdd2J(c, d, ec->base, w, ec, stack);
 				else
-					ecpSmallMultDivpJ(c, d, ec->base, w, ec, stack);
+					ecpSmallMultJ(c, d, ec->base, w, ec, stack);
 
 				if(d)
 				{
@@ -215,9 +215,6 @@ static bool_t ecSmallMultTest(const ec_o* ec, void *stack)
 	return TRUE;
 }
 
-extern bool_t ecSafe;
-extern bool_t ecPrecomp;
-extern bool_t ecPrecompA;
 size_t ecSafeMulJWidth(const size_t l);
 size_t ecSafeMulAWidth(const size_t l);
 static bool_t ecMulTest(const ec_o* ec, void *stack)
@@ -249,9 +246,9 @@ static bool_t ecMulTest(const ec_o* ec, void *stack)
 			return FALSE;
 	}
 
-	if (ecSafe && ecPrecomp) {
+	if (1) {
 		//протестировать особую точку для которой происходит удвоение на последнем шаге
-		if (ecPrecompA)
+		if (1)
 		{
 			w = ecSafeMulAWidth(wwBitSize(ec->order, ec->f->n + 1));
 		}
@@ -342,13 +339,13 @@ static bool_t ecMulTestFullGroup(const ec_o* ec, void* stack)
 {
 	const size_t na = ec->f->n * 2;
 
+	bool_t fb;
 	size_t m = ec->f->n;
 	word* d = (word*)stack;
 	word* exp_j = d + m + 1;
 	word* exp_a = exp_j + ec->f->n * ec->d;
 	word* act_a = exp_a + na;
 	stack = (void*)(act_a + na);
-	bool_t fb;
 
 	{
 		wwSetZero(d, m + 1);
@@ -463,8 +460,8 @@ static bool_t ecpTestDblAddA(const ec_o* ec, void* stack)
 }
 
 extern void ecpJToH(word* c, const word a[], const ec_o* ec, void* stack);
-extern void ecpAddJJ_complete(word* c, const word a[], const word b[], const ec_o* ec, void* stack);
-extern void ecpAddJA_complete(word* c, const word a[], const word b[], const ec_o* ec, void* stack);
+extern void ecpAddAJJ_complete(word* c, const word a[], const word b[], const ec_o* ec, void* stack);
+extern void ecpAddAJA_complete(word* c, const word a[], const word b[], const ec_o* ec, void* stack);
 extern bool_t ecpHToA(word b[], const word a[], const ec_o* ec, void* stack);
 extern bool_t ecpHToJ(word b[], const word a[], const ec_o* ec, void* stack);
 
@@ -472,8 +469,6 @@ static bool_t ecpTestComplete(const ec_o* ec, void* stack)
 {
 	const size_t n = ec->f->n * 3;
 	const size_t na = ec->f->n * 2;
-
-	size_t i;
 
 	word* a = (word*)stack;
 	word* b = a + n;
@@ -498,8 +493,8 @@ static bool_t ecpTestComplete(const ec_o* ec, void* stack)
 	//test affine doubling
 	ecDblA(expected, ec->base, ec, stack);
 	ecFromA(a, ec->base, ec, stack);
-	ecpAddJA_complete(b, a, ec->base, ec, stack);
-	ecpHToJ(actual, b, ec, stack);
+	ecpAddAJA_complete(actual, a, ec->base, ec, stack);
+	ecFromA(actual, actual, ec, stack);
 
 	if (!ecIsSamePointJ(actual, expected, ec, stack))
 		return FALSE;
@@ -508,8 +503,8 @@ static bool_t ecpTestComplete(const ec_o* ec, void* stack)
 	//test affine addition
 	ecDblA(a, ec->base, ec, stack);
 	ecAddA(expected, a, ec->base, ec, stack);
-	ecpAddJA_complete(b, a, ec->base, ec, stack);
-	ecpHToJ(actual, b, ec, stack);
+	ecpAddAJA_complete(actual, a, ec->base, ec, stack);
+	ecFromA(actual, actual, ec, stack);
 
 	if (!ecIsSamePointJ(actual, expected, ec, stack))
 		return FALSE;
@@ -518,8 +513,8 @@ static bool_t ecpTestComplete(const ec_o* ec, void* stack)
 	//test jacobian doubling
 	ecDblA(expected, ec->base, ec, stack);
 	ecFromA(a, ec->base, ec, stack);
-	ecpAddJJ_complete(b, a, a, ec, stack);
-	ecpHToJ(actual, b, ec, stack);
+	ecpAddAJJ_complete(actual, a, a, ec, stack);
+	ecFromA(actual, actual, ec, stack);
 
 	if (!ecIsSamePointJ(actual, expected, ec, stack))
 		return FALSE;
@@ -529,11 +524,13 @@ static bool_t ecpTestComplete(const ec_o* ec, void* stack)
 	ecDblA(a, ec->base, ec, stack);
 	ecFromA(c, ec->base, ec, stack);
 	ecAddA(expected, a, ec->base, ec, stack);
-	ecpAddJJ_complete(b, a, c, ec, stack);
-	ecpHToJ(actual, b, ec, stack);
+	ecpAddAJJ_complete(actual, a, c, ec, stack);
+	ecFromA(actual, actual, ec, stack);
 
 	if (!ecIsSamePointJ(actual, expected, ec, stack))
 		return FALSE;
+
+	return TRUE;
 }
 
 
@@ -570,9 +567,10 @@ bool_t testEcp(const ec_o* ec, void* stack, const size_t sizeOfStack, const size
 	if (!ecpTestComplete(ec, stack)) {
 		return FALSE;
 	}
+	return TRUE;
 }
 
-bool_t testStdCurves(const void* state, const void* stack)
+bool_t testStdCurves(const void* state, void* stack)
 {
 	bign_params params[1];
 	ec_o* ec = (ec_o*)state;
@@ -586,9 +584,10 @@ bool_t testStdCurves(const void* state, const void* stack)
 		if (!ecMulTest(ec, stack))
 			return FALSE;
 	}
+	return TRUE;
 }
 
-bool_t testSmallCurves(const void* state, const void* stack, const size_t sizeOfStack)
+bool_t testSmallCurves(const void* state, void* stack, const size_t sizeOfStack)
 {
 	ec_o* ec = (ec_o*)state;
 	bign_params params[1];
@@ -656,7 +655,7 @@ bool_t ecpTest()
 			return FALSE;
 		// создать группу точек ec
 		hexToRev(t, xbase), hexToRev(t + 32, ybase), hexToRev(t + 64, q);
-		if (!ecCreateGroup(ec, t, t + 32, t + 64, no, cofactor, 0, NULL, stack))
+		if (!ecCreateGroup(ec, t, t + 32, t + 64, no, cofactor, stack))
 			return FALSE;
 		// присоединить f к ec
 		objAppend(ec, f, 0);

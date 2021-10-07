@@ -915,6 +915,242 @@ void ecpSetSignA(word b[], const word a[], bool_t neg, const ec_o* ec)
 }
 
 
+void ecpJToH(word* c, const word a[], const ec_o* ec, void* stack) {
+	qrMul(ecX(c), ecX(a), ecZ(a, ec->f->n), ec->f, stack);
+
+	wwCopy(ecY(c, ec->f->n), ecY(a, ec->f->n), ec->f->n);
+
+	qrSqr(ecZ(c, ec->f->n), ecZ(a, ec->f->n), ec->f, stack);
+	qrMul(ecZ(c, ec->f->n), ecZ(c, ec->f->n), ecZ(a, ec->f->n), ec->f, stack);
+}
+
+size_t ecpJToH_deep(size_t f_deep) {
+	return f_deep;
+}
+
+bool_t ecpHToA(word b[], const word a[], const ec_o* ec, void* stack)
+{
+	const size_t n = ec->f->n;
+
+	word* zi;
+
+	ASSERT(a == b || wwIsDisjoint2(a, 3 * n, b, 2 * n));
+
+	// a == O => b <- O
+	if (qrIsZero(ecZ(a, n), ec->f))
+		return FALSE;
+
+	zi = (word*)stack;
+	stack = (void*)(zi + n);
+
+	// zi <- za^{-1}
+	qrInv(zi, ecZ(a, n), ec->f, stack);
+	// xb <- xa zi
+	qrMul(ecX(b), ecX(a), zi, ec->f, stack);
+	// yb <- ya zi
+	qrMul(ecY(b, n), ecY(a, n), zi, ec->f, stack);
+	// b != O
+	return TRUE;
+}
+
+size_t ecpHToA_deep(size_t n, size_t f_deep) {
+	return O_OF_W(n) + f_deep;
+}
+
+bool_t ecpHToJ(word b[], const word a[], const ec_o* ec, void* stack)
+{
+	const size_t n = ec->f->n;
+
+	word* zz;
+
+	ASSERT(wwIsSameOrDisjoint(b, a, 3 * n));
+
+	// a == O => b <- O
+	if (qrIsZero(ecZ(a, n), ec->f))
+		return FALSE;
+
+	zz = (word*)stack;
+	stack = (void*)(zz + n);
+
+	// xb <- xa za
+	qrMul(ecX(b), ecX(a), ecZ(a, n), ec->f, stack);
+
+	// zz <- za^2
+	qrSqr(zz, ecZ(a, n), ec->f, stack);
+	// yb <- ya zz
+	qrMul(ecY(b, n), ecY(a, n), zz, ec->f, stack);
+
+	// zb <- za
+	wwCopy(ecZ(b, n), ecZ(a, n), n);
+
+	// b != O
+	return TRUE;
+}
+
+size_t ecpHToJ_deep(size_t n, size_t f_deep) {
+	return O_OF_W(n) + f_deep;
+}
+
+void ecpAddAJJ_complete(word* r, const word a[], const word b[], const ec_o* ec, void* stack) {
+	const size_t n = ec->f->n;
+	word* c;
+	word* x1, * y1, * z1;
+	word* x2, * y2, * z2;
+	word* b3, * t0, * t1, * t2, * t3, * t4, * t5;
+
+	ASSERT(wwIsDisjoint2(r, ec->f->n * 2, a, ec->f->n * 3));
+	ASSERT(wwIsDisjoint2(r, ec->f->n * 2, b, ec->f->n * 3));
+	ASSERT(wwIsSameOrDisjoint(a, b, ec->f->n * 3));
+
+	c = (word*)stack;
+	x1 = c + 3 * n;
+	y1 = x1 + n;
+	z1 = y1 + n;
+
+	x2 = z1 + n;
+	y2 = x2 + n;
+	z2 = y2 + n;
+
+	b3 = z2 + n;
+	t0 = b3 + n;
+	t1 = t0 + n;
+	t2 = t1 + n;
+	t3 = t2 + n;
+	t4 = t3 + n;
+	t5 = t4 + n;
+	stack = (void*)(t5 + n);
+
+	ecpJToH(x1, a, ec, stack);
+	ecpJToH(x2, b, ec, stack);
+
+	qrAdd(b3, ec->B, ec->B, ec->f);
+	qrAdd(b3, b3, ec->B, ec->f);
+
+	qrMul(t0, x1, x2, ec->f, stack);
+	qrMul(t1, y1, y2, ec->f, stack);
+	qrMul(t2, z1, z2, ec->f, stack);
+	qrAdd(t3, x1, y1, ec->f);
+	qrAdd(t4, x2, y2, ec->f);
+	qrMul(t3, t3, t4, ec->f, stack);
+	qrAdd(t4, t0, t1, ec->f);
+	qrSub(t3, t3, t4, ec->f);
+	qrAdd(t4, x1, z1, ec->f);
+	qrAdd(t5, x2, z2, ec->f);
+	qrMul(t4, t4, t5, ec->f, stack);
+	qrAdd(t5, t0, t2, ec->f);
+	qrSub(t4, t4, t5, ec->f);
+	qrAdd(t5, y1, z1, ec->f);
+	qrAdd(ecX(c), y2, z2, ec->f);
+	qrMul(t5, t5, ecX(c), ec->f, stack);
+	qrAdd(ecX(c), t1, t2, ec->f);
+	qrSub(t5, t5, ecX(c), ec->f);
+	qrMul(ecZ(c, ec->f->n), ec->A, t4, ec->f, stack);
+	qrMul(ecX(c), b3, t2, ec->f, stack);
+	qrAdd(ecZ(c, ec->f->n), ecX(c), ecZ(c, ec->f->n), ec->f);
+	qrSub(ecX(c), t1, ecZ(c, ec->f->n), ec->f);
+	qrAdd(ecZ(c, ec->f->n), t1, ecZ(c, ec->f->n), ec->f);
+	qrMul(ecY(c, ec->f->n), ecX(c), ecZ(c, ec->f->n), ec->f, stack);
+	qrAdd(t1, t0, t0, ec->f);
+	qrAdd(t1, t1, t0, ec->f);
+	qrMul(t2, ec->A, t2, ec->f, stack);
+	qrMul(t4, b3, t4, ec->f, stack);
+	qrAdd(t1, t1, t2, ec->f);
+	qrSub(t2, t0, t2, ec->f);
+	qrMul(t2, ec->A, t2, ec->f, stack);
+	qrAdd(t4, t4, t2, ec->f);
+	qrMul(t0, t1, t4, ec->f, stack);
+	qrAdd(ecY(c, ec->f->n), ecY(c, ec->f->n), t0, ec->f);
+	qrMul(t0, t5, t4, ec->f, stack);
+	qrMul(ecX(c), t3, ecX(c), ec->f, stack);
+	qrSub(ecX(c), ecX(c), t0, ec->f);
+	qrMul(t0, t3, t1, ec->f, stack);
+	qrMul(ecZ(c, ec->f->n), t5, ecZ(c, ec->f->n), ec->f, stack);
+	qrAdd(ecZ(c, ec->f->n), ecZ(c, ec->f->n), t0, ec->f);
+
+	ecpHToA(r, c, ec, stack);
+}
+
+size_t ecpAddAJJ_complete_deep(size_t n, size_t f_deep) {
+	return O_OF_W(16 * n) +
+		utilMax(2,
+			f_deep,
+			ecpJToH_deep(f_deep)
+		);
+}
+
+void ecpAddAJA_complete(word* r, const word a[], const word b[], const ec_o* ec, void* stack) {
+	const size_t n = ec->f->n;
+	word* c;
+	word* x1, * y1, * z1;
+	word* b3, * t0, * t1, * t2, * t3, * t4, * t5;
+
+	ASSERT(wwIsDisjoint2(r, ec->f->n * 2, a, ec->f->n * 3));
+	ASSERT(wwIsDisjoint(r, b, ec->f->n * 2));
+
+	c = (word*)stack;
+	x1 = c + 3 * n;
+	y1 = x1 + n;
+	z1 = y1 + n;
+
+	b3 = z1 + n;
+	t0 = b3 + n;
+	t1 = t0 + n;
+	t2 = t1 + n;
+	t3 = t2 + n;
+	t4 = t3 + n;
+	t5 = t4 + n;
+	stack = (void*)(t5 + n);
+
+	ecpJToH(x1, a, ec, stack);
+
+	qrAdd(b3, ec->B, ec->B, ec->f);
+	qrAdd(b3, b3, ec->B, ec->f);
+
+	qrMul(t0, x1, ecX(b), ec->f, stack);
+	qrMul(t1, y1, ecY(b, ec->f->n), ec->f, stack);
+	qrAdd(t3, ecX(b), ecY(b, ec->f->n), ec->f);
+	qrAdd(t4, x1, y1, ec->f);
+	qrMul(t3, t3, t4, ec->f, stack);
+	qrAdd(t4, t0, t1, ec->f);
+	qrSub(t3, t3, t4, ec->f);
+	qrMul(t4, ecX(b), z1, ec->f, stack);
+	qrAdd(t4, t4, x1, ec->f);
+	qrMul(t5, ecY(b, ec->f->n), z1, ec->f, stack);
+	qrAdd(t5, t5, y1, ec->f);
+	qrMul(ecZ(c, ec->f->n), ec->A, t4, ec->f, stack);
+	qrMul(ecX(c), b3, z1, ec->f, stack);
+	qrAdd(ecZ(c, ec->f->n), ecX(c), ecZ(c, ec->f->n), ec->f);
+	qrSub(ecX(c), t1, ecZ(c, ec->f->n), ec->f);
+	qrAdd(ecZ(c, ec->f->n), t1, ecZ(c, ec->f->n), ec->f);
+	qrMul(ecY(c, ec->f->n), ecX(c), ecZ(c, ec->f->n), ec->f, stack);
+	qrAdd(t1, t0, t0, ec->f);
+	qrAdd(t1, t1, t0, ec->f);
+	qrMul(t2, ec->A, z1, ec->f, stack);
+	qrMul(t4, b3, t4, ec->f, stack);
+	qrAdd(t1, t1, t2, ec->f);
+	qrSub(t2, t0, t2, ec->f);
+	qrMul(t2, ec->A, t2, ec->f, stack);
+	qrAdd(t4, t4, t2, ec->f);
+	qrMul(t0, t1, t4, ec->f, stack);
+	qrAdd(ecY(c, ec->f->n), ecY(c, ec->f->n), t0, ec->f);
+	qrMul(t0, t5, t4, ec->f, stack);
+	qrMul(ecX(c), t3, ecX(c), ec->f, stack);
+	qrSub(ecX(c), ecX(c), t0, ec->f);
+	qrMul(t0, t3, t1, ec->f, stack);
+	qrMul(ecZ(c, ec->f->n), t5, ecZ(c, ec->f->n), ec->f, stack);
+	qrAdd(ecZ(c, ec->f->n), ecZ(c, ec->f->n), t0, ec->f);
+
+	ecpHToA(r, c, ec, stack);
+}
+
+size_t ecpAddAJA_complete_deep(size_t n, size_t f_deep) {
+	return O_OF_W(13 * n) +
+		utilMax(2,
+			f_deep,
+			ecpJToH_deep(f_deep)
+		);
+}
+
 bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	void* stack)
 {
@@ -961,8 +1197,8 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	ec->dbl = bA3 ? ecpDblJA3 : ecpDblJ;
 	ec->dbla = ecpDblAJ;
 	ec->tpl = bA3 ? ecpTplJA3 : ecpTplJ;
-	ec->dbl_adda = ecpDblAddA;
-	ec->set_signa = ecpSetSignA;
+	// ec->dbl_adda = ecpDblAddA;
+	// ec->set_signa = ecpSetSignA;
 	ec->deep = utilMax(9,
 		ecpToAJ_deep(f->n, f->deep),
 		ecpAddJ_deep(f->n, f->deep),

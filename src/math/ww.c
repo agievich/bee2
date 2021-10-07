@@ -472,51 +472,6 @@ size_t wwNAF(word naf[], const word a[], size_t n, size_t w)
 	naf_len = a_len = 0;
 	return naf_size;
 }
-/*
-	\remark Для данной реализации значение k всегда должно равняться (n * B_PER_W + w - 1) / w.
-*/
-void wwOddRecording(word oddRecording[], size_t m, const word a[], size_t n, size_t k, size_t w)
-{
-	const word hi_bit = WORD_BIT_POS(w);
-	register word digit;
-	register word mask;
-	size_t i;
-	//pre
-	ASSERT(2 <= w && w < B_PER_W);
-	ASSERT(wwIsValid(a, n) & wwIsValid(oddRecording, m));
-	ASSERT(wwIsDisjoint2(a, n, oddRecording, m));
-	ASSERT(wwTestBit(a, 0));
-	ASSERT(k * w >= n * B_PER_W);
-	ASSERT((k - 1) * w < n * B_PER_W);
-	ASSERT(m >= W_OF_B(k * (w + 1)));
-
-	wwSetZero(oddRecording, m);
-
-	for (i = 0; i < k - 1; ++i)
-	{
-		//digit <- a mod 2^(w+1)
-		digit = wwGetBits(a, i * w , w + 1);
-	
-		//digit <- digit - 2^w
-		mask = wordNeq0M(digit & hi_bit, hi_bit);
-		digit ^= mask;
-		digit |= WORD_1;
-		mask = ~mask & hi_bit;
-		digit ^= mask;
-
-		wwSetBits(oddRecording, i * (w+1), (w+1), digit);
-	}
-	mask = B_PER_W * n - (k - 1) * w;
-	digit = wwGetBits(a, (k - 1) * w, mask);
-	digit |= WORD_1;
-	wwSetBits(oddRecording, (k - 1) * (w + 1), w+1, digit);
-	//очистка
-	digit = WORD_0;
-}
-
-size_t wwOddRecording_size(size_t n, size_t w) {
-	return (n * B_PER_W + w - 1) / w;
-}
 
 /*
 *******************************************************************************
