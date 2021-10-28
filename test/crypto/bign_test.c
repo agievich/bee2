@@ -403,11 +403,11 @@ bool_t bignBench()
 	octet hash[64];
 	octet sig[64 + 32];
 	octet brng_state[1024];
-	char params_oid[] = "1.2.112.0.2.0.34.101.45.3.1";
+	char params_oid[] = "1.2.112.0.2.0.34.101.45.3.0";
 	// создать стек
 	ASSERT(sizeof(brng_state) >= brngCTRX_keep());
 	//
-	for(; params_oid[sizeof(params_oid) - 2]++ < '3'; )
+	for(; ++params_oid[sizeof(params_oid) - 2] < '4'; )
 	{
 		size_t reps;
 		size_t i;
