@@ -73,7 +73,7 @@ extern bool_t wordTest();
 extern bool_t ecpTest();
 
 bool_t fTest = TRUE;
-bool_t fBench = FALSE;
+bool_t fBench = TRUE;
 
 int testMath()
 {

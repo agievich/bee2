@@ -229,7 +229,7 @@ static bool_t zzTestMul()
 
 static bool_t zzTestMod()
 {
-	const size_t n = 8;
+	size_t n = 8;
 	size_t reps;
 	word a[8];
 	word b[8];
@@ -324,18 +324,18 @@ static bool_t zzTestMod()
 		if (!FAST(wwIsZero)(t1, n))
 			return FALSE;
 		// zzSetSign.
-		zzSetSignMod(t, a, mod, n, TRUE);
+		SAFE(zzSetSignMod)(t, a, mod, n, TRUE);
 		zzAddMod(t1, t, a, mod, n);
 		if (!wwIsZero(t1, n))
 			return FALSE;
-		zzSetSignMod(t1, t1, mod, n, TRUE);
+		SAFE(zzSetSignMod)(t1, t1, mod, n, TRUE);
 		if (!wwIsZero(t1, n))
 			return FALSE;
-		zzSetSignMod(t, a, mod, n, FALSE);
+		SAFE(zzSetSignMod)(t, a, mod, n, FALSE);
 		zzSubMod(t1, t, a, mod, n);
 		if (!wwIsZero(t1, n))
 			return FALSE;
-		zzSetSignMod(t1, t1, mod, n, FALSE);
+		SAFE(zzSetSignMod)(t1, t1, mod, n, FALSE);
 		if (!wwIsZero(t1, n))
 			return FALSE;
 		// FAST(zzSetSign)
@@ -394,6 +394,35 @@ static bool_t zzTestMod()
 			return FALSE;
 
 	}
+
+	{
+		n = 4;
+		mod[0] = 0x7e5abf99263d6607;
+		mod[1] = 0xd95c8ed60dfb4dfc;
+		mod[2] = WORD_MAX;
+		mod[3] = WORD_MAX;
+		a[0] = (word)2;
+		a[1] = WORD_0;
+		a[2] = WORD_0;
+		a[3] = WORD_0;
+		wwCopy(t, a, n);
+		SAFE(zzSetSignMod)(t, t, mod, n, TRUE);
+		zzAddMod(t1, t, a, mod, n);
+		if (!wwIsZero(t1, n))
+			return FALSE;
+		SAFE(zzSetSignMod)(t1, t1, mod, n, TRUE);
+		if (!wwIsZero(t1, n))
+			return FALSE;
+		wwCopy(t, a, n);
+		SAFE(zzSetSignMod)(t, t, mod, n, FALSE);
+		zzSubMod(t1, t, a, mod, n);
+		if (!wwIsZero(t1, n))
+			return FALSE;
+		SAFE(zzSetSignMod)(t1, t1, mod, n, FALSE);
+		if (!wwIsZero(t1, n))
+			return FALSE;
+	}
+
 	// все нормально
 	return TRUE;
 }
