@@ -400,6 +400,44 @@ T == octet.
 	#error "Unsupported size_t size"
 #endif
 
+
+/*!
+*******************************************************************************
+\def LE_TO_NE
+\brief Little-endian to native-endian
+*******************************************************************************
+*/
+#ifdef LITTLE_ENDIAN
+#define LE8_TO_NE8(o0, o1, o2, o3, o4, o5, o6, o7) \
+  (o0), (o1), (o2), (o3), (o4), (o5), (o6), (o7)
+
+#if (O_PER_W == 2)
+#define LE_TO_NE(o0, o1) (o0), (o1)
+#elif (O_PER_W == 4)
+#define LE_TO_NE(o0, o1, o2, o3) (o0), (o1), (o2), (o3)
+#elif (O_PER_W == 8)
+#define LE_TO_NE(o0, o1, o2, o3, o4, o5, o6, o7) \
+  (o0), (o1), (o2), (o3), (o4), (o5), (o6), (o7)
+#endif
+
+#else /* BIG_ENDIAN */
+#if (O_PER_W == 2)
+#define LE_TO_NE(o0, o1) (o1), (o0)
+#define LE8_TO_NE8(o0, o1, o2, o3, o4, o5, o6, o7) \
+  (o1), (o0), (o3), (o2), (o5), (o4), (o7), (o6)
+#elif (O_PER_W == 4)
+#define LE_TO_NE(o0, o1, o2, o3) (o3), (o2), (o1), (o0)
+#define LE8_TO_NE8(o0, o1, o2, o3, o4, o5, o6, o7) \
+  (o3), (o2), (o1), (o0), (o7), (o6), (o5), (o4)
+#elif (O_PER_W == 8)
+#define LE_TO_NE(o0, o1, o2, o3, o4, o5, o6, o7) \
+  (o7), (o6), (o5), (o4), (o3), (o2), (o1), (o0)
+#define LE8_TO_NE8(o0, o1, o2, o3, o4, o5, o6, o7) \
+  (o7), (o6), (o5), (o4), (o3), (o2), (o1), (o0)
+#endif
+
+#endif
+
 /*
 *******************************************************************************
 Макросы конвертации
