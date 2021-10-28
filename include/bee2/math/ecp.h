@@ -402,50 +402,48 @@ Smult
 
 size_t ecSafeMulAWidth(const size_t l);
 
-bool_t FAST(ecpMulAA1)(word b[], const word a[], const ec_o* ec, const word d[],
-	size_t m, const word precomp_a[], const word precomp_w, void* stack);
+/*!	\brief Кратная точка
 
-size_t FAST(ecpMulAA1_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m);
+	Определяется аффинная точка [2 * ec->f->n]b эллиптической кривой ec,
+	которая является [m]d-кратной аффинной точки [2 * ec->f->n]a:
+	\code
+		b <- d a.
+	\endcode
+	Предвычисленные аффинные малце кратные точки [2 * ec->f->n]a указываются в 
+	[2^w * 2 * ec->f->n]c в следующем порядке:
+	[1-2^w]a, [3-2^w]a, .., [-1]a, [1]a, [3]a, .., [2^w-1]a,
 
-bool_t FAST(ecpMulAA)(word b[], const word a[], const ec_o* ec, const word d[],
-	size_t m, void* stack);
+	\pre Описание ec работоспособно.
+	\pre Координаты a лежат в базовом поле.
+	\pre 3 <= w && w + 1 < B_PER_W
+	\pre m не превосходит размера порядка кривой (ec->f->n+1).
+	\expect Описание ec корректно.
+	\expect Точка a лежит на ec.
+	\return TRUE, если кратная точка является аффинной, и FALSE в противном
+	случае (b == O).
+	\safe Вычисления регулярные.
+	\deep{stack} ecpMulA_deep(ec->f->n, ec->d, ec->f->deep, m).
+*/
+bool_t ecpMulA1(word b[], const word a[], const ec_o* ec, const word d[],
+	size_t m, const word c[], word w, void* stack);
 
-size_t FAST(ecpMulAA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m);
+size_t ecpMulA1_deep(size_t n, size_t f_deep, size_t ec_d, size_t ec_deep, size_t m);
 
-bool_t SAFE(ecpMulAA1)(word b[], const word a[], const ec_o* ec, const word d[],
-	size_t m, const word precomp_a[], word precomp_w, void* stack);
+bool_t ecpMulA(word b[], const word a[], const ec_o* ec, const word d[], size_t m, void* stack);
 
-size_t SAFE(ecpMulAA1_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m);
-
-bool_t SAFE(ecpMulAA)(word b[], const word a[], const ec_o* ec, const word d[], size_t m, void* stack);
-
-size_t SAFE(ecpMulAA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t ec_order_len);
-
-bool_t FAST(ecpMulAJ1)(word b[], const word a[], const ec_o* ec, const word d[],
-	size_t m, const word precomp_j[], word precomp_w, void* stack);
-
-size_t FAST(ecpMulAJ1_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m);
-
-bool_t FAST(ecpMulAJ)(word b[], const word a[], const ec_o* ec, const word d[],
-	size_t m, void* stack);
-
-size_t FAST(ecpMulAJ_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m);
+size_t ecpMulA_deep(size_t n, size_t f_deep, size_t ec_d, size_t ec_deep, size_t ec_order_len);
 
 size_t ecSafeMulJWidth(const size_t l);
 
-bool_t SAFE(ecpMulAJ1)(word b[], const word a[], const ec_o* ec, const word d[],
+bool_t ecpMulAJ1(word b[], const word a[], const ec_o* ec, const word d[],
 	size_t m, const word precomp_j[], word precomp_w, void* stack);
 
-size_t SAFE(ecpMulAJ1_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t m);
+size_t ecpMulAJ1_deep(size_t n, size_t f_deep, size_t ec_d, size_t ec_deep, size_t m);
 
-bool_t SAFE(ecpMulAJ)(word b[], const word a[], const ec_o* ec, const word d[],
+bool_t ecpMulAJ(word b[], const word a[], const ec_o* ec, const word d[],
 	size_t m, void* stack);
 
-size_t SAFE(ecpMulAJ_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t ec_order_len);
-
-bool_t FAST(ecpAddMulAA)(word b[], const ec_o* ec, void* stack, size_t k, ...);
-
-size_t FAST(ecpAddMulAA_deep)(size_t n, size_t ec_d, size_t ec_deep, size_t k, ...);
+size_t ecpMulAJ_deep(size_t n, size_t f_deep, size_t ec_d, size_t ec_deep, size_t ec_order_len);
 
 #ifdef __cplusplus
 } /* extern "C" */
