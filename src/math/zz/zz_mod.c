@@ -216,10 +216,10 @@ void SAFE(zzSetSignMod)(word b[], const word a[], const word mod[], size_t n, bo
 	// b <- b + mod & mask
 	zzAddAndW(b, mod, n, mask);
 
-	zzSetSign(b, b, n, neg);
+	SAFE(zzSetSign)(b, b, n, neg);
 
 	// mask <- b == mod ? WORD_MAX : WORD_0
-	mask = WORD_0 - (word)wwEq(b, mod, n);
+	mask = WORD_0 - (word)SAFE(wwEq)(b, mod, n);
 	// b <- b - mod & mask
 	zzSubAndW(b, mod, n, mask);
 
