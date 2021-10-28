@@ -34,8 +34,9 @@ static size_t bignKeyWrap_deep(size_t n, size_t f_deep, size_t ec_d,
 	size_t ec_deep)
 {
 	return O_OF_W(3 * n) + 32 +
-		utilMax(2,
+		utilMax(3,
 			ecMulA_deep(n, ec_d, ec_deep, n),
+			ecpMulA1_deep(n, f_deep, ec_d, ec_deep, n),
 			beltKWP_keep());
 }
 
@@ -109,7 +110,7 @@ err_t bignKeyWrap(octet token[], const bign_params* params, const octet key[],
 	// theta <- <R>_{256}
 	qrTo(theta, ecX(R), ec->f, stack);
 	// R <- k G
-	if (!ecMulA(R, ec->base, ec, k, n, stack))
+	if (!ecpMulA1(R, ec->base, ec, k, n, params->precomp.Gs, params->precomp.w, stack))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;

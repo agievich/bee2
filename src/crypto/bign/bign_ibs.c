@@ -151,7 +151,7 @@ static size_t bignIdSign_deep(size_t n, size_t f_deep, size_t ec_d,
 	return O_OF_W(4 * n) +
 		utilMax(4,
 			beltHash_keep(),
-			ecMulA_deep(n, ec_d, ec_deep, n),
+			ecpMulA1_deep(n, f_deep, ec_d, ec_deep, n),
 			zzMul_deep(n / 2, n),
 			zzMod_deep(n + n / 2 + 1, n));
 }
@@ -223,7 +223,7 @@ err_t bignIdSign(octet id_sig[], const bign_params* params,
 		return ERR_BAD_RNG;
 	}
 	// V <- k G
-	if (!ecMulA(V, ec->base, ec, k, n, stack))
+	if (!ecpMulA1(V, ec->base, ec, k, n, params->precomp.Gs, params->precomp.w, stack))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;
@@ -261,7 +261,7 @@ static size_t bignIdSign2_deep(size_t n, size_t f_deep, size_t ec_d,
 			beltHash_keep(),
 			32,
 			beltWBL_keep(),
-			ecMulA_deep(n, ec_d, ec_deep, n),
+			ecpMulA1_deep(n, f_deep, ec_d, ec_deep, n),
 			zzMul_deep(n / 2, n),
 			zzMod_deep(n + n / 2 + 1, n));
 }
@@ -354,7 +354,7 @@ err_t bignIdSign2(octet id_sig[], const bign_params* params,
 		}
 	}
 	// V <- k G
-	if (!ecMulA(V, ec->base, ec, k, n, stack))
+	if (!ecpMulA1(V, ec->base, ec, k, n, params->precomp.Gs, params->precomp.w, stack))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;

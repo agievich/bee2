@@ -33,7 +33,7 @@ static size_t bignGenKeypair_deep(size_t n, size_t f_deep, size_t ec_d,
 	size_t ec_deep)
 {
 	return O_OF_W(n + 2 * n) +
-		ecMulA_deep(n, ec_d, ec_deep, n);
+		ecpMulA1_deep(n, f_deep, ec_d, ec_deep, n);
 }
 
 err_t bignGenKeypair(octet privkey[], octet pubkey[],
@@ -83,7 +83,7 @@ err_t bignGenKeypair(octet privkey[], octet pubkey[],
 		return ERR_BAD_RNG;
 	}
 	// Q <- d G
-	if (ecMulA(Q, ec->base, ec, d, n, stack))
+	if (ecpMulA1(Q, ec->base, ec, d, n, params->precomp.Gs, params->precomp.w, stack))
 	{
 		// выгрузить ключи
 		wwTo(privkey, no, d);
@@ -101,7 +101,7 @@ static size_t bignValKeypair_deep(size_t n, size_t f_deep, size_t ec_d,
 	size_t ec_deep)
 {
 	return O_OF_W(n + 2 * n) +
-		ecMulA_deep(n, ec_d, ec_deep, n);
+		ecpMulA1_deep(n, f_deep, ec_d, ec_deep, n);
 }
 
 err_t bignValKeypair(const bign_params* params, const octet privkey[],
@@ -151,7 +151,7 @@ err_t bignValKeypair(const bign_params* params, const octet privkey[],
 		return ERR_BAD_PRIVKEY;
 	}
 	// Q <- d G
-	if (ecMulA(Q, ec->base, ec, d, n, stack))
+	if (ecpMulA1(Q, ec->base, ec, d, n, params->precomp.Gs, params->precomp.w, stack))
 	{
 		// Q == pubkey?
 		wwTo(Q, 2 * no, Q);
@@ -224,7 +224,7 @@ static size_t bignCalcPubkey_deep(size_t n, size_t f_deep, size_t ec_d,
 	size_t ec_deep)
 {
 	return O_OF_W(n + 2 * n) +
-		ecMulA_deep(n, ec_d, ec_deep, n);
+		ecpMulA1_deep(n, f_deep, ec_d, ec_deep, n);
 }
 
 err_t bignCalcPubkey(octet pubkey[], const bign_params* params,
@@ -272,7 +272,7 @@ err_t bignCalcPubkey(octet pubkey[], const bign_params* params,
 		return ERR_BAD_PRIVKEY;
 	}
 	// Q <- d G
-	if (ecMulA(Q, ec->base, ec, d, n, stack))
+	if (ecpMulA1(Q, ec->base, ec, d, n, params->precomp.Gs, params->precomp.w, stack))
 	{
 		// выгрузить открытый ключ
 		qrTo(pubkey, ecX(Q), ec->f, stack);

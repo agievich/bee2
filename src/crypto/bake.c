@@ -273,7 +273,7 @@ err_t bakeBMQVStep2(octet out[], void* state)
 		s->settings->rng_state))
 		return ERR_BAD_RNG;
 	// Vb <- ub G
-	if (!ecMulA(Vb, s->ec->base, s->ec, s->u, n, stack))
+	if (!ecpMulA1(Vb, s->ec->base, s->ec, s->u, n, s->params->precomp.Gs, s->params->precomp.w, stack))
 		return ERR_BAD_PARAMS;
 	// out <- <Vb>
 	qrTo(out, ecX(Vb), s->ec->f, stack);
@@ -290,7 +290,7 @@ static size_t bakeBMQVStep2_deep(size_t n, size_t f_deep, size_t ec_d,
 	return O_OF_W(2 * n) +
 		utilMax(2,
 			f_deep,
-			ecMulA_deep(n, ec_d, ec_deep, n));
+			ecpMulA1_deep(n, f_deep, ec_d, ec_deep, n));
 }
 
 err_t bakeBMQVStep3(octet out[], const octet in[], const bake_cert* certb,
@@ -349,7 +349,7 @@ err_t bakeBMQVStep3(octet out[], const octet in[], const bake_cert* certb,
 		s->settings->rng_state))
 		return ERR_BAD_RNG;
 	// Va <- ua G
-	if (!ecMulA(Va, s->ec->base, s->ec, s->u, n, stack))
+	if (!ecpMulA1(Va, s->ec->base, s->ec, s->u, n, s->params->precomp.Gs, s->params->precomp.w, stack))
 		return ERR_BAD_PARAMS;
 	qrTo((octet*)Va, ecX(Va), s->ec->f, stack);
 	qrTo((octet*)Va + no, ecY(Va, n), s->ec->f, stack);
@@ -415,10 +415,11 @@ static size_t bakeBMQVStep3_deep(size_t n, size_t f_deep, size_t ec_d,
 	size_t ec_deep)
 {
 	return O_OF_W(8 * n + 2) +
-		utilMax(9,
+		utilMax(10,
 			f_deep,
 			ecpIsOnA_deep(n, f_deep),
 			ecMulA_deep(n, ec_d, ec_deep, n),
+			ecpMulA1_deep(n, f_deep, ec_d, ec_deep, n),
 			beltHash_keep(),
 			zzMul_deep(n / 2, n),
 			zzMod_deep(n + n / 2 + 1, n),
@@ -838,7 +839,7 @@ err_t bakeBSTSStep2(octet out[], void* state)
 		s->settings->rng_state))
 		return ERR_BAD_RNG;
 	// Vb <- ub G
-	if (!ecMulA(s->Vb, s->ec->base, s->ec, s->u, n, stack))
+	if (!ecpMulA1(s->Vb, s->ec->base, s->ec, s->u, n, s->params->precomp.Gs, s->params->precomp.w, stack))
 		return ERR_BAD_PARAMS;
 	// out <- <Vb>
 	qrTo(out, ecX(s->Vb), s->ec->f, stack);
@@ -852,7 +853,7 @@ static size_t bakeBSTSStep2_deep(size_t n, size_t f_deep, size_t ec_d,
 {
 	return utilMax(2,
 			f_deep,
-			ecMulA_deep(n, ec_d, ec_deep, n));
+			ecpMulA1_deep(n, f_deep, ec_d, ec_deep, n));
 }
 
 err_t bakeBSTSStep3(octet out[], const octet in[], void* state)
@@ -893,7 +894,7 @@ err_t bakeBSTSStep3(octet out[], const octet in[], void* state)
 		s->settings->rng_state))
 		return ERR_BAD_RNG;
 	// Va <- ua G
-	if (!ecMulA(Va, s->ec->base, s->ec, s->u, n, stack))
+	if (!ecpMulA1(Va, s->ec->base, s->ec, s->u, n, s->params->precomp.Gs, s->params->precomp.w, stack))
 		return ERR_BAD_PARAMS;
 	qrTo((octet*)Va, ecX(Va), s->ec->f, stack);
 	qrTo((octet*)Va + no, ecY(Va, n), s->ec->f, stack);
@@ -955,10 +956,11 @@ static size_t bakeBSTSStep3_deep(size_t n, size_t f_deep, size_t ec_d,
 	size_t ec_deep)
 {
 	return O_OF_W(4 * n + 2) + 32 +
-		utilMax(9,
+		utilMax(10,
 			f_deep,
 			ecpIsOnA_deep(n, f_deep),
 			ecMulA_deep(n, ec_d, ec_deep, n),
+			ecpMulA1_deep(n, f_deep, ec_d, ec_deep, n),
 			beltHash_keep(),
 			zzMul_deep(n / 2, n),
 			zzMod_deep(n + n / 2 + 1, n),
