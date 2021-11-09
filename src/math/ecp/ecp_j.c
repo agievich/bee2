@@ -914,7 +914,6 @@ void ecpSetSignA(word b[], const word a[], bool_t neg, const ec_o* ec)
 	zmSetSign(ecY(b, n), ecY(a, n), ec->f, neg);
 }
 
-
 void ecpJToH(word* c, const word a[], const ec_o* ec, void* stack) {
 	qrMul(ecX(c), ecX(a), ecZ(a, ec->f->n), ec->f, stack);
 
@@ -1197,8 +1196,6 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	ec->dbl = bA3 ? ecpDblJA3 : ecpDblJ;
 	ec->dbla = ecpDblAJ;
 	ec->tpl = bA3 ? ecpTplJA3 : ecpTplJ;
-	// ec->dbl_adda = ecpDblAddA;
-	// ec->set_signa = ecpSetSignA;
 	ec->deep = utilMax(9,
 		ecpToAJ_deep(f->n, f->deep),
 		ecpAddJ_deep(f->n, f->deep),
