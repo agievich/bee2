@@ -97,7 +97,7 @@ bool_t ecpBench()
 			// эксперимент
 			if(1)
 				for (i = 0, ticks = tmTicks(); i < reps; ++i)
-					ecpSmallMultA(c, pt, ec->base, 5, ec, stack2);
+					ecpSmallMultA(c, ec->base, 5, ec, stack2);
 			else
 				for (i = 0, ticks = tmTicks(); i < reps; ++i)
 					ecpSmallMultJ(c, pt, ec->base, 5, ec, stack2);

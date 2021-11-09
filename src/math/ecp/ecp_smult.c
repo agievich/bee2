@@ -183,7 +183,7 @@ bool_t ecpMulA(word b[], const word a[], const ec_o* ec, const word d[], size_t 
 	ci = c + half_precomp_size;
 	stack = ci + half_precomp_size;
 
-	ecpSmallMultA(ci, NULL, a, w, ec, stack);
+	ecpSmallMultA(ci, a, w, ec, stack);
 	ecNegPrecompA(c, w, ec);
 	return ecpMulA1(b, a, ec, d, m, c, w, stack);
 }
@@ -195,7 +195,7 @@ size_t ecpMulA_deep(size_t n, size_t f_deep, size_t ec_d, size_t ec_deep, size_t
 
 	return O_OF_W(na << w)
 		+ utilMax(2,
-			ecpSmallMultA_deep(FALSE, w, n, f_deep),
+			ecpSmallMultA_deep(w, n, f_deep),
 			ecpMulA1_deep(n, f_deep, ec_d, ec_deep, ec_order_len)
 		);
 }

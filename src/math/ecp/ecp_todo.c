@@ -310,36 +310,14 @@ bool_t smMultsA_divPoly(word* sm_mults, const word a[], const word w, const ec_o
 }
 #endif
 
-#ifdef _DEBUG
-#define stack_walloc(p, k)					\
-	do {									\
-		*(word*)(stack) = (word)(k);		\
-		*((word*)(stack) + 1) = 0xfeedbeef;	\
-		(p) = (word*)(stack) + 2;			\
-		*((word*)(stack) + 2) = 0xbeeffeed;	\
-		stack = (word*)(stack) + 3 + (k);	\
-		*((word*)(stack) - 2) = 0xfeedbeef;	\
-		*((word*)(stack) - 1) = 0xbeeffeed;	\
-	} while(0)
-#define stack_wfree(p)														\
-	do {																	\
-		ASSERT(*((word*)(p) - 1) == 0xfeedbeef);							\
-		ASSERT(*((word*)(p)) != 0xbeeffeed);								\
-		ASSERT(stack == ((word*)(p) + 1 + (size_t)*((word*)(p)-2)));		\
-		ASSERT(*((word*)(p) + (size_t)*((word*)(p)-2) - 1) != 0xfeedbeef);	\
-		ASSERT(*((word*)(p) + (size_t)*((word*)(p)-2)) == 0xbeeffeed);		\
-		stack = (word*)(p) - 2;												\
-	} while(0)
-#else
 #define stack_walloc(p, k)				\
 	do {								\
 		(p) = (word*)(stack);			\
 		stack = (word*)(stack) + (k);	\
 	} while(0)
 #define stack_wfree(p)
-#endif
 
-void ecpSmallMultA(word* c, word da[], const word a[], const size_t w, const ec_o* ec, void* stack)
+void ecpSmallMultA(word* c, const word a[], const size_t w, const ec_o* ec, void* stack)
 {
 	// размер координаты
 	const size_t n = ec->f->n;
@@ -356,25 +334,24 @@ void ecpSmallMultA(word* c, word da[], const word a[], const size_t w, const ec_
 	// 0) Wᵢ, i=3,4,5
 	// 1) for i=3,4..2ʷ⁻¹
 	// 2) Wᵢ⁻², i=3,5..2ʷ-1
-	// 3) 2P
-	// 4*) for i=3,5..2ʷ⁻¹-1
-	// 4) for i=3,5..2ʷ⁻¹+1
-	// 5) for i=2ʷ⁻¹+1,2ʷ⁻¹+3..2ʷ-1
-	// 5*) for i=2ʷ⁻¹+3,2ʷ⁻¹+5..2ʷ-1
+	// 3*) for i=3,5..2ʷ⁻¹-1
+	// 3) for i=3,5..2ʷ⁻¹+1
+	// 4) for i=2ʷ⁻¹+1,2ʷ⁻¹+3..2ʷ-1
+	// 4*) for i=2ʷ⁻¹+3,2ʷ⁻¹+5..2ʷ-1
 	//
 	// Таблица. Подвыражения на этапах.
-	// Подвыражение    | 0)       | 1)                | 2)   | 3)     | 4)         | 5)                 |
-	// --------------------------------------------------------------------------------------------------
-	// Wᵢ              | W[3,4,5] | R[i,i+2,2i+1]     |      | R[3,4] | R[*2i]     | R[*i-1,i,*i+1,i+2] |
-	//                 |          | W[2i,2i+1]        |      |        |            |                    |
-	// Wᵢ²             | W[3,4,5] | R[i-1,i,i+1,'i+2] | R[i] |        |            | R[i-1,'i,i+1,'i+2] |
-	//                 |          | W[2i,2i+1]        |      |        |            |                    |
-	// Wᵢ⁻²            |          |                   | W[i] |        | R[i]       | R[i]               |
-	// Wᵢ₋₁ Wᵢ₊₁       | W[2,3]   | W[i+1]            |      |        |            | R[i-1], W[i+1]     |
-	//                 |          | R[i-1,i(e),i+1]   |      |        |            |                    |
-	// (2y)² Wᵢ₋₁ Wᵢ₊₁ | W[3]     | W[i(e)+1]         |      |        | R[i]       |                    |
-	// (2y)⁴ Wᵢ₋₁ Wᵢ₊₁ | W[3]     | R[i(o)]           |      |        |            |                    |
-	//                 |          | WR[i(e)+1]        |      |        |            |                    |
+	// Подвыражение    | 0)       | 1)                | 2)   | 3)         | 4)                 |
+	// -----------------------------------------------------------------------------------------
+	// Wᵢ              | W[3,4,5] | R[i,i+2,2i+1]     |      | R[*2i]     | R[*i-1,i,*i+1,i+2] |
+	//                 |          | W[2i,2i+1]        |      |            |                    |
+	// Wᵢ²             | W[3,4,5] | R[i-1,i,i+1,'i+2] | R[i] |            | R[i-1,'i,i+1,'i+2] |
+	//                 |          | W[2i,2i+1]        |      |            |                    |
+	// Wᵢ⁻²            |          |                   | W[i] | R[i]       | R[i]               |
+	// Wᵢ₋₁ Wᵢ₊₁       | W[2,3]   | W[i+1]            |      |            | R[i-1], W[i+1]     |
+	//                 |          | R[i-1,i(e),i+1]   |      |            |                    |
+	// (2y)² Wᵢ₋₁ Wᵢ₊₁ | W[3]     | W[i(e)+1]         |      | R[i]       |                    |
+	// (2y)⁴ Wᵢ₋₁ Wᵢ₊₁ | W[3]     | R[i(o)]           |      |            |                    |
+	//                 |          | WR[i(e)+1]        |      |            |                    |
 	//
 
 	// Выделяемая память
@@ -382,55 +359,51 @@ void ecpSmallMultA(word* c, word da[], const word a[], const size_t w, const ec_
 	word* tmp2;
 	// 2y
 	word* dy;
-	// (2y)⁻¹
-	word* dyi;
 	// (2y)²
 	word* dy2;
 	// полиномы деления: Wᵢ, i=3,4..(2ʷ+1)
-	// этапы: 0), 1), 3), 4), 5)
+	// этапы: 0), 1), 3), 4)
 	// память: 2ʷ-1
 	// Значения расчитываются на этапе 1) по индексам 2i и 2i+1.
 	// На этапе 1) значения считываются последовательно, по индексам i, i+2.
-	// На этапе 4) значения считываются по чётным индексам 2i.
-	// На этапе 5) значения считываются последовательно, по индексам i-1,i,i+1,i+2.
+	// На этапе 3) значения считываются по чётным индексам 2i.
+	// На этапе 4) значения считываются последовательно, по индексам i-1,i,i+1,i+2.
 	// Упростить кэширование не получается - необходимо выделять память под все значения.
 	word* pW;
 #define W(i) (pW + ((i)-3) * n)
 	// квадраты: Wᵢ², i=3,4..2ʷ
-	// этапы: 2), 4), 5)
+	// этапы: 2), 3), 4)
 	// память: 2ʷ-2[+1]
-	// Если на этапе 5) не используется gfpMul2 (вычисление произведения через квадраты),
-	// то на этапе 5) используются только значения по чётным индексам, поэтому память
+	// Если на этапе 4) не используется gfpMul2 (вычисление произведения через квадраты),
+	// то на этапе 4) используются только значения по чётным индексам, поэтому память
 	// под квадраты по нечётным индексам можно переиспользовать под обратные (макрос W2i).
 	// Квадраты с нечётными индексами сгруппированы вместе для упрощения их обращения.
-	// Если требуется найти также двойную точки (da != NULL), то требуется также инвертировать
-	// значение 2y. Оно добавляется к квадратам по нечётным индексам для обращения.
 	// Квадраты по чётным индексам: W₂ᵢ², i=2,3..2ʷ⁻¹, - выделяются в pW2[0].
-	// Квадраты по нечётным индексам: W₂ᵢ₋₁²[,2y], i=2,3..2ʷ⁻¹, - выделяются в pw2[1].
+	// Квадраты по нечётным индексам: W₂ᵢ₋₁², i=2,3..2ʷ⁻¹, - выделяются в pw2[1].
 	word* pW2[2];
 #define W2(i) (pW2[(i)&1] + (((i)-3)>>1) * n)
 	// обратные нечётные квадраты: W₂ᵢ₋₁⁻², i=2,3..2ʷ⁻¹
-	// этапы: 2), 4), 5)
+	// этапы: 2), 3), 4)
 	// память: 2ʷ⁻¹-1
-	// Обратные нечётные квадраты формируются на этапе 2) и используются на этапах 4) и 5).
+	// Обратные нечётные квадраты формируются на этапе 2) и используются на этапах 3) и 4).
 	word* pW2i;
 #define W2i(i) (pW2i + (((i)-3)>>1) * n)
 	// произведения: Wᵢ₋₁ Wᵢ₊₁, i=2,3..2ʷ⁻¹+1
-	// этапы: 0), 1), 5)
+	// этапы: 0), 1), 4)
 	// память: 3
 	// На этапе 1) значения формируются и используются последовательно с индексами i-1,i,i+1,
 	// поэтому можно выделять память лишь под 3 текущие значения.
-	// На этапе 5) происходит чтение по индексу i-1, и запись по индексу i+1, поэтому
+	// На этапе 4) происходит чтение по индексу i-1, и запись по индексу i+1, поэтому
 	// память можно выделять только под 1 значение.
 	// Макрос WW(i) имеет вид (i+D)%3, где D - константа.
 	// D выбрано как 2ʷ, чтобы WW(2ʷ⁻¹)=[(2ʷ⁻¹(1+2))%3]=0.
-	// Макрос WW переопределен перед этапом 5) так, чтобы WW(i)=0.
+	// Макрос WW переопределен перед этапом 4) так, чтобы WW(i)=0.
 	word* pWW;
 #define WW(i) (pWW + (((i) + (SIZE_1 << w))%3) * n)
 	// произведения: (2y)² Wᵢ₋₁ Wᵢ₊₁, i=3,5..2ʷ⁻¹+1
-	// этапы: 0), 1), 4)
+	// этапы: 0), 1), 3)
 	// память: 2ʷ⁻²
-	// Значения формируются на этапах 0), 1), чтение - на этапе 4). Кэшировать нужно все значения.
+	// Значения формируются на этапах 0), 1), чтение - на этапе 3). Кэшировать нужно все значения.
 	word* pWW2;
 #define WWy2(i) (pWW2 + (((i)-3) >> 1) * n)
 	// текущее произведение: (2y)⁴ Wᵢ₋₁ Wᵢ₊₁, i=3,5..(2ʷ⁻¹-1)
@@ -447,12 +420,12 @@ void ecpSmallMultA(word* c, word da[], const word a[], const size_t w, const ec_
 	stack_walloc(tmp2, n);
 	stack_walloc(pW, n * ((SIZE_1 << w) - 1));
 	stack_walloc(pW2[0], n * ((SIZE_1 << (w-1)) - 1));
-	stack_walloc(pW2[1], n * ((SIZE_1 << (w-1)) - (da ? 0 : 1)));
-	stack_walloc(pW2i, n * ((SIZE_1 << (w-1)) - (da ? 0 : 1)));
+	stack_walloc(pW2[1], n * ((SIZE_1 << (w-1)) - 1));
+	stack_walloc(pW2i, n * ((SIZE_1 << (w-1)) - 1));
 	stack_walloc(pWW, n * 3);
 	stack_walloc(pWW2, n * (SIZE_1 << (w-2)));
 	stack_walloc(pWW4, n);
-	dy = da ? pW2[1] + n * ((SIZE_1 << (w-1)) - 1) : dy2;
+	dy = dy2;
 
 	// Этап 0)
 
@@ -492,7 +465,7 @@ void ecpSmallMultA(word* c, word da[], const word a[], const size_t w, const ec_
 
 		// [W₄]
 		{
-			word* u = da ? ecY(da, n) : W(4);
+			word* u = W(4);
 			gfpDouble(tmp, xx, ec->f);				// 2 x²
 			gfpDouble(tmp, tmp, ec->f);				// 4 x²
 			qrAdd(tmp, tmp, xx, ec->f);				// 5 x²
@@ -525,6 +498,7 @@ void ecpSmallMultA(word* c, word da[], const word a[], const size_t w, const ec_
 			gfpDouble(W(4), u, ec->f);				// W₄ = 2 (x⁶+4bx(5x²-a)+5ax(x³-ax)-8b²-a³)
 		}
 	}
+
 	// [W₃²], [W₁W₃], [W₄²], [W₂W₄], [(2y)²W₂W₄], [(2y)⁴W₂W₄]
 	qrSqr(W2(3), W(3), ec->f, stack);			// W₃²
 	qrCopy(WW(2), W(3), ec->f);					// W₁W₃ = W₃
@@ -532,7 +506,6 @@ void ecpSmallMultA(word* c, word da[], const word a[], const size_t w, const ec_
 	qrCopy(WW(3), W(4), ec->f);					// W₂W₄ = W₄
 	qrMul(WWy2(3), dy2, WW(3), ec->f, stack);	// (2y)² W₂W₄
 	qrMul(WWy4(3), dy2, WWy2(3), ec->f, stack);	// (2y)² (2y)²W₂W₄
-
 
 	// [W₅], [W₅²]
 	{
@@ -588,30 +561,15 @@ void ecpSmallMultA(word* c, word da[], const word a[], const size_t w, const ec_
 			qrSqr(W2(2 * i + 1), W(2 * i + 1), ec->f, stack);		// W₂ᵢ₊₁ ²
 	}
 
-
 	// [1]P
 	wwCopy(c, a, na);
 	c += na;
 
 	// Этап 2)
 	// [Wᵢ⁻²][,2y], i=3,5..2ʷ-1
-	qrMontInv(W2i(3), W2(3), da ? i - 1 : i - 2, ec->f, stack);
+	qrMontInv(W2i(3), W2(3), i - 2, ec->f, stack);
 
 	// Этап 3)
-	// [2]P
-	if(da)
-	{
-		dyi = pW2i + n * ((SIZE_1 << (w - 1)) - 1);
-		// X₂ = x-W₁W₃/(2yW₂)² = x - W₃ / (2y)²
-		qrSqr(tmp, dyi, ec->f, stack);						// (2y) ⁻²
-		qrMul(ecX(da), W(3), tmp, ec->f, stack);			// W₃ / (2y)²
-		qrSub(ecX(da), x, ecX(da), ec->f);					// x - W₃/(2y)²
-		// Y₂ = (W₄W₁²-W₀W₃²)/2/(2yW₂)³ = W₄ / 2 / (2y)³
-		qrMul(tmp, tmp, dyi, ec->f, stack);					// (2y) ⁻³
-		qrMul(ecY(da, n), ecY(da, n), tmp, ec->f, stack);	// W₄/2 / (2y)³
-	}
-
-	// Этап 4)
 	for (i = 3;;)
 	{
 		// i=3,5..2ʷ⁻¹+1: [Xᵢ] = x − (2y)²Wᵢ₋₁Wᵢ₊₁ Wᵢ⁻²
@@ -627,7 +585,7 @@ void ecpSmallMultA(word* c, word da[], const word a[], const size_t w, const ec_
 
 		i += 2, c += na;
 	}
-	// Этап 5)
+	// Этап 4)
 #undef WW
 #define WW(i) (pWW)
 	for (; i <= (SIZE_1 << w) - 1;)
@@ -661,13 +619,6 @@ void ecpSmallMultA(word* c, word da[], const word a[], const size_t w, const ec_
 		qrMul(tmp, W2i(i), tmp, ec->f, stack);								// (2y)²Wᵢ₋₁Wᵢ₊₁ Wᵢ⁻²
 		qrSub(ecX(c), x, tmp, ec->f);										// x − (2y)²Wᵢ₋₁Wᵢ₊₁Wᵢ⁻²
 	}
-#ifdef _DEBUG
-	if (w == 2) {
-		//чтобы stack_wfree не ломался для w == 2, так как значение по адресу pWW + 2 * n не записывается
-		wwSetZero(pWW + 2 * n, n);
-	}
-#endif // _DEBUG
-
 
 	stack_wfree(pWW4);
 	stack_wfree(pWW2);
@@ -686,10 +637,9 @@ void ecpSmallMultA(word* c, word da[], const word a[], const size_t w, const ec_
 #undef WW
 #undef WWy2
 #undef WWy4
-
 }
 
-size_t ecpSmallMultA_deep(bool_t da, const size_t w, size_t n, size_t f_deep)
+size_t ecpSmallMultA_deep(const size_t w, size_t n, size_t f_deep)
 {
 	size_t const ww = SIZE_1 << w;
 	size_t r = n * (0
@@ -698,19 +648,16 @@ size_t ecpSmallMultA_deep(bool_t da, const size_t w, size_t n, size_t f_deep)
 		+ 1						// tmp2
 		+ (ww - 1)				// pW
 		+ (ww/2 - 1)			// pW2[0]
-		+ (ww/2 - (da ? 0 : 1))	// pW2[1]
-		+ (ww/2 - (da ? 0 : 1))	// pW2i
+		+ (ww/2 - 1)			// pW2[1]
+		+ (ww/2 - 1)			// pW2i
 		+ 3						// pWW
 		+ ww/4					// pWW2
 		+ 1						// pWW4
 		);
-#ifdef _DEBUG
-	r += 3 * 10;
-#endif
 	return O_OF_W(r) +
 		utilMax(2,
 			f_deep,
-			qrMontInv_deep(n, da ? ww/2 : ww/2 - 1, f_deep));
+			qrMontInv_deep(n, ww/2 - 1, f_deep));
 ;
 }
 

@@ -145,7 +145,7 @@ static bool_t ecpSmallMultTest(const ec_o* ec, void *stack)
 				if(f == 0)
 					ecSmallMultAdd2A(c, d, ec->base, w, ec, stack);
 				else
-					ecpSmallMultA(c, d, ec->base, w, ec, stack);
+					ecpSmallMultA(c, ec->base, w, ec, stack);
 
 				if(d)
 				{
