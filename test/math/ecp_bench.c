@@ -81,30 +81,43 @@ bool_t ecpBench()
 			}
 			ticks = tmTicks() - ticks;
 			// печать результатов
-			printf("ecpBench::%s: %u cycles / mulpoint [%u mulpoints / sec]\n",
+			printf("ecpBench::wnaf+%s: %u cycles / mulpoint [%u mulpoints / sec]\n",
 				pta == ec->base ? "base": "rand",
 				(unsigned)(ticks / reps),
 				(unsigned)tmSpeed(reps, ticks));
 			if(pta == pt) break;
 			pta = pt;
 		}
-		// скорость предвычислений
+		// с малыми кратными
 		{
 			word *c = (word*)stack;
 			void *stack2 = (word*)(c + (nj << 5) + nj+nj);
 			size_t i;
 			tm_ticks_t ticks;
+
+			prngCOMBOStart(combo_state, utilNonce32());
 			// эксперимент
-			if(1)
-				for (i = 0, ticks = tmTicks(); i < reps; ++i)
-					ecpSmallMultA(c, ec->base, 5, ec, stack2);
-			else
-				for (i = 0, ticks = tmTicks(); i < reps; ++i)
-					ecpSmallMultJ(c, ec->base, 5, ec, stack2);
+            for (i = 0, ticks = tmTicks(); i < reps; ++i)
+            {
+				prngCOMBOStepR(d, ec->f->no, combo_state);
+				ecpMulA1(pt, ec->base, ec, d, ec->f->n, params->precomp.Gs, params->precomp.w, stack);
+            }
 			ticks = tmTicks() - ticks;
 			// печать результатов
-			printf("ecpBench::%s: %u cycles / rep [%u reps / sec]\n",
-				1 ? "smulsa" : "smulsj",
+			printf("ecpBench::smult+base: %u cycles / rep [%u reps / sec]\n",
+				(unsigned)(ticks / reps),
+				(unsigned)tmSpeed(reps, ticks));
+
+			prngCOMBOStart(combo_state, utilNonce32());
+			// эксперимент
+            for (i = 0, ticks = tmTicks(); i < reps; ++i)
+            {
+				prngCOMBOStepR(d, ec->f->no, combo_state);
+				ecpMulA(pt, pt, ec, d, ec->f->n, stack);
+            }
+			ticks = tmTicks() - ticks;
+			// печать результатов
+			printf("ecpBench::smult+rand: %u cycles / rep [%u reps / sec]\n",
 				(unsigned)(ticks / reps),
 				(unsigned)tmSpeed(reps, ticks));
 		}
