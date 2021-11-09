@@ -80,10 +80,6 @@ bool_t ecCreateGroup(ec_o* ec, const octet xbase[], const octet ybase[],
 	wwSetZero(ec->order + W_OF_O(order_len),
 		ec->f->n + 1 - W_OF_O(order_len));
 	ec->cofactor = (word)cofactor;
-	// предвычисления
-	// ec->precomp_w = w;
-	// ec->precomp_Gs = (const word*)Gs;
-	//TODO: выделить память под precomp_Gs в ec->descr и форсировать предвычисления, если Gs==NULL
 	// все нормально
 	return TRUE;
 }
