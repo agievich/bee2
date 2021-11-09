@@ -362,7 +362,7 @@ bool_t ecpMulAJ(word b[], const word a[], const ec_o* ec, const word d[],
 	ci = c + half_precomp_size;
 	stack = ci + half_precomp_size;
 
-	ecpSmallMultJ(ci, NULL, a, w, ec, stack);
+	ecpSmallMultJ(ci, a, w, ec, stack);
 	ecNegPrecompJ(c, w, ec, stack);
 	return ecpMulAJ1(b, a, ec, d, m, c, w, stack);
 }
@@ -373,7 +373,7 @@ size_t ecpMulAJ_deep(size_t n, size_t f_deep, size_t ec_d, size_t ec_deep, size_
 
 	return  O_OF_W((n * ec_d) << w)
 		+ utilMax(2,
-			ecpSmallMultJ_deep(FALSE, w, n, f_deep),
+			ecpSmallMultJ_deep(w, n, f_deep),
 			ecpMulAJ1_deep(n, f_deep, ec_d, ec_deep, ec_order_len)
 		);
 }

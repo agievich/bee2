@@ -180,7 +180,7 @@ static bool_t ecpSmallMultTest(const ec_o* ec, void *stack)
 				if(f == 0)
 					ecSmallMultAdd2J(c, d, ec->base, w, ec, stack);
 				else
-					ecpSmallMultJ(c, d, ec->base, w, ec, stack);
+					ecpSmallMultJ(c, ec->base, w, ec, stack);
 
 				if(d)
 				{

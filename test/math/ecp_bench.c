@@ -100,7 +100,7 @@ bool_t ecpBench()
 					ecpSmallMultA(c, ec->base, 5, ec, stack2);
 			else
 				for (i = 0, ticks = tmTicks(); i < reps; ++i)
-					ecpSmallMultJ(c, pt, ec->base, 5, ec, stack2);
+					ecpSmallMultJ(c, ec->base, 5, ec, stack2);
 			ticks = tmTicks() - ticks;
 			// печать результатов
 			printf("ecpBench::%s: %u cycles / rep [%u reps / sec]\n",
