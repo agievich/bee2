@@ -38,13 +38,8 @@ static void ecNegPrecompA(word c[], const size_t w, const ec_o* ec)
 	}
 }
 
-size_t ecSafeMulAWidth(const size_t l) {
-	//todo calculate actual breakpoints
-	if (l <= 256)
-	{
-		return 4;
-	}
-	return 5;
+size_t ecpMulAWidth(const size_t l) {
+    return l <= 256 ? 4 : 5;
 }
 
 bool_t ecpMulA1(word b[], const word a[], const ec_o* ec, const word d[],
@@ -175,7 +170,7 @@ size_t ecpMulA1_deep(size_t n, size_t f_deep, size_t ec_d, size_t ec_deep, size_
 
 bool_t ecpMulA(word b[], const word a[], const ec_o* ec, const word d[], size_t m, void* stack)
 {
-	const size_t w = ecSafeMulAWidth(wwBitSize(ec->order, ec->f->n + 1));
+	const size_t w = ecpMulAWidth(wwBitSize(ec->order, ec->f->n + 1));
 	const size_t half_precomp_size = ec->f->n << w; //i.e. (ec->f->n * 2) << (w - 1)
 
 	word* c;
@@ -193,7 +188,7 @@ bool_t ecpMulA(word b[], const word a[], const ec_o* ec, const word d[], size_t 
 size_t ecpMulA_deep(size_t n, size_t f_deep, size_t ec_d, size_t ec_deep, size_t ec_order_len)
 {
 	const size_t na = n * 2;
-	const size_t w = ecSafeMulAWidth(B_OF_W(ec_order_len));
+	const size_t w = ecpMulAWidth(B_OF_W(ec_order_len));
 
 	return O_OF_W(na << w)
 		+ utilMax(2,
@@ -217,13 +212,8 @@ static void ecNegPrecompJ(word c[], const size_t w, const ec_o* ec, void* stack)
 	}
 }
 
-size_t ecSafeMulJWidth(const size_t l) {
-	//todo calculate actual breakpoints
-	if (l <= 256)
-	{
-		return 5;
-	}
-	return 6;
+size_t ecpMulJWidth(const size_t l) {
+    return l <= 256 ? 5 : 6;
 }
 
 bool_t ecpMulAJ1(word b[], const word a[], const ec_o* ec, const word d[],
@@ -355,7 +345,7 @@ size_t ecpMulAJ1_deep(size_t n, size_t f_deep, size_t ec_d, size_t ec_deep, size
 bool_t ecpMulAJ(word b[], const word a[], const ec_o* ec, const word d[],
 	size_t m, void* stack)
 {
-	const size_t w = ecSafeMulJWidth(wwBitSize(ec->order, ec->f->n + 1));
+	const size_t w = ecpMulJWidth(wwBitSize(ec->order, ec->f->n + 1));
 	const size_t half_precomp_size = (ec->f->n * ec->d) << (w - 1);
 	word* c;
 	word* ci;
@@ -371,7 +361,7 @@ bool_t ecpMulAJ(word b[], const word a[], const ec_o* ec, const word d[],
 
 size_t ecpMulAJ_deep(size_t n, size_t f_deep, size_t ec_d, size_t ec_deep, size_t ec_order_len)
 {
-	const size_t w = ecSafeMulJWidth(B_OF_W(ec_order_len));
+	const size_t w = ecpMulJWidth(B_OF_W(ec_order_len));
 
 	return  O_OF_W((n * ec_d) << w)
 		+ utilMax(2,

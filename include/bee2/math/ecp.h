@@ -440,7 +440,7 @@ Smult
 *******************************************************************************
 */
 
-size_t ecSafeMulAWidth(const size_t l);
+size_t ecpMulAWidth(const size_t l);
 
 /*!	\brief Кратная точка
 
@@ -473,7 +473,7 @@ bool_t ecpMulA(word b[], const word a[], const ec_o* ec, const word d[], size_t 
 
 size_t ecpMulA_deep(size_t n, size_t f_deep, size_t ec_d, size_t ec_deep, size_t ec_order_len);
 
-size_t ecSafeMulJWidth(const size_t l);
+size_t ecpMulJWidth(const size_t l);
 
 bool_t ecpMulAJ1(word b[], const word a[], const ec_o* ec, const word d[],
 	size_t m, const word precomp_j[], word precomp_w, void* stack);
