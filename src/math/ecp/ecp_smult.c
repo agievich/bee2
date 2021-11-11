@@ -718,7 +718,6 @@ size_t ecpSmallMultA_deep(const size_t w, size_t n, size_t f_deep)
 		utilMax(2,
 			f_deep,
 			qrMontInv_deep(n, ww/2 - 1, f_deep));
-;
 }
 
 void ecpSmallMultJ(word* c, const word a[], const size_t w, const ec_o* ec, void* stack)

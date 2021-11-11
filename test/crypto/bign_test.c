@@ -504,13 +504,10 @@ void bignPrintPrecomp()
 		{
 			for(j = 0; j < na * sizeof(word);)
 			{
-				if(j % 32 == 0)
-					printf("", '\t');//"%c"
+				// if(j % 32 == 0)
+				// 	printf("%c", '\t');
 				printf("0x%02x,", (int)*o++);
-				if(++j % 32 == 0)
-					printf("");//"\n"
-				else
-					printf("");//" "
+				// printf(++j % 32 == 0 ? "\n" : " ");
 			}
 			if (0 == (i & ((1 << (w - 2)) - 1)))
 				printf("\n");

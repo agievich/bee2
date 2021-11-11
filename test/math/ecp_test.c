@@ -536,8 +536,10 @@ bool_t testStdCurves(const void* state, void* stack)
 	char oid[] = "1.2.112.0.2.0.34.101.45.3.0";
 	for (; ++oid[sizeof(oid) - 2] < '4'; )
 	{
-		bignStdParams(params, oid);
-		bignStart(ec, params);
+		if (ERR_OK != bignStdParams(params, oid))
+			return FALSE;
+		if (ERR_OK != bignStart(ec, params))
+			return FALSE;
 		if (!ecpSmallMultTest(ec, stack))
 			return FALSE;
 		if (!ecpMulATest(ec, stack))
@@ -562,8 +564,10 @@ bool_t testSmallCurves(const void* state, void* stack, const size_t sizeOfStack)
 
 	for (int i = 0; i < sizeof(testCurveNames) / sizeof(testCurveNames[0]); ++i)
 	{
-		bignTestParams(params, testCurveNames[i]);
-		bignStart(ec, params);
+		if (ERR_OK != bignTestParams(params, testCurveNames[i]))
+			return FALSE;
+		if (ERR_OK != bignStart(ec, params))
+			return FALSE;
 		if (!testEcp(ec, stack, sizeOfStack, ec->f->n, ec->f->deep, ec->deep))
 			return FALSE;
 		if (!ecpMulATestFullGroup(ec, stack))
