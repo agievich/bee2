@@ -72,18 +72,16 @@ extern bool_t zzTest();
 extern bool_t wordTest();
 extern bool_t ecpTest();
 
-bool_t fTest = TRUE;
-bool_t fBench = TRUE;
-
 int testMath()
 {
 	bool_t code;
 	int ret = 0;
-	//printf("priTest: %s\n", (code = priTest()) ? "OK" : "Err"), ret |= !code;
+	printf("priTest: %s\n", (code = priTest()) ? "OK" : "Err"), ret |= !code;
 	printf("zzTest: %s\n", (code = zzTest()) ? "OK" : "Err"), ret |= !code;
-	//printf("wordTest: %s\n", (code = wordTest()) ? "OK" : "Err"), ret |= !code;
-	//printf("wwTest: %s\n", (code = wwTest()) ? "OK" : "Err"), ret |= !code;
+	printf("wordTest: %s\n", (code = wordTest()) ? "OK" : "Err"), ret |= !code;
+	printf("wwTest: %s\n", (code = wwTest()) ? "OK" : "Err"), ret |= !code;
 	printf("ecpTest: %s\n", (code = ecpTest()) ? "OK" : "Err"), ret |= !code;
+    code = ecpBench(), ret |= !code;
 	return ret;
 }
 
@@ -111,26 +109,25 @@ extern bool_t bpkiTest();
 extern bool_t bignBench();
 extern bool_t bakeBench();
 
-
 int testCrypto()
 {
 	bool_t code;
 	int ret = 0;
-	// printf("beltTest: %s\n", (code = beltTest()) ? "OK" : "Err"), ret |= !code;
-	// printf("bashTest: %s\n", (code = bashTest()) ? "OK" : "Err"), ret |= !code;
-	// code = beltBench(), ret |= !code;
-	// code = bashBench(), ret |= !code;
-	if(fTest) printf("bignTest: %s\n", (code = bignTest()) ? "OK" : "Err"), ret |= !code;
-	if(fBench) code = bignBench(),	ret |= !code;
-	// printf("botpTest: %s\n", (code = botpTest()) ? "OK" : "Err"), ret |= !code;
-	// printf("brngTest: %s\n", (code = brngTest()) ? "OK" : "Err"), ret |= !code;
-	// printf("belsTest: %s\n", (code = belsTest()) ? "OK" : "Err"), ret |= !code;
-	if(fTest) printf("bakeTest: %s\n", (code = bakeTest()) ? "OK" : "Err"), ret |= !code;
-	if(fBench) code = bakeBench(),	ret |= !code;
+	printf("beltTest: %s\n", (code = beltTest()) ? "OK" : "Err"), ret |= !code;
+	printf("bashTest: %s\n", (code = bashTest()) ? "OK" : "Err"), ret |= !code;
+	code = beltBench(), ret |= !code;
+	code = bashBench(), ret |= !code;
+	printf("bignTest: %s\n", (code = bignTest()) ? "OK" : "Err"), ret |= !code;
+	code = bignBench(),	ret |= !code;
+	printf("botpTest: %s\n", (code = botpTest()) ? "OK" : "Err"), ret |= !code;
+	printf("brngTest: %s\n", (code = brngTest()) ? "OK" : "Err"), ret |= !code;
+	printf("belsTest: %s\n", (code = belsTest()) ? "OK" : "Err"), ret |= !code;
+	printf("bakeTest: %s\n", (code = bakeTest()) ? "OK" : "Err"), ret |= !code;
+	code = bakeBench(),	ret |= !code;
 	printf("dstuTest: %s\n", (code = dstuTest()) ? "OK" : "Err"), ret |= !code;
 	printf("g12sTest: %s\n", (code = g12sTest()) ? "OK" : "Err"), ret |= !code;
-	// printf("pfokTest: %s\n", (code = pfokTest()) ? "OK" : "Err"), ret |= !code;
-	// printf("bpkiTest: %s\n", (code = bpkiTest()) ? "OK" : "Err"), ret |= !code;
+	printf("pfokTest: %s\n", (code = pfokTest()) ? "OK" : "Err"), ret |= !code;
+	printf("bpkiTest: %s\n", (code = bpkiTest()) ? "OK" : "Err"), ret |= !code;
 	return ret;
 }
 
@@ -145,6 +142,7 @@ size_t testReps = 10;
 int main(int argc, char const **argv)
 {
 	int ret = 0;
+	ret |= testCore();
 	ret |= testMath();
 	ret |= testCrypto();
 	return ret;

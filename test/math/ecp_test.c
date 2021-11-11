@@ -95,7 +95,7 @@ static bool_t qrMontInvTest(const qr_o* qr, void* stack)
 	return TRUE;
 }
 
-static bool_t ecMulADoubleAdd(word *c, word const *a, const ec_o *ec, word const *d, size_t m, void *stack)
+static bool_t ecMulA2(word *c, word const *a, const ec_o *ec, word const *d, size_t m, void *stack)
 {
 	size_t i;
 	word b;
@@ -113,10 +113,69 @@ static bool_t ecMulADoubleAdd(word *c, word const *a, const ec_o *ec, word const
 	return ecToA(c, q, ec, stack);
 }
 
+static bool_t ecpEqJ(const word a[], const word b[], const ec_o* ec, void* stack) {
+	const size_t n = ec->f->n;
+    bool_t r = TRUE;
+	word *za, *ta;
+	word *zb, *tb;
+
+	za = (word*)stack;
+	ta = za + n;
+	zb = ta + n;
+	tb = zb + n;
+	stack = tb + n;
+
+    qrSqr(za, ecZ(a, n), ec->f, stack);
+    qrSqr(zb, ecZ(b, n), ec->f, stack);
+    qrMul(ta, zb, ecX(a), ec->f, stack);
+    qrMul(tb, za, ecX(b), ec->f, stack);
+    r = wwCmp(ta, tb, n) == 0;
+    qrMul(za, za, ecZ(a, n), ec->f, stack);
+    qrMul(zb, zb, ecZ(b, n), ec->f, stack);
+    qrMul(ta, zb, ecY(a, n), ec->f, stack);
+    qrMul(tb, za, ecY(b, n), ec->f, stack);
+    r = (wwCmp(ta, tb, n) == 0) && r;
+	return r;
+}
+
+static bool_t ecpDblAddATest(const ec_o* ec, void* stack)
+{
+    const size_t n = ec->f->n * 3;
+	size_t i;
+
+	word* a = (word*)stack;
+	word* base_dbl = a + n;
+	word* actual = base_dbl + n;
+	word* expected = actual + n;
+	stack = (void*)(expected + n);
+
+	ecDblA(base_dbl, ec->base, ec, stack);
+	wwCopy(a, base_dbl, n);
+
+	ecDbl(expected, base_dbl, ec, stack);
+	ecAddA(expected, expected, ec->base, ec, stack);
+
+	//a = [3,4,5...] * ec->base
+	//expected = [5,7, 7,9, ...] * ec->base
+	for (i = 0; i < 10; ++i)
+	{
+		ecAddA(a, a, ec->base, ec, stack);
+		ecpDblAddA(actual, a, ec->base, TRUE, ec, stack);
+		if (!ecpEqJ(expected, actual, ec, stack))
+			return FALSE;
+
+		ecAdd(expected, expected, base_dbl, ec, stack);
+		ecpDblAddA(actual, a, ec->base, FALSE, ec, stack);
+		if (!ecpEqJ(expected, actual, ec, stack))
+			return FALSE;
+	}
+	return TRUE;
+}
+
 static bool_t ecpSmallMultTest(const ec_o* ec, void *stack)
 {
 	size_t const MIN_W = 2;
-	size_t const MAX_W = 7;
+	size_t const MAX_W = 6;
 	const size_t na = ec->f->n * 2;
 	const size_t n = ec->f->n * ec->d;
 	size_t w, i, f;
@@ -134,540 +193,43 @@ static bool_t ecpSmallMultTest(const ec_o* ec, void *stack)
 	stack = (void*)(bj + n);
 	ecFromA(bj, ec->base, ec, stack);
 
-	for(;;)
-	{
-		for(w = MIN_W; w <= MAX_W; ++w)
-		{
-			stack = (void*)(c + (na << (w - 1)));
+    for(w = MIN_W; w <= MAX_W; ++w)
+    {
+        stack = (void*)(c + (na << (w - 1)));
+        ecpSmallMultA(c, ec->base, w, ec, stack);
+
+        ci = c;
+        *b = 1;
+        for(i = SIZE_1 << (w - 1); i--;)
+        {
+            if(!ecMulA(ta, ec->base, ec, b, 1, stack))
+                return FALSE;
+            if(0 != wwCmp(ci, ta, na))
+                return FALSE;
+            ci += na;
+            *b += 2;
+        }
+    }
+
+    for(w = MIN_W; w <= MAX_W; ++w)
+    {
+        stack = (void*)(c + (n << (w - 1)));
+        ecpSmallMultJ(c, ec->base, w, ec, stack);
+
+        ci = c;
+        *b = 1;
+        for(i = SIZE_1 << (w - 1); i--;)
+        {
+            ecToA(sa, ci, ec, stack);
+            if(!ecMulA(ta, ec->base, ec, b, 1, stack))
+                return FALSE;
+            if(0 != wwCmp(sa, ta, na))
+                return FALSE;
+            ci += n;
+            *b += 2;
+        }
+    }
 
-			for(f = 0; f < 2; ++f)
-			{
-				if(f == 0)
-					ecSmallMultAdd2A(c, d, ec->base, w, ec, stack);
-				else
-					ecpSmallMultA(c, ec->base, w, ec, stack);
-
-				if(d)
-				{
-					ecDblA(p, ec->base, ec, stack);
-					ecToA(ta, p, ec, stack);
-					if(0 != wwCmp(d, ta, na))
-						return FALSE;
-				}
-
-				ci = c;
-				*b = 1;
-				for(i = SIZE_1 << (w - 1); i--;)
-				{
-					//if(!ecMulA(ta, ec->base, ec, b, 1, stack))
-					//	return FALSE;
-					if(!ecMulADoubleAdd(ta, ec->base, ec, b, 1, stack))
-						return FALSE;
-					if(0 != wwCmp(ci, ta, na))
-						return FALSE;
-					ci += na;
-					*b += 2;
-				}
-			}
-		}
-
-		for(w = MIN_W; w <= MAX_W; ++w)
-		{
-			stack = (void*)(c + (n << (w - 1)));
-
-			for(f = 0; f < 2; ++f)
-			{
-				if(f == 0)
-					ecSmallMultAdd2J(c, d, ec->base, w, ec, stack);
-				else
-					ecpSmallMultJ(c, ec->base, w, ec, stack);
-
-				if(d)
-				{
-					ecToA(sa, d, ec, stack);
-					ecAdd(p, bj, bj, ec, stack);
-					ecToA(ta, p, ec, stack);
-					if(0 != wwCmp(sa, ta, na))
-						return FALSE;
-				}
-
-				ci = c;
-				*b = 1;
-				for(i = SIZE_1 << (w - 1); i--;)
-				{
-					ecToA(sa, ci, ec, stack);
-					//if(!ecMulA(ta, ec->base, ec, b, 1, stack))
-					//	return FALSE;
-					if(!ecMulADoubleAdd(ta, ec->base, ec, b, 1, stack))
-						return FALSE;
-					if(0 != wwCmp(sa, ta, na))
-						return FALSE;
-					ci += n;
-					*b += 2;
-				}
-			}
-		}
-
-		if(!d) break;
-		d = NULL;
-	}
-
-	return TRUE;
-}
-
-size_t ecSafeMulJWidth(const size_t l);
-size_t ecSafeMulAWidth(const size_t l);
-
-static bool_t ecMulTest(const ec_o* ec, void *stack)
-{
-	const size_t MIN_W = 2;
-	const size_t MAX_W = 7;
-	const size_t na = ec->f->n * 2;
-
-	size_t w, k, m = ec->f->n;
-	size_t d0, dk, ik;
-	word* d = (word*)stack;
-	word* ba = d + m + 1;
-	word* sa = ba + na;
-	word* fa = sa + na;
-	bool_t sb, fb;
-	stack = (void*)(fa + na);
-
-	ecDblA(sa, ec->base, ec, stack);
-	ecToA(ba, sa, ec, stack);
-
-	{
-		wwSetZero(d, m + 1);
-		d[0] = 0x0f;
-		fb = ecMulA(fa, /*ba*/ec->base, ec, d, m + 1, stack);
-		sb = ecMulADoubleAdd(sa, /*ba*/ec->base, ec, d, m + 1, stack);
-		if(fb != sb)
-			return FALSE;
-		if(fb && (0 != wwCmp(sa, fa, na)))
-			return FALSE;
-	}
-
-	if (1) {
-		//протестировать особую точку для которой происходит удвоение на последнем шаге
-		if (1)
-		{
-			w = ecSafeMulAWidth(wwBitSize(ec->order, ec->f->n + 1));
-		}
-		else
-		{
-			w = ecSafeMulJWidth(wwBitSize(ec->order, ec->f->n + 1));
-		}
-		//особая точка существует только для кривых с нечетным (q / 2^w)
-		//нечетная особая точка строится из порядка q имеет следующий вид:
-		//1. бит в позиции w выставлен в 0
-		//2. младшие 0 ... w - 1 бит (число k) выставляются 2^w - k
- 		if (wwGetBits(ec->order, w, 1)) {
-			//построить нечетную особую точку
-			wwCopy(d, ec->order, ec->f->n + 1);
-			k = wwGetBits(d, 0, w);
-			k = (1 << w) - k;
-			wwSetBits(d, 0, w + 1, k);
-			//проверить нечетную особую точку
-			fb = ecMulA(fa, /*ba*/ec->base, ec, d, m + 1, stack);
-			sb = ecMulADoubleAdd(sa, /*ba*/ec->base, ec, d, m + 1, stack);
-			if (fb != sb)
-				return FALSE;
-			if (fb && (0 != wwCmp(sa, fa, na)))
-				return FALSE;
-
-			//четная особая точка
-			qrSub(d, ec->order, d, ec->f);
-			//проверить четную особую точку
-			fb = ecMulA(fa, /*ba*/ec->base, ec, d, m + 1, stack);
-			sb = ecMulADoubleAdd(sa, /*ba*/ec->base, ec, d, m + 1, stack);
-			if (fb != sb)
-				return FALSE;
-			if (fb && (0 != wwCmp(sa, fa, na)))
-				return FALSE;
-		}
-	}
-
-	{
-		zzSubW(d, ec->order, m + 1, 1);
-		fb = ecMulA(fa, /*ba*/ec->base, ec, d, m + 1, stack);
-		sb = ecMulADoubleAdd(sa, /*ba*/ec->base, ec, d, m + 1, stack);
-		if (fb != sb)
-			return FALSE;
-		if (fb && (0 != wwCmp(sa, fa, na)))
-			return FALSE;
-	}
-
-	for(;;)
-	{
-		// w = MIN_W .. MAX_W
-		// d = d_0 + .. + d_k 2^{wk}
-		for(w = MIN_W; w <= MAX_W; ++w)
-		{
-			const word ds[8] = {0, 1, 2, (1<<(w-1))-1, 1<<(w-1), (1<<(w-1))+1, (1<<w)-2, (1<<w)-1, };
-			m = (3 * w + B_PER_W - 1) / B_PER_W;
-			for(d0 = 0; d0 < 8; ++d0)
-			{
-				for(dk = 0; dk < 8; ++dk)
-				{
-					const size_t ks[9] = {w-1, w, w+1, w+w-1, w+w, w+w+1, (m * B_PER_W) - w-2, (m * B_PER_W) - w-1, (m * B_PER_W) - w};
-					for(ik = 0; ik < 9; ++ik)
-					{
-						wwSetZero(d, m + 1);
-						wwSetBits(d, 0, w, ds[d0]);
-						k = ks[ik];
-						wwSetBits(d, k, w, ds[dk]);
-
-						fb = ecMulA(fa, ba, ec, d, m, stack);
-						sb = ecMulADoubleAdd(sa, ba, ec, d, m, stack);
-						if(fb != sb)
-							return FALSE;
-						if(fb && (0 != wwCmp(sa, fa, na)))
-							return FALSE;
-					}
-				}
-			}
-		}
-
-		if(ba == ec->base)
-			break;
-		ba = ec->base;
-	}
-
-	return TRUE;
-}
-
-static bool_t ecpMulTest(const ec_o* ec, void *stack)
-{
-	const size_t MIN_W = 2;
-	const size_t MAX_W = 7;
-	const size_t na = ec->f->n * 2;
-
-	// test is completely useless
-	// return TRUE;
-
-	size_t w, k, m = ec->f->n;
-	size_t d0, dk, ik;
-	word* d = (word*)stack;
-	word* ba = d + m + 1;
-	word* sa = ba + na;
-	word* fa = sa + na;
-	bool_t sb, fb;
-	stack = (void*)(fa + na);
-
-	ecDblA(sa, ec->base, ec, stack);
-	ecToA(ba, sa, ec, stack);
-
-	{
-		wwSetZero(d, m);
-		d[0] = 0x0f;
-		fb = ecpMulA(fa, /*ba*/ec->base, ec, d, m, stack);
-		sb = ecMulA(sa, /*ba*/ec->base, ec, d, m, stack);
-		if(fb != sb)
-			return FALSE;
-		if(fb && (0 != wwCmp(sa, fa, na)))
-			return FALSE;
-		sb = ecMulADoubleAdd(sa, /*ba*/ec->base, ec, d, m, stack);
-		if(fb != sb)
-			return FALSE;
-		if(fb && (0 != wwCmp(sa, fa, na)))
-			return FALSE;
-	}
-
-	if (1) {
-		//протестировать особую точку для которой происходит удвоение на последнем шаге
-		if (1)
-		{
-			w = ecSafeMulAWidth(wwBitSize(ec->order, ec->f->n + 1));
-		}
-		else
-		{
-			w = ecSafeMulJWidth(wwBitSize(ec->order, ec->f->n + 1));
-		}
-		//особая точка существует только для кривых с нечетным (q / 2^w)
-		//нечетная особая точка строится из порядка q имеет следующий вид:
-		//1. бит в позиции w выставлен в 0
-		//2. младшие 0 ... w - 1 бит (число k) выставляются 2^w - k
- 		if (wwGetBits(ec->order, w, 1)) {
-			//построить нечетную особую точку
-			wwCopy(d, ec->order, ec->f->n + 1);
-			k = wwGetBits(d, 0, w);
-			k = (1 << w) - k;
-			wwSetBits(d, 0, w + 1, k);
-			//проверить нечетную особую точку
-			fb = ecpMulA(fa, /*ba*/ec->base, ec, d, m, stack);
-			sb = ecMulA(sa, /*ba*/ec->base, ec, d, m, stack);
-			if (fb != sb)
-				return FALSE;
-			if (fb && (0 != wwCmp(sa, fa, na)))
-				return FALSE;
-			sb = ecMulADoubleAdd(sa, /*ba*/ec->base, ec, d, m, stack);
-			if (fb != sb)
-				return FALSE;
-			if (fb && (0 != wwCmp(sa, fa, na)))
-				return FALSE;
-
-			//четная особая точка
-			qrSub(d, ec->order, d, ec->f);
-			//проверить четную особую точку
-			fb = ecpMulA(fa, /*ba*/ec->base, ec, d, m, stack);
-			sb = ecMulA(sa, /*ba*/ec->base, ec, d, m, stack);
-			if (fb != sb)
-				return FALSE;
-			if (fb && (0 != wwCmp(sa, fa, na)))
-				return FALSE;
-			sb = ecMulADoubleAdd(sa, /*ba*/ec->base, ec, d, m, stack);
-			if (fb != sb)
-				return FALSE;
-			if (fb && (0 != wwCmp(sa, fa, na)))
-				return FALSE;
-		}
-	}
-
-	{
-		zzSubW(d, ec->order, m, 1);
-		fb = ecpMulA(fa, /*ba*/ec->base, ec, d, m, stack);
-		sb = ecMulA(sa, /*ba*/ec->base, ec, d, m, stack);
-		if (fb != sb)
-			return FALSE;
-		if (fb && (0 != wwCmp(sa, fa, na)))
-			return FALSE;
-		sb = ecMulADoubleAdd(sa, /*ba*/ec->base, ec, d, m, stack);
-		if (fb != sb)
-			return FALSE;
-		if (fb && (0 != wwCmp(sa, fa, na)))
-			return FALSE;
-	}
-
-	for(;;)
-	{
-		// w = MIN_W .. MAX_W
-		// d = d_0 + .. + d_k 2^{wk}
-		for(w = MIN_W; w <= MAX_W; ++w)
-		{
-			const word ds[8] = {0, 1, 2, (1<<(w-1))-1, 1<<(w-1), (1<<(w-1))+1, (1<<w)-2, (1<<w)-1, };
-			m = (3 * w + B_PER_W - 1) / B_PER_W;
-			for(d0 = 0; d0 < 8; ++d0)
-			{
-				for(dk = 0; dk < 8; ++dk)
-				{
-					const size_t ks[9] = {w-1, w, w+1, w+w-1, w+w, w+w+1, (m * B_PER_W) - w-2, (m * B_PER_W) - w-1, (m * B_PER_W) - w};
-					for(ik = 0; ik < 9; ++ik)
-					{
-						wwSetZero(d, m);
-						wwSetBits(d, 0, w, ds[d0]);
-						k = ks[ik];
-						wwSetBits(d, k, w, ds[dk]);
-
-						fb = ecpMulA(fa, ba, ec, d, m, stack);
-						sb = ecMulA(sa, ba, ec, d, m, stack);
-						if(fb != sb)
-							return FALSE;
-						if(fb && (0 != wwCmp(sa, fa, na)))
-							return FALSE;
-						sb = ecMulADoubleAdd(sa, ba, ec, d, m, stack);
-						if(fb != sb)
-							return FALSE;
-						if(fb && (0 != wwCmp(sa, fa, na)))
-							return FALSE;
-					}
-				}
-			}
-		}
-
-		if(ba == ec->base)
-			break;
-		ba = ec->base;
-	}
-
-	return TRUE;
-}
-
-static bool_t ecMulTestFullGroup(const ec_o* ec, void* stack)
-{
-	const size_t na = ec->f->n * 2;
-
-	bool_t fb;
-	size_t m = ec->f->n;
-	word* d = (word*)stack;
-	word* exp_j = d + m + 1;
-	word* exp_a = exp_j + ec->f->n * ec->d;
-	word* act_a = exp_a + na;
-	stack = (void*)(act_a + na);
-
-	{
-		wwSetZero(d, m + 1);
-		fb = ecMulA(act_a, ec->base, ec, d, m + 1, stack);
-		if (fb != FALSE)
-			return FALSE;
-	}
-
-	{
-		zzAddW2(d, m + 1, 1);
-		fb = ecMulA(act_a, ec->base, ec, d, m + 1, stack);
-		wwCopy(exp_a, ec->base, na);
-		if (fb == FALSE)
-			return FALSE;
-		if (0 != wwCmp(exp_a, act_a, na))
-			return FALSE;
-	}
-
-	{
-		zzAddW2(d, m + 1, 1);
-		fb = ecMulA(act_a, ec->base, ec, d, m + 1, stack);
-		if (fb == FALSE)
-			return FALSE;
-
-		ecDblA(exp_j, ec->base, ec, stack);
-		ecToA(exp_a, exp_j, ec, stack);
-
-
-		if (0 != wwCmp(exp_a, act_a, na))
-			return FALSE;
-	}
-
-	for (;;)
-	{
-		zzAddW2(d, m + 1, 1);
-		if (0 == wwCmp(d, ec->order, m + 1))
-			break;
-
-		fb = ecMulA(act_a, ec->base, ec, d, m + 1, stack);
-
-		if (fb == FALSE)
-			return FALSE;
-
-		ecAddA(exp_j, exp_j, ec->base, ec, stack);
-		ecToA(exp_a, exp_j, ec, stack);
-
-
-		if (0 != wwCmp(exp_a, act_a, na))
-			return FALSE;
-	}
-
-	return TRUE;
-}
-
-static bool_t ecpMulTestFullGroup(const ec_o* ec, void* stack)
-{
-	const size_t na = ec->f->n * 2;
-
-	bool_t fb;
-	size_t m = ec->f->n;
-	word* d = (word*)stack;
-	word* exp_j = d + m + 1;
-	word* exp_a = exp_j + ec->f->n * ec->d;
-	word* act_a = exp_a + na;
-	stack = (void*)(act_a + na);
-
-	{
-		wwSetZero(d, m);
-		fb = ecpMulA(act_a, ec->base, ec, d, m, stack);
-		if (fb != FALSE)
-			return FALSE;
-	}
-
-	{
-		zzAddW2(d, m, 1);
-		fb = ecpMulA(act_a, ec->base, ec, d, m, stack);
-		wwCopy(exp_a, ec->base, na);
-		if (fb == FALSE)
-			return FALSE;
-		if (0 != wwCmp(exp_a, act_a, na))
-			return FALSE;
-	}
-
-	{
-		zzAddW2(d, m, 1);
-		fb = ecpMulA(act_a, ec->base, ec, d, m, stack);
-		if (fb == FALSE)
-			return FALSE;
-
-		ecDblA(exp_j, ec->base, ec, stack);
-		ecToA(exp_a, exp_j, ec, stack);
-
-
-		if (0 != wwCmp(exp_a, act_a, na))
-			return FALSE;
-	}
-
-	for (;;)
-	{
-		zzAddW2(d, m, 1);
-		if (0 == wwCmp(d, ec->order, m))
-			break;
-
-		fb = ecpMulA(act_a, ec->base, ec, d, m, stack);
-
-		if (fb == FALSE)
-			return FALSE;
-
-		ecAddA(exp_j, exp_j, ec->base, ec, stack);
-		ecToA(exp_a, exp_j, ec, stack);
-
-
-		if (0 != wwCmp(exp_a, act_a, na))
-			return FALSE;
-	}
-
-	return TRUE;
-}
-
-
-//одна и та же точка в якобиевых координатах?
-static bool_t ecIsSamePointJ(const word a[], const word b[], const ec_o* ec, void* stack) {
-	const size_t na = ec->f->n * 2;
-	const size_t n = ec->f->n * 3;
-	word* aa;
-	word* ba;
-
-	if (!wwCmp(a, b, n))
-		return TRUE;
-
-	aa = (word*)stack;
-	ba = aa + na;
-	stack = ba + na;
-
-	ecToA(aa, a, ec, stack);
-	ecToA(ba, b, ec, stack);
-
-	return wwCmp(aa, ba, na) == 0;
-}
-
-static bool_t ecpTestDblAddA(const ec_o* ec, void* stack)
-{	const size_t n = ec->f->n * 3;
-
-	size_t i;
-
-	word* a = (word*)stack;
-	word* base_dbl = a + n;
-	word* actual = base_dbl + n;
-	word* expected = actual + n;
-	stack = (void*)(expected + n);
-
-	ecDblA(base_dbl, ec->base, ec, stack);
-	wwCopy(a, base_dbl, n);
-
-	ecDbl(expected, base_dbl, ec, stack);
-	ecAddA(expected, expected, ec->base, ec, stack);
-
-	//a = [3,4,5...] * ec->base
-	//expected = [5,7, 7,9, ...] * ec->base
-	for (i = 0; i < 20; ++i)
-	{
-		ecAddA(a, a, ec->base, ec, stack);
-
-		ecpDblAddA(actual, a, ec->base, TRUE, ec, stack);
-
-		if (!ecIsSamePointJ(expected, actual, ec, stack))
-			return FALSE;
-
-		ecAdd(expected, expected, base_dbl, ec, stack);
-
-		ecpDblAddA(actual, a, ec->base, FALSE, ec, stack);
-
-		if (!ecIsSamePointJ(expected, actual, ec, stack))
-			return FALSE;
-	}
 	return TRUE;
 }
 
@@ -695,7 +257,7 @@ static bool_t ecpTestComplete(const ec_o* ec, void* stack)
 	ecpJToH(a, expected, ec, stack);
 	ecpHToJ(actual, a, ec, stack);
 
-	if (!ecIsSamePointJ(actual, expected, ec, stack))
+	if (!ecpEqJ(actual, expected, ec, stack))
 		return FALSE;
 
 	ecpHToA(actual, a, ec, stack);
@@ -708,9 +270,8 @@ static bool_t ecpTestComplete(const ec_o* ec, void* stack)
 	ecpAddAJA_complete(actual, a, ec->base, ec, stack);
 	ecFromA(actual, actual, ec, stack);
 
-	if (!ecIsSamePointJ(actual, expected, ec, stack))
+	if (!ecpEqJ(actual, expected, ec, stack))
 		return FALSE;
-
 
 	//test affine addition
 	ecDblA(a, ec->base, ec, stack);
@@ -718,9 +279,8 @@ static bool_t ecpTestComplete(const ec_o* ec, void* stack)
 	ecpAddAJA_complete(actual, a, ec->base, ec, stack);
 	ecFromA(actual, actual, ec, stack);
 
-	if (!ecIsSamePointJ(actual, expected, ec, stack))
+	if (!ecpEqJ(actual, expected, ec, stack))
 		return FALSE;
-
 
 	//test jacobian doubling
 	ecDblA(expected, ec->base, ec, stack);
@@ -728,9 +288,8 @@ static bool_t ecpTestComplete(const ec_o* ec, void* stack)
 	ecpAddAJJ_complete(actual, a, a, ec, stack);
 	ecFromA(actual, actual, ec, stack);
 
-	if (!ecIsSamePointJ(actual, expected, ec, stack))
+	if (!ecpEqJ(actual, expected, ec, stack))
 		return FALSE;
-
 
 	//test jacobian addition
 	ecDblA(a, ec->base, ec, stack);
@@ -739,14 +298,202 @@ static bool_t ecpTestComplete(const ec_o* ec, void* stack)
 	ecpAddAJJ_complete(actual, a, c, ec, stack);
 	ecFromA(actual, actual, ec, stack);
 
-	if (!ecIsSamePointJ(actual, expected, ec, stack))
+	if (!ecpEqJ(actual, expected, ec, stack))
 		return FALSE;
 
 	return TRUE;
 }
 
+static bool_t ecpMulATest(const ec_o* ec, void *stack)
+{
+	const size_t MIN_W = 2;
+	const size_t MAX_W = 5;
+	const size_t na = ec->f->n * 2;
 
-//todo продумать параметры функции
+	size_t w, k, m = ec->f->n;
+	size_t d0, dk, ik;
+	word* d = (word*)stack;
+	word* ba = d + m + 1;
+	word* sa = ba + na;
+	word* fa = sa + na;
+	bool_t sb, fb;
+	stack = (void*)(fa + na);
+
+	ecDblA(sa, ec->base, ec, stack);
+	ecToA(ba, sa, ec, stack);
+
+	{
+		wwSetZero(d, m);
+		d[0] = 0x0f;
+		fb = ecpMulA(fa, /*ba*/ec->base, ec, d, m, stack);
+		sb = ecMulA(sa, /*ba*/ec->base, ec, d, m, stack);
+		if(fb != sb)
+			return FALSE;
+		if(fb && (0 != wwCmp(sa, fa, na)))
+			return FALSE;
+		sb = ecMulA2(sa, /*ba*/ec->base, ec, d, m, stack);
+		if(fb != sb)
+			return FALSE;
+		if(fb && (0 != wwCmp(sa, fa, na)))
+			return FALSE;
+	}
+
+	for (w = 3; ++w < 6;) {
+		//протестировать особую точку для которой происходит удвоение на последнем шаге
+		//особая точка существует только для кривых с нечетным (q / 2^w)
+		//нечетная особая точка строится из порядка q имеет следующий вид:
+		//1. бит в позиции w выставлен в 0
+		//2. младшие 0 ... w - 1 бит (число k) выставляются 2^w - k
+ 		if (wwGetBits(ec->order, w, 1)) {
+			//построить нечетную особую точку
+			wwCopy(d, ec->order, ec->f->n + 1);
+			k = wwGetBits(d, 0, w);
+			k = (1 << w) - k;
+			wwSetBits(d, 0, w + 1, k);
+			//проверить нечетную особую точку
+			fb = ecpMulA(fa, /*ba*/ec->base, ec, d, m, stack);
+			sb = ecMulA(sa, /*ba*/ec->base, ec, d, m, stack);
+			if (fb != sb)
+				return FALSE;
+			if (fb && (0 != wwCmp(sa, fa, na)))
+				return FALSE;
+			sb = ecMulA2(sa, /*ba*/ec->base, ec, d, m, stack);
+			if (fb != sb)
+				return FALSE;
+			if (fb && (0 != wwCmp(sa, fa, na)))
+				return FALSE;
+
+			//четная особая точка
+			qrSub(d, ec->order, d, ec->f);
+			//проверить четную особую точку
+			fb = ecpMulA(fa, /*ba*/ec->base, ec, d, m, stack);
+			sb = ecMulA(sa, /*ba*/ec->base, ec, d, m, stack);
+			if (fb != sb)
+				return FALSE;
+			if (fb && (0 != wwCmp(sa, fa, na)))
+				return FALSE;
+			sb = ecMulA2(sa, /*ba*/ec->base, ec, d, m, stack);
+			if (fb != sb)
+				return FALSE;
+			if (fb && (0 != wwCmp(sa, fa, na)))
+				return FALSE;
+		}
+	}
+
+	{
+		zzSubW(d, ec->order, m, 1);
+		fb = ecpMulA(fa, /*ba*/ec->base, ec, d, m, stack);
+		sb = ecMulA(sa, /*ba*/ec->base, ec, d, m, stack);
+		if (fb != sb)
+			return FALSE;
+		if (fb && (0 != wwCmp(sa, fa, na)))
+			return FALSE;
+		sb = ecMulA2(sa, /*ba*/ec->base, ec, d, m, stack);
+		if (fb != sb)
+			return FALSE;
+		if (fb && (0 != wwCmp(sa, fa, na)))
+			return FALSE;
+	}
+
+    if(0)
+	{
+		// w = MIN_W .. MAX_W
+		// d = d_0 + .. + d_k 2^{wk}
+		for(w = MIN_W; w <= MAX_W; ++w)
+		{
+			const word ds[8] = {0, 1, 2, (1<<(w-1))-1, 1<<(w-1), (1<<(w-1))+1, (1<<w)-2, (1<<w)-1, };
+			m = (3 * w + B_PER_W - 1) / B_PER_W;
+			for(d0 = 0; d0 < 8; ++d0)
+			{
+				for(dk = 0; dk < 8; ++dk)
+				{
+					const size_t ks[9] = {w-1, w, w+1, w+w-1, w+w, w+w+1, (m * B_PER_W) - w-2, (m * B_PER_W) - w-1, (m * B_PER_W) - w};
+					for(ik = 0; ik < 9; ++ik)
+					{
+						wwSetZero(d, m);
+						wwSetBits(d, 0, w, ds[d0]);
+						k = ks[ik];
+						wwSetBits(d, k, w, ds[dk]);
+
+						fb = ecpMulA(fa, ba, ec, d, m, stack);
+						sb = ecMulA(sa, ba, ec, d, m, stack);
+						if(fb != sb)
+							return FALSE;
+						if(fb && (0 != wwCmp(sa, fa, na)))
+							return FALSE;
+						sb = ecMulA2(sa, ba, ec, d, m, stack);
+						if(fb != sb)
+							return FALSE;
+						if(fb && (0 != wwCmp(sa, fa, na)))
+							return FALSE;
+					}
+				}
+			}
+		}
+
+		ba = ec->base;
+	}
+
+	return TRUE;
+}
+
+static bool_t ecpMulATestFullGroup(const ec_o* ec, void* stack)
+{
+	const size_t na = ec->f->n * 2;
+
+	bool_t fb;
+	size_t m = W_OF_B(wwBitSize(ec->order, ec->f->n + 1));
+	word* d = (word*)stack;
+	word* exp_j = d + m;
+	word* exp_a = exp_j + ec->f->n * ec->d;
+	word* act_a = exp_a + na;
+	stack = (void*)(act_a + na);
+
+	{
+		wwSetZero(d, m);
+		fb = ecpMulA(act_a, ec->base, ec, d, m, stack);
+		if (fb != FALSE)
+			return FALSE;
+	}
+
+	{
+		zzAddW2(d, m, 1);
+		fb = ecpMulA(act_a, ec->base, ec, d, m, stack);
+		wwCopy(exp_a, ec->base, na);
+		if (fb == FALSE)
+			return FALSE;
+		if (0 != wwCmp(exp_a, act_a, na))
+			return FALSE;
+	}
+
+	{
+		zzAddW2(d, m, 1);
+		fb = ecpMulA(act_a, ec->base, ec, d, m, stack);
+		if (fb == FALSE)
+			return FALSE;
+		ecDblA(exp_j, ec->base, ec, stack);
+		ecToA(exp_a, exp_j, ec, stack);
+		if (0 != wwCmp(exp_a, act_a, na))
+			return FALSE;
+	}
+
+	for (;;)
+	{
+		zzAddW2(d, m, 1);
+		if (0 == wwCmp(d, ec->order, m))
+			break;
+		fb = ecpMulA(act_a, ec->base, ec, d, m, stack);
+		if (fb == FALSE)
+			return FALSE;
+		ecAddA(exp_j, exp_j, ec->base, ec, stack);
+		ecToA(exp_a, exp_j, ec, stack);
+		if (0 != wwCmp(exp_a, act_a, na))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
 bool_t testEcp(const ec_o* ec, void* stack, const size_t sizeOfStack, const size_t n, const size_t f_deep, const size_t ec_deep)
 {
 	// корректная кривая?
@@ -773,7 +520,7 @@ bool_t testEcp(const ec_o* ec, void* stack, const size_t sizeOfStack, const size
 	if (!ecpSmallMultTest(ec, stack))
 		return FALSE;
 	// проверить алгоритм удвоения и вычитания/сложения с афинной точкой
-	if (!ecpTestDblAddA(ec, stack))
+	if (!ecpDblAddATest(ec, stack))
 		return FALSE;
 	// проверить complete
 	if (!ecpTestComplete(ec, stack)) {
@@ -793,7 +540,7 @@ bool_t testStdCurves(const void* state, void* stack)
 		bignStart(ec, params);
 		if (!ecpSmallMultTest(ec, stack))
 			return FALSE;
-		if (!ecpMulTest(ec, stack))
+		if (!ecpMulATest(ec, stack))
 			return FALSE;
 	}
 	return TRUE;
@@ -813,26 +560,18 @@ bool_t testSmallCurves(const void* state, void* stack, const size_t sizeOfStack)
 		//"bign-curve192v1"
 	};
 
-
 	for (int i = 0; i < sizeof(testCurveNames) / sizeof(testCurveNames[0]); ++i)
 	{
 		bignTestParams(params, testCurveNames[i]);
 		bignStart(ec, params);
-
 		if (!testEcp(ec, stack, sizeOfStack, ec->f->n, ec->f->deep, ec->deep))
 			return FALSE;
-
-		// проверить алгоритм скалярного умножения пробежав по всей группе
-		if (!ecpMulTestFullGroup(ec, stack))
+		if (!ecpMulATestFullGroup(ec, stack))
 			return FALSE;
 	}
 
 	return TRUE;
 }
-
-
-
-extern err_t bignStart(void* state, const bign_params* params);
 
 bool_t ecpTest()
 {
@@ -876,7 +615,7 @@ bool_t ecpTest()
 			return FALSE;
 
 		// проверить алгоритм скалярного умножения
-		if (!ecpMulTest(ec, stack))
+		if (!ecpMulATest(ec, stack))
 			return FALSE;
 	}
 
