@@ -1,11 +1,10 @@
 /*
 *******************************************************************************
 \file pfok_test.c
-\brief Tests for the Draft of RD RB (pfok)
+\brief Tests for Draft of RD_RB (pfok)
 \project bee2/test
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.08
-\version 2016.11.10
+\version 2022.06.07
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -37,12 +36,14 @@ static void _on_q_silent(const word q[], size_t n, size_t num)
 {
 }
 
-
 /*
 *******************************************************************************
 Самотестирование
 
-Реализованы тесты из Методики НИИ ППМИ
+Реализованы тесты из Методики НИИ ППМИ.
+
+\remark Тесты PFOK.GENP.2-4, реализованные в функции pfokTestStdParams(),
+выполняются очень долго и поэтому заблокированы.
 *******************************************************************************
 */
 
@@ -69,7 +70,7 @@ bool_t pfokTestStdParams()
 	pfok_seed seed[1];
 	// тест PFOK.GENP.2
 	if (pfokStdParams(params, seed, "1.2.112.0.2.0.1176.2.3.3.2") != ERR_OK ||
-		pfokValParams(params1) != ERR_OK ||
+		pfokValParams(params) != ERR_OK ||
 		pfokGenParams(params1, seed, _on_q) != ERR_OK ||
 		!memEq(params->p, params1->p, O_OF_B(params->l)) ||
 		params->l != params1->l || params->r != params1->r)
