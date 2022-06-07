@@ -85,13 +85,15 @@ if(BUILD_SHARED_LIBS)
     if(MSVC)
       # disable security warnings for sprintf() in bee2.c
       add_definitions(/D _CRT_SECURE_NO_WARNINGS)
+      add_library(bee2 SHARED ${src} 
+        ../win/bee2.def
+        ../img/bee2.bmp
+        ../win/bee2.rc
+        ../win/bee2.c
+      )
+    else()
+      add_library(bee2 SHARED ${src})
     endif()
-    add_library(bee2 SHARED ${src} 
-      ../win/bee2.def
-      ../img/bee2.bmp
-      ../win/bee2.rc
-      ../win/bee2.c
-    )
   endif()
 
   target_link_libraries(bee2 ${libs})
