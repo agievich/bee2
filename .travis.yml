@@ -51,11 +51,11 @@ matrix:
     compiler: gcc
     env: BUILD_TYPE="Check" BUILD_FAST="ON" BASH_PLATFORM="BASH_AVX512"
     install:
-    - export "SDE_VERSION_NAME=sde-external-8.63.0-2021-01-18-lin"
+    - export "SDE_VERSION_NAME=sde-external-9.7.0-2022-05-09-lin"
     - curl --verbose 
-        --output sde.tar.bz2
-        https://software.intel.com/content/dam/develop/external/us/en/documents/downloads/${SDE_VERSION_NAME}.tar.bz2
-    - tar -xf sde.tar.bz2
+        --output sde.tar.xz
+        https://downloadmirror.intel.com/732268/${SDE_VERSION_NAME}.tar.xz
+    - tar -xf sde.tar.xz
     script: 
     - mkdir build && cd build 
     - cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_FAST=$BUILD_FAST -DBASH_PLATFORM=$BASH_PLATFORM ..
