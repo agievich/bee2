@@ -47,19 +47,21 @@ make
 [make install]
 ```
 
-Note: for build on Windows you need to specify compiler and use specific for this compiler `make` command. The following example is for MinGW compiler:
-```
-mkdir build
-cd build
-cmake [-DCMAKE_BUILD_TYPE={Release|Debug|Coverage|ASan|ASanDbg|MemSan|MemSanDbg|Check}]\
-      [-DBUILD_FAST=ON]\
-      [-DBASH_PLATFORM={BASH_32|BASH_64|BASH_AVX2|BASH_AVX512|BASH_NEON}]\
-      -G "MinGW Makefiles"\
-      ..
-mingw32-make
-[mingw32-make test]
-[mingw32-make install]
-``` 
+> **Note**. To build on Windows you need to specify compiler and use the
+compiler-specific `make` command. The following example is for the MinGW
+compiler:
+> ```
+> mkdir build
+> cd build
+> cmake [-DCMAKE_BUILD_TYPE={Release|Debug|Coverage|ASan|ASanDbg|MemSan|MemSanDbg|Check}]\
+>       [-DBUILD_FAST=ON]\
+>       [-DBASH_PLATFORM={BASH_32|BASH_64|BASH_AVX2|BASH_AVX512|BASH_NEON}]\
+>       -G "MinGW Makefiles"\
+>       ..
+> mingw32-make
+> [mingw32-make test]
+> [mingw32-make install]
+> ```
 
 Build types (`Release` by default):
    
