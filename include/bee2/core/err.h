@@ -3,9 +3,8 @@
 \file err.h
 \brief Errors
 \project bee2 [cryptographic library]
-\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.09
-\version 2021.05.15
+\version 2022.06.07
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -179,6 +178,17 @@ Crypto
 #define ERR_SELFTEST				_ERR_REG(516)
 /* ошибка статистического тестирования */
 #define ERR_STATTEST				_ERR_REG(517)
+
+/*
+*******************************************************************************
+Cmd
+*******************************************************************************
+*/
+
+/* команда не найдена */
+#define ERR_CMD_NOT_FOUND			_ERR_REG(601)
+/* неверные параметры команды */
+#define ERR_BAD_CMD					_ERR_REG(602)
 
 /*
 *******************************************************************************

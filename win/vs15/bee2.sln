@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test", "test.vcxproj", "{EF
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bsum", "bsum.vcxproj", "{FBF42734-F8BB-47D2-B964-1017CB32597D}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cmd", "cmd.vcxproj", "{8F6E22D3-FDA1-4699-A061-3950AD16588C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
@@ -105,6 +107,22 @@ Global
 		{FBF42734-F8BB-47D2-B964-1017CB32597D}.Release|Win32.Build.0 = Release|Win32
 		{FBF42734-F8BB-47D2-B964-1017CB32597D}.Release|x64.ActiveCfg = Release|x64
 		{FBF42734-F8BB-47D2-B964-1017CB32597D}.Release|x64.Build.0 = Release|x64
+		{8F6E22D3-FDA1-4699-A061-3950AD16588C}.Debug|ARM.ActiveCfg = Debug|ARM
+		{8F6E22D3-FDA1-4699-A061-3950AD16588C}.Debug|ARM.Build.0 = Debug|ARM
+		{8F6E22D3-FDA1-4699-A061-3950AD16588C}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{8F6E22D3-FDA1-4699-A061-3950AD16588C}.Debug|ARM64.Build.0 = Debug|ARM64
+		{8F6E22D3-FDA1-4699-A061-3950AD16588C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{8F6E22D3-FDA1-4699-A061-3950AD16588C}.Debug|Win32.Build.0 = Debug|Win32
+		{8F6E22D3-FDA1-4699-A061-3950AD16588C}.Debug|x64.ActiveCfg = Debug|x64
+		{8F6E22D3-FDA1-4699-A061-3950AD16588C}.Debug|x64.Build.0 = Debug|x64
+		{8F6E22D3-FDA1-4699-A061-3950AD16588C}.Release|ARM.ActiveCfg = Release|ARM
+		{8F6E22D3-FDA1-4699-A061-3950AD16588C}.Release|ARM.Build.0 = Release|ARM
+		{8F6E22D3-FDA1-4699-A061-3950AD16588C}.Release|ARM64.ActiveCfg = Release|ARM64
+		{8F6E22D3-FDA1-4699-A061-3950AD16588C}.Release|ARM64.Build.0 = Release|ARM64
+		{8F6E22D3-FDA1-4699-A061-3950AD16588C}.Release|Win32.ActiveCfg = Release|Win32
+		{8F6E22D3-FDA1-4699-A061-3950AD16588C}.Release|Win32.Build.0 = Release|Win32
+		{8F6E22D3-FDA1-4699-A061-3950AD16588C}.Release|x64.ActiveCfg = Release|x64
+		{8F6E22D3-FDA1-4699-A061-3950AD16588C}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

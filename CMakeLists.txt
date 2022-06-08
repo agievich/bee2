@@ -10,6 +10,7 @@ set(BEE2_VERSION
 option(BUILD_SHARED_LIBS "Build shared libraries." ON)
 option(BUILD_PIC "Build position independent code." ON)
 option(BUILD_FAST "Build with the SAFE_FAST directive." OFF)
+option(BUILD_CMD "Build cmds." ON)
 option(BUILD_APPS "Build apps." ON)
 option(BUILD_TESTS "Build tests." ON)
 option(BUILD_DOC "Build documentation (doxygen required)." OFF)
@@ -143,6 +144,10 @@ include_directories(src/)
 
 add_subdirectory(include)
 add_subdirectory(src)
+
+if(BUILD_CMD)
+  add_subdirectory(cmd)
+endif()
 
 if(BUILD_APPS)
   add_subdirectory(apps)
