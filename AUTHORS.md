@@ -40,6 +40,8 @@ Contributors*
   - code review
 - Uladzimir Palukha
   - code review
+- Mikhail Mitskevich
+  - build scripts
 
 ---
 *in chronological order of the first contribution
