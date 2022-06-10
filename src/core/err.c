@@ -4,7 +4,7 @@
 \brief Errors
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2022.06.07
+\version 2022.06.09
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -82,6 +82,7 @@ static const err_msg _messages[] = {
 	{ERR_STATTEST, "Statistical tests failed"},
 	// cmd
 	{ERR_CMD_NOT_FOUND, "Command not found"},
+	{ERR_CMD_EXISTS, "Command is already registered"},
 	{ERR_BAD_CMD, "Invalid command parameters"},
 };
 

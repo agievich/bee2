@@ -472,12 +472,17 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\cmd\bsum\bsum.c" />
-    <ClCompile Include="..\..\cmd\cmd.c" />
+    <ClCompile Include="..\..\cmd\cmd_main.c" />
+    <ClCompile Include="..\..\cmd\cmd_core.c" />
+    <ClCompile Include="..\..\cmd\kg\kg.c" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="libbee2.vcxproj">
       <Project>{1b3f88d7-bd23-4398-a331-3db139cf07ef}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\cmd\cmd.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

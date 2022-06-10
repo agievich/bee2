@@ -4,8 +4,10 @@ if(MSVC)
 endif()
 
 add_executable(bee2cmd
-	cmd.c
 	bsum/bsum.c
+	kg/kg.c
+	cmd_core.c
+	cmd_main.c
 )
 
 target_link_libraries(bee2cmd bee2_static)

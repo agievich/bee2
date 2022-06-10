@@ -349,7 +349,11 @@
 			UniqueIdentifier="{ED2943AD-C54B-4D1B-9CD4-B97EE70D805D}"
 			>
 			<File
-				RelativePath="..\..\cmd\cmd.c"
+				RelativePath="..\..\cmd\cmd_core.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\cmd\cmd_main.c"
 				>
 			</File>
 			<Filter
@@ -357,6 +361,14 @@
 				>
 				<File
 					RelativePath="..\..\cmd\bsum\bsum.c"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="kg"
+				>
+				<File
+					RelativePath="..\..\cmd\kg\kg.c"
 					>
 				</File>
 			</Filter>

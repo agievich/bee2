@@ -12,13 +12,27 @@
     <Filter Include="Source Files\bsum">
       <UniqueIdentifier>{bc2d7257-f0e4-4cdc-83d3-e43de2b92009}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\kg">
+      <UniqueIdentifier>{2455007c-f74a-43be-bb06-0580f8bd5e2f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\cmd\cmd.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\cmd\bsum\bsum.c">
       <Filter>Source Files\bsum</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\cmd\kg\kg.c">
+      <Filter>Source Files\kg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\cmd_core.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\cmd_main.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\cmd\cmd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
