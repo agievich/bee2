@@ -8,7 +8,15 @@ add_executable(bee2cmd
 	kg/kg.c
 	cmd_core.c
 	cmd_main.c
+	cmd_privkey.c
+	cmd_pwd.c
 )
+
+if(WIN32)
+  add_executable(bee2cmp
+    stamp.c
+  )
+endif()
 
 target_link_libraries(bee2cmd bee2_static)
 

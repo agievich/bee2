@@ -208,7 +208,7 @@ int bsumCheck(size_t hid, const char* filename)
 			"WARNING: %lu computed checksum did not match\n":  
 			"WARNING: %lu computed checksums did not match\n",  
 			(unsigned long)bad_hashes);
-	return (bad_lines || bad_files || bad_hashes) ? - 1 : 0;
+	return (bad_lines || bad_files || bad_hashes) ? -1 : 0;
 }
 
 /*

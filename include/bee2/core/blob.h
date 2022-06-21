@@ -3,9 +3,8 @@
 \file blob.h
 \brief Blobs
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.01
-\version 2015.01.30
+\version 2022.06.17
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -68,7 +67,7 @@ blob_t blobCreate(
 	\remark Блоб с нулевым дескриптором считается корректным.
 */
 bool_t blobIsValid(
-	const blob_t blob		/*!< [in] корректный блоб */
+	const blob_t blob		/*!< [in] блоб */
 );
 
 /*!	\brief Изменение размера блоба

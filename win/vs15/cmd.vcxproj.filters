@@ -15,6 +15,12 @@
     <Filter Include="Source Files\kg">
       <UniqueIdentifier>{2455007c-f74a-43be-bb06-0580f8bd5e2f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\stamp">
+      <UniqueIdentifier>{4e7f52c5-744f-4876-8ea7-369ec6aaaa3f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{fe74ac43-e0bf-4124-8957-064a2e26c1f4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\cmd\bsum\bsum.c">
@@ -29,10 +35,24 @@
     <ClCompile Include="..\..\cmd\cmd_main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\cmd\cmd_pwd.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\cmd_privkey.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\stamp\stamp.c">
+      <Filter>Source Files\stamp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\cmd\cmd.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\..\cmd\stamp\stamp.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

@@ -6,7 +6,7 @@
 \author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \author Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2021.04.03
-\version 2021.04.20
+\version 2022.06.16
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -145,7 +145,7 @@ static size_t bpkiEncShare(octet pki[], const octet share[], size_t share_len)
 	der_anchor BelsAlgId[1];
 	size_t count = 0;
 	// проверить ключи
-	ASSERT(share_len == 33 || share_len == 49 || share_len == 65);
+	ASSERT(share_len == 17 || share_len == 25 || share_len == 33);
 	ASSERT(memIsNullOrValid(share, share_len));
 	ASSERT(!share || 1 <= share[0] && share[0] <= 16);
 	// кодировать
@@ -153,9 +153,9 @@ static size_t bpkiEncShare(octet pki[], const octet share[], size_t share_len)
 	 derEncStep(derEncSIZE(pki, 0), pki, count);
 	 derEncStep(derEncSEQStart(BelsAlgId, pki, count), pki, count);
 	  derEncStep(derEncOID(pki, oid_bels_share), pki, count);
-	  if (share_len == 33)
+	  if (share_len == 17)
 		  derEncStep(derEncOID(pki, oid_bels_m0128v1), pki, count);
-	  else if (share_len == 49)
+	  else if (share_len == 25)
 		  derEncStep(derEncOID(pki, oid_bels_m0192v1), pki, count);
 	  else
 		  derEncStep(derEncOID(pki, oid_bels_m0256v1), pki, count);
@@ -179,11 +179,11 @@ static size_t bpkiDecShare(octet share[], size_t* share_len,
 	 derDecStep(derDecSEQStart(BelsAlgId, ptr, count), ptr, count);
 	  derDecStep(derDecOID2(ptr, count, oid_bels_share), ptr, count);
 	  if ((t = derDecOID2(ptr, count, oid_bels_m0128v1)) != SIZE_MAX)
-		  len = 33;
+		  len = 17;
 	  else if ((t = derDecOID2(ptr, count, oid_bels_m0192v1)) != SIZE_MAX)
-		  len = 49;
+		  len = 25;
 	  else if ((t = derDecOID2(ptr, count, oid_bels_m0256v1)) != SIZE_MAX)
-		  len = 65;
+		  len = 33;
 	  else
 		  return SIZE_MAX;
 	  ptr += t, count -= t;
@@ -431,7 +431,7 @@ err_t bpkiWrapShare(octet epki[], size_t* epki_len, const octet share[],
 	// проверить входные данные
 	if (iter < 10000)
 		return ERR_BAD_INPUT;
-	if (share_len != 33 && share_len != 49 && share_len != 65 ||
+	if (share_len != 17 && share_len != 25 && share_len != 33 ||
 		share && (!memIsValid(share, 1) || share[0] == 0 || share[0] > 16))
 		return ERR_BAD_SECKEY;
 	// определить длину epki

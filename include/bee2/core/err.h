@@ -4,7 +4,7 @@
 \brief Errors
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2022.06.09
+\version 2022.06.13
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -190,7 +190,7 @@ Cmd
 /* команда уже зарегистрирована */
 #define ERR_CMD_EXISTS				_ERR_REG(602)
 /* неверные параметры команды */
-#define ERR_BAD_CMD					_ERR_REG(603)
+#define ERR_CMD_PARAMS				_ERR_REG(603)
 
 
 /*

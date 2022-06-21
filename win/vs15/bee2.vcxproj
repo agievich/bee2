@@ -312,8 +312,8 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
-      <Message>Set control stamp</Message>
-      <Command>$(OutDir)\stamp.exe -s $(OutDir)\$(ProjectName).dll</Command>
+      <Message>Set a stamp</Message>
+      <Command>$(OutDir)bee2cmd.exe stamp -s $(OutDir)$(ProjectName).dll</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
@@ -348,8 +348,8 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
-      <Message>Set control stamp</Message>
-      <Command>$(OutDir)\stamp.exe -s $(OutDir)\$(ProjectName).dll</Command>
+      <Message>Set a stamp</Message>
+      <Command>$(OutDir)bee2cmd.exe stamp -s $(OutDir)$(ProjectName).dll</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -385,8 +385,8 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
-      <Message>Set control stamp</Message>
-      <Command>$(OutDir)\stamp.exe -s $(OutDir)\$(ProjectName).dll</Command>
+      <Message>Set a stamp</Message>
+      <Command>$(OutDir)bee2cmd.exe stamp -s $(OutDir)$(ProjectName).dll</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
@@ -420,8 +420,8 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
-      <Message>Set control stamp</Message>
-      <Command>$(OutDir)\stamp.exe -s $(OutDir)\$(ProjectName).dll</Command>
+      <Message>Set a stamp</Message>
+      <Command>$(OutDir)bee2cmd.exe stamp -s $(OutDir)$(ProjectName).dll</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -429,10 +429,6 @@
       <Project>{1b3f88d7-bd23-4398-a331-3db139cf07ef}</Project>
       <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
       <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="stamp.vcxproj">
-      <Project>{fbf42734-f8bb-47d2-b964-1017cb32597c}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

@@ -255,6 +255,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Set a stamp"
+				CommandLine="..\..\apps\stamp\autostamp.cmd $(OutDir)"
 			/>
 		</Configuration>
 		<Configuration
@@ -337,6 +339,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Set a stamp"
+				CommandLine="..\..\cmd\stamp\autostamp.cmd $(OutDir)"
 			/>
 		</Configuration>
 	</Configurations>
@@ -356,6 +360,14 @@
 				RelativePath="..\..\cmd\cmd_main.c"
 				>
 			</File>
+			<File
+				RelativePath="..\..\cmd\cmd_privkey.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\cmd\cmd_pwd.c"
+				>
+			</File>
 			<Filter
 				Name="bsum"
 				>
@@ -372,12 +384,32 @@
 					>
 				</File>
 			</Filter>
+			<Filter
+				Name="stamp"
+				>
+				<File
+					RelativePath="..\..\cmd\stamp\stamp.c"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{2585731B-934C-4D01-9DF3-8948C17AB834}"
 			>
+			<File
+				RelativePath="..\..\cmd\cmd.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Resource Files"
+			>
+			<File
+				RelativePath="..\..\cmd\stamp\stamp.rc"
+				>
+			</File>
 		</Filter>
 	</Files>
 	<Globals>

@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.10.29
-\version 2019.06.27
+\version 2022.06.17
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -124,7 +124,7 @@ bool_t FAST(hexEqRev)(const void* buf, const char* hex);
 
 /*!	\brief Кодирование буфера памяти
 
-	Буфер [count]src кодируется шестнадцатеричную строку 
+	Буфер [count]src кодируется шестнадцатеричной строкой
 	{2 * count + 1}dest. Первому октету src соответствует первая пара 
 	символов dest, второму октету -- вторая пара и т.д.
 	\pre Буферы dest и src не пересекаются.

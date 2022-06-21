@@ -4,15 +4,15 @@
 \brief Generate and manage private keys
 \project bee2/cmd 
 \created 2022.06.08
-\version 2022.06.10
+\version 2022.06.21
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
 #include "../cmd.h"
-
 #include <bee2/core/blob.h>
+#include <bee2/core/dec.h>
 #include <bee2/core/err.h>
 #include <bee2/core/hex.h>
 #include <bee2/core/mem.h>
@@ -25,7 +25,6 @@ version 3. See Copyright Notices in bee2/info.h.
 #include <bee2/crypto/bign.h>
 #include <bee2/crypto/bpki.h>
 #include <bee2/crypto/brng.h>
-
 #include <stdio.h>
 
 /*
@@ -33,11 +32,10 @@ version 3. See Copyright Notices in bee2/info.h.
 Утилита kg
 
 Функционал:
-- генерация ключей bign;
-- разделение личного ключа на частичные секреты с записью в защищенные 
-  контейнеры;
-- сборка ключа по контейнерам с проверкой корректности и печатью открытого 
-  ключа. 
+- генерация личного ключа bign с сохранением в контейнер СТБ 34.101.78;
+- проверочное чтение личного ключа из контейнера с печатью открытого 
+  ключа;
+- смена пароля защиты контейнера.
 *******************************************************************************
 */
 
@@ -49,12 +47,17 @@ int kgUsage()
 	printf(
 		"bee2cmd/%s: %s\n"
 		"Usage:\n"
-		"  kg -pass:<pwd> <share_1> <share_2> ... <share_n>\n"
-		"    create a key and store it in n shares protected by <pwd>\n"
-		"    \\pre 2 <= n <= 16\n"
-		"  kg -pass:<pwd> -v <share_i> <share_j>\n"
-		"    restore a key from 2 shares and validate it\n"
-		"    \\pre 2 <= i != j <= n\n",
+		"  kg gen [-lnnn] -pass arg filename\n"
+		"    generate a private key and store it in filename\n"
+		"  kg val -pass arg filename\n"
+		"    validate a private key stored in filename\n"
+		"  kg chp -passin arg -passout pass_arg filename\n"
+		"    change a password used to protect filename\n"
+		"  options:\n"
+		"    -lnnn -- security level (-l128, -l192 or -l256; 128 by default)\n"
+		"    -pass arg -- description of a password\n"
+		"    -passin arg -- description of an input password\n"
+		"    -passout arg -- description of an output password\n",
 		_name, _descr
 	);
 	return -1;
@@ -140,236 +143,334 @@ err_t kgSelfTest()
 
 /*
 *******************************************************************************
-Управление ключами
+Генерация ключа
 *******************************************************************************
 */
 
-typedef struct
+err_t kgGen(int argc, char* argv[])
 {
-	size_t l;				/*!< уровень стойкости */
-	octet privkey[64];		/*!< личный ключ */
-	octet pubkey[128];		/*!< открытый ключ */
-	octet skey[32];			/*!< ключ защиты */
-} kg_key_t;
-
-err_t kgGenKey(kg_key_t* key, size_t l)
-{
-	err_t code;
+	const char* sources[] = { "trng", "trng2", "sys", "timer" };
+	err_t code = ERR_OK;
+	size_t len = 0;
+	cmd_pwd_t pwd = 0;
+	size_t pos;
+	size_t count;
+	size_t read;
 	bign_params params[1];
-	// входной контроль и подготовка
-	if (!memIsValid(key, sizeof(kg_key_t)))
-		return ERR_BAD_INPUT;
-	if (!rngIsValid())
-		return ERR_BAD_RNG;
-	// загрузить параметры
-	if ((key->l = l) == 128)
+	void* state = 0;
+	octet* privkey;
+	octet* pubkey;
+
+	printf("Performing self-tests... ");
+	code = kgSelfTest();
+	printf("%s\n", errMsg(code));
+	ERR_CALL_CHECK(code);
+
+	printf("Starting the RNG[");
+	for (pos = count = 0; pos < COUNT_OF(sources); ++pos)
+		if (rngReadSource(&read, 0, 0, sources[pos]) == ERR_OK)
+			printf(count++ ? ", %s" : "%s", sources[pos]);
+	printf("]... ");
+	code = rngCreate(0, 0);
+	printf("%s\n", errMsg(code));
+	ERR_CALL_CHECK(code);
+
+	printf("Running stat-tests for the RNG... ");
+	code = cmdRngTest();
+	printf("%s\n", errMsg(code));
+	ERR_CALL_CHECK(code);
+
+	printf("Parsing options... ");
+	while (argc && strStartsWith(*argv, "-"))
+	{
+		if (strStartsWith(*argv, "-l"))
+		{
+			char* str = *argv + strLen("-l");
+			if (!decIsValid(str) || decCLZ(str) || strLen(str) != 3 ||
+				(len = (size_t)decToU32(str)) % 64 || len < 128 || len > 256)
+			{
+				code = ERR_CMD_PARAMS;
+				break;
+			}
+			len /= 4, ++argv, --argc;
+		}
+		if (strStartsWith(*argv, "-pass"))
+		{
+			if (!strEq(*argv, "-pass"))
+			{
+				code = ERR_CMD_PARAMS;
+				break;
+			}
+			++argv, --argc;
+			code = cmdPwdGen(&pwd, *argv);
+			if (code != ERR_OK)
+				break;
+			ASSERT(cmdPwdIsValid(pwd));
+			++argv, --argc;
+		}
+	}
+	if (!pwd || argc != 1)
+		code = ERR_CMD_PARAMS;
+	printf("%s\n", errMsg(code));
+	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
+
+	printf("Validating the output file... ");
+	code = cmdFileValNotExist(argc, argv) ? ERR_OK : ERR_FILE_EXISTS;
+	printf("%s\n", errMsg(code));
+	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
+
+	printf("Loading public parameters... ");
+	if (len == 0)
+		len = 32;
+	if (len == 32)
 		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1");
-	else if (key->l == 192)
+	else if (len == 48)
 		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.2");
-	else if (key->l == 256)
+	else if (len == 64)
 		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.3");
 	else
 		code = ERR_BAD_INPUT;
-	ERR_CALL_CHECK(code);
-	// сгенерировать ключевую пару
-	code = bignGenKeypair(key->privkey, key->pubkey, params, rngStepR, 0);
-	ERR_CALL_CHECK(code);
-	// сгенерировать ключ защиты
-	rngStepR(key->skey, key->l / 8, 0);
-	return ERR_OK;
-}
+	printf("%s\n", errMsg(code));
+	ERR_CALL_HANDLE(code, (blobClose(state), cmdPwdClose(pwd)));
 
-bool_t kgKeyIsValid(const kg_key_t* key)
-{
-	return memIsValid(key, sizeof(kg_key_t)) &&
-		(key->l == 128 || key->l == 192) || (key->l == 256);
-}
-
-err_t kgCreateKey(const char* privkey, size_t l,
-	const char* shares[], size_t count, size_t threshold,
-	const char* pwd)
-{
-	err_t code;
-	const size_t iter = 10000;
-	void* state;
-	kg_key_t* key;
-	octet* share;
-	octet* salt;
-	octet* epki;
-	size_t epki_privkey_len;
-	size_t epki_share_len;
-	// входной контроль
-	if (!strIsValid(privkey) ||
-		!(l == 128 || l == 192 || l == 256) ||
-		!memIsValid(shares, count * sizeof(const char*)) ||
-		count < 2 || count > 16 ||
-		threshold == 0 || threshold > count ||
-		!strIsValid(pwd))
-		return ERR_BAD_INPUT;
-	if (!rngIsValid())
-		return ERR_BAD_RNG;
-	// определить длину контейнера с личным ключом
-	code = bpkiWrapPrivkey(0, &epki_privkey_len, 0, l / 4, 0, 0, 0, iter);
-	ERR_CALL_CHECK(code);
-	// определить длину контейнера с частичным секретом
-	code = bpkiWrapShare(0, &epki_share_len, 0, 33, 0, 0, 0, iter);
-	ERR_CALL_CHECK(code);
-	// выделить память
-	state = blobCreate(sizeof(kg_key_t) + count * (l / 8 + 1) + 8 +
-		MAX2(epki_privkey_len, epki_share_len));
-	code = state ? ERR_OK : ERR_OUTOFMEMORY;
-	ERR_CALL_CHECK(code);
-	key = (kg_key_t*)state;
-	share = (octet*)key + sizeof(kg_key_t);
-	salt = share + count * 33;
-	epki = salt + (l / 8 + 1);
-	// сгенерировать ключ
-	code = kgGenKey(key, l);
-	ERR_CALL_HANDLE(code, blobClose(state));
-	// разделить мастер-ключ на частичные секреты
-	code = belsShare2(share, count, threshold, l / 8, key->skey, rngStepR, 0);
-	ERR_CALL_HANDLE(code, blobClose(state));
-	// защитить частичные секреты
-	for (; count--; share += (l / 8 + 1), ++shares)
+	printf("Generating a private key... ");
+	state = blobCreate(3 * len);
+	if (state)
 	{
-		FILE* fp;
-		// установить защиту
-		rngStepR(salt, 8, 0);
-		code = bpkiWrapShare(epki, 0, share, l / 8 + 1, (const octet*)pwd,
-			strLen(pwd), salt, iter);
-		ERR_CALL_HANDLE(code, blobClose(state));
-		// открыть файл для записи
-		fp = fopen(*shares, "wb");
-		code = fp ? ERR_OK : ERR_FILE_CREATE;
-		ERR_CALL_HANDLE(code, blobClose(state));
-		// записать
-		code = fwrite(epki, 1, epki_share_len, fp) == epki_share_len ?
-			ERR_OK : ERR_FILE_WRITE;
-		ERR_CALL_HANDLE(code, (fclose(fp), blobClose(state)));
-		fclose(fp);
-	}
-	// защитить личный ключ
-	{
-		FILE* fp;
-		// установить защиту
-		rngStepR(salt, 8, 0);
-		code = bpkiWrapPrivkey(epki, 0, key->privkey, l / 4, key->skey,
-			l / 8, salt, iter);
-		ERR_CALL_HANDLE(code, blobClose(state));
-		// открыть файл для записи
-		fp = fopen(privkey, "wb");
-		code = fp ? ERR_OK : ERR_FILE_CREATE;
-		ERR_CALL_HANDLE(code, blobClose(state));
-		// записать
-		code = fwrite(epki, 1, epki_privkey_len, fp) == epki_privkey_len ?
-			ERR_OK : ERR_FILE_WRITE;
-		ERR_CALL_HANDLE(code, (fclose(fp), blobClose(state)));
-		fclose(fp);
-	}
-	// завершение
-	blobClose(state);
-	return ERR_OK;
-}
-
-err_t kgReadKey(kg_key_t* key, const char* privkey,
-	const char* shares[], size_t count, const char* pwd)
-{
-	err_t code;
-	void* state;
-	octet* share;
-	octet* epki_privkey;
-	octet* epki_share;
-	size_t epki_privkey_len128;
-	size_t epki_privkey_len192;
-	size_t epki_privkey_len;
-	size_t epki_share_len;
-	size_t len;
-	FILE* fp;
-	// входной контроль
-	if (!memIsValid(key, sizeof(kg_key_t)) ||
-		!strIsValid(privkey) ||
-		count < 2 || count > 16 ||
-		!memIsValid(shares, count * sizeof(const char*)) ||
-		!strIsValid(pwd))
-		return ERR_BAD_INPUT;
-	// определить возможные длины контейнера с личным ключом
-	code = bpkiWrapPrivkey(0, &epki_privkey_len128, 0, 32, 0, 0, 0, SIZE_MAX);
-	ERR_CALL_CHECK(code);
-	code = bpkiWrapPrivkey(0, &epki_privkey_len192, 0, 48, 0, 0, 0, SIZE_MAX);
-	ERR_CALL_CHECK(code);
-	code = bpkiWrapPrivkey(0, &epki_privkey_len, 0, 64, 0, 0, 0, SIZE_MAX);
-	ERR_CALL_CHECK(code);
-	// определить максимальную длину контейнера с частичным секретом
-	code = bpkiWrapShare(0, &epki_share_len, 0, 33, 0, 0, 0, SIZE_MAX);
-	ERR_CALL_CHECK(code);
-	// выделить память
-	state = blobCreate(count * 33 + epki_privkey_len + epki_share_len + 2);
-	code = state ? ERR_OK : ERR_OUTOFMEMORY;
-	ERR_CALL_CHECK(code);
-	share = (octet*)state;
-	epki_privkey = share + count * 33;
-	epki_share = epki_privkey + epki_privkey_len + 1;
-	// открыть файл с личным ключом
-	fp = fopen(privkey, "rb");
-	code = fp ? ERR_OK : ERR_FILE_OPEN;
-	ERR_CALL_HANDLE(code, blobClose(state));
-	// прочитать
-	len = fread(epki_privkey, 1, epki_privkey_len + 1, fp);
-	code = len <= epki_privkey_len ? ERR_OK : ERR_BAD_FORMAT;
-	ERR_CALL_HANDLE(code, (fclose(fp), blobClose(state)));
-	// определить уровень стойкости
-	if (len == epki_privkey_len)
-		key->l = 256;
-	else if (len == epki_privkey_len128)
-	{
-		key->l = 128;
-		epki_privkey_len = epki_privkey_len128;
-	}
-	else if (len == epki_privkey_len192)
-	{
-		key->l = 192;
-		epki_privkey_len = epki_privkey_len192;
+		privkey = (octet*)state;
+		pubkey = privkey + len;
+		code = bignGenKeypair(privkey, pubkey, params, rngStepR, 0);
 	}
 	else
-		code = ERR_BAD_FORMAT;
-	ERR_CALL_HANDLE(code, (fclose(fp), blobClose(state)));
-	fclose(fp);
-	// уточнить длину контейнера с частичным секретом
-	code = bpkiWrapShare(0, &epki_share_len, 0, key->l / 8 + 1,
-		0, 0, 0, SIZE_MAX);
-	ERR_CALL_HANDLE(code, blobClose(state));
-	// прочитать частичные секреты
-	for (; count--; share += (key->l / 8 + 1), ++shares)
-	{
-		// открыть файл для чтения
-		fp = fopen(*shares, "rb");
-		code = fp ? ERR_OK : ERR_FILE_OPEN;
-		ERR_CALL_HANDLE(code, blobClose(state));
-		// прочитать
-		len = fread(epki_share, 1, epki_share_len + 1, fp);
-		code = len == epki_share_len ? ERR_OK : ERR_BAD_FORMAT;
-		ERR_CALL_HANDLE(code, (fclose(fp), blobClose(state)));
-		// декодировать
-		code = bpkiUnwrapShare(share, &len, epki_share, epki_share_len,
-			(const octet*)pwd, strLen(pwd));
-		ERR_CALL_HANDLE(code, (fclose(fp), blobClose(state)));
-		code = len == key->l / 8 + 1 ? ERR_OK : ERR_BAD_FORMAT;
-		ERR_CALL_HANDLE(code, (fclose(fp), blobClose(state)));
-		fclose(fp);
-	}
-	// собрать ключ защиты
-	share -= count * (key->l / 8 + 1);
-	code = belsRecover2(key->skey, count, key->l / 8, share);
-	ERR_CALL_HANDLE(code, blobClose(state));
-	// декодировать личный ключ
-	code = bpkiUnwrapShare(share, &len, epki_privkey, epki_privkey_len,
-		(const octet*)pwd, strLen(pwd));
-	ERR_CALL_HANDLE(code, blobClose(state));
-	code = len == key->l / 4 ? ERR_OK : ERR_BAD_FORMAT;
-	ERR_CALL_HANDLE(code, blobClose(state));
-	// завершение
+		code = ERR_OUTOFMEMORY;
+	printf("%s\n", errMsg(code));
+	ERR_CALL_HANDLE(code, (blobClose(state), cmdPwdClose(pwd)));
+
+	printf("Storing the private key... ");
+	code = cmdPrivkeyWrite(privkey, len, *argv, pwd);
+	printf("%s\n", errMsg(code));
 	blobClose(state);
-	return ERR_OK;
+	cmdPwdClose(pwd);
+	return code;
+}
+
+/*
+*******************************************************************************
+Проверка ключа
+*******************************************************************************
+*/
+
+err_t kgVal(int argc, char* argv[])
+{
+	err_t code = ERR_OK;
+	size_t len = 0;
+	cmd_pwd_t pwd = 0;
+	bign_params params[1];
+	void* state = 0;
+	octet* privkey;
+	octet* pubkey;
+	char* hex;
+
+	printf("Performing self-tests... ");
+	code = kgSelfTest();
+	printf("%s\n", errMsg(code));
+	ERR_CALL_CHECK(code);
+
+	printf("Parsing options... ");
+	while (argc && strStartsWith(*argv, "-"))
+	{
+		if (strStartsWith(*argv, "-l"))
+		{
+			char* str = *argv + strLen("-l");
+			if (!decIsValid(str) || decCLZ(str) || strLen(str) != 3 ||
+				(len = (size_t)decToU32(str)) % 64 || len < 128 || len > 256)
+			{
+				code = ERR_CMD_PARAMS;
+				break;
+			}
+			len /= 4, ++argv, --argc;
+		}
+		if (strStartsWith(*argv, "-pass"))
+		{
+			if (!strEq(*argv, "-pass"))
+			{
+				code = ERR_CMD_PARAMS;
+				break;
+			}
+			++argv, --argc;
+			code = cmdPwdRead(&pwd, *argv);
+			if (code != ERR_OK)
+				break;
+			ASSERT(cmdPwdIsValid(pwd));
+			++argv, --argc;
+		}
+	}
+	if (!pwd || argc != 1)
+		code = ERR_CMD_PARAMS;
+	printf("%s\n", errMsg(code));
+	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
+
+	printf("Validating the input file... ");
+	code = cmdFileValExist(argc, argv) ? ERR_OK : ERR_FILE_NOT_FOUND;
+	printf("%s\n", errMsg(code));
+	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
+
+	printf("Recovering the private key... ");
+	if (len == 0)
+		code = cmdPrivkeyRead(0, &len, *argv, pwd);
+	if (code == ERR_OK)
+	{
+		state = blobCreate(len + 2 * len + 4 * len + 1);
+		if (state)
+		{
+			privkey = (octet*)state;
+			pubkey = privkey + len;
+			hex = (char*)(pubkey + 2 * len);
+			code = cmdPrivkeyRead(privkey, &len, *argv, pwd);
+		}
+		else
+			code = ERR_OUTOFMEMORY;
+	}
+	printf("%s\n", errMsg(code));
+	ERR_CALL_HANDLE(code, (blobClose(state), cmdPwdClose(pwd)));
+
+	printf("Recovering the public key... ");
+	if (len == 32)
+		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1");
+	else if (len == 48)
+		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.2");
+	else if (len == 64)
+		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.3");
+	else
+		code = ERR_BAD_INPUT;
+	if (code == ERR_OK)
+		code = bignCalcPubkey(pubkey, params, privkey);
+	printf("%s\n", errMsg(code));
+	ERR_CALL_HANDLE(code, (blobClose(state), cmdPwdClose(pwd)));
+
+	hexFrom(hex, pubkey, len * 2);
+	printf("pubkey[bign%d] = %s\n", (int)len * 4, hex);
+	blobClose(state);
+	cmdPwdClose(pwd);
+	return code;
+}
+
+/*
+*******************************************************************************
+Смена пароля защиты ключа
+*******************************************************************************
+*/
+
+err_t kgChp(int argc, char* argv[])
+{
+	const char* sources[] = { "trng", "trng2", "sys", "timer" };
+	err_t code = ERR_OK;
+	size_t len = 0;
+	cmd_pwd_t pwdin = 0;
+	cmd_pwd_t pwdout = 0;
+	size_t pos;
+	size_t count;
+	size_t read;
+	void* state = 0;
+	octet* privkey;
+
+	printf("Performing self-tests... ");
+	code = kgSelfTest();
+	printf("%s\n", errMsg(code));
+	ERR_CALL_CHECK(code);
+
+	printf("Starting the RNG[");
+	for (pos = count = 0; pos < COUNT_OF(sources); ++pos)
+		if (rngReadSource(&read, 0, 0, sources[pos]) == ERR_OK)
+			printf(count++ ? ", %s" : "%s", sources[pos]);
+	printf("]... ");
+	code = rngCreate(0, 0);
+	printf("%s\n", errMsg(code));
+	ERR_CALL_CHECK(code);
+
+	printf("Running stat-tests for the RNG... ");
+	code = cmdRngTest();
+	printf("%s\n", errMsg(code));
+	ERR_CALL_CHECK(code);
+
+	printf("Parsing options... ");
+	while (argc && strStartsWith(*argv, "-"))
+	{
+		if (strStartsWith(*argv, "-l"))
+		{
+			char* str = *argv + strLen("-l");
+			if (!decIsValid(str) || decCLZ(str) || strLen(str) != 3 ||
+				(len = (size_t)decToU32(str)) % 64 || len < 128 || len > 256)
+			{
+				code = ERR_CMD_PARAMS;
+				break;
+			}
+			len /= 4, ++argv, --argc;
+		}
+		if (strStartsWith(*argv, "-passin"))
+		{
+			if (!strEq(*argv, "-passin"))
+			{
+				code = ERR_CMD_PARAMS;
+				break;
+			}
+			++argv, --argc;
+			code = cmdPwdRead(&pwdin, *argv);
+			if (code != ERR_OK)
+				break;
+			ASSERT(cmdPwdIsValid(pwdin));
+			++argv, --argc;
+		}
+		if (strStartsWith(*argv, "-passout"))
+		{
+			if (!strEq(*argv, "-passout"))
+			{
+				code = ERR_CMD_PARAMS;
+				break;
+			}
+			++argv, --argc;
+			code = cmdPwdGen(&pwdout, *argv);
+			if (code != ERR_OK)
+				break;
+			ASSERT(cmdPwdIsValid(pwdout));
+			++argv, --argc;
+		}
+	}
+	if (!pwdin || !pwdout || argc != 1)
+		code = ERR_CMD_PARAMS;
+	printf("%s\n", errMsg(code));
+	ERR_CALL_HANDLE(code, (cmdPwdClose(pwdout), cmdPwdClose(pwdin)));
+
+	printf("Validating the target file... ");
+	code = cmdFileValExist(argc, argv) ? ERR_OK : ERR_FILE_EXISTS;
+	printf("%s\n", errMsg(code));
+	ERR_CALL_HANDLE(code, (cmdPwdClose(pwdout), cmdPwdClose(pwdin)));
+
+	printf("Recovering the private key... ");
+	if (len == 0)
+		code = cmdPrivkeyRead(0, &len, *argv, pwdin);
+	if (code == ERR_OK)
+	{
+		state = blobCreate(len + 2 * len + 4 * len + 1);
+		if (state)
+		{
+			privkey = (octet*)state;
+			code = cmdPrivkeyRead(privkey, &len, *argv, pwdin);
+		}
+		else
+			code = ERR_OUTOFMEMORY;
+	}
+	printf("%s\n", errMsg(code));
+	ERR_CALL_HANDLE(code,
+		(blobClose(state), cmdPwdClose(pwdout), cmdPwdClose(pwdin)));
+
+	printf("Storing the private key... ");
+	code = cmdPrivkeyWrite(privkey, len, *argv, pwdout);
+	printf("%s\n", errMsg(code));
+	blobClose(state);
+	cmdPwdClose(pwdout);
+	cmdPwdClose(pwdin);
+	return code;
 }
 
 /*
@@ -378,95 +479,26 @@ err_t kgReadKey(kg_key_t* key, const char* privkey,
 *******************************************************************************
 */
 
-int kgMain(int argc, const char* argv[])
+int kgMain(int argc, char* argv[])
 {
 	err_t code;
-	const char* pwd;
-	bool_t check;
-	// определить пароль
-	if (argc < 2 || !strStartsWith(argv[1], "-pass:"))
+	// справка
+	if (argc < 4)
 		return kgUsage();
-	pwd = argv[1] + strLen("-pass:");
-	argc -= 2, argv += 2;
-	// режим проверки?
-	if (check = strEq(argv[0], "-v"))
-		argc--, argv++;
-	// контроль числа частичных секретов
-	if (argc > 16 || argc < 2 || check && argc != 2)
-		return kgUsage();
-	// создать ключ
-	if (!check)
-	{
-		const char* sources[] = { "trng", "trng2", "sys", "timer" };
-		size_t read, pos, count;
-
-		printf("Validating output files... ");
-		code = cmdValFilesNotExist(argc, argv);
-		printf("%s\n", errMsg(code));
-		ERR_CALL_CHECK(code);
-
-		printf("Performing self-tests... ");
-		code = kgSelfTest();
-		printf("%s\n", errMsg(code));
-		ERR_CALL_CHECK(code);
-
-		printf("Starting the RNG[");
-		for (pos = count = 0; pos < COUNT_OF(sources); ++pos)
-			if (rngReadSource(&read, 0, 0, sources[pos]) == ERR_OK)
-				printf(count++ ? ", %s" : "%s", sources[pos]);
-		printf("]... ");
-		code = rngCreate(0, 0);
-		printf("%s\n", errMsg(code));
-		ERR_CALL_CHECK(code);
-
-		printf("Running stat-tests for the RNG... ");
-		code = cmdRngTest();
-		printf("%s\n", errMsg(code));
-		ERR_CALL_CHECK(code);
-
-		printf("Generating and sharing a key... ");
-		code = kgCreateKey("privkey", 128, argv, (size_t)argc, 2, pwd);
-		printf("%s\n", errMsg(code));
-		rngClose();
-		ERR_CALL_CHECK(code);
-		printf("Password-protected shares are stored in %d files.\n", argc);
-	}
-	// проверить ключ
+	// разбор команды
+	++argv, --argc;
+	if (strEq(argv[0], "gen"))
+		code = kgGen(argc - 1, argv + 1);
+	else if (strEq(argv[0], "val"))
+		code = kgVal(argc - 1, argv + 1);
+	else if (strEq(argv[0], "chp"))
+		code = kgChp(argc - 1, argv + 1);
 	else
 	{
-		blob_t state;
-		kg_key_t* key;
-		char* hex;
-
-		printf("Validating input files... ");
-		code = cmdValFilesExist(argc, argv);
-		printf("%s\n", errMsg(code));
-		ERR_CALL_CHECK(code);
-
-		printf("Performing self-tests... ");
-		code = kgSelfTest();
-		printf("%s\n", errMsg(code));
-		ERR_CALL_CHECK(code);
-
-		printf("Recovering a key... ");
-		state = blobCreate(sizeof(kg_key_t) + 128 + 1);
-		if (state)
-		{
-			key = (kg_key_t*)state;
-			hex = (char*)key + sizeof(kg_key_t);
-			code = kgReadKey(key, "privkey", argv, (size_t)argc, pwd);
-		}
-		else
-			code = ERR_OUTOFMEMORY;
-		printf("%s\n", errMsg(code));
-		ERR_CALL_HANDLE(code, blobClose(state));
-
-		hexFrom(hex, key->pubkey, key->l / 2);
-		printf("pubkey[bign] = %s\n", hex);
-		blobClose(state);
+		code = ERR_CMD_NOT_FOUND;
+		printf("bee2cmd/kg: %s\n", errMsg(code));
 	}
-	// возврат
-	return code;
+	return (code == ERR_OK) ? 0 : -1;
 }
 
 /*

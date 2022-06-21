@@ -3,9 +3,8 @@
 \file bpki_test.c
 \brief Tests for STB 34.101.78 (bpki) helpers
 \project bee2/test
-\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2021.04.13
-\version 2021.04.15
+\version 2022.06.16
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -54,37 +53,37 @@ bool_t bpkiTest()
 		key_len != 64 || !memEq(key, beltH(), 64))
 		return FALSE;
 	// создать контейнер с частичным секретом (l = 128)
-	memCopy(key + 1, beltH(), 32), key[0] = 1;
-	if (bpkiWrapShare(epki, &epki_len, key, 33,
-			pwd, sizeof(pwd), beltH() + 56, 10003) != ERR_OK)
+	memCopy(key + 1, beltH(), 16), key[0] = 1;
+	if (bpkiWrapShare(epki, &epki_len, key, 17,
+			pwd, sizeof(pwd), beltH() + 64, 10003) != ERR_OK)
 		return FALSE;
 	ASSERT(epki_len <= sizeof(epki));
 	// разобрать контейнер с частичным секретом (l = 128)
 	if (bpkiUnwrapShare(key, &key_len, epki, epki_len,
 			pwd, sizeof(pwd)) != ERR_OK ||
-		key_len != 33 || !memEq(key + 1, beltH(), 32) || key[0] != 1)
+		key_len != 17 || !memEq(key + 1, beltH(), 16) || key[0] != 1)
 		return FALSE;
 	// создать контейнер с частичным секретом (l = 192)
-	memCopy(key + 1, beltH(), 48), key[0] = 2;
-	if (bpkiWrapShare(epki, &epki_len, key, 49,
+	memCopy(key + 1, beltH(), 24), key[0] = 2;
+	if (bpkiWrapShare(epki, &epki_len, key, 25,
 			pwd, sizeof(pwd), beltH() + 64, 10004) != ERR_OK)
 		return FALSE;
 	ASSERT(epki_len <= sizeof(epki));
 	// разобрать контейнер с частичным секретом (l = 192)
 	if (bpkiUnwrapShare(key, &key_len, epki, epki_len,
 			pwd, sizeof(pwd)) != ERR_OK ||
-		key_len != 49 || !memEq(key + 1, beltH(), 48) || key[0] != 2)
+		key_len != 25 || !memEq(key + 1, beltH(), 24) || key[0] != 2)
 		return FALSE;
 	// создать контейнер с частичным секретом (l = 256)
-	memCopy(key + 1, beltH(), 64), key[0] = 16;
-	if (bpkiWrapShare(epki, &epki_len, key, 65,
+	memCopy(key + 1, beltH(), 32), key[0] = 16;
+	if (bpkiWrapShare(epki, &epki_len, key, 33,
 			pwd, sizeof(pwd), beltH() + 64, 10005) != ERR_OK)
 		return FALSE;
 	ASSERT(epki_len <= sizeof(epki));
 	// разобрать контейнер с частичным секретом (l = 128)
 	if (bpkiUnwrapShare(key, &key_len, epki, epki_len,
 			pwd, sizeof(pwd)) != ERR_OK ||
-		key_len != 65 || !memEq(key + 1, beltH(), 64) || key[0] != 16)
+		key_len != 33 || !memEq(key + 1, beltH(), 32) || key[0] != 16)
 		return FALSE;
 	// все нормально
 	return TRUE;

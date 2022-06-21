@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: main
 \project bee2/cmd
 \created 2022.06.07
-\version 2022.06.10
+\version 2022.06.21
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -42,12 +42,16 @@ typedef struct
 	cmd_main_i fn;		/*!< точка входа команды */
 } cmd_entry_t;
 
-static size_t _count = 0;	/*< число команд */
+static size_t _count = 0;		/*< число команд */
 static cmd_entry_t _cmds[32];	/*< перечень команд */
 
 err_t cmdReg(const char* name, const char* descr, cmd_main_i fn)
 {
 	size_t pos;
+	// неверный формат?
+	if (!strIsValid(name) || 0 == strLen(name) || strLen(name) > 8 ||
+		!strIsValid(descr) || strLen(descr) > 60)
+		return ERR_BAD_FORMAT;
 	// команда уже зарегистрирована?
 	for (pos = 0; pos < _count; ++pos)
 		if (strEq(_cmds[pos].name, name))
@@ -81,7 +85,10 @@ int cmdUsage()
 	printf("%s} ...\n", _cmds[pos].name);
 	// краткая справка по каждой команде
 	for (pos = 0; pos < _count; ++pos)
-		printf("    %s:\t%s\n", _cmds[pos].name, _cmds[pos].descr);
+		printf("    %s:%*s%s\n",
+			_cmds[pos].name,
+			(int)(12 - strLen(_cmds[pos].name)), "",
+			_cmds[pos].descr);
 	return -1;
 }
 
@@ -92,12 +99,24 @@ int cmdUsage()
 */
 
 extern err_t bsumInit();
+extern err_t kgInit();
+
+#ifdef OS_WIN
+extern err_t stampInit();
+#endif
+
 
 err_t cmdInit()
 {
 	err_t code;
 	code = bsumInit();
 	ERR_CALL_CHECK(code);
+	code = kgInit();
+	ERR_CALL_CHECK(code);
+#ifdef OS_WIN
+	code = stampInit();
+	ERR_CALL_CHECK(code);
+#endif
 	return code;
 }
 
@@ -123,7 +142,7 @@ int main(int argc, char* argv[])
 	if (argc < 2)
 		return cmdUsage();
 	// вызов команды
-	for (pos = 0; pos < COUNT_OF(_cmds); ++pos)
+	for (pos = 0; pos < _count; ++pos)
 		if (strEq(argv[1], _cmds[pos].name))
 			return _cmds[pos].fn(argc - 1,  argv + 1);
 	printf("bee2cmd: %s\n", errMsg(ERR_CMD_NOT_FOUND));
