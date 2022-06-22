@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: managing private keys
 \project bee2/cmd 
 \created 2022.06.20
-\version 2022.06.20
+\version 2022.06.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -147,7 +147,7 @@ err_t cmdPrivkeyRead(octet privkey[], size_t* privkey_len, const char* file,
 	ERR_CALL_HANDLE(code, blobClose(state));
 	// снять защиту
 	code = bpkiUnwrapPrivkey(privkey, &epki_len_min, epki, epki_len,
-		pwd, cmdPwdLen(pwd));
+		(const octet*)pwd, cmdPwdLen(pwd));
 	ERR_CALL_HANDLE(code, blobClose(state));
 	code = (epki_len_min == len) ? ERR_OK : ERR_BAD_FORMAT;
 	blobClose(state);

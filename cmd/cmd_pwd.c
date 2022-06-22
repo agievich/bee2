@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: password management
 \project bee2/cmd 
 \created 2022.06.13
-\version 2022.06.20
+\version 2022.06.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -280,14 +280,14 @@ static err_t cmdPwdGenShare(cmd_pwd_t* pwd, const char* cmdline)
 				goto final;
 			}
 			++offset, --argc;
-			// определить пароль защиты частичных секретов
-			code = cmdPwdRead(&spwd, argv[offset]);
+			// построить пароль защиты частичных секретов
+			code = cmdPwdGen(&spwd, argv[offset]);
 			ERR_CALL_HANDLE(code, cmdArgClose(argv));
 			ASSERT(cmdPwdIsValid(spwd));
 			++offset, --argc;
 		}
 	}
-	// проверить, что пароль защиты частичных секретов определен
+	// проверить, что пароль защиты частичных секретов построен
 	if (!spwd)
 	{
 		code = ERR_CMD_PARAMS;
