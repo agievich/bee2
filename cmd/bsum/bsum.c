@@ -4,7 +4,7 @@
 \brief Hash files using belt-hash / bash-hash
 \project bee2/cmd 
 \created 2014.10.28
-\version 2022.06.10
+\version 2022.06.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -37,7 +37,7 @@ version 3. See Copyright Notices in bee2/info.h.
 */
 
 static const char _name[] = "bsum";
-static const char _descr[] = "hash files using {belt-hash|bash-hash}";
+static const char _descr[] = "hash files using {belt|bash}-hash";
 
 int bsumUsage()
 {

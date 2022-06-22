@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="cmd"
 	ProjectGUID="{5984CE52-1BB1-4F85-9930-FF5BAB757AD4}"
 	RootNamespace="cmd"
@@ -389,6 +389,14 @@
 				>
 				<File
 					RelativePath="..\..\cmd\stamp\stamp.c"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="ver"
+				>
+				<File
+					RelativePath="..\..\cmd\ver\ver.c"
 					>
 				</File>
 			</Filter>

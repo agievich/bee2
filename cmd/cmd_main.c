@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: main
 \project bee2/cmd
 \created 2022.06.07
-\version 2022.06.21
+\version 2022.06.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -15,19 +15,6 @@ version 3. See Copyright Notices in bee2/info.h.
 #include <bee2/core/str.h>
 #include <bee2/core/util.h>
 #include <stdio.h>
-
-/*
-*******************************************************************************
-Лого
-*******************************************************************************
-*/
-
-void cmdLogo()
-{
-	printf(
-		"bee2cmd: Command-line interface to Bee2 [v%s]\n",
-		utilVersion());
-}
 
 /*
 *******************************************************************************
@@ -98,6 +85,7 @@ int cmdUsage()
 *******************************************************************************
 */
 
+extern err_t verInit();
 extern err_t bsumInit();
 extern err_t kgInit();
 
@@ -109,6 +97,8 @@ extern err_t stampInit();
 err_t cmdInit()
 {
 	err_t code;
+	code = verInit();
+	ERR_CALL_CHECK(code);
 	code = bsumInit();
 	ERR_CALL_CHECK(code);
 	code = kgInit();
@@ -131,7 +121,6 @@ int main(int argc, char* argv[])
 	err_t code;
 	size_t pos;
 	// старт
-	cmdLogo();
 	code = cmdInit();
 	if (code != ERR_OK)
 	{
