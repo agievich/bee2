@@ -3,6 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bee2", "bee2.vcproj", "{76530F38-A867-405F-A188-AC7CE92CB1AF}"
 	ProjectSection(ProjectDependencies) = postProject
+		{5984CE52-1BB1-4F85-9930-FF5BAB757AD4} = {5984CE52-1BB1-4F85-9930-FF5BAB757AD4}
 		{1B3F88D7-BD23-4398-A331-3DB139CF07EF} = {1B3F88D7-BD23-4398-A331-3DB139CF07EF}
 	EndProjectSection
 EndProject

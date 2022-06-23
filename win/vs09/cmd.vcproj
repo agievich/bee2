@@ -256,7 +256,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="Set a stamp"
-				CommandLine="..\..\apps\stamp\autostamp.cmd $(OutDir)"
+				CommandLine="..\..\cmd\stamp\autostamp.cmd $(OutDir)"
 			/>
 		</Configuration>
 		<Configuration
