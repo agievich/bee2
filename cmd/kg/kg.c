@@ -4,7 +4,7 @@
 \brief Generate and manage private keys
 \project bee2/cmd 
 \created 2022.06.08
-\version 2022.06.22
+\version 2022.06.23
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -49,27 +49,26 @@ version 3. See Copyright Notices in bee2/info.h.
 static const char _name[] = "kg";
 static const char _descr[] = "generate and manage private keys";
 
-int kgUsage()
+static int kgUsage()
 {
 	printf(
 		"bee2cmd/%s: %s\n"
 		"Usage:\n"
-		"  kg gen [-lnnn] -pass arg filename\n"
-		"    generate a private key and store it in filename\n"
-		"  kg val -pass arg filename\n"
-		"    validate a private key stored in filename\n"
-		"  kg chp -passin arg -passout pass_arg filename\n"
-		"    change a password used to protect filename\n"
+		"  kg gen [-lnnn] -pass <scheme> <filename>\n"
+		"    generate a private key and store it in <filename>\n"
+		"  kg val -pass <scheme> <filename>\n"
+		"    validate a private key stored in <filename>\n"
+		"  kg chp -passin <scheme> -passout <scheme> <filename>\n"
+		"    change a password used to protect <filename>\n"
 		"  options:\n"
-		"    -lnnn -- security level (-l128, -l192 or -l256; 128 by default)\n"
-		"    -pass arg -- description of a password\n"
-		"    -passin arg -- description of an input password\n"
-		"    -passout arg -- description of an output password\n",
+		"    -lnnn -- security level: -l128 (by default), -l192 or -l256\n"
+		"    -pass <scheme> -- description of a password\n"
+		"    -passin <scheme> -- description of an input password\n"
+		"    -passout <scheme> -- description of an output password\n",
 		_name, _descr
 	);
 	return -1;
 }
-
 
 /*
 *******************************************************************************
@@ -77,7 +76,7 @@ int kgUsage()
 *******************************************************************************
 */
 
-err_t kgSelfTest()
+static err_t kgSelfTest()
 {
 	const char pwd[] = "B194BAC80A08F53B";
 	octet state[1024];
@@ -154,7 +153,7 @@ err_t kgSelfTest()
 *******************************************************************************
 */
 
-err_t kgGen(int argc, char* argv[])
+static err_t kgGen(int argc, char* argv[])
 {
 	const char* sources[] = { "trng", "trng2", "sys", "timer" };
 	err_t code = ERR_OK;
@@ -193,6 +192,11 @@ err_t kgGen(int argc, char* argv[])
 		if (strStartsWith(*argv, "-l"))
 		{
 			char* str = *argv + strLen("-l");
+			if (len)
+			{
+				code = ERR_CMD_DUPLICATE;
+				break;
+			}
 			if (!decIsValid(str) || decCLZ(str) || strLen(str) != 3 ||
 				(len = (size_t)decToU32(str)) % 64 || len < 128 || len > 256)
 			{
@@ -208,15 +212,20 @@ err_t kgGen(int argc, char* argv[])
 				code = ERR_CMD_PARAMS;
 				break;
 			}
+			if (pwd)
+			{
+				code = ERR_CMD_DUPLICATE;
+				break;
+			}
 			++argv, --argc;
-			code = cmdPwdGen(&pwd, *argv);
+			code = cmdPwdRead(&pwd, *argv);
 			if (code != ERR_OK)
 				break;
 			ASSERT(cmdPwdIsValid(pwd));
 			++argv, --argc;
 		}
 	}
-	if (!pwd || argc != 1)
+	if (code == ERR_OK && (!pwd || argc != 1))
 		code = ERR_CMD_PARAMS;
 	printf("%s\n", errMsg(code));
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
@@ -267,7 +276,7 @@ err_t kgGen(int argc, char* argv[])
 *******************************************************************************
 */
 
-err_t kgVal(int argc, char* argv[])
+static err_t kgVal(int argc, char* argv[])
 {
 	err_t code = ERR_OK;
 	size_t len = 0;
@@ -289,6 +298,11 @@ err_t kgVal(int argc, char* argv[])
 		if (strStartsWith(*argv, "-l"))
 		{
 			char* str = *argv + strLen("-l");
+			if (len)
+			{
+				code = ERR_CMD_DUPLICATE;
+				break;
+			}
 			if (!decIsValid(str) || decCLZ(str) || strLen(str) != 3 ||
 				(len = (size_t)decToU32(str)) % 64 || len < 128 || len > 256)
 			{
@@ -304,6 +318,11 @@ err_t kgVal(int argc, char* argv[])
 				code = ERR_CMD_PARAMS;
 				break;
 			}
+			if (pwd)
+			{
+				code = ERR_CMD_DUPLICATE;
+				break;
+			}
 			++argv, --argc;
 			code = cmdPwdRead(&pwd, *argv);
 			if (code != ERR_OK)
@@ -312,7 +331,7 @@ err_t kgVal(int argc, char* argv[])
 			++argv, --argc;
 		}
 	}
-	if (!pwd || argc != 1)
+	if (code == ERR_OK && (!pwd || argc != 1))
 		code = ERR_CMD_PARAMS;
 	printf("%s\n", errMsg(code));
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
@@ -368,7 +387,7 @@ err_t kgVal(int argc, char* argv[])
 *******************************************************************************
 */
 
-err_t kgChp(int argc, char* argv[])
+static err_t kgChp(int argc, char* argv[])
 {
 	const char* sources[] = { "trng", "trng2", "sys", "timer" };
 	err_t code = ERR_OK;
@@ -406,6 +425,11 @@ err_t kgChp(int argc, char* argv[])
 		if (strStartsWith(*argv, "-l"))
 		{
 			char* str = *argv + strLen("-l");
+			if (len)
+			{
+				code = ERR_CMD_DUPLICATE;
+				break;
+			}
 			if (!decIsValid(str) || decCLZ(str) || strLen(str) != 3 ||
 				(len = (size_t)decToU32(str)) % 64 || len < 128 || len > 256)
 			{
@@ -419,6 +443,11 @@ err_t kgChp(int argc, char* argv[])
 			if (!strEq(*argv, "-passin"))
 			{
 				code = ERR_CMD_PARAMS;
+				break;
+			}
+			if (pwdin)
+			{
+				code = ERR_CMD_DUPLICATE;
 				break;
 			}
 			++argv, --argc;
@@ -435,6 +464,11 @@ err_t kgChp(int argc, char* argv[])
 				code = ERR_CMD_PARAMS;
 				break;
 			}
+			if (pwdout)
+			{
+				code = ERR_CMD_DUPLICATE;
+				break;
+			}
 			++argv, --argc;
 			code = cmdPwdGen(&pwdout, *argv);
 			if (code != ERR_OK)
@@ -443,7 +477,7 @@ err_t kgChp(int argc, char* argv[])
 			++argv, --argc;
 		}
 	}
-	if (!pwdin || !pwdout || argc != 1)
+	if (code == ERR_OK && (!pwdin || !pwdout || argc != 1))
 		code = ERR_CMD_PARAMS;
 	printf("%s\n", errMsg(code));
 	ERR_CALL_HANDLE(code, (cmdPwdClose(pwdout), cmdPwdClose(pwdin)));
@@ -503,7 +537,7 @@ int kgMain(int argc, char* argv[])
 	else
 	{
 		code = ERR_CMD_NOT_FOUND;
-		printf("bee2cmd/kg: %s\n", errMsg(code));
+		printf("bee2cmd/%s: %s\n", _name, errMsg(code));
 	}
 	return (code == ERR_OK) ? 0 : -1;
 }

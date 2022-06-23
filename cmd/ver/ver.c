@@ -4,7 +4,7 @@
 \brief Version and build information
 \project bee2/cmd 
 \created 2022.06.22
-\version 2022.06.22
+\version 2022.06.23
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -19,16 +19,17 @@ version 3. See Copyright Notices in bee2/info.h.
 Утилита ver
 
 Функционал:
-- печать версии bee2;
-- печать опций SAFE_FAST vs SAFE_SAFE;
-- печать опции bash_platform.
+- печать версии Bee2 и даты сборки;
+- печать опций сборки:
+  - SAFE_FAST vs SAFE_SAFE;
+  - bash_platform.
 *******************************************************************************
 */
 
 static const char _name[] = "ver";
 static const char _descr[] = "print version and build information";
 
-int verUsage()
+static int verUsage()
 {
 	printf(
 		"bee2cmd/%s: %s\n"
@@ -48,14 +49,15 @@ int verUsage()
 
 extern const char bash_platform[];
 
-void verPrint()
+static void verPrint()
 {
 	printf(
-		"Bee2 [v%s]\n"
+		"Bee2: a cryptographic library\n"
+		"  version: %s [%s]\n"
 		"  build options\n"
 		"    safe (constant-time): %s\n"
 		"    bash_platform: %s\n",
-		utilVersion(),
+		utilVersion(), __DATE__,
 #ifdef SAFE_SAFE
 		"ON",
 #else

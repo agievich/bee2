@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: main
 \project bee2/cmd
 \created 2022.06.07
-\version 2022.06.22
+\version 2022.06.23
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -72,7 +72,7 @@ int cmdUsage()
 	printf("%s} ...\n", _cmds[pos].name);
 	// краткая справка по каждой команде
 	for (pos = 0; pos < _count; ++pos)
-		printf("    %s:%*s%s\n",
+		printf("    %s%*s%s\n",
 			_cmds[pos].name,
 			(int)(12 - strLen(_cmds[pos].name)), "",
 			_cmds[pos].descr);
@@ -87,6 +87,7 @@ int cmdUsage()
 
 extern err_t verInit();
 extern err_t bsumInit();
+extern err_t pwdInit();
 extern err_t kgInit();
 
 #ifdef OS_WIN
@@ -100,6 +101,8 @@ err_t cmdInit()
 	code = verInit();
 	ERR_CALL_CHECK(code);
 	code = bsumInit();
+	ERR_CALL_CHECK(code);
+	code = pwdInit();
 	ERR_CALL_CHECK(code);
 	code = kgInit();
 	ERR_CALL_CHECK(code);

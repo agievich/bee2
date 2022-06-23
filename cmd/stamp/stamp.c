@@ -4,7 +4,7 @@
 \brief Integrity control of Windows PE Executables
 \project bee2/cmd
 \created 2011.10.18
-\version 2022.06.21
+\version 2022.06.23
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -44,7 +44,7 @@ version 3. See Copyright Notices in bee2/info.h.
 static const char _name[] = "stamp";
 static const char _descr[] = "integrity control of Windows PE executables";
 
-int stampUsage()
+static int stampUsage()
 {
 	printf(
 		"bee2cmd/%s: %s\n"
@@ -77,7 +77,7 @@ int stampUsage()
 	- 1 -- create;
 	- -1 -- ошибка синтаксиса. 
 */
-int stampParse(int argc, const char* argv[])
+static int stampParse(int argc, const char* argv[])
 {
 	// проверяем число аргументов
 	if (argc != 3)
@@ -105,7 +105,7 @@ void stampPrint(const octet* stamp, const char* stamp_name)
 *******************************************************************************
 */
 
-int stampSet(const char* name)
+static int stampSet(const char* name)
 {
 	HANDLE hFile;
 	DWORD size;
@@ -187,7 +187,7 @@ int stampSet(const char* name)
 }
 
 // проверить характеристику
-int stampCheck(const char* name)
+static int stampCheck(const char* name)
 {
 	HANDLE hFile;
 	DWORD size;

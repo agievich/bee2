@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: password management
 \project bee2/cmd 
 \created 2022.06.13
-\version 2022.06.22
+\version 2022.06.23
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -19,8 +19,10 @@ version 3. See Copyright Notices in bee2/info.h.
 #include <bee2/core/rng.h>
 #include <bee2/core/str.h>
 #include <bee2/core/util.h>
+#include <bee2/crypto/belt.h>
 #include <bee2/crypto/bels.h>
 #include <bee2/crypto/bpki.h>
+#include <bee2/crypto/brng.h>
 #include <stdio.h>
 
 /*
@@ -48,7 +50,66 @@ void cmdPwdClose(cmd_pwd_t pwd)
 
 /*
 *******************************************************************************
-Управление паролями: опция pass
+Управление паролями: самотестирование
+*******************************************************************************
+*/
+
+err_t pwdSelfTest()
+{
+	const char pwd[] = "B194BAC80A08F53B";
+	octet state[1024];
+	octet buf[5 * (32 + 1)];
+	octet buf1[32];
+	// bels-share: разделение и сборка
+	if (belsShare3(buf, 5, 3, 32, beltH()) != ERR_OK)
+		return ERR_SELFTEST;
+	if (belsRecover2(buf1, 1, 32, buf) != ERR_OK ||
+		memEq(buf1, beltH(), 32))
+		return ERR_SELFTEST;
+	if (belsRecover2(buf1, 2, 32, buf) != ERR_OK ||
+		memEq(buf1, beltH(), 32))
+		return ERR_SELFTEST;
+	if (belsRecover2(buf1, 3, 32, buf) != ERR_OK ||
+		!memEq(buf1, beltH(), 32))
+		return ERR_SELFTEST;
+	// brng-ctr: тест Б.2
+	ASSERT(sizeof(state) >= brngCTR_keep());
+	memCopy(buf, beltH(), 96);
+	brngCTRStart(state, beltH() + 128, beltH() + 128 + 64);
+	brngCTRStepR(buf, 96, state);
+	if (!hexEq(buf,
+		"1F66B5B84B7339674533F0329C74F218"
+		"34281FED0732429E0C79235FC273E269"
+		"4C0E74B2CD5811AD21F23DE7E0FA742C"
+		"3ED6EC483C461CE15C33A77AA308B7D2"
+		"0F51D91347617C20BD4AB07AEF4F26A1"
+		"AD1362A8F9A3D42FBE1B8E6F1C88AAD5"))
+		return ERR_SELFTEST;
+	// pbkdf2 тест E.5
+	beltPBKDF2(buf, (const octet*)"B194BAC80A08F53B", strLen(pwd), 10000,
+		beltH() + 128 + 64, 8);
+	if (!hexEq(buf,
+		"3D331BBBB1FBBB40E4BF22F6CB9A689E"
+		"F13A77DC09ECF93291BFE42439A72E7D"))
+		return FALSE;
+	// belt-kwp: тест A.21
+	ASSERT(sizeof(state) >= beltKWP_keep());
+	beltKWPStart(state, beltH() + 128, 32);
+	memCopy(buf, beltH(), 32);
+	memCopy(buf + 32, beltH() + 32, 16);
+	beltKWPStepE(buf, 48, state);
+	if (!hexEq(buf,
+		"49A38EE108D6C742E52B774F00A6EF98"
+		"B106CBD13EA4FB0680323051BC04DF76"
+		"E487B055C69BCF541176169F1DC9F6C8"))
+		return FALSE;
+	// все нормально
+	return ERR_OK;
+}
+
+/*
+*******************************************************************************
+Управление паролями: схема pass
 *******************************************************************************
 */
 
@@ -67,7 +128,7 @@ static err_t cmdPwdGenPass(cmd_pwd_t* pwd, const char* cmdline)
 
 /*
 *******************************************************************************
-Управление паролями: опция share
+Управление паролями: схема share
 *******************************************************************************
 */
 
@@ -238,7 +299,7 @@ static err_t cmdPwdGenShare(cmd_pwd_t* pwd, const char* cmdline)
 	int argc;
 	char** argv = 0;
 	size_t offset = 0;
-	size_t threshold = 2;
+	size_t threshold = 0;
 	size_t len = 0;
 	cmd_pwd_t spwd = 0;
 	// составить список аргументов
@@ -251,6 +312,11 @@ static err_t cmdPwdGenShare(cmd_pwd_t* pwd, const char* cmdline)
 		if (strStartsWith(argv[offset], "-t"))
 		{
 			char* str = argv[offset] + strLen("-t");
+			if (threshold)
+			{
+				code = ERR_CMD_DUPLICATE;
+				goto final;
+			}
 			if (!decIsValid(str) || decCLZ(str) || strLen(str) > 2 ||
 				(threshold = (size_t)decToU32(str)) < 2 || threshold > 16)
 			{
@@ -263,6 +329,11 @@ static err_t cmdPwdGenShare(cmd_pwd_t* pwd, const char* cmdline)
 		if (strStartsWith(argv[offset], "-l"))
 		{
 			char* str = argv[offset] + strLen("-l");
+			if (len)
+			{
+				code = ERR_CMD_DUPLICATE;
+				goto final;
+			}
 			if (!decIsValid(str) || decCLZ(str) || strLen(str) != 3 ||
 				(len = (size_t)decToU32(str)) % 64 || len < 128 || len > 256)
 			{
@@ -279,9 +350,14 @@ static err_t cmdPwdGenShare(cmd_pwd_t* pwd, const char* cmdline)
 				code = ERR_CMD_PARAMS;
 				goto final;
 			}
+			if (spwd)
+			{
+				code = ERR_CMD_DUPLICATE;
+				goto final;
+			}
 			++offset, --argc;
-			// построить пароль защиты частичных секретов
-			code = cmdPwdGen(&spwd, argv[offset]);
+			// определить пароль защиты частичных секретов
+			code = cmdPwdRead(&spwd, argv[offset]);
 			ERR_CALL_HANDLE(code, cmdArgClose(argv));
 			ASSERT(cmdPwdIsValid(spwd));
 			++offset, --argc;
@@ -293,6 +369,9 @@ static err_t cmdPwdGenShare(cmd_pwd_t* pwd, const char* cmdline)
 		code = ERR_CMD_PARAMS;
 		goto final;
 	}
+	// настроить порог
+	if (!threshold)
+		threshold = 2;
 	// проверить число файлов с частичными секретами
 	if ((size_t)argc < threshold)
 	{
@@ -320,7 +399,7 @@ static err_t cmdPwdReadShare(cmd_pwd_t* pwd, const char* cmdline)
 	int argc;
 	char** argv = 0;
 	size_t offset = 0;
-	size_t threshold = 2;
+	size_t threshold = 0;
 	size_t len = 0;
 	cmd_pwd_t spwd = 0;
 	// составить список аргументов
@@ -333,6 +412,11 @@ static err_t cmdPwdReadShare(cmd_pwd_t* pwd, const char* cmdline)
 		if (strStartsWith(argv[offset], "-t"))
 		{
 			char* str = argv[offset] + strLen("-t");
+			if (threshold)
+			{
+				code = ERR_CMD_DUPLICATE;
+				goto final;
+			}
 			if (!decIsValid(str) || decCLZ(str) || strLen(str) > 2 ||
 				(threshold = (size_t)decToU32(str)) < 2 || threshold > 16)
 			{
@@ -345,6 +429,11 @@ static err_t cmdPwdReadShare(cmd_pwd_t* pwd, const char* cmdline)
 		if (strStartsWith(argv[offset], "-l"))
 		{
 			char* str = argv[offset] + strLen("-l");
+			if (len)
+			{
+				code = ERR_CMD_DUPLICATE;
+				goto final;
+			}
 			if (!decIsValid(str) || decCLZ(str) || strLen(str) != 3 ||
 				(len = (size_t)decToU32(str)) % 64 || len < 128 || len > 256)
 			{
@@ -361,6 +450,11 @@ static err_t cmdPwdReadShare(cmd_pwd_t* pwd, const char* cmdline)
 				code = ERR_CMD_PARAMS;
 				goto final;
 			}
+			if (spwd)
+			{
+				code = ERR_CMD_DUPLICATE;
+				goto final;
+			}
 			++offset, --argc;
 			// определить пароль защиты частичных секретов
 			code = cmdPwdRead(&spwd, argv[offset]);
@@ -375,6 +469,9 @@ static err_t cmdPwdReadShare(cmd_pwd_t* pwd, const char* cmdline)
 		code = ERR_CMD_PARAMS;
 		goto final;
 	}
+	// настроить порог
+	if (!threshold)
+		threshold = 2;
 	// проверить число файлов с частичными секретами
 	if ((size_t)argc < threshold)
 	{

@@ -17,6 +17,10 @@ version 3. See Copyright Notices in bee2/info.h.
 #include <bee2/core/rng.h>
 #include <bee2/core/str.h>
 #include <bee2/core/util.h>
+#include <bee2/crypto/belt.h>
+#include <bee2/crypto/bels.h>
+#include <bee2/crypto/bign.h>
+#include <bee2/crypto/brng.h>
 #include <stdio.h>
 
 /*
