@@ -400,6 +400,14 @@
 					>
 				</File>
 			</Filter>
+			<Filter
+				Name="pwd"
+				>
+				<File
+					RelativePath="..\..\cmd\pwd\pwd.c"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
