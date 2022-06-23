@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: managing private keys
 \project bee2/cmd 
 \created 2022.06.20
-\version 2022.06.22
+\version 2022.06.23
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************

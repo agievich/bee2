@@ -494,6 +494,7 @@
     <ClCompile Include="..\..\cmd\cmd_pwd.c" />
     <ClCompile Include="..\..\cmd\kg\kg.c" />
     <ClCompile Include="..\..\cmd\stamp\stamp.c" />
+    <ClCompile Include="..\..\cmd\ver\ver.c" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="libbee2.vcxproj">

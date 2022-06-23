@@ -21,6 +21,9 @@
     <Filter Include="Resource Files">
       <UniqueIdentifier>{fe74ac43-e0bf-4124-8957-064a2e26c1f4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\ver">
+      <UniqueIdentifier>{6804d0a5-fc64-462f-9049-07e5fccb119d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\cmd\bsum\bsum.c">
@@ -43,6 +46,9 @@
     </ClCompile>
     <ClCompile Include="..\..\cmd\stamp\stamp.c">
       <Filter>Source Files\stamp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\ver\ver.c">
+      <Filter>Source Files\ver</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

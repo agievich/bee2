@@ -4,7 +4,7 @@
 \brief Generate and manage private keys
 \project bee2/cmd 
 \created 2022.06.08
-\version 2022.06.22
+\version 2022.06.23
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -199,6 +199,11 @@ err_t kgGen(int argc, char* argv[])
 				code = ERR_CMD_PARAMS;
 				break;
 			}
+			if (len)
+			{
+				code = ERR_CMD_DUPLICATE;
+				break;
+			}
 			len /= 4, ++argv, --argc;
 		}
 		if (strStartsWith(*argv, "-pass"))
@@ -206,6 +211,11 @@ err_t kgGen(int argc, char* argv[])
 			if (!strEq(*argv, "-pass"))
 			{
 				code = ERR_CMD_PARAMS;
+				break;
+			}
+			if (pwd)
+			{
+				code = ERR_CMD_DUPLICATE;
 				break;
 			}
 			++argv, --argc;
@@ -295,6 +305,11 @@ err_t kgVal(int argc, char* argv[])
 				code = ERR_CMD_PARAMS;
 				break;
 			}
+			if (len)
+			{
+				code = ERR_CMD_DUPLICATE;
+				break;
+			}
 			len /= 4, ++argv, --argc;
 		}
 		if (strStartsWith(*argv, "-pass"))
@@ -302,6 +317,11 @@ err_t kgVal(int argc, char* argv[])
 			if (!strEq(*argv, "-pass"))
 			{
 				code = ERR_CMD_PARAMS;
+				break;
+			}
+			if (pwd)
+			{
+				code = ERR_CMD_DUPLICATE;
 				break;
 			}
 			++argv, --argc;
@@ -412,6 +432,11 @@ err_t kgChp(int argc, char* argv[])
 				code = ERR_CMD_PARAMS;
 				break;
 			}
+			if (len)
+			{
+				code = ERR_CMD_DUPLICATE;
+				break;
+			}
 			len /= 4, ++argv, --argc;
 		}
 		if (strStartsWith(*argv, "-passin"))
@@ -419,6 +444,11 @@ err_t kgChp(int argc, char* argv[])
 			if (!strEq(*argv, "-passin"))
 			{
 				code = ERR_CMD_PARAMS;
+				break;
+			}
+			if (pwdin)
+			{
+				code = ERR_CMD_DUPLICATE;
 				break;
 			}
 			++argv, --argc;
@@ -433,6 +463,11 @@ err_t kgChp(int argc, char* argv[])
 			if (!strEq(*argv, "-passout"))
 			{
 				code = ERR_CMD_PARAMS;
+				break;
+			}
+			if (pwdout)
+			{
+				code = ERR_CMD_DUPLICATE;
 				break;
 			}
 			++argv, --argc;

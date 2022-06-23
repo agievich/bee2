@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: password management
 \project bee2/cmd 
 \created 2022.06.13
-\version 2022.06.22
+\version 2022.06.23
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -238,7 +238,7 @@ static err_t cmdPwdGenShare(cmd_pwd_t* pwd, const char* cmdline)
 	int argc;
 	char** argv = 0;
 	size_t offset = 0;
-	size_t threshold = 2;
+	size_t threshold = 0;
 	size_t len = 0;
 	cmd_pwd_t spwd = 0;
 	// составить список аргументов
@@ -269,6 +269,11 @@ static err_t cmdPwdGenShare(cmd_pwd_t* pwd, const char* cmdline)
 				code = ERR_CMD_PARAMS;
 				goto final;
 			}
+			if (len)
+			{
+				code = ERR_CMD_DUPLICATE;
+				goto final;
+			}
 			len /= 8, ++offset, --argc;
 		}
 		// пароль защиты частичных секретов
@@ -277,6 +282,11 @@ static err_t cmdPwdGenShare(cmd_pwd_t* pwd, const char* cmdline)
 			if (!strEq(argv[offset], "-pass"))
 			{
 				code = ERR_CMD_PARAMS;
+				goto final;
+			}
+			if (spwd)
+			{
+				code = ERR_CMD_DUPLICATE;
 				goto final;
 			}
 			++offset, --argc;
@@ -293,6 +303,9 @@ static err_t cmdPwdGenShare(cmd_pwd_t* pwd, const char* cmdline)
 		code = ERR_CMD_PARAMS;
 		goto final;
 	}
+	// настроить порог
+	if (!threshold)
+		threshold = 2;
 	// проверить число файлов с частичными секретами
 	if ((size_t)argc < threshold)
 	{
@@ -320,7 +333,7 @@ static err_t cmdPwdReadShare(cmd_pwd_t* pwd, const char* cmdline)
 	int argc;
 	char** argv = 0;
 	size_t offset = 0;
-	size_t threshold = 2;
+	size_t threshold = 0;
 	size_t len = 0;
 	cmd_pwd_t spwd = 0;
 	// составить список аргументов
@@ -339,6 +352,11 @@ static err_t cmdPwdReadShare(cmd_pwd_t* pwd, const char* cmdline)
 				code = ERR_CMD_PARAMS;
 				goto final;
 			}
+			if (threshold)
+			{
+				code = ERR_CMD_DUPLICATE;
+				goto final;
+			}
 			++offset, --argc;
 		}
 		// уровень стойкости
@@ -351,6 +369,11 @@ static err_t cmdPwdReadShare(cmd_pwd_t* pwd, const char* cmdline)
 				code = ERR_CMD_PARAMS;
 				goto final;
 			}
+			if (len)
+			{
+				code = ERR_CMD_DUPLICATE;
+				goto final;
+			}
 			len /= 8, ++offset, --argc;
 		}
 		// пароль защиты частичных секретов
@@ -359,6 +382,11 @@ static err_t cmdPwdReadShare(cmd_pwd_t* pwd, const char* cmdline)
 			if (!strEq(argv[offset], "-pass"))
 			{
 				code = ERR_CMD_PARAMS;
+				goto final;
+			}
+			if (spwd)
+			{
+				code = ERR_CMD_DUPLICATE;
 				goto final;
 			}
 			++offset, --argc;
@@ -375,6 +403,9 @@ static err_t cmdPwdReadShare(cmd_pwd_t* pwd, const char* cmdline)
 		code = ERR_CMD_PARAMS;
 		goto final;
 	}
+	// настроить порог
+	if (!threshold)
+		threshold = 2;
 	// проверить число файлов с частичными секретами
 	if ((size_t)argc < threshold)
 	{
