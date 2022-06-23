@@ -6,6 +6,7 @@ endif()
 add_executable(bee2cmd
 	bsum/bsum.c
 	kg/kg.c
+	pwd/pwd.c
 	ver/ver.c
 	cmd_core.c
 	cmd_main.c

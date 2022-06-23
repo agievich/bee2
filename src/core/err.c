@@ -84,7 +84,7 @@ static const err_msg _messages[] = {
 	{ERR_CMD_NOT_FOUND, "Command not found"},
 	{ERR_CMD_EXISTS, "Command is already registered"},
 	{ERR_CMD_PARAMS, "Invalid command parameters"},
-	{ERR_CMD_DUPLICATE, "Command parameter is duplicated"},
+	{ERR_CMD_DUPLICATE, "Duplicate command parameters"},
 };
 
 const char* errMsg(err_t code)

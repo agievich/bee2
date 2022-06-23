@@ -493,6 +493,7 @@
     <ClCompile Include="..\..\cmd\cmd_privkey.c" />
     <ClCompile Include="..\..\cmd\cmd_pwd.c" />
     <ClCompile Include="..\..\cmd\kg\kg.c" />
+    <ClCompile Include="..\..\cmd\pwd\pwd.c" />
     <ClCompile Include="..\..\cmd\stamp\stamp.c" />
     <ClCompile Include="..\..\cmd\ver\ver.c" />
   </ItemGroup>

@@ -29,7 +29,7 @@ version 3. See Copyright Notices in bee2/info.h.
 static const char _name[] = "ver";
 static const char _descr[] = "print version and build information";
 
-int verUsage()
+static int verUsage()
 {
 	printf(
 		"bee2cmd/%s: %s\n"
@@ -49,7 +49,7 @@ int verUsage()
 
 extern const char bash_platform[];
 
-void verPrint()
+static void verPrint()
 {
 	printf(
 		"Bee2: a cryptographic library\n"
