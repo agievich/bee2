@@ -4,9 +4,21 @@ if(MSVC)
 endif()
 
 add_executable(bee2cmd
-	cmd.c
 	bsum/bsum.c
+	kg/kg.c
+	pwd/pwd.c
+	ver/ver.c
+	cmd_core.c
+	cmd_main.c
+	cmd_privkey.c
+	cmd_pwd.c
 )
+
+if(WIN32)
+  add_executable(bee2cmp
+    stamp.c
+  )
+endif()
 
 target_link_libraries(bee2cmd bee2_static)
 

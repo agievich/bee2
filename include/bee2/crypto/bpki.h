@@ -1,4 +1,4 @@
-	/*
+/*
 *******************************************************************************
 \file bpki.h
 \brief STB 34.101.78 (bpki): PKI helpers
@@ -6,7 +6,7 @@
 \author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \author Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2021.04.03
-\version 2021.04.27
+\version 2022.06.16
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -51,7 +51,7 @@ EncryptedPrivateKeyInfo будучи защищенными на обычных 
 в частности, стандартные открытые ключи. Номер открытого ключа (число от 1
 до 16) кодируется октетом и добавляется в начало частичного секрета.
 Поэтому длина частичного секрета в октетах на единицу больше стандартной
-длины (33 вместо 32, 49 вместо 48 и 65 вместо 64).
+длины (17 вместо 16, 25 вместо 24 и 33 вместо 32).
 
 \expect{ERR_BAD_INPUT} Все входные указатели действительны. Исключение
 составляют случаи, когда нулевой указатель передается как запрос на определение
@@ -113,7 +113,7 @@ err_t bpkiUnwrapPrivkey(
 	[share_len]share. Ключ защищается на пароле [pwd_len]pwd.
 	Используется механизм защиты PBKDF2 с синхропосылкой ("солью") salt
 	и числом итераций iter.
-	\expect{ERR_BAD_SHAREKEY} share_len \in {33, 49, 65}.
+	\expect{ERR_BAD_SHAREKEY} share_len \in {17, 25, 33}.
 	\expect{ERR_BAD_SHAREKEY} Если share != 0, то 1 <= share[0] <= 16.
 	\expect{ERR_BAD_INPUT} iter >= 10000.
 	\return ERR_OK, если контейнер успешно создан, и код ошибки в противном

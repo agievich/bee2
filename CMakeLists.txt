@@ -11,7 +11,6 @@ option(BUILD_SHARED_LIBS "Build shared libraries." ON)
 option(BUILD_PIC "Build position independent code." ON)
 option(BUILD_FAST "Build with the SAFE_FAST directive." OFF)
 option(BUILD_CMD "Build cmds." ON)
-option(BUILD_APPS "Build apps." ON)
 option(BUILD_TESTS "Build tests." ON)
 option(BUILD_DOC "Build documentation (doxygen required)." OFF)
 option(INSTALL_HEADERS "Install headers." ON)
@@ -65,7 +64,7 @@ if (BASH_PLATFORM)
 endif()
 
 set(CMAKE_C_WARNINGS
-  "-Wall -Wextra -W -Wdeclaration-after-statement -Wwrite-strings -Wlogical-op -Wno-parentheses -Wno-parentheses-equality -Wno-logical-op-parentheses -Wno-bitwise-op-parentheses -Wno-unused-parameter -Wno-strict-aliasing")
+  "-Wall -Wextra -W -Wdeclaration-after-statement -Wwrite-strings -Wlogical-op -Wno-parentheses -Wno-unused-parameter -Wno-strict-aliasing")
 
 if(${CMAKE_C_COMPILER_ID} STREQUAL GNU)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_WARNINGS}")
@@ -87,6 +86,7 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL GNU)
 endif(${CMAKE_C_COMPILER_ID} STREQUAL GNU)
 
 if(${CMAKE_C_COMPILER_ID} STREQUAL CLANG)
+  set(CMAKE_C_WARNINGS "${CMAKE_C_WARNINGS} -Wno-parentheses-equality -Wno-logical-op-parentheses -Wno-bitwise-op-parentheses")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_WARNINGS}")
   if(BASH_SSE2)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse2")
@@ -147,10 +147,6 @@ add_subdirectory(src)
 
 if(BUILD_CMD)
   add_subdirectory(cmd)
-endif()
-
-if(BUILD_APPS)
-  add_subdirectory(apps)
 endif()
 
 if(BUILD_TESTS)

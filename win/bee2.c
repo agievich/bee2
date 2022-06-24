@@ -30,7 +30,7 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#include "..\apps\stamp\stamp_pe.c"
+#include "..\cmd\stamp\stamp_pe.c"
 
 static err_t beeReadAndCalcStamp(octet stampRead[STAMP_SIZE], 
 	octet stampCalc[STAMP_SIZE])

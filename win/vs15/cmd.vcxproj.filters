@@ -12,13 +12,59 @@
     <Filter Include="Source Files\bsum">
       <UniqueIdentifier>{bc2d7257-f0e4-4cdc-83d3-e43de2b92009}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\kg">
+      <UniqueIdentifier>{2455007c-f74a-43be-bb06-0580f8bd5e2f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\stamp">
+      <UniqueIdentifier>{4e7f52c5-744f-4876-8ea7-369ec6aaaa3f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{fe74ac43-e0bf-4124-8957-064a2e26c1f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ver">
+      <UniqueIdentifier>{6804d0a5-fc64-462f-9049-07e5fccb119d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\pwd">
+      <UniqueIdentifier>{c1d2711f-58f2-402c-8a12-03b2d6e1e18e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\cmd\cmd.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\cmd\bsum\bsum.c">
       <Filter>Source Files\bsum</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\cmd\kg\kg.c">
+      <Filter>Source Files\kg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\cmd_core.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\cmd_main.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\cmd_pwd.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\cmd_privkey.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\stamp\stamp.c">
+      <Filter>Source Files\stamp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\ver\ver.c">
+      <Filter>Source Files\ver</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\pwd\pwd.c">
+      <Filter>Source Files\pwd</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\cmd\cmd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\..\cmd\stamp\stamp.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

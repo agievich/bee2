@@ -1,15 +1,16 @@
 /*
 *******************************************************************************
 \file bsum.c
-\brief File hashing utility over the belt-hash and bash-hash algorithms
+\brief Hash files using belt-hash / bash-hash
 \project bee2/cmd 
 \created 2014.10.28
-\version 2022.07.06
+\version 2022.06.23
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
+#include "../cmd.h"
 #include <bee2/core/dec.h>
 #include <bee2/core/hex.h>
 #include <bee2/core/str.h>
@@ -28,35 +29,45 @@ version 3. See Copyright Notices in bee2/info.h.
 
 Максимально точно поддержан интерфейс командной строки утилиты sha1sum.
 
-\warning В Windows имена файлов на русском языке будут записаны в checksum_file 
+\warning В Windows имена файлов на русском языке будут записаны в checksum_file
 в кодировке cp1251. В Linux -- в кодировке UTF8.
 
 \todo Поддержка UTF8 в Windows.
 *******************************************************************************
 */
 
+static const char _name[] = "bsum";
+static const char _descr[] = "hash files using {belt|bash}-hash";
+
 int bsumUsage()
 {
 	printf(
-		"bee2cmd/bsum: STB 34.101.31/77 hashing utility\n"
+		"bee2cmd/%s: %s\n"
 		"Usage:\n" 
 		"  bsum [hash_alg] <file_to_hash> <file_to_hash> ...\n"
 		"  bsum [hash_alg] -c <checksum_file>\n"
 		"  hash_alg:\n" 
-		"    belt-hash (STB 34.101.31, by default)\n"
-		"    bash32, bash64, ..., bash512 (STB 34.101.77)\n"
+		"    -belt-hash (STB 34.101.31, by default)\n"
+		"    -bash-hash32, -bash-hash64, ..., -bash-hash512 (STB 34.101.77)\n",
+		_name, _descr
 	);
 	return -1;
 }
 
+/*
+*******************************************************************************
+Разбор параметров
+*******************************************************************************
+*/
+
 size_t bsumParseHid(const char* alg_name)
 {
-	if (strEq(alg_name, "belt-hash"))
+	if (strEq(alg_name, "-belt-hash"))
 		return 0;
-	if (strStartsWith(alg_name, "bash"))
+	if (strStartsWith(alg_name, "-bash-hash"))
 	{
 		size_t hid;
-		alg_name += 4;
+		alg_name += strLen("-bash-hash");
 		if (!decIsValid(alg_name) || !strLen(alg_name) || 
 			strLen(alg_name) > 3 || decCLZ(alg_name) || 
 			(hid = (size_t)decToU32(alg_name)) % 32 || hid > 512)
@@ -65,6 +76,12 @@ size_t bsumParseHid(const char* alg_name)
 	}
 	return SIZE_MAX;
 }
+
+/*
+*******************************************************************************
+Хэширование
+*******************************************************************************
+*/
 
 int bsumHashFile(octet hash[], size_t hid, const char* filename)
 {
@@ -191,8 +208,14 @@ int bsumCheck(size_t hid, const char* filename)
 			"WARNING: %lu computed checksum did not match\n":  
 			"WARNING: %lu computed checksums did not match\n",  
 			(unsigned long)bad_hashes);
-	return (bad_lines || bad_files || bad_hashes) ? - 1 : 0;
+	return (bad_lines || bad_files || bad_hashes) ? -1 : 0;
 }
+
+/*
+*******************************************************************************
+Главная функция
+*******************************************************************************
+*/
 
 int bsumMain(int argc, char* argv[])
 {
@@ -223,4 +246,15 @@ int bsumMain(int argc, char* argv[])
 			hid = 0;
 	}
 	return bsumPrint(hid, argc - 1, argv + 1);
+}
+
+/*
+*******************************************************************************
+Инициализация
+*******************************************************************************
+*/
+
+err_t bsumInit()
+{
+	return cmdReg(_name, _descr, bsumMain);
 }
