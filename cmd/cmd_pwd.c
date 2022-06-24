@@ -144,7 +144,7 @@ static err_t cmdPwdGenShare_internal(cmd_pwd_t* pwd, size_t scount,
 	octet* salt;
 	octet* epki;
 	// pre
-	ASSERT(memIsValid(pwd, sizeof(cmd_pwd_t*)));
+	ASSERT(memIsValid(pwd, sizeof(cmd_pwd_t)));
 	ASSERT(cmdPwdIsValid(spwd));
 	ASSERT(2 <= scount && scount <= 16);
 	ASSERT(2 <= threshold && threshold <= scount);
@@ -216,7 +216,7 @@ static err_t cmdPwdReadShare_internal(cmd_pwd_t* pwd, size_t scount,
 	octet* pwd_bin;
 	size_t pos;
 	// pre
-	ASSERT(memIsValid(pwd, sizeof(cmd_pwd_t*)));
+	ASSERT(memIsValid(pwd, sizeof(cmd_pwd_t)));
 	ASSERT(cmdPwdIsValid(spwd));
 	ASSERT(2 <= scount && scount <= 16);
 	ASSERT(len % 8 == 0 && len <= 32);
