@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: useful functions
 \project bee2/cmd 
 \created 2022.06.08
-\version 2022.06.21
+\version 2022.06.24
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -77,17 +77,19 @@ int getch()
 
 size_t cmdFileSize(const char* file)
 {
-	FILE* fp = 0;
+	FILE* fp;
 	long int size;
 	ASSERT(strIsValid(file));
 	if (!(fp = fopen(file, "rb")))
 		return SIZE_MAX;
-	if (fseek(fp, 0, SEEK_END) || (size = ftell(fp)) == -1L)
+	if (fseek(fp, 0, SEEK_END))
 	{
 		fclose(fp);
 		return SIZE_MAX;
 	}
-	return (size_t)size;
+	size = ftell(fp);
+	fclose(fp);
+	return (size == -1L) ? SIZE_MAX : (size_t)size;
 }
 
 bool_t cmdFileValNotExist(int count, char* files[])
