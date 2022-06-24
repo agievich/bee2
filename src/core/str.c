@@ -3,9 +3,8 @@
 \file str.c
 \brief Strings
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.02.04
-\version 2022.06.14
+\version 2022.06.24
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -54,16 +53,6 @@ void strCopy(char* dest, const char* src)
 	ASSERT(memIsValid(dest, strLen(src) + 1));
 	ASSERT(memIsDisjoint(src, dest, strLen(src) + 1));
 	memcpy(dest, src, strLen(src) + 1);
-}
-
-char* strDup(const char* str)
-{
-	char* ret;
-	ASSERT(strIsValid(str));
-	ret = memAlloc(strLen(str) + 1);
-	if (ret)
-		strCopy(ret, str);
-	return ret;
 }
 
 int strCmp(const char* str1, const char* str2)

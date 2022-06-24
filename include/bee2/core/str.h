@@ -3,9 +3,8 @@
 \file str.h
 \brief Strings
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.02.04
-\version 2022.06.14
+\version 2022.06.24
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -78,16 +77,6 @@ void strCopy(
 	char* dest,			/*!< [out] строка-назначение */
 	const char* src		/*!< [in] строка-источник */
 );
-
-/*!	\brief Дублирование строки
-
-	Создается строка, которая дублирует строку str.
-	\return Копия строки str или нулевой указатель в случае нехватки памяти.
-*/
-char* strDup(
-	const char* str		/*!< [in] строка */
-);
-
 
 /*!	\brief Сравнение строк
 	
