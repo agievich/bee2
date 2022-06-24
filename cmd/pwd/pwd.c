@@ -4,7 +4,7 @@
 \brief Generate and manage passwords
 \project bee2/cmd 
 \created 2022.06.23
-\version 2022.06.23
+\version 2022.06.24
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -40,12 +40,11 @@ version 3. See Copyright Notices in bee2/info.h.
 функций cmdPwdGen(), cmdPwdRead().
 
 Примеры:
-  bee2cmd pwd gen -pass share:"-pass pass:zed ss1 ss2"
-  bee2cmd pwd gen -pass share:"-pass share:\"-pass pass:zed ss1 ss2\" s1 s2"
-  bee2cmd pwd val -pass share:"-pass share:\"-pass pass:zed ss1 ss2\" s1 s2"
-  bee2cmd pwd print -pass pass:zed
-  bee2cmd pwd print -pass share:"-pass pass:zed ss1 ss2"
-  bee2cmd pwd print -pass share:"-pass share:\"-pass pass:zed ss1 ss2\" s1 s2"
+  bee2cmd pwd gen share:"-l256 -t3 -pass pass:zed s1 s2 s3 s4 s5"
+  bee2cmd pwd gen share:"-l192 -pass share:\"-pass pass:zed s1 s2 s3\"
+    ss1 ss2 ss3"
+  bee2cmd pwd val share:"-pass share:\"-pass pass:zed s2 s4 s1\" ss3 ss1"
+  bee2cmd pwd print share:"-pass share:\"-pass pass:zed s2 s4 s1\" ss3 ss1"
 *******************************************************************************
 */
 
@@ -247,8 +246,7 @@ int pwdMain(int argc, char* argv[])
 	else
 	{
 		code = ERR_CMD_NOT_FOUND;
-		printf("bee2cmd/%s: %s\n", _name, errMsg(code)
-		);
+		printf("bee2cmd/%s: %s\n", _name, errMsg(code));
 	}
 	return (code == ERR_OK) ? 0 : -1;
 }
