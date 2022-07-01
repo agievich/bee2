@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
@@ -40,11 +40,14 @@
     <Filter Include="Source Files\crypto\bash">
       <UniqueIdentifier>{1b2655da-6d78-4597-a66c-bc67357b1340}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\crypto\bign">
+      <UniqueIdentifier>{124e617f-eb35-4338-8fe0-6d34ebd7d2f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\math\ecp">
+      <UniqueIdentifier>{d671e401-a13f-466c-8a07-afd30166c291}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\math\ecp.c">
-      <Filter>Source Files\math</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\math\gf2.c">
       <Filter>Source Files\math</Filter>
     </ClCompile>
@@ -52,9 +55,6 @@
       <Filter>Source Files\math</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\crypto\bels.c">
-      <Filter>Source Files\crypto</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\crypto\bign.c">
       <Filter>Source Files\crypto</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\crypto\brng.c">
@@ -243,6 +243,39 @@
     <ClCompile Include="..\..\src\crypto\bpki.c">
       <Filter>Source Files\crypto</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\crypto\bign\bign_ibs.c">
+      <Filter>Source Files\crypto\bign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\bign\bign_keys.c">
+      <Filter>Source Files\crypto\bign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\bign\bign_keyt.c">
+      <Filter>Source Files\crypto\bign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\bign\bign_misc.c">
+      <Filter>Source Files\crypto\bign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\bign\bign_params.c">
+      <Filter>Source Files\crypto\bign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\bign\bign_sign.c">
+      <Filter>Source Files\crypto\bign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\math\ecp\ecp_a.c">
+      <Filter>Source Files\math\ecp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\math\ecp\ecp_j.c">
+      <Filter>Source Files\math\ecp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\math\ecp\ecp_misc.c">
+      <Filter>Source Files\math\ecp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\math\ecp\ecp_smult.c">
+      <Filter>Source Files\math\ecp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\math\ecp\ecp_todo.c">
+      <Filter>Source Files\math\ecp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\crypto\bign_lcl.h">
@@ -388,6 +421,9 @@
     </ClInclude>
     <ClInclude Include="..\..\include\bee2\crypto\bpki.h">
       <Filter>Header Files\crypto</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\math\ecp\ecp_lcl.h">
+      <Filter>Source Files\math\ecp</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

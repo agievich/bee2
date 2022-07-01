@@ -3,9 +3,9 @@
 \file bign_lcl.h
 \brief STB 34.101.45 (bign): local definitions
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.04.03
-\version 2016.07.05
+\version 2020.07.20
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -76,6 +76,39 @@ size_t bignStart_keep(
 err_t bignStart(
 	void* state,				/*!< [out] состояние */
 	const bign_params* params	/*!< [in] долговременные параметры */
+);
+
+/*
+*******************************************************************************
+Тестовые долговременные параметры
+
+Тестовые параметры сгенерированы с помощью алгоритма bign-genec. На вход
+алгоритма подавались нестандартные уровни стойкости l = 4, 8, 16, 32, 64, 96.
+
+Параметры предназначены длчя тестирования арифметики эллиптических кривых.
+Параметры уровня l = 96 с определенными предосторожностями могут быть
+использованы в криптографических алгоритмах за рамками СТБ 34.101.45.
+*******************************************************************************
+*/
+
+/*!	\brief Загрузка тестовых долговременных параметров
+
+	В params загружаются тестовых долговременные параметры с именем name.
+	Поддерживаются следующие имена:
+		"bign-curve8v1",
+		"bign-curve16v1",
+		"bign-curve32v1",
+		"bign-curve64v1",
+		"bign-curve128v1",
+		"bign-curve192v1".
+	Число в имени перед суффиксом "v1" представляет собой удвоенный уровень
+	стойкости.
+	\return ERR_OK, если параметры успешно загружены, и код ошибки в
+	противном случае.
+*/
+err_t bignTestParams(
+	bign_params* params,	/*!< [out] стандартные параметры */
+	const char* name		/*!< [in] имя параметров */
 );
 
 #ifdef __cplusplus

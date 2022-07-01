@@ -5,21 +5,26 @@
 \project bee2/test
 \author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.08.27
-\version 2020.11.25
+\version 2021.07.20
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
+#include <stdio.h>
 #include <bee2/core/mem.h>
 #include <bee2/core/hex.h>
 #include <bee2/core/str.h>
+#include <bee2/core/tm.h>
 #include <bee2/core/util.h>
 #include <bee2/math/ww.h>
 #include <bee2/math/zz.h>
 #include <bee2/crypto/bign.h>
 #include <bee2/crypto/belt.h>
 #include <bee2/crypto/brng.h>
+#include <bee2/crypto/brng.h>
+#include <crypto/bign_lcl.h>
+
 
 /*
 *******************************************************************************
@@ -385,4 +390,128 @@ bool_t bignTest()
 		return FALSE;
 	// все нормально
 	return TRUE;
+}
+
+extern size_t testReps;
+bool_t bignBench()
+{
+	bign_params params[1];
+	octet oid_der[128];
+	size_t oid_len;
+	octet privkey[64];
+	octet pubkey[128];
+	octet hash[64];
+	octet sig[64 + 32];
+	octet brng_state[1024];
+	char params_oid[] = "1.2.112.0.2.0.34.101.45.3.0";
+	// создать стек
+	ASSERT(sizeof(brng_state) >= brngCTRX_keep());
+	//
+	for(; ++params_oid[sizeof(params_oid) - 2] < '4'; )
+	{
+		size_t reps;
+		size_t i;
+		tm_ticks_t ticks;
+		printf("bignBench: %s\n", params_oid);
+		bignStdParams(params, params_oid);
+		reps = testReps*1024*1024 / params->l / params->l;
+
+		// идентификатор объекта
+		oid_len = sizeof(oid_der);
+		bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.31.81");
+		// инициализировать ГПСЧ
+		brngCTRXStart(beltH() + 128, beltH() + 128 + 64,
+			beltH(), 8 * 32, brng_state);
+		// тест Г.1
+		bignGenKeypair(privkey, pubkey, params, brngCTRXStepR, brng_state);
+
+		for(i = 0, ticks = tmTicks(); i < reps; ++i)
+			bignDH(pubkey, params, privkey, pubkey, params->l / 4);
+		ticks = tmTicks() - ticks;
+		printf("bignBench::bignDH    : %3u cycles / rep [%5u reps / sec]\n",
+			(unsigned)(ticks / reps),
+			(unsigned)tmSpeed(reps, ticks));
+
+		// тест Г.2
+		beltHash(hash, beltH(), 13);
+
+		for(i = 0, ticks = tmTicks(); i < reps; ++i)
+			bignSign(sig, params, oid_der, oid_len, hash, privkey, brngCTRXStepR,
+				brng_state);
+		ticks = tmTicks() - ticks;
+		printf("bignBench::bignSign  : %3u cycles / rep [%5u reps / sec]\n",
+			(unsigned)(ticks / reps),
+			(unsigned)tmSpeed(reps, ticks));
+
+		for(i = 0, ticks = tmTicks(); i < reps; ++i)
+			bignVerify(params, oid_der, oid_len, hash, sig, pubkey);
+		ticks = tmTicks() - ticks;
+		printf("bignBench::bignVerify: %3u cycles / rep [%5u reps / sec]\n",
+			(unsigned)(ticks / reps),
+			(unsigned)tmSpeed(reps, ticks));
+	}
+
+	return TRUE;
+}
+
+#include "bee2/math/ecp.h"
+#include <stdio.h>
+
+extern err_t bignStart(void* state, const bign_params* params);
+
+void bignPrintPrecomp()
+{
+	octet state[4*1024];
+	octet stack[8*1024];
+	size_t const w = 6;
+	size_t i, j, k;
+	word c[2*(2*64 + (64 << 6))];
+	word *da, *nda;
+	word *nci;
+	word *ci;
+	octet *o;
+	ec_o *ec = (ec_o*)state;
+	size_t na;
+	bign_params params[1];
+	char oid[] = "1.2.112.0.2.0.34.101.45.3.0";
+
+	for(k = 0; k < 4; ++k)
+	{
+		bignStdParams(params, oid);
+		oid[sizeof(oid)-2]++;
+		bignStart(state, params);
+		na = ec->f->n * 2;
+		nda = c + (na << w);
+		da = nda + na;
+
+		{
+			ci = nci = c + (na << (w - 1));
+
+			ecSmallMultAdd2A(ci, da, ec->base, w, ec, stack);
+			for(; nci != c;)
+			{
+				nci -= na;
+				ecNegA(nci, ci, ec);
+				ci += na;
+			}
+			ecNegA(nda, da, ec);
+		}
+
+		printf("#define CURVE%dV1_PRECOMP_W %d\n", (int)params->l, (int)w);
+		printf("static const octet _curve%dv1_precomp_Gs[%d * (2 + (1 << CURVE%dV1_PRECOMP_W))] = {\n", (int)params->l, (int)(sizeof(word) * na), (int)params->l);
+		o = (octet *)c;
+		for(i = 0; i++ < 2 + (1 << w);)
+		{
+			for(j = 0; j < na * sizeof(word);)
+			{
+				// if(j % 32 == 0)
+				// 	printf("%c", '\t');
+				printf("0x%02x,", (int)*o++);
+				// printf(++j % 32 == 0 ? "\n" : " ");
+			}
+			if (0 == (i & ((1 << (w - 2)) - 1)))
+				printf("\n");
+		}
+		printf("};\n\n");
+	}
 }

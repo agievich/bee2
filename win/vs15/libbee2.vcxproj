@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|ARM">
@@ -393,13 +393,23 @@
     <ClCompile Include="..\..\src\crypto\belt\belt_pbkdf.c" />
     <ClCompile Include="..\..\src\crypto\belt\belt_sde.c" />
     <ClCompile Include="..\..\src\crypto\belt\belt_wbl.c" />
+    <ClCompile Include="..\..\src\crypto\bign\bign_ibs.c" />
+    <ClCompile Include="..\..\src\crypto\bign\bign_keys.c" />
+    <ClCompile Include="..\..\src\crypto\bign\bign_keyt.c" />
+    <ClCompile Include="..\..\src\crypto\bign\bign_misc.c" />
+    <ClCompile Include="..\..\src\crypto\bign\bign_params.c" />
+    <ClCompile Include="..\..\src\crypto\bign\bign_sign.c" />
     <ClCompile Include="..\..\src\crypto\botp.c" />
     <ClCompile Include="..\..\src\crypto\bpki.c" />
     <ClCompile Include="..\..\src\crypto\g12s.c" />
     <ClCompile Include="..\..\src\crypto\pfok.c" />
     <ClCompile Include="..\..\src\math\ec.c" />
     <ClCompile Include="..\..\src\math\ec2.c" />
-    <ClCompile Include="..\..\src\math\ecp.c" />
+    <ClCompile Include="..\..\src\math\ecp\ecp_a.c" />
+    <ClCompile Include="..\..\src\math\ecp\ecp_j.c" />
+    <ClCompile Include="..\..\src\math\ecp\ecp_misc.c" />
+    <ClCompile Include="..\..\src\math\ecp\ecp_smult.c" />
+    <ClCompile Include="..\..\src\math\ecp\ecp_todo.c" />
     <ClCompile Include="..\..\src\math\gf2.c" />
     <ClCompile Include="..\..\src\math\gfp.c" />
     <ClCompile Include="..\..\src\math\pp.c" />
@@ -408,7 +418,6 @@
     <ClCompile Include="..\..\src\math\ww.c" />
     <ClCompile Include="..\..\src\math\zm.c" />
     <ClCompile Include="..\..\src\crypto\bels.c" />
-    <ClCompile Include="..\..\src\crypto\bign.c" />
     <ClCompile Include="..\..\src\crypto\brng.c" />
     <ClCompile Include="..\..\src\crypto\dstu.c" />
     <ClCompile Include="..\..\src\math\zz\zz_add.c" />
@@ -467,6 +476,7 @@
     <ClInclude Include="..\..\include\bee2\math\zz.h" />
     <ClInclude Include="..\..\src\crypto\belt\belt_lcl.h" />
     <ClInclude Include="..\..\src\crypto\bign_lcl.h" />
+    <ClInclude Include="..\..\src\math\ecp\ecp_lcl.h" />
     <ClInclude Include="..\..\src\math\zz\zz_int.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

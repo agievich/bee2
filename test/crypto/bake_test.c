@@ -11,13 +11,17 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
+#include <stdio.h>
 #include <bee2/core/err.h>
 #include <bee2/core/mem.h>
 #include <bee2/core/hex.h>
 #include <bee2/core/prng.h>
 #include <bee2/core/str.h>
+#include <bee2/core/tm.h>
 #include <bee2/core/util.h>
 #include <bee2/crypto/bake.h>
+#include <bee2/crypto/belt.h>
+#include <bee2/crypto/brng.h>
 
 /*
 *******************************************************************************
@@ -348,4 +352,196 @@ bool_t bakeTest()
 		return FALSE;
 	// все нормально
 	return TRUE;
+}
+
+typedef struct
+{
+	const octet* X;		/*< дополнительное слово */
+	size_t count;		/*< размер X в октетах */
+	size_t offset;		/*< текущее смещение в X */
+	octet state_ex[];	/*< состояние brngCTR */
+} brng_ctrx_st;
+
+static size_t brngCTRX_keep()
+{
+	return sizeof(brng_ctrx_st) + brngCTR_keep();
+}
+
+static void brngCTRXStart(const octet theta[32], const octet iv[32],
+	const void* X, size_t count, void* state)
+{
+	brng_ctrx_st* s = (brng_ctrx_st*)state;
+	ASSERT(memIsValid(s, sizeof(brng_ctrx_st)));
+	ASSERT(count > 0);
+	ASSERT(memIsValid(s->state_ex, brngCTR_keep()));
+	brngCTRStart(s->state_ex, theta, iv);
+	s->X = (const octet*)X;
+	s->count = count;
+	s->offset = 0;
+}
+
+static void brngCTRXStepR(void* buf, size_t count, void* stack)
+{
+	brng_ctrx_st* s = (brng_ctrx_st*)stack;
+	octet* buf1 = (octet*)buf;
+	size_t count1 = count;
+	ASSERT(memIsValid(s, sizeof(brng_ctrx_st)));
+	// заполнить buf
+	while (count1)
+		if (count1 < s->count - s->offset)
+		{
+			memCopy(buf1, s->X + s->offset, count1);
+			s->offset += count1;
+			count1 = 0;
+		}
+		else
+		{
+			memCopy(buf1, s->X + s->offset, s->count - s->offset);
+			buf1 += s->count - s->offset;
+			count1 -= s->count - s->offset;
+			s->offset = 0;
+		}
+	// сгенерировать
+	brngCTRStepR(buf, count, s->state_ex);
+}
+
+extern size_t testReps;
+bool_t bakeBench()
+{
+	err_t codea;
+	err_t codeb;
+	bign_params params[1];
+	octet randa[48];
+	octet randb[48];
+	octet echoa[64];
+	octet echob[64];
+	bake_settings settingsa[1];
+	bake_settings settingsb[1];
+	octet da[64];
+	octet db[64];
+	octet certdataa[5 /* Alice */ + 128 + 3 /* align */];
+	octet certdatab[3 /* Bob */ + 128 + 5 /* align */];
+	bake_cert certa[1];
+	bake_cert certb[1];
+	file_msg_st filea[1];
+	file_msg_st fileb[1];
+	const char pwd[] = "8086";
+	octet keya[32];
+	octet keyb[32];
+	octet brng_state[1024];
+	char params_oid[] = "1.2.112.0.2.0.34.101.45.3.0";
+
+	brngCTRXStart(beltH() + 128, beltH() + 128 + 64,
+		beltH(), 8 * 32, brng_state);
+	for(; params_oid[sizeof(params_oid) - 2]++ < '3'; )
+	{
+		size_t reps;
+		size_t i;
+		tm_ticks_t ticks;
+		printf("bakeBench: %s\n", params_oid);
+		bignStdParams(params, params_oid);
+		memcpy(certdataa, "Alice", 5);
+		bignGenKeypair(da, certdataa + 5, params, brngCTRXStepR, brng_state);
+		memcpy(certdatab, "Bob", 3);
+		bignGenKeypair(db, certdatab + 3, params, brngCTRXStepR, brng_state);
+
+		reps = testReps*1024*1024 / 8 / params->l / params->l;
+
+		// настроить генераторы
+		ASSERT(prngEcho_keep() <= sizeof(echoa));
+		// задать настройки
+		memSetZero(settingsa, sizeof(bake_settings));
+		memSetZero(settingsb, sizeof(bake_settings));
+		settingsa->kca = settingsa->kcb = TRUE;
+		settingsb->kca = settingsb->kcb = TRUE;
+		settingsa->rng = settingsb->rng = prngEchoStepR;
+		settingsa->rng_state = echoa;
+		settingsb->rng_state = echob;
+		// загрузить сертификаты
+		certa->data = certdataa;
+		certa->len = 5 + params->l / 2;
+		certb->data = certdatab;
+		certb->len = 3 + params->l / 2;
+		certa->val = certb->val = bakeTestCertVal;
+		// тест Б.2
+		hexTo(randa, _bmqv_randa);
+		hexTo(randb, _bmqv_randb);
+
+		for(i = 0, ticks = tmTicks(); i < reps; ++i)
+		{
+			fileMsgFlash();
+			do
+			{
+				filea->i = filea->offset = 0;
+				fileb->i = fileb->offset = 0;
+				prngEchoStart(echoa, randa, strLen(_bmqv_randb) / 2);
+				prngEchoStart(echob, randb, strLen(_bmqv_randb) / 2);
+				codeb = bakeBMQVRunB(keyb, params, settingsb, db, certb, certa,
+					fileMsgRead, fileMsgWrite, fileb);
+				if(codeb != ERR_OK && codeb != ERR_FILE_NOT_FOUND)
+					return FALSE;
+				codea = bakeBMQVRunA(keya, params, settingsa, da, certa, certb,
+					fileMsgRead, fileMsgWrite, filea);
+				if(codea != ERR_OK && codea != ERR_FILE_NOT_FOUND)
+					return FALSE;
+			} while(codea == ERR_FILE_NOT_FOUND || codeb == ERR_FILE_NOT_FOUND);
+		}
+		ticks = tmTicks() - ticks;
+		printf("bakeBench::bakeBMQV  : %3u cycles / rep [%5u reps / sec]\n",
+			(unsigned)(ticks / reps),
+			(unsigned)tmSpeed(reps, ticks));
+		// тест Б.3
+		hexTo(randa, _bsts_randa);
+		hexTo(randb, _bsts_randb);
+		for(i = 0, ticks = tmTicks(); i < reps; ++i)
+		{
+			fileMsgFlash();
+			do
+			{
+				filea->i = filea->offset = 0;
+				fileb->i = fileb->offset = 0;
+				prngEchoStart(echoa, randa, strLen(_bsts_randb) / 2);
+				prngEchoStart(echob, randb, strLen(_bsts_randb) / 2);
+				codeb = bakeBSTSRunB(keyb, params, settingsb, db, certb,
+					bakeTestCertVal, fileMsgRead, fileMsgWrite, fileb);
+				if(codeb != ERR_OK && codeb != ERR_FILE_NOT_FOUND)
+					return FALSE;
+				codea = bakeBSTSRunA(keya, params, settingsa, da, certa,
+					bakeTestCertVal, fileMsgRead, fileMsgWrite, filea);
+				if(codea != ERR_OK && codea != ERR_FILE_NOT_FOUND)
+					return FALSE;
+			} while(codea == ERR_FILE_NOT_FOUND || codeb == ERR_FILE_NOT_FOUND);
+		}
+		ticks = tmTicks() - ticks;
+		printf("bakeBench::bakeBSTS  : %3u cycles / rep [%5u reps / sec]\n",
+			(unsigned)(ticks / reps),
+			(unsigned)tmSpeed(reps, ticks));
+		// тест Б.4
+		hexTo(randa, _bpace_randa);
+		hexTo(randb, _bpace_randb);
+		for(i = 0, ticks = tmTicks(); i < reps; ++i)
+		{
+			fileMsgFlash();
+			do
+			{
+				filea->i = filea->offset = 0;
+				fileb->i = fileb->offset = 0;
+				prngEchoStart(echoa, randa, strLen(_bpace_randb) / 2);
+				prngEchoStart(echob, randb, strLen(_bpace_randb) / 2);
+				codeb = bakeBPACERunB(keyb, params, settingsb, (const octet*)pwd,
+					strLen(pwd), fileMsgRead, fileMsgWrite, fileb);
+				if(codeb != ERR_OK && codeb != ERR_FILE_NOT_FOUND)
+					return FALSE;
+				codea = bakeBPACERunA(keya, params, settingsa, (const octet*)pwd,
+					strLen(pwd), fileMsgRead, fileMsgWrite, filea);
+				if(codea != ERR_OK && codea != ERR_FILE_NOT_FOUND)
+					return FALSE;
+			} while(codea == ERR_FILE_NOT_FOUND || codeb == ERR_FILE_NOT_FOUND);
+		}
+		ticks = tmTicks() - ticks;
+		printf("bakeBench::bakeBPACE : %3u cycles / rep [%5u reps / sec]\n",
+			(unsigned)(ticks / reps),
+			(unsigned)tmSpeed(reps, ticks));
+	}
+	return 0;
 }

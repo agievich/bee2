@@ -3,9 +3,8 @@
 \file zm.h
 \brief Quotient rings of integers modulo m
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.09.14
-\version 2014.07.15
+\version 2021.07.29
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -21,6 +20,7 @@ version 3. See Copyright Notices in bee2/info.h.
 #ifndef __ZM_H
 
 #include "bee2/math/qr.h"
+#include "bee2/math/zz.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -258,6 +258,9 @@ qr_sub_i, qr_neg_i идут прямые обращения к zzAddMod(), zzSub
 
 #define zmNeg(b, a, r)\
 	zzNegMod(b, a, (r)->mod, (r)->n)
+
+#define zmSetSign(b, a, r, neg)\
+	zzSetSignMod(b, a, (r)->mod, (r)->n, neg)
 
 #ifdef __cplusplus
 } /* extern "C" */

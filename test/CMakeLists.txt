@@ -30,6 +30,7 @@ add_executable(testbee2
 	crypto/pfok_test.c
 	math/pri_test.c
 	math/zz_test.c
+	math/ww_test.c
 	math/word_test.c
 	math/ecp_test.c
 	math/ecp_bench.c

@@ -6,7 +6,7 @@
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.06.26
 \version 2014.07.15
-\license This program is released under the GNU General Public License 
+\license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
@@ -532,6 +532,16 @@ static size_t ec2SubALD_deep(size_t n, size_t f_deep)
 	return O_OF_W(2 * n) + ec2AddALD_deep(n, f_deep);
 }
 
+static void ec2SetSignA(word b[], const word a[], bool_t neg, const struct ec_o* ec)
+{
+	//todo SAFE?
+	if (neg)
+		ec2SetSignA(b, a, neg, ec);
+	else
+		wwCopy(b, a, 2 * ec->f->n);
+}
+
+
 bool_t ec2CreateLD(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	void* stack)
 {
@@ -557,6 +567,7 @@ bool_t ec2CreateLD(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	ec->froma = ec2FromALD;
 	ec->toa = ec2ToALD;
 	ec->neg = ec2NegLD;
+	ec->nega = ec2NegA;
 	ec->add = ec2AddLD;
 	ec->adda = ec2AddALD;
 	ec->sub = ec2SubLD;

@@ -6,7 +6,7 @@
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.18
 \version 2019.06.27
-\license This program is released under the GNU General Public License 
+\license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
@@ -275,7 +275,7 @@ bool_t FAST(wwIsZero)(const word a[], size_t n);
 
 /*! \brief	Принимает значение -- машинное слово?
 
-	Проверяется, что слово [n]a принимает значение w, которое 
+	Проверяется, что слово [n]a принимает значение w, которое
 	является машинным словом:
 	\code
 		a[0] == w && a[1] == ... == a[n - 1] == 0?

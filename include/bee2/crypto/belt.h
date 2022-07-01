@@ -3,9 +3,8 @@
 \file belt.h
 \brief STB 34.101.31 (belt): data encryption and integrity algorithms
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2020.07.31
+\version 2021.11.12
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -374,7 +373,7 @@ void beltCompr(
 /*!	\brief Сжатие форматированных данных со сложением
 
 	Форматированный буфер h || X сжимается до форматированного буфера h.
-	Внутренняя переменная S belt-compress добавдяется поразрядно 
+	Внутренняя переменная S belt-compress добавляется поразрядно 
 	по модулю 2 к буферу s.
 	\pre Буферы s и h, X и s, X и h не пересекаются.
 	\deep{stack} beltCompr_deep().

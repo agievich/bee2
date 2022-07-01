@@ -297,6 +297,27 @@ void zzNeg(
 	size_t n			/*!< [in] длина a в машинных словах */
 );
 
+/*!	\brief Утстановить знак
+
+	Определяется число [n]b, отрицательное к [n]a по модулю B^n если neg = TRUE, и равное [n]a если neg = FALSE
+	\code
+		b <- neg ? B^n - a : a.
+	\endcode
+	\pre Буфер b либо не пересекается, либо совпадает с буфером a.
+	\pre neg = TRUE или neg = FALSE
+	\safe Имеется ускоренная нерегулярная редакция
+*/
+void zzSetSign(
+	word b[],			/*!< [out] отрицательное число */
+	const word a[],		/*!< [in] число */
+	size_t n,			/*!< [in] длина a в машинных словах */
+	bool_t neg			/*!< [in] флаг отрицательности */
+);
+
+void SAFE(zzSetSign)(word b[], const word a[], size_t n, bool_t neg);
+void FAST(zzSetSign)(word b[], const word a[], size_t n, bool_t neg);
+
+
 /*
 *******************************************************************************
 Мультипликативные операции
@@ -769,6 +790,29 @@ void zzNegMod(
 
 void SAFE(zzNegMod)(word b[], const word a[], const word mod[], size_t n);
 void FAST(zzNegMod)(word b[], const word a[], const word mod[], size_t n);
+
+/*!	\brief Установить знак числа по модулю
+
+	Определяется число [n]b равное (-1)^neg [n]a по модулю [n]mod:
+	\code
+		b <- (-1)^neg a \mod mod.
+	\endcode
+	\pre n > 0 && mod[n - 1] != 0.
+	\pre a < mod.
+	\pre Буфер b либо не пересекается, либо совпадает с буфером a.
+	\pre Буфер b не пересекается с буфером mod.
+	\safe Имеется ускоренная нерегулярная редакция.
+*/
+void zzSetSignMod(
+	word b[],			/*!< [in/out] результирующее число */
+	const word a[],		/*!< [in] число */
+	const word mod[],	/*!< [in] модуль */
+	size_t n,			/*!< [in] длина чисел в машинных словах */
+	bool_t neg			/*!< [in] флаг необходимости аддитивного обращения */
+);
+
+void SAFE(zzSetSignMod)(word b[], const word a[], const word mod[], size_t n, bool_t neg);
+void FAST(zzSetSignMod)(word b[], const word a[], const word mod[], size_t n, bool_t neg);
 
 /*!	\brief Умножение чисел по модулю
 

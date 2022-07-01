@@ -186,6 +186,46 @@ void SAFE(zzNegMod)(word b[], const word a[], const word mod[], size_t n)
 	mask = 0;
 }
 
+void FAST(zzSetSignMod)(word b[], const word a[], const word mod[], size_t n, bool_t neg)
+{
+	ASSERT(wwIsSameOrDisjoint(a, b, n));
+	ASSERT(wwIsDisjoint(b, mod, n));
+	ASSERT(wwCmp(a, mod, n) < 0);
+	if (neg && !wwIsZero(a, n))
+	{
+		zzSub(b, mod, a, n);
+	}
+	else {
+		wwCopy(b, a, n);
+	}	
+}
+
+void SAFE(zzSetSignMod)(word b[], const word a[], const word mod[], size_t n, bool_t neg)
+{
+	register word mask;
+	ASSERT(neg == TRUE || neg == FALSE);
+	ASSERT(wwIsSameOrDisjoint(a, b, n));
+	ASSERT(wwIsDisjoint(b, mod, n));
+	ASSERT(wwCmp(a, mod, n) < 0);
+
+	// b <- a - mod
+	zzSub(b, a, mod, n);
+
+	//mask <- neg ? WORD_0 : WORD_MAX;
+	mask = WORD_MAX + (word)neg;
+	// b <- b + mod & mask
+	zzAddAndW(b, mod, n, mask);
+
+	SAFE(zzSetSign)(b, b, n, neg);
+
+	// mask <- b == mod ? WORD_MAX : WORD_0
+	mask = WORD_0 - (word)SAFE(wwEq)(b, mod, n);
+	// b <- b - mod & mask
+	zzSubAndW(b, mod, n, mask);
+
+	mask = 0;
+}
+
 /*
 *******************************************************************************
 Модулярная арифметика: мультипликативные операции

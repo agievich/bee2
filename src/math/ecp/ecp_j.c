@@ -1,63 +1,25 @@
 /*
 *******************************************************************************
-\file ecp.c
-\brief Elliptic curves over prime fields
+\file ecp_j.c
+\brief Elliptic curves over prime fields: Jacobian coordinates
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.06.26
-\version 2021.06.30
-\license This program is released under the GNU General Public License 
+\version 2021.07.29
+\license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
 #include "bee2/core/mem.h"
-#include "bee2/core/stack.h"
 #include "bee2/core/util.h"
 #include "bee2/math/ecp.h"
 #include "bee2/math/gfp.h"
-#include "bee2/math/pri.h"
 #include "bee2/math/ww.h"
-#include "bee2/math/zz.h"
+#include "ecp_lcl.h"
 
 /*
 *******************************************************************************
-Общие положения
-
-Ссылки на все реализованные алгоритмы имеются на сайте
-http://www.hyperelliptic.org/efd. Там же можно найти соглашения по
-обозначению сложности алгоритмов. В этих обозначениях фигурируют
-следующие формальные выражения:
-	add -- сложение или вычитание \mod p,
-	c -- умножение на малую константу c (2,3,...) \mod p,
-	half -- умножение на 2^{-1} \mod p,
-	*A -- умножение на коэффициент A \mod p,
-	S -- возведение в квадрат \mod p,
-	M -- умножение \mod p,
-	D -- деление \mod p.
-
-При общей оценке сложности считается, что 1D = 100M и 1S = 1M.
-Аддитивные операции игнорируются.
-
-Используются обозначения:
-	A <- A + A -- сложение аффинных точек,
-	A <- 2A -- удвоение аффинной точки;
-	P <- P + P -- сложение проективных точек;
-	P <- P + A -- добавление к проективной точке аффинной;
-	P <- 2P -- удвоение проективной точки;
-	P <- 2A -- удвоение аффинной точки с переходом к проективным координатам.
-*******************************************************************************
-*/
-
-#define ecpSeemsOnA(a, ec)\
-	(zmIsIn(ecX(a), (ec)->f) && zmIsIn(ecY(a, (ec)->f->n), (ec)->f))
-
-#define ecpSeemsOn3(a, ec)\
-	(ecpSeemsOnA(a, ec) && zmIsIn(ecZ(a, (ec)->f->n), (ec)->f))
-
-/*
-*******************************************************************************
-Якобиановы координаты:
+Якобиевы координаты:
 	x = X / Z^2, y = Y / Z^3,
 	-(X : Y : Z) = (X : -Y : Z).
 
@@ -81,11 +43,11 @@ on a 16-bit Microcomputer. Public Key Cryptography, 1998].
 \todo Сравнить dbl-1998-hnm2 с dbl-2001-b, сложность которого
 	3M +5S + 8add + 1*4 + 2*8 + 1*3.
 
-В функции ecpDblAJ() выполняется удвоение P <- 2A. Реализован алгоритм 
+В функции ecpDblAJ() выполняется удвоение P <- 2A. Реализован алгоритм
 mdbl-2007-bl [Bernstein-Lange, 2007]. Сложность алгоритма:
 	1M + 5S + 7add + 1*8 + 3*2 + 1*3 \approx 6M.
 
-В функции ecpAddJ() выполняется сложение P <- P + P. Реализован алгоритм 
+В функции ecpAddJ() выполняется сложение P <- P + P. Реализован алгоритм
 add-2007-bl [Bernstein-Lange, 2007]. Сложность алгоритма:
 	11M + 5S + 9add + 4*2 \approx 16M.
 
@@ -98,16 +60,16 @@ Guide to Elliptic Curve Cryptography, Springer, 2004].
 Сложность алгоритма:
 	8M + 3S + 6add + 1*2 \approx 11M.
 
-В функции ecpTplJ() выполняется утроение P <- 3P. Реализован алгоритм 
+В функции ecpTplJ() выполняется утроение P <- 3P. Реализован алгоритм
 tpl-2007-bl [Bernstein-Lange, 2007]. Сложность алгоритма
 	5M + 10S + 1*A + 15add + 2*4 + 1*6 + 1*8 + 1*16 + 1*3 \approx 15M.
 
-В функции ecpTplJA3() выполняется утроение P <- 3P для случая A = -3. 
-Реализован алгоритм tpl-2007-bl-2 [Bernstein-Lange, 2007]. 
+В функции ecpTplJA3() выполняется утроение P <- 3P для случая A = -3.
+Реализован алгоритм tpl-2007-bl-2 [Bernstein-Lange, 2007].
 Сложность алгоритма
 	7M + 7S + 13add + 2*4 + 1*8 + 1*12 + 1*16 + 1*3 \approx 14M.
 
-Целевые функции ci(l), определенные в описании реализации ecMul() в ec.c, 
+Целевые функции ci(l), определенные в описании реализации ecMul() в ec.c,
 принимают следующий вид:
 	c1(l) = l/3 11;
 	c2(l, w) = 103 + (2^{w-2} - 2)102 + l/(w + 1) 11;
@@ -127,6 +89,21 @@ tpl-2007-bl [Bernstein-Lange, 2007]. Сложность алгоритма
 ecpDblAJ(). Подумать, как "помочь" этой функции, передав уже
 рассчитанные значения, например, za^2. Аналогичное замечание касается
 функции ecpAddJ().
+
+В функции eclDblAddJ() выполняется удвоение якобиевой точки с одновременным 
+сложением с афинной точкой:
+	P <- 2P + A
+Использован алгоритм, предложенный в приложении А.3 работы
+[*]	P. Longa and A. Miri. New Multibase Non-Adjacent Form Scalar 
+	Multiplication and its Application to Elliptic Curve Cryptosystems 
+	(extended version). Cryptology ePrint Archive, Report 2008/052. 
+	https://eprint.iacr.org/2008/052. 2008.
+Время работы алгоритма:
+	11M + 7S + 27A.
+
+\warning В [*] имеется неточность: шаг 36 необходимо выполнять после шага 38, 
+так как на шаге 38 значение переменной T5 предполагается равным theta^3.
+Это значение устанавливается на шаге 33 и перезаписывается на шаге 36.
 *******************************************************************************
 */
 
@@ -148,6 +125,7 @@ static bool_t ecpFromAJ(word b[], const word a[], const ec_o* ec, void* stack)
 }
 
 // [2n]b <- [3n]a (A <- P)
+//todo регуляризовать, так как используется в SAFE(ecMulA)
 static bool_t ecpToAJ(word b[], const word a[], const ec_o* ec, void* stack)
 {
 	const size_t n = ec->f->n;
@@ -496,7 +474,7 @@ static void ecpAddJ(word c[], const word a[], const word b[], const ec_o* ec,
 
 static size_t ecpAddJ_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(4 * n) + 
+	return O_OF_W(4 * n) +
 		utilMax(2,
 			f_deep,
 			ecpDblJ_deep(n, f_deep));
@@ -692,7 +670,7 @@ static void ecpTplJ(word b[], const word a[], const ec_o* ec, void* stack)
 	qrSqr(ecZ(b, n), ecZ(b, n), ec->f, stack);
 	zmSub(ecZ(b, n), ecZ(b, n), t2, ec->f);
 	zmSub(ecZ(b, n), ecZ(b, n), t7, ec->f);
-	// t2 <- (t4 + t6)^2 - t5 - t7 - t3 [U] 
+	// t2 <- (t4 + t6)^2 - t5 - t7 - t3 [U]
 	zmAdd(t2, t4, t6, ec->f);
 	qrSqr(t2, t2, ec->f, stack);
 	zmSub(t2, t2, t5, ec->f);
@@ -772,7 +750,7 @@ static void ecpTplJA3(word b[], const word a[], const ec_o* ec, void* stack)
 	qrSqr(ecZ(b, n), ecZ(b, n), ec->f, stack);
 	zmSub(ecZ(b, n), ecZ(b, n), t2, ec->f);
 	zmSub(ecZ(b, n), ecZ(b, n), t7, ec->f);
-	// t2 <- (t4 + t6)^2 - t5 - t7 - t3 [U] 
+	// t2 <- (t4 + t6)^2 - t5 - t7 - t3 [U]
 	zmAdd(t2, t4, t6, ec->f);
 	qrSqr(t2, t2, ec->f, stack);
 	zmSub(t2, t2, t5, ec->f);
@@ -802,7 +780,377 @@ size_t ecpTplJA3_deep(size_t n, size_t f_deep)
 	return O_OF_W(7 * n) + f_deep;
 }
 
-bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[], 
+void ecpDblAddA(word c[], const word a[], const word b[], bool_t neg_b, 
+  const ec_o* ec, void* stack) 
+{ 
+	const size_t n = ec->f->n;
+	// координаты b
+	const word* tx = ecX(b);
+	const word* ty = ecY(b, n);
+	// переменные в stack
+	word* t1 = (word*)stack;
+	word* t2 = t1 + n;
+	word* t3 = t2 + n;
+	word* t4 = t3 + n;
+	word* t5 = t4 + n;
+	word* t6 = t5 + n;
+	stack = t6 + n;
+	// pre
+	ASSERT(ecIsOperable(ec) && ec->d == 3);
+	ASSERT(ecpSeemsOn3(a, ec));
+	ASSERT(ecpSeemsOnA(b, ec));
+	ASSERT(wwIsSameOrDisjoint(a, c, 3 * n));
+	// todo: - P != Q?
+	wwCopy(t1, ecX(a), n);
+	wwCopy(t2, ecY(a, n), n);
+	wwCopy(t3, ecZ(a, n), n);
+	// 3: t4 <- t3^2
+	qrSqr(t4, t3, ec->f, stack);
+	// 4: t5 <- tx * t4
+	qrMul(t5, tx, t4, ec->f, stack);
+	// 5: t5 <- t5 - t1
+	qrSub(t5, t5, t1, ec->f);
+	// 6: t6 <- t3 + t5
+	qrAdd(t6, t3, t5, ec->f);
+	// 7: t6 <- t6^2
+	qrSqr(t6, t6, ec->f, stack);
+	// 8: t6 <- t6 - t4
+	qrSub(t6, t6, t4, ec->f);
+	// 9: t4 <- t3 * t4
+	qrMul(t4, t3, t4, ec->f, stack);
+	// 10: t4 <- ty * t4
+	qrMul(t4, ty, t4, ec->f, stack);
+	// 10.1: t4 <- (-1)^neg_b * t4
+	zmSetSign(t4, t4, ec->f, neg_b);
+	// 11: t4 <- t4 - t2
+	qrSub(t4, t4, t2, ec->f);
+	// 12: t3 <- t5^2
+	t3 = ecZ(c, n);
+	qrSqr(t3, t5, ec->f, stack);
+	// 13: t6 <- t6 - t3
+	qrSub(t6, t6, t3, ec->f);
+	// 14: t1 <- t1 * t3
+	qrMul(ecX(c), t1, t3, ec->f, stack);
+	t1 = ecX(c);
+	// 15: t1 <- 4t1
+	gfpDouble(t1, t1, ec->f);
+	gfpDouble(t1, t1, ec->f);
+	// 16: t3 <- t3 * t5
+	qrMul(t3, t3, t5, ec->f, stack);
+	// 17: t2 <- t2 * t3
+	qrMul(ecY(c, n), t2, t3, ec->f, stack);
+	t2 = ecY(c, n);
+	// 18: t2 <- 8t2
+	gfpDouble(t2, t2, ec->f);
+	gfpDouble(t2, t2, ec->f);
+	gfpDouble(t2, t2, ec->f);
+	// 19: t5 <- t4^2
+	qrSqr(t5, t4, ec->f, stack);
+	// 20: t3 <- t5 - t3
+	qrSub(t3, t5, t3, ec->f);
+	// 21: t3 <- 4t3
+	gfpDouble(t3, t3, ec->f);
+	gfpDouble(t3, t3, ec->f);
+	// 22: t3 <- t3 - t1
+	qrSub(t3, t3, t1, ec->f);
+	// 23: t3 <- t3 - t1
+	qrSub(t3, t3, t1, ec->f);
+	// 24: t3 <- t3 - t1
+	qrSub(t3, t3, t1, ec->f);
+	// 25: t4 <- t3 + t4
+	qrAdd(t4, t3, t4, ec->f);
+	// 26: t4 <- t4^2
+	qrSqr(t4, t4, ec->f, stack);
+	// 27: t4 <- t5 - t4
+	qrSub(t4, t5, t4, ec->f);
+	// 28: t4 <- t4 - t2
+	qrSub(t4, t4, t2, ec->f);
+	// 29: t4 <- t4 - t2
+	qrSub(t4, t4, t2, ec->f);
+	// 30: t5 <- t3^2
+	qrSqr(t5, t3, ec->f, stack);
+	// 31: t4 <- t4 + t5
+	qrAdd(t4, t4, t5, ec->f);
+	// 32: t1 <- t1 * t5
+	qrMul(t1, t1, t5, ec->f, stack);
+	// 33: t5 <- t3 * t5
+	qrMul(t5, t3, t5, ec->f, stack);
+	// 34: t3 <- t3 * t6
+	qrMul(t3, t3, t6, ec->f, stack);
+	// 35: t2 <- t2 * t5
+	qrMul(t2, t2, t5, ec->f, stack);
+	// шаг 36 будет после шага 38
+	// 37: t6 <- t4^2
+	qrSqr(t6, t4, ec->f, stack);
+	// 38: t6 <- t6 - t5
+	qrSub(t6, t6, t5, ec->f);
+	// 36: t5 <- 3t1
+	gfpDouble(t5, t1, ec->f);
+	qrAdd(t5, t5, t1, ec->f);
+	// 39: t5 <- t5 - t6
+	qrSub(t5, t5, t6, ec->f);
+	// 40: t4 <- t4 * t5
+	qrMul(t4, t4, t5, ec->f, stack);
+	// 41: t2 <- t4 - t2
+	qrSub(t2, t4, t2, ec->f);
+	// 42: t1 <- t1 - t5
+	qrSub(t1, t1, t5, ec->f);
+}
+
+size_t ecpDblAddA_deep(size_t n, size_t f_deep) 
+{
+	return O_OF_W(6 * n) + f_deep;
+}
+
+void ecpSetSignA(word b[], const word a[], bool_t neg, const ec_o* ec) 
+{
+	const size_t n = ec->f->n;
+	// pre
+	ASSERT(ecIsOperable(ec));
+	ASSERT(ecpSeemsOnA(a, ec));
+	ASSERT(wwIsSameOrDisjoint(a, b, 2 * n));
+	// (xb, yb) <- (xa, -1^(neg + 1) * ya)
+	qrCopy(ecX(b), ecX(a), ec->f);
+	zmSetSign(ecY(b, n), ecY(a, n), ec->f, neg);
+}
+
+void ecpJToH(word* c, const word a[], const ec_o* ec, void* stack) {
+	qrMul(ecX(c), ecX(a), ecZ(a, ec->f->n), ec->f, stack);
+
+	wwCopy(ecY(c, ec->f->n), ecY(a, ec->f->n), ec->f->n);
+
+	qrSqr(ecZ(c, ec->f->n), ecZ(a, ec->f->n), ec->f, stack);
+	qrMul(ecZ(c, ec->f->n), ecZ(c, ec->f->n), ecZ(a, ec->f->n), ec->f, stack);
+}
+
+size_t ecpJToH_deep(size_t f_deep) {
+	return f_deep;
+}
+
+bool_t ecpHToA(word b[], const word a[], const ec_o* ec, void* stack)
+{
+	const size_t n = ec->f->n;
+
+	word* zi;
+
+	ASSERT(a == b || wwIsDisjoint2(a, 3 * n, b, 2 * n));
+
+	// a == O => b <- O
+	if (qrIsZero(ecZ(a, n), ec->f))
+		return FALSE;
+
+	zi = (word*)stack;
+	stack = (void*)(zi + n);
+
+	// zi <- za^{-1}
+	qrInv(zi, ecZ(a, n), ec->f, stack);
+	// xb <- xa zi
+	qrMul(ecX(b), ecX(a), zi, ec->f, stack);
+	// yb <- ya zi
+	qrMul(ecY(b, n), ecY(a, n), zi, ec->f, stack);
+	// b != O
+	return TRUE;
+}
+
+size_t ecpHToA_deep(size_t n, size_t f_deep) {
+	return O_OF_W(n) + f_deep;
+}
+
+bool_t ecpHToJ(word b[], const word a[], const ec_o* ec, void* stack)
+{
+	const size_t n = ec->f->n;
+
+	word* zz;
+
+	ASSERT(wwIsSameOrDisjoint(b, a, 3 * n));
+
+	// a == O => b <- O
+	if (qrIsZero(ecZ(a, n), ec->f))
+		return FALSE;
+
+	zz = (word*)stack;
+	stack = (void*)(zz + n);
+
+	// xb <- xa za
+	qrMul(ecX(b), ecX(a), ecZ(a, n), ec->f, stack);
+
+	// zz <- za^2
+	qrSqr(zz, ecZ(a, n), ec->f, stack);
+	// yb <- ya zz
+	qrMul(ecY(b, n), ecY(a, n), zz, ec->f, stack);
+
+	// zb <- za
+	wwCopy(ecZ(b, n), ecZ(a, n), n);
+
+	// b != O
+	return TRUE;
+}
+
+size_t ecpHToJ_deep(size_t n, size_t f_deep) {
+	return O_OF_W(n) + f_deep;
+}
+
+void ecpAddAJJ_complete(word* r, const word a[], const word b[], const ec_o* ec, void* stack) {
+	const size_t n = ec->f->n;
+	word* c;
+	word* x1, * y1, * z1;
+	word* x2, * y2, * z2;
+	word* b3, * t0, * t1, * t2, * t3, * t4, * t5;
+
+	ASSERT(wwIsDisjoint2(r, ec->f->n * 2, a, ec->f->n * 3));
+	ASSERT(wwIsDisjoint2(r, ec->f->n * 2, b, ec->f->n * 3));
+	ASSERT(wwIsSameOrDisjoint(a, b, ec->f->n * 3));
+
+	c = (word*)stack;
+	x1 = c + 3 * n;
+	y1 = x1 + n;
+	z1 = y1 + n;
+
+	x2 = z1 + n;
+	y2 = x2 + n;
+	z2 = y2 + n;
+
+	b3 = z2 + n;
+	t0 = b3 + n;
+	t1 = t0 + n;
+	t2 = t1 + n;
+	t3 = t2 + n;
+	t4 = t3 + n;
+	t5 = t4 + n;
+	stack = (void*)(t5 + n);
+
+	ecpJToH(x1, a, ec, stack);
+	ecpJToH(x2, b, ec, stack);
+
+	qrAdd(b3, ec->B, ec->B, ec->f);
+	qrAdd(b3, b3, ec->B, ec->f);
+
+	qrMul(t0, x1, x2, ec->f, stack);
+	qrMul(t1, y1, y2, ec->f, stack);
+	qrMul(t2, z1, z2, ec->f, stack);
+	qrAdd(t3, x1, y1, ec->f);
+	qrAdd(t4, x2, y2, ec->f);
+	qrMul(t3, t3, t4, ec->f, stack);
+	qrAdd(t4, t0, t1, ec->f);
+	qrSub(t3, t3, t4, ec->f);
+	qrAdd(t4, x1, z1, ec->f);
+	qrAdd(t5, x2, z2, ec->f);
+	qrMul(t4, t4, t5, ec->f, stack);
+	qrAdd(t5, t0, t2, ec->f);
+	qrSub(t4, t4, t5, ec->f);
+	qrAdd(t5, y1, z1, ec->f);
+	qrAdd(ecX(c), y2, z2, ec->f);
+	qrMul(t5, t5, ecX(c), ec->f, stack);
+	qrAdd(ecX(c), t1, t2, ec->f);
+	qrSub(t5, t5, ecX(c), ec->f);
+	qrMul(ecZ(c, ec->f->n), ec->A, t4, ec->f, stack);
+	qrMul(ecX(c), b3, t2, ec->f, stack);
+	qrAdd(ecZ(c, ec->f->n), ecX(c), ecZ(c, ec->f->n), ec->f);
+	qrSub(ecX(c), t1, ecZ(c, ec->f->n), ec->f);
+	qrAdd(ecZ(c, ec->f->n), t1, ecZ(c, ec->f->n), ec->f);
+	qrMul(ecY(c, ec->f->n), ecX(c), ecZ(c, ec->f->n), ec->f, stack);
+	qrAdd(t1, t0, t0, ec->f);
+	qrAdd(t1, t1, t0, ec->f);
+	qrMul(t2, ec->A, t2, ec->f, stack);
+	qrMul(t4, b3, t4, ec->f, stack);
+	qrAdd(t1, t1, t2, ec->f);
+	qrSub(t2, t0, t2, ec->f);
+	qrMul(t2, ec->A, t2, ec->f, stack);
+	qrAdd(t4, t4, t2, ec->f);
+	qrMul(t0, t1, t4, ec->f, stack);
+	qrAdd(ecY(c, ec->f->n), ecY(c, ec->f->n), t0, ec->f);
+	qrMul(t0, t5, t4, ec->f, stack);
+	qrMul(ecX(c), t3, ecX(c), ec->f, stack);
+	qrSub(ecX(c), ecX(c), t0, ec->f);
+	qrMul(t0, t3, t1, ec->f, stack);
+	qrMul(ecZ(c, ec->f->n), t5, ecZ(c, ec->f->n), ec->f, stack);
+	qrAdd(ecZ(c, ec->f->n), ecZ(c, ec->f->n), t0, ec->f);
+
+	ecpHToA(r, c, ec, stack);
+}
+
+size_t ecpAddAJJ_complete_deep(size_t n, size_t f_deep) {
+	return O_OF_W(16 * n) +
+		utilMax(2,
+			f_deep,
+			ecpJToH_deep(f_deep)
+		);
+}
+
+void ecpAddAJA_complete(word* r, const word a[], const word b[], const ec_o* ec, void* stack) {
+	const size_t n = ec->f->n;
+	word* c;
+	word* x1, * y1, * z1;
+	word* b3, * t0, * t1, * t2, * t3, * t4, * t5;
+
+	ASSERT(wwIsDisjoint2(r, ec->f->n * 2, a, ec->f->n * 3));
+	ASSERT(wwIsDisjoint(r, b, ec->f->n * 2));
+
+	c = (word*)stack;
+	x1 = c + 3 * n;
+	y1 = x1 + n;
+	z1 = y1 + n;
+
+	b3 = z1 + n;
+	t0 = b3 + n;
+	t1 = t0 + n;
+	t2 = t1 + n;
+	t3 = t2 + n;
+	t4 = t3 + n;
+	t5 = t4 + n;
+	stack = (void*)(t5 + n);
+
+	ecpJToH(x1, a, ec, stack);
+
+	qrAdd(b3, ec->B, ec->B, ec->f);
+	qrAdd(b3, b3, ec->B, ec->f);
+
+	qrMul(t0, x1, ecX(b), ec->f, stack);
+	qrMul(t1, y1, ecY(b, ec->f->n), ec->f, stack);
+	qrAdd(t3, ecX(b), ecY(b, ec->f->n), ec->f);
+	qrAdd(t4, x1, y1, ec->f);
+	qrMul(t3, t3, t4, ec->f, stack);
+	qrAdd(t4, t0, t1, ec->f);
+	qrSub(t3, t3, t4, ec->f);
+	qrMul(t4, ecX(b), z1, ec->f, stack);
+	qrAdd(t4, t4, x1, ec->f);
+	qrMul(t5, ecY(b, ec->f->n), z1, ec->f, stack);
+	qrAdd(t5, t5, y1, ec->f);
+	qrMul(ecZ(c, ec->f->n), ec->A, t4, ec->f, stack);
+	qrMul(ecX(c), b3, z1, ec->f, stack);
+	qrAdd(ecZ(c, ec->f->n), ecX(c), ecZ(c, ec->f->n), ec->f);
+	qrSub(ecX(c), t1, ecZ(c, ec->f->n), ec->f);
+	qrAdd(ecZ(c, ec->f->n), t1, ecZ(c, ec->f->n), ec->f);
+	qrMul(ecY(c, ec->f->n), ecX(c), ecZ(c, ec->f->n), ec->f, stack);
+	qrAdd(t1, t0, t0, ec->f);
+	qrAdd(t1, t1, t0, ec->f);
+	qrMul(t2, ec->A, z1, ec->f, stack);
+	qrMul(t4, b3, t4, ec->f, stack);
+	qrAdd(t1, t1, t2, ec->f);
+	qrSub(t2, t0, t2, ec->f);
+	qrMul(t2, ec->A, t2, ec->f, stack);
+	qrAdd(t4, t4, t2, ec->f);
+	qrMul(t0, t1, t4, ec->f, stack);
+	qrAdd(ecY(c, ec->f->n), ecY(c, ec->f->n), t0, ec->f);
+	qrMul(t0, t5, t4, ec->f, stack);
+	qrMul(ecX(c), t3, ecX(c), ec->f, stack);
+	qrSub(ecX(c), ecX(c), t0, ec->f);
+	qrMul(t0, t3, t1, ec->f, stack);
+	qrMul(ecZ(c, ec->f->n), t5, ecZ(c, ec->f->n), ec->f, stack);
+	qrAdd(ecZ(c, ec->f->n), ecZ(c, ec->f->n), t0, ec->f);
+
+	ecpHToA(r, c, ec, stack);
+}
+
+size_t ecpAddAJA_complete_deep(size_t n, size_t f_deep) {
+	return O_OF_W(13 * n) +
+		utilMax(2,
+			f_deep,
+			ecpJToH_deep(f_deep)
+		);
+}
+
+bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	void* stack)
 {
 	register bool_t bA3;
@@ -810,7 +1158,7 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	// pre
 	ASSERT(memIsValid(ec, sizeof(ec_o)));
 	ASSERT(gfpIsOperable(f));
-	ASSERT(memIsValid(A, f->no)); 
+	ASSERT(memIsValid(A, f->no));
 	ASSERT(memIsValid(B, f->no));
 	// f->mod > 3?
 	if (wwCmpW(f->mod, f->n, 3) <= 0)
@@ -840,6 +1188,7 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	ec->froma = ecpFromAJ;
 	ec->toa = ecpToAJ;
 	ec->neg = ecpNegJ;
+	ec->nega = ecpNegA;
 	ec->add = ecpAddJ;
 	ec->adda = ecpAddAJ;
 	ec->sub = ecpSubJ;
@@ -847,7 +1196,7 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	ec->dbl = bA3 ? ecpDblJA3 : ecpDblJ;
 	ec->dbla = ecpDblAJ;
 	ec->tpl = bA3 ? ecpTplJA3 : ecpTplJ;
-	ec->deep = utilMax(8,
+	ec->deep = utilMax(9,
 		ecpToAJ_deep(f->n, f->deep),
 		ecpAddJ_deep(f->n, f->deep),
 		ecpAddAJ_deep(f->n, f->deep),
@@ -855,7 +1204,9 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 		ecpSubAJ_deep(f->n, f->deep),
 		bA3 ? ecpDblJA3_deep(f->n, f->deep) : ecpDblJ_deep(f->n, f->deep),
 		ecpDblAJ_deep(f->n, f->deep),
-		bA3 ? ecpTplJA3_deep(f->n, f->deep) : ecpTplJ_deep(f->n, f->deep));
+		bA3 ? ecpTplJA3_deep(f->n, f->deep) : ecpTplJ_deep(f->n, f->deep),
+		ecpDblAddA_deep(f->n, f->deep)
+		);
 	// настроить
 	ec->hdr.keep = sizeof(ec_o) + O_OF_W(5 * f->n + 1);
 	ec->hdr.p_count = 6;
@@ -884,392 +1235,4 @@ size_t ecpCreateJ_deep(size_t n, size_t f_deep)
 		ecpDblAJ_deep(n, f_deep),
 		ecpTplJ_deep(n, f_deep),
 		ecpTplJA3_deep(n, f_deep));
-}
-
-/*
-*******************************************************************************
-Свойства кривой 
-*******************************************************************************
-*/
-
-bool_t ecpIsValid(const ec_o* ec, void* stack)
-{
-	size_t n = ec->f->n;
-	// переменные в stack
-	word* t1 = (word*)stack;
-	word* t2 = t1 + n;
-	word* t3 = t2 + n;
-	stack = t3 + n;
-	// кривая работоспособна?
-	// поле ec->f корректно?
-	// f->mod > 3?
-	// ec->deep >= ec->f->deep?
-	// A, B \in ec->f?
-	if (!ecIsOperable2(ec) ||
-		!gfpIsValid(ec->f, stack) ||
-		wwCmpW(ec->f->mod, ec->f->n, 3) <= 0 ||
-		ec->deep < ec->f->deep ||
-		!zmIsIn(ec->A, ec->f) || 
-		!zmIsIn(ec->B, ec->f))
-		return FALSE;
-	// t1 <- 4 A^3
-	qrSqr(t1, ec->A, ec->f, stack);
-	qrMul(t1, t1, ec->A, ec->f, stack);
-	gfpDouble(t1, t1, ec->f);
-	gfpDouble(t1, t1, ec->f);
-	// t3 <- 3 B^2
-	qrSqr(t2, ec->B, ec->f, stack);
-	gfpDouble(t3, t2, ec->f);
-	zmAdd(t3, t3, t2, ec->f);
-	// t2 <- 3 t3 [27 B^2]
-	gfpDouble(t2, t3, ec->f);
-	zmAdd(t2, t3, t2, ec->f);
-	// t1 <- t1 + t2 [4 A^3 + 27 B^2 -- дискриминант]
-	zmAdd(t1, t1, t2, ec->f);
-	// t1 == 0 => сингулярная кривая
-	return !qrIsZero(t1, ec->f);
-}
-
-size_t ecpIsValid_deep(size_t n, size_t f_deep)
-{
-	return O_OF_W(3 * n) + 
-		utilMax(2,
-			f_deep,
-			gfpIsValid_deep(n));
-}
-
-bool_t ecpSeemsValidGroup(const ec_o* ec, void* stack)
-{
-	size_t n = ec->f->n;
-	int cmp;
-	word w;
-	// переменные в stack
-	word* t1 = (word*)stack;
-	word* t2 = t1 + n + 1;
-	word* t3 = t2 + n + 2;
-	stack = t3 + 2 * n;
-	// pre
-	ASSERT(ecIsOperable(ec));
-	// ecIsOperableGroup(ec) == TRUE? base \in ec?
-	if (!ecIsOperableGroup(ec) ||
-		!ecpIsOnA(ec->base, ec, stack))
-		return FALSE;
-	// [n + 2]t1 <- order * cofactor
-	t1[n + 1] = zzMulW(t1, ec->order, n + 1, ec->cofactor);
-	// t1 <- |t1 - (p + 1)|
-	if (zzSubW2(t1, n + 2, 1))
-		return FALSE;
-	if (wwCmp2(t1, n + 2, ec->f->mod, n) >= 0)
-		zzSubW2(t1 + n, 2, zzSub2(t1, ec->f->mod, n));
-	else
-		zzSub(t1, ec->f->mod, t1, n);
-	// n <- длина t1
-	n = wwWordSize(t1, n + 2);
-	// n > ec->f->n => t1^2 > 4 p
-	if (n > ec->f->n)
-		return FALSE;
-	// [2n]t2 <- ([n]t1)^2
-	zzSqr(t2, t1, n, stack);
-	// условие Хассе: t2 <= 4 p?
-	w = wwGetBits(t2, 0, 2);
-	wwShLo(t2, 2 * n, 2);
-	cmp = wwCmp2(t2, 2 * n, ec->f->mod, ec->f->n);
-	if (cmp > 0 || cmp == 0 && w != 0)
-		return FALSE;
-	// все нормально
-	return TRUE;
-}
-
-size_t ecpSeemsValidGroup_deep(size_t n, size_t f_deep)
-{
-	return O_OF_W(4 * n + 3) + 
-		utilMax(2, 
-			ecpIsOnA_deep(n, f_deep),
-			zzSqr_deep(n));
-}
-
-bool_t ecpIsSafeGroup(const ec_o* ec, size_t mov_threshold, void* stack)
-{
-	size_t n1 = ec->f->n + 1;
-	// переменные в stack
-	word* t1 = (word*)stack;
-	word* t2 = t1 + n1;
-	stack = t2 + n1;
-	// pre
-	ASSERT(ecIsOperable(ec));
-	ASSERT(ecIsOperableGroup(ec));
-	// order -- простое?
-	n1 = wwWordSize(ec->order, n1);
-	if (!priIsPrime(ec->order, n1, stack))
-		return FALSE;
-	// order == p?
-	if (wwCmp2(ec->f->mod, ec->f->n, ec->order, n1) == 0)
-		return FALSE;
-	// проверка MOV
-	if (mov_threshold)
-	{
-		zzMod(t1, ec->f->mod, ec->f->n, ec->order, n1, stack);
-		wwCopy(t2, t1, n1);
-		if (wwCmpW(t2, n1, 1) == 0)
-			return FALSE;
-		while (--mov_threshold)
-		{
-			zzMulMod(t2, t2, t1, ec->order, n1, stack);
-			if (wwCmpW(t2, n1, 1) == 0)
-				return FALSE;
-		}
-	}
-	// все нормально
-	return TRUE;
-}
-
-size_t ecpIsSafeGroup_deep(size_t n)
-{
-	const size_t n1 = n + 1;
-	return O_OF_W(2 * n1) +
-		utilMax(3,
-			priIsPrime_deep(n1),
-			zzMod_deep(n, n1),
-			zzMulMod_deep(n1));
-}
-
-/*
-*******************************************************************************
-Арифметика аффинных точек
-
-Сложение A <- A + A:
-	1D + 1S + 1M + 6add \approx 102M
-
-Удвоение A <- 2A:
-	1D + 2S + 1M + 5add + 1*3 + 1*2 \approx 103M
-*******************************************************************************
-*/
-
-bool_t ecpIsOnA(const word a[], const ec_o* ec, void* stack)
-{
-	const size_t n = ec->f->n;
-	// переменные в stack
-	word* t1 = (word*)stack;
-	word* t2 = t1 + n;
-	stack = t2 + n;
-	// pre
-	ASSERT(ecIsOperable(ec));
-	// xa, ya \in ec->f?
-	if (!zmIsIn(ecX(a), ec->f) || !zmIsIn(ecY(a, n), ec->f))
-		return FALSE;
-	// t1 <- (xa^2 + A)xa + B
-	qrSqr(t1, ecX(a), ec->f, stack);
-	zmAdd(t1, t1, ec->A, ec->f);
-	qrMul(t1, t1, ecX(a), ec->f, stack);
-	zmAdd(t1, t1, ec->B, ec->f);
-	// t2 <- ya^2
-	qrSqr(t2, ecY(a, n), ec->f, stack);
-	// t1 == t2?
-	return qrCmp(t1, t2, ec->f) == 0;
-}
-
-size_t ecpIsOnA_deep(size_t n, size_t f_deep)
-{
-	return O_OF_W(2 * n) + f_deep;
-}
-
-void ecpNegA(word b[], const word a[], const ec_o* ec)
-{
-	const size_t n = ec->f->n;
-	// pre
-	ASSERT(ecIsOperable(ec));
-	ASSERT(ecpSeemsOnA(a, ec));
-	ASSERT(wwIsSameOrDisjoint(a, b, 3 * n));
-	// (xb, yb) <- (xa, -ya)
-	qrCopy(ecX(b), ecX(a), ec->f);
-	zmNeg(ecY(b, n), ecY(a, n), ec->f);
-}
-
-bool_t ecpAddAA(word c[], const word a[], const word b[], const ec_o* ec,
-	void* stack)
-{
-	const size_t n = ec->f->n;
-	// переменные в stack
-	word* t1 = (word*)stack;
-	word* t2 = t1 + n;
-	word* t3 = t2 + n;
-	stack = t3 + n;
-	// pre
-	ASSERT(ecIsOperable(ec));
-	ASSERT(ecpSeemsOnA(a, ec));
-	ASSERT(ecpSeemsOnA(b, ec));
-	// xa != xb?
-	if (qrCmp(ecX(a), ecX(b), ec->f) != 0)
-	{
-		// t1 <- xa - xb
-		zmSub(t1, ecX(a), ecX(b), ec->f);
-		// t2 <- ya - yb
-		zmSub(t2, ecY(a, n), ecY(b, n), ec->f);
-	}
-	else
-	{
-		// ya != yb или yb == 0 => a == -b => a + b == O
-		if (qrCmp(ecY(a, n), ecY(b, n), ec->f) != 0 || 
-			qrIsZero(ecY(b, n), ec->f))
-			return FALSE;
-		// t2 <- 3 xa^2 + A
-		qrSqr(t1, ecX(a), ec->f, stack);
-		gfpDouble(t2, t1, ec->f);
-		zmAdd(t2, t2, t1, ec->f);
-		zmAdd(t2, t2, ec->A, ec->f);
-		// t1 <- 2 ya
-		gfpDouble(t1, ecY(a, n), ec->f);
-	}
-	// t2 <- t2 / t1 = \lambda
-	qrDiv(t2, t2, t1, ec->f, stack);
-	// t1 <- \lambda^2 - xa - xb = xc
-	qrSqr(t1, t2, ec->f, stack);
-	zmSub(t1, t1, ecX(a), ec->f);
-	zmSub(t1, t1, ecX(b), ec->f);
-	// t3 <- xa - xc
-	zmSub(t3, ecX(a), t1, ec->f);
-	// t2 <- \lambda(xa - xc) - ya
-	qrMul(t2, t2, t3, ec->f, stack);
-	zmSub(t2, t2, ecY(a, n), ec->f);
-	// выгрузить результат
-	qrCopy(ecX(c), t1, ec->f);
-	qrCopy(ecY(c, n), t2, ec->f);
-	return TRUE;
-}
-
-size_t ecpAddAA_deep(size_t n, size_t f_deep)
-{
-	return O_OF_W(3 * n) + f_deep;
-}
-
-bool_t ecpSubAA(word c[], const word a[], const word b[], const ec_o* ec,
-	void* stack)
-{
-	const size_t n = ec->f->n;
-	// переменные в stack
-	word* t1 = (word*)stack;
-	word* t2 = t1 + n;
-	word* t3 = t2 + n;
-	stack = t3 + n;
-	// pre
-	ASSERT(ecIsOperable(ec));
-	ASSERT(ecpSeemsOnA(a, ec));
-	ASSERT(ecpSeemsOnA(b, ec));
-	// xa != xb?
-	if (qrCmp(ecX(a), ecX(b), ec->f) != 0)
-	{
-		// t1 <- xa - xb
-		zmSub(t1, ecX(a), ecX(b), ec->f);
-		// t2 <- ya + yb
-		zmAdd(t2, ecY(a, n), ecY(b, n), ec->f);
-	}
-	else
-	{
-		// ya == yb => a == b => a - b == O
-		if (qrCmp(ecY(a, n), ecY(b, n), ec->f) == 0)
-			return FALSE;
-		// здесь должно быть a == -b => a - b = 2a
-		// t2 <- 3 xa^2 + A
-		qrSqr(t1, ecX(a), ec->f, stack);
-		gfpDouble(t2, t1, ec->f);
-		zmAdd(t2, t2, t1, ec->f);
-		zmAdd(t2, t2, ec->A, ec->f);
-		// t1 <- 2 ya
-		gfpDouble(t1, ecY(a, n), ec->f);
-	}
-	// t2 <- t2 / t1 = \lambda
-	qrDiv(t2, t2, t1, ec->f, stack);
-	// t1 <- \lambda^2 - xa - xb = xc
-	qrSqr(t1, t2, ec->f, stack);
-	zmSub(t1, t1, ecX(a), ec->f);
-	zmSub(t1, t1, ecX(b), ec->f);
-	// t3 <- xa - xc
-	zmSub(t3, ecX(a), t1, ec->f);
-	// t2 <- \lambda(xa - xc) - ya
-	qrMul(t2, t2, t3, ec->f, stack);
-	zmSub(t2, t2, ecY(a, n), ec->f);
-	// выгрузить результат
-	qrCopy(ecX(c), t1, ec->f);
-	qrCopy(ecY(c, n), t2, ec->f);
-	return TRUE;
-}
-
-size_t ecpSubAA_deep(size_t n, size_t f_deep)
-{
-	return O_OF_W(3 * n) + f_deep;
-}
-
-/*
-*******************************************************************************
-Алгоритм SWU
-
-\todo Регуляризировать (qrIsUnitySafe).
-*******************************************************************************
-*/
-
-void ecpSWU(word b[], const word a[], const ec_o* ec, void* stack)
-{
-	const size_t n = ec->f->n;
-	register size_t mask;
-	// переменные в stack [x2 после x1, s после y!]
-	word* t = (word*)stack;
-	word* x1 = t + n;
-	word* x2 = x1 + n;
-	word* y = x2 + n;
-	word* s = y + n; 
-	stack = s + n;
-	// pre
-	ASSERT(ecIsOperable(ec));
-	ASSERT(zmIsIn(a, ec->f));
-	ASSERT(wwGetBits(ec->f->mod, 0, 2) == 3);
-	ASSERT(!qrIsZero(ec->A, ec->f) && !qrIsZero(ec->B, ec->f));
-	// t <- -a^2
-	qrSqr(t, a, ec->f, stack);
-	zmNeg(t, t, ec->f);
-	// s <- p - 2
-	wwCopy(s, ec->f->mod, n);
-	zzSubW2(s, n, 2);
-	// x1 <- -B(1 + t + t^2)(A(t + t^2))^{p - 2} 
-	qrSqr(x2, t, ec->f, stack);
-	qrAdd(x2, x2, t, ec->f);
-	qrMul(x1, x2, ec->A, ec->f, stack);
-	qrPower(x1, x1, s, n, ec->f, stack);
-	qrAddUnity(x2, x2, ec->f);
-	qrMul(x1, x1, x2, ec->f, stack);
-	qrMul(x1, x1, ec->B, ec->f, stack);
-	zmNeg(x1, x1, ec->f);
-	// y <- (x1)^3 + A x1 + B
-	qrSqr(x2, x1, ec->f, stack);
-	qrMul(x2, x2, x1, ec->f, stack);
-	qrMul(y, x1, ec->A, ec->f, stack);
-	qrAdd(y, y, x2, ec->f);
-	qrAdd(y, y, ec->B, ec->f);
-	// x2 <- x1 t
-	qrMul(x2, x1, t, ec->f, stack);
-	// t <- y^{(p - 1) - (p + 1) / 4} = y^{s - (p - 3) / 4}
-	wwCopy(t, ec->f->mod, n);
-	wwShLo(t, n, 2);
-	zzSub(s, s, t, n);
-	qrPower(t, y, s, n, ec->f, stack);
-	// s <- a^3 y
-	qrSqr(s, a, ec->f, stack);
-	qrMul(s, s, a, ec->f, stack);
-	qrMul(s, s, y, ec->f, stack);
-	// mask <- t^2 y == 1 ? 0 : -1;
-	qrSqr(b, t, ec->f, stack);
-	qrMul(b, b, y, ec->f, stack);
-	mask = qrIsUnity(b, ec->f) - SIZE_1;
-	// b <- mask == 0 ? (x1, t y) : (x2, t s)
-	qrCopy(ecX(b), x1 + (mask & n), ec->f);
-	qrMul(ecY(b, n), t, y + (mask & n), ec->f, stack);
-	// очистка
-	mask = 0;
-}
-
-size_t ecpSWU_deep(size_t n, size_t f_deep)
-{
-	return O_OF_W(5 * n) + 
-		utilMax(2,
-			f_deep,
-			qrPower_deep(n, n, f_deep));
 }

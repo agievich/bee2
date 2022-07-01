@@ -4,9 +4,10 @@
 \brief Benchmarks for elliptic curves over prime fields
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2013.10.17
-\version 2020.02.05
-\license This program is released under the GNU General Public License 
+\version 2020.12.20
+\license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
@@ -27,54 +28,99 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-static size_t _ecpBench_deep(size_t n, size_t f_deep, size_t ec_d, 
+static size_t _ecpBench_deep(size_t n, size_t f_deep, size_t ec_d,
 	size_t ec_deep)
 {
 	return O_OF_W(3 * n) + prngCOMBO_keep() +
 		ecMulA_deep(n, ec_d, ec_deep, n);
 }
 
+extern size_t testReps;
 bool_t ecpBench()
 {
 	// описание кривой
 	bign_params params[1];
 	// состояние
-	octet state[6000];
+	octet state[40*6000];
 	ec_o* ec;
 	octet* combo_state;
-	word* pt;
+	word* pt, *pta;
 	word* d;
+	size_t nj, reps;
 	void* stack;
+	char params_oid[] = "1.2.112.0.2.0.34.101.45.3.0";
 	// загрузить параметры и создать описание кривой
-	ASSERT(bignStart_keep(128, _ecpBench_deep) <= sizeof(state));
-	if (bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK ||
-		bignStart(state, params) != ERR_OK)
-		return FALSE;
-	// раскладка состояния
-	ec = (ec_o*)state;
-	ec->tpl = 0;
-	combo_state = objEnd(ec, octet);
-	pt = (word*)(combo_state + prngCOMBO_keep());
-	d = pt + 2 * ec->f->n;
-	stack = d + ec->f->n;
-	// создать генератор COMBO
-	prngCOMBOStart(combo_state, utilNonce32());
-	// оценить число кратных точек в секунду
-	{
-		const size_t reps = 1000;
-		size_t i;
-		tm_ticks_t ticks;
-		// эксперимент
-		for (i = 0, ticks = tmTicks(); i < reps; ++i)
+	ASSERT(bignStart_keep(256, _ecpBench_deep) <= sizeof(state));
+	for(; ++params_oid[sizeof(params_oid)-2] < '4';) {
+		if (bignStdParams(params, params_oid) != ERR_OK ||
+			bignStart(state, params) != ERR_OK)
+			return FALSE;
+		printf("ecpBench: %s\n", params_oid);
+		// раскладка состояния
+		ec = (ec_o*)state;
+		ec->tpl = 0;
+		nj = ec->d * ec->f->n;
+		combo_state = objEnd(ec, octet);
+		pt = (word*)(combo_state + prngCOMBO_keep());
+		d = pt + 2 * ec->f->n;
+		stack = d + ec->f->n;
+		reps = testReps*1024*1024 / params->l / params->l;
+		// оценить число кратных точек в секунду
+		pta = ec->base;
+		for(;;)
 		{
-			prngCOMBOStepR(d, ec->f->no, combo_state);
-			ecMulA(pt, ec->base, ec, d, ec->f->n, stack);
+			size_t i;
+			tm_ticks_t ticks;
+			// создать генератор COMBO
+			prngCOMBOStart(combo_state, utilNonce32());
+			// эксперимент
+			for (i = 0, ticks = tmTicks(); i < reps; ++i)
+			{
+				prngCOMBOStepR(d, ec->f->no, combo_state);
+				ecMulA(pt, pta, ec, d, ec->f->n, stack);
+			}
+			ticks = tmTicks() - ticks;
+			// печать результатов
+			printf("ecpBench::wnaf+%s: %u cycles / mulpoint [%u mulpoints / sec]\n",
+				pta == ec->base ? "base": "rand",
+				(unsigned)(ticks / reps),
+				(unsigned)tmSpeed(reps, ticks));
+			if(pta == pt) break;
+			pta = pt;
 		}
-		ticks = tmTicks() - ticks;
-		// печать результатов
-		printf("ecpBench: %u cycles/mulpoint [%u mulpoints/sec]\n", 
-			(unsigned)(ticks / reps),
-			(unsigned)tmSpeed(reps, ticks));
+		// с малыми кратными
+		{
+			word *c = (word*)stack;
+			void *stack2 = (word*)(c + (nj << 5) + nj+nj);
+			size_t i;
+			tm_ticks_t ticks;
+
+			prngCOMBOStart(combo_state, utilNonce32());
+			// эксперимент
+            for (i = 0, ticks = tmTicks(); i < reps; ++i)
+            {
+				prngCOMBOStepR(d, ec->f->no, combo_state);
+				ecpMulA1(pt, ec->base, ec, d, ec->f->n, params->precomp.Gs, params->precomp.w, stack);
+            }
+			ticks = tmTicks() - ticks;
+			// печать результатов
+			printf("ecpBench::smult+base: %u cycles / rep [%u reps / sec]\n",
+				(unsigned)(ticks / reps),
+				(unsigned)tmSpeed(reps, ticks));
+
+			prngCOMBOStart(combo_state, utilNonce32());
+			// эксперимент
+            for (i = 0, ticks = tmTicks(); i < reps; ++i)
+            {
+				prngCOMBOStepR(d, ec->f->no, combo_state);
+				ecpMulA(pt, pt, ec, d, ec->f->n, stack);
+            }
+			ticks = tmTicks() - ticks;
+			// печать результатов
+			printf("ecpBench::smult+rand: %u cycles / rep [%u reps / sec]\n",
+				(unsigned)(ticks / reps),
+				(unsigned)tmSpeed(reps, ticks));
+		}
 	}
 	// все нормально
 	return TRUE;

@@ -42,7 +42,12 @@ set(src
   crypto/belt/belt_kwp.c
   crypto/belt/belt_mac.c
   crypto/belt/belt_pbkdf.c
-  crypto/bign.c
+  crypto/bign/bign_ibs.c
+  crypto/bign/bign_keys.c
+  crypto/bign/bign_keyt.c
+  crypto/bign/bign_misc.c
+  crypto/bign/bign_params.c
+  crypto/bign/bign_sign.c
   crypto/bpki.c
   crypto/botp.c
   crypto/brng.c
@@ -51,7 +56,10 @@ set(src
   crypto/pfok.c
   math/ec.c
   math/ec2.c
-  math/ecp.c
+  math/ecp/ecp_a.c
+  math/ecp/ecp_j.c
+  math/ecp/ecp_misc.c
+  math/ecp/ecp_smult.c
   math/gf2.c
   math/gfp.c
   math/pp.c

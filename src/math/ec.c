@@ -3,17 +3,15 @@
 \file ec.c
 \brief Elliptic curves
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.03.04
-\version 2015.11.09
-\license This program is released under the GNU General Public License 
+\version 2021.07.29
+\license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
 #include <stdarg.h>
 #include "bee2/core/mem.h"
-#include "bee2/core/stack.h"
 #include "bee2/core/util.h"
 #include "bee2/core/word.h"
 #include "bee2/math/ec.h"
@@ -35,14 +33,15 @@ bool_t ecIsOperable2(const ec_o* ec)
 		wwIsValid(ec->A, ec->f->n) &&
 		wwIsValid(ec->B, ec->f->n) &&
 		ec->d >= 3 &&
-		ec->froma != 0 &&	
-		ec->toa != 0 &&	
-		ec->neg != 0 &&	
-		ec->add != 0 &&	
-		ec->adda != 0 &&	
-		ec->sub != 0 &&	
-		ec->suba != 0 &&	
-		ec->dbl != 0 &&	
+		ec->froma != 0 &&
+		ec->toa != 0 &&
+		ec->neg != 0 &&
+		ec->nega != 0 &&
+		ec->add != 0 &&
+		ec->adda != 0 &&
+		ec->sub != 0 &&
+		ec->suba != 0 &&
+		ec->dbl != 0 &&
 		ec->dbla != 0;
 }
 
@@ -53,7 +52,7 @@ bool_t ecIsOperable(const ec_o* ec)
 		ec->deep >= ec->f->deep;
 }
 
-bool_t ecCreateGroup(ec_o* ec, const octet xbase[], const octet ybase[], 
+bool_t ecCreateGroup(ec_o* ec, const octet xbase[], const octet ybase[],
 	const octet order[], size_t order_len, u32 cofactor, void* stack)
 {
 	ASSERT(ecIsOperable(ec));
@@ -62,9 +61,9 @@ bool_t ecCreateGroup(ec_o* ec, const octet xbase[], const octet ybase[],
 	ASSERT(memIsNullOrValid(ybase, ec->f->no));
 	// корректное описание?
 	order_len = memNonZeroSize(order, order_len);
-	if (order_len == 0 || 
+	if (order_len == 0 ||
 		W_OF_O(order_len) > ec->f->n + 1 ||
-		cofactor == 0 || 
+		cofactor == 0 ||
 		(u32)(word)cofactor != cofactor)
 		return FALSE;
 	// установить базовую точку
@@ -78,7 +77,7 @@ bool_t ecCreateGroup(ec_o* ec, const octet xbase[], const octet ybase[],
 		return FALSE;
 	// установить порядок и кофактор
 	wwFrom(ec->order, order, order_len);
-	wwSetZero(ec->order + W_OF_O(order_len), 
+	wwSetZero(ec->order + W_OF_O(order_len),
 		ec->f->n + 1 - W_OF_O(order_len));
 	ec->cofactor = (word)cofactor;
 	// все нормально
@@ -104,8 +103,8 @@ bool_t ecIsOperableGroup(const ec_o* ec)
 Кратная точка
 
 Для определения b = da (d-кратное точки a) используется оконный NAF с
-длиной окна w. В функции ecMulWNAF() реализован алгоритм 3.35 из 
-[Hankerson D., Menezes A., Vanstone S. Guide to Elliptic Curve Cryptography, 
+длиной окна w. В функции ecMulWNAF() реализован алгоритм 3.35 из
+[Hankerson D., Menezes A., Vanstone S. Guide to Elliptic Curve Cryptography,
 Springer, 2004].
 
 Предварительно рассчитываются малые кратные a: сначала 2a, а затем
@@ -122,7 +121,7 @@ Springer, 2004].
 3)	c3(l, w) = 1(P <- 2A) + (2^{w-2} - 2)(P <- P + P) + l/(w + 1)(P <- P + P),
 без учета общего во всех стратегиях слагаемого l(P <- 2P).
 
-Здесь 
+Здесь
 - (P <- P + A) -- время работы функций ec->adda / ec->suba;
 - (A <- 2A) -- время работы каскада (ec->dbla, ec->toa)*;
 - (A <- A + A) -- время работы каскада (ec->adda, ec->toa)*;
@@ -134,21 +133,21 @@ Springer, 2004].
 
 
 В практических диапазонах размерностей при использовании наиболее эффективных
-координат (якобиановых для кривых над GF(p) и Лопеса -- Дахаба для кривых 
-над GF(2^m)) первые две стратегии являются проигрышными. Реализована только 
-третья стратегия. 
+координат (якобиановых для кривых над GF(p) и Лопеса -- Дахаба для кривых
+над GF(2^m)) первые две стратегии являются проигрышными. Реализована только
+третья стратегия.
 
-Оптимальная длина окна выбирается как решение следующей оптимизационной 
+Оптимальная длина окна выбирается как решение следующей оптимизационной
 задачи:
 	(2^{w - 2} - 2) + l / (w + 1) -> min.
 
-\todo Усилить вторую стратегию. Рассчитать малые кратные в проективных 
-координатах, а затем быстро перейти к аффинным координатам с помощью 
+\todo Усилить вторую стратегию. Рассчитать малые кратные в проективных
+координатах, а затем быстро перейти к аффинным координатам с помощью
 трюка Монтгомери [Algorithm 11.15 Simultaneous inversion, CohenFrey, p. 209]:
 	U_1 <- Z_1
 	for t = 2,..., T: U_t <- U_{t-1} Z_t
 	V <- U_T^{-1}
-	for t = T,..., 2: 
+	for t = T,..., 2:
 		Z_t^{-1} <- V U_{t-1}
 		V <- V Z_t
 	Z_1^{-1} <- V
@@ -240,17 +239,71 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 {
 	const size_t naf_width = ecNAFWidth(B_OF_W(m));
 	const size_t naf_count = SIZE_1 << (naf_width - 2);
-	return O_OF_W(2 * m + 1) + 
-		O_OF_W(ec_d * n) + 
-		O_OF_W(ec_d * n * naf_count) + 
+	return O_OF_W(2 * m + 1) +
+		O_OF_W(ec_d * n) +
+		O_OF_W(ec_d * n * naf_count) +
+		ec_deep;
+}
+
+void ecSmallMultAdd2J(word* c, word d[], const word a[], const size_t w, const ec_o* ec, void* stack) {
+	const size_t n = ec->f->n * ec->d;
+	size_t k = SIZE_1 << (w - 1);
+	if (!d)
+	{
+		d = (word*)stack;
+		stack = (word*)(d + n);
+	}
+	ecDblA(d, a, ec, stack);
+	ecFromA(c, a, ec, stack);
+	ecAddA(c + n, d, a, ec, stack);
+	for (--k; --k;) {
+		c += n;
+		ecAdd(c + n, d, c, ec, stack);
+	}
+}
+
+size_t ecSmallMultAdd2J_deep(size_t ec_deep) {
+	return ec_deep;
+}
+
+void ecSmallMultAdd2A(word* c, word d[], const word a[], const size_t w, const ec_o* ec, void* stack) {
+	const size_t n = ec->f->n * ec->d;
+	const size_t na = ec->f->n * 2;
+	size_t k = SIZE_1 << (w - 1);
+	word* p = (word*)stack;
+	stack = (void*)(p + n);
+	if (!d)
+	{
+		d = (word*)stack;
+		stack = (void*)(d + na);
+	}
+
+	ecDblA(p, a, ec, stack);
+	ecToA(d, p, ec, stack);
+	wwCopy(c, a, na);
+	ecFromA(p, a, ec, stack);
+	for (; --k;) {
+		c += na;
+		//TODO: ecAddAA
+		ecAddA(p, p, d, ec, stack);
+
+		//todo - montgomery trick
+		ecToA(c, p, ec, stack);
+	}
+}
+
+size_t ecSmallMultAdd2A_deep(size_t n, size_t ec_d, bool_t da, size_t ec_deep)
+{
+	return O_OF_W(ec_d * n) +
+		da ? 0 : O_OF_W(2 * n) +
 		ec_deep;
 }
 
 /*
 *******************************************************************************
 Имеет порядок?
-*******************************************************************************
-*/
+
+Предыдущая редакция:
 
 bool_t ecHasOrderA(const word a[], const ec_o* ec, const word q[], size_t m,
 	void* stack)
@@ -266,6 +319,49 @@ bool_t ecHasOrderA(const word a[], const ec_o* ec, const word q[], size_t m,
 size_t ecHasOrderA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 {
 	return O_OF_W(ec_d * n) + ecMulA_deep(n, ec_d, ec_deep, m);
+}
+
+Корректно работает вместе с ecMulA().
+
+todo: Нужна ли новая редакция? Ведь усложненные редакции ecMulA() могут
+неправильно работать не только, если порядок точки равняется q, но и если
+порядок меньше q.  А правильно ли работает текущая редакция ecMulA() в
+последнем случае?
+*******************************************************************************
+*/
+
+bool_t ecHasOrderA(const word a[], const ec_o* ec, const word q[], size_t m,
+	void* stack)
+{
+	const size_t na = ec->f->n * 2;
+	const size_t order_len = ec->f->n + 1;
+	register bool_t f;
+	// переменные в stack
+	word* b = (word*)stack;
+	word* qq = b + na;
+	stack = qq + order_len;
+
+	wwSetZero(qq, order_len);
+	zzSubW(qq, q, m, WORD_1);
+	//todo обсудить - добавить поддержку d >= q в SAFE(ecMulA) и вернуться к q a == O?
+
+	// - ((q - 1) a) == a?
+#ifdef SAFE_FAST
+	if (!ecMulA(b, a, ec, qq, m, stack))
+		return FALSE;
+	ecNegA(b, b, ec);
+	return wwEq(b, a, na);
+#else
+	f = ecMulA(b, a, ec, qq, m, stack);
+	ecNegA(b, b, ec);
+	f &= wwEq(b, a, na);
+	return f;
+#endif
+}
+
+size_t ecHasOrderA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
+{
+	return O_OF_W(2 * n + n + 1) + ecMulA_deep(n, ec_d, ec_deep, m);
 }
 
 /*
@@ -409,4 +505,24 @@ size_t ecAddMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t k, ...)
 	va_end(marker);
 	ret += ec_deep;
 	return ret;
+}
+
+/*
+*******************************************************************************
+Расширение интерфейса
+
+todo: убрать?
+*******************************************************************************
+*/
+
+void ecDblAddA(word c[], const word a[], const word b[], bool_t neg_b, const struct ec_o* ec, void* stack) {
+	//todo SAFE - memcpy b to another buffer and apply (-1)^(1+neg_b) to it?
+	ecDbl(c, a, ec, stack);
+	if (neg_b) {
+		ecSubA(c, c, b, ec, stack);
+	}
+	else
+	{
+		ecAddA(c, c, b, ec, stack);
+	}
 }

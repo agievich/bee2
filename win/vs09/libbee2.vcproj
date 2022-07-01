@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding="windows-1251"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="libbee2"
 	ProjectGUID="{1B3F88D7-BD23-4398-A331-3DB139CF07EF}"
 	RootNamespace="bee2lib"
@@ -579,10 +579,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\src\math\ecp.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\src\math\gf2.c"
 					>
 				</File>
@@ -646,6 +642,34 @@
 						>
 					</File>
 				</Filter>
+				<Filter
+					Name="ecp"
+					>
+					<File
+						RelativePath="..\..\src\math\ecp\ecp_a.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\math\ecp\ecp_j.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\math\ecp\ecp_lcl.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\math\ecp\ecp_misc.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\math\ecp\ecp_smult.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\math\ecp\ecp_todo.c"
+						>
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="crypto"
@@ -656,10 +680,6 @@
 				</File>
 				<File
 					RelativePath="..\..\src\crypto\bels.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\crypto\bign.c"
 					>
 				</File>
 				<File
@@ -783,6 +803,34 @@
 					</File>
 					<File
 						RelativePath="..\..\src\crypto\bash\bash_prg.c"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="bign"
+					>
+					<File
+						RelativePath="..\..\src\crypto\bign\bign_ibs.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\bign\bign_keys.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\bign\bign_keyt.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\bign\bign_misc.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\bign\bign_params.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\bign\bign_sign.c"
 						>
 					</File>
 				</Filter>
