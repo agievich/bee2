@@ -257,7 +257,7 @@ EXPORTS
 	pfokDH						@1307
 	pfokMTI						@1308
 
-	bpkiWrapPrivkey				@1401
-	bpkiUnwrapPrivkey			@1402
-	bpkiWrapShare				@1403
-	bpkiUnwrapShare				@1404
+	bpkiPrivkeyWrap				@1401
+	bpkiPrivkeyUnwrap			@1402
+	bpkiShareWrap				@1403
+	bpkiShareUnwrap				@1404

@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: password management
 \project bee2/cmd 
 \created 2022.06.13
-\version 2022.06.23
+\version 2022.07.05
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -158,7 +158,7 @@ static err_t cmdPwdGenShare_internal(cmd_pwd_t* pwd, size_t scount,
 	if (len == 0)
 		len = 32;
 	// определить длину контейнера с частичным секретом
-	code = bpkiWrapShare(0, &epki_len, 0, len + 1, 0, 0, 0, iter);
+	code = bpkiShareWrap(0, &epki_len, 0, len + 1, 0, 0, 0, iter);
 	ERR_CALL_CHECK(code);
 	// выделить память и разметить ее
 	state = blobCreate(len + scount * (len + 1) + epki_len + 8);
@@ -180,7 +180,7 @@ static err_t cmdPwdGenShare_internal(cmd_pwd_t* pwd, size_t scount,
 		FILE* fp;
 		// установить защиту
 		rngStepR(salt, 8, 0);
-		code = bpkiWrapShare(epki, 0, share, len + 1, (const octet*)spwd,
+		code = bpkiShareWrap(epki, 0, share, len + 1, (const octet*)spwd,
 			cmdPwdLen(spwd), salt, iter);
 		ERR_CALL_HANDLE(code, blobClose(state));
 		// открыть файл для записи
@@ -231,9 +231,9 @@ static err_t cmdPwdReadShare_internal(cmd_pwd_t* pwd, size_t scount,
 		// найти подходящую длину
 		for (len = 16; len <= 32; len += 8)
 		{
-			code = bpkiWrapShare(0, &epki_len_min, 0, len + 1, 0, 0, 0, 10000);
+			code = bpkiShareWrap(0, &epki_len_min, 0, len + 1, 0, 0, 0, 10000);
 			ERR_CALL_CHECK(code);
-			code = bpkiWrapShare(0, &epki_len_max, 0, len + 1, 0, 0, 0, 
+			code = bpkiShareWrap(0, &epki_len_max, 0, len + 1, 0, 0, 0, 
 				SIZE_MAX);
 			ERR_CALL_CHECK(code);
 			if (epki_len_min <= epki_len && epki_len <= epki_len_max)
@@ -244,9 +244,9 @@ static err_t cmdPwdReadShare_internal(cmd_pwd_t* pwd, size_t scount,
 	}
 	else
 	{
-		code = bpkiWrapShare(0, &epki_len_min, 0, len + 1, 0, 0, 0, 10000);
+		code = bpkiShareWrap(0, &epki_len_min, 0, len + 1, 0, 0, 0, 10000);
 		ERR_CALL_CHECK(code);
-		code = bpkiWrapShare(0, &epki_len_max, 0, len + 1, 0, 0, 0,	SIZE_MAX);
+		code = bpkiShareWrap(0, &epki_len_max, 0, len + 1, 0, 0, 0,	SIZE_MAX);
 		ERR_CALL_CHECK(code);
 	}
 	// выделить память и разметить ее
@@ -275,7 +275,7 @@ static err_t cmdPwdReadShare_internal(cmd_pwd_t* pwd, size_t scount,
 			ERR_OK : ERR_BAD_FORMAT;
 		ERR_CALL_HANDLE(code, blobClose(state));
 		// декодировать
-		code = bpkiUnwrapShare(share + pos * (len + 1), &share_len,
+		code = bpkiShareUnwrap(share + pos * (len + 1), &share_len,
 			epki, epki_len, (const octet*)spwd, cmdPwdLen(spwd));
 		ERR_CALL_HANDLE(code, blobClose(state));
 		code = (share_len == len + 1) ? ERR_OK : ERR_BAD_FORMAT;

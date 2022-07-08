@@ -3,9 +3,8 @@
 \file u32.c
 \brief 32-bit unsigned words
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.10.28
-\version 2019.07.08
+\version 2022.07.05
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -176,7 +175,7 @@ u32 u32Deshuffle(register u32 w)
 *******************************************************************************
 Аддитивно-мультипликативное обращение
 
-Используется то факт, что разрядность является степенью двойки: 
+Используется тот факт, что разрядность является степенью двойки: 
 	32 = 2^k, k = 5. 
 Корректность алгоритма, реализованного в u32NegInv(), обосновывается следующим 
 образом:

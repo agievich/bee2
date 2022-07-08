@@ -3,10 +3,8 @@
 \file bpki.h
 \brief STB 34.101.78 (bpki): PKI helpers
 \project bee2/apps/bpki
-\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
-\author Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2021.04.03
-\version 2022.06.16
+\version 2022.07.05
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -73,7 +71,7 @@ EncryptedPrivateKeyInfo будучи защищенными на обычных 
 	\remark При нулевом epki указатели privkey, pwd и salt могут быть нулевыми.
 */
 
-err_t bpkiWrapPrivkey(
+err_t bpkiPrivkeyWrap(
     octet epki[],			/*!< [out] контейнер с личным ключом */
 	size_t* epki_len,		/*!< [out] длина epki */
 	const octet privkey[],	/*!< [in] личный ключ */
@@ -98,7 +96,7 @@ err_t bpkiWrapPrivkey(
 	определить косвенно по длине контейнера.
 */
 
-err_t bpkiUnwrapPrivkey(
+err_t bpkiPrivkeyUnwrap(
 	octet privkey[],		/*!< [out] личный ключ */
 	size_t* privkey_len,	/*!< [in] длина privkey */
 	const octet epki[],		/*!< [in] контейнер с личным ключом */
@@ -124,7 +122,7 @@ err_t bpkiUnwrapPrivkey(
 	\remark При нулевом epki указатели share, pwd и salt могут быть нулевыми.
 */
 
-err_t bpkiWrapShare(
+err_t bpkiShareWrap(
 	octet epki[],			/*!< [out] контейнер с частичным секретом */
 	size_t* epki_len,		/*!< [out] длина epki */
 	const octet share[],	/*!< [in] частичный секрет */
@@ -149,7 +147,7 @@ err_t bpkiWrapShare(
 	share_len. Здесь не учитывается, что длину частичного секрета можно определить
 	косвенно по длине контейнера.
 */
-err_t bpkiUnwrapShare(
+err_t bpkiShareUnwrap(
 	octet share[],			/*!< [out] частичный секрет */
 	size_t* share_len,		/*!< [out] длина share */
 	const octet epki[],		/*!< [in] контейнер с частичным секретом */

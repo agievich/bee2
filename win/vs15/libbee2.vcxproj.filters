@@ -40,6 +40,9 @@
     <Filter Include="Source Files\crypto\bash">
       <UniqueIdentifier>{1b2655da-6d78-4597-a66c-bc67357b1340}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\crypto\btok">
+      <UniqueIdentifier>{9f284c79-794b-4a32-80a9-777cace4f97e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\math\ecp.c">
@@ -243,6 +246,12 @@
     <ClCompile Include="..\..\src\crypto\bpki.c">
       <Filter>Source Files\crypto</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\crypto\btok\btok_cvc.c">
+      <Filter>Source Files\crypto\btok</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\btok\btok_etc.c">
+      <Filter>Source Files\crypto\btok</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\crypto\bign_lcl.h">
@@ -387,6 +396,9 @@
       <Filter>Source Files\crypto\belt</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\bee2\crypto\bpki.h">
+      <Filter>Header Files\crypto</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\bee2\crypto\btok.h">
       <Filter>Header Files\crypto</Filter>
     </ClInclude>
   </ItemGroup>

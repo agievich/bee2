@@ -4,7 +4,7 @@
 \brief Strings
 \project bee2 [cryptographic library]
 \created 2013.02.04
-\version 2022.06.24
+\version 2022.07.05
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -82,6 +82,18 @@ bool_t strIsAlphanumeric(const char* str)
 		if ((*str < '0' || *str > '9') &&
 			(*str < 'A' || *str > 'Z') &&
 			(*str < 'a' || *str > 'z'))
+			return FALSE;
+	return TRUE;
+}
+
+bool_t strIsPrintable(const char* str)
+{
+	ASSERT(strIsValid(str));
+	for (; *str; ++str)
+		if ((*str < '0' || *str > '9') &&
+			(*str < 'A' || *str > 'Z') &&
+			(*str < 'a' || *str > 'z') &&
+			strchr(" '()+,-./:=?", *str) == 0)
 			return FALSE;
 	return TRUE;
 }

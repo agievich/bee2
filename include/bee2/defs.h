@@ -3,9 +3,8 @@
 \file defs.h
 \brief Basic definitions
 \project bee2 [cryptographic library]
-\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.01
-\version 2021.04.21
+\version 2022.07.05
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -84,6 +83,11 @@ T == octet.
 к функции с ненулевым указателем out значение по адресу out_len не
 определено, более того, адрес out_len при дополнительных оговорках
 может быть нулевым.
+
+Выражение out_len? может входить в арифметическое выражение, которое уточняет
+требуемый объем памяти. Например, запись [out_len? + 1]str означает, что
+для буфера (строки) str требуется один дополнительный к out_len октет
+(в него будет записан завершающий нулевой символ).
 
 \section defs-seqs Последовательности вызовов
 

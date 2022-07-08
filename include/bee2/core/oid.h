@@ -3,9 +3,8 @@
 \file oid.h
 \brief Object identifiers
 \project bee2 [cryptographic library]
-\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.02.04
-\version 2021.04.12
+\version 2022.07.06
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -100,7 +99,7 @@ size_t oidToDER(
 
 /*!	\brief DER-декодирование
 
-	Определяется число символов (включая завершающий нулевой) для размещения
+	Определяется число символов (исключая завершающий нулевой) для размещения
 	идентификатора, представленного DER-кодом [count]der.
 	Если oid != 0, то идентификатор размещается по этому адресу.
 	\pre Если oid != 0, то по адресу oid зарезервировано

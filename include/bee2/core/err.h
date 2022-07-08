@@ -4,7 +4,7 @@
 \brief Errors
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2022.06.23
+\version 2022.07.08
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -78,7 +78,7 @@ Sys
 #define ERR_TIMEOUT					_ERR_REG(112)
 /* не реализовано */
 #define ERR_NOT_IMPLEMENTED			_ERR_REG(113)
-/* не реализовано */
+/* последствия предыдущих ошибок */
 #define ERR_AFTER					_ERR_REG(114)
 
 /*
@@ -122,6 +122,10 @@ Core
 #define ERR_BAD_FORMAT				_ERR_REG(305)
 /* некорректная отметка времени */
 #define ERR_BAD_TIME				_ERR_REG(306)
+/* некорректная дата */
+#define ERR_BAD_DATE				_ERR_REG(307)
+/* некорректное имя */
+#define ERR_BAD_NAME				_ERR_REG(308)
 
 /*
 *******************************************************************************

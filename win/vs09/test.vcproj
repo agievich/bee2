@@ -386,6 +386,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\test\crypto\btok_test.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\test\crypto\dstu_test.c"
 					>
 				</File>

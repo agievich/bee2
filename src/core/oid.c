@@ -90,13 +90,13 @@ bool_t oidIsValid(const char* oid)
 
 size_t oidToDER(octet der[], const char* oid)
 {
-	return derEncOID(der, oid);
+	return derOIDEnc(der, oid);
 }
 
 size_t oidFromDER(char* oid, const octet der[], size_t count)
 {
 	size_t len, c;
-	c = derDecOID(oid, &len, der, count);
+	c = derOIDDec(oid, &len, der, count);
 	if (len == SIZE_MAX || c != count)
 		return SIZE_MAX;
 	return len;

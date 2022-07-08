@@ -4,7 +4,7 @@
 \brief Errors
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2022.06.23
+\version 2022.07.08
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -57,6 +57,8 @@ static const err_msg _messages[] = {
 	{ERR_BAD_ANG, "Incorrect any number generator"},
 	{ERR_BAD_FORMAT, "Invalid format"},
 	{ERR_BAD_TIME, "Invalid time"},
+	{ERR_BAD_DATE, "Invalid date"},
+	{ERR_BAD_NAME, "Invalid name"},
 	// math
 	{ERR_BAD_POINT, "Invalid elliptic curve point"},
 	{ERR_NOT_PRIME, "The number is not prime"},

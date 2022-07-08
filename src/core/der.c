@@ -3,10 +3,8 @@
 \file der.c
 \brief Distinguished Encoding Rules
 \project bee2 [cryptographic library]
-\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
-\author Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2014.04.21
-\version 2021.04.14
+\version 2022.07.07
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -21,97 +19,128 @@ version 3. See Copyright Notices in bee2/info.h.
 /*
 *******************************************************************************
 Поле T (тег)
+
+Вот так можно определить класс тега:
+\code
+	static u32 derTClass(u32 tag)
+	{
+		ASSERT(derTIsValid(tag));
+		for (; tag > 255; tag >>= 8);
+		return tag >>= 6;
+	}
+\endcode
 *******************************************************************************
 */
 
-static size_t derLenT(u32 tag)
+static bool_t derTIsValid(u32 tag)
 {
-	size_t t_count = 1;
-	u32 t;
-	// короткий тег (представляется одним октетом)?
-	if ((tag & 31) < 31)
+	// короткий код (один октет)?
+	if (tag < 256)
 	{
-		// старшие октеты tag ненулевые?
-		if (tag >> 8 != 0)
-			return SIZE_MAX;
+		// установлены 5 младших битов?
+		if ((tag & 31) == 31)
+			return FALSE;
 	}
-	// длинный тег
+	// длинный код
 	else
 	{
-		t = tag >> 8;
-		// длинный тег для маленького номера?
-		if (t < 31)
-			return SIZE_MAX;
-		// число октетов для представления tag
-		for (; t; t >>= 7, t_count++);
+		u32 t;
+		u32 b;
+		// установлен старший бит в последнем (младшем) октете?
+		if (tag & 128)
+			return FALSE;
+		// пробегаем ненулевые октеты вплоть до первого (старшего)
+		for (b = tag & 127, t = b, tag >>= 8; tag > 255; tag >>= 8)
+		{
+			// в промежуточном октете снят старший бит?
+			// будет переполнение при пересчете тега-как-значения?
+			if ((tag & 128) == 0 || (t >> 25) != 0)
+				return FALSE;
+			// пересчитать тег-как-значение
+			b = tag & 127, t = t << 7, t |= b;
+		}
+		// можно кодировать одним октетом? меньшим числом октетов?
+		// в первом (старшем) октете не установлены 5 младших битов?
+		if (t < 31 || b == 0 || (tag & 31) != 31)
+			return FALSE;
+	}
+	return TRUE;
+}
+
+static bool_t derTIsPrimitive(u32 tag)
+{
+	ASSERT(derTIsValid(tag));
+	for (; tag > 255; tag >>= 8);
+	return ((tag >> 5) & 1) == 0;
+}
+
+static bool_t derTIsConstructive(u32 tag)
+{
+	return !derTIsPrimitive(tag);
+}
+
+static size_t derTEnc(octet der[], u32 tag)
+{
+	size_t t_count = 0;
+	// проверить корректность
+	if (!derTIsValid(tag))
+		return SIZE_MAX;
+	// определить длину кода
+	{
+		u32 t = tag;
+		for (; t; ++t_count, t >>= 8);
+		if (t_count == 0)
+			t_count = 1;
+	}
+	// кодировать
+	if (der)
+	{
+		size_t pos = t_count;
+		ASSERT(memIsValid(der, t_count));
+		while (pos--)
+		{
+			der[pos] = (octet)tag;
+			tag >>= 8;
+		}
+		ASSERT(tag == 0);
 	}
 	return t_count;
 }
 
-static void derEncT(octet der[], u32 tag, size_t t_count)
+static size_t derTDec(u32* tag, const octet der[], size_t count)
 {
-	ASSERT(memIsValid(der, t_count));
-	ASSERT(t_count >= 1);
-	// короткая форма?
-	if (t_count == 1)
-	{
-		ASSERT((tag & 31) < 31);
-		ASSERT(tag >> 8 == 0);
-		der[0] = (octet)tag;
-	}
-	// длинная форма
-	else
-	{
-		ASSERT((tag & 31) == 31);
-		tag >>= 8;
-		ASSERT(tag >= 31);
-		der[--t_count] = (octet)(tag & 127);
-		while (--t_count)
-			tag >>= 7, der[t_count] = (octet)(tag & 127 | 128);
-		ASSERT(tag == 0);
-	}
-}
-
-static size_t derDecT(u32* tag, const octet der[], size_t count)
-{
-	size_t t_count = 1;
 	u32 t;
-	ASSERT(memIsValid(der, count));
-	// первый октет
+	size_t t_count = 1;
+	// обработать длину кода
 	if (count < 1)
 		return SIZE_MAX;
-	// короткий тег?
-	if ((der[0] & 31) < 31)
-		t = der[0];
-	// длинный тег
-	else
+	ASSERT(memIsValid(der, count));
+	count = MIN2(4, count);
+	// длинный код?
+	if ((der[0] & 31) == 31)
 	{
-		t = 0;
-		// лидирующий ноль? номер < 31?
-		if (count < 2 || der[1] == 128 || der[1] < 31)
-			return SIZE_MAX;
-		while (1)
+		// короткий код? лишний октет с нулем?
+		if (count < 2 || (der[1] & 127) == 0)
+			return FALSE;
+		for (t = 0; t_count < count;)
 		{
-			// переполнение?
-			if (t * 128 + der[t_count] % 128 >= ((u32)1 << 24))
-				return SIZE_MAX;
-			// обработать октет тега
-			t = t * 128 + der[t_count] % 128;
-			// последний октет?
-			if (der[t_count] < 128)
+			t <<= 8, t |= der[t_count] & 127;
+			// завершающий октет?
+			if ((der[t_count++] & 128) == 0)
 				break;
-			// к следующему октету
-			++t_count;
-			// не хватает буфера?
-			if (count < t_count)
-				return SIZE_MAX;
 		}
-		t <<= 8, t |= der[0];
+		// завершающий октет не найден?
+		// можно было обойтись коротким кодом?
+		if (t_count == count || t < 31)
+			return SIZE_MAX;
 	}
 	// возврат 
 	if (tag)
 	{
+		size_t pos;
 		ASSERT(memIsValid(tag, 4));
+		for (t = der[0], pos = 1; pos < t_count; ++pos)
+			t <<= 8, t |= der[pos];
 		*tag = t;		
 	}
 	return t_count;
@@ -123,37 +152,38 @@ static size_t derDecT(u32* tag, const octet der[], size_t count)
 *******************************************************************************
 */
 
-static size_t derLenL(size_t len)
+static size_t derLEnc(octet der[], size_t len)
 {
 	size_t l_count = 1;
-	// длинная форма (r | 128) || o_{r - 1} ||...|| o_0?
-	if (len >= 128)
-		for (; len; len >>= 8, ++l_count);
+	// определить длину кода
+	{
+		size_t l = len;
+		// длинная форма (r | 128) || o_{r - 1} ||...|| o_0?
+		if (l >= 128)
+			for (; l; l >>= 8, ++l_count);
+	}
+	// кодировать
+	if (der)
+	{
+		ASSERT(memIsValid(der, l_count));
+		if (len < 128)
+		{
+			ASSERT(l_count == 1);
+			der[0] = (octet)len;
+		}
+		else
+		{
+			size_t r = l_count - 1;
+			ASSERT(r >= 1);
+			der[0] = (octet)(r | 128);
+			for (; r; der[r--] = (octet)len, len >>= 8);
+			ASSERT(len == 0);
+		}
+	}
 	return l_count;
 }
 
-static size_t derEncL(octet der[], size_t len, size_t l_count)
-{
-	ASSERT(memIsValid(der, l_count));
-	// короткая форма?
-	if (len < 128)
-	{
-		ASSERT(l_count == 1);
-		der[0] = (octet)len;
-	}
-	// длинная форма
-	else
-	{
-		size_t r = l_count - 1;
-		ASSERT(r >= 1);
-		der[0] = (octet)(r | 128);
-		for (; r; der[r--] = (octet)len, len >>= 8);
-		ASSERT(len == 0);
-	}
-	return l_count;
-}
-
-static size_t derDecL(size_t* len, const octet der[], size_t count)
+static size_t derLDec(size_t* len, const octet der[], size_t count)
 {
 	size_t l_count = 1;
 	size_t l;
@@ -169,9 +199,9 @@ static size_t derDecL(size_t* len, const octet der[], size_t count)
 		size_t r = der[0] - 128;
 		l_count += r;
 		// не хватает буфера? переполнение?
-		// нулевой старший октет кода длины? длина меньше 128?
-		if (count < l_count || 
-			r > O_PER_S ||
+		// нулевой старший октет кода длины?
+		// длина меньше 128?
+		if (count < l_count || r > O_PER_S ||
 			der[1] == 0 || 
 			r == 1 && der[1] < 128)
 			return SIZE_MAX;
@@ -201,11 +231,11 @@ size_t derEnc(octet der[], u32 tag, const void* val, size_t len)
 	size_t t_count;
 	size_t l_count;
 	// t_count <- len(T)
-	t_count = derLenT(tag);
+	t_count = derTEnc(0, tag);
 	if (t_count == SIZE_MAX)
 		return SIZE_MAX;
 	// l_count <- len(L)
-	l_count = derLenL(len);
+	l_count = derLEnc(0, len);
 	if (l_count == SIZE_MAX)
 		return SIZE_MAX;
 	// кодировать?
@@ -215,8 +245,9 @@ size_t derEnc(octet der[], u32 tag, const void* val, size_t len)
 		ASSERT(memIsValid(der, t_count + l_count + len));
 		// der <- TLV
 		memMove(der + t_count + l_count, val, len);
-		derEncT(der, tag, t_count);
-		derEncL(der + t_count, len, l_count);
+		if (derTEnc(der, tag) != t_count ||
+			derLEnc(der + t_count, len) != l_count)
+			return SIZE_MAX;
 	}
 	return t_count + l_count + len;
 }
@@ -233,11 +264,11 @@ bool_t derIsValid(const octet der[], size_t count)
 	size_t l_count;
 	size_t len;
 	// обработать T
-	t_count = derDecT(0, der, count);
+	t_count = derTDec(0, der, count);
 	if (t_count == SIZE_MAX)
 		return FALSE;
 	// обработать L
-	l_count = derDecL(&len, der + t_count, count - t_count);
+	l_count = derLDec(&len, der + t_count, count - t_count);
 	if (l_count == SIZE_MAX)
 		return FALSE;
 	// проверить V
@@ -252,16 +283,22 @@ bool_t derIsValid2(const octet der[], size_t count, u32 tag)
 	u32 t;
 	size_t len;
 	// обработать T
-	t_count = derDecT(&t, der, count);
+	t_count = derTDec(&t, der, count);
 	if (t_count == SIZE_MAX || t != tag)
 		return FALSE;
 	// обработать L
-	l_count = derDecL(&len, der + t_count, count - t_count);
+	l_count = derLDec(&len, der + t_count, count - t_count);
 	if (l_count == SIZE_MAX)
 		return FALSE;
 	// проверить V
 	return count == t_count + l_count + len &&
 		memIsValid(der + t_count + l_count, len);
+}
+
+bool_t derStartsWith(const octet der[], size_t count, u32 tag)
+{
+	u32 t;
+	return derTDec(&t, der, count) != SIZE_MAX && t == tag;
 }
 
 /*
@@ -279,12 +316,12 @@ size_t derDec(u32* tag, const octet** val, size_t* len, const octet der[],
 	ASSERT(memIsValid(der, count));
 	// обработать T
 	ASSERT(tag == 0 || memIsDisjoint2(tag, 4, der, count));
-	t_count = derDecT(tag, der, count);
+	t_count = derTDec(tag, der, count);
 	if (t_count == SIZE_MAX)
 		return SIZE_MAX;
 	// обработать L
 	ASSERT(count >= t_count);
-	l_count = derDecL(&l, der + t_count, count - t_count);
+	l_count = derLDec(&l, der + t_count, count - t_count);
 	if (l_count == SIZE_MAX || t_count + l_count + l > count)
 		return SIZE_MAX;
 	if (len)
@@ -341,97 +378,211 @@ size_t derDec4(const octet der[], size_t count, u32 tag, const void* val,
 
 /*
 *******************************************************************************
-Кодирование целого числа (INTEGER):
-- T = 0x02;
-- V = o1 o2 ... on, где o1 -- старший октет числа, on -- младший.
+Тип SIZE (беззнаковый INTEGER):
+	V = o1 o2 ... on,
+где o1 -- старший октет числа, on -- младший.
 
-Установка старшего бита в o1 -- признак отрицательного числа. Должно
-использоваться минимальное число октетов для однозначного представления числа.
-
-Примеры:
-- der(0) = 02 01 00
-- der(127) = 02 01 7F
-- der(128) = 02 02 00 80
-- der(256) = 02 02 01 00
-- der(-128) = 02 01 80
-- der(-129) = 02 02 FF 7F
+\remark В o1 должен быть снят старший бит (признак отрицательности).
 *******************************************************************************
 */
 
-size_t derEncSIZE(octet der[], size_t val)
+size_t derTSIZEEnc(octet der[], u32 tag, size_t val)
 {
-	register size_t v = val;
-	size_t count = 1;
-	// определить длину L
-	for (; v >= 256; v >>= 8, ++count);
-	count += v >> 7, v = 0;
-	// кодировать
+	size_t len = 1;
+	size_t t_count;
+	size_t l_count;
+	// определить длину V
+	{
+		register size_t v = val;
+		for (; v >= 256; v >>= 8, ++len);
+		len += v >> 7, v = 0;
+	}
+	// кодировать T
+	t_count = derTEnc(der, tag);
+	if (t_count == SIZE_MAX)
+		return SIZE_MAX;
+	// кодировать L
+	l_count = derLEnc(der ? der + t_count : 0, len);
+	if (l_count == SIZE_MAX)
+		return SIZE_MAX;
+	// кодировать V
 	if (der)
 	{
-		size_t pos = count;
-		ASSERT(memIsValid(der, count + 2));
-		der[0] = 0x02;
-		der[1] = (octet)count;
+		size_t pos = len;
+		der += t_count + l_count;
+		ASSERT(memIsValid(der, len));
 		for (; pos--; val >>= 8)
-			der[2 + pos] = (octet)val;
+			der[pos] = (octet)val;
 	}
-	// длина der-кода
-	return count + 2;
+	return t_count + l_count + len;
 }
 
-size_t derDecSIZE(size_t* val, const octet der[], size_t count)
+size_t derTSIZEDec(size_t* val, const octet der[], size_t count, u32 tag)
 {
-	register size_t v;
-	size_t pos;
-	// проверить длину кода
-	if (count < 3)
+	u32 t;
+	size_t t_count;
+	size_t l_count;
+	size_t len;
+	// pre
+	ASSERT(memIsNullOrValid(val, O_PER_S));
+	ASSERT(val == 0 || memIsDisjoint2(val, O_PER_S, der, count));
+	// декодировать T
+	t_count = derTDec(&t, der, count);
+	if (t_count == SIZE_MAX || t != tag)
 		return SIZE_MAX;
-	ASSERT(memIsValid(der, count));
-	// проверить TL
-	if (der[0] != 0x02 || (size_t)der[1] + 2 > count)
+	der += t_count, count -= t_count;
+	// декодировать L
+	l_count = derLDec(&len, der, count);
+	if (l_count == SIZE_MAX || len > O_PER_S + 1)
 		return SIZE_MAX;
-	// проверить V
-	if ((der[2] & 0x80) || der[2] == 0 && der[1] > 1 && (der[3] & 0x80) == 0)
-		return SIZE_MAX;
-	// декодировать
-	for (v = 0, pos = 2; pos < (size_t)der[1] + 2; ++pos)
-		v = (v << 8) ^ der[pos];
-	if (val)
+	der += l_count, count -= l_count;
+	// декодировать V
 	{
-		ASSERT(memIsValid(val, O_PER_S));
-		*val = v;
+		register size_t v = 0;
+		size_t pos = 0;
+		// в старшем октете установлен старший бит?
+		// избыточный нулевой старший октет?
+		// переполнение?
+		if ((der[0] & 0x80) ||
+			der[0] == 0 && len > 1 && (der[1] & 0x80) == 0 ||
+			len == O_PER_S + 1 && der[0] != 0)
+			return SIZE_MAX;
+		// декодировать
+		for (; pos < len; ++pos)
+			v <<= 8, v |= der[pos];
+		if (val)
+			*val = v;
 		v = 0;
 	}
-	// длина DER-кода
-	return pos;
+	return t_count + l_count + len;
 }
 
-size_t derDecSIZE2(const octet der[], size_t count, size_t val)
+size_t derTSIZEDec2(const octet der[], size_t count, u32 tag, size_t val)
 {
-	size_t v;
-	count = derDecSIZE(&v, der, count);
-	if (count == SIZE_MAX || v != val)
-		return SIZE_MAX;
+	register size_t v = val;
+	count = derTSIZEDec(&val, der, count, tag);
+	if (v != val)
+		count = SIZE_MAX;
+	v = 0;
 	return count;
 }
 
 /*
 *******************************************************************************
-Строка октетов (OCTET STRING):
-- T = 0x04;
-- V = строка октетов.
+Тип BIT (строка битов, BIT STRING):
+	V = o0 o1...on,
+где oi -- октеты:
+- o1 -- первый октет строки,
+- on -- последний октет строки (возможно неполный);
+- o0 -- число неиспользуемых битов в on.
 *******************************************************************************
 */
 
-size_t derDecOCT(octet* val, size_t* len, const octet der[], size_t count)
+size_t derTBITEnc(octet der[], u32 tag, const octet* val, size_t len)
+{
+	size_t t_count;
+	size_t l_count;
+	// кодировать T
+	t_count = derTEnc(0, tag);
+	if (t_count == SIZE_MAX)
+		return SIZE_MAX;
+	// кодировать L
+	l_count = derLEnc(0, (len + 15) / 8);
+	if (l_count == SIZE_MAX)
+		return SIZE_MAX;
+	// кодировать
+	if (der)
+	{
+		// V
+		memMove(der + t_count + l_count + 1, val, (len + 7) / 8);
+		if (len % 8)
+		{
+			der[t_count + l_count + 1 + len / 8] >>= 8 - len % 8;
+			der[t_count + l_count + 1 + len / 8] <<= 8 - len % 8;
+			der[t_count + l_count] = 8 - len % 8;
+		}
+		else
+			der[t_count + l_count] = 0;
+		// TL
+		if (derTEnc(der, tag) != t_count ||
+			derLEnc(der + t_count, (len + 15) / 8) != l_count)
+			return SIZE_MAX;
+	}
+	return t_count + l_count + (len + 15) / 8;
+}
+
+size_t derTBITDec(octet* val, size_t* len, const octet der[], size_t count,
+	u32 tag)
 {
 	const octet* v;
 	size_t l;
-	count = derDec2(&v, &l, der, count, 0x04);
+	// декодировать
+	count = derDec2(&v, &l, der, count, tag);
+	if (count == SIZE_MAX)
+		return SIZE_MAX;
+	// в значении менее одного октета?
+	// число битов дополнения больше 7?
+	// биты дополнения в несуществующем октете?
+	if (l < 1 || v[0] > 7 || v[0] != 0 && l == 1) 
+		return SIZE_MAX;
+	// возвратить строку
+	if (val)
+	{
+		ASSERT(memIsValid(val, l - 1));
+		ASSERT(len == 0 || memIsDisjoint2(len, O_PER_S, val, l - 1));
+		memMove(val, v + 1, l - 1);
+	}
+	// возвратить битовую длину
+	if (len)
+	{
+		ASSERT(memIsValid(len, O_PER_S));
+		*len = (l - 1) * 8 - v[0];
+	}
+	return count;
+}
+
+size_t derTBITDec2(octet* val, const octet der[], size_t count, u32 tag,
+	size_t len)
+{
+	const octet* v;
+	size_t l;
+	// декодировать
+	count = derDec2(&v, &l, der, count, tag);
+	if (count == SIZE_MAX)
+		return SIZE_MAX;
+	// в значении менее одного октета?
+	// число битов дополнения больше 7?
+	// биты дополнения в несуществующем октете?
+	// длина не соответствует ожидаемой?
+	if (l < 1 || v[0] > 7 || v[0] != 0 && l == 1 || (l - 1) * 8 != len + v[0])
+		return SIZE_MAX;
+	// возвратить строку
+	if (val)
+		memMove(val, v + 1, l - 1);
+	return count;
+}
+
+/*
+*******************************************************************************
+Тип OCT (строка октетов, OCTET STRING):
+	V = строка октетов.
+*******************************************************************************
+*/
+
+size_t derTOCTDec(octet* val, size_t* len, const octet der[], size_t count,
+	u32 tag)
+{
+	const octet* v;
+	size_t l;
+	count = derDec2(&v, &l, der, count, tag);
 	if (count == SIZE_MAX)
 		return SIZE_MAX;
 	if (val)
+	{
+		ASSERT(memIsValid(val, l));
+		ASSERT(len == 0 || memIsDisjoint2(len, O_PER_S, val, l));
 		memMove(val, v, l);
+	}
 	if (len)
 	{
 		ASSERT(memIsValid(len, O_PER_S));
@@ -440,10 +591,11 @@ size_t derDecOCT(octet* val, size_t* len, const octet der[], size_t count)
 	return count;
 }
 
-size_t derDecOCT2(octet* val, const octet der[], size_t count, size_t len)
+size_t derTOCTDec2(octet* val, const octet der[], size_t count, u32 tag,
+	size_t len)
 {
 	const octet* v;
-	count = derDec3(&v, der, count, 0x04, len);
+	count = derDec3(&v, der, count, tag, len);
 	if (count == SIZE_MAX)
 		return SIZE_MAX;
 	if (val)
@@ -453,13 +605,12 @@ size_t derDecOCT2(octet* val, const octet der[], size_t count, size_t len)
 
 /*
 *******************************************************************************
-Идентификатор объекта (OBJECT IDENTIFIER):
-- T = 0x06;
-- V = sid1 sid2 ... sid_n, sid_i укладываются в u32 (подробнее см. oid.h).
+Тип OID (идентификатор объекта, OBJECT IDENTIFIER):
+	V = sid1 sid2 ... sid_n, sid_i укладываются в u32 (подробнее см. oid.h).
 *******************************************************************************
 */
 
-static size_t derEncSID(octet* der, u32 val)
+static size_t derSIDEnc(octet* der, u32 val)
 {
 	size_t count = 0;
 	u32 t = val;
@@ -480,7 +631,7 @@ static size_t derEncSID(octet* der, u32 val)
 	return count;
 }
 
-static size_t derDecSID(char* oid, u32 val)
+static size_t derSIDDec(char* oid, u32 val)
 {
 	size_t count = 0, pos;
 	u32 t = val;
@@ -500,7 +651,7 @@ static size_t derDecSID(char* oid, u32 val)
 	return count;
 }
 
-static size_t derDecSID2(u32 val, const char* oid)
+static size_t derSIDDec2(u32 val, const char* oid)
 {
 	size_t count = 0, pos;
 	u32 t = val;
@@ -522,7 +673,7 @@ static size_t derDecSID2(u32 val, const char* oid)
 	return count;
 }
 
-size_t derEncOID(octet der[], const char* oid)
+size_t derOIDEnc(octet der[], const char* oid)
 {
 	u32 d1;
 	u32 val = 0;
@@ -547,7 +698,7 @@ size_t derEncOID(octet der[], const char* oid)
 			if (d1 != 3)
 				val += 40 * d1, d1 = 3;
 			// обработать число
-			count += derEncSID(der ? der + count : der, val);
+			count += derSIDEnc(der ? der + count : der, val);
 			// конец строки?
 			if (oid[pos] == '\0')
 				break;
@@ -560,24 +711,19 @@ size_t derEncOID(octet der[], const char* oid)
 		val += oid[pos] - '0';
 		++pos;
 	}
-	// обработать длину
-	if (der)
-		count = derEnc(der, 0x06, der, count);
-	else
-		count = derEnc(0, 0x06, 0, count);
+	// кодировать TL
+	count = derEnc(der, 0x06, der, count);
 	// очистка и выход
 	d1 = val = 0, pos = 0;
 	return count;
 }
 
-size_t derDecOID(char* oid, size_t* len, const octet der[], size_t count)
+size_t derOIDDec(char* oid, size_t* len, const octet der[], size_t count)
 {
 	u32 d1 = 3;
 	u32 val = 0;
 	size_t l, pos, oid_len;
-	// проверить входной буфер
-	if (count == SIZE_MAX)
-		return SIZE_MAX;
+	// pre
 	ASSERT(memIsValid(der, count));
 	// проверить тег и определить значение
 	count = derDec2(&der, &l, der, count, 0x06);
@@ -606,28 +752,29 @@ size_t derDecOID(char* oid, size_t* len, const octet der[], size_t count)
 					d1 = 1, val -= 40;
 				else
 					d1 = 2, val -= 80;
-				oid_len += derDecSID(oid ? oid + oid_len : oid, d1);
+				oid_len += derSIDDec(oid ? oid + oid_len : oid, d1);
 				d1 = 0;
 			}
 			// добавить ".val"
 			oid ? oid[oid_len++] = '.' : oid_len++;
-			oid_len += derDecSID(oid ? oid + oid_len : oid, val);
+			oid_len += derSIDDec(oid ? oid + oid_len : oid, val);
 			// к следующему sid
 			val = 0;
 		}
 	}
 	// очистка и выход
 	d1 = val = 0, pos = l = 0;
-	oid ? oid[oid_len++] = '\0' : oid_len++;
+	oid ? oid[oid_len] = '\0' : oid_len;
 	if (len)
 	{
 		ASSERT(memIsValid(len, O_PER_S));
+		ASSERT(oid == 0 || memIsDisjoint2(len, O_PER_S, oid, strLen(oid)));
 		*len = oid_len;
 	}
 	return count;
 }
 
-size_t derDecOID2(const octet der[], size_t count, const char* oid)
+size_t derOIDDec2(const octet der[], size_t count, const char* oid)
 {
 	u32 d1 = 3;
 	u32 val = 0;
@@ -663,7 +810,7 @@ size_t derDecOID2(const octet der[], size_t count, const char* oid)
 					d1 = 1, val -= 40;
 				else
 					d1 = 2, val -= 80;
-				oid_delta = derDecSID2(d1, oid);
+				oid_delta = derSIDDec2(d1, oid);
 				if (oid_delta == SIZE_MAX)
 					return SIZE_MAX;
 				oid += oid_delta, d1 = 0;
@@ -672,7 +819,7 @@ size_t derDecOID2(const octet der[], size_t count, const char* oid)
 			if (*oid != '.')
 				return SIZE_MAX;
 			++oid;
-			oid_delta = derDecSID2(val, oid);
+			oid_delta = derSIDDec2(val, oid);
 			if (oid_delta == SIZE_MAX)
 				return SIZE_MAX;
 			// к следующему sid
@@ -688,9 +835,65 @@ size_t derDecOID2(const octet der[], size_t count, const char* oid)
 
 /*
 *******************************************************************************
-Последовательность (SEQUENCE), структура:
-- T = 0x30;
-- V = вложенное содержимое.
+Тип PSTR (печатаемая строка, PrintableString):
+	V = строка (без завершающего нуля).
+*******************************************************************************
+*/
+
+size_t derTPSTREnc(octet der[], u32 tag, const char* val)
+{
+	// проверить строку
+	if (!strIsValid(val) || !strIsPrintable(val))
+		return SIZE_MAX;
+	// кодировать
+	return derEnc(der, tag, val, strLen(val));
+}
+
+size_t derTPSTRDec(char* val, size_t* len, const octet der[], size_t count,
+	u32 tag)
+{
+	const octet* v;
+	size_t l;
+	size_t pos;
+	// декодировать
+	count = derDec2(&v, &l, der, count, tag);
+	if (count == SIZE_MAX)
+		return SIZE_MAX;
+	// проверить символы (см. strIsPrintable())
+	for (pos = 0; pos < l; ++pos)
+	{
+		register char ch = (char)v[pos];
+		if ((ch < '0' || ch > '9') &&
+			(ch < 'A' || ch > 'Z') &&
+			(ch < 'a' || ch > 'z') &&
+			strchr(" '()+,-./:=?", ch) == 0)
+		{
+			ch = 0;
+			return SIZE_MAX;
+		}
+		ch = 0;
+	}
+	// возвратить строку
+	if (val)
+	{
+		ASSERT(memIsValid(val, l + 1));
+		ASSERT(len == 0 || memIsDisjoint2(len, O_PER_S, val, l + 1));
+		memMove(val, v, l);
+		val[l] = 0;
+	}
+	// возвратить длину строки
+	if (len)
+	{
+		ASSERT(memIsValid(len, O_PER_S));
+		*len = l;
+	}
+	return count;
+}
+
+/*
+*******************************************************************************
+Тип SEQ (последовательность / структура, SEQUENCE):
+	V = вложенные данные.
 
 Длина V становится окончательно известна только в конце кодирования структуры.
 В начале кодирования структура пуста и поэтому длина L = |V| устанавливается
@@ -699,30 +902,38 @@ size_t derDecOID2(const octet der[], size_t count, const char* oid)
 *******************************************************************************
 */
 
-size_t derEncSEQStart(der_anchor* anchor, octet der[], size_t pos)
+size_t derTSEQEncStart(der_anchor_t* anchor, octet der[], size_t pos, u32 tag)
 {
-	ASSERT(memIsValid(anchor, sizeof(der_anchor)));
+	ASSERT(memIsValid(anchor, sizeof(der_anchor_t)));
+	// проверить тег
+	if (!derTIsValid(tag))
+		return SIZE_MAX;
+	ASSERT(derTIsConstructive(tag));
 	// бросить якорь
 	anchor->der = der;
 	anchor->pos = pos;
+	anchor->tag = tag;
 	anchor->len = 0;
 	// кодировать пустую (пока) структуру
-	return derEnc(der, 0x30, 0, 0);
+	return derEnc(der, tag, 0, 0);
 }
 
-size_t derEncSEQStop(octet der[], size_t pos, const der_anchor* anchor)
+size_t derTSEQEncStop(octet der[], size_t pos, const der_anchor_t* anchor)
 {
-	size_t t_count, l_count, len, l_count1;
-	ASSERT(memIsValid(anchor, sizeof(der_anchor)));
+	size_t t_count;
+	size_t l_count;
+	size_t len;
+	size_t l_count1;
+	ASSERT(memIsValid(anchor, sizeof(der_anchor_t)));
 	ASSERT(anchor->der == 0 ||
 		der != 0 && anchor->der + pos == der + anchor->pos);
 	// определить длину вложенных данных
-	t_count = derLenT(0x30);
-	l_count = derLenL(anchor->len);
+	t_count = derTEnc(0, anchor->tag);
+	l_count = derLEnc(0, anchor->len);
 	if (anchor->pos + t_count + l_count > pos)
 		return SIZE_MAX;
-	len = pos  - anchor->pos - t_count - l_count;
-	l_count1 = derLenL(len);
+	len = pos - anchor->pos - t_count - l_count;
+	l_count1 = derLEnc(0, len);
 	// определить величину смещения вложенных данных
 	pos = l_count1 - l_count;
 	// сдвинуть вложенные данные и уточнить длину
@@ -730,35 +941,38 @@ size_t derEncSEQStop(octet der[], size_t pos, const der_anchor* anchor)
 	{
 		ASSERT(anchor->der + t_count == der - len - l_count);
 		memMove(der - len + pos, der - len, len);
-		derEncL(der - len - l_count, len, l_count1);
+		derLEnc(der - len - l_count, len);
 	}
 	return pos;
 }
 
-size_t derDecSEQStart(der_anchor* anchor, const octet der[], size_t count)
+size_t derTSEQDecStart(der_anchor_t* anchor, const octet der[], size_t count,
+	u32 tag)
 {
-	u32 tag;
 	size_t t_count;
-	ASSERT(memIsValid(anchor, sizeof(der_anchor)));
+	size_t l_count;
+	// pre
+	ASSERT(memIsValid(anchor, sizeof(der_anchor_t)));
+	ASSERT(derTIsConstructive(tag));
 	// бросить якорь
 	anchor->der = der;
 	// декодировать тег
-	t_count = derDecT(&tag, der, count);
-	if (t_count == SIZE_MAX || tag != 0x30)
+	t_count = derTDec(&anchor->tag, der, count);
+	if (t_count == SIZE_MAX || anchor->tag != tag)
 		return SIZE_MAX;
 	// декодировать длину
-	count = derDecL(&anchor->len, der + t_count, count - t_count);
-	if (count == SIZE_MAX)
+	l_count = derLDec(&anchor->len, der + t_count, count - t_count);
+	if (l_count == SIZE_MAX)
 		return SIZE_MAX;
-	return t_count + count;
+	return t_count + l_count;
 }
 
-size_t derDecSEQStop(const octet der[], const der_anchor* anchor)
+size_t derTSEQDecStop(const octet der[], const der_anchor_t* anchor)
 {
 	const octet* val;
-	ASSERT(memIsValid(anchor, sizeof(der_anchor)));
+	ASSERT(memIsValid(anchor, sizeof(der_anchor_t)));
 	// определить начало вложенных данных
-	val = anchor->der + derLenT(0x30) + derLenL(anchor->len);
+	val = anchor->der + derTEnc(0, anchor->tag) + derLEnc(0, anchor->len);
 	if (val > der)
 		return SIZE_MAX;
 	// сравнить длину вложенных данных с сохраненной длиной

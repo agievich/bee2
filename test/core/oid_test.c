@@ -3,9 +3,8 @@
 \file oid_test.c
 \brief Tests for object identifiers
 \project bee2/test
-\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.04.01
-\version 2021.04.16
+\version 2021.07.07
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -20,7 +19,7 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 Тестирование
 
--#	used http://www.viathinksoft.de/~daniel-marschall/asn.1/oid_facts.html
+\used http://www.viathinksoft.de/~daniel-marschall/asn.1/oid_facts.html
 *******************************************************************************
 */
 
@@ -96,14 +95,14 @@ bool_t oidTest()
 		"43.44.45.46.47.48.49.50.51.52.53.54.55.56.57.58.59.60.61.62.63.64.65.66");
 	count = oidToDER(buf, str1);
 	if (count == SIZE_MAX ||
-		oidFromDER(str, buf, count) != strLen(str1) + 1 ||
+		oidFromDER(str, buf, count) != strLen(str1) ||
 		!strEq(str, str1))
 		return FALSE;
 	str1[strLen(str1)] = '.';
 	strCopy(str1 + strLen(str) + 1, str);
 	count = oidToDER(buf, str1);
 	if (count == SIZE_MAX ||
-		oidFromDER(str, buf, count) != strLen(str1) + 1 ||
+		oidFromDER(str, buf, count) != strLen(str1) ||
 		!strEq(str, str1))
 		return FALSE;
 	// все нормально

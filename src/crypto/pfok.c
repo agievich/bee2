@@ -431,7 +431,7 @@ static bool_t pfokIsOperableParams(const pfok_params* params)
 	if (params->p[0] % 4 != 3 || params->p[n - 1] / 32 != 1)
 		return FALSE;
 	// проверить g
-	return !memIsZero(params->g, n) && memCmp(params->g, params->p, n) < 0;
+	return !memIsZero(params->g, n) && memCmpRev(params->g, params->p, n) < 0;
 }
 
 /*
@@ -736,7 +736,7 @@ err_t pfokValPubkey(const pfok_params* params, const octet pubkey[])
 	if (!memIsValid(pubkey, no))
 		return ERR_BAD_INPUT;
 	// 0 < pubkey < p?
-	if (memIsZero(pubkey, no) || memCmp(pubkey, params->p, no) >= 0)
+	if (memIsZero(pubkey, no) || memCmpRev(pubkey, params->p, no) >= 0)
 		return ERR_BAD_PUBKEY;
 	// все нормально
 	return ERR_OK;

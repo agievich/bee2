@@ -4,7 +4,7 @@
 \brief Strings
 \project bee2 [cryptographic library]
 \created 2013.02.04
-\version 2022.06.24
+\version 2022.07.05
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -119,6 +119,18 @@ void strSet(
 	\safe Функция нерегулярна.
 */
 bool_t strIsAlphanumeric(
+	const char* str		/*!< [in] строка */
+);
+
+/*!	\brief Из печатаемых символов?
+
+	Проверяется, что каждый символ строки str принадлежит алфавиту, составленному
+	из латинских букв, цифр и символов строки " '()+,-./:=?".
+	\return Признак успеха.
+	\safe Функция нерегулярна.
+	\remark Целевой алфавит -- это алфавит PrintableString АСН.1.
+*/
+bool_t strIsPrintable(
 	const char* str		/*!< [in] строка */
 );
 

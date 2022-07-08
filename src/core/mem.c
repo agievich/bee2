@@ -189,6 +189,51 @@ int SAFE(memCmp)(const void* buf1, const void* buf2, size_t count)
 {
 	register word less = 0;
 	register word greater = 0;
+	register word w1 = 0;
+	register word w2 = 0;
+	const octet* b1 = (const octet*)buf1;
+	const octet* b2 = (const octet*)buf2;
+	size_t filled = 0;
+	ASSERT(memIsValid(buf1, count));
+	ASSERT(memIsValid(buf2, count));
+	for (; count--; ++b1, ++b2)
+	{
+		w1 = w1 << 8 | *b1;
+		w2 = w2 << 8 | *b2;
+		if (++filled == O_PER_W)
+		{
+			less |= ~greater & wordLess(w1, w2);
+			greater |= ~less & wordGreater(w1, w2);
+			filled = 0;
+		}
+	}
+	if (filled)
+	{
+		less |= ~greater & wordLess(w1, w2);
+		greater |= ~less & wordGreater(w1, w2);
+	}
+	w1 = w2 = 0;
+	return (wordEq(less, 0) - 1) | wordNeq(greater, 0);
+}
+
+int FAST(memCmp)(const void* buf1, const void* buf2, size_t count)
+{
+	const octet* b1 = (const octet*)buf1;
+	const octet* b2 = (const octet*)buf2;
+	ASSERT(memIsValid(buf1, count));
+	ASSERT(memIsValid(buf2, count));
+	for (; count--; ++b1, ++b2)
+		if (*b1 > *b2)
+			return 1;
+		else if (*b1 < *b2)
+			return -1;
+	return 0;
+}
+
+int SAFE(memCmpRev)(const void* buf1, const void* buf2, size_t count)
+{
+	register word less = 0;
+	register word greater = 0;
 	register word w1;
 	register word w2;
 	ASSERT(memIsValid(buf1, count));
@@ -220,7 +265,7 @@ int SAFE(memCmp)(const void* buf1, const void* buf2, size_t count)
 	return (wordEq(less, 0) - 1) | wordNeq(greater, 0);
 }
 
-int FAST(memCmp)(const void* buf1, const void* buf2, size_t count)
+int FAST(memCmpRev)(const void* buf1, const void* buf2, size_t count)
 {
 	const octet* b1 = (const octet*)buf1 + count;
 	const octet* b2 = (const octet*)buf2 + count;

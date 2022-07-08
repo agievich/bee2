@@ -3,9 +3,8 @@
 \file u64.h
 \brief 64-bit words
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.10.28
-\version 2019.07.08
+\version 2022.07.05
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -25,7 +24,7 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/core/safe.h"
 
 #ifndef U64_SUPPORT
-	#error "Can't proceed without u64"
+	#error "Cannot proceed without u64"
 #endif
 
 #ifdef __cplusplus
