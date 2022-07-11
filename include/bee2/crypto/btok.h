@@ -96,14 +96,12 @@ typedef struct
 
 	Проверяется корректность содержания cvc CV-сертификата.
 	Проверка завершается успешно, если:
-	- строки cvc->authority и cvc->holder состоят только из печатаемых
-	  символов;
-	- длины строк cvc->authority и cvc->holder лешат в диапазоне от 8 до 12;
-	- [cvc->pubkey_len]cvc->pubkey является корректным ключом bign одного из
-	  3 уровней стойкости (лежит на одной из 3-х стандартных эллиптических
-	  кривых);
+	- cтроки cvc->authority и cvc->holder состоят из печатаемых символов;
+	- длины строк cvc->authority и cvc->holder лежат в диапазоне от 8 до 12;
 	- даты cvc->from и cvc->until корректны;
-	- cvc->from <= cvc->until.
+	- cvc->from <= cvc->until;
+	- открытый ключ [cvc->pubkey_len]cvc->pubkey корректен
+	  (лежит на одной из трех стандартных эллиптических кривых).
 	\return ERR_OK, если проверка прошла успешно, и код ошибки в противном
 	случае.
 	\remark Подпись [cvc->sig_len]cvc->sig не проверяется.
@@ -116,8 +114,8 @@ err_t btokCVCCheck(
 
 	Проверяется корректность содержания cvc CV-сертификата с учетом
 	содержания cvca сертификата (потенциального) издателя. 
-	Выполняются следующие проверки:
-	- btokCVCInfoVal(cvc) == TRUE;
+	Проверка завершается успешно, если:
+	- btokCVCCheck(cvc) == ERR_OK;
 	- cvc->authority == cvca->holder;
 	- даты cvca->from и cvca->until корректны;
 	- cvca->from <= cvc->from && cvc->from <= cvca->until.
@@ -135,15 +133,9 @@ err_t btokCVCCheck2(
 	Создается CV-сертификат [cert_len?]cert с содержанием cvc. Сертификат
 	подписывается на личном ключе [privkey_len]privkey. Подпись сохраняется
 	в [cvc->sig_len]cvc->sig. Если cvc->pubkey_len == 0, то открытый ключ
-	[cvc->pubkey_len]cvc->pubkey определяется по privkey и выходной
+	[cvc->pubkey_len]cvc->pubkey строится по privkey и выходной
 	сертификат выступает в роли доказательства владения личным ключом.
-	\expect{ERR_BAD_NAME} Строки cvc->authority и cvc->holder состоят
-	только из печатаемых символов, длины строк лежат в диапазоне от 8 до 12.
-	\expect{ERR_BAD_DATE} Даты cvc->from и cvc->until корректны,
-	cvc->from <= cvc->until.
-	\expect{ERR_BAD_PUBKEY} [cvc->pubkey_len]cvc->pubkey является корректным
-	ключом bign одного из 3 уровней стойкости (лежит на одной из трех
-	стандартных эллиптических кривых).
+	\expect btokCVCCheck(cvc) == ERR_OK (после построения cvc->pubkey).
 	\return ERR_OK, если сертификат успешно создан, и код ошибки в противном
 	случае.
 	\remark Используется детерминированный режим выработки подписи. Если
@@ -171,6 +163,7 @@ err_t btokCVCWrap(
 	Подпись сертификата проверяется на открытом ключе [privkey_len]privkey.
 	Может передаваться нулевая длина pubkey_len, и тогда указатель pubkey
 	игнорируется, а подпись не проверяется.
+	\expect btokCVCCheck(cvc) == ERR_OK (после определения cvc).
 	\return ERR_OK, если сертификат успешно разобран, и код ошибки в
 	противном случае. При проверке cvc коды ERR_BAD_NAME, ERR_BAD_DATE,
 	ERR_BAD_PUBKEY возвращаются при условиях, заданных в описании функции
@@ -187,27 +180,28 @@ err_t btokCVCUnwrap(
 
 /*!	\brief Выпуск CV-сертификата
 
-	Выпускается CV-сертификат [cert_len?]cert с содержанием cvc. Сертификат
-	подписывается на личном ключе [privkey_len]privkey. Подпись сохраняется
-	в [cvc->sig_len]cvc->sig.
-	\return ERR_OK, если сертификат успешно создан, и код ошибки в противном
+	Выпускается CV-сертификат [cert_len?]cert с содержанием cvc. При выпуске
+	используются личный ключ [privkeya_len]privkeya и сертификат
+	[certa_len]certa издателя. Подпись сертификата сохраняется
+	в [cvc->sig_len]cvc->sig. Перед выпуском проверяются следующие условия:
+	- btokCVCCheck(cvc) == ERR_OK;
+	- btokCVCCheck2(cvc, cvca) == ERR_OK, где cvca --- содержание сертификата
+	  издателяж;
+	- открытый ключ [cvc->pubkey_len]cvc->pubkey соответствует личному ключу
+	  [cvc->privkey_len]cvc->privkey.
+	\return ERR_OK, если сертификат успешно выпущен, и код ошибки в противном
 	случае.
 	\remark Используется детерминированный режим выработки подписи. Если
 	инициализирован штатный ГСЧ, то дополнительно используются данные от него.
-	\remark Создание самоподписанного (корневого) сертификата:
-	- cvc->authority == cvc->holder;
-	- [privkey_len]privkey == [cvc->privkey_len]cvc->privkey.
-	\remark Создание доказательства знания личного ключа:
-	- cvc->authority -- имя проверяющей стороны или будущего издателя;
-	- cvc->holder -- владелец;
-	- [privkey_len]privkey == [cvc->privkey_len]cvc->privkey.
 */
-err_t btokCVCWrap(
+err_t btokCVCIss(
 	octet cert[],				/*!< [out] сертификат */
 	size_t* cert_len,			/*!< [out] длина cert в октетах */
-	btok_cvc_t* ci,				/*!< [in/out] содержание сертификата */
-	const octet privkey[],		/*!< [in] личный ключ */
-	size_t privkey_len			/*!< [in] длина privkey в октетах */
+	btok_cvc_t* cvc,			/*!< [in/out] содержание сертификата */
+	const octet certa[],		/*!< [out] сертификат издателя */
+	size_t certa_len,			/*!< [out] длина certa в октетах */
+	const octet privkeya[],		/*!< [in] личный ключ издателя */
+	size_t privkeya_len			/*!< [in] длина privkey в октетах */
 );
 
 /*!	\brief Проверка CV-сертификата
@@ -228,10 +222,10 @@ err_t btokCVCWrap(
 	\return ERR_OK, если сертификат признан корректным, и код ошибки в
 	противном случае. 
 	\remark Проверка цепочки сертификатов certa, certb, certc,...:
-	- btokCVCParse(cvca, certa, certa_len);
+	- btokCVCUnwrap(cvca, certa, certa_len, 0, 0);
 	- btokCVCVal(0, certa, certa_len, cvca, date);
 	- btokCVCVal(cvcb, certb, certb_len, cvca, date);
-	- btokCVCVal(cvcc, certc, certb_len, cvcb, date);
+	- btokCVCVal(cvcc, certc, certc_len, cvcb, date);
 	- ...
 */
 err_t btokCVCVal(

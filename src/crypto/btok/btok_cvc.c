@@ -69,12 +69,14 @@ static err_t btokPubkeyVal(const octet pubkey[], size_t pubkey_len)
 }
 
 static err_t btokKeypairVal(const octet privkey[], size_t privkey_len,
-	const octet pubkey[])
+	const octet pubkey[], size_t pubkey_len)
 {
 	err_t code;
 	bign_params params[1];
 	if (privkey_len != 32 && privkey_len != 48 && privkey_len != 64)
 		return ERR_BAD_INPUT;
+	if (pubkey_len != 2 * privkey_len)
+		return ERR_BAD_KEYPAIR;
 	code = bignStdParams(params,
 		privkey_len == 32 ? "1.2.112.0.2.0.34.101.45.3.1" :
 			privkey_len == 48 ? "1.2.112.0.2.0.34.101.45.3.2" :
@@ -206,7 +208,7 @@ static err_t btokVerify(const void* buf, size_t count, const octet sig[],
 
 /*
 *******************************************************************************
-CV-сертификат: содержание
+Содержание CV-сертификата
 *******************************************************************************
 */
 
@@ -235,19 +237,7 @@ static bool_t btokCVCDateLeq(const octet left[6], const octet right[6])
 	ASSERT(btokCVCDateIsValid(left));
 	ASSERT(btokCVCDateIsValid(right));
 	// left <= right?
-	return memCmp(left, right, 2) <= 0 &&
-		memCmp(left + 2, right + 2, 2) <= 0 &&
-		memCmp(left + 4, right + 4, 2) <= 0;
-}
-
-
-static bool_t btokCVCDatesAreValid(const octet from[6], const octet until[6])
-{
-	return btokCVCDateIsValid(from) &&
-		btokCVCDateIsValid(until) &&
-		memCmp(from, until, 2) <= 0 &&
-		memCmp(from + 2, until + 2, 2) <= 0 &&
-		memCmp(from + 4, until + 4, 2) <= 0;
+	return memCmp(left, right, 6) <= 0;
 }
 
 static bool_t btokCVCNameIsValid(const char* name)
@@ -299,7 +289,7 @@ err_t btokCVCCheck2(const btok_cvc_t* cvc, const btok_cvc_t* cvca)
 
 /*
 *******************************************************************************
-CV-сертификат: основная часть (тело)
+Основная часть (тело) CV-сертификата
 
   SEQ[APPLICATION 78] CertificateBody
     SIZE[APPLICATION 41](0) -- version
@@ -431,8 +421,6 @@ static size_t btokCVCBodyDec(btok_cvc_t* cvc, const octet body[], size_t count)
 	// ...from/until...
 	derDecStep(derTOCTDec2(cvc->from, ptr, count, 0x5F25, 6), ptr, count);
 	derDecStep(derTOCTDec2(cvc->until, ptr, count, 0x5F24, 6), ptr, count);
-	if (!btokCVCDatesAreValid(cvc->from, cvc->until))
-		return SIZE_MAX;
 	// ...CVExt...
 	if (derStartsWith(ptr, count, 0x65))
 	{
@@ -451,7 +439,7 @@ static size_t btokCVCBodyDec(btok_cvc_t* cvc, const octet body[], size_t count)
 
 /*
 *******************************************************************************
-CV-сертификат: создание / разбор
+Создание / разбор CV-сертификата
 
 SEQ[APPLICATION 33] CVCertificate
   SEQ[APPLICATION 78] CertificateBody
@@ -571,4 +559,34 @@ err_t btokCVCUnwrap(btok_cvc_t* cvc, const octet cert[], size_t cert_len,
 		return ERR_BAD_FORMAT;
 	// окончательная проверка cvc
 	return btokCVCCheck(cvc);
+}
+
+/*
+*******************************************************************************
+Выпуск CV-сертификата
+*******************************************************************************
+*/
+
+err_t btokCVCIss(octet cert[], size_t* cert_len, btok_cvc_t* cvc,
+	const octet certa[], size_t certa_len, const octet privkeya[],
+	size_t privkeya_len)
+{
+	err_t code;
+	btok_cvc_t* cvca;
+	// разобрать сертификат издателя
+	cvca = (btok_cvc_t*)blobCreate(sizeof(btok_cvc_t));
+	if (!cvca)
+		return ERR_OUTOFMEMORY;
+	code = btokCVCUnwrap(cvca, certa, certa_len, 0, 0);
+	ERR_CALL_HANDLE(code, blobClose(cvca));
+	// проверить ключи издателя
+	code = btokKeypairVal(privkeya, privkeya_len,
+		cvca->pubkey, cvca->pubkey_len);
+	ERR_CALL_HANDLE(code, blobClose(cvca));
+	// проверить содержимое выпускаемого сертификата
+	code = btokCVCCheck2(cvc, cvca);
+	ERR_CALL_HANDLE(code, blobClose(cvca));
+	// создать сертификат
+	code = btokCVCWrap(cert, cert_len, cvc, privkeya, privkeya_len);
+	return code;
 }

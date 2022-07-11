@@ -4,7 +4,7 @@
 \brief Errors
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2022.07.08
+\version 2022.07.11
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -156,32 +156,34 @@ Crypto
 #define ERR_BAD_PRIVKEY				_ERR_REG(503)
 /* некорректный открытый ключ */
 #define ERR_BAD_PUBKEY				_ERR_REG(504)
+/* некорректная пара открытый / личный ключ */
+#define ERR_BAD_KEYPAIR				_ERR_REG(505)
 /* некорректный сертификат (открытого ключа) */
-#define ERR_BAD_CERT				_ERR_REG(505)
+#define ERR_BAD_CERT				_ERR_REG(506)
 /* некорректный общий ключ */
-#define ERR_BAD_SHAREDKEY			_ERR_REG(506)
+#define ERR_BAD_SHAREDKEY			_ERR_REG(507)
 /* некорректный частичный секрет */
-#define ERR_BAD_SHAREKEY			_ERR_REG(507)
+#define ERR_BAD_SHAREKEY			_ERR_REG(508)
 /* некорректное хэш-значение */
-#define ERR_BAD_HASH				_ERR_REG(508)
+#define ERR_BAD_HASH				_ERR_REG(509)
 /* некорректная ЭЦП */
-#define ERR_BAD_SIG					_ERR_REG(509)
+#define ERR_BAD_SIG					_ERR_REG(510)
 /* некорректная имитовставка */
-#define ERR_BAD_MAC					_ERR_REG(510)
+#define ERR_BAD_MAC					_ERR_REG(511)
 /* некорректный токен ключа */
-#define ERR_BAD_KEYTOKEN			_ERR_REG(511)
+#define ERR_BAD_KEYTOKEN			_ERR_REG(512)
 /* неверная логика (протокола) */
-#define ERR_BAD_LOGIC				_ERR_REG(512)
+#define ERR_BAD_LOGIC				_ERR_REG(513)
 /* неверный пароль */
-#define ERR_BAD_PWD					_ERR_REG(513)
+#define ERR_BAD_PWD					_ERR_REG(514)
 /* ключ не найден */
-#define ERR_KEY_NOT_FOUND			_ERR_REG(514)
+#define ERR_KEY_NOT_FOUND			_ERR_REG(515)
 /* ошибка аутентификации */
-#define ERR_AUTH					_ERR_REG(515)
+#define ERR_AUTH					_ERR_REG(516)
 /* ошибка самотестирования */
-#define ERR_SELFTEST				_ERR_REG(516)
+#define ERR_SELFTEST				_ERR_REG(517)
 /* ошибка статистического тестирования */
-#define ERR_STATTEST				_ERR_REG(517)
+#define ERR_STATTEST				_ERR_REG(518)
 
 /*
 *******************************************************************************

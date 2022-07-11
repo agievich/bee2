@@ -4,7 +4,7 @@
 \brief Errors
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2022.07.08
+\version 2022.07.11
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -69,6 +69,7 @@ static const err_msg _messages[] = {
 	{ERR_BAD_SECKEY, "Invalid secret key"},
 	{ERR_BAD_PRIVKEY, "Invalid private key"},
 	{ERR_BAD_PUBKEY, "Invalid public key"},
+	{ERR_BAD_KEYPAIR, "Invalid private/public keypair"},
 	{ERR_BAD_CERT, "Incorrect public key certificate"},
 	{ERR_BAD_SHAREDKEY, "Incorrect shared key"},
 	{ERR_BAD_SHAREKEY, "Incorrect secret share"},

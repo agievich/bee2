@@ -30,13 +30,15 @@ static bool_t btokCVCTest()
 	bign_params params[1];
 	octet privkey0[64];
 	octet privkey1[48];
-	octet cert0[512]; size_t cert0_len;
-	octet cert1[512]; size_t cert1_len;
+	octet privkey2[32];
+	octet cert0[400]; size_t cert0_len;
+	octet cert1[400]; size_t cert1_len;
+	octet cert2[400]; size_t cert2_len;
 
 	// запустить ГПСЧ
 	prngEchoStart(echo, beltH(), 256);
 
-	// составить и проверить cvc0
+	// определить максимальную длину сертификата
 	memSetZero(cvc0, sizeof(btok_cvc_t));
 	strCopy(cvc0->authority, "BYCA00000000");
 	strCopy(cvc0->holder, "BYCA00000000");
@@ -48,21 +50,25 @@ static bool_t btokCVCTest()
 	if (btokCVCCheck(cvc0) == ERR_OK)
 		return FALSE;
 	if (bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.3") != ERR_OK ||
-		bignGenKeypair(privkey0, cvc0->pubkey, params, prngEchoStepR, 
+		bignGenKeypair(privkey0, cvc0->pubkey, params, prngEchoStepR,
 			echo) != ERR_OK ||
 		btokCVCCheck(cvc0) != ERR_OK)
 		return FALSE;
-	// создать cert0
 	if (btokCVCWrap(0, 0, cvc0, privkey0, 64) != ERR_OK)
 		return FALSE;
 	cvc0->pubkey_len = 0;
 	if (btokCVCWrap(0, &cert0_len, cvc0, privkey0, 64) != ERR_OK)
 		return FALSE;
-	ASSERT(cert0_len == 349); /* максимальная длина CV-сертификата */
-	ASSERT(cert0_len <= sizeof(cert0));
-	if (btokCVCWrap(cert0, &cert0_len, cvc0, privkey0, 64) != ERR_OK ||
-		bignValKeypair(params, privkey0, cvc0->pubkey) != ERR_OK)
+	ASSERT(cert0_len == 349);
+
+	// выпустить cert0
+	memSetZero(cvc0->authority, sizeof(cvc0->authority));
+	strCopy(cvc0->authority, "BYCA0000");
+	memSetZero(cvc0->holder, sizeof(cvc0->holder));
+	strCopy(cvc0->holder, "BYCA0000");
+	if (btokCVCWrap(cert0, &cert0_len, cvc0, privkey0, 64) != ERR_OK)
 		return FALSE;
+	ASSERT(cert0_len < 349);
 	// разобрать cert0
 	if (btokCVCUnwrap(cvc1, cert0, cert0_len, 0, 0) != ERR_OK ||
 		btokCVCUnwrap(cvc1, cert0, cert0_len, cvc0->pubkey,
@@ -72,10 +78,10 @@ static bool_t btokCVCTest()
 
 	// составить и проверить cvc1
 	memSetZero(cvc1, sizeof(btok_cvc_t));
-	strCopy(cvc1->authority, "BYCA00000000");
+	strCopy(cvc1->authority, "BYCA0000");
 	strCopy(cvc1->holder, "BYCA1000");
-	hexTo(cvc1->from, "020200070007");
-	hexTo(cvc1->until, "030300070007");
+	hexTo(cvc1->from, "020200080207");
+	hexTo(cvc1->until, "030300060109");
 	memSet(cvc1->hat_eid, 0xDD, sizeof(cvc1->hat_eid));
 	memSet(cvc1->hat_esign, 0x33, sizeof(cvc1->hat_esign));
 	cvc1->pubkey_len = 96;
@@ -106,6 +112,30 @@ static bool_t btokCVCTest()
 	ASSERT(cert1_len <= sizeof(cert1));
 	if (btokCVCWrap(cert1, &cert1_len, cvc1, privkey0, 64) != ERR_OK)
 		return FALSE;
+
+	// составить cvc2
+	memSetZero(cvc2, sizeof(btok_cvc_t));
+	strCopy(cvc2->authority, "BYCA1000");
+	strCopy(cvc2->holder, "590082394654");
+	hexTo(cvc2->from, "020201020301");
+	hexTo(cvc2->until, "030300020208");
+	memSet(cvc2->hat_eid, 0x88, sizeof(cvc2->hat_eid));
+	memSet(cvc2->hat_esign, 0x11, sizeof(cvc2->hat_esign));
+	cvc2->pubkey_len = 64;
+	if (bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK ||
+		bignGenKeypair(privkey2, cvc2->pubkey, params, prngEchoStepR,
+			echo) != ERR_OK ||
+		btokCVCCheck(cvc2) != ERR_OK)
+		return FALSE;
+	// выпустить cert2
+	if (btokCVCIss(cert2, &cert2_len, cvc2, cert1, cert1_len - 1,
+			privkey1, 48) == ERR_OK ||
+		btokCVCIss(cert2, &cert2_len, cvc2, cert1, cert1_len,
+			privkey1, 48 + 1) == ERR_OK ||
+		btokCVCIss(cert2, &cert2_len, cvc2, cert1, cert1_len,
+			privkey1, 48) != ERR_OK)
+		return FALSE;
+	ASSERT(cert2_len <= sizeof(cert2));
 	// все хорошо
 	return TRUE;
 }
