@@ -797,10 +797,6 @@
 						RelativePath="..\..\src\crypto\btok\btok_cvc.c"
 						>
 					</File>
-					<File
-						RelativePath="..\..\src\crypto\btok\btok_etc.c"
-						>
-					</File>
 				</Filter>
 			</Filter>
 		</Filter>

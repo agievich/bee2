@@ -47,7 +47,6 @@ set(src
   crypto/botp.c
   crypto/brng.c
   crypto/btok/btok_cvc.c
-  crypto/btok/btok_etc.c
   crypto/dstu.c
   crypto/g12s.c
   crypto/pfok.c

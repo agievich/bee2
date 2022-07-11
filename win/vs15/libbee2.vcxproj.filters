@@ -249,9 +249,6 @@
     <ClCompile Include="..\..\src\crypto\btok\btok_cvc.c">
       <Filter>Source Files\crypto\btok</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\crypto\btok\btok_etc.c">
-      <Filter>Source Files\crypto\btok</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\crypto\bign_lcl.h">
