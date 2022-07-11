@@ -590,3 +590,80 @@ err_t btokCVCIss(octet cert[], size_t* cert_len, btok_cvc_t* cvc,
 	code = btokCVCWrap(cert, cert_len, cvc, privkeya, privkeya_len);
 	return code;
 }
+
+/*
+*******************************************************************************
+Проверка CV-сертификата
+*******************************************************************************
+*/
+
+err_t btokCVCVal(const octet cert[], size_t cert_len, 
+	const octet certa[], size_t certa_len, const octet* date)
+{
+	err_t code;
+	btok_cvc_t* cvc;
+	btok_cvc_t* cvca;
+	// разобрать сертификаты
+	cvc = (btok_cvc_t*)blobCreate(2 * sizeof(btok_cvc_t));
+	if (!cvc)
+		return ERR_OUTOFMEMORY;
+	cvca = cvc + 1;
+	code = btokCVCUnwrap(cvca, certa, certa_len, 0, 0);
+	ERR_CALL_HANDLE(code, blobClose(cvca));
+	code = btokCVCUnwrap(cvc, cert, cert_len, cvca->pubkey, cvca->pubkey_len);
+	ERR_CALL_HANDLE(code, blobClose(cvc));
+	// проверить соответствие
+	code = btokCVCCheck2(cvc, cvca);
+	ERR_CALL_HANDLE(code, blobClose(cvc));
+	// проверить дату
+	if (date)
+	{
+		if (!memIsValid(date, 6))
+			code = ERR_BAD_INPUT;
+		else if (!btokCVCDateIsValid(date) ||
+			!btokCVCDateLeq(cvc->from, date) ||
+			!btokCVCDateLeq(date, cvc->until))
+			code = ERR_BAD_DATE;
+	}
+	// завершить
+	blobClose(cvc);
+	return code;
+}
+
+err_t btokCVCVal2(btok_cvc_t* cvc, const octet cert[], size_t cert_len,
+	const btok_cvc_t* cvca, const octet* date)
+{
+	err_t code;
+	btok_cvc_t* state = 0;
+	// входной контроль
+	if (!memIsNullOrValid(cvc, sizeof(btok_cvc_t)) || 
+		!memIsValid(cvca, sizeof(btok_cvc_t)))
+		return ERR_BAD_INPUT;
+	// разобрать сертификаты
+	if (!cvc)
+	{
+		state = (btok_cvc_t*)blobCreate(sizeof(btok_cvc_t));
+		if (!state)
+			return ERR_OUTOFMEMORY;
+		cvc = state;
+	}
+	code = btokCVCUnwrap(cvc, cert, cert_len, cvca->pubkey, 
+		cvca->pubkey_len);
+	ERR_CALL_HANDLE(code, blobClose(state));
+	// проверить соответствие
+	code = btokCVCCheck2(cvc, cvca);
+	ERR_CALL_HANDLE(code, blobClose(state));
+	// проверить дату
+	if (date)
+	{
+		if (!memIsValid(date, 6))
+			code = ERR_BAD_INPUT;
+		else if (!btokCVCDateIsValid(date) ||
+			!btokCVCDateLeq(cvc->from, date) ||
+			!btokCVCDateLeq(date, cvc->until))
+			code = ERR_BAD_DATE;
+	}
+	// завершить
+	blobClose(state);
+	return code;
+}

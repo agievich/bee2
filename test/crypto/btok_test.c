@@ -136,6 +136,14 @@ static bool_t btokCVCTest()
 			privkey1, 48) != ERR_OK)
 		return FALSE;
 	ASSERT(cert2_len <= sizeof(cert2));
+
+	// проверить сертификаты
+	if (btokCVCVal(cert1, cert1_len, cert0, cert0_len, 0) != ERR_OK ||
+		btokCVCVal(cert2, cert2_len, cert1, cert1_len, 0) != ERR_OK ||
+		btokCVCVal2(cvc1, cert1, cert1_len, cvc0, 0) != ERR_OK ||
+		btokCVCVal2(cvc2, cert2, cert2_len, cvc1, 0) != ERR_OK)
+		return FALSE;
+
 	// все хорошо
 	return TRUE;
 }
