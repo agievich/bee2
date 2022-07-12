@@ -3,9 +3,8 @@
 \file tm.h
 \brief Time and timers
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2015.11.25
+\version 2022.07.12
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -23,6 +22,7 @@ version 3. See Copyright Notices in bee2/info.h.
 
 #include <time.h>
 #include "bee2/defs.h"
+#include "bee2/core/err.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -133,6 +133,41 @@ tm_time_t tmTime();
 tm_time_t tmTimeRound(
 	tm_time_t t0,		/*!< [in] начало отсчета */
 	tm_time_t ts		/*!< [in] шаг времени */
+);
+
+/*!
+*******************************************************************************
+\file tm.h
+
+\section tm-date Дата
+
+Дата определяется с привязкой к текущему часовому поясу.
+*******************************************************************************
+*/
+
+/*!	\brief Дата
+
+	Определяются текущие год year, месяц mon и день месяца day.
+	\return ERR_OK, если дата успешно определена, и код ошибки в противном
+	случае.
+	\remark Каждый из указателей year, mon, day может быть нулевым, и тогда
+	соответствующее поле даты не возвращается.
+*/
+err_t tmDate(
+	size_t* year,		/*!< [out] год */
+	size_t* mon,		/*!< [out] месяц */
+	size_t* day			/*!< [out] день */
+);
+
+/*!	\brief Дата в формате YYMMDD
+
+	Определяется текущая дата date в формате YYMMDD: каждая десятичная цифра
+	кодируется одним октетом.
+	\return ERR_OK, если дата успешно определена, и код ошибки в противном
+	случае.
+*/
+err_t tmDate2(
+	octet date[6]		/*!< [out] дата */
 );
 
 #ifdef __cplusplus

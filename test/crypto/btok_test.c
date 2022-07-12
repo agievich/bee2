@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.79 (btok) helpers
 \project bee2/test
 \created 2022.07.07
-\version 2022.07.11
+\version 2022.07.12
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -43,7 +43,7 @@ static bool_t btokCVCTest()
 	strCopy(cvc0->authority, "BYCA00000000");
 	strCopy(cvc0->holder, "BYCA00000000");
 	hexTo(cvc0->from, "020200070007");
-	hexTo(cvc0->until, "040400070007");
+	hexTo(cvc0->until, "090900070007");
 	memSet(cvc0->hat_eid, 0xEE, sizeof(cvc0->hat_eid));
 	memSet(cvc0->hat_esign, 0x77, sizeof(cvc0->hat_esign));
 	cvc0->pubkey_len = 128;
@@ -73,15 +73,16 @@ static bool_t btokCVCTest()
 	if (btokCVCUnwrap(cvc1, cert0, cert0_len, 0, 0) != ERR_OK ||
 		btokCVCUnwrap(cvc1, cert0, cert0_len, cvc0->pubkey,
 			cvc0->pubkey_len) != ERR_OK ||
-		!memEq(cvc0, cvc1, sizeof(btok_cvc_t)))
+		!memEq(cvc0, cvc1, sizeof(btok_cvc_t)) ||
+		btokCVCFit(cert0, cert0_len, privkey0, 64) != ERR_OK)
 		return FALSE;
 
 	// составить и проверить cvc1
 	memSetZero(cvc1, sizeof(btok_cvc_t));
 	strCopy(cvc1->authority, "BYCA0000");
 	strCopy(cvc1->holder, "BYCA1000");
-	hexTo(cvc1->from, "020200080207");
-	hexTo(cvc1->until, "030300060109");
+	hexTo(cvc1->from, "020200070102");
+	hexTo(cvc1->until, "020201010300");
 	memSet(cvc1->hat_eid, 0xDD, sizeof(cvc1->hat_eid));
 	memSet(cvc1->hat_esign, 0x33, sizeof(cvc1->hat_esign));
 	cvc1->pubkey_len = 96;
@@ -117,8 +118,8 @@ static bool_t btokCVCTest()
 	memSetZero(cvc2, sizeof(btok_cvc_t));
 	strCopy(cvc2->authority, "BYCA1000");
 	strCopy(cvc2->holder, "590082394654");
-	hexTo(cvc2->from, "020201020301");
-	hexTo(cvc2->until, "030300020208");
+	hexTo(cvc2->from, "020200070102");
+	hexTo(cvc2->until, "030901020301");
 	memSet(cvc2->hat_eid, 0x88, sizeof(cvc2->hat_eid));
 	memSet(cvc2->hat_esign, 0x11, sizeof(cvc2->hat_esign));
 	cvc2->pubkey_len = 64;
@@ -140,8 +141,10 @@ static bool_t btokCVCTest()
 	// проверить сертификаты
 	if (btokCVCVal(cert1, cert1_len, cert0, cert0_len, 0) != ERR_OK ||
 		btokCVCVal(cert2, cert2_len, cert1, cert1_len, 0) != ERR_OK ||
+		btokCVCVal(cert2, cert2_len, cert1, cert1_len, cvc0->from) == ERR_OK ||
 		btokCVCVal2(cvc1, cert1, cert1_len, cvc0, 0) != ERR_OK ||
-		btokCVCVal2(cvc2, cert2, cert2_len, cvc1, 0) != ERR_OK)
+		btokCVCVal2(cvc2, cert2, cert2_len, cvc1, 0) != ERR_OK ||
+		btokCVCVal2(cvc2, cert2, cert2_len, cvc1, cvc0->until) == ERR_OK)
 		return FALSE;
 
 	// все хорошо

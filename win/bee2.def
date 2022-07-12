@@ -261,3 +261,11 @@ EXPORTS
 	bpkiPrivkeyUnwrap			@1402
 	bpkiShareWrap				@1403
 	bpkiShareUnwrap				@1404
+
+	btokCVCCheck				@1501
+	btokCVCCheck2				@1502
+	btokCVCWrap					@1503
+	btokCVCUnwrap				@1504
+	btokCVCIss					@1505
+	btokCVCVal					@1506
+	btokCVCVal2					@1507

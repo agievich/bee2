@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): CV certificates
 \project bee2 [cryptographic library]
 \created 2022.07.04
-\version 2022.07.11
+\version 2022.07.12
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -17,11 +17,13 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/core/hex.h"
 #include "bee2/core/rng.h"
 #include "bee2/core/str.h"
+#include "bee2/core/tm.h"
 #include "bee2/core/util.h"
 #include "bee2/crypto/bash.h"
 #include "bee2/crypto/belt.h"
 #include "bee2/crypto/bign.h"
 #include "bee2/crypto/btok.h"
+#include <time.h>
 
 /*
 *******************************************************************************
@@ -48,8 +50,8 @@ static err_t btokPubkeyCalc(octet pubkey[], const octet privkey[],
 		return ERR_BAD_INPUT;
 	code = bignStdParams(params,
 		privkey_len == 32 ? "1.2.112.0.2.0.34.101.45.3.1" :
-			privkey_len == 48 ? "1.2.112.0.2.0.34.101.45.3.2" :
-				"1.2.112.0.2.0.34.101.45.3.3");
+		privkey_len == 48 ? "1.2.112.0.2.0.34.101.45.3.2" :
+		"1.2.112.0.2.0.34.101.45.3.3");
 	ERR_CALL_CHECK(code);
 	return bignCalcPubkey(pubkey, params, privkey);
 }
@@ -62,8 +64,8 @@ static err_t btokPubkeyVal(const octet pubkey[], size_t pubkey_len)
 		return ERR_BAD_INPUT;
 	code = bignStdParams(params,
 		pubkey_len == 64 ? "1.2.112.0.2.0.34.101.45.3.1" :
-			pubkey_len == 96 ? "1.2.112.0.2.0.34.101.45.3.2" :
-				"1.2.112.0.2.0.34.101.45.3.3");
+		pubkey_len == 96 ? "1.2.112.0.2.0.34.101.45.3.2" :
+		"1.2.112.0.2.0.34.101.45.3.3");
 	ERR_CALL_CHECK(code);
 	return bignValPubkey(params, pubkey);
 }
@@ -79,8 +81,8 @@ static err_t btokKeypairVal(const octet privkey[], size_t privkey_len,
 		return ERR_BAD_KEYPAIR;
 	code = bignStdParams(params,
 		privkey_len == 32 ? "1.2.112.0.2.0.34.101.45.3.1" :
-			privkey_len == 48 ? "1.2.112.0.2.0.34.101.45.3.2" :
-				"1.2.112.0.2.0.34.101.45.3.3");
+		privkey_len == 48 ? "1.2.112.0.2.0.34.101.45.3.2" :
+		"1.2.112.0.2.0.34.101.45.3.3");
 	ERR_CALL_CHECK(code);
 	return bignValKeypair(params, privkey, pubkey);
 }
@@ -212,6 +214,13 @@ static err_t btokVerify(const void* buf, size_t count, const octet sig[],
 *******************************************************************************
 */
 
+static bool_t btokCVCNameIsValid(const char* name)
+{
+	return strIsValid(name) &&
+		8 <= strLen(name) && strLen(name) <= 12 &&
+		strIsPrintable(name);
+}
+
 static bool_t btokCVCDateIsValid(const octet date[6])
 {
 	octet y, m, d;
@@ -225,7 +234,7 @@ static bool_t btokCVCDateIsValid(const octet date[6])
 	y = 10 * date[0] + date[1];
 	m = 10 * date[2] + date[3];
 	d = 10 * date[4] + date[5];
-	return y >= 19 && 
+	return y >= 19 &&
 		1 <= m && m <= 12 &&
 		1 <= d && d <= 31 &&
 		!(d == 31 && (m == 4 || m == 6 || m == 9 || m == 11)) &&
@@ -240,14 +249,7 @@ static bool_t btokCVCDateLeq(const octet left[6], const octet right[6])
 	return memCmp(left, right, 6) <= 0;
 }
 
-static bool_t btokCVCNameIsValid(const char* name)
-{
-	return strIsValid(name) &&
-		8 <= strLen(name) && strLen(name) <= 12 &&
-		strIsPrintable(name);
-}
-
-static bool_t btokCVCInfoSeemsValid(const btok_cvc_t* cvc)
+static bool_t btokCVCSeemsValid(const btok_cvc_t* cvc)
 {
 	return memIsValid(cvc, sizeof(btok_cvc_t)) &&
 		btokCVCNameIsValid(cvc->authority) &&
@@ -335,7 +337,7 @@ static size_t btokCVCBodyEnc(octet body[], const btok_cvc_t* cvc)
 	der_anchor_t DDT[1];
 	size_t count = 0;
 	// pre
-	ASSERT(btokCVCInfoSeemsValid(cvc));
+	ASSERT(btokCVCSeemsValid(cvc));
 	// начать кодирование...
 	derEncStep(derTSEQEncStart(CertBody, body, count, 0x7F4E), body, count);
 	derEncStep(derTSIZEEnc(body, 0x5F29, 0), body, count);
@@ -579,15 +581,17 @@ err_t btokCVCIss(octet cert[], size_t* cert_len, btok_cvc_t* cvc,
 		return ERR_OUTOFMEMORY;
 	code = btokCVCUnwrap(cvca, certa, certa_len, 0, 0);
 	ERR_CALL_HANDLE(code, blobClose(cvca));
-	// проверить ключи издателя
-	code = btokKeypairVal(privkeya, privkeya_len,
-		cvca->pubkey, cvca->pubkey_len);
-	ERR_CALL_HANDLE(code, blobClose(cvca));
 	// проверить содержимое выпускаемого сертификата
 	code = btokCVCCheck2(cvc, cvca);
 	ERR_CALL_HANDLE(code, blobClose(cvca));
+	// проверить ключи издателя
+	code = btokKeypairVal(privkeya, privkeya_len, cvca->pubkey,
+		cvca->pubkey_len);
+	ERR_CALL_HANDLE(code, blobClose(cvca));
 	// создать сертификат
 	code = btokCVCWrap(cert, cert_len, cvc, privkeya, privkeya_len);
+	// завершить
+	blobClose(cvca);
 	return code;
 }
 
@@ -601,13 +605,19 @@ err_t btokCVCVal(const octet cert[], size_t cert_len,
 	const octet certa[], size_t certa_len, const octet* date)
 {
 	err_t code;
+	void* state;
 	btok_cvc_t* cvc;
 	btok_cvc_t* cvca;
-	// разобрать сертификаты
-	cvc = (btok_cvc_t*)blobCreate(2 * sizeof(btok_cvc_t));
-	if (!cvc)
+	// входной контроль
+	if (!memIsNullOrValid(date, 6))
+		return ERR_BAD_INPUT;
+	// выделить и разметить память
+	state = blobCreate(2 * sizeof(btok_cvc_t));
+	if (!state)
 		return ERR_OUTOFMEMORY;
+	cvc = (btok_cvc_t*)state;
 	cvca = cvc + 1;
+	// разобрать сертификаты
 	code = btokCVCUnwrap(cvca, certa, certa_len, 0, 0);
 	ERR_CALL_HANDLE(code, blobClose(cvca));
 	code = btokCVCUnwrap(cvc, cert, cert_len, cvca->pubkey, cvca->pubkey_len);
@@ -618,15 +628,14 @@ err_t btokCVCVal(const octet cert[], size_t cert_len,
 	// проверить дату
 	if (date)
 	{
-		if (!memIsValid(date, 6))
-			code = ERR_BAD_INPUT;
-		else if (!btokCVCDateIsValid(date) ||
-			!btokCVCDateLeq(cvc->from, date) ||
-			!btokCVCDateLeq(date, cvc->until))
+		if (!btokCVCDateIsValid(date))
 			code = ERR_BAD_DATE;
+		else if (!btokCVCDateLeq(cvc->from, date) ||
+			!btokCVCDateLeq(date, cvc->until))
+			code = ERR_OUTOFRANGE;
 	}
 	// завершить
-	blobClose(cvc);
+	blobClose(state);
 	return code;
 }
 
@@ -637,18 +646,20 @@ err_t btokCVCVal2(btok_cvc_t* cvc, const octet cert[], size_t cert_len,
 	btok_cvc_t* state = 0;
 	// входной контроль
 	if (!memIsNullOrValid(cvc, sizeof(btok_cvc_t)) || 
-		!memIsValid(cvca, sizeof(btok_cvc_t)))
+		!memIsValid(cvca, sizeof(btok_cvc_t)) ||
+		!memIsNullOrValid(date, 6))
 		return ERR_BAD_INPUT;
-	// разобрать сертификаты
-	if (!cvc)
+	// выделить память
+	if (!cvc || !date)
 	{
 		state = (btok_cvc_t*)blobCreate(sizeof(btok_cvc_t));
 		if (!state)
 			return ERR_OUTOFMEMORY;
-		cvc = state;
+		if (!cvc)
+			cvc = state;
 	}
-	code = btokCVCUnwrap(cvc, cert, cert_len, cvca->pubkey, 
-		cvca->pubkey_len);
+	// разобрать сертификат
+	code = btokCVCUnwrap(cvc, cert, cert_len, cvca->pubkey, cvca->pubkey_len);
 	ERR_CALL_HANDLE(code, blobClose(state));
 	// проверить соответствие
 	code = btokCVCCheck2(cvc, cvca);
@@ -656,14 +667,39 @@ err_t btokCVCVal2(btok_cvc_t* cvc, const octet cert[], size_t cert_len,
 	// проверить дату
 	if (date)
 	{
-		if (!memIsValid(date, 6))
-			code = ERR_BAD_INPUT;
-		else if (!btokCVCDateIsValid(date) ||
-			!btokCVCDateLeq(cvc->from, date) ||
-			!btokCVCDateLeq(date, cvc->until))
+		if (!btokCVCDateIsValid(date))
 			code = ERR_BAD_DATE;
+		else if (!btokCVCDateLeq(cvc->from, date) ||
+			!btokCVCDateLeq(date, cvc->until))
+			code = ERR_OUTOFRANGE;
 	}
 	// завершить
 	blobClose(state);
 	return code;
 }
+
+/*
+*******************************************************************************
+Проверка соответствия CV-сертификата
+*******************************************************************************
+*/
+
+err_t btokCVCFit(const octet cert[], size_t cert_len, const octet privkey[],
+	size_t privkey_len)
+{
+	err_t code;
+	btok_cvc_t* cvc;
+	// выделить память
+	cvc = (btok_cvc_t*)blobCreate(sizeof(btok_cvc_t));
+	if (!cvc)
+		return ERR_OUTOFMEMORY;
+	// разобрать сертификат
+	code = btokCVCUnwrap(cvc, cert, cert_len, 0, 0);
+	ERR_CALL_HANDLE(code, blobClose(cvc));
+	// проверить соответствие
+	code = btokKeypairVal(privkey, privkey_len, cvc->pubkey, cvc->pubkey_len);
+	// завершить
+	blobClose(cvc);
+	return code;
+}
+

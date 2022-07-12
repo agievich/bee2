@@ -4,7 +4,7 @@
 \brief Errors
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2022.07.11
+\version 2022.07.12
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -58,28 +58,30 @@ Sys
 #define ERR_BAD_UNIT				_ERR_REG(102)
 /* некорректный файл */
 #define ERR_BAD_FILE				_ERR_REG(103)
+/* некорректный таймер */
+#define ERR_BAD_TIMER				_ERR_REG(104)
 /* некорректная функция */
-#define ERR_BAD_FUNCTION			_ERR_REG(104)
+#define ERR_BAD_FUNCTION			_ERR_REG(105)
 /* некорректная команда */
-#define ERR_BAD_COMMAND				_ERR_REG(105)
+#define ERR_BAD_COMMAND				_ERR_REG(106)
 /* некорректная длина */
-#define ERR_BAD_LENGTH				_ERR_REG(106)
+#define ERR_BAD_LENGTH				_ERR_REG(107)
 /* некорректные входные данные */
-#define ERR_BAD_INPUT				_ERR_REG(107)
+#define ERR_BAD_INPUT				_ERR_REG(108)
 /* не хватает памяти */
-#define ERR_OUTOFMEMORY				_ERR_REG(108)
+#define ERR_OUTOFMEMORY				_ERR_REG(109)
 /* доступ запрещен */
-#define ERR_ACCESS_DENIED			_ERR_REG(109)
+#define ERR_ACCESS_DENIED			_ERR_REG(110)
 /* устройство не готово */
-#define ERR_NOT_READY				_ERR_REG(110)
+#define ERR_NOT_READY				_ERR_REG(111)
 /* запрашиваемый ресурс занят */
-#define ERR_BUSY					_ERR_REG(111)
+#define ERR_BUSY					_ERR_REG(112)
 /* таймаут */
-#define ERR_TIMEOUT					_ERR_REG(112)
+#define ERR_TIMEOUT					_ERR_REG(113)
 /* не реализовано */
-#define ERR_NOT_IMPLEMENTED			_ERR_REG(113)
+#define ERR_NOT_IMPLEMENTED			_ERR_REG(114)
 /* последствия предыдущих ошибок */
-#define ERR_AFTER					_ERR_REG(114)
+#define ERR_AFTER					_ERR_REG(115)
 
 /*
 *******************************************************************************
@@ -126,6 +128,9 @@ Core
 #define ERR_BAD_DATE				_ERR_REG(307)
 /* некорректное имя */
 #define ERR_BAD_NAME				_ERR_REG(308)
+/* вне диапазона */
+#define ERR_OUTOFRANGE				_ERR_REG(309)
+
 
 /*
 *******************************************************************************

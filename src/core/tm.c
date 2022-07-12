@@ -3,9 +3,8 @@
 \file tm.c
 \brief Time and timers
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.05.10
-\version 2015.11.25
+\version 2022.07.12
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -194,4 +193,57 @@ tm_time_t tmTimeRound(tm_time_t t0, tm_time_t ts)
 		return TIME_ERR;
 	t = (t - t0) / ts;
 	return t;
+}
+
+/*
+*******************************************************************************
+Дата
+*******************************************************************************
+*/
+
+#if defined(_MSC_VER)
+#define localtime_r(et, lt) (localtime_s(lt, et) ? 0 : lt)
+#endif
+
+err_t tmDate(size_t* year, size_t* mon, size_t* day)
+{
+	struct tm lt;
+	time_t et;
+	// входной контроль
+	if (!memIsNullOrValid(year, O_PER_S) ||
+		!memIsNullOrValid(mon, O_PER_S) ||
+		!memIsNullOrValid(day, O_PER_S))
+		return ERR_BAD_INPUT;
+	// получить отметку времени
+	if (time(&et) == -1 || !localtime_r(&et, &lt))
+		return ERR_BAD_TIMER;
+	// возвратить данные
+	if (year)
+		*year = (size_t)lt.tm_year, *year += 1900;
+	if (mon)
+		*mon = (size_t)lt.tm_mon;
+	if (day)
+		*day = (size_t)lt.tm_mday;
+	return ERR_OK;
+}
+
+err_t tmDate2(octet date[6])
+{
+	err_t code;
+	size_t year;
+	size_t mon;
+	size_t day;
+	// входной контроль
+	if (!memIsValid(date, 6))
+		return ERR_BAD_INPUT;
+	// получить дату
+	code = tmDate(&year, &mon, &day);
+	ERR_CALL_CHECK(code);
+	// преобразовать дату
+	if (year < 2000 || year > 2099)
+		return ERR_OUTOFRANGE;
+	date[0] = (octet)(year / 10), date[1] = (octet)(year % 10);
+	date[2] = (octet)(mon / 10),  date[3] = (octet)(mon % 10);
+	date[4] = (octet)(day / 10),  date[5] = (octet)(day % 10);
+	return ERR_OK;
 }

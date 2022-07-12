@@ -30,6 +30,7 @@ static const err_msg _messages[] = {
 	{ERR_SYS, "Unknown system error"},
 	{ERR_BAD_UNIT, "Invalid device"},
 	{ERR_BAD_FILE, "Invalid file"},
+	{ERR_BAD_TIMER, "Invalid timer"},
 	{ERR_BAD_FUNCTION, "Invalid function"},
 	{ERR_BAD_COMMAND, "Invalid command"},
 	{ERR_BAD_LENGTH, "Invalid length"},
@@ -59,6 +60,7 @@ static const err_msg _messages[] = {
 	{ERR_BAD_TIME, "Invalid time"},
 	{ERR_BAD_DATE, "Invalid date"},
 	{ERR_BAD_NAME, "Invalid name"},
+	{ERR_OUTOFRANGE, "Out of range"},
 	// math
 	{ERR_BAD_POINT, "Invalid elliptic curve point"},
 	{ERR_NOT_PRIME, "The number is not prime"},
