@@ -34,6 +34,7 @@ version 3. See Copyright Notices in bee2/info.h.
 static const char oid_bign_pubkey[] = "1.2.112.0.2.0.34.101.45.2.1";
 static const char oid_eid_access[] = "1.2.112.0.2.0.34.101.79.6.1";
 static const char oid_esign_access[] = "1.2.112.0.2.0.34.101.79.6.2";
+static const char oid_esign_auth_ext[] = "1.2.112.0.2.0.34.101.79.8.1";
 
 /*
 *******************************************************************************
@@ -300,15 +301,17 @@ err_t btokCVCCheck2(const btok_cvc_t* cvc, const btok_cvc_t* cvca)
 	  OID(bign-pubkey)
 	  BITS(SIZE(512|768|1024)) -- pubkey
 	PSTR[APPLICATION 32](SIZE(8..12)) -- holder
-	SEQ[APPLICATION 73] CertHAT OPTIONAL
+	SEQ[APPLICATION 76] CertHAT OPTIONAL
 	  OID(id-eIdAccess)
 	  OCT(SIZE(5)) -- eid_hat
 	OCT[APPLICATION 37](SIZE(6)) -- from
 	OCT[APPLICATION 36](SIZE(6)) -- until
 	SEQ[APPLICATION 5] CVExt OPTIONAL
       SEQ[APPLICATION 19] DDT -- Discretionary Data Template
-	    OID(id-eSignAccess)
-	    OCT(SIZE(2)) -- esign_hat
+	    OID(id-eSignAuthExt)
+	    SEQ[APPLICATION 76] CertHAT OPTIONAL
+	      OID(id-eSignAccess)
+          OCT(SIZE(2)) -- esign_hat
 *******************************************************************************
 */
 
@@ -366,8 +369,11 @@ static size_t btokCVCBodyEnc(octet body[], const btok_cvc_t* cvc)
 	{
 		derEncStep(derTSEQEncStart(CVExt, body, count, 0x65), body, count);
 		derEncStep(derTSEQEncStart(DDT, body, count, 0x73), body, count);
+		derEncStep(derOIDEnc(body, oid_esign_auth_ext), body, count);
+		derEncStep(derTSEQEncStart(CertHAT, body, count, 0x7F4C), body, count);
 		derEncStep(derOIDEnc(body, oid_esign_access), body, count);
 		derEncStep(derOCTEnc(body, cvc->hat_esign, 2), body, count);
+		derEncStep(derTSEQEncStop(body, count, CertHAT), body, count);
 		derEncStep(derTSEQEncStop(body, count, DDT), body, count);
 		derEncStep(derTSEQEncStop(body, count, CVExt), body, count);
 	}
@@ -428,8 +434,11 @@ static size_t btokCVCBodyDec(btok_cvc_t* cvc, const octet body[], size_t count)
 	{
 		derDecStep(derTSEQDecStart(CVExt, ptr, count, 0x65), ptr, count);
 		derDecStep(derTSEQDecStart(DDT, ptr, count, 0x73), ptr, count);
+		derDecStep(derOIDDec2(ptr, count, oid_esign_auth_ext), ptr, count);
+		derDecStep(derTSEQDecStart(CertHAT, ptr, count, 0x7F4C), ptr, count);
 		derDecStep(derOIDDec2(ptr, count, oid_esign_access), ptr, count);
 		derDecStep(derOCTDec2(cvc->hat_esign, ptr, count, 2), ptr, count);
+		derDecStep(derTSEQDecStop(ptr, CertHAT), ptr, count);
 		derDecStep(derTSEQDecStop(ptr, DDT), ptr, count);
 		derDecStep(derTSEQDecStop(ptr, CVExt), ptr, count);
 	}

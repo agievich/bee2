@@ -59,7 +59,7 @@ static bool_t btokCVCTest()
 	cvc0->pubkey_len = 0;
 	if (btokCVCWrap(0, &cert0_len, cvc0, privkey0, 64) != ERR_OK)
 		return FALSE;
-	ASSERT(cert0_len == 349);
+	ASSERT(cert0_len == 365);
 
 	// выпустить cert0
 	memSetZero(cvc0->authority, sizeof(cvc0->authority));
@@ -68,7 +68,7 @@ static bool_t btokCVCTest()
 	strCopy(cvc0->holder, "BYCA0000");
 	if (btokCVCWrap(cert0, &cert0_len, cvc0, privkey0, 64) != ERR_OK)
 		return FALSE;
-	ASSERT(cert0_len < 349);
+	ASSERT(cert0_len < 365);
 	// разобрать cert0
 	if (btokCVCUnwrap(cvc1, cert0, cert0_len, 0, 0) != ERR_OK ||
 		btokCVCUnwrap(cvc1, cert0, cert0_len, cvc0->pubkey,

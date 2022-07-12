@@ -5,6 +5,7 @@ endif()
 
 add_executable(bee2cmd
 	bsum/bsum.c
+	cvc/cvc.c
 	kg/kg.c
 	pwd/pwd.c
 	ver/ver.c

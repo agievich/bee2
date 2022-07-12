@@ -4,7 +4,7 @@
 \brief Generate and manage passwords
 \project bee2/cmd 
 \created 2022.06.23
-\version 2022.06.24
+\version 2022.07.12
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -244,11 +244,13 @@ int pwdMain(int argc, char* argv[])
 	else if (strEq(argv[0], "print"))
 		code = pwdPrint(argc - 1, argv + 1);
 	else
-	{
 		code = ERR_CMD_NOT_FOUND;
+	if (code != ERR_OK)
+	{
 		printf("bee2cmd/%s: %s\n", _name, errMsg(code));
+		return -1;
 	}
-	return (code == ERR_OK) ? 0 : -1;
+	return 0;
 }
 
 /*
