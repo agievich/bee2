@@ -4,7 +4,7 @@
 \brief Time and timers
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2022.07.12
+\version 2022.07.13
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -168,6 +168,27 @@ err_t tmDate(
 */
 err_t tmDate2(
 	octet date[6]		/*!< [out] дата */
+);
+
+/*!	\brief Корректная дата?
+
+	Проверяется корректность даты (year, mon, day), где year -- год, 
+	mon -- месяц, day -- день месяца.
+	\return Признак корректности.
+*/
+bool_t tmDateIsValid(
+	size_t year,		/*!< [in] год */
+	size_t mon,			/*!< [in] месяц */
+	size_t day			/*!< [in] день */
+);
+
+/*!	\brief Корректная дата в формате YYMMDD?
+
+	Проверяется корректность даты date в формате YYMMDD.
+	\return Признак корректности.
+*/
+bool_t tmDateIsValid2(
+	const octet date[6]		/*!< [in] дата */
 );
 
 #ifdef __cplusplus

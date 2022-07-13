@@ -4,7 +4,7 @@
 \brief Generate and manage private keys
 \project bee2/cmd 
 \created 2022.06.08
-\version 2022.06.24
+\version 2022.07.13
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -205,13 +205,8 @@ static err_t kgGen(int argc, char* argv[])
 			}
 			len /= 4, ++argv, --argc;
 		}
-		if (strStartsWith(*argv, "-pass"))
+		if (strEq(*argv, "-pass"))
 		{
-			if (!strEq(*argv, "-pass"))
-			{
-				code = ERR_CMD_PARAMS;
-				break;
-			}
 			if (pwd)
 			{
 				code = ERR_CMD_DUPLICATE;
@@ -223,6 +218,11 @@ static err_t kgGen(int argc, char* argv[])
 				break;
 			ASSERT(cmdPwdIsValid(pwd));
 			++argv, --argc;
+		}
+		else
+		{
+			code = ERR_CMD_PARAMS;
+			break;
 		}
 	}
 	if (code == ERR_OK && (!pwd || argc != 1))
@@ -311,13 +311,8 @@ static err_t kgVal(int argc, char* argv[])
 			}
 			len /= 4, ++argv, --argc;
 		}
-		if (strStartsWith(*argv, "-pass"))
+		if (strEq(*argv, "-pass"))
 		{
-			if (!strEq(*argv, "-pass"))
-			{
-				code = ERR_CMD_PARAMS;
-				break;
-			}
 			if (pwd)
 			{
 				code = ERR_CMD_DUPLICATE;
@@ -329,6 +324,11 @@ static err_t kgVal(int argc, char* argv[])
 				break;
 			ASSERT(cmdPwdIsValid(pwd));
 			++argv, --argc;
+		}
+		else
+		{
+			code = ERR_CMD_PARAMS;
+			break;
 		}
 	}
 	if (code == ERR_OK && (!pwd || argc != 1))
@@ -438,13 +438,8 @@ static err_t kgChp(int argc, char* argv[])
 			}
 			len /= 4, ++argv, --argc;
 		}
-		if (strStartsWith(*argv, "-passin"))
+		if (strEq(*argv, "-passin"))
 		{
-			if (!strEq(*argv, "-passin"))
-			{
-				code = ERR_CMD_PARAMS;
-				break;
-			}
 			if (pwdin)
 			{
 				code = ERR_CMD_DUPLICATE;
@@ -457,13 +452,8 @@ static err_t kgChp(int argc, char* argv[])
 			ASSERT(cmdPwdIsValid(pwdin));
 			++argv, --argc;
 		}
-		if (strStartsWith(*argv, "-passout"))
+		if (strEq(*argv, "-passout"))
 		{
-			if (!strEq(*argv, "-passout"))
-			{
-				code = ERR_CMD_PARAMS;
-				break;
-			}
 			if (pwdout)
 			{
 				code = ERR_CMD_DUPLICATE;
@@ -475,6 +465,11 @@ static err_t kgChp(int argc, char* argv[])
 				break;
 			ASSERT(cmdPwdIsValid(pwdout));
 			++argv, --argc;
+		}
+		else
+		{
+			code = ERR_CMD_PARAMS;
+			break;
 		}
 	}
 	if (code == ERR_OK && (!pwdin || !pwdout || argc != 1))

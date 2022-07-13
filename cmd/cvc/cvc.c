@@ -12,13 +12,12 @@ version 3. See Copyright Notices in bee2/info.h.
 
 #include "../cmd.h"
 #include <bee2/core/blob.h>
-#include <bee2/core/dec.h>
 #include <bee2/core/err.h>
 #include <bee2/core/hex.h>
 #include <bee2/core/mem.h>
 #include <bee2/core/prng.h>
-#include <bee2/core/rng.h>
 #include <bee2/core/str.h>
+#include <bee2/core/tm.h>
 #include <bee2/core/util.h>
 #include <bee2/crypto/bign.h>
 #include <bee2/crypto/btok.h>
@@ -48,17 +47,17 @@ static int cvcUsage()
 	printf(
 		"bee2cmd/%s: %s\n"
 		"Usage:\n"
-		"  cvc root <data> -pass <scheme> <privkeya> <certa>\n"
+		"  cvc root <cert_data> -pass <scheme> <privkeya> <certa>\n"
 		"    issue a self-signed certificate <certa> using <privkeya>\n"
-		"  cvc req <data> -pass <scheme> <privkey> <req>\n"
+		"  cvc req <cert_data> -pass <scheme> <privkey> <req>\n"
 		"    generate a pre-certificate <req> using <privkey>\n"
 		"  cvc iss -pass <scheme> <privkeya> <certa> <req> <cert>\n"
-		"    process <req> and issue <cert> subordinate to <certa> using <privkeya>\n"
+		"    issue <cert> based on <req> and subordinate to <certa> using <privkeya>\n"
 		"  cvc val [-date <YYMMDD>] <certa> <certb> ... <cert>\n"
 		"    validate <certb> ... <cert> using <certa> as an anchor\n"
 		"  cvc print <cert>\n"
 		"    print <cert> info\n"
-		"  <data>:\n"
+		"  <cert_data>:\n"
 		"    -authority <name> -- authority (issuer)\n"
 		"    -holder <name> -- holder (owner)\n"
 		"    -from <YYMMDD> -- starting date\n"
@@ -106,6 +105,123 @@ static err_t cvcSelfTest()
 
 /*
 *******************************************************************************
+Разбор опций
+*******************************************************************************
+*/
+
+static err_t cvcParseOptions(btok_cvc_t* cvc, cmd_pwd_t* pwd, octet date[6],
+	int argc, char* argv[])
+{
+	err_t code;
+	// pre
+	ASSERT(memIsNullOrValid(cvc, sizeof(btok_cvc_t)));
+	ASSERT(memIsNullOrValid(pwd, sizeof(cmd_pwd_t)));
+	ASSERT(memIsNullOrValid(date, 6));
+	// подготовить выходные данные
+	cvc ? memSetZero(cvc, sizeof(btok_cvc_t)) : 0;
+	pwd ? *pwd = 0 : 0;
+	date ? memSetZero(date, 6) : 0;
+	// обработать опции
+	if (!argc || argc % 2)
+		return ERR_CMD_PARAMS;
+	while (argc && strStartsWith(*argv, "-"))
+	{
+		// authority
+		if (strEq(argv[0], "-authority"))
+		{
+			if (!cvc)
+			{
+				code = ERR_CMD_PARAMS;
+				break;
+			}
+			if (strLen(cvc->authority))
+			{
+				code = ERR_CMD_DUPLICATE;
+				break;
+			}
+			--argc, ++argv;
+			ASSERT(argc > 0);
+			if (!strLen(*argv) || strLen(*argv) + 1 > sizeof(cvc->authority))
+			{
+				code = ERR_BAD_NAME;
+				break;
+			}
+			strCopy(cvc->authority, *argv);
+			--argc, ++argv;
+		}
+		// holder
+		if (strEq(argv[0], "-holder"))
+		{
+			if (!cvc)
+			{
+				code = ERR_CMD_PARAMS;
+				break;
+			}
+			if (strLen(cvc->holder))
+			{
+				code = ERR_CMD_DUPLICATE;
+				break;
+			}
+			--argc, ++argv;
+			ASSERT(argc > 0);
+			if (!strLen(*argv) || strLen(*argv) + 1 > sizeof(cvc->holder))
+			{
+				code = ERR_BAD_NAME;
+				break;
+			}
+			strCopy(cvc->holder, *argv);
+			--argc, ++argv;
+		}
+		// password
+		if (strEq(*argv, "-pass"))
+		{
+			if (!pwd)
+			{
+				code = ERR_CMD_PARAMS;
+				break;
+			}
+			if (*pwd)
+			{
+				code = ERR_CMD_DUPLICATE;
+				break;
+			}
+			--argc, ++argv;
+			code = cmdPwdRead(pwd, *argv);
+			if (code != ERR_OK)
+				break;
+			--argc, ++argv;
+		}
+		else
+		{
+			code = ERR_CMD_PARAMS;
+			break;
+		}
+
+	}
+	// проверить, что требуемые данные определены корректно
+	if (code == ERR_OK && pwd && !*pwd)
+		code = ERR_CMD_PARAMS;
+	if (code == ERR_OK && cvc)
+		code = btokCVCCheck(cvc);
+	if (code == ERR_OK && date)
+	{
+		if (memIsZero(date, 6))
+			code = ERR_CMD_PARAMS;
+		else if (!tmDateIsValid2(date))
+			code = ERR_BAD_DATE;
+	}
+	// проверить, что требуемые данные определены корректно
+	if (pwd && !*pwd)
+		code = ERR_CMD_PARAMS;
+	if (pwd)
+			cmdPwdClose(*pwd);
+		return code;
+	// завершить
+	return ERR_OK;
+}
+
+/*
+*******************************************************************************
 Самоподписанный сертификат
 *******************************************************************************
 */
@@ -148,7 +264,6 @@ static err_t cvcVal(int argc, char* argv[])
 	return ERR_NOT_IMPLEMENTED;
 }
 
-
 /*
 *******************************************************************************
 Печать
@@ -166,7 +281,7 @@ static err_t cvcPrint(int argc, char* argv[])
 	// обработать опции
 	if (argc != 1)
 		return ERR_CMD_PARAMS;
-	// обработать файл
+	// определить длину сертификата
 	if (!cmdFileValExist(argc, argv))
 		return ERR_FILE_NOT_FOUND;
 	if ((cert_len = cmdFileSize(argv[0])) == SIZE_MAX)
@@ -193,6 +308,7 @@ static err_t cvcPrint(int argc, char* argv[])
 	code = btokCVCUnwrap(cvc, cert, cert_len, 0, 0);
 	ERR_CALL_HANDLE(code, blobClose(state));
 	// печать содержимого
+	ASSERT(cvc->pubkey_len <= 128);
 	hexFrom(hex, cvc->pubkey, cvc->pubkey_len);
 	printf(
 		"authority = \"%s\"\n"
@@ -205,7 +321,8 @@ static err_t cvcPrint(int argc, char* argv[])
 		"hat_eid = %s\n"
 		"hat_esign = %s\n",
 		hex, hex + 16);
-	hexFrom(hex, cvc->pubkey, cvc->pubkey_len);
+	ASSERT(cvc->sig_len <= 96);
+	hexFrom(hex, cvc->sig, cvc->sig_len);
 	printf(
 		"from = 20%c%c-%c%c-%c%c\n"
 		"until = 20%c%c-%c%c-%c%c\n"
@@ -220,6 +337,12 @@ static err_t cvcPrint(int argc, char* argv[])
 	// завершить
 	return ERR_OK;
 }
+
+/*
+*******************************************************************************
+Главная функция
+*******************************************************************************
+*/
 
 int cvcMain(int argc, char* argv[])
 {

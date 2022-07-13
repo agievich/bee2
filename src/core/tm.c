@@ -4,7 +4,7 @@
 \brief Time and timers
 \project bee2 [cryptographic library]
 \created 2012.05.10
-\version 2022.07.12
+\version 2022.07.13
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -246,4 +246,22 @@ err_t tmDate2(octet date[6])
 	date[2] = (octet)(mon / 10),  date[3] = (octet)(mon % 10);
 	date[4] = (octet)(day / 10),  date[5] = (octet)(day % 10);
 	return ERR_OK;
+}
+
+bool_t tmDateIsValid(size_t year, size_t mon, size_t day)
+{
+	return 1 <= mon && mon <= 12 &&
+		1 <= day && day <= 31 &&
+		!(day == 31 && (mon == 4 || mon == 6 || mon == 9 || mon == 11)) &&
+		!(mon == 2 && (day > 29 || 
+			day == 29 && (year % 400 == 0 || year % 4 == 0 && year % 100)));
+}
+
+bool_t tmDateIsValid2(const octet date[6])
+{
+	return memIsValid(date, 6) && 
+		tmDateIsValid(
+			2000 + 10 * date[0] + date[1],
+			10 * date[2] + date[3],
+			10 * date[4] + date[5]);
 }

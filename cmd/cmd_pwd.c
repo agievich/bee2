@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: password management
 \project bee2/cmd 
 \created 2022.06.13
-\version 2022.07.05
+\version 2022.07.13
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -343,13 +343,8 @@ static err_t cmdPwdGenShare(cmd_pwd_t* pwd, const char* cmdline)
 			len /= 8, ++offset, --argc;
 		}
 		// пароль защиты частичных секретов
-		if (strStartsWith(argv[offset], "-pass"))
+		if (strEq(argv[offset], "-pass"))
 		{
-			if (!strEq(argv[offset], "-pass"))
-			{
-				code = ERR_CMD_PARAMS;
-				goto final;
-			}
 			if (spwd)
 			{
 				code = ERR_CMD_DUPLICATE;
@@ -361,6 +356,11 @@ static err_t cmdPwdGenShare(cmd_pwd_t* pwd, const char* cmdline)
 			ERR_CALL_HANDLE(code, cmdArgClose(argv));
 			ASSERT(cmdPwdIsValid(spwd));
 			++offset, --argc;
+		}
+		else
+		{
+			code = ERR_CMD_PARAMS;
+			goto final;
 		}
 	}
 	// проверить, что пароль защиты частичных секретов построен
@@ -443,13 +443,8 @@ static err_t cmdPwdReadShare(cmd_pwd_t* pwd, const char* cmdline)
 			len /= 8, ++offset, --argc;
 		}
 		// пароль защиты частичных секретов
-		if (strStartsWith(argv[offset], "-pass"))
+		if (strEq(argv[offset], "-pass"))
 		{
-			if (!strEq(argv[offset], "-pass"))
-			{
-				code = ERR_CMD_PARAMS;
-				goto final;
-			}
 			if (spwd)
 			{
 				code = ERR_CMD_DUPLICATE;
@@ -461,6 +456,11 @@ static err_t cmdPwdReadShare(cmd_pwd_t* pwd, const char* cmdline)
 			ERR_CALL_HANDLE(code, cmdArgClose(argv));
 			ASSERT(cmdPwdIsValid(spwd));
 			++offset, --argc;
+		}
+		else
+		{
+			code = ERR_CMD_PARAMS;
+			goto final;
 		}
 	}
 	// проверить, что пароль защиты частичных секретов определен
