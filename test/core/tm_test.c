@@ -38,14 +38,17 @@ bool_t tmTest()
 	}
 	// дата
 	{
-		size_t year;
-		size_t mon;
-		size_t day;
+		size_t y;
+		size_t m;
+		size_t d;
 		octet date[6];
-		if (tmDate(&year, &mon, &day) != ERR_OK || tmDate2(date) != ERR_OK)
+		if (!tmDate(&y, &m, &d) || !tmDate2(date) ||
+			!tmDateIsValid(y, m, d) || !tmDateIsValid2(date) ||
+			tmDateIsValid(1582, 12, 31) || tmDateIsValid(1583, 9, 31) ||
+			!tmDateIsValid(1600, 2, 29) || tmDateIsValid(1900, 2, 29))
 			return FALSE;
 		printf("tm::date: %04u-%02u-%02u\n",
-			(unsigned)year, (unsigned)mon, (unsigned)day);
+			(unsigned)y, (unsigned)m, (unsigned)d);
 	}
 	// все нормально
 	return TRUE;

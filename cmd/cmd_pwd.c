@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: password management
 \project bee2/cmd 
 \created 2022.06.13
-\version 2022.07.13
+\version 2022.07.14
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -326,7 +326,7 @@ static err_t cmdPwdGenShare(cmd_pwd_t* pwd, const char* cmdline)
 			++offset, --argc;
 		}
 		// уровень стойкости
-		if (strStartsWith(argv[offset], "-l"))
+		else if (strStartsWith(argv[offset], "-l"))
 		{
 			char* str = argv[offset] + strLen("-l");
 			if (len)
@@ -343,7 +343,7 @@ static err_t cmdPwdGenShare(cmd_pwd_t* pwd, const char* cmdline)
 			len /= 8, ++offset, --argc;
 		}
 		// пароль защиты частичных секретов
-		if (strEq(argv[offset], "-pass"))
+		else if (strEq(argv[offset], "-pass"))
 		{
 			if (spwd)
 			{
@@ -426,7 +426,7 @@ static err_t cmdPwdReadShare(cmd_pwd_t* pwd, const char* cmdline)
 			++offset, --argc;
 		}
 		// уровень стойкости
-		if (strStartsWith(argv[offset], "-l"))
+		else if (strStartsWith(argv[offset], "-l"))
 		{
 			char* str = argv[offset] + strLen("-l");
 			if (len)
@@ -443,7 +443,7 @@ static err_t cmdPwdReadShare(cmd_pwd_t* pwd, const char* cmdline)
 			len /= 8, ++offset, --argc;
 		}
 		// пароль защиты частичных секретов
-		if (strEq(argv[offset], "-pass"))
+		else if (strEq(argv[offset], "-pass"))
 		{
 			if (spwd)
 			{

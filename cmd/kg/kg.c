@@ -4,7 +4,7 @@
 \brief Generate and manage private keys
 \project bee2/cmd 
 \created 2022.06.08
-\version 2022.07.13
+\version 2022.07.14
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -205,7 +205,7 @@ static err_t kgGen(int argc, char* argv[])
 			}
 			len /= 4, ++argv, --argc;
 		}
-		if (strEq(*argv, "-pass"))
+		else if (strEq(*argv, "-pass"))
 		{
 			if (pwd)
 			{
@@ -311,7 +311,7 @@ static err_t kgVal(int argc, char* argv[])
 			}
 			len /= 4, ++argv, --argc;
 		}
-		if (strEq(*argv, "-pass"))
+		else if (strEq(*argv, "-pass"))
 		{
 			if (pwd)
 			{
@@ -438,7 +438,7 @@ static err_t kgChp(int argc, char* argv[])
 			}
 			len /= 4, ++argv, --argc;
 		}
-		if (strEq(*argv, "-passin"))
+		else if (strEq(*argv, "-passin"))
 		{
 			if (pwdin)
 			{
@@ -452,7 +452,7 @@ static err_t kgChp(int argc, char* argv[])
 			ASSERT(cmdPwdIsValid(pwdin));
 			++argv, --argc;
 		}
-		if (strEq(*argv, "-passout"))
+		else if (strEq(*argv, "-passout"))
 		{
 			if (pwdout)
 			{

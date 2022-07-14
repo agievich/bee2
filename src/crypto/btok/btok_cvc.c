@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): CV certificates
 \project bee2 [cryptographic library]
 \created 2022.07.04
-\version 2022.07.12
+\version 2022.07.14
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -23,7 +23,6 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/crypto/belt.h"
 #include "bee2/crypto/bign.h"
 #include "bee2/crypto/btok.h"
-#include <time.h>
 
 /*
 *******************************************************************************
@@ -222,30 +221,10 @@ static bool_t btokCVCNameIsValid(const char* name)
 		strIsPrintable(name);
 }
 
-static bool_t btokCVCDateIsValid(const octet date[6])
+static bool_t tmDateLeq2(const octet left[6], const octet right[6])
 {
-	octet y, m, d;
-	// предварительная проверка
-	if (!memIsValid(date, 6) ||
-		date[0] > 9 || date[1] > 9 || date[2] > 9 ||
-		date[3] > 9 || date[4] > 9 || date[5] > 9)
-		return FALSE;
-	// проверить год/месяц/число
-	// \remark СТБ 34.101.79 вееден в 2019 году
-	y = 10 * date[0] + date[1];
-	m = 10 * date[2] + date[3];
-	d = 10 * date[4] + date[5];
-	return y >= 19 &&
-		1 <= m && m <= 12 &&
-		1 <= d && d <= 31 &&
-		!(d == 31 && (m == 4 || m == 6 || m == 9 || m == 11)) &&
-		!(m == 2 && (d > 29 || d == 29 && y % 4 != 0));
-}
-
-static bool_t btokCVCDateLeq(const octet left[6], const octet right[6])
-{
-	ASSERT(btokCVCDateIsValid(left));
-	ASSERT(btokCVCDateIsValid(right));
+	ASSERT(tmDateIsValid2(left));
+	ASSERT(tmDateIsValid2(right));
 	// left <= right?
 	return memCmp(left, right, 6) <= 0;
 }
@@ -255,9 +234,9 @@ static bool_t btokCVCSeemsValid(const btok_cvc_t* cvc)
 	return memIsValid(cvc, sizeof(btok_cvc_t)) &&
 		btokCVCNameIsValid(cvc->authority) &&
 		btokCVCNameIsValid(cvc->holder) &&
-		btokCVCDateIsValid(cvc->from) &&
-		btokCVCDateIsValid(cvc->until) &&
-		btokCVCDateLeq(cvc->from, cvc->until) &&
+		tmDateIsValid2(cvc->from) &&
+		tmDateIsValid2(cvc->until) &&
+		tmDateLeq2(cvc->from, cvc->until) &&
 		(cvc->pubkey_len == 64 || cvc->pubkey_len == 96 ||
 			cvc->pubkey_len == 128);
 }
@@ -268,8 +247,8 @@ err_t btokCVCCheck(const btok_cvc_t* cvc)
 		return ERR_BAD_INPUT;
 	if (!btokCVCNameIsValid(cvc->authority) || !btokCVCNameIsValid(cvc->holder))
 		return ERR_BAD_NAME;
-	if (!btokCVCDateIsValid(cvc->from) || !btokCVCDateIsValid(cvc->until) ||
-		!btokCVCDateLeq(cvc->from, cvc->until))
+	if (!tmDateIsValid2(cvc->from) || !tmDateIsValid2(cvc->until) ||
+		!tmDateLeq2(cvc->from, cvc->until))
 		return ERR_BAD_DATE;
 	return btokPubkeyVal(cvc->pubkey, cvc->pubkey_len);
 }
@@ -282,10 +261,10 @@ err_t btokCVCCheck2(const btok_cvc_t* cvc, const btok_cvc_t* cvca)
 		return ERR_BAD_INPUT;
 	if (!strEq(cvc->authority, cvca->holder))
 		return ERR_BAD_NAME;
-	if (!btokCVCDateIsValid(cvca->from) ||
-		!btokCVCDateIsValid(cvca->until) ||
-		!btokCVCDateLeq(cvca->from, cvc->from) ||
-		!btokCVCDateLeq(cvc->from, cvca->until))
+	if (!tmDateIsValid2(cvca->from) ||
+		!tmDateIsValid2(cvca->until) ||
+		!tmDateLeq2(cvca->from, cvc->from) ||
+		!tmDateLeq2(cvc->from, cvca->until))
 		return ERR_BAD_DATE;
 	return ERR_OK;
 }
@@ -637,10 +616,10 @@ err_t btokCVCVal(const octet cert[], size_t cert_len,
 	// проверить дату
 	if (date)
 	{
-		if (!btokCVCDateIsValid(date))
+		if (!tmDateIsValid2(date))
 			code = ERR_BAD_DATE;
-		else if (!btokCVCDateLeq(cvc->from, date) ||
-			!btokCVCDateLeq(date, cvc->until))
+		else if (!tmDateLeq2(cvc->from, date) ||
+			!tmDateLeq2(date, cvc->until))
 			code = ERR_OUTOFRANGE;
 	}
 	// завершить
@@ -676,10 +655,10 @@ err_t btokCVCVal2(btok_cvc_t* cvc, const octet cert[], size_t cert_len,
 	// проверить дату
 	if (date)
 	{
-		if (!btokCVCDateIsValid(date))
+		if (!tmDateIsValid2(date))
 			code = ERR_BAD_DATE;
-		else if (!btokCVCDateLeq(cvc->from, date) ||
-			!btokCVCDateLeq(date, cvc->until))
+		else if (!tmDateLeq2(cvc->from, date) ||
+			!tmDateLeq2(date, cvc->until))
 			code = ERR_OUTOFRANGE;
 	}
 	// завершить

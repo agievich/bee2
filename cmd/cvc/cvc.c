@@ -4,7 +4,7 @@
 \brief Manage CV-certificates
 \project bee2/cmd 
 \created 2022.07.12
-\version 2022.07.12
+\version 2022.07.14
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -150,7 +150,7 @@ static err_t cvcParseOptions(btok_cvc_t* cvc, cmd_pwd_t* pwd, octet date[6],
 			--argc, ++argv;
 		}
 		// holder
-		if (strEq(argv[0], "-holder"))
+		else if (strEq(argv[0], "-holder"))
 		{
 			if (!cvc)
 			{
@@ -173,7 +173,7 @@ static err_t cvcParseOptions(btok_cvc_t* cvc, cmd_pwd_t* pwd, octet date[6],
 			--argc, ++argv;
 		}
 		// password
-		if (strEq(*argv, "-pass"))
+		else if (strEq(*argv, "-pass"))
 		{
 			if (!pwd)
 			{
