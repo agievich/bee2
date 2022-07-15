@@ -502,6 +502,7 @@ err_t btokCVCUnwrap(btok_cvc_t* cvc, const octet cert[], size_t cert_len,
 	if (!memIsValid(cvc, sizeof(btok_cvc_t)) ||
 		pubkey_len != 0 &&
 			pubkey_len != 64 && pubkey_len != 96 &&	pubkey_len != 128 ||
+		pubkey_len == 0 && pubkey != 0 && pubkey != cvc->pubkey ||
 		!memIsValid(cert, cert_len) ||
 		!memIsValid(pubkey, pubkey_len) ||
 		!memIsDisjoint2(cvc, sizeof(btok_cvc_t), cert, cert_len) ||
@@ -521,6 +522,8 @@ err_t btokCVCUnwrap(btok_cvc_t* cvc, const octet cert[], size_t cert_len,
 	body = cert, body_len = t;
 	cert = cert ? cert + t : 0, cert_len -= t;
 	// ...определить длину подписи...
+	if (pubkey_len == 0 && pubkey == cvc->pubkey)
+		pubkey_len = cvc->pubkey_len;
 	if (pubkey_len == 0)
 	{
 		size_t sig_len;

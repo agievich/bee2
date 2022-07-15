@@ -107,16 +107,70 @@ static err_t cvcSelfTest()
 
 /*
 *******************************************************************************
+Чтение / запись
+*******************************************************************************
+*/
+
+err_t cmdCVCWrite(const octet cert[], size_t cert_len, const char* file)
+{
+	err_t code;
+	// pre
+	ASSERT(memIsValid(cert, cert_len));
+	ASSERT(strIsValid(file));
+	// записать
+	{
+		FILE* fp;
+		code = (fp = fopen(file, "wb")) ? ERR_OK : ERR_FILE_CREATE;
+		ERR_CALL_CHECK(code);
+		code = (cert_len == fwrite(cert, 1, cert_len, fp)) ?
+			ERR_OK : ERR_FILE_WRITE;
+		fclose(fp);
+	}
+	// завершить
+	return code;
+}
+
+err_t cmdCVCRead(octet cert[], size_t* cert_len, const char* file)
+{
+	err_t code = ERR_OK;
+	size_t len;
+	// pre
+	ASSERT(memIsNullOrValid(cert_len, O_PER_S));
+	ASSERT(strIsValid(file));
+	// определить длину файла
+	if ((len = cmdFileSize(file)) == SIZE_MAX)
+		return ERR_FILE_READ;
+	if (cert_len)
+		*cert_len = len;
+	// читать
+	if (cert)
+	{
+		FILE* fp;
+		ASSERT(memIsValid(cert, len));
+		code = (fp = fopen(file, "rb")) ? ERR_OK : ERR_FILE_OPEN;
+		ERR_CALL_CHECK(code);
+		code = (len == fread(cert, 1, len, fp)) ? ERR_OK : ERR_FILE_READ;
+		fclose(fp);
+	}
+	// завершить
+	return code;
+}
+
+
+/*
+*******************************************************************************
 Разбор опций командной строки
 
 Опции возвращаются по адресам cvc, pwd, date. Лююой из адресов может быть
 нулевым, и тогда соответствующая опция не возвращается. Более того, ее указание
 в командной строке считается ошибкой.
+
+В случае успеха по адресу readc возвращается число обработанных аргументов.
 *******************************************************************************
 */
 
 static err_t cvcParseOptions(btok_cvc_t* cvc, cmd_pwd_t* pwd, octet date[6],
-	int argc, char* argv[])
+	int* readc, int argc, char* argv[])
 {
 	err_t code;
 	bool_t eid = FALSE;
@@ -125,6 +179,7 @@ static err_t cvcParseOptions(btok_cvc_t* cvc, cmd_pwd_t* pwd, octet date[6],
 	ASSERT(memIsNullOrValid(cvc, sizeof(btok_cvc_t)));
 	ASSERT(memIsNullOrValid(pwd, sizeof(cmd_pwd_t)));
 	ASSERT(memIsNullOrValid(date, 6));
+	ASSERT(memIsValid(readc, sizeof(int)));
 	// подготовить выходные данные
 	cvc ? memSetZero(cvc, sizeof(btok_cvc_t)) : 0;
 	pwd ? *pwd = 0 : 0;
@@ -132,6 +187,7 @@ static err_t cvcParseOptions(btok_cvc_t* cvc, cmd_pwd_t* pwd, octet date[6],
 	// обработать опции
 	if (!argc || argc % 2)
 		return ERR_CMD_PARAMS;
+	*readc = argc;
 	while (argc && strStartsWith(*argv, "-"))
 	{
 		// authority
@@ -344,6 +400,8 @@ static err_t cvcParseOptions(btok_cvc_t* cvc, cmd_pwd_t* pwd, octet date[6],
 	// завершить
 	if (code != ERR_OK)
 		cmdPwdClose(*pwd), *pwd = 0;
+	else
+		*readc -= argc;
 	return code;
 }
 
@@ -360,21 +418,18 @@ static err_t cvcRoot(int argc, char* argv[])
 	err_t code;
 	btok_cvc_t cvc;
 	cmd_pwd_t pwd;
+	int readc;
 	size_t privkey_len;
-	size_t cert_len;
 	octet* privkey;
+	size_t cert_len;
 	octet* cert;
-	FILE* fp;
-	// обработать имена файлов
-	if (argc < 2)
-		return ERR_CMD_PARAMS;
-	code = cmdFileValExist(1, argv + argc - 2);
-	ERR_CALL_CHECK(code);
-	code = cmdFileValNotExist(1, argv + argc - 1);
-	ERR_CALL_CHECK(code);
 	// обработать опции
-	code = cvcParseOptions(&cvc, &pwd, 0, argc - 2, argv);
+	code = cvcParseOptions(&cvc, &pwd, 0, &readc, argc, argv);
 	ERR_CALL_CHECK(code);
+	argc -= readc, argv += readc;
+	if (argc != 2)
+		code = ERR_CMD_PARAMS;
+	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	// доопределить cvc и проверить, что authority == holder
 	if (!strLen(cvc.authority))
 		strCopy(cvc.authority, cvc.holder);
@@ -383,11 +438,18 @@ static err_t cvcRoot(int argc, char* argv[])
 	if (!strEq(cvc.authority, cvc.holder))
 		code = ERR_BAD_NAME;
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
+	// проверить наличие/отсутствие файлов
+	code = cmdFileValExist(1, argv);
+	ERR_CALL_CHECK(code);
+	code = cmdFileValNotExist(1, argv + 1);
+	ERR_CALL_CHECK(code);
 	// прочитать личный ключ
-	code = cmdBlobCreate(privkey, 64);
-	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	privkey_len = 0;
-	code = cmdPrivkeyRead(privkey, &privkey_len, argv[argc - 2], pwd);
+	code = cmdPrivkeyRead(0, &privkey_len, argv[0], pwd);
+	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
+	code = cmdBlobCreate(privkey, privkey_len);
+	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
+	code = cmdPrivkeyRead(privkey, 0, argv[0], pwd);
 	cmdPwdClose(pwd);
 	ERR_CALL_HANDLE(code, cmdBlobClose(privkey));
 	// определить длину сертификата
@@ -402,10 +464,7 @@ static err_t cvcRoot(int argc, char* argv[])
 	cmdBlobClose(privkey);
 	ERR_CALL_HANDLE(code, cmdBlobClose(cert));
 	// записать сертификат
-	code = (fp = fopen(argv[argc - 1], "wb")) ? ERR_OK : ERR_FILE_CREATE;
-	ERR_CALL_HANDLE(code, cmdBlobClose(cert));
-	code = fwrite(cert, 1, cert_len, fp) == cert_len ? ERR_OK : ERR_FILE_WRITE;
-	fclose(fp);
+	code = cmdCVCWrite(cert, cert_len, argv[1]);
 	cmdBlobClose(cert);
 	// завершить
 	return code;
@@ -424,30 +483,34 @@ static err_t cvcReq(int argc, char* argv[])
 	err_t code;
 	btok_cvc_t cvc;
 	cmd_pwd_t pwd;
+	int readc;
 	size_t privkey_len;
-	size_t req_len;
 	octet* privkey;
+	size_t req_len;
 	octet* req;
-	FILE* fp;
-	// обработать имена файлов
-	if (argc < 2)
-		return ERR_CMD_PARAMS;
-	code = cmdFileValExist(1, argv + argc - 2);
-	ERR_CALL_CHECK(code);
-	code = cmdFileValNotExist(1, argv + argc - 1);
-	ERR_CALL_CHECK(code);
 	// обработать опции
-	code = cvcParseOptions(&cvc, &pwd, 0, argc - 2, argv);
+	code = cvcParseOptions(&cvc, &pwd, 0, &readc, argc, argv);
 	ERR_CALL_CHECK(code);
+	argc -= readc, argv += readc;
+	if (argc != 2)
+		code = ERR_CMD_PARAMS;
+	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	// проверить, что authority != holder
 	if (strEq(cvc.authority, cvc.holder))
 		code = ERR_BAD_NAME;
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
+	// проверить наличие/отсутствие файлов
+	code = cmdFileValExist(1, argv);
+	ERR_CALL_CHECK(code);
+	code = cmdFileValNotExist(1, argv + 1);
+	ERR_CALL_CHECK(code);
 	// прочитать личный ключ
-	code = cmdBlobCreate(privkey, 64);
-	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	privkey_len = 0;
-	code = cmdPrivkeyRead(privkey, &privkey_len, argv[argc - 2], pwd);
+	code = cmdPrivkeyRead(0, &privkey_len, argv[0], pwd);
+	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
+	code = cmdBlobCreate(privkey, privkey_len);
+	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
+	code = cmdPrivkeyRead(privkey, 0, argv[0], pwd);
 	cmdPwdClose(pwd);
 	ERR_CALL_HANDLE(code, cmdBlobClose(privkey));
 	// определить длину предсертификата
@@ -462,10 +525,7 @@ static err_t cvcReq(int argc, char* argv[])
 	cmdBlobClose(privkey);
 	ERR_CALL_HANDLE(code, cmdBlobClose(req));
 	// записать сертификат
-	code = (fp = fopen(argv[argc - 1], "wb")) ? ERR_OK : ERR_FILE_CREATE;
-	ERR_CALL_HANDLE(code, cmdBlobClose(req));
-	code = fwrite(req, 1, req_len, fp) == req_len ? ERR_OK : ERR_FILE_WRITE;
-	fclose(fp);
+	code = cmdCVCWrite(req, req_len, argv[1]);
 	cmdBlobClose(req);
 	// завершить
 	return code;
@@ -479,63 +539,78 @@ cvc iss options <privkeya> <certa> <req> <cert>
 *******************************************************************************
 */
 
-#ifdef __
-
 static err_t cvcIss(int argc, char* argv[])
 {
 	err_t code;
 	cmd_pwd_t pwd;
-	size_t privkey_len;
+	int readc;
+	size_t privkeya_len;
+	octet* privkeya;
+	size_t certa_len;
 	size_t req_len;
 	size_t cert_len;
-	octet* privkey;
+	void* state;
+	octet* certa;
 	octet* req;
-	FILE* fp;
-	// обработать имена файлов
-	if (argc < 4)
-		return ERR_CMD_PARAMS;
-	code = cmdFileValExist(3, argv + argc - 4);
-	ERR_CALL_CHECK(code);
-	code = cmdFileValNotExist(1, argv + argc - 1);
-	ERR_CALL_CHECK(code);
+	octet* cert;
+	btok_cvc_t* cvc;
 	// обработать опции
-	code = cvcParseOptions(0, &pwd, 0, argc - 2, argv);
+	code = cvcParseOptions(0, &pwd, 0, &readc, argc, argv);
+	ERR_CALL_CHECK(code);
+	argc -= readc, argv += readc;
+	if (argc != 4)
+		code = ERR_CMD_PARAMS;
+	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
+	// проверить наличие/отсутствие файлов
+	code = cmdFileValExist(3, argv);
+	ERR_CALL_CHECK(code);
+	code = cmdFileValNotExist(1, argv + 3);
 	ERR_CALL_CHECK(code);
 	// прочитать личный ключ
-	code = cmdBlobCreate(privkey, 64);
+	privkeya_len = 0;
+	code = cmdPrivkeyRead(0, &privkeya_len, argv[0], pwd);
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
-	privkey_len = 0;
-	code = cmdPrivkeyRead(privkey, &privkey_len, argv[argc - 2], pwd);
+	code = cmdBlobCreate(privkeya, privkeya_len);
+	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
+	code = cmdPrivkeyRead(privkeya, 0, argv[0], pwd);
 	cmdPwdClose(pwd);
-	ERR_CALL_HANDLE(code, cmdBlobClose(privkey));
-	// определить длину предсертификата
-	ASSERT(cvc.pubkey_len == 0);
-	code = btokCVCWrap(0, &req_len, &cvc, privkey, privkey_len);
-	ERR_CALL_HANDLE(code, cmdBlobClose(privkey));
-	ASSERT(cvc.pubkey_len != 0);
-	// создать предсертификат
-	code = cmdBlobCreate(req, req_len);
-	ERR_CALL_HANDLE(code, cmdBlobClose(privkey));
-	code = btokCVCWrap(req, 0, &cvc, privkey, privkey_len);
-	cmdBlobClose(privkey);
-	ERR_CALL_HANDLE(code, cmdBlobClose(req));
+	ERR_CALL_HANDLE(code, cmdBlobClose(privkeya));
+	// определить длины входных сертификата и запроса
+	code = cmdCVCRead(0, &certa_len, argv[1]);
+	ERR_CALL_HANDLE(code, cmdBlobClose(privkeya));
+	code = cmdCVCRead(0, &req_len, argv[2]);
+	ERR_CALL_HANDLE(code, cmdBlobClose(privkeya));
+	// построить оценку сверху для cert_len: req_len + расширение_подписи
+	cert_len = req_len + (96 - 48);
+	// выделить память и разметить ее
+	code = cmdBlobCreate(state, certa_len + req_len + cert_len +
+		sizeof(btok_cvc_t));
+	ERR_CALL_HANDLE(code, cmdBlobClose(privkeya));
+	certa = (octet*)state;
+	req = certa + certa_len;
+	cert = req + req_len;
+	cvc = (btok_cvc_t*)(cert + cert_len);
+	// прочитать сертификат
+	code = cmdCVCRead(certa, 0, argv[1]);
+	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(state)));
+	// прочитать запрос
+	code = cmdCVCRead(req, 0, argv[2]);
+	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(state)));
+	// разобрать запрос
+	code = btokCVCUnwrap(cvc, req, req_len, cvc->pubkey, 0);
+	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(state)));
+	// выпустить сертификат
+	code = btokCVCIss(cert, &cert_len, cvc, certa, certa_len, privkeya,
+		privkeya_len);
+	ASSERT(cert_len <= req_len + 96 - 48);
+	cmdBlobClose(privkeya);
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// записать сертификат
-	code = (fp = fopen(argv[argc - 1], "wb")) ? ERR_OK : ERR_FILE_CREATE;
-	ERR_CALL_HANDLE(code, cmdBlobClose(req));
-	code = fwrite(req, 1, req_len, fp) == req_len ? ERR_OK : ERR_FILE_WRITE;
-	fclose(fp);
-	cmdBlobClose(req);
+	code = cmdCVCWrite(cert, cert_len, argv[3]);
+	cmdBlobClose(state);
 	// завершить
 	return code;
 }
-
-#endif
-
-static err_t cvcIss(int argc, char* argv[])
-{
-	return ERR_NOT_IMPLEMENTED;
-}
-
 
 /*
 *******************************************************************************
@@ -552,7 +627,7 @@ static err_t cvcVal(int argc, char* argv[])
 *******************************************************************************
 Печать
 
-cvc root <cert>
+cvc print <cert>
 *******************************************************************************
 */
 
@@ -567,32 +642,25 @@ static err_t cvcPrint(int argc, char* argv[])
 	// обработать опции
 	if (argc != 1)
 		return ERR_CMD_PARAMS;
-	// определить длину сертификата
-	code = cmdFileValExist(argc, argv);
+	// проверить наличие/отсутствие файлов
+	code = cmdFileValExist(1, argv);
 	ERR_CALL_CHECK(code);
-	if ((cert_len = cmdFileSize(argv[0])) == SIZE_MAX)
-		return ERR_FILE_READ;
-	if (cert_len > 1024)
-		return ERR_BAD_FORMAT;
+	// определить длину сертификата
+	code = cmdCVCRead(0, &cert_len, argv[0]);
+	ERR_CALL_CHECK(code);
 	// выделить память и разметить ее
 	code = cmdBlobCreate(state, cert_len + sizeof(btok_cvc_t) + 2 * 128 + 1);
 	ERR_CALL_CHECK(code);
 	cert = (octet*)state;
 	cvc = (btok_cvc_t*)(cert + cert_len);
 	hex = (char*)(cvc + 1);
-	// читать сертификат
-	{
-		FILE* fp;
-		code = (fp = fopen(argv[0], "rb")) ? ERR_OK : ERR_FILE_OPEN;
-		ERR_CALL_HANDLE(code, cmdBlobClose(state));
-		cert_len = fread(cert, 1, cert_len, fp);
-		fclose(fp);
-		ERR_CALL_HANDLE(code, cmdBlobClose(state));
-	}
+	// прочитать сертификат
+	code = cmdCVCRead(cert, 0, argv[0]);
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// разобрать сертификат
 	code = btokCVCUnwrap(cvc, cert, cert_len, 0, 0);
 	ERR_CALL_HANDLE(code, cmdBlobClose(state));
-	// печать содержимого
+	// печатать содержимое
 	ASSERT(cvc->pubkey_len <= 128);
 	hexFrom(hex, cvc->pubkey, cvc->pubkey_len);
 	printf(
@@ -620,6 +688,7 @@ static err_t cvcPrint(int argc, char* argv[])
 		cvc->until[4] + '0', cvc->until[5] + '0',
 		hex);
 	// завершить
+	cmdBlobClose(state);
 	return ERR_OK;
 }
 
@@ -649,12 +718,10 @@ int cvcMain(int argc, char* argv[])
 		code = cvcPrint(argc - 1, argv + 1);
 	else
 		code = ERR_CMD_NOT_FOUND;
-	if (code != ERR_OK)
-	{
+	// завершить
+	if (code != ERR_OK || code == ERR_OK && strEq(argv[0], "val"))
 		printf("bee2cmd/%s: %s\n", _name, errMsg(code));
-		return -1;
-	}
-	return 0;
+	return (int)code;
 }
 
 /*

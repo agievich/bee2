@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): cryptographic tokens
 \project bee2 [cryptographic library]
 \created 2022.07.04
-\version 2022.07.14
+\version 2022.07.15
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -161,8 +161,11 @@ err_t btokCVCWrap(
 	Проверка завершается успешно, если:
 	- btokCVCCheck(cvc) == ERR_OK;
 	- подпись cert признается корректной на открытом ключе pubkey.
-	Может передаваться нулевая длина pubkey_len, и тогда указатель pubkey
-	игнорируется, а подпись не проверяется. 
+	Может передаваться нулевая длина pubkey_len, и тогда:
+	- подпись не проверяется, если pubkey == 0;
+	- подпись проверяется на открытом ключе сертификата,
+	  если pubkey == cvc->pubkey;
+	- индуцируется ошибка, если pubkey != 0 && pubkey != cvc->pubkey.
 	\return ERR_OK, если сертификат успешно разобран, и код ошибки в
 	противном случае.
 	\remark Даже если подпись не проверяется, ее длина все равно
