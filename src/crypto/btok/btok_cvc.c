@@ -547,6 +547,9 @@ err_t btokCVCUnwrap(btok_cvc_t* cvc, const octet cert[], size_t cert_len,
 	t = derTSEQDecStop(cert, CVCert);
 	if (t == SIZE_MAX)
 		return ERR_BAD_FORMAT;
+	cert = cert ? cert + t : 0, cert_len -= t;
+	if (cert_len != 0)
+		return ERR_BAD_FORMAT;
 	// окончательная проверка cvc
 	return btokCVCCheck(cvc);
 }

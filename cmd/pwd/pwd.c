@@ -4,7 +4,7 @@
 \brief Generate and manage passwords
 \project bee2/cmd 
 \created 2022.06.23
-\version 2022.07.14
+\version 2022.07.15
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -58,10 +58,10 @@ static int pwdUsage()
 		"Usage:\n"
 		"  pwd gen <scheme>\n"
 		"    generate a password according to <scheme>\n"
-		"  kg val <scheme>\n"
+		"  pwd val <scheme>\n"
 		"    validate a password built by <scheme>\n"
-		"  kg print <scheme>\n"
-		"    print (silently) a password built by <scheme>\n",
+		"  pwd print <scheme>\n"
+		"    print a password built by <scheme>\n",
 		_name, _descr
 	);
 	return -1;
@@ -135,40 +135,19 @@ static err_t pwdSelfTest()
 
 static err_t pwdGen(int argc, char* argv[])
 {
-	const char* sources[] = { "trng", "trng2", "sys", "timer" };
 	err_t code = ERR_OK;
 	cmd_pwd_t pwd = 0;
-	size_t pos;
-	size_t count;
-	size_t read;
-
-	printf("Performing self-tests... ");
+	// самотестирование
 	code = pwdSelfTest();
-	printf("%s\n", errMsg(code));
 	ERR_CALL_CHECK(code);
-
-	printf("Starting the RNG[");
-	for (pos = count = 0; pos < COUNT_OF(sources); ++pos)
-		if (rngReadSource(&read, 0, 0, sources[pos]) == ERR_OK)
-			printf(count++ ? ", %s" : "%s", sources[pos]);
-	printf("]... ");
-	code = rngCreate(0, 0);
-	printf("%s\n", errMsg(code));
+	// запустить ГСЧ
+	code = cmdRngStart(TRUE);
 	ERR_CALL_CHECK(code);
-
-	printf("Running stat-tests for the RNG... ");
+	// тестировать ГСЧ
 	code = cmdRngTest();
-	printf("%s\n", errMsg(code));
 	ERR_CALL_CHECK(code);
-
-	printf("Parsing options and generating a password... ");
-	if (argc == 1)
-		code = cmdPwdGen(&pwd, *argv);
-	else 
-		code = ERR_CMD_PARAMS;
-	printf("%s\n", errMsg(code));
-	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
-
+	// разобрать опции и генерировать пароль
+	code = (argc == 1) ? cmdPwdGen(&pwd, *argv) : ERR_CMD_PARAMS;
 	cmdPwdClose(pwd);
 	return code;
 }
@@ -183,20 +162,11 @@ static err_t pwdVal(int argc, char* argv[])
 {
 	err_t code = ERR_OK;
 	cmd_pwd_t pwd = 0;
-
-	printf("Performing self-tests... ");
+	// самотестирование
 	code = pwdSelfTest();
-	printf("%s\n", errMsg(code));
 	ERR_CALL_CHECK(code);
-
-	printf("Parsing options and recovering the password... ");
-	if (argc == 1)
-		code = cmdPwdRead(&pwd, *argv);
-	else
-		code = ERR_CMD_PARAMS;
-	printf("%s\n", errMsg(code));
-	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
-
+	// разобрать опции и определить пароль
+	code = (argc == 1) ? cmdPwdRead(&pwd, *argv) : ERR_CMD_PARAMS;
 	cmdPwdClose(pwd);
 	return code;
 }
@@ -211,13 +181,10 @@ static err_t pwdPrint(int argc, char* argv[])
 {
 	err_t code = ERR_OK;
 	cmd_pwd_t pwd = 0;
-	// обработать опции
-	if (argc == 1)
-		code = cmdPwdRead(&pwd, *argv);
-	else
-		code = ERR_CMD_PARAMS;
-	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
-	// печать пароля
+	// разобрать опции и определить пароль
+	code = (argc == 1) ? cmdPwdRead(&pwd, *argv) : ERR_CMD_PARAMS;
+	ERR_CALL_CHECK(code);
+	// печатать пароль
 	printf("%s\n", pwd);
 	cmdPwdClose(pwd);
 	return code;
@@ -235,7 +202,7 @@ int pwdMain(int argc, char* argv[])
 	// справка
 	if (argc < 3)
 		return pwdUsage();
-	// разбор команды
+	// разбор
 	++argv, --argc;
 	if (strEq(argv[0], "gen"))
 		code = pwdGen(argc - 1, argv + 1);
@@ -244,11 +211,11 @@ int pwdMain(int argc, char* argv[])
 	else if (strEq(argv[0], "print"))
 		code = pwdPrint(argc - 1, argv + 1);
 	else
-	{
 		code = ERR_CMD_NOT_FOUND;
+	// завершить
+	if (code != ERR_OK || code == ERR_OK && strEq(argv[0], "val"))
 		printf("bee2cmd/%s: %s\n", _name, errMsg(code));
-	}
-	return (code == ERR_OK) ? 0 : -1;
+	return (int)code;
 }
 
 /*

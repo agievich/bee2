@@ -4,7 +4,7 @@
 \brief Strings
 \project bee2 [cryptographic library]
 \created 2013.02.04
-\version 2022.07.05
+\version 2022.07.14
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -74,6 +74,15 @@ void strSet(char* str, char ch)
 Структура
 *******************************************************************************
 */
+
+bool_t strIsNumeric(const char* str)
+{
+	ASSERT(strIsValid(str));
+	for (; *str; ++str)
+		if (*str < '0' || *str > '9')
+			return FALSE;
+	return TRUE;
+}
 
 bool_t strIsAlphanumeric(const char* str)
 {

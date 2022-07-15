@@ -61,6 +61,7 @@ static const err_msg _messages[] = {
 	{ERR_BAD_DATE, "Invalid date"},
 	{ERR_BAD_NAME, "Invalid name"},
 	{ERR_OUTOFRANGE, "Out of range"},
+	{ERR_BAD_ACL, "Invalid access control list"},
 	// math
 	{ERR_BAD_POINT, "Invalid elliptic curve point"},
 	{ERR_NOT_PRIME, "The number is not prime"},

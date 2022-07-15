@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: useful functions
 \project bee2/cmd 
 \created 2022.06.08
-\version 2022.06.24
+\version 2022.07.15
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -92,7 +92,7 @@ size_t cmdFileSize(const char* file)
 	return (size == -1L) ? SIZE_MAX : (size_t)size;
 }
 
-bool_t cmdFileValNotExist(int count, char* files[])
+err_t cmdFileValNotExist(int count, char* files[])
 {
 	FILE* fp;
 	int ch;
@@ -106,26 +106,26 @@ bool_t cmdFileValNotExist(int count, char* files[])
 			do
 				ch = getch();
 			while (ch != 'Y' && ch != 'y' && ch != 'N' && ch != 'n' && ch != '\n');
-			printf(" ");
+			printf("\n");
 			if (ch == 'N' || ch == 'n' || ch == '\n')
-				return FALSE;
+				return ERR_FILE_EXISTS;
 			break;
 		}
 	}
-	return TRUE;
+	return ERR_OK;
 }
 
-bool_t cmdFileValExist(int count, char* files[])
+err_t cmdFileValExist(int count, char* files[])
 {
 	FILE* fp;
 	for (; count--; files++)
 	{
 		ASSERT(strIsValid(*files));
 		if (!(fp = fopen(*files, "rb")))
-			return FALSE;
+			return ERR_FILE_NOT_FOUND;
 		fclose(fp);
 	}
-	return TRUE;
+	return ERR_OK;
 }
 
 /*
@@ -264,6 +264,27 @@ void cmdArgClose(char** argv)
 *******************************************************************************
 */
 
+err_t cmdRngStart(bool_t verbose)
+{
+	err_t code;
+	if (verbose)
+	{
+		const char* sources[] = { "trng", "trng2", "sys", "timer" };
+		size_t pos;
+		size_t count;
+		size_t read;
+		printf("Starting RNG[");
+		for (pos = count = 0; pos < COUNT_OF(sources); ++pos)
+			if (rngReadSource(&read, 0, 0, sources[pos]) == ERR_OK)
+				printf(count++ ? ", %s" : "%s", sources[pos]);
+		printf("]... ");
+	}
+	code = rngCreate(0, 0);
+	if (verbose)
+		printf("%s\n", errMsg(code));
+	return code;
+}
+
 err_t cmdRngTest()
 {
 	const char* sources[] = { "trng", "trng2", "timer", "sys" };
@@ -292,3 +313,4 @@ err_t cmdRngTest()
 	// все нормально
 	return ERR_OK;
 }
+

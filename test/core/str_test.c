@@ -5,7 +5,7 @@
 \project bee2/test
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2017.01.12
-\version 2022.07.05
+\version 2022.07.14
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -34,7 +34,9 @@ bool_t strTest()
 	if (strCmp(buf, str) != 0 || !strEq(buf, str))
 		return FALSE;
 	// props
-	if (!strIsAlphanumeric(str) || 
+	if (!strIsNumeric(str) ||
+		strIsNumeric("1234?") ||
+		!strIsAlphanumeric(str) ||
 		strIsAlphanumeric("1234?") || 
 		!strIsAlphanumeric("1234aAz") ||
 		!strIsPrintable(str) ||

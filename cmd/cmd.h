@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2
 \project bee2/cmd
 \created 2022.06.09
-\version 2022.06.23
+\version 2022.07.15
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -17,7 +17,22 @@ version 3. See Copyright Notices in bee2/info.h.
 extern "C" {
 #endif
 
+#include <bee2/core/blob.h>
+#include <bee2/core/err.h>
 #include <bee2/defs.h>
+
+/*
+*******************************************************************************
+Блобы
+*******************************************************************************
+*/
+
+/*! \brief Создание блоба */
+#define cmdBlobCreate(blob, size) \
+	(((blob) = blobCreate(size)) ? ERR_OK : ERR_OUTOFMEMORY)
+
+/*! \brief Закрытие блоба */
+#define cmdBlobClose blobClose
 
 /*
 *******************************************************************************
@@ -73,9 +88,9 @@ size_t cmdFileSize(
 	их можно создавать и записывать в них данные. Если некоторый файл все-таки
 	присутствует, то предлагается его перезаписать. Разрешение на перезапись
 	приравнивается к отсутствию файла.
-	\return Признак отсутствия файлов. 
+	\return ERR_OK в случае успеха и код ошибки в противном случае. 
 */
-bool_t cmdFileValNotExist(
+err_t cmdFileValNotExist(
 	int count,				/*!< [in] число файлов */
 	char* files[]			/*!< [in] список имен файлов */
 );
@@ -83,9 +98,9 @@ bool_t cmdFileValNotExist(
 /*!	\brief Проверка наличия файлов
 
 	Проверяется существование файлов списка [count]files.
-	\return Признак наличия файлов.
+	\return ERR_OK в случае успеха и код ошибки в противном случае.
 */
-bool_t cmdFileValExist(
+err_t cmdFileValExist(
 	int count,				/*!< [in] число файлов */
 	char* files[]			/*!< [in] список имен файлов */
 );
@@ -258,7 +273,8 @@ err_t cmdPrivkeyWrite(
 	file. Защита снимается на пароле pwd.
 	\pre Если адрес privkey_len ненулевой, то по этому адресу передается
 	одно из следующих значений: 0, 32, 48, 64. Нулевое значение соответствует
-	стандартной логике [privkey_len?].
+	стандартной логике [privkey_len?]. Ненулевые значения соответствуют логике
+	[?privkey_len], то есть задают требуемую длину ключа.
 	\expect{ERR_BAD_FORMAT} Если privkey_len != 0 и *privkey_len != 0,
 	то контейнер file содержит ключ из *privkey_len октетов.
 	\return ERR_OK, если ключ успешно прочитан, и код ошибки в противном случае.
@@ -275,6 +291,16 @@ err_t cmdPrivkeyRead(
 ГСЧ
 *******************************************************************************
 */
+
+/*!	\brief Запуск ГСЧ
+
+	Запускается штатный ГСЧ. При установке флага verbose запуск сопровождается
+	экранным выводом.
+	\return ERR_OK в случае успеха и код ошибки в противном случае.
+*/
+err_t cmdRngStart(
+	bool_t verbose			/*!< [in] печатать подробности */
+);
 
 /*!	\brief Тестирование ГСЧ
 
