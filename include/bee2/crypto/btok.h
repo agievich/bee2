@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): cryptographic tokens
 \project bee2 [cryptographic library]
 \created 2022.07.04
-\version 2022.07.15
+\version 2022.07.16
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -269,11 +269,11 @@ err_t btokCVCVal2(
 	ключом [privkey_len]privkey.
 	Проверка завершается успешно, если:
 	- cert имеет корректный формат;
-	- открытый ключ cert сответствует privkey.
+	- открытый ключ cert соответствует privkey.
 	\return ERR_OK, если соответствие подтверждено, и код ошибки в
 	противном случае.
 */
-err_t btokCVCFit(
+err_t btokCVCMatch(
 	const octet cert[],			/*!< [in] сертификат */
 	size_t cert_len,			/*!< [in] длина cert в октетах */
 	const octet privkey[],		/*!< [in] личный ключ */

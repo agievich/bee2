@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.79 (btok) helpers
 \project bee2/test
 \created 2022.07.07
-\version 2022.07.12
+\version 2022.07.16
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -74,7 +74,7 @@ static bool_t btokCVCTest()
 		btokCVCUnwrap(cvc1, cert0, cert0_len, cvc0->pubkey,
 			cvc0->pubkey_len) != ERR_OK ||
 		!memEq(cvc0, cvc1, sizeof(btok_cvc_t)) ||
-		btokCVCFit(cert0, cert0_len, privkey0, 64) != ERR_OK)
+		btokCVCMatch(cert0, cert0_len, privkey0, 64) != ERR_OK)
 		return FALSE;
 
 	// составить и проверить cvc1

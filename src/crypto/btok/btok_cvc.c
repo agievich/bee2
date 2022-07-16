@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): CV certificates
 \project bee2 [cryptographic library]
 \created 2022.07.04
-\version 2022.07.14
+\version 2022.07.16
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -678,7 +678,7 @@ err_t btokCVCVal2(btok_cvc_t* cvc, const octet cert[], size_t cert_len,
 *******************************************************************************
 */
 
-err_t btokCVCFit(const octet cert[], size_t cert_len, const octet privkey[],
+err_t btokCVCMatch(const octet cert[], size_t cert_len, const octet privkey[],
 	size_t privkey_len)
 {
 	err_t code;

@@ -4,7 +4,7 @@
 \brief Manage CV-certificates
 \project bee2/cmd 
 \created 2022.07.12
-\version 2022.07.15
+\version 2022.07.16
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -55,20 +55,22 @@ static int cvcUsage()
 		"    issue <cert> based on <req> and subordinate to <certa>\n"
 		"  cvc val options <certa> <certb> ... <cert>\n"
 		"    validate <certb> ... <cert> using <certa> as an anchor\n"
+		"  cvc match options <privkey> <cert>\n"
+		"    check the match between <privkey> and <cert>\n"
 		"  cvc print <cert>\n"
 		"    print <cert> info\n"
 		"  .\n"
 		"  <privkey>, <privkeya>\n"
 		"    containers with private keys\n"
 		"  options:\n"
-		"    -authority <name> -- authority (issuer)  // [root], req\n"
-		"    -holder <name> -- holder (owner)         // [root], req\n"
-		"    -from <YYMMDD> -- starting date          // root, req\n"
-		"    -until <YYMMDD> -- expiration date       // root, req\n"
-		"    -eid <10*hex> -- eId access template     // [root], [req]\n"
-		"    -esign <4*hex> -- eSign access template  // [root], [req]\n"
-		"    -pass <scheme> -- password description   // root, req, iss\n"
-		"    -date <YYMMDD> -- validation date        // [val]\n",
+		"    -authority <name> -- authority (issuer)  [root], req\n"
+		"    -holder <name> -- holder (owner)         [root], req\n"
+		"    -from <YYMMDD> -- starting date          root, req\n"
+		"    -until <YYMMDD> -- expiration date       root, req\n"
+		"    -eid <10*hex> -- eId access template     [root], [req]\n"
+		"    -esign <4*hex> -- eSign access template  [root], [req]\n"
+		"    -pass <scheme> -- password description   root, req, iss, match\n"
+		"    -date <YYMMDD> -- validation date        [val]\n",
 		_name, _descr
 	);
 	return -1;
@@ -465,8 +467,8 @@ static err_t cvcRoot(int argc, char* argv[])
 	ERR_CALL_HANDLE(code, cmdBlobClose(cert));
 	// записать сертификат
 	code = cmdCVCWrite(cert, cert_len, argv[1]);
-	cmdBlobClose(cert);
 	// завершить
+	cmdBlobClose(cert);
 	return code;
 }
 
@@ -526,8 +528,8 @@ static err_t cvcReq(int argc, char* argv[])
 	ERR_CALL_HANDLE(code, cmdBlobClose(req));
 	// записать сертификат
 	code = cmdCVCWrite(req, req_len, argv[1]);
-	cmdBlobClose(req);
 	// завершить
+	cmdBlobClose(req);
 	return code;
 }
 
@@ -607,8 +609,8 @@ static err_t cvcIss(int argc, char* argv[])
 	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// записать сертификат
 	code = cmdCVCWrite(cert, cert_len, argv[3]);
-	cmdBlobClose(state);
 	// завершить
+	cmdBlobClose(state);
 	return code;
 }
 
@@ -621,6 +623,58 @@ static err_t cvcIss(int argc, char* argv[])
 static err_t cvcVal(int argc, char* argv[])
 {
 	return ERR_NOT_IMPLEMENTED;
+}
+
+/*
+*******************************************************************************
+Выпуск сертификата
+
+cvc match options <privkey> <cert>
+*******************************************************************************
+*/
+
+static err_t cvcMatch(int argc, char* argv[])
+{
+	err_t code;
+	cmd_pwd_t pwd;
+	int readc;
+	size_t privkey_len;
+	octet* privkey;
+	size_t cert_len;
+	octet* cert;
+	// обработать опции
+	code = cvcParseOptions(0, &pwd, 0, &readc, argc, argv);
+	ERR_CALL_CHECK(code);
+	argc -= readc, argv += readc;
+	if (argc != 2)
+		code = ERR_CMD_PARAMS;
+	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
+	// проверить наличие/отсутствие файлов
+	code = cmdFileValExist(2, argv);
+	ERR_CALL_CHECK(code);
+	// прочитать личный ключ
+	privkey_len = 0;
+	code = cmdPrivkeyRead(0, &privkey_len, argv[0], pwd);
+	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
+	code = cmdBlobCreate(privkey, privkey_len);
+	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
+	code = cmdPrivkeyRead(privkey, 0, argv[0], pwd);
+	cmdPwdClose(pwd);
+	ERR_CALL_HANDLE(code, cmdBlobClose(privkey));
+	// определить длину сертификата
+	code = cmdCVCRead(0, &cert_len, argv[1]);
+	ERR_CALL_HANDLE(code, cmdBlobClose(privkey));
+	// прочитать сертификат
+	code = cmdBlobCreate(cert, cert_len);
+	ERR_CALL_HANDLE(code, cmdBlobClose(privkey));
+	code = cmdCVCRead(cert, 0, argv[1]);
+	ERR_CALL_HANDLE(code, (cmdBlobClose(privkey), cmdBlobClose(cert)));
+	// проверить соответствие
+	code = btokCVCMatch(cert, cert_len, privkey, privkey_len);
+	// завершить
+	cmdBlobClose(cert);
+	cmdBlobClose(privkey);
+	return code;
 }
 
 /*
@@ -714,12 +768,15 @@ int cvcMain(int argc, char* argv[])
 		code = cvcIss(argc - 1, argv + 1);
 	else if (strEq(argv[0], "val"))
 		code = cvcVal(argc - 1, argv + 1);
+	else if (strEq(argv[0], "match"))
+		code = cvcMatch(argc - 1, argv + 1);
 	else if (strEq(argv[0], "print"))
 		code = cvcPrint(argc - 1, argv + 1);
 	else
 		code = ERR_CMD_NOT_FOUND;
 	// завершить
-	if (code != ERR_OK || code == ERR_OK && strEq(argv[0], "val"))
+	if (code != ERR_OK || 
+		code == ERR_OK && (strEq(argv[0], "val") || strEq(argv[0], "match")))
 		printf("bee2cmd/%s: %s\n", _name, errMsg(code));
 	return (int)code;
 }
