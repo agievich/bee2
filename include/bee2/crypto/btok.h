@@ -250,10 +250,13 @@ err_t btokCVCVal(
 	\remark Интерфейс ориентирован на проверку цепочки сертификатов.
 	Цепочка certa, certb, certc,... проверяется следующим образом:
 	- btokCVCUnwrap(cvca, certa, certa_len, 0, 0);
-	- btokCVCVal(0, certa, certa_len, cvca, 0);
 	- btokCVCVal(cvcb, certb, certb_len, cvca, 0);
 	- btokCVCVal(cvcc, certc, certc_len, cvcb, date);
 	- ...
+	\remark Если certa является самоподписанным и требуется проверить его
+	подпись, то перва строчка в предыдущем коде должна выглядеть следующим
+	образом:
+	- btokCVCUnwrap(cvca, certa, certa_len, cvca->pubkey, 0);
 */
 err_t btokCVCVal2(
 	btok_cvc_t* cvc,			/*!< [out] содержание сертификата */

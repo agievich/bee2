@@ -174,7 +174,7 @@ err_t cmdCVCRead(octet cert[], size_t* cert_len, const char* file)
 static err_t cvcParseOptions(btok_cvc_t* cvc, cmd_pwd_t* pwd, octet date[6],
 	int* readc, int argc, char* argv[])
 {
-	err_t code;
+	err_t code = ERR_OK;
 	bool_t eid = FALSE;
 	bool_t esign = FALSE;
 	// pre
@@ -397,7 +397,7 @@ static err_t cvcParseOptions(btok_cvc_t* cvc, cmd_pwd_t* pwd, octet date[6],
 	}
 	// проверить, что запрошенные данные определены
 	// \warning корректность cvc не проверяется
-	if (code == ERR_OK && (pwd && !*pwd || date && memIsZero(date, 6)))
+	if (code == ERR_OK && pwd && !*pwd)
 		code = ERR_CMD_PARAMS;
 	// завершить
 	if (code != ERR_OK)
@@ -617,12 +617,72 @@ static err_t cvcIss(int argc, char* argv[])
 /*
 *******************************************************************************
 Проверка
+
+cvc val options <certa> <certb> ... <cert>
 *******************************************************************************
 */
 
 static err_t cvcVal(int argc, char* argv[])
 {
-	return ERR_NOT_IMPLEMENTED;
+	err_t code;
+	octet date[6];
+	int readc;
+	const size_t cert_max_len = 512;
+	size_t cert_len;
+	void* state;
+	octet* cert;
+	btok_cvc_t* cvc;
+	btok_cvc_t* cvc1;
+	// обработать опции
+	code = cvcParseOptions(0, 0, date, &readc, argc, argv);
+	ERR_CALL_CHECK(code);
+	argc -= readc, argv += readc;
+	if (argc < 2)
+		code = ERR_CMD_PARAMS;
+	ERR_CALL_CHECK(code);
+	// обработать дату
+	if (memIsZero(date, 6) && !tmDate2(date))
+		code = ERR_BAD_TIMER;
+	ERR_CALL_CHECK(code);
+	// проверить наличие/отсутствие файлов
+	code = cmdFileValExist(argc, argv);
+	ERR_CALL_CHECK(code);
+	// выделить память и разметить ее
+	code = cmdBlobCreate(state, cert_max_len + 2 * sizeof(btok_cvc_t));
+	ERR_CALL_CHECK(code);
+	cert = (octet*)state;
+	cvc = (btok_cvc_t*)(cert + cert_max_len);
+	cvc1 = cvc + 1;
+	// прочитать первый сертификат
+	code = cmdCVCRead(0, &cert_len, argv[0]);
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
+	code = cert_len <= cert_max_len ? ERR_OK : ERR_BAD_CERT;
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
+	code = cmdCVCRead(cert, 0, argv[0]);
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
+	// разобрать первый сертификат
+	code = btokCVCUnwrap(cvc, cert, cert_len, 0, 0);
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
+	// цикл по сертификатам
+	for (--argc, ++argv; argc--; ++argv)
+	{
+		// прочитать очередной сертификат
+		code = cmdCVCRead(0, &cert_len, *argv);
+		ERR_CALL_HANDLE(code, cmdBlobClose(state));
+		code = cert_len <= cert_max_len ? ERR_OK : ERR_BAD_CERT;
+		ERR_CALL_HANDLE(code, cmdBlobClose(state));
+		code = cmdCVCRead(cert, 0, *argv);
+		ERR_CALL_HANDLE(code, cmdBlobClose(state));
+		// проверить очередной сертификат
+		code = btokCVCVal2(cvc1, cert, cert_len, cvc, 
+			argc == -1 ? date : 0);
+		ERR_CALL_HANDLE(code, cmdBlobClose(state));
+		// подготовиться к проверке следующего сертификата
+		memCopy(cvc, cvc1, sizeof(btok_cvc_t));
+	}
+	// завершить
+	cmdBlobClose(state);
+	return code;
 }
 
 /*
