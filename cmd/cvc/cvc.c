@@ -440,11 +440,12 @@ static err_t cvcParseOptions(btok_cvc_t* cvc, cmd_pwd_t* pwd, octet date[6],
 		}
 	}
 	// проверить, что запрошенные данные определены
-	// \warning корректность cvc не проверяется
+	// \remark корректность cvc будет проверена позже
+	// \remark параметр date не является обязательным
 	if (code == ERR_OK && pwd && !*pwd)
 		code = ERR_CMD_PARAMS;
 	// завершить
-	if (code != ERR_OK)
+	if (code != ERR_OK && pwd)
 		cmdPwdClose(*pwd), *pwd = 0;
 	else
 		*readc -= argc;
