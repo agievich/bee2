@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): CV certificates
 \project bee2 [cryptographic library]
 \created 2022.07.04
-\version 2022.07.16
+\version 2022.07.18
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -94,14 +94,14 @@ static err_t btokSign(octet sig[], const void* buf, size_t count,
 	void* stack;
 	bign_params* params;
 	octet* oid_der;
-	size_t oid_len;
+	size_t oid_len = 16;
 	octet* hash;
 	octet* t;
 	size_t t_len;
 	// pre
 	ASSERT(privkey_len == 32 || privkey_len == 48 || privkey_len == 64);
 	// создать и разметить стек
-	stack = blobCreate(sizeof(bign_params) + 16 + 2 * privkey_len);
+	stack = blobCreate(sizeof(bign_params) + oid_len + 2 * privkey_len);
 	if (!stack)
 		return ERR_OUTOFMEMORY;
 	params = (bign_params*)stack;

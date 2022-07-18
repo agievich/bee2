@@ -4,7 +4,7 @@
 \brief Time and timers
 \project bee2 [cryptographic library]
 \created 2012.05.10
-\version 2022.07.14
+\version 2022.07.18
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -221,7 +221,7 @@ bool_t tmDate(size_t* y, size_t* m, size_t* d)
 	if (y)
 		*y = (size_t)lt.tm_year, *y += 1900;
 	if (m)
-		*m = (size_t)lt.tm_mon;
+		*m = (size_t)lt.tm_mon + 1;
 	if (d)
 		*d = (size_t)lt.tm_mday;
 	return TRUE;

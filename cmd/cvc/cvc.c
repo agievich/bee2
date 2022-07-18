@@ -4,7 +4,7 @@
 \brief Manage CV-certificates
 \project bee2/cmd 
 \created 2022.07.12
-\version 2022.07.16
+\version 2022.07.18
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -19,6 +19,7 @@ version 3. See Copyright Notices in bee2/info.h.
 #include <bee2/core/str.h>
 #include <bee2/core/tm.h>
 #include <bee2/core/util.h>
+#include <bee2/crypto/belt.h>
 #include <bee2/crypto/bign.h>
 #include <bee2/crypto/btok.h>
 #include <stdio.h>
@@ -32,10 +33,26 @@ version 3. See Copyright Notices in bee2/info.h.
 - создание предсертификата (запроса на выпуск);
 - выпуск сертификата;
 - проверка цепочки сертификатов;
+- проверка соответствия между сертификатом и личным ключом;
 - печать полей сертификата.
 
-Примеры:
-  bee2cmd cvc print cert
+Пример:
+  bee2cmd kg gen -l256 -pass pass:root privkey0
+  bee2cmd kg gen -l192 -pass pass:trent privkey1
+  bee2cmd kg gen -pass pass:alice privkey2
+  bee2cmd cvc root -authority BYCA0000 -from 220707 -until 990707 \
+	-pass pass:root -eid EEEEEEEEEE -esign 7777 privkey0 cert0
+  bee2cmd cvc print cert0
+  bee2cmd cvc req -pass pass:trent  -authority BYCA0000 -holder BYCA1000 \
+	-from 220712 -until 221130 -eid DDDDDDDDDD -esign 3333 privkey1 req1
+  bee2cmd cvc iss -pass pass:root privkey0 cert0 req1 cert1
+  bee2cmd cvc req -authority BYCA1000 -from 220712 -until 391231 -esign 1111 \
+	-holder "590082394654" -pass pass:alice -eid 8888888888 privkey2 req2
+  bee2cmd cvc iss -pass pass:trent privkey1 cert1 req2 cert2
+  bee2cmd cvc match -pass pass:alice privkey2 cert2
+  bee2cmd cvc val cert0 cert0
+  bee2cmd cvc val -date 220712 cert0 cert1
+  bee2cmd cvc val -date 221201 cert0 cert1 cert2
 *******************************************************************************
 */
 
@@ -88,6 +105,11 @@ static err_t cvcSelfTest()
 	bign_params params[1];
 	octet privkey[32];
 	octet pubkey[64];
+	octet hash[32];
+	const octet oid[] = {
+		0x06, 0x09, 0x2A, 0x70, 0x00, 0x02, 0x00, 0x22, 0x65, 0x1F, 0x51, 
+	};
+	octet sig[48];
 	// bign-genkeypair
 	hexTo(privkey,
 		"1F66B5B84B7339674533F0329C74F218"
@@ -102,6 +124,25 @@ static err_t cvcSelfTest()
 		"F54CE46D0CF11E4FF87BF7A890857FD0"
 		"7AC6A60361E8C8173491686D461B2826"
 		"190C2EDA5909054A9AB84D2AB9D99A90"))
+		return ERR_SELFTEST;
+	// bign-valpubkey
+	if (bignValPubkey(params, pubkey) != ERR_OK)
+		return ERR_SELFTEST;
+	// bign-sign
+	if (beltHash(hash, beltH(), 13) != ERR_OK)
+		return ERR_SELFTEST;
+	if (bignSign2(sig, params, oid, sizeof(oid), hash, privkey,
+			0, 0) != ERR_OK)
+		return ERR_SELFTEST;
+	if (!hexEq(sig,
+		"19D32B7E01E25BAE4A70EB6BCA42602C"
+		"CA6A13944451BCC5D4C54CFD8737619C"
+		"328B8A58FB9C68FD17D569F7D06495FB"))
+		return ERR_SELFTEST;
+	if (bignVerify(params, oid, sizeof(oid), hash, sig, pubkey) != ERR_OK)
+		return ERR_SELFTEST;
+	sig[0] ^= 1;
+	if (bignVerify(params, oid, sizeof(oid), hash, sig, pubkey) == ERR_OK)
 		return ERR_SELFTEST;
 	// все нормально
 	return ERR_OK;
@@ -187,11 +228,14 @@ static err_t cvcParseOptions(btok_cvc_t* cvc, cmd_pwd_t* pwd, octet date[6],
 	pwd ? *pwd = 0 : 0;
 	date ? memSetZero(date, 6) : 0;
 	// обработать опции
-	if (!argc || argc % 2)
-		return ERR_CMD_PARAMS;
 	*readc = argc;
 	while (argc && strStartsWith(*argv, "-"))
 	{
+		if (argc < 2)
+		{
+			code = ERR_CMD_PARAMS;
+			break;
+		}
 		// authority
 		if (strEq(argv[0], "-authority"))
 		{
@@ -425,6 +469,9 @@ static err_t cvcRoot(int argc, char* argv[])
 	octet* privkey;
 	size_t cert_len;
 	octet* cert;
+	// самотестирование
+	code = cvcSelfTest();
+	ERR_CALL_CHECK(code);
 	// обработать опции
 	code = cvcParseOptions(&cvc, &pwd, 0, &readc, argc, argv);
 	ERR_CALL_CHECK(code);
@@ -490,6 +537,9 @@ static err_t cvcReq(int argc, char* argv[])
 	octet* privkey;
 	size_t req_len;
 	octet* req;
+	// самотестирование
+	code = cvcSelfTest();
+	ERR_CALL_CHECK(code);
 	// обработать опции
 	code = cvcParseOptions(&cvc, &pwd, 0, &readc, argc, argv);
 	ERR_CALL_CHECK(code);
@@ -556,6 +606,9 @@ static err_t cvcIss(int argc, char* argv[])
 	octet* req;
 	octet* cert;
 	btok_cvc_t* cvc;
+	// самотестирование
+	code = cvcSelfTest();
+	ERR_CALL_CHECK(code);
 	// обработать опции
 	code = cvcParseOptions(0, &pwd, 0, &readc, argc, argv);
 	ERR_CALL_CHECK(code);
@@ -633,6 +686,9 @@ static err_t cvcVal(int argc, char* argv[])
 	octet* cert;
 	btok_cvc_t* cvc;
 	btok_cvc_t* cvc1;
+	// самотестирование
+	code = cvcSelfTest();
+	ERR_CALL_CHECK(code);
 	// обработать опции
 	code = cvcParseOptions(0, 0, date, &readc, argc, argv);
 	ERR_CALL_CHECK(code);
@@ -675,7 +731,7 @@ static err_t cvcVal(int argc, char* argv[])
 		ERR_CALL_HANDLE(code, cmdBlobClose(state));
 		// проверить очередной сертификат
 		code = btokCVCVal2(cvc1, cert, cert_len, cvc, 
-			argc == -1 ? date : 0);
+			argc == 0 ? date : 0);
 		ERR_CALL_HANDLE(code, cmdBlobClose(state));
 		// подготовиться к проверке следующего сертификата
 		memCopy(cvc, cvc1, sizeof(btok_cvc_t));
@@ -702,6 +758,9 @@ static err_t cvcMatch(int argc, char* argv[])
 	octet* privkey;
 	size_t cert_len;
 	octet* cert;
+	// самотестирование
+	code = cvcSelfTest();
+	ERR_CALL_CHECK(code);
 	// обработать опции
 	code = cvcParseOptions(0, &pwd, 0, &readc, argc, argv);
 	ERR_CALL_CHECK(code);

@@ -4,7 +4,7 @@
 \brief Generate and manage private keys
 \project bee2/cmd 
 \created 2022.06.08
-\version 2022.07.15
+\version 2022.07.18
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -37,13 +37,13 @@ version 3. See Copyright Notices in bee2/info.h.
   ключа;
 - смена пароля защиты контейнера.
 
-Примеры:
+Пример:
   bee2cmd pwd gen share:"-l256 -t3 -pass pass:zed s1 s2 s3 s4 s5"
-  bee2cmd kg gen -l256 -pass share:"-pass pass:zed s2 s3 s4" pk
-  bee2cmd kg val -pass share:"-pass pass:zed s1 s2 s4" pk
-  bee2cmd kg print -pass share:"-pass pass:zed s1 s2 s4" pk
+  bee2cmd kg gen -l256 -pass share:"-pass pass:zed s2 s3 s4" privkey
+  bee2cmd kg val -pass share:"-pass pass:zed s1 s2 s4" privkey
   bee2cmd kg chp -passin share:"-pass pass:zed s3 s1 s4"
-    -passout pass:"1?23&aaA..." pk
+    -passout pass:"1?23&aaA..." privkey
+  bee2cmd kg print -pass pass:"1?23&aaA..." privkey
 *******************************************************************************
 */
 

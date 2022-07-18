@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.79 (btok) helpers
 \project bee2/test
 \created 2022.07.07
-\version 2022.07.16
+\version 2022.07.18
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -34,10 +34,8 @@ static bool_t btokCVCTest()
 	octet cert0[400]; size_t cert0_len;
 	octet cert1[400]; size_t cert1_len;
 	octet cert2[400]; size_t cert2_len;
-
 	// запустить ГПСЧ
 	prngEchoStart(echo, beltH(), 256);
-
 	// определить максимальную длину сертификата
 	memSetZero(cvc0, sizeof(btok_cvc_t));
 	strCopy(cvc0->authority, "BYCA00000000");
@@ -60,7 +58,6 @@ static bool_t btokCVCTest()
 	if (btokCVCWrap(0, &cert0_len, cvc0, privkey0, 64) != ERR_OK)
 		return FALSE;
 	ASSERT(cert0_len == 365);
-
 	// выпустить cert0
 	memSetZero(cvc0->authority, sizeof(cvc0->authority));
 	strCopy(cvc0->authority, "BYCA0000");
@@ -76,7 +73,6 @@ static bool_t btokCVCTest()
 		!memEq(cvc0, cvc1, sizeof(btok_cvc_t)) ||
 		btokCVCMatch(cert0, cert0_len, privkey0, 64) != ERR_OK)
 		return FALSE;
-
 	// составить и проверить cvc1
 	memSetZero(cvc1, sizeof(btok_cvc_t));
 	strCopy(cvc1->authority, "BYCA0000");
@@ -113,7 +109,6 @@ static bool_t btokCVCTest()
 	ASSERT(cert1_len <= sizeof(cert1));
 	if (btokCVCWrap(cert1, &cert1_len, cvc1, privkey0, 64) != ERR_OK)
 		return FALSE;
-
 	// составить cvc2
 	memSetZero(cvc2, sizeof(btok_cvc_t));
 	strCopy(cvc2->authority, "BYCA1000");
@@ -137,7 +132,6 @@ static bool_t btokCVCTest()
 			privkey1, 48) != ERR_OK)
 		return FALSE;
 	ASSERT(cert2_len <= sizeof(cert2));
-
 	// проверить сертификаты
 	if (btokCVCVal(cert1, cert1_len, cert0, cert0_len, 0) != ERR_OK ||
 		btokCVCVal(cert2, cert2_len, cert1, cert1_len, 0) != ERR_OK ||
@@ -146,7 +140,6 @@ static bool_t btokCVCTest()
 		btokCVCVal2(cvc2, cert2, cert2_len, cvc1, 0) != ERR_OK ||
 		btokCVCVal2(cvc2, cert2, cert2_len, cvc1, cvc0->until) == ERR_OK)
 		return FALSE;
-
 	// все хорошо
 	return TRUE;
 }

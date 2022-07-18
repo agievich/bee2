@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: useful functions
 \project bee2/cmd 
 \created 2022.06.08
-\version 2022.07.15
+\version 2022.07.18
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -290,12 +290,13 @@ err_t cmdRngTest()
 	const char* sources[] = { "trng", "trng2", "timer", "sys" };
 	octet buf[2500];
 	bool_t trng = FALSE;
-	size_t valid_sources = 0, i;
+	size_t valid_sources = 0;
+	size_t pos;
 	// пробежать источники
-	for (i = 0; i < COUNT_OF(sources); ++i)
+	for (pos = 0; pos < COUNT_OF(sources); ++pos)
 	{
 		size_t read;
-		if (rngReadSource(&read, buf, 2500, sources[i]) != ERR_OK ||
+		if (rngReadSource(&read, buf, 2500, sources[pos]) != ERR_OK ||
 			read != 2500)
 			continue;
 		// статистическое тестирование
@@ -304,8 +305,11 @@ err_t cmdRngTest()
 			continue;
 		// зафиксировать источник
 		valid_sources++;
-		if (strEq(sources[i], "trng") || strEq(sources[i], "trng2"))
+		if (strEq(sources[pos], "trng") || strEq(sources[pos], "trng2"))
+		{
 			trng = TRUE;
+			break;
+		}
 	}
 	// нет ни физического источника, ни двух разнотипных?
 	if (!trng && valid_sources < 2)

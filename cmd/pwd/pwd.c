@@ -4,7 +4,7 @@
 \brief Generate and manage passwords
 \project bee2/cmd 
 \created 2022.06.23
-\version 2022.07.15
+\version 2022.07.18
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -39,7 +39,7 @@ version 3. See Copyright Notices in bee2/info.h.
 Допустимые схемы построения паролей определены в модуле cmd.h при описании 
 функций cmdPwdGen(), cmdPwdRead().
 
-Примеры:
+Пример:
   bee2cmd pwd gen share:"-l256 -t3 -pass pass:zed s1 s2 s3 s4 s5"
   bee2cmd pwd gen share:"-l192 -pass share:\"-pass pass:zed s1 s2 s3\"
     ss1 ss2 ss3"
