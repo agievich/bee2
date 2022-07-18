@@ -2,11 +2,9 @@
 *******************************************************************************
 \file bpki.c
 \brief STB 34.101.78 (bpki): PKI helpers
-\project bee2/bpki
-\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
-\author Vlad Semenov [semenov.vlad.by@gmail.com]
+\project bee2 [cryptographic library]
 \created 2021.04.03
-\version 2022.06.16
+\version 2022.07.07
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -15,7 +13,6 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/core/blob.h"
 #include "bee2/core/err.h"
 #include "bee2/core/der.h"
-#include "bee2/core/oid.h"
 #include "bee2/core/mem.h"
 #include "bee2/core/util.h"
 #include "bee2/crypto/bels.h"
@@ -69,66 +66,66 @@ static const char oid_hmac_hbelt[] = "1.2.112.0.2.0.34.101.47.12";
 *******************************************************************************
 Контейнер с личным ключом / частичным секретом (PKI): кодирование
 
-SEQUENCE PrivateKeyInfo
-  INTEGER(0)
-  SEQUENCE BignAlgorithmIdentifier | BelsAlgorithmIdentifier
-    OID -- (bign-pubkey | bels-share)
-    OID -- (bign-curveXXX | bels-m0XXX)
-  OCTET STRING -- key
+SEQ PrivateKeyInfo
+  SIZE(0)
+  SEQ BignAlgorithmIdentifier | BelsAlgorithmIdentifier
+    OID(bign-pubkey | bels-share)
+    OID(bign-curveXXX | bels-m0XXX)
+  OCT -- key
 *******************************************************************************
 */
 
-static size_t bpkiEncPrivkey(octet pki[], const octet privkey[],
+static size_t bpkiPrivkeyEnc(octet pki[], const octet privkey[],
 	size_t privkey_len)
 {
-	der_anchor PKI[1];
-	der_anchor BignAlgId[1];
+	der_anchor_t PKI[1];
+	der_anchor_t BignAlgId[1];
 	size_t count = 0;
 	// проверить ключи
 	ASSERT(privkey_len == 32 || privkey_len == 48 || privkey_len == 64);
 	ASSERT(memIsNullOrValid(privkey, privkey_len));
 	// кодировать
-	derEncStep(derEncSEQStart(PKI, pki, count), pki, count);
-	 derEncStep(derEncSIZE(pki, 0), pki, count);
-	 derEncStep(derEncSEQStart(BignAlgId, pki, count), pki, count);
-	  derEncStep(derEncOID(pki, oid_bign_pubkey), pki, count);
+	derEncStep(derSEQEncStart(PKI, pki, count), pki, count);
+	 derEncStep(derSIZEEnc(pki, 0), pki, count);
+	 derEncStep(derSEQEncStart(BignAlgId, pki, count), pki, count);
+	  derEncStep(derOIDEnc(pki, oid_bign_pubkey), pki, count);
 	  if (privkey_len == 32)
-		  derEncStep(derEncOID(pki, oid_bign_curve256v1), pki, count);
+		  derEncStep(derOIDEnc(pki, oid_bign_curve256v1), pki, count);
 	  else if (privkey_len == 48)
-		  derEncStep(derEncOID(pki, oid_bign_curve384v1), pki, count);
+		  derEncStep(derOIDEnc(pki, oid_bign_curve384v1), pki, count);
 	  else
-		  derEncStep(derEncOID(pki, oid_bign_curve512v1), pki, count);
-	 derEncStep(derEncSEQStop(pki, count, BignAlgId), pki, count);
-	 derEncStep(derEncOCT(pki, privkey, privkey_len), pki, count);
-	derEncStep(derEncSEQStop(pki, count, PKI), pki, count);
+		  derEncStep(derOIDEnc(pki, oid_bign_curve512v1), pki, count);
+	 derEncStep(derSEQEncStop(pki, count, BignAlgId), pki, count);
+	 derEncStep(derOCTEnc(pki, privkey, privkey_len), pki, count);
+	derEncStep(derSEQEncStop(pki, count, PKI), pki, count);
 	// возвратить длину DER-кода
 	return count;
 }
 
-static size_t bpkiDecPrivkey(octet privkey[], size_t* privkey_len,
+static size_t bpkiPrivkeyDec(octet privkey[], size_t* privkey_len,
 	const octet pki[], size_t count)
 {
-	der_anchor PKI[1];
-	der_anchor BignAlgId[1];
+	der_anchor_t PKI[1];
+	der_anchor_t BignAlgId[1];
 	const octet* ptr = pki;
 	size_t t, len;
 	// декодировать
-	derDecStep(derDecSEQStart(PKI, ptr, count), ptr, count);
-	 derDecStep(derDecSIZE2(ptr, count, 0), ptr, count);
-	 derDecStep(derDecSEQStart(BignAlgId, ptr, count), ptr, count);
-	  derDecStep(derDecOID2(ptr, count, oid_bign_pubkey), ptr, count);
-	  if ((t = derDecOID2(ptr, count, oid_bign_curve256v1)) != SIZE_MAX)
+	derDecStep(derSEQDecStart(PKI, ptr, count), ptr, count);
+	 derDecStep(derSIZEDec2(ptr, count, 0), ptr, count);
+	 derDecStep(derSEQDecStart(BignAlgId, ptr, count), ptr, count);
+	  derDecStep(derOIDDec2(ptr, count, oid_bign_pubkey), ptr, count);
+	  if ((t = derOIDDec2(ptr, count, oid_bign_curve256v1)) != SIZE_MAX)
 		  len = 32;
-	  else if ((t = derDecOID2(ptr, count, oid_bign_curve384v1)) != SIZE_MAX)
+	  else if ((t = derOIDDec2(ptr, count, oid_bign_curve384v1)) != SIZE_MAX)
 		  len = 48;
-	  else if ((t = derDecOID2(ptr, count, oid_bign_curve512v1)) != SIZE_MAX)
+	  else if ((t = derOIDDec2(ptr, count, oid_bign_curve512v1)) != SIZE_MAX)
 		  len = 64;
 	  else
 		  return SIZE_MAX;
 	  ptr += t, count -= t;
-	 derDecStep(derDecSEQStop(ptr, BignAlgId), ptr, count);
-	 derDecStep(derDecOCT2(privkey, ptr, count, len), ptr, count);
-	derDecStep(derDecSEQStop(ptr, PKI), ptr, count);
+	 derDecStep(derSEQDecStop(ptr, BignAlgId), ptr, count);
+	 derDecStep(derOCTDec2(privkey, ptr, count, len), ptr, count);
+	derDecStep(derSEQDecStop(ptr, PKI), ptr, count);
 	// возвратить длину ключа
 	if (privkey_len)
 	{
@@ -139,57 +136,57 @@ static size_t bpkiDecPrivkey(octet privkey[], size_t* privkey_len,
 	return ptr - pki;
 }
 
-static size_t bpkiEncShare(octet pki[], const octet share[], size_t share_len)
+static size_t bpkiShareEnc(octet pki[], const octet share[], size_t share_len)
 {
-	der_anchor PKI[1];
-	der_anchor BelsAlgId[1];
+	der_anchor_t PKI[1];
+	der_anchor_t BelsAlgId[1];
 	size_t count = 0;
 	// проверить ключи
 	ASSERT(share_len == 17 || share_len == 25 || share_len == 33);
 	ASSERT(memIsNullOrValid(share, share_len));
 	ASSERT(!share || 1 <= share[0] && share[0] <= 16);
 	// кодировать
-	derEncStep(derEncSEQStart(PKI, pki, count), pki, count);
-	 derEncStep(derEncSIZE(pki, 0), pki, count);
-	 derEncStep(derEncSEQStart(BelsAlgId, pki, count), pki, count);
-	  derEncStep(derEncOID(pki, oid_bels_share), pki, count);
+	derEncStep(derSEQEncStart(PKI, pki, count), pki, count);
+	 derEncStep(derSIZEEnc(pki, 0), pki, count);
+	 derEncStep(derSEQEncStart(BelsAlgId, pki, count), pki, count);
+	  derEncStep(derOIDEnc(pki, oid_bels_share), pki, count);
 	  if (share_len == 17)
-		  derEncStep(derEncOID(pki, oid_bels_m0128v1), pki, count);
+		  derEncStep(derOIDEnc(pki, oid_bels_m0128v1), pki, count);
 	  else if (share_len == 25)
-		  derEncStep(derEncOID(pki, oid_bels_m0192v1), pki, count);
+		  derEncStep(derOIDEnc(pki, oid_bels_m0192v1), pki, count);
 	  else
-		  derEncStep(derEncOID(pki, oid_bels_m0256v1), pki, count);
-	 derEncStep(derEncSEQStop(pki, count, BelsAlgId), pki, count);
-	 derEncStep(derEncOCT(pki, share, share_len), pki, count);
-	derEncStep(derEncSEQStop(pki, count, PKI), pki, count);
+		  derEncStep(derOIDEnc(pki, oid_bels_m0256v1), pki, count);
+	 derEncStep(derSEQEncStop(pki, count, BelsAlgId), pki, count);
+	 derEncStep(derOCTEnc(pki, share, share_len), pki, count);
+	derEncStep(derSEQEncStop(pki, count, PKI), pki, count);
 	// возвратить длину DER-кода
 	return count;
 }
 
-static size_t bpkiDecShare(octet share[], size_t* share_len,
+static size_t bpkiShareDec(octet share[], size_t* share_len,
 	const octet pki[], size_t count)
 {
-	der_anchor PKI[1];
-	der_anchor BelsAlgId[1];
+	der_anchor_t PKI[1];
+	der_anchor_t BelsAlgId[1];
 	const octet* ptr = pki;
 	size_t t, len;
 	// декодировать
-	derDecStep(derDecSEQStart(PKI, ptr, count), ptr, count);
-	 derDecStep(derDecSIZE2(ptr, count, 0), ptr, count);
-	 derDecStep(derDecSEQStart(BelsAlgId, ptr, count), ptr, count);
-	  derDecStep(derDecOID2(ptr, count, oid_bels_share), ptr, count);
-	  if ((t = derDecOID2(ptr, count, oid_bels_m0128v1)) != SIZE_MAX)
+	derDecStep(derSEQDecStart(PKI, ptr, count), ptr, count);
+	 derDecStep(derSIZEDec2(ptr, count, 0), ptr, count);
+	 derDecStep(derSEQDecStart(BelsAlgId, ptr, count), ptr, count);
+	  derDecStep(derOIDDec2(ptr, count, oid_bels_share), ptr, count);
+	  if ((t = derOIDDec2(ptr, count, oid_bels_m0128v1)) != SIZE_MAX)
 		  len = 17;
-	  else if ((t = derDecOID2(ptr, count, oid_bels_m0192v1)) != SIZE_MAX)
+	  else if ((t = derOIDDec2(ptr, count, oid_bels_m0192v1)) != SIZE_MAX)
 		  len = 25;
-	  else if ((t = derDecOID2(ptr, count, oid_bels_m0256v1)) != SIZE_MAX)
+	  else if ((t = derOIDDec2(ptr, count, oid_bels_m0256v1)) != SIZE_MAX)
 		  len = 33;
 	  else
 		  return SIZE_MAX;
 	  ptr += t, count -= t;
-	 derDecStep(derDecSEQStop(ptr, BelsAlgId), ptr, count);
-	 derDecStep(derDecOCT2(share, ptr, count, len), ptr, count);
-	derDecStep(derDecSEQStop(ptr, PKI), ptr, count);
+	 derDecStep(derSEQDecStop(ptr, BelsAlgId), ptr, count);
+	 derDecStep(derOCTDec2(share, ptr, count, len), ptr, count);
+	derDecStep(derSEQDecStop(ptr, PKI), ptr, count);
 	// возвратить длину частичного секрета
 	if (share_len)
 	{
@@ -204,99 +201,99 @@ static size_t bpkiDecShare(octet share[], size_t* share_len,
 *******************************************************************************
 Контейнер с защищенными данными (EPKI): кодирование
 
-SEQUENCE EncryptedPrivateKeyInfo
-  SEQUENCE EncryptionAlgorithmIdentifier
+SEQ EncryptedPrivateKeyInfo
+  SEQ EncryptionAlgorithmIdentifier
     OID(id-PBES2),
-    SEQUENCE PBES2-params
-	  SEQUENCE PBKDF2AlgorithmIdentifier
+    SEQ PBES2-params
+	  SEQ PBKDF2AlgorithmIdentifier
         OID(id-pbkdf2)
-        SEQUENCE PBKDF2-params
-          OCTET STRING(SIZE(8)) -- salt
-          INTEGER(10000..MAX) -- iterCount
-          SEQUENCE PrfAlgorithmIdentifier
+        SEQ PBKDF2-params
+          OCT(SIZE(8)) -- salt
+          SIZE(10000..MAX) -- iterCount
+          SEQ PrfAlgorithmIdentifier
             OID(hmac-hbelt)
             NULL
-      SEQUENCE BeltKwpAlgorithmIdentifier
+      SEQ BeltKwpAlgorithmIdentifier
         OID(belt-kwp256)
         NULL
-  OCTET STRING -- encData
+  OCT -- encData
 *******************************************************************************
 */
 
-static size_t bpkiEncEdata(octet epki[], const octet edata[], size_t edata_len,
+static size_t bpkiEdataEnc(octet epki[], const octet edata[], size_t edata_len,
 	const octet salt[8], size_t iter)
 {
-	der_anchor EPKI[1];
-	der_anchor EncryptionAlgId[1];
-	der_anchor PBES2_params[1];
-	der_anchor PBKDF2AlgId[1];
-	der_anchor PBKDF2_params[1];
-	der_anchor PrfAlgId[1];
-	der_anchor BeltKwpAlgId[1];
+	der_anchor_t EPKI[1];
+	der_anchor_t EncryptionAlgId[1];
+	der_anchor_t PBES2_params[1];
+	der_anchor_t PBKDF2AlgId[1];
+	der_anchor_t PBKDF2_params[1];
+	der_anchor_t PrfAlgId[1];
+	der_anchor_t BeltKwpAlgId[1];
 	size_t count = 0;
 	// кодировать
-	derEncStep(derEncSEQStart(EPKI, epki, count), epki, count);
-	 derEncStep(derEncSEQStart(EncryptionAlgId, epki, count), epki, count);
-	  derEncStep(derEncOID(epki, oid_id_pbes2), epki, count);
-	  derEncStep(derEncSEQStart(PBES2_params, epki, count), epki, count);
-	   derEncStep(derEncSEQStart(PBKDF2AlgId, epki, count), epki, count);
-	    derEncStep(derEncOID(epki, oid_id_pbkdf2), epki, count);
-	    derEncStep(derEncSEQStart(PBKDF2_params, epki, count), epki, count);
-	     derEncStep(derEncOCT(epki, salt, 8), epki, count);
-		 derEncStep(derEncSIZE(epki, iter), epki, count);
-		 derEncStep(derEncSEQStart(PrfAlgId, epki, count), epki, count);
-		  derEncStep(derEncOID(epki, oid_hmac_hbelt), epki, count);
-		  derEncStep(derEncNULL(epki), epki, count);
-		 derEncStep(derEncSEQStop(epki, count, PrfAlgId), epki, count);
-		derEncStep(derEncSEQStop(epki, count, PBKDF2_params), epki, count);
-	   derEncStep(derEncSEQStop(epki, count, PBKDF2AlgId), epki, count);
-	   derEncStep(derEncSEQStart(BeltKwpAlgId, epki, count), epki, count);
-	    derEncStep(derEncOID(epki, oid_belt_kwp256), epki, count);
-	    derEncStep(derEncNULL(epki), epki, count);
-	  derEncStep(derEncSEQStop(epki, count, BeltKwpAlgId), epki, count);
-	  derEncStep(derEncSEQStop(epki, count, PBES2_params), epki, count);
-	  derEncStep(derEncSEQStop(epki, count, EncryptionAlgId), epki, count);
-	 derEncStep(derEncOCT(epki, edata, edata_len), epki, count);
-	derEncStep(derEncSEQStop(epki, count, EPKI), epki, count);
+	derEncStep(derSEQEncStart(EPKI, epki, count), epki, count);
+	 derEncStep(derSEQEncStart(EncryptionAlgId, epki, count), epki, count);
+	  derEncStep(derOIDEnc(epki, oid_id_pbes2), epki, count);
+	  derEncStep(derSEQEncStart(PBES2_params, epki, count), epki, count);
+	   derEncStep(derSEQEncStart(PBKDF2AlgId, epki, count), epki, count);
+	    derEncStep(derOIDEnc(epki, oid_id_pbkdf2), epki, count);
+	    derEncStep(derSEQEncStart(PBKDF2_params, epki, count), epki, count);
+	     derEncStep(derOCTEnc(epki, salt, 8), epki, count);
+		 derEncStep(derSIZEEnc(epki, iter), epki, count);
+		 derEncStep(derSEQEncStart(PrfAlgId, epki, count), epki, count);
+		  derEncStep(derOIDEnc(epki, oid_hmac_hbelt), epki, count);
+		  derEncStep(derNULLEnc(epki), epki, count);
+		 derEncStep(derSEQEncStop(epki, count, PrfAlgId), epki, count);
+		derEncStep(derSEQEncStop(epki, count, PBKDF2_params), epki, count);
+	   derEncStep(derSEQEncStop(epki, count, PBKDF2AlgId), epki, count);
+	   derEncStep(derSEQEncStart(BeltKwpAlgId, epki, count), epki, count);
+	    derEncStep(derOIDEnc(epki, oid_belt_kwp256), epki, count);
+	    derEncStep(derNULLEnc(epki), epki, count);
+	  derEncStep(derSEQEncStop(epki, count, BeltKwpAlgId), epki, count);
+	  derEncStep(derSEQEncStop(epki, count, PBES2_params), epki, count);
+	  derEncStep(derSEQEncStop(epki, count, EncryptionAlgId), epki, count);
+	 derEncStep(derOCTEnc(epki, edata, edata_len), epki, count);
+	derEncStep(derSEQEncStop(epki, count, EPKI), epki, count);
 	// возвратить длину DER-кода
 	return count;
 }
 
-static size_t bpkiDecEdata(octet edata[], size_t* edata_len, octet salt[8],
+static size_t bpkiEdataDec(octet edata[], size_t* edata_len, octet salt[8],
 	size_t* iter, const octet epki[], size_t count)
 {
-	der_anchor EPKI[1];
-	der_anchor EncryptionAlgId[1];
-	der_anchor PBES2_params[1];
-	der_anchor PBKDF2AlgId[1];
-	der_anchor PBKDF2_params[1];
-	der_anchor PrfAlgId[1];
-	der_anchor BeltKwpAlgId[1];
+	der_anchor_t EPKI[1];
+	der_anchor_t EncryptionAlgId[1];
+	der_anchor_t PBES2_params[1];
+	der_anchor_t PBKDF2AlgId[1];
+	der_anchor_t PBKDF2_params[1];
+	der_anchor_t PrfAlgId[1];
+	der_anchor_t BeltKwpAlgId[1];
 	const octet* ptr = epki;
 	// декодировать
-	derDecStep(derDecSEQStart(EPKI, ptr, count), ptr, count);
-	 derDecStep(derDecSEQStart(EncryptionAlgId, ptr, count), ptr, count);
-	  derDecStep(derDecOID2(ptr, count, oid_id_pbes2), ptr, count);
-	  derDecStep(derDecSEQStart(PBES2_params, ptr, count), ptr, count);
-	   derDecStep(derDecSEQStart(PBKDF2AlgId, ptr, count), ptr, count);
-	    derDecStep(derDecOID2(ptr, count, oid_id_pbkdf2), ptr, count);
-	    derDecStep(derDecSEQStart(PBKDF2_params, ptr, count), ptr, count);
-	     derDecStep(derDecOCT2(salt, ptr, count, 8), ptr, count);
-	     derDecStep(derDecSIZE(iter, ptr, count), ptr, count);
-	     derDecStep(derDecSEQStart(PrfAlgId, ptr, count), ptr, count);
-	      derDecStep(derDecOID2(ptr, count, oid_hmac_hbelt), ptr, count);
-	      derDecStep(derDecNULL(ptr, count), ptr, count);
-	     derDecStep(derDecSEQStop(ptr, PrfAlgId), ptr, count);
-	    derDecStep(derDecSEQStop(ptr, PBKDF2_params), ptr, count);
-	   derDecStep(derDecSEQStop(ptr, PBKDF2AlgId), ptr, count);
-	   derDecStep(derDecSEQStart(BeltKwpAlgId, ptr, count), ptr, count);
-	    derDecStep(derDecOID2(ptr, count, oid_belt_kwp256), ptr, count);
-	    derDecStep(derDecNULL(ptr, count), ptr, count);
-	   derDecStep(derDecSEQStop(ptr, BeltKwpAlgId), ptr, count);
-	  derDecStep(derDecSEQStop(ptr, PBES2_params), ptr, count);
-	 derDecStep(derDecSEQStop(ptr, EncryptionAlgId), ptr, count);
-	 derDecStep(derDecOCT(edata, edata_len, ptr, count), ptr, count);
-	derDecStep(derDecSEQStop(ptr, EPKI), ptr, count);
+	derDecStep(derSEQDecStart(EPKI, ptr, count), ptr, count);
+	 derDecStep(derSEQDecStart(EncryptionAlgId, ptr, count), ptr, count);
+	  derDecStep(derOIDDec2(ptr, count, oid_id_pbes2), ptr, count);
+	  derDecStep(derSEQDecStart(PBES2_params, ptr, count), ptr, count);
+	   derDecStep(derSEQDecStart(PBKDF2AlgId, ptr, count), ptr, count);
+	    derDecStep(derOIDDec2(ptr, count, oid_id_pbkdf2), ptr, count);
+	    derDecStep(derSEQDecStart(PBKDF2_params, ptr, count), ptr, count);
+	     derDecStep(derOCTDec2(salt, ptr, count, 8), ptr, count);
+	     derDecStep(derSIZEDec(iter, ptr, count), ptr, count);
+	     derDecStep(derSEQDecStart(PrfAlgId, ptr, count), ptr, count);
+	      derDecStep(derOIDDec2(ptr, count, oid_hmac_hbelt), ptr, count);
+	      derDecStep(derNULLDec(ptr, count), ptr, count);
+	     derDecStep(derSEQDecStop(ptr, PrfAlgId), ptr, count);
+	    derDecStep(derSEQDecStop(ptr, PBKDF2_params), ptr, count);
+	   derDecStep(derSEQDecStop(ptr, PBKDF2AlgId), ptr, count);
+	   derDecStep(derSEQDecStart(BeltKwpAlgId, ptr, count), ptr, count);
+	    derDecStep(derOIDDec2(ptr, count, oid_belt_kwp256), ptr, count);
+	    derDecStep(derNULLDec(ptr, count), ptr, count);
+	   derDecStep(derSEQDecStop(ptr, BeltKwpAlgId), ptr, count);
+	  derDecStep(derSEQDecStop(ptr, PBES2_params), ptr, count);
+	 derDecStep(derSEQDecStop(ptr, EncryptionAlgId), ptr, count);
+	 derDecStep(derOCTDec(edata, edata_len, ptr, count), ptr, count);
+	derDecStep(derSEQDecStop(ptr, EPKI), ptr, count);
 	// возвратить длину DER-кода
 	return ptr - epki;
 }
@@ -307,7 +304,7 @@ static size_t bpkiDecEdata(octet edata[], size_t* edata_len, octet salt[8],
 *******************************************************************************
 */
 
-err_t bpkiWrapPrivkey(octet epki[], size_t* epki_len, const octet privkey[],
+err_t bpkiPrivkeyWrap(octet epki[], size_t* epki_len, const octet privkey[],
 	size_t privkey_len, const octet pwd[], size_t pwd_len,
 	const octet salt[8], size_t iter)
 {
@@ -320,11 +317,11 @@ err_t bpkiWrapPrivkey(octet epki[], size_t* epki_len, const octet privkey[],
 	if (privkey_len != 32 && privkey_len != 48 && privkey_len != 64)
 		return ERR_BAD_PRIVKEY;
 	// определить длину epki
-	pki_len = bpkiEncPrivkey(0, privkey, privkey_len);
+	pki_len = bpkiPrivkeyEnc(0, privkey, privkey_len);
 	if (pki_len == SIZE_MAX)
 		return ERR_BAD_FORMAT;
 	edata_len = pki_len + 16;
-	count = bpkiEncEdata(0, 0, edata_len, 0, iter);
+	count = bpkiEdataEnc(0, 0, edata_len, 0, iter);
 	if (count == SIZE_MAX)
 		return ERR_BAD_FORMAT;
 	if (epki_len)
@@ -348,7 +345,7 @@ err_t bpkiWrapPrivkey(octet epki[], size_t* epki_len, const octet privkey[],
 	code = beltPBKDF2(key, pwd, pwd_len, iter, salt, 8);
 	ERR_CALL_HANDLE(code, blobClose(key));
 	// кодировать pki
-	pki_len = bpkiEncPrivkey(epki + count - pki_len, privkey, privkey_len);
+	pki_len = bpkiPrivkeyEnc(epki + count - pki_len, privkey, privkey_len);
 	code = pki_len != SIZE_MAX ? ERR_OK : ERR_BAD_PRIVKEY;
 	ERR_CALL_HANDLE(code, (memWipe(epki, count), blobClose(key)));
 	// зашифровать pki
@@ -356,7 +353,7 @@ err_t bpkiWrapPrivkey(octet epki[], size_t* epki_len, const octet privkey[],
 		epki + count - pki_len,	pki_len, 0, key, 32);
 	ERR_CALL_HANDLE(code, (memWipe(epki, count), blobClose(key)));
 	// кодировать edata и epki
-	count = bpkiEncEdata(epki, epki + count - edata_len, edata_len,
+	count = bpkiEdataEnc(epki, epki + count - edata_len, edata_len,
 		salt, iter);
 	code = count != SIZE_MAX ? ERR_OK : ERR_BAD_FORMAT;
 	ERR_CALL_HANDLE(code, (memWipe(epki, count), blobClose(key)));
@@ -365,7 +362,7 @@ err_t bpkiWrapPrivkey(octet epki[], size_t* epki_len, const octet privkey[],
 	return ERR_OK;
 }
 
-err_t bpkiUnwrapPrivkey(octet privkey[], size_t* privkey_len,
+err_t bpkiPrivkeyUnwrap(octet privkey[], size_t* privkey_len,
 	const octet epki[], size_t epki_len, const octet pwd[], size_t pwd_len)
 {
 	size_t edata_len, pki_len, count, iter;
@@ -380,7 +377,7 @@ err_t bpkiUnwrapPrivkey(octet privkey[], size_t* privkey_len,
 		privkey_len && !memIsValid(privkey_len, O_PER_S))
 		return ERR_BAD_INPUT;
 	// определить размер edata
-	count = bpkiDecEdata(0, &edata_len, 0, 0, epki, epki_len);
+	count = bpkiEdataDec(0, &edata_len, 0, 0, epki, epki_len);
 	if (count != epki_len)
 		return ERR_BAD_FORMAT;
 	// подготовить буферы для параметров PBKDF2
@@ -391,7 +388,7 @@ err_t bpkiUnwrapPrivkey(octet privkey[], size_t* privkey_len,
 	key = salt + 8;
 	edata = key + 32;
 	// выделить edata
-	count = bpkiDecEdata(edata, 0, salt, &iter, epki, epki_len);
+	count = bpkiEdataDec(edata, 0, salt, &iter, epki, epki_len);
 	ASSERT(count == epki_len);
 	// построить ключ защиты 
 	code = beltPBKDF2(key, pwd, pwd_len, iter, salt, 8);
@@ -401,14 +398,14 @@ err_t bpkiUnwrapPrivkey(octet privkey[], size_t* privkey_len,
 	ERR_CALL_HANDLE(code, blobClose(state));
 	pki_len = edata_len - 16;
 	// определить длину privkey
-	count = bpkiDecPrivkey(privkey, &edata_len, edata, pki_len);
+	count = bpkiPrivkeyDec(privkey, &edata_len, edata, pki_len);
 	code = count == pki_len ? ERR_OK : ERR_BAD_FORMAT;
 	ERR_CALL_HANDLE(code, blobClose(state));
 	// проверить указатель share 
 	code = memIsNullOrValid(privkey, edata_len) ? ERR_OK : ERR_BAD_INPUT;
 	ERR_CALL_HANDLE(code, blobClose(state));
 	// декодировать pki
-	count = bpkiDecPrivkey(privkey, privkey_len, edata, pki_len);
+	count = bpkiPrivkeyDec(privkey, privkey_len, edata, pki_len);
 	ASSERT(count == pki_len);
 	// завершить
 	blobClose(state);
@@ -421,7 +418,7 @@ err_t bpkiUnwrapPrivkey(octet privkey[], size_t* privkey_len,
 *******************************************************************************
 */
 
-err_t bpkiWrapShare(octet epki[], size_t* epki_len, const octet share[],
+err_t bpkiShareWrap(octet epki[], size_t* epki_len, const octet share[],
 	size_t share_len, const octet pwd[], size_t pwd_len,
 	const octet salt[8], size_t iter)
 {
@@ -435,11 +432,11 @@ err_t bpkiWrapShare(octet epki[], size_t* epki_len, const octet share[],
 		share && (!memIsValid(share, 1) || share[0] == 0 || share[0] > 16))
 		return ERR_BAD_SECKEY;
 	// определить длину epki
-	pki_len = bpkiEncShare(0, share, share_len);
+	pki_len = bpkiShareEnc(0, share, share_len);
 	if (pki_len == SIZE_MAX)
 		return ERR_BAD_FORMAT;
 	edata_len = pki_len + 16;
-	count = bpkiEncEdata(0, 0, edata_len, 0, iter);
+	count = bpkiEdataEnc(0, 0, edata_len, 0, iter);
 	if (count == SIZE_MAX)
 		return ERR_BAD_FORMAT;
 	if (epki_len)
@@ -463,7 +460,7 @@ err_t bpkiWrapShare(octet epki[], size_t* epki_len, const octet share[],
 	code = beltPBKDF2(key, pwd, pwd_len, iter, salt, 8);
 	ERR_CALL_HANDLE(code, blobClose(key));
 	// кодировать pki
-	pki_len = bpkiEncShare(epki + count - pki_len, share, share_len);
+	pki_len = bpkiShareEnc(epki + count - pki_len, share, share_len);
 	code = pki_len != SIZE_MAX ? ERR_OK : ERR_BAD_PRIVKEY;
 	ERR_CALL_HANDLE(code, (memWipe(epki, count), blobClose(key)));
 	// зашифровать pki
@@ -471,7 +468,7 @@ err_t bpkiWrapShare(octet epki[], size_t* epki_len, const octet share[],
 		epki + count - pki_len, pki_len, 0, key, 32);
 	ERR_CALL_HANDLE(code, (memWipe(epki, count), blobClose(key)));
 	// кодировать edata и epki
-	count = bpkiEncEdata(epki, epki + count - edata_len, edata_len,
+	count = bpkiEdataEnc(epki, epki + count - edata_len, edata_len,
 		salt, iter);
 	code = count != SIZE_MAX ? ERR_OK : ERR_BAD_FORMAT;
 	ERR_CALL_HANDLE(code, (memWipe(epki, count), blobClose(key)));
@@ -480,7 +477,7 @@ err_t bpkiWrapShare(octet epki[], size_t* epki_len, const octet share[],
 	return ERR_OK;
 }
 
-err_t bpkiUnwrapShare(octet share[], size_t* share_len,
+err_t bpkiShareUnwrap(octet share[], size_t* share_len,
 	const octet epki[], size_t epki_len, const octet pwd[], size_t pwd_len)
 {
 	size_t edata_len, pki_len, count, iter;
@@ -495,7 +492,7 @@ err_t bpkiUnwrapShare(octet share[], size_t* share_len,
 		share_len && !memIsValid(share_len, O_PER_S))
 		return ERR_BAD_INPUT;
 	// определить размер edata
-	count = bpkiDecEdata(0, &edata_len, 0, 0, epki, epki_len);
+	count = bpkiEdataDec(0, &edata_len, 0, 0, epki, epki_len);
 	if (count != epki_len)
 		return ERR_BAD_FORMAT;
 	// подготовить буферы для параметров PBKDF2
@@ -506,7 +503,7 @@ err_t bpkiUnwrapShare(octet share[], size_t* share_len,
 	key = salt + 8;
 	edata = key + 32;
 	// выделить edata
-	count = bpkiDecEdata(edata, 0, salt, &iter, epki, epki_len);
+	count = bpkiEdataDec(edata, 0, salt, &iter, epki, epki_len);
 	ASSERT(count == epki_len);
 	// построить ключ защиты 
 	code = beltPBKDF2(key, pwd, pwd_len, iter, salt, 8);
@@ -516,14 +513,14 @@ err_t bpkiUnwrapShare(octet share[], size_t* share_len,
 	ERR_CALL_HANDLE(code, blobClose(state));
 	pki_len = edata_len - 16;
 	// определить длину share
-	count = bpkiDecShare(share, &edata_len, edata, pki_len);
+	count = bpkiShareDec(share, &edata_len, edata, pki_len);
 	code = count == pki_len ? ERR_OK : ERR_BAD_FORMAT;
 	ERR_CALL_HANDLE(code, blobClose(state));
 	// проверить указатель share 
 	code = memIsNullOrValid(share, edata_len) ? ERR_OK : ERR_BAD_INPUT;
 	ERR_CALL_HANDLE(code, blobClose(state));
 	// декодировать pki
-	count = bpkiDecShare(share, share_len, edata, pki_len);
+	count = bpkiShareDec(share, share_len, edata, pki_len);
 	ASSERT(count == pki_len);
 	// проверить первый октет share
 	code = !share || 1 <= share[0] && share[0] <= 16 ?
@@ -532,4 +529,3 @@ err_t bpkiUnwrapShare(octet share[], size_t* share_len,
 	blobClose(state);
 	return code;
 }
-

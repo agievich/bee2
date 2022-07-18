@@ -27,6 +27,9 @@
     <Filter Include="Source Files\pwd">
       <UniqueIdentifier>{c1d2711f-58f2-402c-8a12-03b2d6e1e18e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\cvc">
+      <UniqueIdentifier>{22ba03ac-1a5c-44d7-9c8d-024b44b15711}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\cmd\bsum\bsum.c">
@@ -55,6 +58,9 @@
     </ClCompile>
     <ClCompile Include="..\..\cmd\pwd\pwd.c">
       <Filter>Source Files\pwd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\cvc\cvc.c">
+      <Filter>Source Files\cvc</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

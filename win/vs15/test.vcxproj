@@ -381,6 +381,7 @@
     <ClCompile Include="..\..\test\crypto\botp_test.c" />
     <ClCompile Include="..\..\test\crypto\bpki_test.c" />
     <ClCompile Include="..\..\test\crypto\brng_test.c" />
+    <ClCompile Include="..\..\test\crypto\btok_test.c" />
     <ClCompile Include="..\..\test\crypto\dstu_test.c" />
     <ClCompile Include="..\..\test\crypto\g12s_test.c" />
     <ClCompile Include="..\..\test\crypto\pfok_test.c" />

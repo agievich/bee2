@@ -3,9 +3,8 @@
 \file belt_hash.c
 \brief STB 34.101.31 (belt): hashing
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2020.03.24
+\version 2022.07.18
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -71,7 +70,7 @@ void beltHashStepH(const void* buf, size_t count, void* state)
 		}
 		memCopy(st->block + st->filled, buf, 32 - st->filled);
 		count -= 32 - st->filled;
-		buf = (const octet*)buf + 32 - st->filled;
+		buf = (const octet*)buf + (32 - st->filled);
 #if (OCTET_ORDER == BIG_ENDIAN)
 		beltBlockRevU32(st->block);
 		beltBlockRevU32(st->block + 16);

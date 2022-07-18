@@ -3,9 +3,8 @@
 \file tm.c
 \brief Time and timers
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.05.10
-\version 2015.11.25
+\version 2022.07.18
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -14,6 +13,7 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/core/mem.h"
 #include "bee2/core/mt.h"
 #include "bee2/core/tm.h"
+#include "bee2/core/util.h"
 
 /*
 *******************************************************************************
@@ -194,4 +194,74 @@ tm_time_t tmTimeRound(tm_time_t t0, tm_time_t ts)
 		return TIME_ERR;
 	t = (t - t0) / ts;
 	return t;
+}
+
+/*
+*******************************************************************************
+Дата
+*******************************************************************************
+*/
+
+#if defined(_MSC_VER)
+#define localtime_r(et, lt) (localtime_s(lt, et) ? 0 : lt)
+#endif
+
+bool_t tmDate(size_t* y, size_t* m, size_t* d)
+{
+	struct tm lt;
+	time_t et;
+	// входной контроль
+	ASSERT(memIsNullOrValid(y, O_PER_S));
+	ASSERT(memIsNullOrValid(m, O_PER_S));
+	ASSERT(memIsNullOrValid(d, O_PER_S));
+	// получить отметку времени
+	if (time(&et) == -1 || !localtime_r(&et, &lt))
+		return FALSE;
+	// возвратить данные
+	if (y)
+		*y = (size_t)lt.tm_year, *y += 1900;
+	if (m)
+		*m = (size_t)lt.tm_mon + 1;
+	if (d)
+		*d = (size_t)lt.tm_mday;
+	return TRUE;
+}
+
+bool_t tmDate2(octet date[6])
+{
+	size_t y;
+	size_t m;
+	size_t d;
+	ASSERT(memIsValid(date, 6));
+	// получить дату
+	if (!tmDate(&y, &m, &d))
+		return FALSE;
+	// преобразовать дату
+	if (y < 2000 || y > 2099)
+		return FALSE;
+	y -= 2000;
+	date[0] = (octet)(y / 10), date[1] = (octet)(y % 10);
+	date[2] = (octet)(m / 10), date[3] = (octet)(m % 10);
+	date[4] = (octet)(d / 10), date[5] = (octet)(d % 10);
+	return TRUE;
+}
+
+#define yearIsSlope(y) ((y) % 400 == 0 || (y) % 4 == 0 && (y) % 100)
+
+bool_t tmDateIsValid(size_t y, size_t m, size_t d)
+{
+	return 1583 <= y &&
+		1 <= m && m <= 12 &&
+		1 <= d && d <= 31 &&
+		!(d == 31 && (m == 4 || m == 6 || m == 9 || m == 11)) &&
+		!(m == 2 && (d > 29 || d == 29 && !yearIsSlope(y)));
+}
+
+bool_t tmDateIsValid2(const octet date[6])
+{
+	return memIsValid(date, 6) && 
+		tmDateIsValid(
+			(size_t)10 * date[0] + date[1] + 2000,
+			(size_t)10 * date[2] + date[3],
+			(size_t)10 * date[4] + date[5]);
 }

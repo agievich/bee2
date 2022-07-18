@@ -4,7 +4,7 @@
 \brief Errors
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2022.06.23
+\version 2022.07.12
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -58,28 +58,30 @@ Sys
 #define ERR_BAD_UNIT				_ERR_REG(102)
 /* некорректный файл */
 #define ERR_BAD_FILE				_ERR_REG(103)
+/* некорректный таймер */
+#define ERR_BAD_TIMER				_ERR_REG(104)
 /* некорректная функция */
-#define ERR_BAD_FUNCTION			_ERR_REG(104)
+#define ERR_BAD_FUNCTION			_ERR_REG(105)
 /* некорректная команда */
-#define ERR_BAD_COMMAND				_ERR_REG(105)
+#define ERR_BAD_COMMAND				_ERR_REG(106)
 /* некорректная длина */
-#define ERR_BAD_LENGTH				_ERR_REG(106)
+#define ERR_BAD_LENGTH				_ERR_REG(107)
 /* некорректные входные данные */
-#define ERR_BAD_INPUT				_ERR_REG(107)
+#define ERR_BAD_INPUT				_ERR_REG(108)
 /* не хватает памяти */
-#define ERR_OUTOFMEMORY				_ERR_REG(108)
+#define ERR_OUTOFMEMORY				_ERR_REG(109)
 /* доступ запрещен */
-#define ERR_ACCESS_DENIED			_ERR_REG(109)
+#define ERR_ACCESS_DENIED			_ERR_REG(110)
 /* устройство не готово */
-#define ERR_NOT_READY				_ERR_REG(110)
+#define ERR_NOT_READY				_ERR_REG(111)
 /* запрашиваемый ресурс занят */
-#define ERR_BUSY					_ERR_REG(111)
+#define ERR_BUSY					_ERR_REG(112)
 /* таймаут */
-#define ERR_TIMEOUT					_ERR_REG(112)
+#define ERR_TIMEOUT					_ERR_REG(113)
 /* не реализовано */
-#define ERR_NOT_IMPLEMENTED			_ERR_REG(113)
-/* не реализовано */
-#define ERR_AFTER					_ERR_REG(114)
+#define ERR_NOT_IMPLEMENTED			_ERR_REG(114)
+/* последствия предыдущих ошибок */
+#define ERR_AFTER					_ERR_REG(115)
 
 /*
 *******************************************************************************
@@ -122,6 +124,14 @@ Core
 #define ERR_BAD_FORMAT				_ERR_REG(305)
 /* некорректная отметка времени */
 #define ERR_BAD_TIME				_ERR_REG(306)
+/* некорректная дата */
+#define ERR_BAD_DATE				_ERR_REG(307)
+/* некорректное имя */
+#define ERR_BAD_NAME				_ERR_REG(308)
+/* вне диапазона */
+#define ERR_OUTOFRANGE				_ERR_REG(309)
+/* некорректный перечень прав доступа */
+#define ERR_BAD_ACL					_ERR_REG(310)
 
 /*
 *******************************************************************************
@@ -152,32 +162,34 @@ Crypto
 #define ERR_BAD_PRIVKEY				_ERR_REG(503)
 /* некорректный открытый ключ */
 #define ERR_BAD_PUBKEY				_ERR_REG(504)
+/* некорректная пара открытый / личный ключ */
+#define ERR_BAD_KEYPAIR				_ERR_REG(505)
 /* некорректный сертификат (открытого ключа) */
-#define ERR_BAD_CERT				_ERR_REG(505)
+#define ERR_BAD_CERT				_ERR_REG(506)
 /* некорректный общий ключ */
-#define ERR_BAD_SHAREDKEY			_ERR_REG(506)
+#define ERR_BAD_SHAREDKEY			_ERR_REG(507)
 /* некорректный частичный секрет */
-#define ERR_BAD_SHAREKEY			_ERR_REG(507)
+#define ERR_BAD_SHAREKEY			_ERR_REG(508)
 /* некорректное хэш-значение */
-#define ERR_BAD_HASH				_ERR_REG(508)
+#define ERR_BAD_HASH				_ERR_REG(509)
 /* некорректная ЭЦП */
-#define ERR_BAD_SIG					_ERR_REG(509)
+#define ERR_BAD_SIG					_ERR_REG(510)
 /* некорректная имитовставка */
-#define ERR_BAD_MAC					_ERR_REG(510)
+#define ERR_BAD_MAC					_ERR_REG(511)
 /* некорректный токен ключа */
-#define ERR_BAD_KEYTOKEN			_ERR_REG(511)
+#define ERR_BAD_KEYTOKEN			_ERR_REG(512)
 /* неверная логика (протокола) */
-#define ERR_BAD_LOGIC				_ERR_REG(512)
+#define ERR_BAD_LOGIC				_ERR_REG(513)
 /* неверный пароль */
-#define ERR_BAD_PWD					_ERR_REG(513)
+#define ERR_BAD_PWD					_ERR_REG(514)
 /* ключ не найден */
-#define ERR_KEY_NOT_FOUND			_ERR_REG(514)
+#define ERR_KEY_NOT_FOUND			_ERR_REG(515)
 /* ошибка аутентификации */
-#define ERR_AUTH					_ERR_REG(515)
+#define ERR_AUTH					_ERR_REG(516)
 /* ошибка самотестирования */
-#define ERR_SELFTEST				_ERR_REG(516)
+#define ERR_SELFTEST				_ERR_REG(517)
 /* ошибка статистического тестирования */
-#define ERR_STATTEST				_ERR_REG(517)
+#define ERR_STATTEST				_ERR_REG(518)
 
 /*
 *******************************************************************************

@@ -4,7 +4,7 @@
 \brief Errors
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2022.06.23
+\version 2022.07.11
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -30,6 +30,7 @@ static const err_msg _messages[] = {
 	{ERR_SYS, "Unknown system error"},
 	{ERR_BAD_UNIT, "Invalid device"},
 	{ERR_BAD_FILE, "Invalid file"},
+	{ERR_BAD_TIMER, "Invalid timer"},
 	{ERR_BAD_FUNCTION, "Invalid function"},
 	{ERR_BAD_COMMAND, "Invalid command"},
 	{ERR_BAD_LENGTH, "Invalid length"},
@@ -57,6 +58,10 @@ static const err_msg _messages[] = {
 	{ERR_BAD_ANG, "Incorrect any number generator"},
 	{ERR_BAD_FORMAT, "Invalid format"},
 	{ERR_BAD_TIME, "Invalid time"},
+	{ERR_BAD_DATE, "Invalid date"},
+	{ERR_BAD_NAME, "Invalid name"},
+	{ERR_OUTOFRANGE, "Out of range"},
+	{ERR_BAD_ACL, "Invalid access control list"},
 	// math
 	{ERR_BAD_POINT, "Invalid elliptic curve point"},
 	{ERR_NOT_PRIME, "The number is not prime"},
@@ -67,6 +72,7 @@ static const err_msg _messages[] = {
 	{ERR_BAD_SECKEY, "Invalid secret key"},
 	{ERR_BAD_PRIVKEY, "Invalid private key"},
 	{ERR_BAD_PUBKEY, "Invalid public key"},
+	{ERR_BAD_KEYPAIR, "Invalid private/public keypair"},
 	{ERR_BAD_CERT, "Incorrect public key certificate"},
 	{ERR_BAD_SHAREDKEY, "Incorrect shared key"},
 	{ERR_BAD_SHAREKEY, "Incorrect secret share"},

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="libbee2"
 	ProjectGUID="{1B3F88D7-BD23-4398-A331-3DB139CF07EF}"
 	RootNamespace="bee2lib"
@@ -421,6 +421,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\include\bee2\crypto\btok.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\include\bee2\crypto\dstu.h"
 					>
 				</File>
@@ -783,6 +787,14 @@
 					</File>
 					<File
 						RelativePath="..\..\src\crypto\bash\bash_prg.c"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="btok"
+					>
+					<File
+						RelativePath="..\..\src\crypto\btok\btok_cvc.c"
 						>
 					</File>
 				</Filter>

@@ -3,9 +3,8 @@
 \file mem.h
 \brief Memory management
 \project bee2 [cryptographic library]
-\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.16
-\version 2021.05.18
+\version 2022.07.05
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -195,15 +194,14 @@ bool_t FAST(memEq)(const void* buf1, const void* buf2, size_t count);
 
 /*!	\brief Сравнение
 
-	Буферы [count]buf1 и [count]buf2 сравниваются обратно-лексикографически.
-	\return < 0, если [count]buf1 < [count]buf2, 
-	0, если [count]buf1 == [count]buf2, 
+	Буферы [count]buf1 и [count]buf2 сравниваются лексикографически.
+	\return < 0, если [count]buf1 < [count]buf2,
+	0, если [count]buf1 == [count]buf2,
 	> 0, если [count]buf1 > [count]buf2.
-	\remark Октеты буферов сравниваются последовательно, от последнего 
-	к первому. Первое несовпадение задает соотношение между буферами.
-	\warning Стандартная функция memcmp() сравнивает октеты от первого 
-	к последнему.
+	\remark Октеты буферов сравниваются последовательно, от первого
+	к последнему. Первое несовпадение задает соотношение между буферами.
 	\safe Имеется ускоренная нерегулярная редакция.
+	\remark Повторяется логика сравнения стандартной функции memcmp().
 */
 int memCmp(
 	const void* buf1,	/*!< [in] первый буфер */
@@ -213,6 +211,25 @@ int memCmp(
 
 int SAFE(memCmp)(const void* buf1, const void* buf2, size_t count);
 int FAST(memCmp)(const void* buf1, const void* buf2, size_t count);
+
+/*!	\brief Обратное сравнение
+
+	Буферы [count]buf1 и [count]buf2 сравниваются обратно-лексикографически.
+	\return < 0, если [count]buf1 < [count]buf2, 
+	0, если [count]buf1 == [count]buf2, 
+	> 0, если [count]buf1 > [count]buf2.
+	\remark Октеты буферов сравниваются последовательно, от последнего 
+	к первому. Первое несовпадение задает соотношение между буферами.
+	\safe Имеется ускоренная нерегулярная редакция.
+*/
+int memCmpRev(
+	const void* buf1,	/*!< [in] первый буфер */
+	const void* buf2,	/*!< [in] второй буфер */
+	size_t count		/*!< [in] размер буферов */
+);
+
+int SAFE(memCmpRev)(const void* buf1, const void* buf2, size_t count);
+int FAST(memCmpRev)(const void* buf1, const void* buf2, size_t count);
 
 /*!	\brief Очистить буфер памяти
 

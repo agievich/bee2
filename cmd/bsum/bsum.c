@@ -4,7 +4,7 @@
 \brief Hash files using belt-hash / bash-hash
 \project bee2/cmd 
 \created 2014.10.28
-\version 2022.06.23
+\version 2022.07.05
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -48,7 +48,7 @@ int bsumUsage()
 		"  bsum [hash_alg] -c <checksum_file>\n"
 		"  hash_alg:\n" 
 		"    -belt-hash (STB 34.101.31, by default)\n"
-		"    -bash-hash32, -bash-hash64, ..., -bash-hash512 (STB 34.101.77)\n",
+		"    -bash32, -bash64, ..., -bash512 (STB 34.101.77)\n",
 		_name, _descr
 	);
 	return -1;
@@ -64,10 +64,10 @@ size_t bsumParseHid(const char* alg_name)
 {
 	if (strEq(alg_name, "-belt-hash"))
 		return 0;
-	if (strStartsWith(alg_name, "-bash-hash"))
+	if (strStartsWith(alg_name, "-bash"))
 	{
 		size_t hid;
-		alg_name += strLen("-bash-hash");
+		alg_name += strLen("-bash");
 		if (!decIsValid(alg_name) || !strLen(alg_name) || 
 			strLen(alg_name) > 3 || decCLZ(alg_name) || 
 			(hid = (size_t)decToU32(alg_name)) % 32 || hid > 512)
