@@ -70,6 +70,7 @@ matrix:
     after_success:
     - lcov -c -i -d src -o coverage_base.info
     - test/testbee2
+    - cp ../cmd/test/test.sh cmd && cd cmd && ./test.sh && cd ..
     - lcov -c -d src -o coverage_test.info
     - lcov -a coverage_base.info -a coverage_test.info -o coverage.info
     - bash <(curl -s https://codecov.io/bash) -f coverage.info
