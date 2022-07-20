@@ -396,6 +396,7 @@
     <ClCompile Include="..\..\src\crypto\botp.c" />
     <ClCompile Include="..\..\src\crypto\bpki.c" />
     <ClCompile Include="..\..\src\crypto\btok\btok_cvc.c" />
+    <ClCompile Include="..\..\src\crypto\btok\btok_pwd.c" />
     <ClCompile Include="..\..\src\crypto\g12s.c" />
     <ClCompile Include="..\..\src\crypto\pfok.c" />
     <ClCompile Include="..\..\src\math\ec.c" />
