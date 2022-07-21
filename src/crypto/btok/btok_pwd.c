@@ -151,9 +151,9 @@ CAN) остается возможной.
 - pin_activate: активация PIN после деактивации;
 - auth_close: отмена аутентификации.
 
-\remark Команд отмены аутентификации нет. Речь может идти о неявной
-отмене (например, через переключение на соединение с терминалом). События
-XXX_close под вопросом.
+\remark Команд отмены аутентификации нет. Речь может идти о неявной отмене
+(например, через переключение на соединение с терминалом). События auth_close
+под вопросом.
 
 \remark "Деактивация и повторная активация PIN не изменяют ни статус его
 блокировки, ни счетчик попыток." Деактивация выполняется после успешной
@@ -210,21 +210,11 @@ bool_t btokPwdTransition(btok_pwd_state* state, btok_pwd_event event)
 			return FALSE;
 		state->auth = auth_none;
 		return TRUE;
-	case can_close:
-		if (state->auth != auth_can)
-			return FALSE;
-		state->auth = auth_none;
-		return TRUE;
-	case puk_close:
-		if (state->auth != auth_puk)
-			return FALSE;
-		state->auth = auth_none;
-		return TRUE;
 	case pin_deactivate:
 		if (state->auth != auth_pin && state->auth != auth_puk)
 			return FALSE;
 		state->pin = pind;
-		if (state->auth = auth_pin)
+		if (state->auth == auth_pin)
 			state->auth = auth_none;
 		return TRUE;
 	case pin_activate:
