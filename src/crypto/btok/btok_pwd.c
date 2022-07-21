@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): Password management
 \project bee2 [cryptographic library]
 \created 2022.07.19
-\version 2022.07.20
+\version 2022.07.21
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -115,7 +115,7 @@ CAN) остается возможной.
 
 Первая часть (pin_state) описывает состояние PIN и принимает значения
 из множества:
-  {puk0, puk1,...., puk9, pin0, pind, pin1, pins, pin2, pin3}.
+  {puk0, puk1,...., puk9, pin0, pin1, pind, pins, pin2, pin3}.
 Семантика состояний:
 - в состояниях pinN остается N попыток ввода PIN, при этом pin0 -- состояние
   блокировки PIN;
@@ -140,16 +140,18 @@ CAN) остается возможной.
 Подсостояние полагается равным auth_none в начале каждого сеанса.
 
 Автомат обрабатывает события из следующего множества:
-  { pin_ok, pin_bad, pin_close, can_ok, can_bad, can_close,
-    puk_ok, puk_bad, puk_close, pin_deactivate, pin_activate }.
+  { pin_ok, pin_bad, pin_deactivate, pin_activate,
+    can_ok, can_bad,
+	puk_ok, puk_bad,
+    auth_close, }.
 Семантика событий:
 - XXX_ok: успешная аутентификация по паролю XXX;
 - XXX_bad: ошибка аутентификации по паролю XXX;
-- XXX_close: отмена аутентификации по паролю XXX;
 - pin_deactivate: деактивация PIN;
-- pin_activate: активация PIN после деактивации.
+- pin_activate: активация PIN после деактивации;
+- auth_close: отмена аутентификации.
 
-\remark Команд явной отмены аутентификации нет. Речь может идти о неявной
+\remark Команд отмены аутентификации нет. Речь может идти о неявной
 отмене (например, через переключение на соединение с терминалом). События
 XXX_close под вопросом.
 
@@ -169,8 +171,8 @@ typedef enum
 	puk0,													/* terminated */
 	puk1, puk2, puk3, puk4, puk5, puk6, puk7, puk8, puk9,	/* puk attempts */
 	pin0,													/* locked */
-	pind,													/* deactivated */
 	pin1,													/* last attempt */
+	pind,													/* deactivated */
 	pins,													/* suspended */
 	pin2,													/* two attempts */
 	pin3,													/* operational */
@@ -186,9 +188,10 @@ typedef enum
 
 typedef enum
 {
-	pin_ok, pin_bad, pin_close, pin_deactivate, pin_activate,
-	can_ok, can_bad, can_close,
-	puk_ok, puk_bad, puk_close,
+	pin_ok, pin_bad, pin_deactivate, pin_activate,
+	can_ok, can_bad, 
+	puk_ok, puk_bad,
+	auth_close, 
 } btok_pwd_event;
 
 typedef struct
@@ -202,8 +205,8 @@ bool_t btokPwdTransition(btok_pwd_state* state, btok_pwd_event event)
 	ASSERT(memIsValid(state, sizeof(btok_pwd_state)));
 	switch (event)
 	{
-	case pin_close:
-		if (state->auth != auth_pin)
+	case auth_close:
+		if (state->auth == auth_none)
 			return FALSE;
 		state->auth = auth_none;
 		return TRUE;
@@ -225,7 +228,7 @@ bool_t btokPwdTransition(btok_pwd_state* state, btok_pwd_event event)
 			state->auth = auth_none;
 		return TRUE;
 	case pin_activate:
-		if (state->auth != auth_puk)
+		if (state->pin != pind || state->auth != auth_puk)
 			return FALSE;
 		state->pin = pin3;
 		return TRUE;
