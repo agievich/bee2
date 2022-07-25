@@ -90,6 +90,7 @@ extern err_t bsumInit();
 extern err_t pwdInit();
 extern err_t kgInit();
 extern err_t cvcInit();
+extern err_t sigInit();
 
 #ifdef OS_WIN
 extern err_t stampInit();
@@ -108,6 +109,8 @@ err_t cmdInit()
 	code = kgInit();
 	ERR_CALL_CHECK(code);
 	code = cvcInit();
+	ERR_CALL_CHECK(code);
+    code = sigInit();
 	ERR_CALL_CHECK(code);
 #ifdef OS_WIN
 	code = stampInit();

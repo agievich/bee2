@@ -8,6 +8,7 @@ add_executable(bee2cmd
 	cvc/cvc.c
 	kg/kg.c
 	pwd/pwd.c
+	sig/sig.c
 	ver/ver.c
 	cmd_core.c
 	cmd_main.c
