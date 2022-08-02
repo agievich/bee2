@@ -313,6 +313,75 @@ err_t cmdRngStart(
 */
 err_t cmdRngTest();
 
+/*
+*******************************************************************************
+ЭЦП
+*******************************************************************************
+*/
+
+#define SIG_MAX_CERTS 16
+#define SIG_MAX_CERT_SIZE 512
+#define SIG_MAX_DER SIG_MAX_CERTS * SIG_MAX_CERT_SIZE + 96 + 16
+#define CERTS_DELIM ','
+
+typedef struct {
+    size_t sig_len;	                    /*!< длина подписи в октетах */
+    octet sig[96];	                    /*!< подпись */
+    size_t certs_len[SIG_MAX_CERTS];    /*!< длины сертификатов */
+} cmd_sig_t;
+
+/*!
+    \brief Чтение подписи из файла
+    \return ERR_OK, если подпись прочитана успешно. Код ошибки в обратном случае.
+ */
+err_t cmdSigRead(
+        size_t* der_len,      /*!< [out] длина der-кода */
+        cmd_sig_t* sig,       /*!< [out] подпись. Может быть NULL, тогда подпись не возвращается */
+        octet certs[],        /*!< [out] сертификаты. Может быть NULL, тогда сертификаты не возвращаются */
+        const char* file      /*!< [in]  файл, содержащий подпись*/
+);
+
+/*! \brief Запись подписи в файл
+
+    \return ERR_OK, если подпись записана успешно. Код ошибки в обратном случае.
+
+    \remark Подпись читается с конца, поэтому может быть дописана в непустой,
+    в частности исполняемый файл (при указании append = true)
+ */
+err_t cmdSigWrite(
+        cmd_sig_t* sig,       /*!< [in] подпись */
+        octet certs[],        /*!< [in] сертификаты */
+        const char* file,     /*!< [in] файл для записи */
+        bool_t append         /*!< [in] дописать[TRUE]/перезаписать[FALSE] подпись */
+);
+
+/*!
+    \brief Проверка подписи
+    \return ERR_OK, если подпись корректна. Код ошибки в обратном случае.
+ */
+err_t cmdSigVerify(
+        octet* pubkey,                          /*!< [in] открытый ключ (optional) */
+        octet* anchor_cert,                     /*!< [in] доверенный сертификат (optional) */
+        size_t anchor_cert_len,                 /*!< [in] длина доверенного сертификата */
+        const char* file,                       /*!< [in] проверяемый файл */
+        const char* sig_file                    /*!< [in] файл с подписью */
+);
+
+/*!
+    \brief Выработка подписи
+    \return ERR_OK, если подпись выработана успешно. Код ошибки в обратном случае.
+ */
+err_t cmdSigSign(
+        cmd_sig_t * sig,                                 /*!< [out] подпись */
+        const octet * privkey,                           /*!< [in] личный ключ */
+        size_t privkey_len,                              /*!< [in] длина личного ключа */
+        const octet* certs,                              /*!< [in] сертификаты (optional) */
+        const size_t certs_lens[SIG_MAX_CERTS],          /*!< [in] длины сертификатов */
+        const char* file                                 /*!< [in] подписываемый файл */
+);
+
+
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

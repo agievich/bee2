@@ -14,6 +14,7 @@ add_executable(bee2cmd
 	cmd_main.c
 	cmd_privkey.c
 	cmd_pwd.c
+    cmd_sig.c
 )
 
 if(WIN32)
