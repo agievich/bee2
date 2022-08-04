@@ -216,6 +216,94 @@ if %ERRORLEVEL% equ 0 goto Error
 echo ****** OK
 
 rem ===========================================================================
+rem  bee2cmd/sig
+rem ===========================================================================
+
+echo ****** Testing bee2cmd/sig...
+
+del /q sig_file test_file 2> nul
+
+bee2cmd kg print -pass pass:alice privkey2 > pubkey2
+if %ERRORLEVEL% neq 0 goto Error
+
+for /f "tokens=1" %%A in (pubkey2) do @echo|set /p="%%A" > pubkey2
+for %%A in (pubkey2) do set pubkey2_len=%%~zA
+if %pubkey2_len% neq 128 goto Error
+
+echo test > test_file
+echo sig > sig_file
+
+bee2cmd sig vfy -pubkey pubkey2 test_file sig_file
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd sig vfy -anchor cert0 test_file sig_file
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd sig vfy -anchor cert2 test_file sig_file
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd sig vfy -pubkey pubkey2 test_file test_file
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd sig vfy -anchor cert0 test_file test_file
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd sig vfy -anchor cert2 test_file test_file
+if %ERRORLEVEL% equ 0 goto Error
+
+del /q sig_file 1> nul
+
+bee2cmd sig sign -cert cert1,cert2 -pass pass:alice privkey2 test_file sig_file
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig vfy test_file sig_file
+
+bee2cmd sig vfy -pubkey pubkey2 test_file sig_file
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig vfy -anchor cert0 test_file sig_file
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig vfy -anchor cert1 test_file sig_file
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig vfy -anchor cert2 test_file sig_file
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd sig sign -cert cert1,cert2 -pass pass:alice privkey2 test_file test_file
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig vfy test_file sig_file
+
+bee2cmd sig vfy -pubkey pubkey2 test_file test_file
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig vfy -anchor cert0 test_file test_file
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig vfy -anchor cert1 test_file test_file
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig vfy -anchor cert2 test_file test_file
+if %ERRORLEVEL% equ 0 goto Error
+
+del sig_file> nul
+
+bee2cmd sig sign -cert cert2 -pass pass:alice privkey2 test_file sig_file
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig vfy -pubkey pubkey2 test_file sig_file
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig vfy -anchor cert1 test_file sig_file
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig vfy -anchor cert2 test_file sig_file
+if %ERRORLEVEL% neq 0 goto Error
+
+echo ****** OK
+
+rem ===========================================================================
 rem  exit
 rem ===========================================================================
 
