@@ -3,15 +3,9 @@
 #include <bee2/core/blob.h>
 #include <bee2/core/util.h>
 #include <bee2/core/mem.h>
-#include <bee2/core/rng.h>
 #include <bee2/core/hex.h>
 #include <bee2/core/str.h>
 #include "../cmd.h"
-
-#define SIG_MAX_CERTS 16
-#define SIG_MAX_CERT_SIZE 512
-#define SIG_MAX_DER SIG_MAX_CERTS * SIG_MAX_CERT_SIZE + 96 + 16
-#define CERTS_DELIM ','
 
 #define ARG_CERT "-cert"
 #define ARG_ANCHOR "-anchor"
@@ -49,13 +43,15 @@
   Внешняя подпись:
     bee2cmd sig sign -cert "cert1,cert2" -pass pass:alice privkey2 file_to_sign.pdf file_to_store_sig.bin
     bee2cmd sig vfy -anchor cert0 file_to_sign.pdf file_to_store_sig.bin
-    bee2cmd sig vfy -pubkey <cert0.pubkey> file_to_sign.pdf file_to_store_sig.bin
+    bee2cmd kg print -pass pass:alice privkey2 > pubkey2
+    bee2cmd sig vfy -pubkey pubkey2 file_to_sign.pdf file_to_store_sig.bin
     bee2cmd sig print -cert "save_cert1,save_cert2" file_to_store_sig.bin
 
   Встраивание подписи:
     bee2cmd sig sign -cert "cert1,cert2" -pass pass:alice privkey2 file_to_sign.exe file_to_sign.exe
     bee2cmd sig vfy -anchor cert0 file_to_sign.exe file_to_sign.exe
-    bee2cmd sig vfy -pubkey <cert0.pubkey> file_to_sign.exe file_to_sign.exe
+    bee2cmd kg print -pass pass:alice privkey2 > pubkey2
+    bee2cmd sig vfy -pubkey pubkey2 file_to_sign.exe file_to_sign.exe
     bee2cmd sig print -cert "save_cert1,save_cert2" file_to_sign
 
 *******************************************************************************
@@ -113,7 +109,7 @@ static err_t sigReadCerts(
     size_t m_certs_lens[SIG_MAX_CERTS];
     octet m_certs[SIG_MAX_CERTS * SIG_MAX_CERT_SIZE];
     size_t certs_total_len = 0;
-    char* blob = blobCreate(strLen(names));
+    char* blob = blobCreate(strLen(names)+1);
     char* m_names = blob;
     err_t  code;
     strCopy(m_names, names);
@@ -162,7 +158,7 @@ static err_t sigWriteCerts(
     if (!names || !strLen(names) && certs_cnt > 0)
         return ERR_BAD_NAME;
 
-    char* blob = blobCreate(strLen(names));
+    char* blob = blobCreate(strLen(names)+1);
     char* m_certs = blob;
     strCopy(m_certs, names);
     size_t m_certs_cnt = 0;
@@ -235,6 +231,7 @@ static err_t sigParseOptions(
     size_t m_privkey_len;
     size_t m_pubkey_len;
 
+    char s_pubkey[257];
     if (has_certs)
         *has_certs = FALSE;
 
@@ -288,14 +285,28 @@ static err_t sigParseOptions(
                 printf("ERROR: failed to open public key file '%s'\n", argv[1]);
                 return ERR_FILE_OPEN;
             }
-            m_pubkey_len = fread(pubkey, 1, 128, fp);
 
+            m_pubkey_len = fread(s_pubkey, 1, 256, fp);
             fclose(fp);
-            if (m_pubkey_len != 128 && m_pubkey_len != 96 && m_pubkey_len != 64)
-                return ERR_BAD_PUBKEY;
+
+            switch (m_pubkey_len) {
+                case 128:
+                    s_pubkey[128] = '\0';
+                    break;
+                case 192:
+                    s_pubkey[192] = '\0';
+                    break;
+                case 256:
+                    s_pubkey[256] = '\0';
+                    break;
+                default:
+                    return ERR_BAD_PUBKEY;
+            }
+
+            hexTo(pubkey, s_pubkey);
 
             if (memIsValid(pubkey_len, sizeof (size_t)))
-                *pubkey_len = m_pubkey_len;
+                *pubkey_len = m_pubkey_len/2;
 
         }
 
@@ -391,9 +402,6 @@ static err_t sigVfy(int argc, char* argv[])
     char file_name[1024];
     char sig_file_name[1024];
 
-    cmd_sig_t sig[1];
-    octet certs[SIG_MAX_CERTS][SIG_MAX_CERT_SIZE];
-
     code = sigParseOptions(argc, argv, 0, 0, pubkey, &pubkey_len, anchor_cert,
                            &anchor_cert_len, file_name,sig_file_name, 0,0);
     ERR_CALL_CHECK(code)
@@ -419,6 +427,7 @@ static err_t sigSign(int argc, char* argv[])
     size_t cert_lens[SIG_MAX_CERTS];
     err_t code;
     bool_t has_certs;
+    bool_t append;
 
     memSetZero(file_name, sizeof(file_name));
     memSetZero(sig_file_name, sizeof(sig_file_name));
@@ -440,7 +449,13 @@ static err_t sigSign(int argc, char* argv[])
     code = cmdSigSign(sig, privkey, privkey_len, has_certs ? certs : 0, cert_lens, file_name);
     ERR_CALL_CHECK(code)
 
-    return cmdSigWrite(sig, certs, sig_file_name, strEq(sig_file_name, file_name));
+    append = strEq(sig_file_name, file_name);
+
+    char* files[] = {sig_file_name, sig_file_name};
+    if (!append)
+        ERR_CALL_CHECK(cmdFileValNotExist(1, files));
+
+    return cmdSigWrite(sig, certs, sig_file_name, append);
 }
 
 

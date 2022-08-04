@@ -349,7 +349,7 @@ err_t cmdSigRead(
     в частности исполняемый файл (при указании append = true)
  */
 err_t cmdSigWrite(
-        cmd_sig_t* sig,       /*!< [in] подпись */
+        const cmd_sig_t* sig,       /*!< [in] подпись */
         octet certs[],        /*!< [in] сертификаты */
         const char* file,     /*!< [in] файл для записи */
         bool_t append         /*!< [in] дописать[TRUE]/перезаписать[FALSE] подпись */
@@ -360,8 +360,8 @@ err_t cmdSigWrite(
     \return ERR_OK, если подпись корректна. Код ошибки в обратном случае.
  */
 err_t cmdSigVerify(
-        octet* pubkey,                          /*!< [in] открытый ключ (optional) */
-        octet* anchor_cert,                     /*!< [in] доверенный сертификат (optional) */
+        const octet* pubkey,                    /*!< [in] открытый ключ (optional) */
+        const octet* anchor_cert,               /*!< [in] доверенный сертификат (optional) */
         size_t anchor_cert_len,                 /*!< [in] длина доверенного сертификата */
         const char* file,                       /*!< [in] проверяемый файл */
         const char* sig_file                    /*!< [in] файл с подписью */
@@ -390,8 +390,8 @@ err_t cmdSigSign(
     \return ERR_OK, если подпись корректра, код ошибки в обратном случае
  */
 err_t cmdVerifySelf(
-    octet* pubkey,                          /*!< [in] открытый ключ (optional) */
-    octet* anchor_cert,                     /*!< [in] доверенный сертификат (optional) */
+    const octet* pubkey,                          /*!< [in] открытый ключ (optional) */
+    const octet* anchor_cert,                     /*!< [in] доверенный сертификат (optional) */
     size_t anchor_cert_len                  /*!< [in] длина доверенного сертификата */
 );
 

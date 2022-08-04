@@ -290,7 +290,7 @@ err_t cmdSigRead(
 *******************************************************************************
 */
 err_t cmdSigWrite(
-        cmd_sig_t* sig,
+        const cmd_sig_t* sig,
         octet certs[],
         const char* file,
         bool_t append
@@ -300,8 +300,6 @@ err_t cmdSigWrite(
     octet der[SIG_MAX_DER];
     FILE* fp;
 
-    if (!append)
-        ERR_CALL_CHECK(cmdFileValNotExist(1, &file));
 
     count = sigEnc(der, sig, certs);
     fp = fopen(file, append ? "ab" : "wb");
@@ -431,20 +429,16 @@ static const char* hashOid(size_t hid)
       и дальнейшая цепочка корректна.
     - Первый сертификат в цепочке признается действительным на anchor
       и дальнейшая цепочка корректна
-    - Первый сертификат в цепочке признается действительным на pubkey
-      и дальнейшая цепочка корректна
 
-    \remark Если anchor = NULL и pubkey = NULL, то первый сертификат в
+    \remark Если anchor = NULL, то первый сертификат в
     цепочке считается дверенным. Пустая цепочка вызывает ошибку ERR_BAD_CERT
 
     \return ERR_OR, если цепочка корректна. Код ошибки в обратном случае
  */
 static err_t cmdValCerts(
         btok_cvc_t *last_cert,              /*!< [out] последний сертификат */
-        octet * anchor,                     /*!< [in]  доверенный сертификат (optional) */
+        const octet * anchor,                     /*!< [in]  доверенный сертификат (optional) */
         size_t anchor_len,                  /*!< [in]  длина доверенного сертификата */
-        const octet *pubkey,                /*!< [in]  открытый ключ издателя (optional) */
-        size_t pubkey_len,                  /*!< [in]  длина ключа издателя*/
         const octet  certs[],               /*!< [in] сертификаты для проверки */
         const size_t certs_lens[]           /*!< [in] длины всех сертификатов */
 ){
@@ -483,7 +477,7 @@ static err_t cmdValCerts(
         code = btokCVCUnwrap(cvc_anchor, anchor, anchor_len, 0, 0);
     } else
     {
-        code = btokCVCUnwrap(cvc_anchor, certs, certs_lens[0], pubkey ? pubkey : 0,pubkey? pubkey_len : 0);
+        code = btokCVCUnwrap(cvc_anchor, certs, certs_lens[0], 0, 0);
         certs_total_len += certs_lens[0];
         certs_lens++;
     }
@@ -509,8 +503,8 @@ static err_t cmdValCerts(
 *******************************************************************************
 */
 err_t cmdSigVerify(
-        octet* pubkey,
-        octet* anchor_cert,
+        const octet* pubkey,
+        const octet* anchor_cert,
         size_t anchor_cert_len,
         const char* file,
         const char* sig_file
@@ -527,7 +521,6 @@ err_t cmdSigVerify(
 
     btok_cvc_t last_cert[1];
 
-
     memSetZero(sig, sizeof (sig));
     code = cmdSigRead(&der_len, sig, certs,sig_file);
     ERR_CALL_CHECK(code)
@@ -537,9 +530,7 @@ err_t cmdSigVerify(
 
     if (sig->certs_len[0])
     {
-        code = cmdValCerts(last_cert, anchor_cert ? anchor_cert : 0, anchor_cert_len,
-                           pubkey ? pubkey : 0, sig->sig_len * 2 / 3, certs,
-                           sig->certs_len);
+        code = cmdValCerts(last_cert, anchor_cert, anchor_cert_len, certs,sig->certs_len);
         ERR_CALL_CHECK(code)
     }
 
@@ -591,7 +582,7 @@ err_t cmdSigSign(
 
     if (sig->certs_len[0])
     {
-        code = cmdValCerts(0, 0, 0, 0, 0, certs, sig->certs_len);
+        code = cmdValCerts(0, 0, 0, certs, sig->certs_len);
         ERR_CALL_CHECK(code);
     }
 
@@ -668,8 +659,8 @@ WAI_FUNCSPEC
 static int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length);
 
 err_t cmdVerifySelf(
-        octet* pubkey,
-        octet* anchor_cert,
+        const octet* pubkey,
+        const octet* anchor_cert,
         size_t anchor_cert_len
 ) {
 
