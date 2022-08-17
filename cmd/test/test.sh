@@ -229,7 +229,7 @@ test_pke(){
 
   $bee2cmd kg print -pass pass:root privkey0 > pubkey0 \
       || return 1
-  $bee2cmd kg print -pass pass:root privkey2 > pubkey2 \
+  $bee2cmd kg print -pass pass:alice privkey2 > pubkey2 \
       || return 1
 
   $bee2cmd pke enc -cert cert0 -pubkey pubkey0 $bee2cmd test_file_encoded \
