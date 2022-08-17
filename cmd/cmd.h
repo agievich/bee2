@@ -48,11 +48,11 @@ typedef int (*cmd_main_i)(
 
 /*!	\brief Регистрация команды
 
-	Регистрируется команда с именем name, описанием descr и главной 
+	Регистрируется команда с именем id, описанием descr и главной
 	функцией fn.
-	\expect Строки name и descr -- статические, указатели на них остаются
+	\expect Строки id и descr -- статические, указатели на них остаются
 	корректными на протяжении всего времени выполнения. 
-	\expect{ERR_BAD_FORMAT} 1 <= strLen(name) <= 8 && strLen(descr) <= 60.
+	\expect{ERR_BAD_FORMAT} 1 <= strLen(id) <= 8 && strLen(descr) <= 60.
 	\return ERR_OK, если команда зарегистрирована, и код ошибки в противном
 	случае.
 */
@@ -103,6 +103,51 @@ err_t cmdFileValNotExist(
 err_t cmdFileValExist(
 	int count,				/*!< [in] число файлов */
 	char* files[]			/*!< [in] список имен файлов */
+);
+
+/*!	\brief Чтение файла
+
+	Содержимое файла file записывается в буфер buf (может быть NULL),
+    а его длина записывается в buf_len (также может быть NULL)
+
+    \expect имя файла file корректно
+
+	\return ERR_OK в случае успеха и код ошибки в противном случае.
+*/
+err_t cmdFileRead(
+    octet* buf,              /*!< [out] содержимое файла */
+    size_t* buf_len,         /*!< [out] длина файлов */
+    const char* file         /*!< [in]  имя файла */
+);
+
+/*!	\brief Чтение файла
+
+	Из файла file читается buf_len октетов и записывается в буфер buf
+
+    \expect имя файла file корректно
+    \expect по адресу buf выделено buf_len октетов памяти
+
+	\return число прочитанных октетов в случае успеха и SIZE_MAX в противном случае
+*/
+size_t cmdFileRead2(
+    octet* buf,              /*!< [out] прочитанные октеты */
+    size_t buf_len,          /*!< [in]  максимальное число октетов */
+    const char* file         /*!< [in]  имя файла */
+);
+
+/*!	\brief Создание файла
+
+	Создается файл file и заполняется содержимым буфера buf длины buf_len.
+
+    \expect имя файла file корректно
+    \expect по адресу buf выделено buf_len октетов памяти
+
+	\return ERR_OK в случае успеха и код ошибки в противном случае.
+*/
+err_t cmdFileWrite(
+    const octet* buf,         /*!< [in] буфер */
+    size_t buf_len,           /*!< [in] длина буфера */
+    const char* file          /*!< [in] имя файла */
 );
 
 /*
@@ -321,7 +366,7 @@ err_t cmdRngTest();
 
 #define SIG_MAX_CERTS 16
 #define SIG_MAX_CERT_SIZE 512
-#define SIG_MAX_DER SIG_MAX_CERTS * SIG_MAX_CERT_SIZE + 96 + 16
+#define SIG_MAX_DER (SIG_MAX_CERTS * SIG_MAX_CERT_SIZE + 96 + 16)
 #define CERTS_DELIM ','
 
 typedef struct {
@@ -330,8 +375,8 @@ typedef struct {
     size_t certs_len[SIG_MAX_CERTS];    /*!< длины сертификатов */
 } cmd_sig_t;
 
-/*!
-    \brief Чтение подписи из файла
+/*! \brief Чтение подписи из файла
+
     \return ERR_OK, если подпись прочитана успешно. Код ошибки в обратном случае.
  */
 err_t cmdSigRead(
@@ -350,9 +395,9 @@ err_t cmdSigRead(
  */
 err_t cmdSigWrite(
         const cmd_sig_t* sig,       /*!< [in] подпись */
-        octet certs[],        /*!< [in] сертификаты */
-        const char* file,     /*!< [in] файл для записи */
-        bool_t append         /*!< [in] дописать[TRUE]/перезаписать[FALSE] подпись */
+        octet certs[],              /*!< [in] сертификаты */
+        const char* file,           /*!< [in] файл для записи */
+        bool_t append               /*!< [in] дописать[TRUE]/перезаписать[FALSE] подпись */
 );
 
 /*!
@@ -360,11 +405,11 @@ err_t cmdSigWrite(
     \return ERR_OK, если подпись корректна. Код ошибки в обратном случае.
  */
 err_t cmdSigVerify(
-        const octet* pubkey,                    /*!< [in] открытый ключ (optional) */
-        const octet* anchor_cert,               /*!< [in] доверенный сертификат (optional) */
-        size_t anchor_cert_len,                 /*!< [in] длина доверенного сертификата */
-        const char* file,                       /*!< [in] проверяемый файл */
-        const char* sig_file                    /*!< [in] файл с подписью */
+        const octet* pubkey,              /*!< [in] открытый ключ (optional) */
+        const octet* anchor_cert,         /*!< [in] доверенный сертификат (optional) */
+        size_t anchor_cert_len,           /*!< [in] длина доверенного сертификата */
+        const char* file,                 /*!< [in] проверяемый файл */
+        const char* sig_file              /*!< [in] файл с подписью */
 );
 
 /*!
@@ -373,11 +418,11 @@ err_t cmdSigVerify(
  */
 err_t cmdSigSign(
         cmd_sig_t * sig,                                 /*!< [out] подпись */
-        const octet * privkey,                           /*!< [in] личный ключ */
-        size_t privkey_len,                              /*!< [in] длина личного ключа */
-        const octet* certs,                              /*!< [in] сертификаты (optional) */
-        const size_t certs_lens[SIG_MAX_CERTS],          /*!< [in] длины сертификатов */
-        const char* file                                 /*!< [in] подписываемый файл */
+        const octet * privkey,                           /*!< [in]  личный ключ */
+        size_t privkey_len,                              /*!< [in]  длина личного ключа */
+        const octet* certs,                              /*!< [in]  сертификаты (optional) */
+        const size_t certs_lens[SIG_MAX_CERTS],          /*!< [in]  длины сертификатов */
+        const char* file                                 /*!< [in]  подписываемый файл */
 );
 
 /*!
@@ -390,11 +435,123 @@ err_t cmdSigSign(
     \return ERR_OK, если подпись корректра, код ошибки в обратном случае
  */
 err_t cmdVerifySelf(
-    const octet* pubkey,                          /*!< [in] открытый ключ (optional) */
-    const octet* anchor_cert,                     /*!< [in] доверенный сертификат (optional) */
-    size_t anchor_cert_len                  /*!< [in] длина доверенного сертификата */
+    const octet* pubkey,            /*!< [in] открытый ключ (optional) */
+    const octet* anchor_cert,       /*!< [in] доверенный сертификат (optional) */
+    size_t anchor_cert_len          /*!< [in] длина доверенного сертификата */
 );
 
+
+/*
+*******************************************************************************
+Шифрование с открытым ключом
+*******************************************************************************
+*/
+
+/*! \brief Идентификатор ключевого материала */
+typedef u8 cmd_keyload_id;
+
+/*! \brief Длина ключа */
+#define CMD_PKE_KEY_SIZE 32
+
+/*! \brief Максимальная длина ключевого материала */
+#define CMD_KEYLOAD_MAX_SIZE 1024
+
+/*! \brief Заголовок зашифрованного файла */
+typedef struct {
+    octet keyload[CMD_KEYLOAD_MAX_SIZE];    /*!< ключевой материал */
+    cmd_keyload_id keyload_id;              /*!< идентификатор ключевого материала */
+    octet iv[16];                           /*!< синхропосылка */
+    size_t itag;                            /*!< частоста имитовставок */
+} cmd_pkehead_t;
+
+/*
+*******************************************************************************
+Ключевой материал PKE
+*******************************************************************************
+*/
+
+/**
+ * \brief Идентификатор ключевого материала
+ *
+ * Cеансовый ключ защищается на открытом ключе получателя с помощью
+ * алгоритма bign-keytransport.
+ * */
+#define CMD_KEYLOAD_ID_PKE (cmd_keyload_id)1
+
+/*! Ключевой материал PKE */
+typedef struct {
+    octet key[64 + 16 + CMD_PKE_KEY_SIZE];      /*!< защищенный ключ */
+    octet cert[SIG_MAX_CERT_SIZE];              /*!< сертификат получателя */
+    size_t cert_len;                            /*!< длина сертификата */
+} keyload_pke_t;
+
+/*! Параметры сборки ключевого материала PKE */
+typedef struct  {
+    octet pubkey[128];             /*!< [in] открытый ключ получателя */
+    size_t pubkey_len;             /*!< [in] длина ключа */
+    octet cert[SIG_MAX_CERT_SIZE]; /*!< [in] сертификат получателя */
+    size_t cert_len;               /*!< [in] длина сертификата */
+} keyload_pke_wrap_t;
+
+/*! Параметры разбора ключевого материала PKE */
+typedef struct  {
+    octet privkey[64];             /*!< [in]  личный ключ получателя */
+    size_t privkey_len;            /*!< [in]  длина личного ключа */
+    octet cert[SIG_MAX_CERT_SIZE]; /*!< [out] сертификат получателя */
+    size_t cert_len;               /*!< [out] длина сертификата */
+} keyload_pke_unwrap_t;
+
+// \todo реализовать другие типы ключевых материалов
+
+/*
+*******************************************************************************
+*/
+
+/*! \brief Сборка ключевого материала
+
+    \return ERR_OK, если ключевой материал собран успешно, и
+    код ошибки в обратном случае
+ */
+err_t cmdPkeWrapKey(
+    octet *keload,                        /*!< [out] ключевой материал */
+    cmd_keyload_id keyload_id,            /*!< [in]  идентификатор ключевого материала */
+    octet *keyload_wrap,                  /*!< [in/out]  параметры сборки */
+    const octet key[CMD_PKE_KEY_SIZE]     /*!< [in]  сеансовый ключ */
+);
+
+/*! \brief Разбор ключевого материала
+
+    \return ERR_OK, если ключевой материал разобран успешно, и
+    код ошибки в обратном случае
+ */
+err_t cmdPkeUnwrapKey(
+    const octet* keyload,                  /*!< [in]  ключевой материал */
+    cmd_keyload_id keyload_id,             /*!< [in]  идентификатор ключевого материала */
+    octet* keyload_unwrap,                 /*!< [in/out]  параметры разбора */
+    octet key[CMD_PKE_KEY_SIZE]            /*!< [out] сеансовый ключ */
+);
+
+/*! \brief Чтение заголовка зашифрованного файла
+
+    \return ERR_OK, если заголовок прочитан успешно, и код
+    ошибки в обратном случае
+ */
+err_t cmdPkeHeaderRead(
+    size_t* der_len,            /*!< [out] длина DER-кода */
+    cmd_pkehead_t* pke,         /*!< [out] заголовок */
+    const char* file_name       /*!< [in]  имя файла */
+);
+
+/*! \brief Запись заголовка в зашифрованный файл
+
+    \return ERR_OK, если заголовок записан успешно, и код
+    ошибки в обратном случае
+ */
+err_t cmdPkeHeaderWrite(
+    size_t* der_len,            /*!< [out] длина DER-кода */
+    const cmd_pkehead_t* pke,   /*!< [in]  заголовок */
+    const char* file_name       /*!< [out] имя файла */
+);
 
 #ifdef __cplusplus
 } /* extern "C" */

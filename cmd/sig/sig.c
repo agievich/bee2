@@ -15,6 +15,10 @@
 #define ARG_SIGN "sign"
 #define ARG_PRINT "print"
 
+#if !defined FILENAME_MAX
+#define FILENAME_MAX 1024
+#endif
+
 /*
 *******************************************************************************
 Утилита sig
@@ -57,14 +61,14 @@
 *******************************************************************************
 */
 
-extern err_t cmdCVCRead(octet cert[], size_t* cert_len, const char* file);
-
-
 static const char _name[] = "sig";
 static const char _descr[] = "sign and verify files";
 
-
-
+/*
+*******************************************************************************
+Справка по использованию
+*******************************************************************************
+*/
 static int sigUsage(){
     printf(
             "bee2cmd/%s: %s\n"
@@ -77,7 +81,7 @@ static int sigUsage(){
             "  %s %s [%s <pubkey> | %s <anchor>] <file> <sig>\n"
             "    verify <file> signature stored in <sig>\n"
             "  options:\n"
-            "    %s <pibkey> -- verification public key\n"
+            "    %s <pubkey> -- verification public key\n"
             "    %s <anchor> -- trusted certificate"
             "  %s %s [%s <save_certa,save_certb,...,save_cert>] <sig>\n"
             "    print <sig> to the console\n"
@@ -124,7 +128,7 @@ static err_t sigReadCerts(
         else
             m_names[i] = '\0';
 
-        code = cmdCVCRead(
+        code = cmdFileRead(
                 m_certs + certs_total_len,
                 m_certs_lens + m_certs_cnt, m_names);
 
@@ -142,7 +146,6 @@ static err_t sigReadCerts(
             certs_lens[i] = i < m_certs_cnt ? m_certs_lens[i] : 0;
         }
     }
-
 
     blobClose(blob);
     return ERR_OK;
@@ -246,10 +249,8 @@ static err_t sigParseOptions(
 
     while (argc >0 && strStartsWith(*argv, "-"))
     {
-
         if (argc < 2)
             return ERR_CMD_PARAMS;
-
 
         // прочитать схему защиты личного ключа
         if (strEq(*argv, ARG_PASS))
@@ -267,9 +268,8 @@ static err_t sigParseOptions(
 
             ASSERT(memIsValid(anchor_cert_len, sizeof(size_t)));
 
-            if (cmdCVCRead(anchor_cert, anchor_cert_len, argv[1]) != ERR_OK)
+            if (cmdFileRead(anchor_cert, anchor_cert_len, argv[1]) != ERR_OK)
                 return ERR_CMD_PARAMS;
-
         }
 
         // прочитать открытый ключ
@@ -277,7 +277,6 @@ static err_t sigParseOptions(
         {
             if (!pubkey)
                 return ERR_CMD_PARAMS;
-
 
             FILE* fp = fopen(argv[1], "rb");
             if (!fp)
@@ -291,12 +290,15 @@ static err_t sigParseOptions(
 
             switch (m_pubkey_len) {
                 case 128:
+                case 129:
                     s_pubkey[128] = '\0';
                     break;
                 case 192:
+                case 193:
                     s_pubkey[192] = '\0';
                     break;
                 case 256:
+                case 257:
                     s_pubkey[256] = '\0';
                     break;
                 default:
@@ -307,9 +309,7 @@ static err_t sigParseOptions(
 
             if (memIsValid(pubkey_len, sizeof (size_t)))
                 *pubkey_len = m_pubkey_len/2;
-
         }
-
 
         // прочитать сертификаты
         if (strEq(*argv, ARG_CERT))
@@ -332,6 +332,9 @@ static err_t sigParseOptions(
         if (argc != 3 || !privkey)
             return ERR_CMD_PARAMS;
 
+        if (!memIsValid(privkey, 64))
+            return ERR_CMD_PARAMS;
+
         m_privkey_len = 0;
         if (pwd_provided)
         {
@@ -347,7 +350,7 @@ static err_t sigParseOptions(
                 printf("ERROR: failed to open private key container '%s'\n", argv[0]);
                 return ERR_FILE_OPEN;
             }
-            *privkey_len = fread(privkey, 1, 64, fp);
+            m_privkey_len = fread(privkey, 1, 64, fp);
             fclose(fp);
         }
 
@@ -399,8 +402,8 @@ static err_t sigVfy(int argc, char* argv[])
     octet anchor_cert[1024];
     size_t anchor_cert_len = 0;
 
-    char file_name[1024];
-    char sig_file_name[1024];
+    char file_name[FILENAME_MAX];
+    char sig_file_name[FILENAME_MAX];
 
     code = sigParseOptions(argc, argv, 0, 0, pubkey, &pubkey_len, anchor_cert,
                            &anchor_cert_len, file_name,sig_file_name, 0,0);
@@ -417,9 +420,9 @@ static err_t sigVfy(int argc, char* argv[])
 */
 static err_t sigSign(int argc, char* argv[])
 {
-    char file_name[256];
-    char sig_file_name[256];
-    char certs_names[256 * SIG_MAX_CERTS];
+    char file_name[FILENAME_MAX];
+    char sig_file_name[FILENAME_MAX];
+    char certs_names[FILENAME_MAX * SIG_MAX_CERTS];
     octet privkey[64];
     size_t privkey_len;
     cmd_sig_t sig[1];
@@ -470,8 +473,8 @@ static err_t sigPrint(int argc, char * argv[])
 
     cmd_sig_t sig[1];
     octet certs[SIG_MAX_CERTS * SIG_MAX_CERT_SIZE];
-    char sig_file_name[256];
-    char cert_names[256 * SIG_MAX_CERTS];
+    char sig_file_name[FILENAME_MAX];
+    char cert_names[FILENAME_MAX * SIG_MAX_CERTS];
     size_t cert_names_len;
     char sigHex[96*2 + 1];
     bool_t has_certs;

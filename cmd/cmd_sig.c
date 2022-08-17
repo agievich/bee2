@@ -47,7 +47,7 @@ extern err_t cmdCVCRead(octet cert[], size_t* cert_len, const char* file);
 
 static size_t sigEnc(
         octet buf[],
-        cmd_sig_t* sig,
+        const cmd_sig_t* sig,
         const octet certs[]
 ){
 
