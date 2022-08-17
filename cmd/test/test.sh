@@ -270,7 +270,7 @@ test_pke(){
 
 run_test() {
   echo -n "Testing $1... "
-  (test_$1 >/dev/null)
+  (test_$1 > /dev/null)
   if [ $? -eq 0 ]; then 
     echo "Success"
   else 
