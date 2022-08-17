@@ -6,7 +6,7 @@
 # \version 2022.07.18
 # =============================================================================
 
-bee2cmd=.././bee2cmd
+bee2cmd=./bee2cmd
 
 function pause() {
  read -s -n 1 -p "Press any key to continue..."
@@ -279,6 +279,3 @@ run_test() {
 } 
 
 run_test ver && run_test pwd && run_test kg && run_test cvc && run_test sig && run_test pke
-
-rm -rf cert0 cert1 cert2 privkey0 privkey1 privkey2 req1 req2 s1 s2 s3 s4 s5 ss1 ss2 ss3 pubkey0 pubkey2 \
-       test_file_encoded test_file_decoded./
