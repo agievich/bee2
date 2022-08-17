@@ -6,7 +6,7 @@
 # \version 2022.07.18
 # =============================================================================
 
-bee2cmd=./bee2cmd
+bee2cmd=.././bee2cmd
 
 function pause() {
  read -s -n 1 -p "Press any key to continue..."
@@ -156,9 +156,121 @@ test_cvc() {
   return 0
 }
 
+test_sig(){
+  rm -rf sig_file test_file\
+    || return 2
+  return 0;
+  pubkey2="$($bee2cmd kg print -pass pass:alice privkey2)"
+  if [ ${#pubkey2} != "128" ]; then
+    return 1
+  fi
+
+  echo test > test_file
+  echo sig > sig_file
+
+  $bee2cmd sig vfy -pubkey pubkey2 test_file sig_file \
+    && return 1
+  $bee2cmd sig vfy -anchor cert0 test_file sig_file \
+    && return 1
+  $bee2cmd sig vfy -anchor cert2 test_file sig_file \
+    && return 1
+  $bee2cmd sig vfy -pubkey pubkey2 test_file test_file \
+    && return 1
+  $bee2cmd sig vfy -anchor cert0 test_file test_file \
+    && return 1
+  $bee2cmd sig vfy -anchor cert2 test_file test_file \
+    && return 1
+
+  rm -rf sig_file
+
+  $bee2cmd sig sign -cert cert1,cert2 -pass pass:alice privkey2 test_file sig_file \
+    || return 1
+
+  $bee2cmd sig vfy test_file sig_file \
+    || return 1
+  $bee2cmd sig vfy -pubkey pubkey2 test_file sig_file \
+    || return 1
+  $bee2cmd sig vfy -anchor cert0 test_file sig_file \
+    || return 1
+  $bee2cmd sig vfy -anchor cert1 test_file sig_file \
+    || return 1
+  $bee2cmd sig vfy -anchor cert2 test_file sig_file \
+    || return 1
+  $bee2cmd sig sign -cert cert1,cert2 -pass pass:alice privkey2 test_file test_file \
+    || return 1
+  $bee2cmd sig vfy test_file sig_file \
+    || return 1
+  $bee2cmd sig vfy -pubkey pubkey2 test_file test_file \
+    || return 1
+  $bee2cmd sig vfy -anchor cert0 test_file test_file \
+    || return 1
+  $bee2cmd sig vfy -anchor cert1 test_file test_fil \
+    || return 1
+  $bee2cmd sig vfy -anchor cert2 test_file test_file \
+    && return 1
+
+  rm -rf sig_file
+
+  $bee2cmd sig sign -cert cert2 -pass pass:alice privkey2 test_file sig_file \
+    || return 1
+  $bee2cmd sig vfy -pubkey pubkey2 test_file sig_file \
+    || return 1
+  $bee2cmd sig vfy -anchor cert1 test_file sig_file \
+    || return 1
+  $bee2cmd sig vfy -anchor cert2 test_file sig_fil \
+    || return 1
+
+  return 0
+}
+
+test_pke(){
+  rm -rf test_file_decoded test_file_encoded\
+      || return 2
+
+  $bee2cmd kg print -pass pass:root privkey0 > pubkey0 \
+      || return 1
+  $bee2cmd kg print -pass pass:root privkey2 > pubkey2 \
+      || return 1
+
+  $bee2cmd pke enc -cert cert0 -pubkey pubkey0 $bee2cmd test_file_encoded \
+      || return 1
+  $bee2cmd pke dec -pass pass:root privkey0 test_file_encoded test_file_decoded \
+      || return 1
+  diff $bee2cmd test_file_decoded \
+      || return 1
+  $bee2cmd pke dec -pass pass:alice privkey2 test_file_encoded test_file_decoded \
+      && return 1
+  $bee2cmd pke val -cert cert0 -pass pass:root -privkey privkey0 test_file_encoded \
+      || return 1
+  $bee2cmd pke val -pass pass:root -privkey privkey0 test_file_encoded \
+      || return 1
+  $bee2cmd pke val -cert cert0 test_file_encoded \
+      || return 1
+  $bee2cmd pke val test_file_encoded \
+      && return 1
+  $bee2cmd pke val -cert cert1 test_file_encoded \
+      && return 1
+  $bee2cmd pke val -pass pass:alice -privkey privkey2 test_file_encoded \
+      && return 1
+
+  rm -rf test_file_decoded test_file_encoded \
+      || return 2
+
+  $bee2cmd pke enc -cert cert0 -pubkey pubkey0 --itag1024 $bee2cmd test_file_encoded \
+      || return 1
+  $bee2cmd pke dec -pass pass:root privkey0 test_file_encoded test_file_decoded \
+      || return 1
+  diff $bee2cmd test_file_decoded \
+      || return 1
+  $bee2cmd pke val -cert cert0 -pass pass:root -privkey privkey0 test_file_encoded \
+      || return 1
+
+  return 0
+}
+
 run_test() {
   echo -n "Testing $1... "
-  (test_$1 > /dev/null)
+  (test_$1 >/dev/null)
   if [ $? -eq 0 ]; then 
     echo "Success"
   else 
@@ -166,4 +278,7 @@ run_test() {
   fi
 } 
 
-run_test ver && run_test pwd && run_test kg && run_test cvc
+run_test ver && run_test pwd && run_test kg && run_test cvc && run_test sig && run_test pke
+
+rm -rf cert0 cert1 cert2 privkey0 privkey1 privkey2 req1 req2 s1 s2 s3 s4 s5 ss1 ss2 ss3 pubkey0 pubkey2 \
+       test_file_encoded test_file_decoded./
