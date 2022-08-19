@@ -10,11 +10,13 @@ add_executable(bee2cmd
 	pwd/pwd.c
 	sig/sig.c
 	ver/ver.c
+	pke/pke.c
 	cmd_core.c
 	cmd_main.c
 	cmd_privkey.c
 	cmd_pwd.c
     cmd_sig.c
+	cmd_pke.c
 )
 
 if(WIN32)

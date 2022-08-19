@@ -304,6 +304,62 @@ if %ERRORLEVEL% neq 0 goto Error
 echo ****** OK
 
 rem ===========================================================================
+rem  bee2cmd/sig
+rem ===========================================================================
+
+echo ****** Testing bee2cmd/pke...
+
+del /q test_file_decoded test_file_encoded 2> nul
+
+bee2cmd kg print -pass pass:root privkey0 > pubkey0
+
+bee2cmd pke enc -cert cert0 -pubkey pubkey0 test_file test_file_encoded
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd pke dec -pass pass:root privkey0 test_file_encoded test_file_decoded
+if %ERRORLEVEL% neq 0 goto Error
+
+fc test_file test_file_decoded
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd pke dec -pass pass:alice privkey2 test_file_encoded test_file_decoded
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd pke val -cert cert0 -pass pass:root -privkey privkey0 test_file_encoded
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd pke val -pass pass:root -privkey privkey0 test_file_encoded
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd pke val -cert cert0 test_file_encoded
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd pke val test_file_encoded
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd pke val -cert cert1 test_file_encoded
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd pke val -pass pass:alice -privkey privkey2 test_file_encoded
+if %ERRORLEVEL% equ 0 goto Error
+
+del /q test_file_decoded test_file_encoded 2> nul
+
+bee2cmd pke enc -cert cert0 -pubkey pubkey0 --itag128 test_file test_file_encoded
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd pke dec -pass pass:root privkey0 test_file_encoded test_file_decoded
+if %ERRORLEVEL% neq 0 goto Error
+
+fc test_file test_file_decoded
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd pke val -cert cert0 -pass pass:root -privkey privkey0 test_file_encoded
+if %ERRORLEVEL% neq 0 goto Error
+
+echo ****** OK
+
+rem ===========================================================================
 rem  exit
 rem ===========================================================================
 

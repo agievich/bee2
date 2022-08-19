@@ -128,6 +128,72 @@ err_t cmdFileValExist(int count, char* files[])
 	return ERR_OK;
 }
 
+err_t cmdFileRead(
+        octet* buf,
+        size_t* buf_len,
+        const char * file
+) {
+    size_t len;
+
+    ASSERT(memIsNullOrValid(buf_len, O_PER_S));
+    ASSERT(strIsValid(file));
+
+    len = cmdFileSize(file);
+    if (len == SIZE_MAX)
+        return ERR_FILE_READ;
+
+    if (buf)
+        len = cmdFileRead2(buf, len, file);
+
+    if (len == SIZE_MAX)
+        return ERR_FILE_OPEN;
+
+    if (buf_len)
+        *buf_len = len;
+
+    return ERR_OK;
+}
+
+size_t cmdFileRead2(
+        octet* buf,
+        size_t buf_len,
+        const char * file
+) {
+    err_t code;
+    size_t len;
+    FILE* fp;
+
+    ASSERT(strIsValid(file));
+    ASSERT(memIsValid(buf, buf_len));
+
+    code = (fp = fopen(file, "rb")) ? ERR_OK : ERR_FILE_OPEN;
+    ERR_CALL_CHECK(code);
+    len = fread(buf, 1, buf_len, fp);
+    fclose(fp);
+
+    return len;
+}
+
+err_t cmdFileWrite(
+        const octet* buf,
+        size_t buf_len,
+        const char* file
+){
+    err_t code;
+    FILE* fp;
+
+    ASSERT(memIsValid(buf, buf_len));
+    ASSERT(strIsValid(file));
+
+    code = (fp = fopen(file, "wb")) ? ERR_OK : ERR_FILE_CREATE;
+    ERR_CALL_CHECK(code);
+    code = (buf_len == fwrite(buf, 1, buf_len, fp)) ?
+           ERR_OK : ERR_FILE_WRITE;
+    fclose(fp);
+
+    return code;
+}
+
 /*
 *******************************************************************************
 Командная строка
