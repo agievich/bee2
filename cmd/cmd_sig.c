@@ -46,13 +46,12 @@ extern err_t cmdCVCRead(octet cert[], size_t* cert_len, const char* file);
 
 
 static size_t sigEnc(
-        octet buf[],
-        const cmd_sig_t* sig,
-        const octet certs[]
+	octet buf[],
+	const cmd_sig_t* sig,
+	const octet certs[]
 ){
 
     der_anchor_t Signature[1];
-    der_anchor_t Certs[1];
     size_t certs_total_len = 0;
     size_t count = 0;
 
@@ -82,14 +81,13 @@ static size_t sigEnc(
 }
 
 static size_t sigDec(
-        octet der[],
-        size_t count,
-        cmd_sig_t* sig,
-        octet certs[]
+	octet der[],
+	size_t count,
+	cmd_sig_t* sig,
+	octet certs[]
 ){
 
     der_anchor_t Signature[1];
-    der_anchor_t Certs[1];
     octet *ptr = der;
     cmd_sig_t m_sig[1];
     octet m_certs[SIG_MAX_CERTS * SIG_MAX_CERT_SIZE];
@@ -129,9 +127,9 @@ static size_t sigDec(
 *******************************************************************************
 */
 static err_t sigReadCerts(
-        const char* names,
-        octet certs[],
-        size_t certs_lens[SIG_MAX_CERTS]
+	const char* names,
+	octet certs[],
+	size_t certs_lens[SIG_MAX_CERTS]
 ){
     size_t m_certs_cnt;
     size_t m_certs_lens[SIG_MAX_CERTS];
@@ -177,10 +175,10 @@ static err_t sigReadCerts(
 }
 
 static err_t sigWriteCerts(
-        const char* names,
-        const octet certs[],
-        const size_t certs_lens[],
-        size_t certs_cnt
+	const char* names,
+	const octet certs[],
+	const size_t certs_lens[],
+	size_t certs_cnt
 ){
 
     if (!names || !strLen(names) && certs_cnt > 0)
@@ -230,10 +228,10 @@ static err_t sigWriteCerts(
 *******************************************************************************
 */
 err_t cmdSigRead(
-        size_t* der_len,
-        cmd_sig_t* sig,
-        octet certs[],
-        const char* file
+	size_t* der_len,
+	cmd_sig_t* sig,
+	octet certs[],
+	const char* file
 ){
 
     ASSERT(memIsNullOrValid(sig, sizeof (cmd_sig_t)));
@@ -290,10 +288,10 @@ err_t cmdSigRead(
 *******************************************************************************
 */
 err_t cmdSigWrite(
-        const cmd_sig_t* sig,
-        octet certs[],
-        const char* file,
-        bool_t append
+	const cmd_sig_t* sig,
+	octet certs[],
+	const char* file,
+	bool_t append
 ){
 
     size_t count;
@@ -323,10 +321,10 @@ err_t cmdSigWrite(
 *******************************************************************************
 */
 static int bsumHashFileWithOffset(
-        octet hash[],
-        size_t hid,
-        const char* filename,
-        unsigned end_offset
+	octet hash[],
+	size_t hid,
+	const char* filename,
+	unsigned end_offset
 ){
     size_t file_size;
     size_t total_readed;
@@ -436,11 +434,11 @@ static const char* hashOid(size_t hid)
     \return ERR_OR, если цепочка корректна. Код ошибки в обратном случае
  */
 static err_t cmdValCerts(
-        btok_cvc_t *last_cert,              /*!< [out] последний сертификат */
-        const octet * anchor,                     /*!< [in]  доверенный сертификат (optional) */
-        size_t anchor_len,                  /*!< [in]  длина доверенного сертификата */
-        const octet  certs[],               /*!< [in] сертификаты для проверки */
-        const size_t certs_lens[]           /*!< [in] длины всех сертификатов */
+	btok_cvc_t *last_cert,              /*!< [out] последний сертификат */
+	const octet * anchor,                     /*!< [in]  доверенный сертификат (optional) */
+	size_t anchor_len,                  /*!< [in]  длина доверенного сертификата */
+	const octet  certs[],               /*!< [in] сертификаты для проверки */
+	const size_t certs_lens[]           /*!< [in] длины всех сертификатов */
 ){
 
     btok_cvc_t cvc_anchor[1];
@@ -503,11 +501,11 @@ static err_t cmdValCerts(
 *******************************************************************************
 */
 err_t cmdSigVerify(
-        const octet* pubkey,
-        const octet* anchor_cert,
-        size_t anchor_cert_len,
-        const char* file,
-        const char* sig_file
+	const octet* pubkey,
+	const octet* anchor_cert,
+	size_t anchor_cert_len,
+	const char* file,
+	const char* sig_file
 ){
     err_t code;
     size_t der_len;
@@ -557,12 +555,12 @@ err_t cmdSigVerify(
 */
 
 err_t cmdSigSign(
-        cmd_sig_t * sig,
-        const octet * privkey,
-        size_t privkey_len,
-        const octet* certs,
-        const size_t certs_lens[SIG_MAX_CERTS],
-        const char* file
+	cmd_sig_t * sig,
+	const octet * privkey,
+	size_t privkey_len,
+	const octet* certs,
+	const size_t certs_lens[SIG_MAX_CERTS],
+	const char* file
 ){
     octet hash[64];
     octet oid_der[128];
@@ -659,9 +657,9 @@ WAI_FUNCSPEC
 static int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length);
 
 err_t cmdVerifySelf(
-        const octet* pubkey,
-        const octet* anchor_cert,
-        size_t anchor_cert_len
+	const octet* pubkey,
+	const octet* anchor_cert,
+	size_t anchor_cert_len
 ) {
 
     err_t code;
@@ -676,7 +674,7 @@ err_t cmdVerifySelf(
 
     char* args[] = {"vfy",buf, buf};
 
-    code = cmdSigVerify(0,0,0, buf, buf);
+    code = cmdSigVerify(pubkey, anchor_cert, anchor_cert_len, buf, buf);
 
     blobClose(buf);
     return code;
