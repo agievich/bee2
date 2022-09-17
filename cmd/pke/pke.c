@@ -263,7 +263,7 @@ static err_t pkeGen(octet* key, size_t size)
 {
     if (!rngIsValid()) {
         ERR_CALL_CHECK(cmdRngStart(1))
-        ERR_CALL_CHECK(cmdRngTest())
+        // ERR_CALL_CHECK(cmdRngTest())
     }
     rngStepR(key, size, 0);
 

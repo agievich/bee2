@@ -34,6 +34,27 @@ version 3. See Copyright Notices in bee2/info.h.
 #include <termios.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <sys/select.h>
+#include <sys/ioctl.h>
+
+static bool_t _kbhit()
+{
+    static bool_t _initialized = FALSE;
+
+    if (!_initialized) {
+        struct termios term;
+        tcgetattr(STDIN_FILENO, &term);
+        term.c_lflag &= ~ICANON;
+        term.c_lflag &= ~( ECHO );
+        tcsetattr(STDIN_FILENO, TCSANOW, &term);
+        setbuf(stdin, NULL);
+        _initialized = TRUE;
+    }
+
+    int bytesWaiting;
+    ioctl(STDIN_FILENO, FIONREAD, &bytesWaiting);
+    return bytesWaiting;
+}
 
 int getch()
 {
@@ -56,6 +77,7 @@ int getch()
 
 #include <conio.h>
 
+#define _kbhit kbhit
 #define getch _getch
 
 #else
@@ -65,6 +87,10 @@ int getch()
 	char ch;
 	scanf(" %c", &ch);
 	return ch;
+}
+
+bool_t _kbhit() {
+    return true;
 }
 
 #endif
@@ -330,9 +356,148 @@ void cmdArgClose(char** argv)
 *******************************************************************************
 */
 
+#if defined OS_WIN
+
+#include <profileapi.h>
+
+static inline u64 cmdReadTCS()
+{
+	LARGE_INTEGER cnt;
+    QueryPerformanceCounter(&cnt);
+	return cnt.QuadPart;
+}
+
+static inline u64 cmdGetProcessorFrequency()
+{
+	LARGE_INTEGER freq;
+    QueryPerformanceFrequency(&freq);
+	return freq.QuadPart;
+}
+
+#elif defined OS_LINUX
+
+#include <time.h>
+static u64 cmdReadTCS()
+{
+    struct timespec ts;
+    if (clock_gettime(CLOCK_MONOTONIC_RAW, &ts) < 0)
+        return 0;
+    return ts.tv_sec * 1000000000L + ts.tv_nsec;
+}
+
+static u64 cmdGetProcessorFrequency()
+{
+    u64 start = cmdReadTCS();
+    u64 overhead = cmdReadTCS() - start;
+    start = cmdReadTCS();
+    usleep(1000000);
+    return cmdReadTCS() - start - overhead;
+}
+
+#elif defined OS_APPLE
+
+#include <mach/mach_time.h>
+
+#define cmdReadTCS mach_absolute_time
+
+static u64 cmdGetProcessorFrequency()
+{
+    u64 start = cmdReadTCS();
+    u64 overhead = cmdReadTCS() - start;
+    start = cmdReadTCS();
+    usleep(1000000);
+    return cmdReadTCS()  - start - overhead;
+}
+
+#else
+
+static inline u64 cmdReadTCS(){
+    return 0;
+}
+
+static inline u64 cmdGetProcessorFrequency(){
+    return 0;
+}
+
+#endif
+
+static u64 _freq = 0;
+
+static err_t cmdRngKeyboardSource(size_t* read, void* buf, size_t count, void* state)
+{
+
+    const word _min_delay = 50;
+    const word _timeout_delay = 10000;
+
+    u8 tick;
+    u64 min_ticks;
+    u64 timeout_ticks;
+    u64 prevtime;
+    u64 diff;
+    u64 curtime;
+    int prevchar;
+    int curchar;
+    size_t pos = 0;
+
+    ASSERT(memIsValid(buf,count));
+
+    if (_freq <= 0)
+        _freq = cmdGetProcessorFrequency();
+    if (_freq <= 0)
+        return ERR_BAD_ENTROPY;
+
+    prevchar = '\0';
+    prevtime = cmdReadTCS();
+    min_ticks = _freq * _min_delay / 1000;
+    timeout_ticks = _freq * _timeout_delay / 1000;
+
+    printf("Collecting entropy from keyboard...\n");
+    printf("Press different buttons %lu times with >%lu ms delay\n", count, _min_delay);
+
+    if (read)
+        *read = 0;
+
+    for(size_t i = 0 ; i < count; i++){
+        printf(".");
+    }
+    printf("\n");
+    while (pos < count)
+    {
+        while (!_kbhit())
+        {
+            if (cmdReadTCS() - prevtime > timeout_ticks)
+                return ERR_TIMEOUT;
+        }
+
+        curchar = getch();
+
+        if (curchar == prevchar || curchar == 0 || curchar == 0xE0)
+            continue;
+
+        curtime = cmdReadTCS();
+
+        diff = curtime - prevtime;
+
+        if (diff < min_ticks)
+            continue;
+        tick = diff % 256;
+        memCopy(buf + pos, &tick, 1);
+        prevchar = curchar;
+        prevtime = curtime;
+        pos++;
+        printf(".");
+        if (read)
+            *read = *read +1;
+    }
+    printf("\n");
+    return ERR_OK;
+}
+
 err_t cmdRngStart(bool_t verbose)
 {
 	err_t code;
+
+    code = cmdRngTest();
 	if (verbose)
 	{
 		const char* sources[] = { "trng", "trng2", "sys", "timer" };
@@ -345,7 +510,7 @@ err_t cmdRngStart(bool_t verbose)
 				printf(count++ ? ", %s" : "%s", sources[pos]);
 		printf("]... ");
 	}
-	code = rngCreate(0, 0);
+	code = rngCreate(code != ERR_OK ? cmdRngKeyboardSource : 0, 0);
 	if (verbose)
 		printf("%s\n", errMsg(code));
 	return code;
@@ -377,10 +542,9 @@ err_t cmdRngTest()
 			break;
 		}
 	}
-	// нет ни физического источника, ни двух разнотипных?
-	if (!trng && valid_sources < 2)
-		return ERR_BAD_ENTROPY;
-	// все нормально
-	return ERR_OK;
+    // нет ни физического источника, ни двух разнотипных?
+    if (!trng && valid_sources < 2)
+        return ERR_BAD_ENTROPY;
+    // все нормально
+    return ERR_OK;
 }
-

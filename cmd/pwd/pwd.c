@@ -144,8 +144,8 @@ static err_t pwdGen(int argc, char* argv[])
 	code = cmdRngStart(TRUE);
 	ERR_CALL_CHECK(code);
 	// тестировать ГСЧ
-	code = cmdRngTest();
-	ERR_CALL_CHECK(code);
+	// code = cmdRngTest();
+	// ERR_CALL_CHECK(code);
 	// разобрать опции и генерировать пароль
 	code = (argc == 1) ? cmdPwdGen(&pwd, *argv) : ERR_CMD_PARAMS;
 	cmdPwdClose(pwd);

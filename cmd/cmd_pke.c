@@ -393,7 +393,7 @@ static err_t keyloadPkeWrap(
 
     if (!rngIsValid()){
         ERR_CALL_CHECK(cmdRngStart(1));
-        ERR_CALL_CHECK(cmdRngTest())
+        // ERR_CALL_CHECK(cmdRngTest())
     }
     code = bignStdParams(params, curveOid(keyload_wrap->pubkey_len * 2));
     ERR_CALL_CHECK(code)

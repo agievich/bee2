@@ -229,8 +229,8 @@ static err_t kgGen(int argc, char* argv[])
 	code = cmdRngStart(TRUE);
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	// тестировать ГСЧ
-	code = cmdRngTest();
-	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
+	// code = cmdRngTest();
+	// ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	// выделить память
 	code = cmdBlobCreate(state, 3 * len);
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
@@ -517,8 +517,8 @@ static err_t kgChp(int argc, char* argv[])
 	code = cmdRngStart(TRUE);
 	ERR_CALL_HANDLE(code, (cmdBlobClose(privkey), cmdPwdClose(pwdout)));
 	// тестировать ГСЧ
-	code = cmdRngTest();
-	ERR_CALL_HANDLE(code, (cmdBlobClose(privkey), cmdPwdClose(pwdout)));
+	// code = cmdRngTest();
+	// ERR_CALL_HANDLE(code, (cmdBlobClose(privkey), cmdPwdClose(pwdout)));
 	// сохранить личный ключ
 	code = cmdPrivkeyWrite(privkey, len, *argv, pwdout);
 	cmdBlobClose(privkey);
