@@ -14,14 +14,12 @@
 #include "cmd.h"
 
 
-extern err_t cmdCVCRead(octet cert[], size_t* cert_len, const char* file);
-
 /*
 *******************************************************************************
 Кодирование подписи
 
   SEQ[APPLICATION 78] Signature
-    SIZE[APPLICATION 41] -- sig_len
+    SIZE -- sig_len
     OCT(SIZE(96)) -- sig
     OCT(SIZE(sizeof(size_t) * SIG_MAX_CERT)) - cert_len
     OCT - certs
@@ -67,7 +65,7 @@ static size_t sigEnc(
 
     derEncStep(derTSEQEncStart(Signature, buf, count, 0x7F4E), buf, count);
 
-    derEncStep(derTSIZEEnc(buf, 0x5F29, sig->sig_len), buf, count);
+    derEncStep(derSIZEEnc(buf, sig->sig_len), buf, count);
 
     derEncStep(derOCTEnc(buf, sig->sig, sig->sig_len), buf, count);
 
@@ -98,7 +96,7 @@ static size_t sigDec(
 
     derDecStep(derTSEQDecStart(Signature, ptr, count, 0x7F4E), ptr, count);
 
-    derDecStep(derTSIZEDec(&m_sig->sig_len,ptr,count, 0x5F29), ptr, count);
+    derDecStep(derSIZEDec(&m_sig->sig_len,ptr,count), ptr, count);
 
     derDecStep(derOCTDec2(m_sig->sig, ptr, count , m_sig->sig_len), ptr, count);
 
@@ -150,9 +148,11 @@ static err_t sigReadCerts(
         else
             m_names[i] = '\0';
 
-        code = cmdCVCRead(
+        code = cmdFileRead(
                 m_certs + certs_total_len,
-                m_certs_lens + m_certs_cnt, m_names);
+                m_certs_lens + m_certs_cnt,
+                m_names
+                );
 
         ERR_CALL_HANDLE(code, blobClose(blob));
         m_names += i + 1;
@@ -241,16 +241,18 @@ err_t cmdSigRead(
     octet buf[SIG_MAX_DER];
     octet m_certs[SIG_MAX_CERTS * SIG_MAX_CERT_SIZE];
     octet * der = buf;
-    size_t file_size = cmdFileSize(file);
+    size_t file_size;
     cmd_sig_t m_sig[1];
     size_t total_certs_len = 0;
+
+    file_size = cmdFileSize(file);
+    if (file_size == SIZE_MAX)
+        return ERR_FILE_READ;
+
     if (der_count > file_size){
         der += der_count - file_size;
         der_count = file_size;
     }
-
-    if (file_size == SIZE_MAX)
-        return ERR_FILE_OPEN;
 
     fp = fopen(file, "rb");
 
@@ -656,7 +658,7 @@ static int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_l
 WAI_FUNCSPEC
 static int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length);
 
-err_t cmdVerifySelf(
+err_t cmdSigVerifySelf(
 	const octet* pubkey,
 	const octet* anchor_cert,
 	size_t anchor_cert_len

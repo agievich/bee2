@@ -307,55 +307,120 @@ rem ===========================================================================
 rem  bee2cmd/sig
 rem ===========================================================================
 
-echo ****** Testing bee2cmd/pke...
+echo ****** Testing bee2cmd/aead...
 
 del /q test_file_decoded test_file_encoded 2> nul
 
 bee2cmd kg print -pass pass:root privkey0 > pubkey0
 
-bee2cmd pke enc -cert cert0 -pubkey pubkey0 test_file test_file_encoded
+rem pke test
+
+bee2cmd aead enc -kld PKE -cert cert0 -pubkey pubkey0 test_file test_file_encoded
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd pke dec -pass pass:root privkey0 test_file_encoded test_file_decoded
+bee2cmd aead dec -kld PKE -pass pass:root -privkey privkey0 test_file_encoded test_file_decoded
 if %ERRORLEVEL% neq 0 goto Error
 
 fc test_file test_file_decoded
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd pke dec -pass pass:alice privkey2 test_file_encoded test_file_decoded
+del /q test_file_decoded 2> nul
+
+bee2cmd aead dec -kld PKE -pass pass:alice -privkey privkey2 test_file_encoded test_file_decoded
 if %ERRORLEVEL% equ 0 goto Error
 
-bee2cmd pke val -cert cert0 -pass pass:root -privkey privkey0 test_file_encoded
+bee2cmd aead val -kld PKE -cert cert0 -pass pass:root -privkey privkey0 test_file_encoded
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd pke val -pass pass:root -privkey privkey0 test_file_encoded
+bee2cmd aead val -kld PKE -pass pass:root -privkey privkey0 test_file_encoded
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd pke val -cert cert0 test_file_encoded
-if %ERRORLEVEL% neq 0 goto Error
-
-bee2cmd pke val test_file_encoded
+bee2cmd aead val -kld PKE -cert cert0 test_file_encoded
 if %ERRORLEVEL% equ 0 goto Error
 
-bee2cmd pke val -cert cert1 test_file_encoded
+bee2cmd aead val -kld PKE test_file_encoded
 if %ERRORLEVEL% equ 0 goto Error
 
-bee2cmd pke val -pass pass:alice -privkey privkey2 test_file_encoded
+bee2cmd aead val -kld PKE -cert cert1 test_file_encoded
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd aead val -kld PKE -pass pass:alice -privkey privkey2 test_file_encoded
 if %ERRORLEVEL% equ 0 goto Error
 
 del /q test_file_decoded test_file_encoded 2> nul
 
-bee2cmd pke enc -cert cert0 -pubkey pubkey0 --itag128 test_file test_file_encoded
+rem with itag
+
+bee2cmd aead enc -kld PKE -cert cert0 -pubkey pubkey0 --itag128 test_file test_file_encoded
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd pke dec -pass pass:root privkey0 test_file_encoded test_file_decoded
+bee2cmd aead dec -kld PKE -pass pass:root -privkey privkey0 test_file_encoded test_file_decoded
 if %ERRORLEVEL% neq 0 goto Error
 
 fc test_file test_file_decoded
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd pke val -cert cert0 -pass pass:root -privkey privkey0 test_file_encoded
+rem with itag and adata
+
+del /q test_file_decoded test_file_encoded 2> nul
+
+bee2cmd aead enc -kld PKE -cert cert0 -pubkey pubkey0 --itag128 -adata cert0 test_file test_file_encoded
 if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd aead dec -kld PKE -pass pass:root -privkey privkey0 -adata cert0 test_file_encoded test_file_decoded
+if %ERRORLEVEL% neq 0 goto Error
+
+fc test_file test_file_decoded
+if %ERRORLEVEL% neq 0 goto Error
+
+del /q test_file_decoded test_file_encoded 2> nul
+
+rem PWD test
+
+bee2cmd aead enc -kld PWD -pass pass:root test_file test_file_encoded
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd aead val -kld PWD -pass pass:root  test_file_encoded
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd aead val -kld PWD -pass pass:wrongpass  test_file_encoded
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd aead dec -kld PWD -pass pass:wrongpass test_file_encoded test_file_decoded
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd aead dec -kld PWD -pass pass:root test_file_encoded test_file_decoded
+if %ERRORLEVEL% neq 0 goto Error
+
+fc test_file test_file_decoded
+if %ERRORLEVEL% neq 0 goto Error
+
+del /q test_file_decoded test_file_encoded 2> nul
+
+rem with itag
+
+bee2cmd aead enc -kld PWD -pass pass:root --itag128 test_file test_file_encoded
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd aead dec -kld PWD -pass pass:root test_file_encoded test_file_decoded
+if %ERRORLEVEL% neq 0 goto Error
+
+fc test_file test_file_decoded
+if %ERRORLEVEL% neq 0 goto Error
+
+rem with itag and adata
+
+del /q test_file_decoded test_file_encoded 2> nul
+
+bee2cmd aead enc -kld PWD -pass pass:root --itag128 -adata cert0 test_file test_file_encoded
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd aead dec -kld PWD -pass pass:root -adata cert0 test_file_encoded test_file_decoded
+if %ERRORLEVEL% neq 0 goto Error
+
+fc test_file test_file_decoded
+if %ERRORLEVEL% neq 0 goto Error
+
 
 echo ****** OK
 

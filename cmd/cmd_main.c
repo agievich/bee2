@@ -91,7 +91,7 @@ extern err_t pwdInit();
 extern err_t kgInit();
 extern err_t cvcInit();
 extern err_t sigInit();
-extern err_t pkeInit();
+extern err_t aeadInit();
 
 #ifdef OS_WIN
 extern err_t stampInit();
@@ -113,7 +113,7 @@ err_t cmdInit()
 	ERR_CALL_CHECK(code);
     code = sigInit();
 	ERR_CALL_CHECK(code);
-    code = pkeInit();
+    code = aeadInit();
 	ERR_CALL_CHECK(code);
 
 #ifdef OS_WIN

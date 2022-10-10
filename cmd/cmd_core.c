@@ -497,7 +497,7 @@ err_t cmdRngStart(bool_t verbose)
 {
 	err_t code;
 
-    code = cmdRngTest();
+    code = ERR_OK;//cmdRngTest();
 	if (verbose)
 	{
 		const char* sources[] = { "trng", "trng2", "sys", "timer" };

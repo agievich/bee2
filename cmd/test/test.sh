@@ -165,7 +165,8 @@ test_sig(){
     return 1
   fi
 
-  echo test > test_file
+  head -c 5000000 /dev/urandom  > test_file
+
   echo sig > sig_file
 
   $bee2cmd sig vfy -pubkey pubkey2 test_file sig_file \
@@ -220,10 +221,14 @@ test_sig(){
   $bee2cmd sig vfy -anchor cert2 test_file sig_fil \
     || return 1
 
+  rm -rf test_file sig_file
+
   return 0
 }
 
-test_pke(){
+test_aead(){
+
+
   rm -rf test_file_decoded test_file_encoded\
       || return 2
 
@@ -232,41 +237,103 @@ test_pke(){
   $bee2cmd kg print -pass pass:alice privkey2 > pubkey2 \
       || return 1
 
-  $bee2cmd pke enc -cert cert0 -pubkey pubkey0 $bee2cmd test_file_encoded \
+  head -c 5000000 /dev/urandom  > test_file_aead
+
+  #pke test
+  $bee2cmd aead enc -kld PKE -cert cert0 -pubkey pubkey0 test_file_aead test_file_encoded \
       || return 1
-  $bee2cmd pke dec -pass pass:root privkey0 test_file_encoded test_file_decoded \
+  $bee2cmd aead dec -kld PKE -pass pass:root -privkey privkey0 test_file_encoded test_file_decoded \
       || return 1
-  diff $bee2cmd test_file_decoded \
+  diff test_file_aead test_file_decoded \
       || return 1
-  $bee2cmd pke dec -pass pass:alice privkey2 test_file_encoded test_file_decoded \
+
+    rm -rf test_file_decoded\
+        || return 2
+
+  $bee2cmd aead dec -kld PKE -pass pass:alice -privkey privkey2 test_file_encoded test_file_decoded \
       && return 1
-  $bee2cmd pke val -cert cert0 -pass pass:root -privkey privkey0 test_file_encoded \
+  $bee2cmd aead val -kld PKE -cert cert0 -pass pass:root -privkey privkey0 test_file_encoded \
       || return 1
-  $bee2cmd pke val -pass pass:root -privkey privkey0 test_file_encoded \
+  $bee2cmd aead val -kld PKE -pass pass:root -privkey privkey0 test_file_encoded \
       || return 1
-  $bee2cmd pke val -cert cert0 test_file_encoded \
-      || return 1
-  $bee2cmd pke val test_file_encoded \
+  $bee2cmd aead val -kld PKE -cert cert0 test_file_encoded \
       && return 1
-  $bee2cmd pke val -cert cert1 test_file_encoded \
+  $bee2cmd aead val -kld PKE test_file_encoded \
       && return 1
-  $bee2cmd pke val -pass pass:alice -privkey privkey2 test_file_encoded \
+  $bee2cmd aead val -kld PKE -cert cert1 test_file_encoded \
+      && return 1
+  $bee2cmd aead val -kld PKE -pass pass:alice -privkey privkey2 test_file_encoded \
       && return 1
 
   rm -rf test_file_decoded test_file_encoded \
       || return 2
 
-  $bee2cmd pke enc -cert cert0 -pubkey pubkey0 --itag1024 $bee2cmd test_file_encoded \
+  #with itag
+  $bee2cmd aead enc -kld PKE -cert cert0 -pubkey pubkey0 --itag1 test_file_aead test_file_encoded \
       || return 1
-  $bee2cmd pke dec -pass pass:root privkey0 test_file_encoded test_file_decoded \
+  $bee2cmd aead dec -kld PKE -pass pass:root -privkey privkey0 test_file_encoded test_file_decoded \
       || return 1
-  diff $bee2cmd test_file_decoded \
+  diff test_file_aead test_file_decoded \
       || return 1
-  $bee2cmd pke val -cert cert0 -pass pass:root -privkey privkey0 test_file_encoded \
+
+  rm -rf test_file_decoded test_file_encoded \
+        || return 2
+
+  #with itag and adata
+  $bee2cmd aead enc -kld PKE -cert cert0 -pubkey pubkey0 --itag1 -adata cert0 test_file_aead test_file_encoded \
       || return 1
+  $bee2cmd aead dec -kld PKE -pass pass:root -privkey privkey0 -adata cert0 test_file_encoded test_file_decoded \
+      || return 1
+  diff test_file_aead test_file_decoded \
+      || return 1
+
+  rm -rf test_file_decoded test_file_encoded \
+      || return 2
+
+  #pwd test
+  $bee2cmd aead enc -kld PWD -pass pass:root test_file_aead test_file_encoded \
+      || return 1
+  $bee2cmd aead val -kld PWD -pass pass:root test_file_encoded \
+      || return 1
+  $bee2cmd aead val -kld PWD -pass pass:wrongpass test_file_encoded \
+      && return 1
+  $bee2cmd aead dec -kld PWD -pass pass:wrongpass test_file_encoded test_file_decoded \
+      && return 1
+  $bee2cmd aead dec -kld PWD -pass pass:root test_file_encoded test_file_decoded \
+      || return 1
+  diff test_file_aead test_file_decoded \
+      || return 1
+
+  rm -rf test_file_decoded test_file_encoded \
+        || return 2
+
+  #with itag
+  $bee2cmd aead enc -kld PWD -pass pass:root --itag1 test_file_aead test_file_encoded \
+      || return 1
+  $bee2cmd aead val -kld PWD -pass pass:root test_file_encoded \
+      || return 1
+  $bee2cmd aead dec -kld PWD -pass pass:root test_file_encoded test_file_decoded \
+      || return 1
+  diff test_file_aead test_file_decoded \
+      || return 1
+
+  rm -rf test_file_decoded test_file_encoded \
+      || return 2
+
+  #with itag and adata
+  $bee2cmd aead enc -kld PWD -pass pass:root --itag1 -adata cert0 test_file_aead test_file_encoded \
+      || return 1
+  $bee2cmd aead dec -kld PWD -pass pass:root -adata cert0 test_file_encoded test_file_decoded \
+      || return 1
+  diff test_file_aead test_file_decoded \
+      || return 1
+
+  rm -rf test_file_decoded test_file_encoded \
+      || return 2
 
   return 0
 }
+
 
 run_test() {
   echo -n "Testing $1... "
@@ -278,4 +345,4 @@ run_test() {
   fi
 } 
 
-run_test ver && run_test pwd && run_test kg && run_test cvc && run_test sig && run_test pke
+run_test ver && run_test pwd && run_test kg && run_test cvc && run_test sig && run_test aead

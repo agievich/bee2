@@ -71,29 +71,29 @@ static const char _descr[] = "sign and verify files";
 */
 static int sigUsage(){
     printf(
-            "bee2cmd/%s: %s\n"
-            "Usage:\n"
-            "  %s %s [%s <certa,certb,...,cert> ] [%s <scheme>] <privkey> <file> <sig>\n"
-            "    sign <file> using <privkey> and write signature to <sig>\n"
-            "  options:\n"
-            "    %s <certa,certb,...,cert> -- certificate sequence (optional)\n"
-            "    %s <scheme> -- scheme of the private key password\n"
-            "  %s %s [%s <pubkey> | %s <anchor>] <file> <sig>\n"
-            "    verify <file> signature stored in <sig>\n"
-            "  options:\n"
-            "    %s <pubkey> -- verification public key\n"
-            "    %s <anchor> -- trusted certificate"
-            "  %s %s [%s <save_certa,save_certb,...,save_cert>] <sig>\n"
-            "    print <sig> to the console\n"
-            "  options:\n"
-            "    %s <ave_certa,save_certb,...,save_cert> -- files to save certificates (if signature contains it)\n"
-            ,
-            _name, _descr,
-            _name, ARG_SIGN, ARG_CERT, ARG_PASS,
-            ARG_CERT, ARG_PASS,
-            _name, ARG_VFY, ARG_PUBKEY, ARG_ANCHOR,
-            ARG_PUBKEY, ARG_ANCHOR,
-            _name, ARG_PRINT, ARG_CERT, ARG_CERT
+        "bee2cmd/%s: %s\n"
+        "Usage:\n"
+        "  %s %s [%s <certa,certb,...,cert> ] [%s <scheme>] <privkey> <file> <sig>\n"
+        "    sign <file> using <privkey> and write signature to <sig>\n"
+        "  options:\n"
+        "    %s <certa,certb,...,cert> -- certificate sequence (optional)\n"
+        "    %s <scheme> -- scheme of the private key password\n"
+        "  %s %s [%s <pubkey> | %s <anchor>] <file> <sig>\n"
+        "    verify <file> signature stored in <sig>\n"
+        "  options:\n"
+        "    %s <pubkey> -- verification public key\n"
+        "    %s <anchor> -- trusted certificate"
+        "  %s %s [%s <save_certa,save_certb,...,save_cert>] <sig>\n"
+        "    print <sig> to the console\n"
+        "  options:\n"
+        "    %s <ave_certa,save_certb,...,save_cert> -- files to save certificates (if signature contains it)\n"
+        ,
+        _name, _descr,
+        _name, ARG_SIGN, ARG_CERT, ARG_PASS,
+        ARG_CERT, ARG_PASS,
+        _name, ARG_VFY, ARG_PUBKEY, ARG_ANCHOR,
+        ARG_PUBKEY, ARG_ANCHOR,
+        _name, ARG_PRINT, ARG_CERT, ARG_CERT
     );
     return -1;
 }
@@ -456,7 +456,10 @@ static err_t sigSign(int argc, char* argv[])
 
     char* files[] = {sig_file_name, sig_file_name};
     if (!append)
-        ERR_CALL_CHECK(cmdFileValNotExist(1, files));
+    {
+        code = cmdFileValNotExist(1, files);
+        ERR_CALL_CHECK(code);
+    }
 
     return cmdSigWrite(sig, certs, sig_file_name, append);
 }
