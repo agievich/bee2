@@ -322,9 +322,9 @@ err_t cmdSigWrite(
  Хэширование файла с учетом отступа для встроенной подписи
 *******************************************************************************
 */
-static int bsumHashFileWithOffset(
+static int sigHashFileWithOffset(
 	octet hash[],
-	size_t hid,
+	size_t l,
 	const char* filename,
 	unsigned end_offset
 ){
@@ -359,7 +359,7 @@ static int bsumHashFileWithOffset(
     // хэшировать
     ASSERT(beltHash_keep() <= sizeof(state));
     ASSERT(bashHash_keep() <= sizeof(state));
-    hid ? bashHashStart(state, hid / 2) : beltHashStart(state);
+    l ? bashHashStart(state, l) : beltHashStart(state);
     while (!eof_reached)
     {
         count = fread(buf, 1, sizeof(buf), fp);
@@ -379,21 +379,21 @@ static int bsumHashFileWithOffset(
             }
             break;
         }
-        hid ? bashHashStepH(buf, count, state) :
+        l ? bashHashStepH(buf, count, state) :
         beltHashStepH(buf, count, state);
 
         total_readed += count;
     }
     // завершить
     fclose(fp);
-    hid ? bashHashStepG(hash, hid / 8, state) : beltHashStepG(hash, state);
+    l ? bashHashStepG(hash, l / 4, state) : beltHashStepG(hash, state);
     return 0;
 }
 
 
-static const char* curveOid(size_t hid)
+static const char* curveOid(size_t l)
 {
-    switch (hid)
+    switch (l)
     {
         case 128:
             return "1.2.112.0.2.0.34.101.45.3.1";
@@ -406,9 +406,9 @@ static const char* curveOid(size_t hid)
     }
 }
 
-static const char* hashOid(size_t hid)
+static const char* hashOid(size_t l)
 {
-    switch (hid)
+    switch (l)
     {
         case 128:
             return "1.2.112.0.2.0.34.101.31.81";
@@ -514,7 +514,7 @@ err_t cmdSigVerify(
     cmd_sig_t sig[1];
     octet certs[SIG_MAX_CERTS * SIG_MAX_CERT_SIZE];
     octet hash[64];
-    size_t hid;
+    size_t l;
     octet oid_der[128];
     size_t oid_len;
     bign_params params[1];
@@ -534,17 +534,17 @@ err_t cmdSigVerify(
         ERR_CALL_CHECK(code)
     }
 
-    hid = sig->sig_len * 8/3 ;
+    l = sig->sig_len * 8 / 3 ;
 
     memSetZero(hash, sizeof (hash));
-    code = bsumHashFileWithOffset(hash, hid, file, strEq(file, sig_file) ? der_len : 0);
+    code = sigHashFileWithOffset(hash, l, file, strEq(file, sig_file) ? der_len : 0);
     ERR_CALL_CHECK(code)
 
-    code = bignStdParams(params, curveOid(hid));
+    code = bignStdParams(params, curveOid(l));
     ERR_CALL_CHECK(code)
 
     oid_len = sizeof(oid_der);
-    code = bignOidToDER(oid_der, &oid_len, hashOid(hid));
+    code = bignOidToDER(oid_der, &oid_len, hashOid(l));
     ERR_CALL_CHECK(code);
 
     return bignVerify(params, oid_der, oid_len, hash, sig->sig, pubkey ? pubkey : last_cert->pubkey);
@@ -587,7 +587,7 @@ err_t cmdSigSign(
     }
 
     memSetZero(hash, sizeof (hash));
-    bsumHashFileWithOffset(hash, privkey_len * 4, file, 0);
+    sigHashFileWithOffset(hash, privkey_len * 4, file, 0);
 
     code = bignStdParams(&params, curveOid(privkey_len * 4));
     ERR_CALL_CHECK(code);

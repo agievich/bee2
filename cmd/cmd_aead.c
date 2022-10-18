@@ -159,9 +159,9 @@ static size_t aeadDecode(
     return ptr - der;
 }
 
-inline static const char* curveOid(size_t hid)
+inline static const char* curveOid(size_t l)
 {
-    switch (hid)
+    switch (l)
     {
         case 128:
             return "1.2.112.0.2.0.34.101.45.3.1";
