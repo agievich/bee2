@@ -116,10 +116,11 @@ static err_t sigReadCerts(
     char* blob = blobCreate(strLen(names)+1);
     char* m_names = blob;
     err_t  code;
-    strCopy(m_names, names);
-
-    m_certs_cnt = 0;
     bool_t stop = FALSE;
+
+	strCopy(m_names, names);
+    m_certs_cnt = 0;
+
     while (!stop) {
         size_t i = 0;
         for (; m_names[i] != '\0' && m_names[i] != CERTS_DELIM; i++);
@@ -141,8 +142,10 @@ static err_t sigReadCerts(
     if (memIsValid(certs, certs_total_len))
         memCopy(certs, m_certs, certs_total_len);
 
-    if (certs_lens){
-        for (size_t i =0; i < SIG_MAX_CERTS; i++){
+    if (certs_lens)
+	{
+		size_t i;
+        for (i =0; i < SIG_MAX_CERTS; i++){
             certs_lens[i] = i < m_certs_cnt ? m_certs_lens[i] : 0;
         }
     }
@@ -157,24 +160,25 @@ static err_t sigWriteCerts(
     const size_t certs_lens[],
     size_t certs_cnt
 ){
-
-    if (!names || !strLen(names) && certs_cnt > 0)
-        return ERR_BAD_NAME;
-
     char* blob = blobCreate(strLen(names)+1);
     char* m_certs = blob;
-    strCopy(m_certs, names);
     size_t m_certs_cnt = 0;
     size_t m_total_certs_len = 0;
     bool_t stop = FALSE;
     FILE* fp;
-    while (!stop){
 
+    if (!names || !strLen(names) && certs_cnt > 0)
+        return ERR_BAD_NAME;
+
+    strCopy(m_certs, names);
+
+	while (!stop){
+		size_t i;
         if (m_certs_cnt >= certs_cnt){
             blobClose(blob);
             return ERR_BAD_PARAMS;
         }
-        size_t i = 0;
+        i = 0;
         for (; m_certs[i] != '\0' && m_certs[i] != CERTS_DELIM; i++);
         if (m_certs[i] == '\0')
             stop = TRUE;
@@ -233,12 +237,13 @@ static err_t sigParseOptions(
     bool_t pwd_provided = FALSE;
     size_t m_privkey_len;
     size_t m_pubkey_len;
-
     char s_pubkey[257];
+	char* command;
+
     if (has_certs)
         *has_certs = FALSE;
 
-    char* command = argv[0];
+    command = argv[0];
     if (!strEq(command, ARG_SIGN) &&
             !strEq(command, ARG_VFY) &&
             !strEq(command, ARG_PRINT))
@@ -275,10 +280,10 @@ static err_t sigParseOptions(
         // прочитать открытый ключ
         if (strEq(*argv, ARG_PUBKEY))
         {
+			FILE* fp;
             if (!pubkey)
                 return ERR_CMD_PARAMS;
-
-            FILE* fp = fopen(argv[1], "rb");
+            fp = fopen(argv[1], "rb");
             if (!fp)
             {
                 printf("ERROR: failed to open public key file '%s'\n", argv[1]);
@@ -431,6 +436,7 @@ static err_t sigSign(int argc, char* argv[])
     err_t code;
     bool_t has_certs;
     bool_t append;
+    char* files[] = {sig_file_name, sig_file_name};
 
     memSetZero(file_name, sizeof(file_name));
     memSetZero(sig_file_name, sizeof(sig_file_name));
@@ -454,7 +460,6 @@ static err_t sigSign(int argc, char* argv[])
 
     append = strEq(sig_file_name, file_name);
 
-    char* files[] = {sig_file_name, sig_file_name};
     if (!append)
     {
         code = cmdFileValNotExist(1, files);
@@ -502,15 +507,16 @@ static err_t sigPrint(int argc, char * argv[])
 
     if (has_certs)
     {
+		size_t i;
         size_t certs_cnt = 1;
         cert_names_len = strLen(cert_names);
-        for (size_t i = 0; i < cert_names_len; i++)
+        for (i = 0; i < cert_names_len; i++)
         {
             if (cert_names[i] == CERTS_DELIM)
                 certs_cnt++;
         }
         sig_certs_count =0;
-        for (int i=0;i<SIG_MAX_CERTS;i++){
+        for (i=0;i<SIG_MAX_CERTS;i++){
             if (sig->certs_len[i] != 0)
                 sig_certs_count++;
         }

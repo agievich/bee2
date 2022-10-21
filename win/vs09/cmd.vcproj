@@ -353,6 +353,18 @@
 			UniqueIdentifier="{ED2943AD-C54B-4D1B-9CD4-B97EE70D805D}"
 			>
 			<File
+				RelativePath="..\..\cmd\cmd_aead.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\cmd\cmd_aead_pke.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\cmd\cmd_aead_pwd.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\cmd\cmd_core.c"
 				>
 			</File>
@@ -366,6 +378,10 @@
 			</File>
 			<File
 				RelativePath="..\..\cmd\cmd_pwd.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\cmd\cmd_sig.c"
 				>
 			</File>
 			<Filter
@@ -413,6 +429,22 @@
 				>
 				<File
 					RelativePath="..\..\cmd\cvc\cvc.c"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="aead"
+				>
+				<File
+					RelativePath="..\..\cmd\aead\aead.c"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="sig"
+				>
+				<File
+					RelativePath="..\..\cmd\sig\sig.c"
 					>
 				</File>
 			</Filter>

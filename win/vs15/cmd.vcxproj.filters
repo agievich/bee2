@@ -30,6 +30,12 @@
     <Filter Include="Source Files\cvc">
       <UniqueIdentifier>{22ba03ac-1a5c-44d7-9c8d-024b44b15711}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\sig">
+      <UniqueIdentifier>{7d63dbed-c2a6-4d12-ad02-decbc03a946f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\aead">
+      <UniqueIdentifier>{d2783d93-fb65-4124-b598-6b968db1b45d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\cmd\bsum\bsum.c">
@@ -61,6 +67,24 @@
     </ClCompile>
     <ClCompile Include="..\..\cmd\cvc\cvc.c">
       <Filter>Source Files\cvc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\sig\sig.c">
+      <Filter>Source Files\sig</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\cmd_aead.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\cmd_aead_pke.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\cmd_aead_pwd.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\cmd_sig.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\aead\aead.c">
+      <Filter>Source Files\aead</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

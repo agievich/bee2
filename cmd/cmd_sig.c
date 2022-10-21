@@ -52,11 +52,12 @@ static size_t sigEnc(
     der_anchor_t Signature[1];
     size_t certs_total_len = 0;
     size_t count = 0;
+	size_t i;
 
     if (!memIsValid(sig, sizeof(cmd_sig_t)))
         return SIZE_MAX;
 
-    for (size_t i =0 ; i < SIG_MAX_CERTS && sig->certs_len[i] != 0;i++){
+    for (i = 0; i < SIG_MAX_CERTS && sig->certs_len[i] != 0;i++){
         certs_total_len += sig->certs_len[i];
     }
 
@@ -90,6 +91,7 @@ static size_t sigDec(
     cmd_sig_t m_sig[1];
     octet m_certs[SIG_MAX_CERTS * SIG_MAX_CERT_SIZE];
     size_t certs_total_len = 0;
+	size_t i;
 
     if (!memIsNullOrValid(sig, sizeof(cmd_sig_t)))
         return SIZE_MAX;
@@ -102,7 +104,7 @@ static size_t sigDec(
 
     derDecStep(derOCTDec2((octet*)m_sig->certs_len, ptr, count, sizeof(size_t) * SIG_MAX_CERTS), ptr, count);
 
-    for (size_t i =0 ; i < SIG_MAX_CERTS && m_sig->certs_len[i] != 0; i++){
+    for (i =0 ; i < SIG_MAX_CERTS && m_sig->certs_len[i] != 0; i++){
         certs_total_len += m_sig->certs_len[i];
     }
 
@@ -136,10 +138,11 @@ static err_t sigReadCerts(
     char* blob = blobCreate(strLen(names));
     char* m_names = blob;
     err_t  code;
-    strCopy(m_names, names);
-
-    m_certs_cnt = 0;
     bool_t stop = FALSE;
+
+	strCopy(m_names, names);
+    m_certs_cnt = 0;
+
     while (!stop) {
         size_t i = 0;
         for (; m_names[i] != '\0' && m_names[i] != CERTS_DELIM; i++);
@@ -164,7 +167,8 @@ static err_t sigReadCerts(
         memCopy(certs, m_certs, certs_total_len);
 
     if (certs_lens){
-        for (size_t i =0; i < SIG_MAX_CERTS; i++){
+		size_t i;
+        for (i =0; i < SIG_MAX_CERTS; i++){
             certs_lens[i] = i < m_certs_cnt ? m_certs_lens[i] : 0;
         }
     }
@@ -180,24 +184,25 @@ static err_t sigWriteCerts(
 	const size_t certs_lens[],
 	size_t certs_cnt
 ){
-
-    if (!names || !strLen(names) && certs_cnt > 0)
-        return ERR_BAD_NAME;
-
     char* blob = blobCreate(strLen(names));
     char* m_certs = blob;
-    strCopy(m_certs, names);
     size_t m_certs_cnt = 0;
     size_t m_total_certs_len = 0;
     bool_t stop = FALSE;
     FILE* fp;
-    while (!stop){
 
+    if (!names || !strLen(names) && certs_cnt > 0)
+        return ERR_BAD_NAME;
+
+    strCopy(m_certs, names);
+
+    while (!stop){
+		size_t i;
         if (m_certs_cnt >= certs_cnt){
             blobClose(blob);
             return ERR_BAD_PARAMS;
         }
-        size_t i = 0;
+        i = 0;
         for (; m_certs[i] != '\0' && m_certs[i] != CERTS_DELIM; i++);
         if (m_certs[i] == '\0')
             stop = TRUE;
@@ -234,8 +239,6 @@ err_t cmdSigRead(
 	const char* file
 ){
 
-    ASSERT(memIsNullOrValid(sig, sizeof (cmd_sig_t)));
-
     FILE* fp;
     size_t der_count = SIG_MAX_DER;
     octet buf[SIG_MAX_DER];
@@ -244,8 +247,11 @@ err_t cmdSigRead(
     size_t file_size;
     cmd_sig_t m_sig[1];
     size_t total_certs_len = 0;
+	size_t i;
 
-    file_size = cmdFileSize(file);
+    ASSERT(memIsNullOrValid(sig, sizeof (cmd_sig_t)));
+
+	file_size = cmdFileSize(file);
     if (file_size == SIZE_MAX)
         return ERR_FILE_READ;
 
@@ -271,7 +277,7 @@ err_t cmdSigRead(
         memCopy(sig, m_sig, sizeof(cmd_sig_t));
     }
 
-    for (size_t i =0; i < SIG_MAX_CERTS && m_sig->certs_len[i]; i++)
+    for (i =0; i < SIG_MAX_CERTS && m_sig->certs_len[i]; i++)
         total_certs_len += m_sig->certs_len[i];
 
     if(memIsValid(certs, total_certs_len))
@@ -449,6 +455,7 @@ static err_t cmdValCerts(
     err_t code;
     bool_t same_anchor;
     size_t certs_total_len = 0;
+	size_t i;
 
     if (!tmDate2(date))
         return ERR_BAD_DATE;
@@ -483,7 +490,7 @@ static err_t cmdValCerts(
     }
     ERR_CALL_CHECK(code)
 
-    for (size_t i = 0;  i < SIG_MAX_CERTS && certs_lens[i]; i++)
+    for (i = 0;  i < SIG_MAX_CERTS && certs_lens[i]; i++)
     {
         code = btokCVCVal2(cvc_current, certs + certs_total_len, certs_lens[i], cvc_anchor, date);
         ERR_CALL_CHECK(code)
@@ -667,17 +674,15 @@ err_t cmdSigVerifySelf(
     err_t code;
     int len;
     char* buf;
-
     len = wai_getExecutablePath(0,0, 0);
     if (len == -1)
         return ERR_SYS;
     buf = blobCreate(len+1);
     wai_getExecutablePath(buf, len,0);
-
-    char* args[] = {"vfy",buf, buf};
-
-    code = cmdSigVerify(pubkey, anchor_cert, anchor_cert_len, buf, buf);
-
+	{
+	    char* args[] = {"vfy",buf, buf};
+	    code = cmdSigVerify(pubkey, anchor_cert, anchor_cert_len, buf, buf);
+	}
     blobClose(buf);
     return code;
 }
@@ -739,7 +744,7 @@ err_t cmdSigVerifySelf(
 #if defined(_MSC_VER)
 #pragma warning(pop)
 #endif
-#include <stdbool.h>
+//#include <stdbool.h>
 
 static int WAI_PREFIX(getModulePath_)(HMODULE module, char* out, int capacity, int* dirname_length)
 {
@@ -747,9 +752,9 @@ static int WAI_PREFIX(getModulePath_)(HMODULE module, char* out, int capacity, i
   wchar_t buffer2[MAX_PATH];
   wchar_t* path = NULL;
   int length = -1;
-  bool ok;
+  bool_t ok;
 
-  for (ok = false; !ok; ok = true)
+  for (ok = FALSE; !ok; ok = TRUE)
   {
     DWORD size;
     int length_, length__;

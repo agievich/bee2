@@ -4,7 +4,7 @@
 \brief Generate and manage private keys
 \project bee2/cmd 
 \created 2022.06.08
-\version 2022.07.18
+\version 2022.10.21
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -228,9 +228,6 @@ static err_t kgGen(int argc, char* argv[])
 	// запустить ГСЧ
 	code = cmdRngStart(TRUE);
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
-	// тестировать ГСЧ
-	// code = cmdRngTest();
-	// ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	// выделить память
 	code = cmdBlobCreate(state, 3 * len);
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
@@ -239,6 +236,8 @@ static err_t kgGen(int argc, char* argv[])
 	pubkey = privkey + len;
 	code = bignGenKeypair(privkey, pubkey, params, rngStepR, 0);
 	ERR_CALL_HANDLE(code, (cmdBlobClose(state), cmdPwdClose(pwd)));
+	// обновить ключ ГСЧ
+	rngRekey();
 	// сохранить ключ
 	code = cmdPrivkeyWrite(privkey, len, *argv, pwd);
 	cmdBlobClose(state);
@@ -516,9 +515,6 @@ static err_t kgChp(int argc, char* argv[])
 	// запустить ГСЧ
 	code = cmdRngStart(TRUE);
 	ERR_CALL_HANDLE(code, (cmdBlobClose(privkey), cmdPwdClose(pwdout)));
-	// тестировать ГСЧ
-	// code = cmdRngTest();
-	// ERR_CALL_HANDLE(code, (cmdBlobClose(privkey), cmdPwdClose(pwdout)));
 	// сохранить личный ключ
 	code = cmdPrivkeyWrite(privkey, len, *argv, pwdout);
 	cmdBlobClose(privkey);

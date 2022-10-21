@@ -13,7 +13,6 @@
 */
 
 
-
 #define derEncStep(step, ptr, count)\
 {\
 	size_t t = step;\

@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: useful functions
 \project bee2/cmd 
 \created 2022.06.08
-\version 2022.07.18
+\version 2022.10.21
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -16,6 +16,7 @@ version 3. See Copyright Notices in bee2/info.h.
 #include <bee2/core/mem.h>
 #include <bee2/core/rng.h>
 #include <bee2/core/str.h>
+#include <bee2/core/tm.h>
 #include <bee2/core/util.h>
 #include <bee2/crypto/belt.h>
 #include <bee2/crypto/bels.h>
@@ -25,7 +26,13 @@ version 3. See Copyright Notices in bee2/info.h.
 
 /*
 *******************************************************************************
-Консоль
+Терминал
+
+\thanks
+https://www.flipcode.com/archives/_kbhit_for_Linux.shtml
+(Morgan McGuire [morgan@cs.brown.edu])
+https://stackoverflow.com/questions/29335758/using-kbhit-and-getch-on-linux
+https://askcodes.net/questions/how-to-implement-getch---function-of-c-in-linux-
 *******************************************************************************
 */
 
@@ -34,37 +41,46 @@ version 3. See Copyright Notices in bee2/info.h.
 #include <termios.h>
 #include <unistd.h>
 #include <stdio.h>
+//#include <fcntl.h>
 #include <sys/select.h>
 #include <sys/ioctl.h>
 
-static bool_t _kbhit()
+static bool_t termEcho(bool_t echo)
 {
-    static bool_t _initialized = FALSE;
-
-    if (!_initialized) {
-        struct termios term;
-        tcgetattr(STDIN_FILENO, &term);
-        term.c_lflag &= ~ICANON;
-        term.c_lflag &= ~( ECHO );
-        tcsetattr(STDIN_FILENO, TCSANOW, &term);
-        setbuf(stdin, NULL);
-        _initialized = TRUE;
-    }
-
-    int bytesWaiting;
-    ioctl(STDIN_FILENO, FIONREAD, &bytesWaiting);
-    return bytesWaiting;
+	bool_t prev;
+	struct termios attr;
+	fflush(stdout);
+	tcgetattr(STDIN_FILENO, &attr);
+	prev = (attr.c_lflag & ECHO) != 0;
+	if (echo)
+		attr.c_lflag |= ECHO;
+	else
+		attr.c_lflag &= ~ECHO;
+	tcsetattr(STDIN_FILENO, TCSANOW, &attr);
+	return prev;
 }
 
-int getch()
+static bool_t termKbhit()
+{
+	struct termios oldattr, newattr;
+	int bytesWaiting;
+	tcgetattr(STDIN_FILENO, &oldattr);
+	newattr = oldattr;
+	newattr.c_lflag &= ~ICANON;
+	tcsetattr(STDIN_FILENO, TCSANOW, &newattr);
+	ioctl(STDIN_FILENO, FIONREAD, &bytesWaiting);
+	tcsetattr(STDIN_FILENO, TCSANOW, &oldattr);
+	return bytesWaiting > 0;
+}
+
+int termGetch()
 {
 	struct termios oldattr, newattr;
 	int ch;
 	fflush(stdout);
 	tcgetattr(STDIN_FILENO, &oldattr);
 	newattr = oldattr;
-	newattr.c_lflag &= ~( ICANON );
-	newattr.c_lflag &= ~( ECHO );
+	newattr.c_lflag &= ~ICANON;
 	newattr.c_cc[VMIN] = 1;
 	newattr.c_cc[VTIME] = 0;
 	tcsetattr(STDIN_FILENO, TCSANOW, &newattr);
@@ -77,20 +93,31 @@ int getch()
 
 #include <conio.h>
 
-#define _kbhit kbhit
-#define getch _getch
+static bool_t termEcho(bool_t echo)
+{
+	return TRUE;
+}
+
+#define termKbhit _kbhit
+#define termGetch _getch
 
 #else
 
-int getch()
+static bool_t termEcho(bool_t echo)
+{
+	return TRUE;
+}
+
+static bool_t termKbhit()
+{
+	return FALSE;
+}
+
+int termGetch()
 {
 	char ch;
 	scanf(" %c", &ch);
 	return ch;
-}
-
-bool_t _kbhit() {
-    return true;
 }
 
 #endif
@@ -130,7 +157,7 @@ err_t cmdFileValNotExist(int count, char* files[])
 			fclose(fp);
 			printf("Some files already exist. Overwrite [y/n]?");
 			do
-				ch = getch();
+				ch = termGetch();
 			while (ch != 'Y' && ch != 'y' && ch != 'N' && ch != 'n' && ch != '\n');
 			printf("\n");
 			if (ch == 'N' || ch == 'n' || ch == '\n')
@@ -353,151 +380,108 @@ void cmdArgClose(char** argv)
 /*
 *******************************************************************************
 ГСЧ
+
+В функции cmdKbRead() реализован клавиатурный источник энтропии. Реализация
+соответствует СТБ 34.101.27-2011 (Б.7):
+- при нажатии клавиш фиксируются значения регистра TSC (высокоточный таймер);
+- разность между значениями регистра сохраняется, если друг за другом нажаты
+  две различные клавиши и интервал между нажатиями более 50 мс;
+- всего сохраняется 128 разностей;
+- собранные разности объединяются и хэшируются;
+- хэш-значение (32 октета) возвращается в качестве энтропийных данных.
+
+Дополнительно в cmdKbRead() проверяется, что интервал между нажатиями клавиш
+не превышает 5 секунд. При отсутствии активности со стороны пользователя
+сбор данных от источника будет прекращен.
+
+В функции cmdRngStart() проверяются требования СТБ 34.101.27-2020 уровня 1:
+наличие работоспособного физического источника энтропии или двух различных
+работоспособных источников. Если недостает одного источника, то задействуется
+клавиатурный.
 *******************************************************************************
 */
 
-#if defined OS_WIN
-
-#include <profileapi.h>
-
-static inline u64 cmdReadTCS()
+static err_t cmdKbRead(size_t* read, void* buf, size_t count, void* state)
 {
-	LARGE_INTEGER cnt;
-    QueryPerformanceCounter(&cnt);
-	return cnt.QuadPart;
-}
-
-static inline u64 cmdGetProcessorFrequency()
-{
-	LARGE_INTEGER freq;
-    QueryPerformanceFrequency(&freq);
-	return freq.QuadPart;
-}
-
-#elif defined OS_LINUX
-
-#include <time.h>
-static u64 cmdReadTCS()
-{
-    struct timespec ts;
-    if (clock_gettime(CLOCK_MONOTONIC_RAW, &ts) < 0)
-        return 0;
-    return ts.tv_sec * 1000000000L + ts.tv_nsec;
-}
-
-static u64 cmdGetProcessorFrequency()
-{
-    u64 start = cmdReadTCS();
-    u64 overhead = cmdReadTCS() - start;
-    start = cmdReadTCS();
-    usleep(1000000);
-    return cmdReadTCS() - start - overhead;
-}
-
-#elif defined OS_APPLE
-
-#include <mach/mach_time.h>
-
-#define cmdReadTCS mach_absolute_time
-
-static u64 cmdGetProcessorFrequency()
-{
-    u64 start = cmdReadTCS();
-    u64 overhead = cmdReadTCS() - start;
-    start = cmdReadTCS();
-    usleep(1000000);
-    return cmdReadTCS()  - start - overhead;
-}
-
-#else
-
-static inline u64 cmdReadTCS(){
-    return 0;
-}
-
-static inline u64 cmdGetProcessorFrequency(){
-    return 0;
-}
-
-#endif
-
-static u64 _freq = 0;
-
-static err_t cmdRngKeyboardSource(size_t* read, void* buf, size_t count, void* state)
-{
-
-    const word _min_delay = 50;
-    const word _timeout_delay = 10000;
-
-    u8 tick;
-    u64 min_ticks;
-    u64 timeout_ticks;
-    u64 prevtime;
-    u64 diff;
-    u64 curtime;
-    int prevchar;
-    int curchar;
-    size_t pos = 0;
-
-    ASSERT(memIsValid(buf,count));
-
-    if (_freq <= 0)
-        _freq = cmdGetProcessorFrequency();
-    if (_freq <= 0)
-        return ERR_BAD_ENTROPY;
-
-    prevchar = '\0';
-    prevtime = cmdReadTCS();
-    min_ticks = _freq * _min_delay / 1000;
-    timeout_ticks = _freq * _timeout_delay / 1000;
-
-    printf("Collecting entropy from keyboard...\n");
-    printf("Press different buttons %lu times with >%lu ms delay\n", count, _min_delay);
-
-    if (read)
-        *read = 0;
-
-    for(size_t i = 0 ; i < count; i++){
-        printf(".");
+	const tm_ticks_t freq = tmFreq(); /* число обновлений таймера в секунду */
+	const tm_ticks_t max_delay = freq * 5; /* 5 с */
+	const tm_ticks_t min_delay = freq /  20; /* 50 мс */
+	err_t code = ERR_OK;
+	void* stack;
+	void* hash_state;
+	tm_ticks_t* diff;
+	register tm_ticks_t ticks;
+	register tm_ticks_t t;
+	size_t reps;
+	bool_t echo;
+	int ch;
+	// pre
+	ASSERT(memIsValid(read, sizeof(size_t)));
+	ASSERT(memIsValid(buf, count));
+	// таймер достаточно точен?
+	if (B_PER_W == 16 || freq < 1000000000u)
+		return ERR_FILE_NOT_FOUND;
+	// подготовить стек
+	stack = blobCreate(sizeof(tm_ticks_t) + beltHash_keep());
+	if (!stack)
+		return ERR_OUTOFMEMORY;
+	diff = (tm_ticks_t*)stack;
+	hash_state = diff + 1;
+	beltHashStart(hash_state);
+	// приглашение к сбору энтропии
+	printf("Collecting entropy from keyboard...\n");
+	printf("Please, press different keys avoiding repetitions and long pauses:\n");
+	for (reps = 128; reps; reps -= 2)
+		printf("%c", '*');
+	printf("\r");
+	// сбор энтропии
+	echo = termEcho(FALSE);
+	for (*read = 0, ticks = tmTicks(), ch = 0; count; )
+	{
+		int c;
+		// превышен интервал ожидания?
+		t = tmTicks();
+		if (t > ticks + max_delay)
+		{
+			code = ERR_TIMEOUT;
+			break;
+		}
+		// клавиша не нажата? нажата слишком быcтро?
+		// нажали ту же клавишу? функциональную клавишу?
+		if (!termKbhit() || t < ticks + min_delay ||
+			(c = termGetch()) == ch || c == 0 || c == 0xE0)
+			continue;
+		// обрабатать нажатие
+		*diff = t - ticks, ticks = t, ch = c;
+		if (reps % 2)
+			printf(".");
+		// хэшировать
+		beltHashStepH(diff, sizeof(tm_ticks_t), hash_state);
+		// накоплено 128 наблюдений?
+		if (++reps == 128)
+		{
+			size_t hash_len = MIN2(32, count);
+			beltHashStepG2(buf, hash_len, hash_state);
+			buf = (octet*)buf + hash_len;
+			*read += hash_len, count -= hash_len;
+			printf("\n");
+			if (count)
+			{
+				for (; reps; reps -= 2)
+					printf("%c", '*');
+				printf("\r");
+			}
+		}
     }
-    printf("\n");
-    while (pos < count)
-    {
-        while (!_kbhit())
-        {
-            if (cmdReadTCS() - prevtime > timeout_ticks)
-                return ERR_TIMEOUT;
-        }
-
-        curchar = getch();
-
-        if (curchar == prevchar || curchar == 0 || curchar == 0xE0)
-            continue;
-
-        curtime = cmdReadTCS();
-
-        diff = curtime - prevtime;
-
-        if (diff < min_ticks)
-            continue;
-        tick = diff % 256;
-        memCopy(buf + pos, &tick, 1);
-        prevchar = curchar;
-        prevtime = curtime;
-        pos++;
-        printf(".");
-        if (read)
-            *read = *read +1;
-    }
-    printf("\n");
-    return ERR_OK;
+	ticks = t = 0;
+	blobClose(stack);
+	termEcho(echo);
+	return code;
 }
 
 err_t cmdRngStart(bool_t verbose)
 {
 	err_t code;
-
-    code = ERR_OK;//cmdRngTest();
 	if (verbose)
 	{
 		const char* sources[] = { "trng", "trng2", "sys", "timer" };
@@ -506,45 +490,16 @@ err_t cmdRngStart(bool_t verbose)
 		size_t read;
 		printf("Starting RNG[");
 		for (pos = count = 0; pos < COUNT_OF(sources); ++pos)
-			if (rngReadSource(&read, 0, 0, sources[pos]) == ERR_OK)
+			if (rngESRead(&read, 0, 0, sources[pos]) == ERR_OK)
 				printf(count++ ? ", %s" : "%s", sources[pos]);
 		printf("]... ");
 	}
-	code = rngCreate(code != ERR_OK ? cmdRngKeyboardSource : 0, 0);
+	code = rngESHealth();
+	if (code == ERR_OK)
+		code = rngCreate(0, 0);
+	else if (code = ERR_NOT_ENOUGH_ENTROPY)
+		code = rngCreate(cmdKbRead, 0);
 	if (verbose)
 		printf("%s\n", errMsg(code));
 	return code;
-}
-
-err_t cmdRngTest()
-{
-	const char* sources[] = { "trng", "trng2", "timer", "sys" };
-	octet buf[2500];
-	bool_t trng = FALSE;
-	size_t valid_sources = 0;
-	size_t pos;
-	// пробежать источники
-	for (pos = 0; pos < COUNT_OF(sources); ++pos)
-	{
-		size_t read;
-		if (rngReadSource(&read, buf, 2500, sources[pos]) != ERR_OK ||
-			read != 2500)
-			continue;
-		// статистическое тестирование
-		if (!rngTestFIPS1(buf) || !rngTestFIPS2(buf) ||
-			!rngTestFIPS3(buf) || !rngTestFIPS4(buf))
-			continue;
-		// зафиксировать источник
-		valid_sources++;
-		if (strEq(sources[pos], "trng") || strEq(sources[pos], "trng2"))
-		{
-			trng = TRUE;
-			break;
-		}
-	}
-    // нет ни физического источника, ни двух разнотипных?
-    if (!trng && valid_sources < 2)
-        return ERR_BAD_ENTROPY;
-    // все нормально
-    return ERR_OK;
 }

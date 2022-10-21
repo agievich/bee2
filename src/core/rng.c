@@ -3,9 +3,8 @@
 \file rng.c
 \brief Entropy sources and random number generators
 \project bee2 [cryptographic library]
-\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2021.06.29
+\version 2022.10.20
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -25,6 +24,98 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/crypto/belt.h"
 #include "bee2/crypto/brng.h"
 #include "bee2/math/ww.h"
+
+/*
+*******************************************************************************
+Статистические тесты
+
+\todo Оценка энтропии.
+*******************************************************************************
+*/
+
+bool_t rngTestFIPS1(const octet buf[2500])
+{
+	size_t s = 0;
+	size_t count = W_OF_O(2500);
+	ASSERT(memIsValid(buf, 2500));
+	if (O_OF_W(count) > 2500)
+	{
+		ASSERT(B_PER_W == 64);
+		s = u32Weight(*(const u32*)(buf + 2496));
+		--count;
+	}
+	while (count--)
+		s += wordWeight(((const word*)buf)[count]);
+	return 9725 < s && s < 10275;
+}
+
+bool_t rngTestFIPS2(const octet buf[2500])
+{
+	u32 s[16];
+	size_t i = 2500;
+	size_t s1 = 0;
+	ASSERT(memIsValid(buf, 2500));
+	memSetZero(s, sizeof(s));
+	while (i--)
+		++s[buf[i] & 15], ++s[buf[i] >> 4];
+	for (i = 0; i < 16; ++i)
+		s1 += s[i];
+	s[0] *= s[0];
+	for (i = 1; i < 16; ++i)
+		s[0] += s[i] * s[i];
+	s[0] = 16 * s[0] - 5000 * 5000;
+	return 10800 < s[0] && s[0] < 230850;
+}
+
+bool_t rngTestFIPS3(const octet buf[2500])
+{
+	word s[2][7];
+	octet b;
+	size_t l;
+	size_t i;
+	ASSERT(memIsValid(buf, 2500));
+	memSetZero(s, sizeof(s));
+	b = buf[0] & 1;
+	l = 1;
+	for (i = 1; i < 20000; ++i)
+		if ((buf[i / 8] >> i % 8 & 1) == b)
+			++l;
+		else
+			++s[b][MIN2(l, 6)], b = !b, l = 1;
+	++s[b][MIN2(l, 6)];
+	return 2315 <= s[0][1] && s[0][1] <= 2685 &&
+		2315 <= s[1][1] && s[1][1] <= 2685 &&
+		1114 <= s[0][2] && s[0][2] <= 1386 &&
+		1114 <= s[1][2] && s[1][2] <= 1386 &&
+		527 <= s[0][3] && s[0][3] <= 723 &&
+		527 <= s[1][3] && s[1][3] <= 723 &&
+		240 <= s[0][4] && s[0][4] <= 384 &&
+		240 <= s[1][4] && s[1][4] <= 384 &&
+		103 <= s[0][5] && s[0][5] <= 209 &&
+		103 <= s[1][5] && s[1][5] <= 209 &&
+		103 <= s[0][6] && s[0][6] <= 209 &&
+		103 <= s[1][6] && s[1][6] <= 209;
+}
+
+bool_t rngTestFIPS4(const octet buf[2500])
+{
+	octet b;
+	size_t l;
+	size_t i;
+	ASSERT(memIsValid(buf, 2500));
+	b = buf[0] & 1;
+	l = 1;
+	for (i = 1; i < 20000; ++i)
+		if ((buf[i / 8] >> i % 8 & 1) == b)
+			++l;
+		else
+		{
+			if (l >= 26)
+				return FALSE;
+			b = !b, l = 1;
+		}
+	return l < 26;
+}
 
 /*
 *******************************************************************************
@@ -125,7 +216,7 @@ static int rngRDStep2(u32* val)
 
 #endif
 
-static bool_t rngHasTRNG()
+static bool_t rngTRNGIsAvail()
 {
 	u32 info[4];
 	// Intel?
@@ -139,7 +230,7 @@ static bool_t rngHasTRNG()
 	return (info[1] & 0x00040000) != 0;
 }
 
-static bool_t rngHasTRNG2()
+static bool_t rngTRNG2IsAvail()
 {
 	u32 info[4];
 	// Intel?
@@ -153,14 +244,14 @@ static bool_t rngHasTRNG2()
 	return (info[2] & 0x40000000) != 0;
 }
 
-static err_t rngReadTRNG(void* buf, size_t* read, size_t count)
+static err_t rngTRNGRead(void* buf, size_t* read, size_t count)
 {
 	u32* rand = (u32*)buf;
 	// pre
 	ASSERT(memIsValid(read, O_PER_S));
 	ASSERT(memIsValid(buf, count));
 	// есть источник?
-	if (!rngHasTRNG())
+	if (!rngTRNGIsAvail())
 		return ERR_FILE_NOT_FOUND;
 	// короткий буфер?
 	*read = 0;
@@ -181,14 +272,14 @@ static err_t rngReadTRNG(void* buf, size_t* read, size_t count)
 	return ERR_OK;
 }
 
-static err_t rngReadTRNG2(void* buf, size_t* read, size_t count)
+static err_t rngTRNG2Read(void* buf, size_t* read, size_t count)
 {
 	u32* rand = (u32*)buf;
 	// pre
 	ASSERT(memIsValid(read, O_PER_S));
 	ASSERT(memIsValid(buf, count));
 	// есть источник?
-	if (!rngHasTRNG2())
+	if (!rngTRNG2IsAvail())
 		return ERR_FILE_NOT_FOUND;
 	// короткий буфер?
 	*read = 0;
@@ -241,7 +332,7 @@ static err_t rngReadTRNG2(void* buf, size_t* read, size_t count)
 *******************************************************************************
 */
 
-static bool_t rngHasTimer()
+static bool_t rngTimerIsAvail()
 {
 #if (B_PER_W == 16)
 	return FALSE;
@@ -250,7 +341,7 @@ static bool_t rngHasTimer()
 #endif
 }
 
-static err_t rngReadTimer(void* buf, size_t* read, size_t count)
+static err_t rngTimerRead(void* buf, size_t* read, size_t count)
 {
 	register tm_ticks_t ticks;
 	register tm_ticks_t t;
@@ -260,7 +351,7 @@ static err_t rngReadTimer(void* buf, size_t* read, size_t count)
 	ASSERT(memIsValid(read, sizeof(size_t)));
 	ASSERT(memIsValid(buf, count));
 	// есть источник?
-	if (!rngHasTimer())
+	if (!rngTimerIsAvail())
 		return ERR_FILE_NOT_FOUND;
 	// генерация
 	for (i = 0; i < count; ++i)
@@ -316,7 +407,7 @@ dev/urandom. Это неблокирующий источник, который 
 #include <windows.h>
 #include <wincrypt.h>
 
-static err_t rngReadSys(void* buf, size_t* read, size_t count)
+static err_t rngSysRead(void* buf, size_t* read, size_t count)
 {
 	HCRYPTPROV hprov = 0;
 	// pre
@@ -345,7 +436,7 @@ static err_t rngReadSys(void* buf, size_t* read, size_t count)
 
 #include <stdio.h>
 
-static err_t rngReadSys(void* buf, size_t* read, size_t count)
+static err_t rngSysRead(void* buf, size_t* read, size_t count)
 {
 	FILE* fp;
 	ASSERT(memIsValid(read, sizeof(size_t)));
@@ -360,7 +451,7 @@ static err_t rngReadSys(void* buf, size_t* read, size_t count)
 
 #else
 
-static err_t rngReadSys(void* buf, size_t* read, size_t count)
+static err_t rngSysRead(void* buf, size_t* read, size_t count)
 {
 	ASSERT(memIsValid(read, sizeof(size_t)));
 	ASSERT(memIsValid(buf, count));
@@ -371,114 +462,77 @@ static err_t rngReadSys(void* buf, size_t* read, size_t count)
 
 /*
 *******************************************************************************
-Статистические тесты
-
-\todo Оценка энтропии.
+Источники случайности (энтропии)
 *******************************************************************************
 */
 
-bool_t rngTestFIPS1(const octet buf[2500])
+err_t rngESRead(size_t* read, void* buf, size_t count, const char* source)
 {
-	size_t s = 0;
-	size_t count = W_OF_O(2500);
-	ASSERT(memIsValid(buf, 2500));
-	if (O_OF_W(count) > 2500)
-	{
-		ASSERT(B_PER_W == 64);
-		s = u32Weight(*(const u32*)(buf + 2496));
-		--count;
-	}
-	while (count--)
-		s += wordWeight(((const word*)buf)[count]);
-	return 9725 < s && s < 10275;
-}
-
-bool_t rngTestFIPS2(const octet buf[2500])
-{
-	u32 s[16];
-	size_t i = 2500;
-	size_t s1 = 0;
-	ASSERT(memIsValid(buf, 2500));
-	memSetZero(s, sizeof(s));
-	while (i--)
-		++s[buf[i] & 15], ++s[buf[i] >> 4];
-	for (i = 0; i < 16; ++i)
-		s1 += s[i];
-	s[0] *= s[0];
-	for (i = 1; i < 16; ++i)
-		s[0] += s[i] * s[i];
-	s[0] = 16 * s[0] - 5000 * 5000;
-	return 10800 < s[0] && s[0] < 230850;
-}
-
-bool_t rngTestFIPS3(const octet buf[2500])
-{
-	word s[2][7];
-	octet b;
-	size_t l;
-	size_t i;
-	ASSERT(memIsValid(buf, 2500));
-	memSetZero(s, sizeof(s));
-	b = buf[0] & 1;
-	l = 1;
-	for (i = 1; i < 20000; ++i)
-		if ((buf[i / 8] >> i % 8 & 1) == b)
-			++l;
-		else
-			++s[b][MIN2(l, 6)], b = !b, l = 1;
-	++s[b][MIN2(l, 6)];
-	return 2315 <= s[0][1] && s[0][1] <= 2685 &&
-		2315 <= s[1][1] && s[1][1] <= 2685 &&
-		1114 <= s[0][2] && s[0][2] <= 1386 &&
-		1114 <= s[1][2] && s[1][2] <= 1386 &&
-		527 <= s[0][3] && s[0][3] <= 723 &&
-		527 <= s[1][3] && s[1][3] <= 723 &&
-		240 <= s[0][4] && s[0][4] <= 384 &&
-		240 <= s[1][4] && s[1][4] <= 384 &&
-		103 <= s[0][5] && s[0][5] <= 209 &&
-		103 <= s[1][5] && s[1][5] <= 209 &&
-		103 <= s[0][6] && s[0][6] <= 209 &&
-		103 <= s[1][6] && s[1][6] <= 209;
-}
-
-bool_t rngTestFIPS4(const octet buf[2500])
-{
-	octet b;
-	size_t l;
-	size_t i;
-	ASSERT(memIsValid(buf, 2500));
-	b = buf[0] & 1;
-	l = 1;
-	for (i = 1; i < 20000; ++i)
-		if ((buf[i / 8] >> i % 8 & 1) == b)
-			++l;
-		else
-		{
-			if (l >= 26)
-				return FALSE;
-			b = !b, l = 1;
-		}
-	return l < 26;
-}
-
-/*
-*******************************************************************************
-Сбор энтропии
-*******************************************************************************
-*/
-
-err_t rngReadSource(size_t* read, void* buf, size_t count,
-	const char* source_name)
-{
-	if (strEq(source_name, "trng"))
-		return rngReadTRNG(buf, read, count);
-	else if (strEq(source_name, "trng2"))
-		return rngReadTRNG2(buf, read, count);
-	else if (strEq(source_name, "timer"))
-		return rngReadTimer(buf, read, count);
-	else if (strEq(source_name, "sys"))
-		return rngReadSys(buf, read, count);
+	if (strEq(source, "trng"))
+		return rngTRNGRead(buf, read, count);
+	else if (strEq(source, "trng2"))
+		return rngTRNG2Read(buf, read, count);
+	else if (strEq(source, "timer"))
+		return rngTimerRead(buf, read, count);
+	else if (strEq(source, "sys"))
+		return rngSysRead(buf, read, count);
 	return ERR_FILE_NOT_FOUND;
+}
+
+err_t rngESTest(const char* source)
+{
+	err_t code;
+	octet buf[2500];
+	size_t read;
+	// прочитать данные от источника
+	code = rngESRead(&read, buf, 2500, source);
+	if (code == ERR_OK && read != 2500)
+		code = ERR_FILE_READ;
+	ERR_CALL_CHECK(code);
+	// статистическое тестирование
+	if (!rngTestFIPS1(buf) || !rngTestFIPS2(buf) || !rngTestFIPS3(buf) ||
+		!rngTestFIPS4(buf))
+		code = ERR_STATTEST;
+	// завершение
+	memWipe(buf, sizeof(buf));
+	return code;
+}
+
+err_t rngESHealth2()
+{
+	const char* sources[] = { "trng", "trng2" };
+	size_t pos;
+	// проверить физические источники
+	for (pos = 0; pos < COUNT_OF(sources); ++pos)
+		if (rngESTest(sources[pos]) == ERR_OK)
+			return ERR_OK;
+	// работоспособные источники не найдены
+	return ERR_NOT_ENOUGH_ENTROPY;
+}
+
+err_t rngESHealth()
+{
+	const char* sources[] = { "timer", "sys" };
+	size_t valid_sources = 0;
+	size_t pos;
+	// есть физический источник?
+	if (rngESHealth2())
+		return ERR_OK;
+	// проверить остальные источники
+	for (pos = 0; pos < COUNT_OF(sources); ++pos)
+	{
+		if (rngESTest(sources[pos]) != ERR_OK)
+			continue;
+		valid_sources++;
+	}
+	// два разных источника?
+	if (valid_sources == 2)
+		return ERR_OK;
+	// только один источник?
+	if (valid_sources == 1)
+		return ERR_NOT_ENOUGH_ENTROPY;
+	// ни одного источника
+	return ERR_BAD_ENTROPY;
 }
 
 /*
@@ -486,7 +540,7 @@ err_t rngReadSource(size_t* read, void* buf, size_t count,
 Создание / закрытие генератора
 
 \warning CoverityScan выдает предупреждение по функции rngCreate(): 
-	"Call to RngReadSource might sleep while holding lock _mtx".
+	"Call to rngESRead might sleep while holding lock _mtx".
 См. пояснения в комментариях к функции rngStepR().
 
 \warning Функция rngDestroy(), зарегистрированная как деструктор,
@@ -569,7 +623,7 @@ err_t rngCreate(read_i source, void* source_state)
 	count = 0;
 	beltHashStart(_state->alg_state);
 	for (pos = 0; pos < COUNT_OF(sources); ++pos)
-		if (rngReadSource(&read, _state->block, 32, sources[pos]) == ERR_OK)
+		if (rngESRead(&read, _state->block, 32, sources[pos]) == ERR_OK)
 		{
 			beltHashStepH(_state->block, read, _state->alg_state);
 			count += read;
@@ -583,12 +637,12 @@ err_t rngCreate(read_i source, void* source_state)
 	{
 		blobClose(_state), _state = 0;
 		mtMtxUnlock(_mtx);
-		return ERR_BAD_ENTROPY;
+		return ERR_NOT_ENOUGH_ENTROPY;
 	}
 	// создать brngCTR
 	beltHashStepG(_state->block, _state->alg_state);
 	brngCTRStart(_state->alg_state, _state->block, 0);
-	memSetZero(_state->block, 32);
+	memWipe(_state->block, 32);
 	// завершить
 	_ctr = 1;
 	mtMtxUnlock(_mtx);
@@ -616,14 +670,14 @@ void rngClose()
 Генерация
 
 \warning CoverityScan выдает предупреждение по функции rngStepR(): 
-	"Call to RngReadSource might sleep while holding lock _mtx"
+	"Call to RngESRead might sleep while holding lock _mtx"
 с объяснениями: 
 	"The lock will prevent other threads from making progress for 
 	an indefinite period of time; may be mistaken for deadlock. In rngStepR: 
 	A lock is held while waiting for a long running or blocking operation 
 	to complete (CWE-667)".
-Проблема в том, что в источнике timer многократно вызывается 
-функция mtSleep(0).
+Проблема в том, что в источнике timer многократно вызывается функция
+mtSleep(0).
 *******************************************************************************
 */
 
@@ -647,13 +701,27 @@ void rngStepR(void* buf, size_t count, void* state)
 	buf1 = (octet*)buf, read = pos = 0;
 	while (read < count && pos < COUNT_OF(sources))
 	{
-		if (rngReadSource(&r, buf1, count - read, sources[pos]) != ERR_OK)
+		if (rngESRead(&r, buf1, count - read, sources[pos]) != ERR_OK)
 			r = 0;
 		buf1 += r, ++pos, read += r;
 	}
 	// генерация
 	brngCTRStepR(buf, count, _state->alg_state);
 	read = r = pos = 0, buf1 = 0;
+	// снять блокировку
+	mtMtxUnlock(_mtx);
+}
+
+void rngRekey()
+{
+	ASSERT(rngIsValid());
+	// заблокировать мьютекс
+	mtMtxLock(_mtx);
+	// сгенерировать новый ключ
+	brngCTRStepR(_state->block, 32, _state->alg_state);
+	// пересоздать brngCTR
+	brngCTRStart(_state->alg_state, _state->block, 0);
+	memWipe(_state->block, 32);
 	// снять блокировку
 	mtMtxUnlock(_mtx);
 }

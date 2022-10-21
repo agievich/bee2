@@ -16,7 +16,7 @@
 Сборка/разбор ключевого материала
 *******************************************************************************
 */
-inline err_t cmdAeadWrapKey(
+err_t cmdAeadWrapKey(
     octet *keload,
     const cmd_keyload_t* keyload_type,
     const void *keyload_wrap,
@@ -26,7 +26,7 @@ inline err_t cmdAeadWrapKey(
     return keyload_type->wrap(keload, keyload_wrap, key);
 }
 
-inline err_t cmdAeadUnwrapKey(
+err_t cmdAeadUnwrapKey(
     const octet* keyload,
     const cmd_keyload_t* keyload_type,
     const void* keyload_unwrap,
@@ -141,7 +141,7 @@ static size_t aeadDecode(
 ){
     der_anchor_t Header[1];
     const octet * ptr = der;
-    cmd_keyload_t * kld;
+//    cmd_keyload_t* kld;
 
     ASSERT(memIsValid(keyload_type, sizeof (cmd_keyload_t)));
 
@@ -159,7 +159,7 @@ static size_t aeadDecode(
     return ptr - der;
 }
 
-inline static const char* curveOid(size_t l)
+static const char* curveOid(size_t l)
 {
     switch (l)
     {

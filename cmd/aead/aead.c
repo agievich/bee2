@@ -419,6 +419,7 @@ static err_t aeadEnc(int argc, char* argv[])
     size_t itag = 0;
     const cmd_keyload_t* keyload;
     octet wrap[1024];
+	char* files = {enc_file_name};
 
     ASSERT(sizeof (wrap) >= sizeof (keyload_pke_wrap_t));
     ASSERT(sizeof (wrap) >= sizeof (keyload_pwd_wrap_t));
@@ -430,10 +431,9 @@ static err_t aeadEnc(int argc, char* argv[])
     code = aeadParseOptions(argc, (const char **) argv, &keyload,
                             wrap,0, &itag,file_name, enc_file_name,adata_name);
 
-    ERR_CALL_CHECK(code)
+    ERR_CALL_CHECK(code);
 
     //проверить существование файла
-    char *files = {enc_file_name};
     code = cmdFileValNotExist(1, &files);
     ERR_CALL_CHECK(code)
 
@@ -465,6 +465,7 @@ static err_t aeadDec(int argc, char* argv[]) {
     char adata_name[FILENAME_MAX];
     char dec_file_name[FILENAME_MAX];
     const cmd_keyload_t* keyload;
+    char *files = {dec_file_name};
 
     octet unwrap[1024];
 
@@ -481,7 +482,6 @@ static err_t aeadDec(int argc, char* argv[]) {
     ERR_CALL_CHECK(code)
 
     //проверить существование файла
-    char *files = {dec_file_name};
     code = cmdFileValNotExist(1, &files);
     ERR_CALL_CHECK(code)
 

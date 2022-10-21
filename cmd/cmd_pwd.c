@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: password management
 \project bee2/cmd 
 \created 2022.06.13
-\version 2022.07.15
+\version 2022.10.21
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -173,6 +173,8 @@ static err_t cmdPwdGenShare_internal(cmd_pwd_t* pwd, size_t scount,
 	// разделить пароль на частичные секреты
 	code = belsShare2(share, scount, threshold, len, pwd_bin, rngStepR, 0);
 	ERR_CALL_HANDLE(code, cmdBlobClose(state));
+	// обновить ключ ГСЧ
+	rngRekey();
 	// защитить частичные секреты
 	for (; scount--; share += (len + 1), ++shares)
 	{
