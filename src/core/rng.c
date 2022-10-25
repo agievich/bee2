@@ -516,7 +516,7 @@ err_t rngESHealth()
 	size_t valid_sources = 0;
 	size_t pos;
 	// есть физический источник?
-	if (rngESHealth2())
+	if (rngESHealth2() == ERR_OK)
 		return ERR_OK;
 	// проверить остальные источники
 	for (pos = 0; pos < COUNT_OF(sources); ++pos)

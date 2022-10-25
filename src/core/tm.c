@@ -115,7 +115,27 @@ tm_ticks_t tmFreq()
 	return freq;
 }
 
-#elif (B_PER_W > 16)
+#elif defined OS_APPLE && B_PER_W >= 64
+#include <mach/mach_time.h>
+
+tm_ticks_t tmTicks()
+{
+    return mach_absolute_time();
+}
+
+tm_ticks_t tmFreq() {
+    mach_timebase_info_data_t tb_info;
+    tm_ticks_t nsec;
+
+    if (mach_timebase_info(&tb_info))
+        return 0;
+
+    nsec = tb_info.numer / tb_info.denom + (tb_info.numer % tb_info.denom != 0);
+
+    return 1000000000u / nsec;
+}
+
+#elif (B_PER_W > 16) && defined CLOCK_MONOTONIC
 
 tm_ticks_t tmTicks()
 {

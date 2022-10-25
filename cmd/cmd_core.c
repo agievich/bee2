@@ -497,7 +497,7 @@ err_t cmdRngStart(bool_t verbose)
 	code = rngESHealth();
 	if (code == ERR_OK)
 		code = rngCreate(0, 0);
-	else if (code = ERR_NOT_ENOUGH_ENTROPY)
+	else if (code == ERR_NOT_ENOUGH_ENTROPY)
 		code = rngCreate(cmdKbRead, 0);
 	if (verbose)
 		printf("%s\n", errMsg(code));
