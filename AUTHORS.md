@@ -42,7 +42,7 @@ Contributors*
   - code review
 - Mikhail Mitskevich
   - build scripts
-- Aleksandr Zhirkevich
+- Alexander Zhirkevich
   - cmd/sig, cmd/rng, cmd/test
 
 ---
