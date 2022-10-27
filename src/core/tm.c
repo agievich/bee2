@@ -4,7 +4,7 @@
 \brief Time and timers
 \project bee2 [cryptographic library]
 \created 2012.05.10
-\version 2022.07.18
+\version 2022.10.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -19,8 +19,11 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 Таймер
 
-\todo Протестировать все возможности.
+\remark Функция mach_timebase_info() "returns fraction to multiply a value
+in mach tick units with to convert it to nanoseconds". Можно понять, что
+1 tick * fraction = 1 ns. На самом деле, 1 tick = fraction * 1 ns.
 
+\todo Протестировать все возможности.
 \todo Определять частоту без временной задержки.
 *******************************************************************************
 */
@@ -72,27 +75,25 @@ tm_ticks_t tmFreq()
 
 #endif
 
-#elif defined(__GNUC__)
+#elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 
-#if defined(__i386__) || defined(__x86_64__)
-
-#if defined(__i386__) || (B_PER_W == 16)
+#if defined(__x86_64__)
 
 tm_ticks_t tmTicks()
 {
-	register tm_ticks_t x;
-	__asm__ volatile (".byte 0x0f, 0x31" : "=A" (x));
-	return x;
+	register u32 hi;
+	register u32 lo;
+	__asm__ __volatile__("rdtsc" : "=a"(lo), "=d"(hi));
+	return (tm_ticks_t)lo | (tm_ticks_t)hi << 32;
 }
 
 #else
 
 tm_ticks_t tmTicks()
 {
-	register u32 hi;
-	register u32 lo;
-	__asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
-	return (tm_ticks_t)lo | (tm_ticks_t)hi << 32;
+	register tm_ticks_t x;
+	__asm__ volatile (".byte 0x0f, 0x31" : "=A" (x));
+	return x;
 }
 
 #endif
@@ -115,7 +116,8 @@ tm_ticks_t tmFreq()
 	return freq;
 }
 
-#elif defined OS_APPLE && B_PER_W >= 64
+#elif defined(OS_APPLE) && defined(U64_SUPPORT)
+
 #include <mach/mach_time.h>
 
 tm_ticks_t tmTicks()
@@ -123,19 +125,18 @@ tm_ticks_t tmTicks()
     return mach_absolute_time();
 }
 
-tm_ticks_t tmFreq() {
+tm_ticks_t tmFreq()
+{
     mach_timebase_info_data_t tb_info;
-    tm_ticks_t nsec;
-
-    if (mach_timebase_info(&tb_info))
-        return 0;
-
-    nsec = tb_info.numer / tb_info.denom + (tb_info.numer % tb_info.denom != 0);
-
-    return 1000000000u / nsec;
+    tm_ticks_t freq = 1000000000u;
+	// tb_info <- {num, denom}: 1 tick = num / denom * 1 ns
+	VERIFY(mach_timebase_info(&tb_info) == KERN_SUCCESS);
+	// 1 s = 10^9 * denom / num ticks
+	freq *= tb_info.denom, freq /= tb_info.num;
+    return freq;
 }
 
-#elif (B_PER_W > 16) && defined CLOCK_MONOTONIC
+#elif defined(U64_SUPPORT)
 
 tm_ticks_t tmTicks()
 {
@@ -159,20 +160,6 @@ tm_ticks_t tmFreq()
 	freq /= (tm_ticks_t)ts.tv_nsec;
 	return freq;
 }
-
-#else
-
-tm_ticks_t tmTicks()
-{
-	return (tm_ticks_t)clock();
-}
-
-tm_ticks_t tmFreq()
-{
-	return (tm_ticks_t)CLOCKS_PER_SEC;
-}
-
-#endif
 
 #else
 

@@ -4,7 +4,7 @@
 \brief Tests for DER encoding rules
 \project bee2/test
 \created 2021.04.12
-\version 2022.07.05
+\version 2022.10.26
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -61,6 +61,7 @@ bool_t derTest()
 	ASSERT(count <= sizeof(buf));
 	if (derSIZEEnc(buf, 0) != 3 ||
 		!hexEq(buf, "020100") ||
+		derDecTL(&tag, &len, buf, 1024) != 3 || tag != 2 || len != 1 ||
 		derSIZEDec(&val.size, buf, sizeof(buf)) != 3 ||
 		val.size != 0)
 		return FALSE;

@@ -4,7 +4,7 @@
 \brief Entropy sources and random number generators
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2022.10.20
+\version 2022.10.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -314,7 +314,7 @@ static err_t rngTRNG2Read(void* buf, size_t* read, size_t count)
 
 Реализация:
 -	таймер может быть источником случайности, если он обновляется не реже
-	10^9 раз в секунду (1GHz);
+	20 млн. раз в секунду (20 МГц);
 -	для формирования одного выходного бита используется сумма битов четности 
 	8-ми разностей между показаниями таймера.
 
@@ -329,16 +329,14 @@ static err_t rngTRNG2Read(void* buf, size_t* read, size_t count)
 
 \todo Остановка на Windows, если параллельно запущено несколько ресурсоемких
 процессов.
+
+\todo Уточнение (обоснование выбора) порога частоты.
 *******************************************************************************
 */
 
 static bool_t rngTimerIsAvail()
 {
-#if (B_PER_W == 16)
-	return FALSE;
-#else
-	return tmFreq() >= 1000000000u;
-#endif
+	return tmFreq() >= 20000000u;
 }
 
 static err_t rngTimerRead(void* buf, size_t* read, size_t count)
@@ -398,6 +396,9 @@ static err_t rngTimerRead(void* buf, size_t* read, size_t count)
 запускались под виртуальной машиной). Поэтому было решено использовать файл 
 dev/urandom. Это неблокирующий источник, который всегда выдает данные.
 
+\remark Установка флагов CRYPT_VERIFYCONTEXT и CRYPT_SILENT при вызове
+CryptAcquireContextW() снижает риск ошибочного завершения функции.
+
 \todo http://www.2uo.de/myths-about-urandom/
 *******************************************************************************
 */
@@ -414,7 +415,8 @@ static err_t rngSysRead(void* buf, size_t* read, size_t count)
 	ASSERT(memIsValid(read, sizeof(size_t)));
 	ASSERT(memIsValid(buf, count));
 	// открыть провайдер
-	if (!CryptAcquireContextW(&hprov, 0, 0, PROV_RSA_FULL, 0))
+	if (!CryptAcquireContextW(&hprov, 0, 0, PROV_RSA_FULL,
+		CRYPT_VERIFYCONTEXT | CRYPT_SILENT))
 	{
 		*read = 0;
 		return ERR_FILE_NOT_FOUND;

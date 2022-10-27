@@ -3,7 +3,7 @@ rem ===========================================================================
 rem \brief Testing command-line interface
 rem \project bee2evp/cmd
 rem \created 2022.06.24
-rem \version 2018.07.18
+rem \version 2022.10.27
 rem ===========================================================================
 
 rem ===========================================================================
@@ -110,7 +110,7 @@ rem ===========================================================================
 
 echo ****** Testing bee2cmd/kg...
 
-del /q privkey0 privkey1 privkey2 pubkey1 2> nul
+del /q privkey0 privkey1 privkey2 pubkey0 pubkey2 2> nul
 
 bee2cmd kg gen -l256 -pass share:"-pass pass:zed s2 s3 s4"
 if %ERRORLEVEL% equ 0 goto Error
@@ -142,6 +142,12 @@ if %pubkey1_len% neq 192 goto Error
 
 bee2cmd kg gen -pass pass:alice privkey2
 if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd kg pub -pass pass:alice privkey2 pubkey2
+if %ERRORLEVEL% neq 0 goto Error
+
+for %%A in (pubkey2) do set pubkey2_len=%%~zA
+if %pubkey1_len% neq 64 goto Error
 
 echo ****** OK
 
@@ -221,206 +227,83 @@ rem ===========================================================================
 
 echo ****** Testing bee2cmd/sig...
 
-del /q sig_file test_file 2> nul
+del /q ff ss 2> nul
 
-bee2cmd kg print -pass pass:alice privkey2 > pubkey2
-if %ERRORLEVEL% neq 0 goto Error
+echo test > ff
+echo sig > ss
 
-for /f "tokens=1" %%A in (pubkey2) do @echo|set /p="%%A" > pubkey2
-for %%A in (pubkey2) do set pubkey2_len=%%~zA
-if %pubkey2_len% neq 128 goto Error
-
-echo test > test_file
-echo sig > sig_file
-
-bee2cmd sig vfy -pubkey pubkey2 test_file sig_file
+bee2cmd sig vfy -pubkey pubkey2 ff ss
 if %ERRORLEVEL% equ 0 goto Error
 
-bee2cmd sig vfy -anchor cert0 test_file sig_file
+bee2cmd sig vfy -anchor cert0 ff ss
 if %ERRORLEVEL% equ 0 goto Error
 
-bee2cmd sig vfy -anchor cert2 test_file sig_file
+bee2cmd sig vfy -anchor cert2 ff ss
 if %ERRORLEVEL% equ 0 goto Error
 
-bee2cmd sig vfy -pubkey pubkey2 test_file test_file
+bee2cmd sig vfy -pubkey pubkey2 ff ss
 if %ERRORLEVEL% equ 0 goto Error
 
-bee2cmd sig vfy -anchor cert0 test_file test_file
+bee2cmd sig vfy -anchor cert0 ff ff
 if %ERRORLEVEL% equ 0 goto Error
 
-bee2cmd sig vfy -anchor cert2 test_file test_file
+bee2cmd sig vfy -anchor cert2 ff ff
 if %ERRORLEVEL% equ 0 goto Error
 
-del /q sig_file 1> nul
+del /q ss 1> nul
 
-bee2cmd sig sign -cert cert1,cert2 -pass pass:alice privkey2 test_file sig_file
+bee2cmd sig sign -certs "cert2 cert1" -pass pass:alice privkey2 ff ss
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd sig vfy test_file sig_file
-
-bee2cmd sig vfy -pubkey pubkey2 test_file sig_file
+bee2cmd sig vfy -pubkey pubkey2 ff ss
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd sig vfy -anchor cert0 test_file sig_file
+bee2cmd sig vfy -anchor cert2 ff ss
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd sig vfy -anchor cert1 test_file sig_file
+bee2cmd sig vfy -anchor cert1 ff ss
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd sig vfy -anchor cert2 test_file sig_file
+bee2cmd sig vfy -anchor cert0 ff ss
 if %ERRORLEVEL% equ 0 goto Error
 
-bee2cmd sig sign -cert cert1,cert2 -pass pass:alice privkey2 test_file test_file
+bee2cmd sig sign -cert "cert2 cert1 cert0" -pass pass:alice privkey2 ff ff
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd sig vfy test_file sig_file
-
-bee2cmd sig vfy -pubkey pubkey2 test_file test_file
+bee2cmd sig vfy -pubkey pubkey2 ff ff
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd sig vfy -anchor cert0 test_file test_file
+bee2cmd sig vfy -anchor cert2 ff ff
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd sig vfy -anchor cert1 test_file test_file
+bee2cmd sig vfy -anchor cert1 ff ff
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd sig vfy -anchor cert2 test_file test_file
+bee2cmd sig vfy -anchor cert0 ff ff
 if %ERRORLEVEL% equ 0 goto Error
 
-del sig_file> nul
+del /q ss 2> nul
 
-bee2cmd sig sign -cert cert2 -pass pass:alice privkey2 test_file sig_file
+bee2cmd sig sign -certs cert2 -pass pass:alice privkey2 ff ss
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd sig vfy -pubkey pubkey2 test_file sig_file
+bee2cmd sig vfy -pubkey pubkey2 ff ss
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd sig vfy -anchor cert1 test_file sig_file
+bee2cmd sig vfy -anchor cert2 ff ss
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd sig vfy -anchor cert2 test_file sig_file
-if %ERRORLEVEL% neq 0 goto Error
-
-echo ****** OK
-
-rem ===========================================================================
-rem  bee2cmd/sig
-rem ===========================================================================
-
-echo ****** Testing bee2cmd/aead...
-
-del /q test_file_decoded test_file_encoded 2> nul
-
-bee2cmd kg print -pass pass:root privkey0 > pubkey0
-
-rem pke test
-
-bee2cmd aead enc -kld PKE -cert cert0 -pubkey pubkey0 test_file test_file_encoded
-if %ERRORLEVEL% neq 0 goto Error
-
-bee2cmd aead dec -kld PKE -pass pass:root -privkey privkey0 test_file_encoded test_file_decoded
-if %ERRORLEVEL% neq 0 goto Error
-
-fc test_file test_file_decoded
-if %ERRORLEVEL% neq 0 goto Error
-
-del /q test_file_decoded 2> nul
-
-bee2cmd aead dec -kld PKE -pass pass:alice -privkey privkey2 test_file_encoded test_file_decoded
+bee2cmd sig vfy -anchor cert1 ff ss
 if %ERRORLEVEL% equ 0 goto Error
 
-bee2cmd aead val -kld PKE -cert cert0 -pass pass:root -privkey privkey0 test_file_encoded
+bee2cmd sig sign -pass pass:alice privkey2 ff ff
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd aead val -kld PKE -pass pass:root -privkey privkey0 test_file_encoded
+bee2cmd sig vfy -pubkey pubkey2 ff ff
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd aead val -kld PKE -cert cert0 test_file_encoded
+bee2cmd sig vfy -anchor cert2 ff ff
 if %ERRORLEVEL% equ 0 goto Error
-
-bee2cmd aead val -kld PKE test_file_encoded
-if %ERRORLEVEL% equ 0 goto Error
-
-bee2cmd aead val -kld PKE -cert cert1 test_file_encoded
-if %ERRORLEVEL% equ 0 goto Error
-
-bee2cmd aead val -kld PKE -pass pass:alice -privkey privkey2 test_file_encoded
-if %ERRORLEVEL% equ 0 goto Error
-
-del /q test_file_decoded test_file_encoded 2> nul
-
-rem with itag
-
-bee2cmd aead enc -kld PKE -cert cert0 -pubkey pubkey0 --itag128 test_file test_file_encoded
-if %ERRORLEVEL% neq 0 goto Error
-
-bee2cmd aead dec -kld PKE -pass pass:root -privkey privkey0 test_file_encoded test_file_decoded
-if %ERRORLEVEL% neq 0 goto Error
-
-fc test_file test_file_decoded
-if %ERRORLEVEL% neq 0 goto Error
-
-rem with itag and adata
-
-del /q test_file_decoded test_file_encoded 2> nul
-
-bee2cmd aead enc -kld PKE -cert cert0 -pubkey pubkey0 --itag128 -adata cert0 test_file test_file_encoded
-if %ERRORLEVEL% neq 0 goto Error
-
-bee2cmd aead dec -kld PKE -pass pass:root -privkey privkey0 -adata cert0 test_file_encoded test_file_decoded
-if %ERRORLEVEL% neq 0 goto Error
-
-fc test_file test_file_decoded
-if %ERRORLEVEL% neq 0 goto Error
-
-del /q test_file_decoded test_file_encoded 2> nul
-
-rem PWD test
-
-bee2cmd aead enc -kld PWD -pass pass:root test_file test_file_encoded
-if %ERRORLEVEL% neq 0 goto Error
-
-bee2cmd aead val -kld PWD -pass pass:root  test_file_encoded
-if %ERRORLEVEL% neq 0 goto Error
-
-bee2cmd aead val -kld PWD -pass pass:wrongpass  test_file_encoded
-if %ERRORLEVEL% equ 0 goto Error
-
-bee2cmd aead dec -kld PWD -pass pass:wrongpass test_file_encoded test_file_decoded
-if %ERRORLEVEL% equ 0 goto Error
-
-bee2cmd aead dec -kld PWD -pass pass:root test_file_encoded test_file_decoded
-if %ERRORLEVEL% neq 0 goto Error
-
-fc test_file test_file_decoded
-if %ERRORLEVEL% neq 0 goto Error
-
-del /q test_file_decoded test_file_encoded 2> nul
-
-rem with itag
-
-bee2cmd aead enc -kld PWD -pass pass:root --itag128 test_file test_file_encoded
-if %ERRORLEVEL% neq 0 goto Error
-
-bee2cmd aead dec -kld PWD -pass pass:root test_file_encoded test_file_decoded
-if %ERRORLEVEL% neq 0 goto Error
-
-fc test_file test_file_decoded
-if %ERRORLEVEL% neq 0 goto Error
-
-rem with itag and adata
-
-del /q test_file_decoded test_file_encoded 2> nul
-
-bee2cmd aead enc -kld PWD -pass pass:root --itag128 -adata cert0 test_file test_file_encoded
-if %ERRORLEVEL% neq 0 goto Error
-
-bee2cmd aead dec -kld PWD -pass pass:root -adata cert0 test_file_encoded test_file_decoded
-if %ERRORLEVEL% neq 0 goto Error
-
-fc test_file test_file_decoded
-if %ERRORLEVEL% neq 0 goto Error
-
 
 echo ****** OK
 

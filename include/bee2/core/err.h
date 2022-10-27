@@ -4,7 +4,7 @@
 \brief Errors
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2022.10.20
+\version 2022.10.24
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -186,12 +186,14 @@ Crypto
 #define ERR_BAD_PWD					_ERR_REG(514)
 /* ключ не найден */
 #define ERR_KEY_NOT_FOUND			_ERR_REG(515)
+/* отсутствует доверие */
+#define ERR_NO_TRUST				_ERR_REG(516)
 /* ошибка аутентификации */
-#define ERR_AUTH					_ERR_REG(516)
+#define ERR_AUTH					_ERR_REG(517)
 /* ошибка самотестирования */
-#define ERR_SELFTEST				_ERR_REG(517)
+#define ERR_SELFTEST				_ERR_REG(518)
 /* ошибка статистического тестирования */
-#define ERR_STATTEST				_ERR_REG(518)
+#define ERR_STATTEST				_ERR_REG(519)
 
 /*
 *******************************************************************************

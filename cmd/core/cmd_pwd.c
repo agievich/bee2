@@ -4,13 +4,13 @@
 \brief Command-line interface to Bee2: password management
 \project bee2/cmd 
 \created 2022.06.13
-\version 2022.10.21
+\version 2022.10.26
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#include "cmd.h"
+#include "../cmd.h"
 #include <bee2/core/blob.h>
 #include <bee2/core/dec.h>
 #include <bee2/core/err.h>
@@ -57,7 +57,7 @@ void cmdPwdClose(cmd_pwd_t pwd)
 err_t pwdSelfTest()
 {
 	const char pwd[] = "B194BAC80A08F53B";
-	octet state[1024];
+	octet stack[1024];
 	octet buf[5 * (32 + 1)];
 	octet buf1[32];
 	// bels-share: разделение и сборка
@@ -73,10 +73,10 @@ err_t pwdSelfTest()
 		!memEq(buf1, beltH(), 32))
 		return ERR_SELFTEST;
 	// brng-ctr: тест Б.2
-	ASSERT(sizeof(state) >= brngCTR_keep());
+	ASSERT(sizeof(stack) >= brngCTR_keep());
 	memCopy(buf, beltH(), 96);
-	brngCTRStart(state, beltH() + 128, beltH() + 128 + 64);
-	brngCTRStepR(buf, 96, state);
+	brngCTRStart(stack, beltH() + 128, beltH() + 128 + 64);
+	brngCTRStepR(buf, 96, stack);
 	if (!hexEq(buf,
 		"1F66B5B84B7339674533F0329C74F218"
 		"34281FED0732429E0C79235FC273E269"
@@ -93,11 +93,11 @@ err_t pwdSelfTest()
 		"F13A77DC09ECF93291BFE42439A72E7D"))
 		return FALSE;
 	// belt-kwp: тест A.21
-	ASSERT(sizeof(state) >= beltKWP_keep());
-	beltKWPStart(state, beltH() + 128, 32);
+	ASSERT(sizeof(stack) >= beltKWP_keep());
+	beltKWPStart(stack, beltH() + 128, 32);
 	memCopy(buf, beltH(), 32);
 	memCopy(buf + 32, beltH() + 32, 16);
-	beltKWPStepE(buf, 48, state);
+	beltKWPStepE(buf, 48, stack);
 	if (!hexEq(buf,
 		"49A38EE108D6C742E52B774F00A6EF98"
 		"B106CBD13EA4FB0680323051BC04DF76"
@@ -138,7 +138,7 @@ static err_t cmdPwdGenShare_internal(cmd_pwd_t* pwd, size_t scount,
 	err_t code;
 	const size_t iter = 10000;
 	size_t epki_len;
-	void* state;
+	void* stack;
 	octet* pwd_bin;
 	octet* share;
 	octet* salt;
@@ -161,18 +161,18 @@ static err_t cmdPwdGenShare_internal(cmd_pwd_t* pwd, size_t scount,
 	code = bpkiShareWrap(0, &epki_len, 0, len + 1, 0, 0, 0, iter);
 	ERR_CALL_CHECK(code);
 	// выделить память и разметить ее
-	code = cmdBlobCreate(state, len + scount * (len + 1) + epki_len + 8);
+	code = cmdBlobCreate(stack, len + scount * (len + 1) + epki_len + 8);
 	ERR_CALL_CHECK(code);
-	pwd_bin = (octet*)state;
+	pwd_bin = (octet*)stack;
 	share = pwd_bin + len;
 	salt = share + scount * (len + 1);
 	epki = salt + 8;
 	// сгенерировать пароль
 	rngStepR(pwd_bin, len, 0);
-	ERR_CALL_HANDLE(code, cmdBlobClose(state));
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// разделить пароль на частичные секреты
 	code = belsShare2(share, scount, threshold, len, pwd_bin, rngStepR, 0);
-	ERR_CALL_HANDLE(code, cmdBlobClose(state));
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// обновить ключ ГСЧ
 	rngRekey();
 	// защитить частичные секреты
@@ -183,24 +183,24 @@ static err_t cmdPwdGenShare_internal(cmd_pwd_t* pwd, size_t scount,
 		rngStepR(salt, 8, 0);
 		code = bpkiShareWrap(epki, 0, share, len + 1, (const octet*)spwd,
 			cmdPwdLen(spwd), salt, iter);
-		ERR_CALL_HANDLE(code, cmdBlobClose(state));
+		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		// открыть файл для записи
 		ASSERT(strIsValid(*shares));
 		fp = fopen(*shares, "wb");
 		code = fp ? ERR_OK : ERR_FILE_CREATE;
-		ERR_CALL_HANDLE(code, cmdBlobClose(state));
+		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		// записать
 		code = fwrite(epki, 1, epki_len, fp) == epki_len ?
 			ERR_OK : ERR_FILE_WRITE;
 		fclose(fp);
-		ERR_CALL_HANDLE(code, cmdBlobClose(state));
+		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	}
 	// создать выходной (текстовый) пароль
 	*pwd = cmdPwdCreate(2 * len);
 	code = *pwd ? ERR_OK : ERR_OUTOFMEMORY;
-	ERR_CALL_HANDLE(code, cmdBlobClose(state));
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	hexFrom(*pwd, pwd_bin, len);
-	cmdBlobClose(state);
+	cmdBlobClose(stack);
 	return code;
 }
 
@@ -211,7 +211,7 @@ static err_t cmdPwdReadShare_internal(cmd_pwd_t* pwd, size_t scount,
 	size_t epki_len;
 	size_t epki_len_min;
 	size_t epki_len_max;
-	void* state;
+	void* stack;
 	octet* share;
 	octet* epki;
 	octet* pwd_bin;
@@ -251,9 +251,9 @@ static err_t cmdPwdReadShare_internal(cmd_pwd_t* pwd, size_t scount,
 		ERR_CALL_CHECK(code);
 	}
 	// выделить память и разметить ее
-	code = cmdBlobCreate(state, scount * (len + 1) + epki_len_max + 1 + len);
+	code = cmdBlobCreate(stack, scount * (len + 1) + epki_len_max + 1 + len);
 	ERR_CALL_HANDLE(code, cmdPwdClose(*pwd));
-	share = (octet*)state;
+	share = (octet*)stack;
 	epki = share + scount * (len + 1);
 	pwd_bin = epki + epki_len_max + 1;
 	// прочитать частичные секреты
@@ -264,29 +264,29 @@ static err_t cmdPwdReadShare_internal(cmd_pwd_t* pwd, size_t scount,
 		// открыть файл для чтения
 		ASSERT(strIsValid(*shares));
 		code = (fp = fopen(*shares, "rb")) ? ERR_OK : ERR_FILE_OPEN;
-		ERR_CALL_HANDLE(code, cmdBlobClose(state));
+		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		// читать
 		epki_len = fread(epki, 1, epki_len_max + 1, fp);
 		fclose(fp);
 		code = (epki_len_min <= epki_len && epki_len <= epki_len_max) ?
 			ERR_OK : ERR_BAD_FORMAT;
-		ERR_CALL_HANDLE(code, cmdBlobClose(state));
+		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		// декодировать
 		code = bpkiShareUnwrap(share + pos * (len + 1), &share_len,
 			epki, epki_len, (const octet*)spwd, cmdPwdLen(spwd));
-		ERR_CALL_HANDLE(code, cmdBlobClose(state));
+		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		code = (share_len == len + 1) ? ERR_OK : ERR_BAD_FORMAT;
-		ERR_CALL_HANDLE(code, cmdBlobClose(state));
+		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	}
 	// собрать пароль
 	code = belsRecover2(pwd_bin, scount, len, share);
-	ERR_CALL_HANDLE(code, cmdBlobClose(state));
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// создать выходной (текстовый) пароль
 	*pwd = cmdPwdCreate(2 * len);
 	code = *pwd ? ERR_OK : ERR_OUTOFMEMORY;
-	ERR_CALL_HANDLE(code, cmdBlobClose(state));
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	hexFrom(*pwd, pwd_bin, len);
-	cmdBlobClose(state);
+	cmdBlobClose(stack);
 	return code;
 }
 

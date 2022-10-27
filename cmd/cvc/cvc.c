@@ -4,7 +4,7 @@
 \brief Manage CV-certificates
 \project bee2/cmd 
 \created 2022.07.12
-\version 2022.07.18
+\version 2022.10.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -101,7 +101,7 @@ static int cvcUsage()
 
 static err_t cvcSelfTest()
 {
-	octet state[1024];
+	octet stack[1024];
 	bign_params params[1];
 	octet privkey[32];
 	octet pubkey[64];
@@ -114,11 +114,11 @@ static err_t cvcSelfTest()
 	hexTo(privkey,
 		"1F66B5B84B7339674533F0329C74F218"
 		"34281FED0732429E0C79235FC273E269");
-	ASSERT(sizeof(state) >= prngEcho_keep());
-	prngEchoStart(state, privkey, 32);
+	ASSERT(sizeof(stack) >= prngEcho_keep());
+	prngEchoStart(stack, privkey, 32);
 	if (bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK ||
 		bignGenKeypair(privkey, pubkey, params, prngEchoStepR,
-			state) != ERR_OK ||
+			stack) != ERR_OK ||
 		!hexEq(pubkey,
 		"BD1A5650179D79E03FCEE49D4C2BD5DD"
 		"F54CE46D0CF11E4FF87BF7A890857FD0"
@@ -150,61 +150,9 @@ static err_t cvcSelfTest()
 
 /*
 *******************************************************************************
-Чтение / запись
-*******************************************************************************
-*/
-
-err_t cmdCVCWrite(const octet cert[], size_t cert_len, const char* file)
-{
-	err_t code;
-	// pre
-	ASSERT(memIsValid(cert, cert_len));
-	ASSERT(strIsValid(file));
-	// записать
-	{
-		FILE* fp;
-		code = (fp = fopen(file, "wb")) ? ERR_OK : ERR_FILE_CREATE;
-		ERR_CALL_CHECK(code);
-		code = (cert_len == fwrite(cert, 1, cert_len, fp)) ?
-			ERR_OK : ERR_FILE_WRITE;
-		fclose(fp);
-	}
-	// завершить
-	return code;
-}
-
-err_t cmdCVCRead(octet cert[], size_t* cert_len, const char* file)
-{
-	err_t code = ERR_OK;
-	size_t len;
-	// pre
-	ASSERT(memIsNullOrValid(cert_len, O_PER_S));
-	ASSERT(strIsValid(file));
-	// определить длину файла
-	if ((len = cmdFileSize(file)) == SIZE_MAX)
-		return ERR_FILE_READ;
-	if (cert_len)
-		*cert_len = len;
-	// читать
-	if (cert)
-	{
-		FILE* fp;
-		ASSERT(memIsValid(cert, len));
-		code = (fp = fopen(file, "rb")) ? ERR_OK : ERR_FILE_OPEN;
-		ERR_CALL_CHECK(code);
-		code = (len == fread(cert, 1, len, fp)) ? ERR_OK : ERR_FILE_READ;
-		fclose(fp);
-	}
-	// завершить
-	return code;
-}
-
-
-/*
-*******************************************************************************
 Разбор опций командной строки
 
-Опции возвращаются по адресам cvc, pwd, date. Лююой из адресов может быть
+Опции возвращаются по адресам cvc, pwd, date. Любой из адресов может быть
 нулевым, и тогда соответствующая опция не возвращается. Более того, ее указание
 в командной строке считается ошибкой.
 
@@ -514,7 +462,7 @@ static err_t cvcRoot(int argc, char* argv[])
 	cmdBlobClose(privkey);
 	ERR_CALL_HANDLE(code, cmdBlobClose(cert));
 	// записать сертификат
-	code = cmdCVCWrite(cert, cert_len, argv[1]);
+	code = cmdFileWrite(argv[1], cert, cert_len);
 	// завершить
 	cmdBlobClose(cert);
 	return code;
@@ -578,7 +526,7 @@ static err_t cvcReq(int argc, char* argv[])
 	cmdBlobClose(privkey);
 	ERR_CALL_HANDLE(code, cmdBlobClose(req));
 	// записать сертификат
-	code = cmdCVCWrite(req, req_len, argv[1]);
+	code = cmdFileWrite(argv[1], req, req_len);
 	// завершить
 	cmdBlobClose(req);
 	return code;
@@ -602,7 +550,7 @@ static err_t cvcIss(int argc, char* argv[])
 	size_t certa_len;
 	size_t req_len;
 	size_t cert_len;
-	void* state;
+	void* stack;
 	octet* certa;
 	octet* req;
 	octet* cert;
@@ -632,39 +580,39 @@ static err_t cvcIss(int argc, char* argv[])
 	cmdPwdClose(pwd);
 	ERR_CALL_HANDLE(code, cmdBlobClose(privkeya));
 	// определить длины входных сертификата и запроса
-	code = cmdCVCRead(0, &certa_len, argv[1]);
+	code = cmdFileReadAll(0, &certa_len, argv[1]);
 	ERR_CALL_HANDLE(code, cmdBlobClose(privkeya));
-	code = cmdCVCRead(0, &req_len, argv[2]);
+	code = cmdFileReadAll(0, &req_len, argv[2]);
 	ERR_CALL_HANDLE(code, cmdBlobClose(privkeya));
 	// построить оценку сверху для cert_len: req_len + расширение_подписи
 	cert_len = req_len + (96 - 48);
 	// выделить память и разметить ее
-	code = cmdBlobCreate(state, certa_len + req_len + cert_len +
+	code = cmdBlobCreate(stack, certa_len + req_len + cert_len +
 		sizeof(btok_cvc_t));
 	ERR_CALL_HANDLE(code, cmdBlobClose(privkeya));
-	certa = (octet*)state;
+	certa = (octet*)stack;
 	req = certa + certa_len;
 	cert = req + req_len;
 	cvc = (btok_cvc_t*)(cert + cert_len);
 	// прочитать сертификат
-	code = cmdCVCRead(certa, 0, argv[1]);
-	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(state)));
+	code = cmdFileReadAll(certa, &certa_len, argv[1]);
+	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(stack)));
 	// прочитать запрос
-	code = cmdCVCRead(req, 0, argv[2]);
-	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(state)));
+	code = cmdFileReadAll(req, &req_len, argv[2]);
+	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(stack)));
 	// разобрать запрос
 	code = btokCVCUnwrap(cvc, req, req_len, cvc->pubkey, 0);
-	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(state)));
+	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(stack)));
 	// выпустить сертификат
 	code = btokCVCIss(cert, &cert_len, cvc, certa, certa_len, privkeya,
 		privkeya_len);
 	ASSERT(cert_len <= req_len + 96 - 48);
 	cmdBlobClose(privkeya);
-	ERR_CALL_HANDLE(code, cmdBlobClose(state));
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// записать сертификат
-	code = cmdCVCWrite(cert, cert_len, argv[3]);
+	code = cmdFileWrite(argv[3], cert, cert_len);
 	// завершить
-	cmdBlobClose(state);
+	cmdBlobClose(stack);
 	return code;
 }
 
@@ -683,7 +631,7 @@ static err_t cvcVal(int argc, char* argv[])
 	int readc;
 	const size_t cert_max_len = 512;
 	size_t cert_len;
-	void* state;
+	void* stack;
 	octet* cert;
 	btok_cvc_t* cvc;
 	btok_cvc_t* cvc1;
@@ -705,40 +653,40 @@ static err_t cvcVal(int argc, char* argv[])
 	code = cmdFileValExist(argc, argv);
 	ERR_CALL_CHECK(code);
 	// выделить память и разметить ее
-	code = cmdBlobCreate(state, cert_max_len + 2 * sizeof(btok_cvc_t));
+	code = cmdBlobCreate(stack, cert_max_len + 2 * sizeof(btok_cvc_t));
 	ERR_CALL_CHECK(code);
-	cert = (octet*)state;
+	cert = (octet*)stack;
 	cvc = (btok_cvc_t*)(cert + cert_max_len);
 	cvc1 = cvc + 1;
 	// прочитать первый сертификат
-	code = cmdCVCRead(0, &cert_len, argv[0]);
-	ERR_CALL_HANDLE(code, cmdBlobClose(state));
+	code = cmdFileReadAll(0, &cert_len, argv[0]);
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	code = cert_len <= cert_max_len ? ERR_OK : ERR_BAD_CERT;
-	ERR_CALL_HANDLE(code, cmdBlobClose(state));
-	code = cmdCVCRead(cert, 0, argv[0]);
-	ERR_CALL_HANDLE(code, cmdBlobClose(state));
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	code = cmdFileReadAll(cert, &cert_len, argv[0]);
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// разобрать первый сертификат
 	code = btokCVCUnwrap(cvc, cert, cert_len, 0, 0);
-	ERR_CALL_HANDLE(code, cmdBlobClose(state));
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// цикл по сертификатам
 	for (--argc, ++argv; argc--; ++argv)
 	{
 		// прочитать очередной сертификат
-		code = cmdCVCRead(0, &cert_len, *argv);
-		ERR_CALL_HANDLE(code, cmdBlobClose(state));
+		code = cmdFileReadAll(0, &cert_len, *argv);
+		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		code = cert_len <= cert_max_len ? ERR_OK : ERR_BAD_CERT;
-		ERR_CALL_HANDLE(code, cmdBlobClose(state));
-		code = cmdCVCRead(cert, 0, *argv);
-		ERR_CALL_HANDLE(code, cmdBlobClose(state));
+		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		code = cmdFileReadAll(cert, &cert_len, *argv);
+		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		// проверить очередной сертификат
 		code = btokCVCVal2(cvc1, cert, cert_len, cvc, 
 			argc == 0 ? date : 0);
-		ERR_CALL_HANDLE(code, cmdBlobClose(state));
+		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		// подготовиться к проверке следующего сертификата
 		memCopy(cvc, cvc1, sizeof(btok_cvc_t));
 	}
 	// завершить
-	cmdBlobClose(state);
+	cmdBlobClose(stack);
 	return code;
 }
 
@@ -782,12 +730,12 @@ static err_t cvcMatch(int argc, char* argv[])
 	cmdPwdClose(pwd);
 	ERR_CALL_HANDLE(code, cmdBlobClose(privkey));
 	// определить длину сертификата
-	code = cmdCVCRead(0, &cert_len, argv[1]);
+	code = cmdFileReadAll(0, &cert_len, argv[1]);
 	ERR_CALL_HANDLE(code, cmdBlobClose(privkey));
 	// прочитать сертификат
 	code = cmdBlobCreate(cert, cert_len);
 	ERR_CALL_HANDLE(code, cmdBlobClose(privkey));
-	code = cmdCVCRead(cert, 0, argv[1]);
+	code = cmdFileReadAll(cert, &cert_len, argv[1]);
 	ERR_CALL_HANDLE(code, (cmdBlobClose(privkey), cmdBlobClose(cert)));
 	// проверить соответствие
 	code = btokCVCMatch(cert, cert_len, privkey, privkey_len);
@@ -809,10 +757,9 @@ static err_t cvcPrint(int argc, char* argv[])
 {
 	err_t code;
 	size_t cert_len;
-	void* state;
+	void* stack;
 	octet* cert;
 	btok_cvc_t* cvc;
-	char* hex;
 	// обработать опции
 	if (argc != 1)
 		return ERR_CMD_PARAMS;
@@ -820,49 +767,24 @@ static err_t cvcPrint(int argc, char* argv[])
 	code = cmdFileValExist(1, argv);
 	ERR_CALL_CHECK(code);
 	// определить длину сертификата
-	code = cmdCVCRead(0, &cert_len, argv[0]);
+	code = cmdFileReadAll(0, &cert_len, argv[0]);
 	ERR_CALL_CHECK(code);
 	// выделить память и разметить ее
-	code = cmdBlobCreate(state, cert_len + sizeof(btok_cvc_t) + 2 * 128 + 1);
+	code = cmdBlobCreate(stack, cert_len + sizeof(btok_cvc_t));
 	ERR_CALL_CHECK(code);
-	cert = (octet*)state;
+	cert = (octet*)stack;
 	cvc = (btok_cvc_t*)(cert + cert_len);
-	hex = (char*)(cvc + 1);
 	// прочитать сертификат
-	code = cmdCVCRead(cert, 0, argv[0]);
-	ERR_CALL_HANDLE(code, cmdBlobClose(state));
+	code = cmdFileReadAll(cert, &cert_len, argv[0]);
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// разобрать сертификат
 	code = btokCVCUnwrap(cvc, cert, cert_len, 0, 0);
-	ERR_CALL_HANDLE(code, cmdBlobClose(state));
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// печатать содержимое
-	ASSERT(cvc->pubkey_len <= 128);
-	hexFrom(hex, cvc->pubkey, cvc->pubkey_len);
-	printf(
-		"authority = \"%s\"\n"
-		"holder = \"%s\"\n"
-		"pubkey = %s\n",
-		cvc->authority, cvc->holder, hex);
-	hexFrom(hex, cvc->hat_eid, 5);
-	hexFrom(hex + 16, cvc->hat_esign, 2);
-	printf(
-		"hat_eid = %s\n"
-		"hat_esign = %s\n",
-		hex, hex + 16);
-	ASSERT(cvc->sig_len <= 96);
-	hexFrom(hex, cvc->sig, cvc->sig_len);
-	printf(
-		"from = 20%c%c-%c%c-%c%c\n"
-		"until = 20%c%c-%c%c-%c%c\n"
-		"sig = %s\n",
-		cvc->from[0] + '0', cvc->from[1] + '0',
-		cvc->from[2] + '0',	cvc->from[3] + '0',
-		cvc->from[4] + '0', cvc->from[5] + '0',
-		cvc->until[0] + '0', cvc->until[1] + '0',
-		cvc->until[2] + '0', cvc->until[3] + '0',
-		cvc->until[4] + '0', cvc->until[5] + '0',
-		hex);
+	code = cmdCVCPrint(cvc);
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// завершить
-	cmdBlobClose(state);
+	cmdBlobClose(stack);
 	return ERR_OK;
 }
 
@@ -876,7 +798,7 @@ int cvcMain(int argc, char* argv[])
 {
 	err_t code;
 	// справка
-	if (argc < 3)
+	if (argc < 2)
 		return cvcUsage();
 	// разбор команды
 	++argv, --argc;

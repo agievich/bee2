@@ -4,26 +4,27 @@ if(MSVC)
 endif()
 
 add_executable(bee2cmd
+	core/cmd_arg.c
+	core/cmd_cvc.c
+	core/cmd_file.c
+	core/cmd_privkey.c
+	core/cmd_pwd.c
+	core/cmd_rng.c
+	core/cmd_sig.c
+	core/cmd_term.c
+	core/whereami.c
 	bsum/bsum.c
 	cvc/cvc.c
 	kg/kg.c
 	pwd/pwd.c
 	sig/sig.c
 	ver/ver.c
-	aead/aead.c
-	cmd_core.c
 	cmd_main.c
-	cmd_privkey.c
-	cmd_pwd.c
-    cmd_sig.c
-	cmd_aead.c
-	cmd_aead_pke.c
-	cmd_aead_pwd.c
 )
 
 if(WIN32)
-  add_executable(bee2cmp
-    stamp.c
+  add_executable(bee2cmd
+    stamp/stamp.c
   )
 endif()
 

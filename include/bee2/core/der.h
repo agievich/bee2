@@ -4,7 +4,7 @@
 \brief Distinguished Encoding Rules
 \project bee2 [cryptographic library]
 \created 2014.04.21
-\version 2022.07.08
+\version 2022.10.24
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -175,6 +175,19 @@ bool_t derStartsWith(
 	const octet der[],	/*!< [in] DER-код */
 	size_t count,		/*!< [in] длина der в октетах */
 	u32 tag				/*!< [in] тег */
+);
+
+/*!	\brief Декодирование тега и длины
+
+	Определяются тег tag и длина значения len DER-кода [<=count]der.
+	\return Точная длина DER-кода или SIZE_MAX в случае ошибки формата.
+	\remark Любой из указателей tag и len может быть нулевым.
+*/
+size_t derDecTL(
+	u32* tag,				/*!< [out] тег */
+	size_t* len,			/*!< [out] длина значения */
+	const octet der[],		/*!< [in] DER-код */
+	size_t count			/*!< [in] длина der в октетах */
 );
 
 /*!	\brief Декодирование

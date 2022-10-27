@@ -84,6 +84,7 @@ static const err_msg _messages[] = {
 	{ERR_BAD_LOGIC, "Incorrect (protocol) logic"},
 	{ERR_BAD_PWD, "Incorrect password"},
 	{ERR_KEY_NOT_FOUND, "Unable to find the key"},
+	{ERR_NO_TRUST, "No trust"},
 	{ERR_AUTH, "Authentication failed"},
 	{ERR_SELFTEST, "Self-tests failed"},
 	{ERR_STATTEST, "Statistical tests failed"},
