@@ -42,6 +42,8 @@ Contributors*
   - code review
 - Mikhail Mitskevich
   - build scripts
+- Alexander Zhirkevich
+  - cmd/sig, cmd/rng, cmd/test
 
 ---
 *in chronological order of the first contribution

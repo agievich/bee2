@@ -4,7 +4,7 @@
 \brief Errors
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2022.07.11
+\version 2022.10.20
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -53,7 +53,8 @@ static const err_msg _messages[] = {
 	{ERR_FILE_EOF, "Reached the end of the file"},
 	// core
 	{ERR_BAD_OID, "Incorrect object identifier"},
-	{ERR_BAD_ENTROPY, "Insufficient entropy"},
+	{ERR_BAD_ENTROPY, "Error while collecting entropy"},
+	{ERR_NOT_ENOUGH_ENTROPY, "Not enough entropy"},
 	{ERR_BAD_RNG, "Incorrect random number generator"},
 	{ERR_BAD_ANG, "Incorrect any number generator"},
 	{ERR_BAD_FORMAT, "Invalid format"},
@@ -83,6 +84,7 @@ static const err_msg _messages[] = {
 	{ERR_BAD_LOGIC, "Incorrect (protocol) logic"},
 	{ERR_BAD_PWD, "Incorrect password"},
 	{ERR_KEY_NOT_FOUND, "Unable to find the key"},
+	{ERR_NO_TRUST, "No trust"},
 	{ERR_AUTH, "Authentication failed"},
 	{ERR_SELFTEST, "Self-tests failed"},
 	{ERR_STATTEST, "Statistical tests failed"},

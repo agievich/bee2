@@ -4,7 +4,7 @@
 \brief Version and build information
 \project bee2/cmd 
 \created 2022.06.22
-\version 2022.06.23
+\version 2022.10.21
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -35,7 +35,7 @@ static int verUsage()
 		"bee2cmd/%s: %s\n"
 		"Usage:\n"
 		"  ver\n"
-		"    print version and build information",
+		"    print version and build information\n",
 		_name, _descr
 	);
 	return -1;

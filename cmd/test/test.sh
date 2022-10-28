@@ -3,7 +3,7 @@
 # \brief Testing command-line interface
 # \project bee2evp/cmd
 # \created 2022.06.24
-# \version 2022.07.18
+# \version 2022.10.27
 # =============================================================================
 
 bee2cmd=./bee2cmd
@@ -79,7 +79,7 @@ test_pwd() {
 }
 
 test_kg() {
-  rm -rf privkey0 privkey1 privkey2 \
+  rm -rf privkey0 privkey1 privkey2 pubkey1 pubkey2 \
     || return 2
   $bee2cmd kg gen -l256 -pass share:"-pass pass:zed s2 s3 s4" \
     && return 1
@@ -96,16 +96,19 @@ test_kg() {
     || return 1
   $bee2cmd kg print -pass pass:root privkey0 \
     || return 1
-  pubkey0="$($bee2cmd kg print -pass pass:root privkey0)"
-  if [ ${#pubkey0} != "256" ]; then
-    return 1
-  fi
   $bee2cmd kg gen -pass pass:trent -l192 privkey1 \
     || return 1
-  $bee2cmd kg print -pass pass:trent privkey1 \
-    || return 1
+  pubkey1="$($bee2cmd kg print -pass pass:"trent" privkey1)"
+  if [ ${#pubkey1} != "192" ]; then
+    return 1
+  fi
   $bee2cmd kg gen -pass pass:alice privkey2 \
     || return 1
+  $bee2cmd kg pub -pass pass:alice privkey2 pubkey2 \
+    || return 1
+  if [ "$(wc -c pubkey2 | awk '{print $1}')" != "64" ]; then
+    return 1
+  fi
   return 0
 }
 
@@ -156,6 +159,75 @@ test_cvc() {
   return 0
 }
 
+test_sig(){
+  rm -rf ss ff\
+    || return 2
+
+  echo test > ff
+  echo sig > ss
+
+  $bee2cmd sig vfy -pubkey pubkey2 ff ss \
+    && return 1
+  $bee2cmd sig vfy -anchor cert0 ff ss \
+    && return 1
+  $bee2cmd sig vfy -anchor cert2 ff ss \
+    && return 1
+  $bee2cmd sig vfy -pubkey pubkey2 ff ff \
+    && return 1
+  $bee2cmd sig vfy -anchor cert0 ff ff \
+    && return 1
+  $bee2cmd sig vfy -anchor cert2 ff ff \
+    && return 1
+
+  rm -rf ss
+
+  $bee2cmd sig sign -certs "cert2 cert1" -pass pass:alice privkey2 ff ss \
+    || return 1
+  $bee2cmd sig vfy -pubkey pubkey2 ff ss \
+    || return 1
+  $bee2cmd sig vfy -anchor cert2 ff ss \
+    || return 1
+  $bee2cmd sig vfy -anchor cert1 ff ss \
+    || return 1
+
+  $bee2cmd sig vfy -anchor cert0 ff ss \
+    && return 1
+  $bee2cmd sig sign -certs "cert2 cert1 cert0" -pass pass:alice privkey2 ff ff \
+    || return 1
+  $bee2cmd sig vfy -pubkey pubkey2 ff ff \
+    || return 1
+  $bee2cmd sig vfy -anchor cert2 ff ff \
+    || return 1
+  $bee2cmd sig vfy -anchor cert1 ff ff \
+    || return 1
+  $bee2cmd sig vfy -anchor cert0 ff ff \
+    || return 1
+
+  rm -rf ss
+
+  $bee2cmd sig sign -certs cert2 -pass pass:alice privkey2 ff ss \
+    || return 1
+  $bee2cmd sig print ss \
+    || return 1
+  $bee2cmd sig vfy -pubkey pubkey2 ff ss \
+    || return 1
+  $bee2cmd sig vfy -anchor cert2 ff ss \
+    || return 1
+  $bee2cmd sig vfy -anchor cert1 ff ss \
+    && return 1
+
+  $bee2cmd sig sign -pass pass:alice privkey2 ff ff \
+    || return 1
+  $bee2cmd sig vfy -pubkey pubkey2 ff ff \
+    || return 1
+  $bee2cmd sig vfy -anchor cert2 ff ff \
+    && return 1
+  $bee2cmd sig print ff \
+    || return 1
+
+  return 0
+}
+
 run_test() {
   echo -n "Testing $1... "
   (test_$1 > /dev/null)
@@ -166,4 +238,4 @@ run_test() {
   fi
 } 
 
-run_test ver && run_test pwd && run_test kg && run_test cvc
+run_test ver && run_test pwd && run_test kg && run_test cvc && run_test sig

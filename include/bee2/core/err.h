@@ -4,7 +4,7 @@
 \brief Errors
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2022.07.12
+\version 2022.10.24
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -114,24 +114,26 @@ Core
 
 /* некорректный идентификатор объекта */
 #define ERR_BAD_OID					_ERR_REG(301)
-/* недостаточно энтропии */
+/* ошибка при сборе энтропии */
 #define ERR_BAD_ENTROPY				_ERR_REG(302)
+/* недостает энтропии */
+#define ERR_NOT_ENOUGH_ENTROPY		_ERR_REG(303)
 /* ошибка при обращении к генератору случайных чисел */
-#define ERR_BAD_RNG					_ERR_REG(303)
+#define ERR_BAD_RNG					_ERR_REG(304)
 /* ошибка при обращении к генератору произвольных чисел */
-#define ERR_BAD_ANG					_ERR_REG(304)
+#define ERR_BAD_ANG					_ERR_REG(305)
 /* неверный формат */
-#define ERR_BAD_FORMAT				_ERR_REG(305)
+#define ERR_BAD_FORMAT				_ERR_REG(306)
 /* некорректная отметка времени */
-#define ERR_BAD_TIME				_ERR_REG(306)
+#define ERR_BAD_TIME				_ERR_REG(307)
 /* некорректная дата */
-#define ERR_BAD_DATE				_ERR_REG(307)
+#define ERR_BAD_DATE				_ERR_REG(308)
 /* некорректное имя */
-#define ERR_BAD_NAME				_ERR_REG(308)
+#define ERR_BAD_NAME				_ERR_REG(309)
 /* вне диапазона */
-#define ERR_OUTOFRANGE				_ERR_REG(309)
+#define ERR_OUTOFRANGE				_ERR_REG(310)
 /* некорректный перечень прав доступа */
-#define ERR_BAD_ACL					_ERR_REG(310)
+#define ERR_BAD_ACL					_ERR_REG(311)
 
 /*
 *******************************************************************************
@@ -184,12 +186,14 @@ Crypto
 #define ERR_BAD_PWD					_ERR_REG(514)
 /* ключ не найден */
 #define ERR_KEY_NOT_FOUND			_ERR_REG(515)
+/* отсутствует доверие */
+#define ERR_NO_TRUST				_ERR_REG(516)
 /* ошибка аутентификации */
-#define ERR_AUTH					_ERR_REG(516)
+#define ERR_AUTH					_ERR_REG(517)
 /* ошибка самотестирования */
-#define ERR_SELFTEST				_ERR_REG(517)
+#define ERR_SELFTEST				_ERR_REG(518)
 /* ошибка статистического тестирования */
-#define ERR_STATTEST				_ERR_REG(518)
+#define ERR_STATTEST				_ERR_REG(519)
 
 /*
 *******************************************************************************

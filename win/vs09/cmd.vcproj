@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="cmd"
 	ProjectGUID="{5984CE52-1BB1-4F85-9930-FF5BAB757AD4}"
 	RootNamespace="cmd"
@@ -353,19 +353,7 @@
 			UniqueIdentifier="{ED2943AD-C54B-4D1B-9CD4-B97EE70D805D}"
 			>
 			<File
-				RelativePath="..\..\cmd\cmd_core.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\cmd\cmd_main.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\cmd\cmd_privkey.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\cmd\cmd_pwd.c"
 				>
 			</File>
 			<Filter
@@ -413,6 +401,54 @@
 				>
 				<File
 					RelativePath="..\..\cmd\cvc\cvc.c"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="core"
+				>
+				<File
+					RelativePath="..\..\cmd\core\cmd_arg.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\cmd\core\cmd_cvc.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\cmd\core\cmd_file.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\cmd\core\cmd_privkey.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\cmd\core\cmd_pwd.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\cmd\core\cmd_rng.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\cmd\core\cmd_sig.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\cmd\core\cmd_term.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\cmd\core\whereami.c"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="sig"
+				>
+				<File
+					RelativePath="..\..\cmd\sig\sig.c"
 					>
 				</File>
 			</Filter>

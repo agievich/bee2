@@ -3,7 +3,7 @@ rem ===========================================================================
 rem \brief Testing command-line interface
 rem \project bee2evp/cmd
 rem \created 2022.06.24
-rem \version 2018.07.18
+rem \version 2022.10.28
 rem ===========================================================================
 
 rem ===========================================================================
@@ -110,7 +110,7 @@ rem ===========================================================================
 
 echo ****** Testing bee2cmd/kg...
 
-del /q privkey0 privkey1 privkey2 pubkey1 2> nul
+del /q privkey0 privkey1 privkey2 pubkey0 pubkey2 2> nul
 
 bee2cmd kg gen -l256 -pass share:"-pass pass:zed s2 s3 s4"
 if %ERRORLEVEL% equ 0 goto Error
@@ -142,6 +142,12 @@ if %pubkey1_len% neq 192 goto Error
 
 bee2cmd kg gen -pass pass:alice privkey2
 if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd kg pub -pass pass:alice privkey2 pubkey2
+if %ERRORLEVEL% neq 0 goto Error
+
+for %%A in (pubkey2) do set pubkey2_len=%%~zA
+if %pubkey2_len% neq 64 goto Error
 
 echo ****** OK
 
@@ -211,6 +217,92 @@ bee2cmd cvc val -date 221201 cert0 cert1 cert2
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd cvc val -date 400101 cert0 cert1 cert2
+if %ERRORLEVEL% equ 0 goto Error
+
+echo ****** OK
+
+rem ===========================================================================
+rem  bee2cmd/sig
+rem ===========================================================================
+
+echo ****** Testing bee2cmd/sig...
+
+del /q ff ss 2> nul
+
+echo test > ff
+echo sig > ss
+
+bee2cmd sig vfy -pubkey pubkey2 ff ss
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd sig vfy -anchor cert0 ff ss
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd sig vfy -anchor cert2 ff ss
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd sig vfy -pubkey pubkey2 ff ss
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd sig vfy -anchor cert0 ff ff
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd sig vfy -anchor cert2 ff ff
+if %ERRORLEVEL% equ 0 goto Error
+
+del /q ss 1> nul
+
+bee2cmd sig sign -certs "cert2 cert1" -pass pass:alice privkey2 ff ss
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig vfy -pubkey pubkey2 ff ss
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig vfy -anchor cert2 ff ss
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig vfy -anchor cert1 ff ss
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig vfy -anchor cert0 ff ss
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd sig sign -certs "cert2 cert1 cert0" -pass pass:alice privkey2 ff ff
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig vfy -pubkey pubkey2 ff ff
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig vfy -anchor cert2 ff ff
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig vfy -anchor cert1 ff ff
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig vfy -anchor cert0 ff ff
+if %ERRORLEVEL% neq 0 goto Error
+
+del /q ss 2> nul
+
+bee2cmd sig sign -certs cert2 -pass pass:alice privkey2 ff ss
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig vfy -pubkey pubkey2 ff ss
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig vfy -anchor cert2 ff ss
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig vfy -anchor cert1 ff ss
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd sig sign -pass pass:alice privkey2 ff ff
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig vfy -pubkey pubkey2 ff ff
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig vfy -anchor cert2 ff ff
 if %ERRORLEVEL% equ 0 goto Error
 
 echo ****** OK

@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): cryptographic tokens
 \project bee2 [cryptographic library]
 \created 2022.07.04
-\version 2022.07.16
+\version 2022.10.21
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -254,7 +254,7 @@ err_t btokCVCVal(
 	- btokCVCVal(cvcc, certc, certc_len, cvcb, date);
 	- ...
 	\remark Если certa является самоподписанным и требуется проверить его
-	подпись, то перва строчка в предыдущем коде должна выглядеть следующим
+	подпись, то первая строчка в предыдущем коде должна выглядеть следующим
 	образом:
 	- btokCVCUnwrap(cvca, certa, certa_len, cvca->pubkey, 0);
 */

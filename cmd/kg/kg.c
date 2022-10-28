@@ -4,7 +4,7 @@
 \brief Generate and manage private keys
 \project bee2/cmd 
 \created 2022.06.08
-\version 2022.07.18
+\version 2022.10.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -43,6 +43,7 @@ version 3. See Copyright Notices in bee2/info.h.
   bee2cmd kg val -pass share:"-pass pass:zed s1 s2 s4" privkey
   bee2cmd kg chp -passin share:"-pass pass:zed s3 s1 s4"
     -passout pass:"1?23&aaA..." privkey
+  bee2cmd kg pub -pass pass:"1?23&aaA..." privkey pubkey
   bee2cmd kg print -pass pass:"1?23&aaA..." privkey
 *******************************************************************************
 */
@@ -59,10 +60,12 @@ static int kgUsage()
 		"    generate a private key and store it in <privkey>\n"
 		"  kg val -pass <scheme> <privkey>\n"
 		"    validate <privkey>\n"
+		"  kg pub -pass <scheme> <privkey> <pubkey>\n"
+		"    calculate public key from <privkey> and store it in <pubkey>\n"
 		"  kg print -pass <scheme> <privkey>\n"
 		"    validate <privkey> and print the corresponding public key\n"
 		"  kg chp -passin <scheme> -passout <scheme> <privkey>\n"
-		"    change a password used to protect <privkey>\n"
+		"    change the password used to protect <privkey>\n"
 		"  options:\n"
 		"    -lnnn -- security level: -l128 (by default), -l192 or -l256\n"
 		"    -pass <scheme> -- description of a password\n"
@@ -82,7 +85,7 @@ static int kgUsage()
 static err_t kgSelfTest()
 {
 	const char pwd[] = "B194BAC80A08F53B";
-	octet state[1024];
+	octet stack[1024];
 	bign_params params[1];
 	octet privkey[32];
 	octet pubkey[64];
@@ -92,11 +95,11 @@ static err_t kgSelfTest()
 	hexTo(privkey,
 		"1F66B5B84B7339674533F0329C74F218"
 		"34281FED0732429E0C79235FC273E269");
-	ASSERT(sizeof(state) >= prngEcho_keep());
-	prngEchoStart(state, privkey, 32);
+	ASSERT(sizeof(stack) >= prngEcho_keep());
+	prngEchoStart(stack, privkey, 32);
 	if (bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK ||
 		bignGenKeypair(privkey, pubkey, params, prngEchoStepR,
-			state) != ERR_OK ||
+			stack) != ERR_OK ||
 		!hexEq(pubkey,
 		"BD1A5650179D79E03FCEE49D4C2BD5DD"
 		"F54CE46D0CF11E4FF87BF7A890857FD0"
@@ -116,10 +119,10 @@ static err_t kgSelfTest()
 		!memEq(buf1, beltH(), 32))
 		return ERR_SELFTEST;
 	// brng-ctr: тест Б.2
-	ASSERT(sizeof(state) >= brngCTR_keep());
+	ASSERT(sizeof(stack) >= brngCTR_keep());
 	memCopy(buf, beltH(), 96);
-	brngCTRStart(state, beltH() + 128, beltH() + 128 + 64);
-	brngCTRStepR(buf, 96, state);
+	brngCTRStart(stack, beltH() + 128, beltH() + 128 + 64);
+	brngCTRStepR(buf, 96, stack);
 	if (!hexEq(buf,
 		"1F66B5B84B7339674533F0329C74F218"
 		"34281FED0732429E0C79235FC273E269"
@@ -136,11 +139,11 @@ static err_t kgSelfTest()
 		"F13A77DC09ECF93291BFE42439A72E7D"))
 		return FALSE;
 	// belt-kwp: тест A.21
-	ASSERT(sizeof(state) >= beltKWP_keep());
-	beltKWPStart(state, beltH() + 128, 32);
+	ASSERT(sizeof(stack) >= beltKWP_keep());
+	beltKWPStart(stack, beltH() + 128, 32);
 	memCopy(buf, beltH(), 32);
 	memCopy(buf + 32, beltH() + 32, 16);
-	beltKWPStepE(buf, 48, state);
+	beltKWPStepE(buf, 48, stack);
 	if (!hexEq(buf,
 		"49A38EE108D6C742E52B774F00A6EF98"
 		"B106CBD13EA4FB0680323051BC04DF76"
@@ -164,7 +167,7 @@ static err_t kgGen(int argc, char* argv[])
 	size_t len = 0;
 	cmd_pwd_t pwd = 0;
 	bign_params params[1];
-	void* state = 0;
+	void* stack = 0;
 	octet* privkey;
 	octet* pubkey;
 	// самотестирование
@@ -197,6 +200,11 @@ static err_t kgGen(int argc, char* argv[])
 				break;
 			}
 			++argv, --argc;
+			if (!argc)
+			{
+				code = ERR_CMD_PARAMS;
+				break;
+			}
 			code = cmdPwdRead(&pwd, *argv);
 			if (code != ERR_OK)
 				break;
@@ -213,7 +221,7 @@ static err_t kgGen(int argc, char* argv[])
 		code = ERR_CMD_PARAMS;
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	// проверить файл-контейнер
-	code = cmdFileValNotExist(argc, argv);
+	code = cmdFileValNotExist(1, argv);
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	// загрузить параметры
 	if (len == 0)
@@ -228,20 +236,19 @@ static err_t kgGen(int argc, char* argv[])
 	// запустить ГСЧ
 	code = cmdRngStart(TRUE);
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
-	// тестировать ГСЧ
-	code = cmdRngTest();
-	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	// выделить память
-	code = cmdBlobCreate(state, 3 * len);
+	code = cmdBlobCreate(stack, 3 * len);
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	// генерировать ключ
-	privkey = (octet*)state;
+	privkey = (octet*)stack;
 	pubkey = privkey + len;
 	code = bignGenKeypair(privkey, pubkey, params, rngStepR, 0);
-	ERR_CALL_HANDLE(code, (cmdBlobClose(state), cmdPwdClose(pwd)));
+	ERR_CALL_HANDLE(code, (cmdBlobClose(stack), cmdPwdClose(pwd)));
+	// обновить ключ ГСЧ
+	rngRekey();
 	// сохранить ключ
-	code = cmdPrivkeyWrite(privkey, len, *argv, pwd);
-	cmdBlobClose(state);
+	code = cmdPrivkeyWrite(privkey, len, argv[0], pwd);
+	cmdBlobClose(stack);
 	cmdPwdClose(pwd);
 	return code;
 }
@@ -257,8 +264,8 @@ val -pass <scheme> <privkey>
 static err_t kgVal(int argc, char* argv[])
 {
 	err_t code = ERR_OK;
-	size_t len = 0;
 	cmd_pwd_t pwd = 0;
+	size_t len = 0;
 	octet* privkey;
 	// самотестирование
 	code = kgSelfTest();
@@ -266,23 +273,7 @@ static err_t kgVal(int argc, char* argv[])
 	// разбор опций
 	while (argc && strStartsWith(*argv, "-"))
 	{
-		if (strStartsWith(*argv, "-l"))
-		{
-			char* str = *argv + strLen("-l");
-			if (len)
-			{
-				code = ERR_CMD_DUPLICATE;
-				break;
-			}
-			if (!decIsValid(str) || decCLZ(str) || strLen(str) != 3 ||
-				(len = (size_t)decToU32(str)) % 64 || len < 128 || len > 256)
-			{
-				code = ERR_CMD_PARAMS;
-				break;
-			}
-			len /= 4, ++argv, --argc;
-		}
-		else if (strEq(*argv, "-pass"))
+		if (strEq(*argv, "-pass"))
 		{
 			if (pwd)
 			{
@@ -290,6 +281,11 @@ static err_t kgVal(int argc, char* argv[])
 				break;
 			}
 			++argv, --argc;
+			if (!argc)
+			{
+				code = ERR_CMD_PARAMS;
+				break;
+			}
 			code = cmdPwdRead(&pwd, *argv);
 			if (code != ERR_OK)
 				break;
@@ -306,19 +302,16 @@ static err_t kgVal(int argc, char* argv[])
 		code = ERR_CMD_PARAMS;
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	// проверить файл-контейнер
-	code = cmdFileValExist(argc, argv);
+	code = cmdFileValExist(1, argv);
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	// определить длину личного ключа
-	if (len == 0)
-	{
-		code = cmdPrivkeyRead(0, &len, *argv, pwd);
-		ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
-	}
+	code = cmdPrivkeyRead(0, &len, argv[0], pwd);
+	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	// выделить память
 	code = cmdBlobCreate(privkey, len);
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	// определить личный ключ
-	code = cmdPrivkeyRead(privkey, 0, *argv, pwd);
+	code = cmdPrivkeyRead(privkey, 0, argv[0], pwd);
 	cmdBlobClose(privkey);
 	cmdPwdClose(pwd);
 	return code;
@@ -326,45 +319,28 @@ static err_t kgVal(int argc, char* argv[])
 
 /*
 *******************************************************************************
-Печать открытого ключа
+Экспорт открытого ключа
 
 print -pass <scheme> <privkey>
 *******************************************************************************
 */
 
-static err_t kgPrint(int argc, char* argv[])
+static err_t kgPub(int argc, char* argv[])
 {
 	err_t code = ERR_OK;
-	size_t len = 0;
 	cmd_pwd_t pwd = 0;
 	bign_params params[1];
-	void* state;
+	void* stack;
+	size_t len = 0;
 	octet* privkey;
 	octet* pubkey;
-	char* hex;
 	// самотестирование
 	code = kgSelfTest();
 	ERR_CALL_CHECK(code);
 	// разбор опций
 	while (argc && strStartsWith(*argv, "-"))
 	{
-		if (strStartsWith(*argv, "-l"))
-		{
-			char* str = *argv + strLen("-l");
-			if (len)
-			{
-				code = ERR_CMD_DUPLICATE;
-				break;
-			}
-			if (!decIsValid(str) || decCLZ(str) || strLen(str) != 3 ||
-				(len = (size_t)decToU32(str)) % 64 || len < 128 || len > 256)
-			{
-				code = ERR_CMD_PARAMS;
-				break;
-			}
-			len /= 4, ++argv, --argc;
-		}
-		else if (strEq(*argv, "-pass"))
+		if (strEq(*argv, "-pass"))
 		{
 			if (pwd)
 			{
@@ -372,6 +348,11 @@ static err_t kgPrint(int argc, char* argv[])
 				break;
 			}
 			++argv, --argc;
+			if (!argc)
+			{
+				code = ERR_BAD_PARAMS;
+				break;
+			}
 			code = cmdPwdRead(&pwd, *argv);
 			if (code != ERR_OK)
 				break;
@@ -384,27 +365,26 @@ static err_t kgPrint(int argc, char* argv[])
 			break;
 		}
 	}
-	if (code == ERR_OK && (!pwd || argc != 1))
+	if (code == ERR_OK && (!pwd || argc != 2))
 		code = ERR_CMD_PARAMS;
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	// проверить файл-контейнер
-	code = cmdFileValExist(argc, argv);
+	code = cmdFileValExist(1, argv);
+	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
+	// проверить выходной файл
+	code = cmdFileValNotExist(1, argv + 1);
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	// определить длину личного ключа
-	if (len == 0)
-	{
-		code = cmdPrivkeyRead(0, &len, *argv, pwd);
-		ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
-	}
-	// выделить память и разметить ее
-	code = cmdBlobCreate(state, len + 2 * len + 4 * len + 1);
+	code = cmdPrivkeyRead(0, &len, argv[0], pwd);
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
-	privkey = (octet*)state;
+	// выделить память и разметить ее
+	code = cmdBlobCreate(stack, len + 2 * len);
+	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
+	privkey = (octet*)stack;
 	pubkey = privkey + len;
-	hex = (char*)(pubkey + 2 * len);
 	// определить личный ключ
-	code = cmdPrivkeyRead(privkey, &len, *argv, pwd);
-	ERR_CALL_HANDLE(code, (cmdBlobClose(state), cmdPwdClose(pwd)));
+	code = cmdPrivkeyRead(privkey, &len, argv[0], pwd);
+	ERR_CALL_HANDLE(code, (cmdBlobClose(stack), cmdPwdClose(pwd)));
 	// определить открытый ключ
 	if (len == 32)
 		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1");
@@ -414,11 +394,95 @@ static err_t kgPrint(int argc, char* argv[])
 		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.3");
 	if (code == ERR_OK)
 		code = bignCalcPubkey(pubkey, params, privkey);
-	ERR_CALL_HANDLE(code, (cmdBlobClose(state), cmdPwdClose(pwd)));
+	ERR_CALL_HANDLE(code, (cmdBlobClose(stack), cmdPwdClose(pwd)));
+	// записать открытый ключ
+	code = cmdFileWrite(argv[1], pubkey, len * 2);
+	cmdBlobClose(stack);
+	cmdPwdClose(pwd);
+	return code;
+}
+
+/*
+*******************************************************************************
+Печать
+
+print -pass <scheme> <privkey>
+*******************************************************************************
+*/
+
+static err_t kgPrint(int argc, char* argv[])
+{
+	err_t code = ERR_OK;
+	cmd_pwd_t pwd = 0;
+	bign_params params[1];
+	void* stack;
+	size_t len = 0;
+	octet* privkey;
+	octet* pubkey;
+	char* hex;
+	// самотестирование
+	code = kgSelfTest();
+	ERR_CALL_CHECK(code);
+	// разбор опций
+	while (argc && strStartsWith(*argv, "-"))
+	{
+		if (strEq(*argv, "-pass"))
+		{
+			if (pwd)
+			{
+				code = ERR_CMD_DUPLICATE;
+				break;
+			}
+			++argv, --argc;
+			if (!argc)
+			{
+				code = ERR_BAD_PARAMS;
+				break;
+			}
+			code = cmdPwdRead(&pwd, *argv);
+			if (code != ERR_OK)
+				break;
+			ASSERT(cmdPwdIsValid(pwd));
+			++argv, --argc;
+		}
+		else
+		{
+			code = ERR_CMD_PARAMS;
+			break;
+		}
+	}
+	if (code == ERR_OK && (!pwd || argc != 1))
+		code = ERR_CMD_PARAMS;
+	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
+	// проверить файл-контейнер
+	code = cmdFileValExist(1, argv);
+	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
+	// определить длину личного ключа
+	code = cmdPrivkeyRead(0, &len, argv[0], pwd);
+	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
+	// выделить память и разметить ее
+	code = cmdBlobCreate(stack, len + 2 * len + 4 * len + 1);
+	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
+	privkey = (octet*)stack;
+	pubkey = privkey + len;
+	hex = (char*)(pubkey + 2 * len);
+	// определить личный ключ
+	code = cmdPrivkeyRead(privkey, &len, argv[0], pwd);
+	ERR_CALL_HANDLE(code, (cmdBlobClose(stack), cmdPwdClose(pwd)));
+	// определить открытый ключ
+	if (len == 32)
+		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1");
+	else if (len == 48)
+		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.2");
+	else
+		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.3");
+	if (code == ERR_OK)
+		code = bignCalcPubkey(pubkey, params, privkey);
+	ERR_CALL_HANDLE(code, (cmdBlobClose(stack), cmdPwdClose(pwd)));
 	// печатать открытый ключ
 	hexFrom(hex, pubkey, len * 2);
 	printf("%s\n", hex);
-	cmdBlobClose(state);
+	cmdBlobClose(stack);
 	cmdPwdClose(pwd);
 	return code;
 }
@@ -434,9 +498,9 @@ chp -passin <scheme> -passout <scheme> <privkey>
 static err_t kgChp(int argc, char* argv[])
 {
 	err_t code = ERR_OK;
-	size_t len = 0;
 	cmd_pwd_t pwdin = 0;
 	cmd_pwd_t pwdout = 0;
+	size_t len = 0;
 	octet* privkey;
 	// самотестирование
 	code = kgSelfTest();
@@ -444,23 +508,7 @@ static err_t kgChp(int argc, char* argv[])
 	// разбор опций
 	while (argc && strStartsWith(*argv, "-"))
 	{
-		if (strStartsWith(*argv, "-l"))
-		{
-			char* str = *argv + strLen("-l");
-			if (len)
-			{
-				code = ERR_CMD_DUPLICATE;
-				break;
-			}
-			if (!decIsValid(str) || decCLZ(str) || strLen(str) != 3 ||
-				(len = (size_t)decToU32(str)) % 64 || len < 128 || len > 256)
-			{
-				code = ERR_CMD_PARAMS;
-				break;
-			}
-			len /= 4, ++argv, --argc;
-		}
-		else if (strEq(*argv, "-passin"))
+		if (strEq(*argv, "-passin"))
 		{
 			if (pwdin)
 			{
@@ -468,6 +516,11 @@ static err_t kgChp(int argc, char* argv[])
 				break;
 			}
 			++argv, --argc;
+			if (!argc)
+			{
+				code = ERR_CMD_PARAMS;
+				break;
+			}
 			code = cmdPwdRead(&pwdin, *argv);
 			if (code != ERR_OK)
 				break;
@@ -482,6 +535,11 @@ static err_t kgChp(int argc, char* argv[])
 				break;
 			}
 			++argv, --argc;
+			if (!argc)
+			{
+				code = ERR_CMD_PARAMS;
+				break;
+			}
 			code = cmdPwdRead(&pwdout, *argv);
 			if (code != ERR_OK)
 				break;
@@ -498,29 +556,23 @@ static err_t kgChp(int argc, char* argv[])
 		code = ERR_CMD_PARAMS;
 	ERR_CALL_HANDLE(code, (cmdPwdClose(pwdout), cmdPwdClose(pwdin)));
 	// проверить файл-контейнер
-	code = cmdFileValExist(argc, argv);
+	code = cmdFileValExist(1, argv);
 	ERR_CALL_HANDLE(code, (cmdPwdClose(pwdout), cmdPwdClose(pwdin)));
 	// определить длину личного ключа
-	if (len == 0)
-	{
-		code = cmdPrivkeyRead(0, &len, *argv, pwdin);
-		ERR_CALL_HANDLE(code, (cmdPwdClose(pwdout), cmdPwdClose(pwdin)));
-	}
+	code = cmdPrivkeyRead(0, &len, argv[0], pwdin);
+	ERR_CALL_HANDLE(code, (cmdPwdClose(pwdout), cmdPwdClose(pwdin)));
 	// выделить память
 	code = cmdBlobCreate(privkey, len);
 	ERR_CALL_HANDLE(code, (cmdPwdClose(pwdout), cmdPwdClose(pwdin)));
 	// читать личный ключ
-	code = cmdPrivkeyRead(privkey, &len, *argv, pwdin);
+	code = cmdPrivkeyRead(privkey, &len, argv[0], pwdin);
 	cmdPwdClose(pwdin);
 	ERR_CALL_HANDLE(code, (cmdBlobClose(privkey), cmdPwdClose(pwdout)));
 	// запустить ГСЧ
 	code = cmdRngStart(TRUE);
 	ERR_CALL_HANDLE(code, (cmdBlobClose(privkey), cmdPwdClose(pwdout)));
-	// тестировать ГСЧ
-	code = cmdRngTest();
-	ERR_CALL_HANDLE(code, (cmdBlobClose(privkey), cmdPwdClose(pwdout)));
 	// сохранить личный ключ
-	code = cmdPrivkeyWrite(privkey, len, *argv, pwdout);
+	code = cmdPrivkeyWrite(privkey, len, argv[0], pwdout);
 	cmdBlobClose(privkey);
 	cmdPwdClose(pwdout);
 	return code;
@@ -544,6 +596,8 @@ int kgMain(int argc, char* argv[])
 		code = kgGen(argc - 1, argv + 1);
 	else if (strEq(argv[0], "val"))
 		code = kgVal(argc - 1, argv + 1);
+	else if (strEq(argv[0], "pub"))
+		code = kgPub(argc - 1, argv + 1);
 	else if (strEq(argv[0], "print"))
 		code = kgPrint(argc - 1, argv + 1);
 	else if (strEq(argv[0], "chp"))
