@@ -13,12 +13,16 @@ add_executable(bee2cmd
 	core/cmd_sig.c
 	core/cmd_term.c
 	core/whereami.c
+	core/cmd_aead.c
+	core/cmd_aead_pke.c
+	core/cmd_aead_pwd.c
 	bsum/bsum.c
 	cvc/cvc.c
 	kg/kg.c
 	pwd/pwd.c
 	sig/sig.c
 	ver/ver.c
+	aead/aead.c
 	cmd_main.c
 )
 

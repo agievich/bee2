@@ -568,6 +568,264 @@ err_t cmdSigPrint(
 	const char* sig_file		/*!< [in] файл подписи */
 );
 
+/*
+*******************************************************************************
+Аутентифицированное шифрование с присоединенными данными
+*******************************************************************************
+*/
+
+/*! \brief Длина ключа */
+#define CMD_AEAD_KEY_SIZE (size_t)32
+
+/*! \brief Максимальная длина ключевого материала */
+#define CMD_KEYLOAD_MAX_SIZE (size_t)1024
+
+/*! \brief Заголовок зашифрованного файла */
+typedef struct {
+    octet keyload[CMD_KEYLOAD_MAX_SIZE];    /*!< ключевой материал */
+    octet iv[16];                           /*!< синхропосылка */
+    size_t itag;                            /*!< частоста имитовставок */
+} cmd_aeadhead_t;
+
+/*! \brief Максимальный размер DER-кода заголовка */
+#define AEAD_HEAD_MAX_DER (size_t)(sizeof(cmd_aeadhead_t) + 128)
+
+/*
+*******************************************************************************
+Описание типа ключевого материала
+*******************************************************************************
+*/
+
+/*!	\brief Функция кодирования ключевого материала.
+
+    \remark Der-код ключевого материала располагается в контейнере SEQUENCE
+    с тегом этого материала. Требуется закодировать только содержание материала
+    \return длина DER-кода или SIZE_MAX в случае ошибки
+ */
+typedef size_t (*keyload_encode_i)(
+        octet* der,                         /*!< [out] DER-код */
+        const octet *keload                 /*!< [in]  ключевой материал */
+);
+
+/*!	\brief Функция декодирования ключевого материала
+
+    \return реальная длина DER-кода или SIZE_MAX в случае ошибки
+ */
+typedef size_t (*keyload_decode_i)(
+        const octet* der,                  /*!< [in]   DER-код */
+        octet *keload,                     /*!< [out]  ключевой материал */
+        size_t count                       /*!< [out]  максимальная длина DER-кода */
+);
+
+/*!	\brief Функция защиты сеансового ключа
+
+    \return ERR_OK в случае успеха и код ошибки в противном случае
+*/
+typedef err_t (*keyload_wrap_i)(
+        octet *keload,                          /*!< [out] ключевой материал */
+        const void *keyload_wrap,               /*!< [in] параметры для защиты */
+        const octet key[CMD_AEAD_KEY_SIZE]      /*!< [in] сеансовый ключ */
+);
+
+/*!	\brief Функция снятия защиты сеансового ключа
+
+    \return ERR_OK в случае успеха и код ошибки в противном случае
+*/
+typedef err_t (*keyload_unwrap_i)(
+        const octet* keyload,                   /*!< [in] ключевой материал */
+        const void* keyload_unwrap,             /*!< [in] параметры для снятия защиты */
+        octet key[CMD_AEAD_KEY_SIZE]            /*!< [out] сеансовый ключ */
+);
+
+/*!	\brief Тип ключевого материала */
+typedef struct {
+    const u32 tag;                          /*!< тег материала */
+    const keyload_encode_i encode;          /*!< функция кодирования */
+    const keyload_decode_i decode;          /*!< функция декодирования */
+    const keyload_wrap_i   wrap;            /*!< функция защиты сеансового ключа*/
+    const keyload_unwrap_i unwrap;          /*!< функция снятия защиты сеансового ключа*/
+} cmd_keyload_t;
+
+// Ключевой материал PKE
+
+/*! \brief Тип ключевого материала PKE
+
+    Cеансовый ключ защищается на открытом ключе получателя с помощью
+    алгоритма bign-keytransport.
+
+    @see keyload_pke_t - cодержание ключевого материала
+    @see keyload_pke_wrap_t - параметры для защиты сеансового ключа
+    @see keyload_pke_unwrap_t - параметры для снятия защиты сеансового ключа
+*/
+const cmd_keyload_t* cmdAeadKeyloadPKE();
+
+/*! \brief Тег ключевого материала PKE*/
+#define CMD_KEYLOAD_TAG_PKE 0x61
+
+/*! Содержание ключевого материала PKE */
+typedef struct {
+    octet ekey[64 + 16 + CMD_AEAD_KEY_SIZE];    /*!< защищенный ключ */
+    octet cert[512];                            /*!< сертификат получателя */
+    size_t cert_len;                            /*!< длина сертификата */
+} keyload_pke_t;
+
+/*! Параметры защиты сеансового ключа в режиме PKE */
+typedef struct  {
+    octet pubkey[128];             /*!< открытый ключ получателя */
+    size_t pubkey_len;             /*!< длина открытого ключа (64/96/128) */
+    octet cert[512];               /*!< сертификат получателя */
+    size_t cert_len;               /*!< длина сертификата */
+} keyload_pke_wrap_t;
+
+/*! Параметры снятия защиты сансового ключа в режиме PKE */
+typedef struct {
+    octet privkey[64];             /*!< личный ключ получателя */
+    size_t privkey_len;            /*!< длина личного ключа (32/48/64) */
+} keyload_pke_unwrap_t;
+
+// Ключевой материал PWD
+
+/** \brief Тип ключевого материала PWD
+
+    Сеансовый ключ защищается алгоритмом beltKWP при помощи ключа, построенного
+    по паролю алгоритмом beltPBKDF2.
+
+    @see keyload_pwd_t - cодержание ключевого материала
+    @see keyload_pwd_wrap_t - параметры для защиты сеансового ключа
+    @see keyload_pwd_unwrap_t - параметры для снятия защиты сеансового ключа
+ */
+const cmd_keyload_t* cmdAeadKeyloadPWD();
+
+/*! \brief Тег ключевого материала PWD*/
+#define CMD_KEYLOAD_TAG_PWD 0x62
+
+/*! Содержание ключевого материала PWD */
+typedef struct {
+    octet ekey[CMD_AEAD_KEY_SIZE + 16];         /*!< защищенный сеансовый ключ */
+    octet salt[8];                              /*!< "соль" алгоритма beltPBKDF2 */
+    size_t iter;                                /*!< число итераций алгоритма beltPBKDF2 */
+} keyload_pwd_t;
+
+/*! Параметры защиты сеансового ключа в режиме PWD */
+typedef struct {
+    octet pwd[256];                 /*!< пароль */
+    size_t pwd_len;                 /*!< длина пароля */
+    octet salt[8];                  /*!< "соль" алгоритма beltPBKDF2 */
+    size_t iter;                    /*!< число итераций алгоритма beltPBKDF2 */
+} keyload_pwd_wrap_t;
+
+/*! Параметры снятия защиты сеансового ключа в режиме PWD */
+typedef struct {
+    octet pwd[256];                 /*!< пароль */
+    size_t pwd_len;                 /*!< длина пароля */
+} keyload_pwd_unwrap_t;
+
+//Операции с заголовком и ключевым материалом
+
+/*! \brief Защита сеансового ключа
+
+    Стандартные типы ключевого материала:
+        cmdAeadKeyloadPKE (сеансовый ключ защищается на открытом ключе получателя),
+        cmdAeadKeyloadPWD (сеансовым ключем является общий секретный ключ)
+
+    \return ERR_OK, если защита проведена успешно, и
+    код ошибки в обратном случае
+ */
+err_t cmdAeadWrapKey(
+        octet *keload,                        /*!< [out] защищенный ключевой материал */
+        const cmd_keyload_t* keyload_type,    /*!< [in]  тип ключевого материала */
+        const void *keyload_wrap,             /*!< [in]  параметры защиты */
+        const octet key[CMD_AEAD_KEY_SIZE]    /*!< [in]  сеансовый ключ */
+);
+
+/*! \brief Снятие защиты сеансового ключа
+
+    Стандартные типы ключевого материала:
+        cmdAeadKeyloadPKE (сеансовый ключ защищается на открытом ключе получателя),
+        cmdAeadKeyloadPWD (сеансовым ключем является общий секретный ключ)
+
+    \return ERR_OK, если защита снята успешно, и
+    код ошибки в обратном случае
+ */
+err_t cmdAeadUnwrapKey(
+        const octet* keyload,                 /*!< [in]  защищенный ключевой материал */
+        const cmd_keyload_t* keyload_type,    /*!< [in]  тип ключевого материала */
+        const void* keyload_unwrap,           /*!< [in]  параметры снятия защиты */
+        octet key[CMD_AEAD_KEY_SIZE]          /*!< [out] сеансовый ключ */
+);
+
+/*! \brief Чтение заголовка зашифрованного файла
+
+    Стандартные типы ключевого материала:
+        cmdAeadKeyloadPKE (сеансовый ключ защищается на открытом ключе получателя),
+        cmdAeadKeyloadPWD (сеансовым ключем является общий секретный ключ)
+
+    \return ERR_OK, если заголовок прочитан успешно, и код
+    ошибки в обратном случае
+ */
+err_t cmdAeadHeaderRead(
+        size_t* der_len,                      /*!< [out] длина DER-кода (optional) */
+        octet* der,                           /*!< [out] DER-код (optional) */
+        cmd_aeadhead_t* header,               /*!< [out] заголовок */
+        const cmd_keyload_t* keyload_type,    /*!< [in]  тип ключевого материала */
+        const char* file_name                 /*!< [in]  имя файла */
+);
+
+/*! \brief Запись заголовка в зашифрованный файл
+
+    Стандартные типы ключевого материала:
+        cmdAeadKeyloadPKE (сеансовый ключ защищается на открытом ключе получателя),
+        cmdAeadKeyloadPWD (сеансовым ключем является общий секретный ключ)
+
+    \return ERR_OK, если заголовок записан успешно, и код
+    ошибки в обратном случае
+ */
+err_t cmdAeadHeaderWrite(
+        size_t* der_len,                      /*!< [out] длина DER-кода (optinal) */
+        octet* der,                           /*!< [out] DER-код (optinal) */
+        const cmd_aeadhead_t* header,         /*!< [in]  заголовок */
+        const cmd_keyload_t* keyload_type,    /*!< [in]  тип ключевого материала */
+        const char* file_name                 /*!< [in] имя файла */
+);
+
+// Шифрование и дешифрование
+
+/*! \brief Аутентифицированное шифрование данных по схеме CHE
+
+    Стандартные типы ключевого материала:
+        cmdAeadKeyloadPKE (сеансовый ключ защищается на открытом ключе получателя),
+        cmdAeadKeyloadPWD (сеансовый ключ защищается на пароле)
+
+    \return ERR_OK, если файл зашифрован успешно, и код ошибки
+    в обратном случае
+ */
+err_t cmdAeadEncrypt(
+        const char* file,                       /*!< [in] имя шифруемого файла */
+        const char* encrypted_file,             /*!< [in] имя выходного файла */
+        size_t itag,                            /*!< [in] период промежуточных имитовставок (МБ) */
+        const cmd_keyload_t* keyload_type,      /*!< [in] тип ключевого материала */
+        const void* wrap_params,                /*!< [in] параметры для защиты сеансового ключа */
+        const char* adata                       /*!< [in] файл с присоединенными данными */
+);
+
+/*! \brief Дешифрование аутентифицированного сообщения по схеме CHE
+
+    Стандартные типы ключевого материала:
+        cmdAeadKeyloadPKE (сеансовый ключ защищается на открытом ключе получателя),
+        cmdAeadKeyloadPWD (сеансовый ключ защищается на пароле)
+
+    \return ERR_OK, если файл расшифрован успешно, и код ошибки
+    в обратном случае
+ */
+err_t cmdAeadDecrypt(
+        const char* file,                       /*!< [in] имя зашифрованного файла */
+        const char* decrypted_file,             /*!< [in] имя выходного файла */
+        const cmd_keyload_t* keyload_type,      /*!< [in] тип ключевого материала */
+        const void* unwrap_params,              /*!< [in] параметры для снятия защиты сеансового ключа */
+        const char* adata                       /*!< [in] файл с присоединенными данными */
+);
+
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

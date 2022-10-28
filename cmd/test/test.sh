@@ -228,6 +228,114 @@ test_sig(){
   return 0
 }
 
+test_aead(){
+
+  rm -rf test_file_decoded test_file_encoded pubkey1 pubkey2\
+      || return 2
+
+  $bee2cmd kg pub -pass pass:trent privkey1 pubkey1 \
+      || return 1
+  $bee2cmd kg pub -pass pass:alice privkey2 pubkey2 \
+      || return 1
+
+  head -c 5000000 /dev/urandom  > test_file_aead
+
+  #pke test
+  $bee2cmd aead enc -kld PKE -cert cert1 -pubkey pubkey1 test_file_aead test_file_encoded \
+      || return 1
+  $bee2cmd aead dec -kld PKE -pass pass:trent -privkey privkey1 test_file_encoded test_file_decoded \
+      || return 1
+  diff test_file_aead test_file_decoded \
+      || return 1
+
+  rm -rf test_file_decoded\
+      || return 2
+
+  $bee2cmd aead dec -kld PKE -pass pass:alice -privkey privkey2 test_file_encoded test_file_decoded \
+      && return 1
+  $bee2cmd aead val -kld PKE -cert cert1 -pass pass:trent -privkey privkey1 test_file_encoded \
+      || return 1
+  $bee2cmd aead val -kld PKE -pass pass:trent -privkey privkey1 test_file_encoded \
+      || return 1
+  $bee2cmd aead val -kld PKE -cert cert1 test_file_encoded \
+      && return 1
+  $bee2cmd aead val -kld PKE test_file_encoded \
+      && return 1
+  $bee2cmd aead val -kld PKE -cert cert1 test_file_encoded \
+      && return 1
+  $bee2cmd aead val -kld PKE -pass pass:alice -privkey privkey2 test_file_encoded \
+      && return 1
+
+  rm -rf test_file_decoded test_file_encoded \
+      || return 2
+
+  #with itag
+  $bee2cmd aead enc -kld PKE -cert cert1 -pubkey pubkey1 --itag1 test_file_aead test_file_encoded \
+      || return 1
+  $bee2cmd aead dec -kld PKE -pass pass:trent -privkey privkey1 test_file_encoded test_file_decoded \
+      || return 1
+  diff test_file_aead test_file_decoded \
+      || return 1
+
+  rm -rf test_file_decoded test_file_encoded \
+        || return 2
+
+  #with itag and adata
+  $bee2cmd aead enc -kld PKE -cert cert1 -pubkey pubkey1 --itag1 -adata cert1 test_file_aead test_file_encoded \
+      || return 1
+  $bee2cmd aead dec -kld PKE -pass pass:trent -privkey privkey1 -adata cert1 test_file_encoded test_file_decoded \
+      || return 1
+  diff test_file_aead test_file_decoded \
+      || return 1
+
+  rm -rf test_file_decoded test_file_encoded \
+      || return 2
+
+  #pwd test
+  $bee2cmd aead enc -kld PWD -pass pass:trent test_file_aead test_file_encoded \
+      || return 1
+  $bee2cmd aead val -kld PWD -pass pass:trent test_file_encoded \
+      || return 1
+  $bee2cmd aead val -kld PWD -pass pass:wrongpass test_file_encoded \
+      && return 1
+  $bee2cmd aead dec -kld PWD -pass pass:wrongpass test_file_encoded test_file_decoded \
+      && return 1
+  $bee2cmd aead dec -kld PWD -pass pass:trent test_file_encoded test_file_decoded \
+      || return 1
+  diff test_file_aead test_file_decoded \
+      || return 1
+
+  rm -rf test_file_decoded test_file_encoded \
+        || return 2
+
+  #with itag
+  $bee2cmd aead enc -kld PWD -pass pass:trent --itag1 test_file_aead test_file_encoded \
+      || return 1
+  $bee2cmd aead val -kld PWD -pass pass:trent test_file_encoded \
+      || return 1
+  $bee2cmd aead dec -kld PWD -pass pass:trent test_file_encoded test_file_decoded \
+      || return 1
+  diff test_file_aead test_file_decoded \
+      || return 1
+
+  rm -rf test_file_decoded test_file_encoded \
+      || return 2
+
+  #with itag and adata
+  $bee2cmd aead enc -kld PWD -pass pass:trent --itag1 -adata cert1 test_file_aead test_file_encoded \
+      || return 1
+  $bee2cmd aead dec -kld PWD -pass pass:trent -adata cert1 test_file_encoded test_file_decoded \
+      || return 1
+  diff test_file_aead test_file_decoded \
+      || return 1
+
+  rm -rf test_file_decoded test_file_encoded \
+      || return 2
+
+  return 0
+}
+
+
 run_test() {
   echo -n "Testing $1... "
   (test_$1 > /dev/null)
@@ -238,4 +346,4 @@ run_test() {
   fi
 } 
 
-run_test ver && run_test pwd && run_test kg && run_test cvc && run_test sig
+run_test ver && run_test pwd && run_test kg && run_test cvc && run_test sig && run_test aead
