@@ -4,7 +4,7 @@
 \brief Time and timers
 \project bee2 [cryptographic library]
 \created 2012.05.10
-\version 2022.10.27
+\version 2022.10.28
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -129,9 +129,9 @@ tm_ticks_t tmFreq()
 {
     mach_timebase_info_data_t tb_info;
     tm_ticks_t freq = 1000000000u;
-	// tb_info <- {num, denom}: 1 tick = num / denom * 1 ns
+	// tb_info <- {numer, denom}: 1 tick = numer / denom * 1 ns
 	VERIFY(mach_timebase_info(&tb_info) == KERN_SUCCESS);
-	// 1 s = 10^9 * denom / num ticks
+	// 1 s = 10^9 * denom / numer ticks
 	freq *= tb_info.denom, freq /= tb_info.numer;
     return freq;
 }
