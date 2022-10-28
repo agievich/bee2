@@ -3,7 +3,7 @@ rem ===========================================================================
 rem \brief Testing command-line interface
 rem \project bee2evp/cmd
 rem \created 2022.06.24
-rem \version 2022.10.27
+rem \version 2022.10.28
 rem ===========================================================================
 
 rem ===========================================================================
@@ -147,7 +147,7 @@ bee2cmd kg pub -pass pass:alice privkey2 pubkey2
 if %ERRORLEVEL% neq 0 goto Error
 
 for %%A in (pubkey2) do set pubkey2_len=%%~zA
-if %pubkey1_len% neq 64 goto Error
+if %pubkey2_len% neq 64 goto Error
 
 echo ****** OK
 
@@ -267,7 +267,7 @@ if %ERRORLEVEL% neq 0 goto Error
 bee2cmd sig vfy -anchor cert0 ff ss
 if %ERRORLEVEL% equ 0 goto Error
 
-bee2cmd sig sign -cert "cert2 cert1 cert0" -pass pass:alice privkey2 ff ff
+bee2cmd sig sign -certs "cert2 cert1 cert0" -pass pass:alice privkey2 ff ff
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd sig vfy -pubkey pubkey2 ff ff
@@ -280,7 +280,7 @@ bee2cmd sig vfy -anchor cert1 ff ff
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd sig vfy -anchor cert0 ff ff
-if %ERRORLEVEL% equ 0 goto Error
+if %ERRORLEVEL% neq 0 goto Error
 
 del /q ss 2> nul
 

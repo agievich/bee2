@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: main
 \project bee2/cmd
 \created 2022.06.07
-\version 2022.10.22
+\version 2022.10.28
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -81,6 +81,30 @@ int cmdUsage()
 
 /*
 *******************************************************************************
+Самопроверка подписи
+
+\remark Используется проверочный открытый ключ Q -- базовая точка G кривой
+bign-curve256v1: Q = G. Этому ключу соответствует личный ключ d = 1.
+*******************************************************************************
+*/
+
+static err_t cmdSelfCheck()
+{
+	static const octet pubkey[64] = {
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x93, 0x6A, 0x51, 0x04, 0x18, 0xCF, 0x29, 0x1E,
+		0x52, 0xF6, 0x08, 0xC4, 0x66, 0x39, 0x91, 0x78,
+		0x5D, 0x83, 0xD6, 0x51, 0xA3, 0xC9, 0xE4, 0x5C,
+		0x9F, 0xD6, 0x16, 0xFB, 0x3C, 0xFC, 0xF7, 0x6B,
+	};
+	return cmdSigSelfVerify(pubkey, sizeof(pubkey));
+}
+
+/*
+*******************************************************************************
 Инициализация
 *******************************************************************************
 */
@@ -139,7 +163,9 @@ int main(int argc, char* argv[])
 	// справка
 	if (argc < 2)
 		return cmdUsage();
-	// вызов команды
+	// демонстрационный контроль целостности (результат игнорируется!)
+	cmdSelfCheck();
+	// обработка команды
 	for (pos = 0; pos < _count; ++pos)
 		if (strEq(argv[1], _cmds[pos].name))
 			return _cmds[pos].fn(argc - 1,  argv + 1);

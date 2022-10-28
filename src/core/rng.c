@@ -4,7 +4,7 @@
 \brief Entropy sources and random number generators
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2022.10.27
+\version 2022.10.28
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -314,7 +314,7 @@ static err_t rngTRNG2Read(void* buf, size_t* read, size_t count)
 
 Реализация:
 -	таймер может быть источником случайности, если он обновляется не реже
-	20 млн. раз в секунду (20 МГц);
+	10^9 раз в секунду (1 ГГц);
 -	для формирования одного выходного бита используется сумма битов четности 
 	8-ми разностей между показаниями таймера.
 
@@ -329,14 +329,12 @@ static err_t rngTRNG2Read(void* buf, size_t* read, size_t count)
 
 \todo Остановка на Windows, если параллельно запущено несколько ресурсоемких
 процессов.
-
-\todo Уточнение (обоснование выбора) порога частоты.
 *******************************************************************************
 */
 
 static bool_t rngTimerIsAvail()
 {
-	return tmFreq() >= 20000000u;
+	return tmFreq() >= 1000000000u;
 }
 
 static err_t rngTimerRead(void* buf, size_t* read, size_t count)

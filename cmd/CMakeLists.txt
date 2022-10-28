@@ -23,8 +23,8 @@ add_executable(bee2cmd
 )
 
 if(WIN32)
-  add_executable(bee2cmd
-    stamp/stamp.c
+  target_sources(bee2cmd
+    PRIVATE stamp/stamp.c
   )
 endif()
 
