@@ -132,7 +132,7 @@ tm_ticks_t tmFreq()
 	// tb_info <- {num, denom}: 1 tick = num / denom * 1 ns
 	VERIFY(mach_timebase_info(&tb_info) == KERN_SUCCESS);
 	// 1 s = 10^9 * denom / num ticks
-	freq *= tb_info.denom, freq /= tb_info.num;
+	freq *= tb_info.denom, freq /= tb_info.numer;
     return freq;
 }
 
