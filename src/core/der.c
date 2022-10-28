@@ -307,6 +307,32 @@ bool_t derStartsWith(const octet der[], size_t count, u32 tag)
 *******************************************************************************
 */
 
+size_t derDecTL(u32* tag, size_t* len, const octet der[], size_t count)
+{
+	size_t t_count;
+	size_t l_count;
+	size_t l;
+	ASSERT(memIsValid(der, count));
+	// обработать T
+	ASSERT(tag == 0 || memIsDisjoint2(tag, 4, der, count));
+	t_count = derTDec(tag, der, count);
+	if (t_count == SIZE_MAX)
+		return SIZE_MAX;
+	// обработать L
+	ASSERT(count >= t_count);
+	l_count = derLDec(&l, der + t_count, count - t_count);
+	if (l_count == SIZE_MAX || t_count + l_count > count)
+		return SIZE_MAX;
+	if (len)
+	{
+		ASSERT(memIsDisjoint2(len, O_PER_S, der, count));
+		ASSERT(tag == 0 || memIsDisjoint2(len, O_PER_S, tag, 4));
+		*len = l;
+	}
+	// все нормально
+	return t_count + l_count + l;
+}
+
 size_t derDec(u32* tag, const octet** val, size_t* len, const octet der[],
 	size_t count)
 {

@@ -3,9 +3,8 @@
 \file rng_test.c
 \brief Tests for random number generators
 \project bee2/test
-\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.10
-\version 2021.05.18
+\version 2022.10.21
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -34,7 +33,7 @@ bool_t rngTest()
 	// пробежать источники
 	for (pos = 0; pos < COUNT_OF(sources); ++pos)
 	{
-		if (rngReadSource(&read, buf, 2500, sources[pos]) == ERR_OK)
+		if (rngESRead(&read, buf, 2500, sources[pos]) == ERR_OK)
 		{
 			if (read == 2500)
 				hexFrom(hex, buf, 16),
@@ -67,6 +66,7 @@ bool_t rngTest()
 		rngTestFIPS2(buf) ? '+' : '-',
 		rngTestFIPS3(buf) ? '+' : '-',
 		rngTestFIPS4(buf) ? '+' : '-');
+	rngRekey();
 	rngStepR2(buf, 2500, 0);
 	hexFrom(hex, buf, 16);
 	printf("rngStepR2:        %s... [FIPS: 1%c 2%c 3%c 4%c]\n",

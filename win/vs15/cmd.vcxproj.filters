@@ -30,6 +30,12 @@
     <Filter Include="Source Files\cvc">
       <UniqueIdentifier>{22ba03ac-1a5c-44d7-9c8d-024b44b15711}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\sig">
+      <UniqueIdentifier>{7d63dbed-c2a6-4d12-ad02-decbc03a946f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\core">
+      <UniqueIdentifier>{b2ee0400-483e-4ae5-901e-56f2bd565271}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\cmd\bsum\bsum.c">
@@ -38,16 +44,7 @@
     <ClCompile Include="..\..\cmd\kg\kg.c">
       <Filter>Source Files\kg</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\cmd\cmd_core.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\cmd\cmd_main.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\cmd\cmd_pwd.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\cmd\cmd_privkey.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\cmd\stamp\stamp.c">
@@ -61,6 +58,36 @@
     </ClCompile>
     <ClCompile Include="..\..\cmd\cvc\cvc.c">
       <Filter>Source Files\cvc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\sig\sig.c">
+      <Filter>Source Files\sig</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\core\cmd_arg.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\core\cmd_file.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\core\cmd_privkey.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\core\cmd_pwd.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\core\cmd_rng.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\core\cmd_sig.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\core\cmd_term.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\core\cmd_cvc.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\core\whereami.c">
+      <Filter>Source Files\core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
