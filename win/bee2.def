@@ -267,5 +267,6 @@ EXPORTS
 	btokCVCWrap					@1503
 	btokCVCUnwrap				@1504
 	btokCVCIss					@1505
-	btokCVCVal					@1506
-	btokCVCVal2					@1507
+	btokCVCLen					@1506
+	btokCVCVal					@1507
+	btokCVCVal2					@1508

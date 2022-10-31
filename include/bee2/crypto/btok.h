@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): cryptographic tokens
 \project bee2 [cryptographic library]
 \created 2022.07.04
-\version 2022.10.21
+\version 2022.10.31
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -203,6 +203,19 @@ err_t btokCVCIss(
 	size_t certa_len,			/*!< [in] длина certa в октетах */
 	const octet privkeya[],		/*!< [in] личный ключ издателя */
 	size_t privkeya_len			/*!< [in] длина privkeya в октетах */
+);
+
+/*!	\brief Точная длина CV-сертификата
+
+	Определяется точная длина CV-сертификата, размещенного в префиксе
+	DER-кода [count]der.
+	\return SIZE_MAX в случае ошибки и длина сертификата в противном
+	случае.
+	\remark Корректность CV-сертификата сертификата не проверяется.
+*/
+size_t btokCVCLen(
+	const octet der[],			/*!< [in] DER-код */
+	size_t count				/*!< [in] длина privkey в октетах */
 );
 
 /*!	\brief Проверка CV-сертификата

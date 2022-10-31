@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: signing files
 \project bee2/cmd
 \created 2022.08.20
-\version 2022.10.27
+\version 2022.10.31
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -64,7 +64,7 @@ static bool_t cmdSigSeemsValid(const cmd_sig_t* sig)
 	// проверить сертификаты
 	for (certs_len = sig->certs_len, cert = sig->certs; certs_len; )
 	{
-		cert_len = derDec2(0, 0, cert, certs_len, 0x7F21);
+		cert_len = btokCVCLen(cert, certs_len);
 		if (cert_len == SIZE_MAX)
 			return FALSE;
 		cert += cert_len, certs_len -= cert_len;
@@ -346,12 +346,12 @@ static err_t cmdSigCertsVal(const cmd_sig_t* sig)
 		return ERR_OK;
 	// найти и разобрать последний сертификат
 	certs_len = sig->certs_len, certa = sig->certs;
-	certa_len = derDec2(0, 0, certa, certs_len, 0x7F21);
+	certa_len = btokCVCLen(certa, certs_len);
 	ASSERT(certa_len != SIZE_MAX);
 	while (certs_len > certa_len)
 	{
 		certa += certa_len;
-		certa_len = derDec2(0, 0, certa, certs_len, 0x7F21);
+		certa_len = btokCVCLen(certa, certs_len);
 		ASSERT(certa_len != SIZE_MAX);
 		certs_len -= certa_len;
 	} 
@@ -362,12 +362,12 @@ static err_t cmdSigCertsVal(const cmd_sig_t* sig)
 	{
 		// определить сертификат эмитента
 		certs_len = sig->certs_len, cert = sig->certs;
-		cert_len = derDec2(0, 0, cert, certs_len, 0x7F21);
+		cert_len = btokCVCLen(cert, certs_len);
 		ASSERT(cert_len != SIZE_MAX);
 		while (cert + cert_len < certa)
 		{
 			cert += cert_len;
-			cert_len = derDec2(0, 0, cert, certs_len, 0x7F21);
+			cert_len = btokCVCLen(cert, certs_len);
 			ASSERT(cert_len != SIZE_MAX);
 			certs_len -= cert_len;
 		}
@@ -393,7 +393,7 @@ static err_t cmdSigCertsVal2(const cmd_sig_t* sig, const octet anchor[],
 	// один из сертификатов совпадает с anchor?
 	for (certs_len = sig->certs_len, cert = sig->certs; certs_len; )
 	{
-		cert_len = derDec2(0, 0, cert, certs_len, 0x7F21);
+		cert_len = btokCVCLen(cert, certs_len);
 		if (cert_len == SIZE_MAX)
 			return ERR_BAD_CERT;
 		if (cert_len == anchor_len && memEq(cert, anchor, cert_len))
@@ -458,7 +458,7 @@ static err_t cmdSigCertsGet(btok_cvc_t* cvc, size_t* cert_len,
 	if (offset >= sig->certs_len)
 		return ERR_BAD_INPUT;
 	// выделить сертификат
-	len = derDec2(0, 0, sig->certs + offset, sig->certs_len - offset, 0x7F21);
+	len = btokCVCLen(sig->certs + offset, sig->certs_len - offset);
 	code = len != SIZE_MAX ? ERR_OK : ERR_BAD_CERT;
 	ERR_CALL_CHECK(code);
 	// возвратить длину
@@ -484,7 +484,7 @@ static err_t cmdSigCertsMatch(const cmd_sig_t* sig, const octet privkey[],
 	if (!sig->certs_len)
 		return ERR_OK;
 	// выделить первый сертификат
-	cert_len = derDec2(0, 0, sig->certs, sig->certs_len, 0x7F21);
+	cert_len = btokCVCLen(sig->certs, sig->certs_len);
 	code = cert_len != SIZE_MAX ? ERR_OK : ERR_BAD_CERT;
 	ERR_CALL_CHECK(code);
 	// проверить соответствие
@@ -761,10 +761,12 @@ err_t cmdSigVerify2(const char* file, const char* sig_file,
 /*
 *******************************************************************************
 Самопроверка
+
+\thanks Gregory Pakosz [https://github.com/gpakosz/whereami]
 *******************************************************************************
 */
 
-extern int wai_getExecutablePath(char*, int, int*);
+#include "whereami.h"
 
 err_t cmdSigSelfVerify(const octet pubkey[], size_t pubkey_len)
 {

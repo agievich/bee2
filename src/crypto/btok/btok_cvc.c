@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): CV certificates
 \project bee2 [cryptographic library]
 \created 2022.07.04
-\version 2022.07.18
+\version 2022.10.31
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -591,6 +591,19 @@ err_t btokCVCIss(octet cert[], size_t* cert_len, btok_cvc_t* cvc,
 
 /*
 *******************************************************************************
+Точная длина CV-сертификата
+*******************************************************************************
+*/
+
+size_t btokCVCLen(const octet der[], size_t count)
+{
+	if (!memIsValid(der, count))
+		return SIZE_MAX;
+	return derDec2(0, 0, der, count, 0x7F21);
+}
+
+/*
+*******************************************************************************
 Проверка CV-сертификата
 *******************************************************************************
 */
@@ -696,4 +709,3 @@ err_t btokCVCMatch(const octet cert[], size_t cert_len, const octet privkey[],
 	blobClose(cvc);
 	return code;
 }
-
