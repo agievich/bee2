@@ -301,6 +301,10 @@
 				Name="core"
 				>
 				<File
+					RelativePath="..\..\include\bee2\core\apdu.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\include\bee2\core\b64.h"
 					>
 				</File>
@@ -494,6 +498,10 @@
 			<Filter
 				Name="core"
 				>
+				<File
+					RelativePath="..\..\src\core\apdu.c"
+					>
+				</File>
 				<File
 					RelativePath="..\..\src\core\b64.c"
 					>

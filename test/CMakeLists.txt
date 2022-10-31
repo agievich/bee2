@@ -1,4 +1,5 @@
 add_executable(testbee2
+	core/apdu_test.c
 	core/b64_test.c
 	core/dec_test.c
 	core/der_test.c

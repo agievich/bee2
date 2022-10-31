@@ -4,7 +4,7 @@
 \brief Tests for DER encoding rules
 \project bee2/test
 \created 2021.04.12
-\version 2022.10.26
+\version 2022.10.31
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -20,8 +20,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 Тестирование
 
--#	used [Kaliski B. A Layman's Guide to a Subset of ASN.1, BER, and DER]
-	http://luca.ntop.org/Teaching/Appunti/asn1.html
+- used [Kaliski B. A Layman's Guide to a Subset of ASN.1, BER, and DER]
+  http://luca.ntop.org/Teaching/Appunti/asn1.html
 *******************************************************************************
 */
 

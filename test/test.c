@@ -4,7 +4,7 @@
 \brief Bee2 testing
 \project bee2/test
 \created 2014.04.02
-\version 2022.07.07
+\version 2022.10.31
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -19,6 +19,7 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
+extern bool_t apduTest();
 extern bool_t b64Test();
 extern bool_t decTest();
 extern bool_t derTest();
@@ -40,6 +41,7 @@ int testCore()
 {
 	bool_t code;
 	int ret = 0;
+	printf("apduTest: %s\n", (code = apduTest()) ? "OK" : "Err"), ret |= !code;
 	printf("b64Test: %s\n", (code = b64Test()) ? "OK" : "Err"), ret |= !code;
 	printf("decTest: %s\n", (code = decTest()) ? "OK" : "Err"), ret |= !code;
 	printf("derTest: %s\n", (code = derTest()) ? "OK" : "Err"), ret |= !code;

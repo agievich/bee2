@@ -1,4 +1,5 @@
 set(src
+  core/apdu.c
   core/b64.c
   core/blob.c
   core/dec.c

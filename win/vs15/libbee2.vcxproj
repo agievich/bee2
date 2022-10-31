@@ -351,6 +351,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\core\apdu.c" />
     <ClCompile Include="..\..\src\core\b64.c" />
     <ClCompile Include="..\..\src\core\blob.c" />
     <ClCompile Include="..\..\src\core\dec.c" />
@@ -422,6 +423,7 @@
     <ClCompile Include="..\..\src\math\zz\zz_red.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\include\bee2\core\apdu.h" />
     <ClInclude Include="..\..\include\bee2\core\b64.h" />
     <ClInclude Include="..\..\include\bee2\core\blob.h" />
     <ClInclude Include="..\..\include\bee2\core\dec.h" />

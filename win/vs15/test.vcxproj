@@ -354,6 +354,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\test\core\apdu_test.c" />
     <ClCompile Include="..\..\test\core\b64_test.c" />
     <ClCompile Include="..\..\test\core\dec_test.c" />
     <ClCompile Include="..\..\test\core\der_test.c" />

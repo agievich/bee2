@@ -430,6 +430,10 @@
 				Name="core"
 				>
 				<File
+					RelativePath="..\..\test\core\apdu_test.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\test\core\b64_test.c"
 					>
 				</File>

@@ -252,6 +252,9 @@
     <ClCompile Include="..\..\src\crypto\btok\btok_pwd.c">
       <Filter>Source Files\crypto\btok</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\core\apdu.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\crypto\bign_lcl.h">
@@ -400,6 +403,9 @@
     </ClInclude>
     <ClInclude Include="..\..\include\bee2\crypto\btok.h">
       <Filter>Header Files\crypto</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\bee2\core\apdu.h">
+      <Filter>Header Files\core</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
