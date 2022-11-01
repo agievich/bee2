@@ -809,6 +809,10 @@
 						RelativePath="..\..\src\crypto\btok\btok_pwd.c"
 						>
 					</File>
+					<File
+						RelativePath="..\..\src\crypto\btok\btok_sm.c"
+						>
+					</File>
 				</Filter>
 			</Filter>
 		</Filter>

@@ -4,7 +4,7 @@
 \brief Distinguished Encoding Rules
 \project bee2 [cryptographic library]
 \created 2014.04.21
-\version 2022.10.24
+\version 2022.11.01
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -114,6 +114,21 @@ extern "C" {
 *******************************************************************************
 */
 
+/*!	\brief Кодирование тега и длины
+
+	Определяется число октетов в TL-префиксе DER-кода с тегом tag и значением
+	длины val. Если der != 0, то префикс размещается по этому адресу.
+	\pre Если der != 0, то по адресу der зарезервировано derEnc(0, tag, len)
+	октетов.
+	\return Число октетов в TL-префиксе или SIZE_MAX в случае ошибки.
+	\remark Ошибкой является неверный формат tag.
+*/
+size_t derTLEnc(
+	octet der[],		/*!< [out] DER-код */
+	u32 tag,			/*!< [in] тег */
+	size_t len			/*!< [in] длина значения в октетах */
+);
+
 /*!	\brief Кодирование
 
 	Определяется число октетов в DER-коде значения [len]val с тегом tag. 
@@ -179,11 +194,12 @@ bool_t derStartsWith(
 
 /*!	\brief Декодирование тега и длины
 
-	Определяются тег tag и длина значения len DER-кода [<=count]der.
-	\return Точная длина DER-кода или SIZE_MAX в случае ошибки формата.
+	Определяются тег tag и длина значения len DER-кода с TL-префиксом
+	[<=count]der.
+	\return Точная длина TL-префикса или SIZE_MAX в случае ошибки формата.
 	\remark Любой из указателей tag и len может быть нулевым.
 */
-size_t derDecTL(
+size_t derTLDec(
 	u32* tag,				/*!< [out] тег */
 	size_t* len,			/*!< [out] длина значения */
 	const octet der[],		/*!< [in] DER-код */

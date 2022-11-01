@@ -255,6 +255,9 @@
     <ClCompile Include="..\..\src\core\apdu.c">
       <Filter>Source Files\core</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\crypto\btok\btok_sm.c">
+      <Filter>Source Files\crypto\btok</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\crypto\bign_lcl.h">

@@ -4,7 +4,7 @@
 \brief Distinguished Encoding Rules
 \project bee2 [cryptographic library]
 \created 2014.04.21
-\version 2022.07.07
+\version 2022.11.01
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -222,9 +222,65 @@ static size_t derLDec(size_t* len, const octet der[], size_t count)
 
 /*
 *******************************************************************************
+Пара TL
+*******************************************************************************
+*/
+
+size_t derTLDec(u32* tag, size_t* len, const octet der[], size_t count)
+{
+	size_t t_count;
+	size_t l_count;
+	size_t l;
+	ASSERT(memIsValid(der, count));
+	// обработать T
+	ASSERT(tag == 0 || memIsDisjoint2(tag, 4, der, count));
+	t_count = derTDec(tag, der, count);
+	if (t_count == SIZE_MAX)
+		return SIZE_MAX;
+	// обработать L
+	ASSERT(count >= t_count);
+	l_count = derLDec(&l, der + t_count, count - t_count);
+	if (l_count == SIZE_MAX || t_count + l_count > count)
+		return SIZE_MAX;
+	if (len)
+	{
+		ASSERT(memIsDisjoint2(len, O_PER_S, der, count));
+		ASSERT(tag == 0 || memIsDisjoint2(len, O_PER_S, tag, 4));
+		*len = l;
+	}
+	// все нормально
+	return t_count + l_count;
+}
+
+/*
+*******************************************************************************
 Кодирование
 *******************************************************************************
 */
+
+size_t derTLEnc(octet der[], u32 tag, size_t len)
+{
+	size_t t_count;
+	size_t l_count;
+	// t_count <- len(T)
+	t_count = derTEnc(0, tag);
+	if (t_count == SIZE_MAX)
+		return SIZE_MAX;
+	// l_count <- len(L)
+	l_count = derLEnc(0, len);
+	if (l_count == SIZE_MAX)
+		return SIZE_MAX;
+	// кодировать?
+	if (der)
+	{
+		ASSERT(memIsValid(der, t_count + l_count));
+		// der <- TL
+		if (derTEnc(der, tag) != t_count ||
+			derLEnc(der + t_count, len) != l_count)
+			return SIZE_MAX;
+	}
+	return t_count + l_count;
+}
 
 size_t derEnc(octet der[], u32 tag, const void* val, size_t len)
 {
@@ -307,32 +363,7 @@ bool_t derStartsWith(const octet der[], size_t count, u32 tag)
 *******************************************************************************
 */
 
-size_t derDecTL(u32* tag, size_t* len, const octet der[], size_t count)
-{
-	size_t t_count;
-	size_t l_count;
-	size_t l;
-	ASSERT(memIsValid(der, count));
-	// обработать T
-	ASSERT(tag == 0 || memIsDisjoint2(tag, 4, der, count));
-	t_count = derTDec(tag, der, count);
-	if (t_count == SIZE_MAX)
-		return SIZE_MAX;
-	// обработать L
-	ASSERT(count >= t_count);
-	l_count = derLDec(&l, der + t_count, count - t_count);
-	if (l_count == SIZE_MAX || t_count + l_count > count)
-		return SIZE_MAX;
-	if (len)
-	{
-		ASSERT(memIsDisjoint2(len, O_PER_S, der, count));
-		ASSERT(tag == 0 || memIsDisjoint2(len, O_PER_S, tag, 4));
-		*len = l;
-	}
-	// все нормально
-	return t_count + l_count + l;
-}
-
+/*
 size_t derDec(u32* tag, const octet** val, size_t* len, const octet der[],
 	size_t count)
 {
@@ -366,6 +397,30 @@ size_t derDec(u32* tag, const octet** val, size_t* len, const octet der[],
 	}
 	// все нормально
 	return t_count + l_count + l;
+}
+*/
+
+size_t derDec(u32* tag, const octet** val, size_t* len, const octet der[],
+	size_t count)
+{
+	size_t l;
+	size_t tl_count;
+	// сделать len наверняка действительным
+	if (!len)
+		len = &l;
+	// обработать TL
+	tl_count = derTLDec(tag, len, der, count);
+	if (tl_count == SIZE_MAX || tl_count + *len > count)
+		return SIZE_MAX;
+	// обработать V
+	if (val)
+	{
+		ASSERT(memIsDisjoint2(val, sizeof(octet*), der, count));
+		ASSERT(tag == 0 || memIsDisjoint2(val, sizeof(octet*), tag, 4));
+		*val = der + tl_count;
+	}
+	// все нормально
+	return tl_count + *len;
 }
 
 size_t derDec2(const octet** val, size_t* len, const octet der[],

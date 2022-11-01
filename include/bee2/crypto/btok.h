@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): cryptographic tokens
 \project bee2 [cryptographic library]
 \created 2022.07.04
-\version 2022.10.31
+\version 2022.11.01
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -14,6 +14,7 @@ version 3. See Copyright Notices in bee2/info.h.
 #define __BEE2_BTOK_H
 
 #include "bee2/defs.h"
+#include "bee2/core/apdu.h"
 
 /*!
 *******************************************************************************
@@ -293,6 +294,62 @@ err_t btokCVCMatch(
 	size_t cert_len,			/*!< [in] длина cert в октетах */
 	const octet privkey[],		/*!< [in] личный ключ */
 	size_t privkey_len			/*!< [in] длина privkey в октетах */
+);
+
+/*!
+*******************************************************************************
+\file btok.h
+
+\section btok-sm Защищенное соединение
+
+Защищенное соединение (Secure Messaging) -- это правила защиты APDU-команд
+и APDU-ответов. Общие правила огранизации защищенного соединения определены
+в ISO/IEC 7816-4, конкретные правила, которые собственно и реализованы, ---
+в СТБ 34.101.79.
+
+\expect Состояние функций SM не изменяется вне этих функций.
+
+\expect{ERR_BAD_INPUT} Буфер состояния функций SM не пересекается с другими
+входными и выходными буферами.
+*******************************************************************************
+*/
+
+
+/*!	\brief Длина состояния SM
+
+	Возвращается длина состояния (в октетах) функций SM.
+	\return Длина состояния.
+*/
+size_t btokSM_keep();
+
+/*!	\brief Инициализация функций SM
+
+	По ключу key в state формируются структуры данных, необходимые для
+	управления защищенным соединением.
+	\pre По адресу state зарезервировано btokSM_keep() октетов.
+	\pre Указатель key корректен.
+	\pre Буферы key и state не пересекаются.
+*/
+void btokSMStart(
+	void* state,			/*!< [out] состояние SM */
+	const octet key[32]		/*!< [in] ключ */
+);
+
+/*!	\brief Кодирование и установка защиты команды с помощью SM
+
+	Определяется код [count?]apdu команды cmd. Если state != 0, то
+	одновременно с кодированием выполняется защита кода с помощью
+	объектов, размещенных в state.
+	\pre По адресу state зарезервировано btokSM_keep() октетов.
+	\expect btokSMStart() < btokSMCmdWrap()*.
+	\expect{ERR_BAD_APDU} В cmd->cla снят бит 0x40 (признак защиты).
+	\return ERR_OK в случае успеха и код ошибки в противном случае.
+*/
+err_t btokSMCmdWrap(
+	octet apdu[],			/*!< [out] код команды */
+	size_t* count,			/*!< [out] код команды */
+	const apdu_cmd_t* cmd,	/*!< [in] команда */
+	void* state				/*!< [in/out] состояние SM */
 );
 
 #ifdef __cplusplus

@@ -4,7 +4,7 @@
 \brief Errors
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2022.10.24
+\version 2022.10.31
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -134,6 +134,8 @@ Core
 #define ERR_OUTOFRANGE				_ERR_REG(310)
 /* некорректный перечень прав доступа */
 #define ERR_BAD_ACL					_ERR_REG(311)
+/* некорректная APDU-команда/ответ */
+#define ERR_BAD_APDU				_ERR_REG(312)
 
 /*
 *******************************************************************************

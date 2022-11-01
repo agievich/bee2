@@ -195,6 +195,7 @@ static err_t cmdSigRead(cmd_sig_t* sig, size_t* der_len, const char* file)
 	size_t file_size;
 	octet suffix[16];
 	octet* der;
+	size_t count;
 	size_t len;
 	FILE* fp;
 	u32 tag;
@@ -205,42 +206,45 @@ static err_t cmdSigRead(cmd_sig_t* sig, size_t* der_len, const char* file)
 	file_size = cmdFileSize(file);
 	code = file_size == SIZE_MAX ? ERR_FILE_READ : ERR_OK;
 	ERR_CALL_CHECK(code);
-	len = MIN2(file_size, sizeof(suffix));
+	count = MIN2(file_size, sizeof(suffix));
 	// открыть файл для чтения
 	fp = fopen(file, "rb");
 	code = fp ? ERR_OK : ERR_FILE_OPEN;
 	ERR_CALL_CHECK(code);
 	// читать суффикс
-	code = fseek(fp, (long)(file_size - len), SEEK_SET) == 0 ?
+	code = fseek(fp, (long)(file_size - count), SEEK_SET) == 0 ?
 		ERR_OK : ERR_FILE_READ;
 	ERR_CALL_HANDLE(code, fclose(fp));
-	code = fread(suffix, 1, len, fp) == len ? ERR_OK : ERR_FILE_READ;
+	code = fread(suffix, 1, count, fp) == count ? ERR_OK : ERR_FILE_READ;
 	ERR_CALL_HANDLE(code, fclose(fp));
 	// развернуть октеты суффикса
-	memRev(suffix, len);
+	memRev(suffix, count);
+	// определить длину TL-префикса DER-кода
+	count = derTLDec(&tag, &len, suffix, count);
+	code = (count != SIZE_MAX && tag == 0x30) ? ERR_OK : ERR_BAD_SIG;
+	ERR_CALL_HANDLE(code, fclose(fp));
 	// определить длину DER-кода
-	len = derDecTL(&tag, 0, suffix, len);
-	code = (len != SIZE_MAX && tag == 0x30 && len <= file_size) ?
-		ERR_OK : ERR_BAD_SIG;
+	count += len;
+	code = count <= file_size ? ERR_OK : ERR_BAD_SIG;
 	ERR_CALL_HANDLE(code, fclose(fp));
 	// подготовить память
-	code = cmdBlobCreate(der, len);
+	code = cmdBlobCreate(der, count);
 	ERR_CALL_HANDLE(code, fclose(fp));
 	// читать DER-код и закрыть файл
-	code = fseek(fp, (long)(file_size - len), SEEK_SET) == 0 ?
+	code = fseek(fp, (long)(file_size - count), SEEK_SET) == 0 ?
 		ERR_OK : ERR_FILE_READ;
 	ERR_CALL_HANDLE(code, (cmdBlobClose(der), fclose(fp)));
-	code = fread(der, 1, len, fp) == len ? ERR_OK : ERR_FILE_READ;
+	code = fread(der, 1, count, fp) == count ? ERR_OK : ERR_FILE_READ;
 	fclose(fp);
 	ERR_CALL_HANDLE(code, cmdBlobClose(der));
 	// декодировать
-	memRev(der, len);
-	code = cmdSigDec(sig, der, len) == len ? ERR_OK : ERR_BAD_SIG;
+	memRev(der, count);
+	code = cmdSigDec(sig, der, count) == count ? ERR_OK : ERR_BAD_SIG;
 	// возвратить длину DER-кода
 	if (der_len)
 	{
 		ASSERT(memIsValid(der_len, sizeof(size_t)));
-		*der_len = len;
+		*der_len = count;
 	}
 	// завершить
 	cmdBlobClose(der);

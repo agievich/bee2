@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.79 (btok) helpers
 \project bee2/test
 \created 2022.07.07
-\version 2022.10.31
+\version 2022.11.01
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -147,7 +147,39 @@ static bool_t btokCVCTest()
 	return TRUE;
 }
 
+static bool_t btokSMTest()
+{
+	octet state[1024];
+	octet stack[2048];
+	apdu_cmd_t* cmd = (apdu_cmd_t*)stack;
+	octet apdu[1024];
+	size_t count;
+	// запустить SM
+	ASSERT(btokSM_keep() <= sizeof(state));
+	btokSMStart(state, beltH());
+	// обработать команду без защиты
+	memSetZero(cmd, sizeof(apdu_cmd_t));
+	cmd->cla = 0x00, cmd->ins = 0xA4, cmd->p1 = 0x04, cmd->p2 = 0x04;
+	cmd->cdf_len = 4, cmd->rdf_len = 256;
+	hexTo(cmd->cdf, "54657374");
+	if (btokSMCmdWrap(0, &count, cmd, 0) != ERR_OK ||
+		count != 10 ||
+		btokSMCmdWrap(apdu, &count, cmd, 0) != ERR_OK ||
+		count != 10 ||
+		!hexEq(apdu, "00A40404045465737400"))
+		return FALSE;
+	// обработать команду с защитой
+	if (btokSMCmdWrap(0, &count, cmd, state) != ERR_OK ||
+		count != 26 ||
+		btokSMCmdWrap(apdu, &count, cmd, state) != ERR_OK ||
+		count != 26 ||
+		!hexEq(apdu, "04A40404148705024117F4309701008E08B6B2B5475FE1D0D000"))
+		return FALSE;
+	// все хорошо
+	return TRUE;
+}
+
 bool_t btokTest()
 {
-	return btokCVCTest();
+	return btokCVCTest() && btokSMTest();
 }

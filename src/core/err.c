@@ -4,7 +4,7 @@
 \brief Errors
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2022.10.20
+\version 2022.10.31
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -63,6 +63,7 @@ static const err_msg _messages[] = {
 	{ERR_BAD_NAME, "Invalid name"},
 	{ERR_OUTOFRANGE, "Out of range"},
 	{ERR_BAD_ACL, "Invalid access control list"},
+	{ERR_BAD_APDU, "Incorrect APDU command or response"},
 	// math
 	{ERR_BAD_POINT, "Invalid elliptic curve point"},
 	{ERR_NOT_PRIME, "The number is not prime"},
