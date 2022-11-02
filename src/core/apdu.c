@@ -4,7 +4,7 @@
 \brief Smart card Application Protocol Data Unit
 \project bee2 [cryptographic library]
 \created 2022.10.31
-\version 2022.10.31
+\version 2022.11.02
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -26,6 +26,8 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
+#define apduCmdSizeof(cmd) (sizeof(apdu_cmd_t) + (cmd)->cdf_len)
+
 bool_t apduCmdIsValid(const apdu_cmd_t* cmd)
 {
 	return memIsValid(cmd, sizeof(apdu_cmd_t)) &&
@@ -42,7 +44,7 @@ size_t apduCmdEnc(octet apdu[], const apdu_cmd_t* cmd)
 	// кодировать заголовок
 	if (apdu)
 	{
-		ASSERT(memIsValid(apdu, 4));
+		ASSERT(memIsDisjoint2(apdu, 4, cmd, apduCmdSizeof(cmd)));
 		apdu[0] = cmd->cla, apdu[1] = cmd->ins;
 		apdu[2] = cmd->p1, apdu[3] = cmd->p2;
 		apdu += 4;
@@ -56,7 +58,7 @@ size_t apduCmdEnc(octet apdu[], const apdu_cmd_t* cmd)
 	{
 		if (apdu)
 		{
-			ASSERT(memIsNullOrValid(apdu, 1));
+			ASSERT(memIsDisjoint2(apdu, 1, cmd, apduCmdSizeof(cmd)));
 			apdu[0] = (octet)cmd->cdf_len;
 			memCopy(apdu + 1, cmd->cdf, cmd->cdf_len);
 			apdu += 1 + cmd->cdf_len;
@@ -69,7 +71,7 @@ size_t apduCmdEnc(octet apdu[], const apdu_cmd_t* cmd)
 		ASSERT(cmd->cdf_len < 65536);
 		if (apdu)
 		{
-			ASSERT(memIsNullOrValid(apdu, 3));
+			ASSERT(memIsDisjoint2(apdu, 3, cmd, apduCmdSizeof(cmd)));
 			apdu[0] = 0;
 			apdu[1] = (octet)(cmd->cdf_len / 256);
 			apdu[2] = (octet)cmd->cdf_len;
@@ -86,7 +88,7 @@ size_t apduCmdEnc(octet apdu[], const apdu_cmd_t* cmd)
 	{
 		if (apdu)
 		{
-			ASSERT(memIsNullOrValid(apdu, 1));
+			ASSERT(memIsDisjoint2(apdu, 1, cmd, apduCmdSizeof(cmd)));
 			apdu[0] = (octet)cmd->rdf_len;
 		}
 		count += 1;
@@ -98,7 +100,7 @@ size_t apduCmdEnc(octet apdu[], const apdu_cmd_t* cmd)
 		ASSERT(cmd->rdf_len <= 65536);
 		if (apdu)
 		{
-			ASSERT(memIsNullOrValid(apdu, 2));
+			ASSERT(memIsDisjoint2(apdu, 2, cmd, apduCmdSizeof(cmd)));
 			apdu[0] = (octet)(cmd->cdf_len / 256);
 			apdu[1] = (octet)cmd->cdf_len;
 		}
@@ -109,7 +111,7 @@ size_t apduCmdEnc(octet apdu[], const apdu_cmd_t* cmd)
 		ASSERT(256 < cmd->rdf_len && cmd->rdf_len <= 65536);
 		if (apdu)
 		{
-			ASSERT(memIsNullOrValid(apdu, 3));
+			ASSERT(memIsDisjoint2(apdu, 3, cmd, apduCmdSizeof(cmd)));
 			apdu[0] = 0;
 			apdu[1] = (octet)(cmd->cdf_len / 256);
 			apdu[2] = (octet)cmd->cdf_len;
@@ -133,6 +135,7 @@ size_t apduCmdDec(apdu_cmd_t* cmd, const octet apdu[], size_t count)
 		return SIZE_MAX;
 	if (cmd)
 	{
+		ASSERT(memIsDisjoint2(cmd, sizeof(apdu_cmd_t), apdu, count));
 		memSetZero(cmd, sizeof(apdu_cmd_t));
 		cmd->cla = apdu[0], cmd->ins = apdu[1];
 		cmd->p1 = apdu[2], cmd->p2 = apdu[3];

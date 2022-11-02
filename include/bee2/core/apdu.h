@@ -1,10 +1,10 @@
 /*
 *******************************************************************************
-\file der.h
+\file apdu.h
 \brief Smart card Application Protocol Data Unit
 \project bee2 [cryptographic library]
 \created 2022.10.31
-\version 2022.10.31
+\version 2022.11.02
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -13,7 +13,7 @@ version 3. See Copyright Notices in bee2/info.h.
 /*!
 *******************************************************************************
 \file apdu.h
-\brief Формат команд и ответов смарт-карт
+\brief Команды и ответы смарт-карт
 *******************************************************************************
 */
 
@@ -194,8 +194,6 @@ size_t apduRespDec(
 	const octet apdu[],			/*!< [in] код ответа */
 	size_t count				/*!< [in] длина apdu в октетах */
 );
-
-
 
 #ifdef __cplusplus
 } /* extern "C" */

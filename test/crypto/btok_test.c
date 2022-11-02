@@ -1,10 +1,10 @@
 /*
 *******************************************************************************
 \file btok_test.c
-\brief Tests for STB 34.101.79 (btok) helpers
+\brief Tests for STB 34.101.79 (btok)
 \project bee2/test
 \created 2022.07.07
-\version 2022.11.01
+\version 2022.11.02
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -149,32 +149,112 @@ static bool_t btokCVCTest()
 
 static bool_t btokSMTest()
 {
-	octet state[1024];
-	octet stack[2048];
+	octet state_t[512];
+	octet state_ct[512];
+	octet stack[1024];
 	apdu_cmd_t* cmd = (apdu_cmd_t*)stack;
-	octet apdu[1024];
+	apdu_cmd_t* cmd1 = (apdu_cmd_t*)(stack + 256);
+	apdu_resp_t* resp = (apdu_resp_t*)(stack + 2 * 256);
+	apdu_resp_t* resp1 = (apdu_resp_t*)(stack + 3 * 256);
+	octet apdu[256];
 	size_t count;
+	size_t size;
 	// запустить SM
-	ASSERT(btokSM_keep() <= sizeof(state));
-	btokSMStart(state, beltH());
-	// обработать команду без защиты
+	ASSERT(btokSM_keep() <= sizeof(state_t));
+	ASSERT(btokSM_keep() <= sizeof(state_ct));
+	btokSMStart(state_t, beltH());
+	btokSMStart(state_ct, beltH());
+	// обработка команды без защиты
 	memSetZero(cmd, sizeof(apdu_cmd_t));
 	cmd->cla = 0x00, cmd->ins = 0xA4, cmd->p1 = 0x04, cmd->p2 = 0x04;
 	cmd->cdf_len = 4, cmd->rdf_len = 256;
 	hexTo(cmd->cdf, "54657374");
-	if (btokSMCmdWrap(0, &count, cmd, 0) != ERR_OK ||
+	if (btokSMCmdWrap(0, 0, cmd, 0) != ERR_OK ||
+		btokSMCmdWrap(0, &count, cmd, 0) != ERR_OK ||
 		count != 10 ||
+		btokSMCmdWrap(apdu, 0, cmd, 0) != ERR_OK ||
 		btokSMCmdWrap(apdu, &count, cmd, 0) != ERR_OK ||
 		count != 10 ||
-		!hexEq(apdu, "00A40404045465737400"))
+		!hexEq(apdu, "00A40404045465737400") ||
+		btokSMCmdUnwrap(0, 0, apdu, count, 0) != ERR_OK ||
+		btokSMCmdUnwrap(0, &size, apdu, count, 0) != ERR_OK ||
+		size != sizeof(apdu_cmd_t) + 4 ||
+		btokSMCmdUnwrap(cmd1, 0, apdu, count, 0) != ERR_OK ||
+		btokSMCmdUnwrap(cmd1, &size, apdu, count, 0) != ERR_OK ||
+		size != sizeof(apdu_cmd_t) + 4 ||
+		!memEq(cmd, cmd1, size))
 		return FALSE;
-	// обработать команду с защитой
-	if (btokSMCmdWrap(0, &count, cmd, state) != ERR_OK ||
-		count != 26 ||
-		btokSMCmdWrap(apdu, &count, cmd, state) != ERR_OK ||
-		count != 26 ||
-		!hexEq(apdu, "04A40404148705024117F4309701008E08B6B2B5475FE1D0D000"))
+	// обработка ответа без защиты
+	memSetZero(resp, sizeof(apdu_resp_t));
+	resp->sw1 = 0x90, resp->sw2 = 0x00;
+	resp->rdf_len = 20;
+	hexTo(resp->rdf, "E012C00401FF8010C00402FF8010C00403FF8010");
+	if (btokSMRespWrap(0, 0, resp, 0) != ERR_OK ||
+		btokSMRespWrap(0, &count, resp, 0) != ERR_OK ||
+		count != 22 ||
+		btokSMRespWrap(apdu, 0, resp, 0) != ERR_OK ||
+		btokSMRespWrap(apdu, &count, resp, 0) != ERR_OK ||
+		count != 22 ||
+		!hexEq(apdu,
+			"E012C00401FF8010C00402FF8010C00403FF80109000") ||
+		btokSMRespUnwrap(0, 0, apdu, count, 0) != ERR_OK ||
+		btokSMRespUnwrap(0, &size, apdu, count, 0) != ERR_OK ||
+		size != sizeof(apdu_resp_t) + 20 ||
+		btokSMRespUnwrap(resp1, 0, apdu, count, 0) != ERR_OK ||
+		btokSMRespUnwrap(resp1, &size, apdu, count, 0) != ERR_OK ||
+		size != sizeof(apdu_resp_t) + 20 ||
+		!memEq(resp, resp1, size))
 		return FALSE;
+	// обработка команды с защитой
+	if (btokSMCmdWrap(0, &count, cmd, state_t) != ERR_OK ||
+		count != 26 ||
+		btokSMCmdWrap(apdu, &count, cmd, state_t) != ERR_OK ||
+		count != 26 ||
+		!hexEq(apdu,
+			"04A4040414870502B17683409701008E0872E4A86020680D5300") ||
+		btokSMCmdUnwrap(0, &size, apdu, count, state_ct) != ERR_OK ||
+		size != sizeof(apdu_cmd_t) + 4 ||
+		btokSMCmdUnwrap(cmd1, &size, apdu, count, state_ct) != ERR_OK ||
+		size != sizeof(apdu_cmd_t) + 4 ||
+		!memEq(cmd, cmd1, size))
+		return FALSE;
+	// обработка ответа с защитой
+	if (btokSMRespWrap(0, &count, resp, state_t) != ERR_OK ||
+		count != 35 ||
+		btokSMRespWrap(apdu, &count, resp, state_t) != ERR_OK ||
+		count != 35 ||
+		!hexEq(apdu,
+			"871502366A98E96E008234D6A73861B2A7B500E9AAF8438E0857030C74AC0CF3"
+			"B89000") ||
+		btokSMRespUnwrap(0, &size, apdu, count, state_ct) != ERR_OK ||
+		size != sizeof(apdu_resp_t) + 20 ||
+		btokSMRespUnwrap(resp1, &size, apdu, count, state_ct) != ERR_OK ||
+		size != sizeof(apdu_resp_t) + 20 ||
+		!memEq(resp, resp1, size))
+		return FALSE;
+	// защита команд и ответов: сочетания длин
+	cmd->cla = 0x00, cmd->ins = 0xA4, cmd->p1 = 0x04, cmd->p2 = 0x04;
+	for (cmd->cdf_len = 0; cmd->cdf_len < 130; ++cmd->cdf_len)
+		for (cmd->rdf_len = 0; cmd->rdf_len < 130; ++cmd->rdf_len)
+		{
+			if (btokSMCmdWrap(apdu, &count, cmd, state_t) != ERR_OK)
+				return FALSE;
+			ASSERT(count < sizeof(apdu));
+			if (btokSMCmdUnwrap(cmd1, &size, apdu, count, state_ct) != ERR_OK)
+				return FALSE;
+			ASSERT(size < sizeof(stack) / 4);
+			if (!memEq(cmd, cmd1, size))
+				return FALSE;
+			resp->rdf_len = cmd->rdf_len;
+			if (btokSMRespWrap(apdu, &count, resp, state_ct) != ERR_OK)
+				return FALSE;
+			ASSERT(count < sizeof(apdu));
+			if (btokSMRespUnwrap(resp1, &size, apdu, count, state_t) != ERR_OK)
+				return FALSE;
+			ASSERT(size < sizeof(stack) / 4);
+			if (!memEq(resp, resp1, size))
+				return FALSE;
+		}
 	// все хорошо
 	return TRUE;
 }
