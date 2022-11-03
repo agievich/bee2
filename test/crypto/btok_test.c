@@ -222,7 +222,11 @@ static bool_t btokSMTest()
 		btokSMCmdWrap(apdu, &count, cmd, state_t) != ERR_OK ||
 		count != 26 ||
 		!hexEq(apdu,
-			"04A40404148705020C4C0BFB9701008E08F71EFAADD16A0A2700") ||
+			"04A4040414"
+			"8705020C4C0BFB"
+			"970100"
+			"8E08FBD50AD6814F90A9"
+			"00") ||
 		btokSMCmdUnwrap(0, &size, apdu, count, state_ct) != ERR_OK ||
 		size != sizeof(apdu_cmd_t) + 4 ||
 		btokSMCmdUnwrap(cmd1, &size, apdu, count, state_ct) != ERR_OK ||
@@ -235,8 +239,9 @@ static bool_t btokSMTest()
 		btokSMRespWrap(apdu, &count, resp, state_t) != ERR_OK ||
 		count != 35 ||
 		!hexEq(apdu,
-			"8715022A9042A60A85E50FAB446AC80B75F144B67EBD6D8E0813CA27A67F5E3D"
-			"729000") ||
+			"8715022A9042A60A85E50FAB446AC80B75F144B67EBD6D"
+			"8E082C4DE31DFAA17635"
+			"9000") ||
 		btokSMRespUnwrap(0, &size, apdu, count, state_ct) != ERR_OK ||
 		size != sizeof(apdu_resp_t) + 20 ||
 		btokSMRespUnwrap(resp1, &size, apdu, count, state_ct) != ERR_OK ||
@@ -246,7 +251,7 @@ static bool_t btokSMTest()
 	// защита команд и ответов: сочетания длин
 	cmd->cla = 0x00, cmd->ins = 0xA4, cmd->p1 = 0x04, cmd->p2 = 0x04;
 	for (cmd->cdf_len = 0; cmd->cdf_len <= 257; ++cmd->cdf_len)
-		for (cmd->rdf_len = 257; cmd->rdf_len <= 257; ++cmd->rdf_len)
+		for (cmd->rdf_len = 0; cmd->rdf_len <= 257; ++cmd->rdf_len)
 		{
 			if (btokSMCmdWrap(apdu, &count, cmd, state_t) != ERR_OK)
 				return FALSE;
@@ -316,14 +321,6 @@ static err_t bakeTestCertVal(octet* pubkey, const bign_params* params,
 bool_t btokBAUTHTest() 
 {
 	bign_params params[1];
-	octet randa[16] = {
-		0,1,2,3,4,5,6,7,8,7,6,5,4,3,2,1,
-	};
-	octet randb[48] = {
-    	2,1,4,3,6,5,8,7,6,7,4,5,2,3,1,0,
-	    6,7,4,5,2,3,1,0,2,1,4,3,6,5,8,7,
-    	7,6,5,4,3,2,1,0,1,2,3,4,5,6,7,8,
-	};
 	octet echoa[64];
 	octet echob[64];
 	bake_settings settingsa[1];
@@ -369,11 +366,11 @@ bool_t btokBAUTHTest()
 	settingsa->rng = settingsb->rng = prngEchoStepR;
 	settingsa->rng_state = echoa;
 	settingsb->rng_state = echob;
-	prngEchoStart(echoa, randa, sizeof(randa));
-	prngEchoStart(echob, randb, sizeof(randb));
+	prngEchoStart(echoa, beltH(), 128);
+	prngEchoStart(echob, beltH() + 128, 128);
 	// инициализация
-	ASSERT(sizeof(statea) >= btokBAUTHterm_keep(params->l));
-	ASSERT(sizeof(stateb) >= btokBAUTHct_keep(params->l));
+	ASSERT(btokBAUTHterm_keep(params->l) <= sizeof(statea));
+	ASSERT(btokBAUTHct_keep(params->l) <= sizeof(stateb));
 	if (btokBAUTHtermStart(statea, params, settingsa, da, certa) != ERR_OK ||
 		btokBAUTHctStart(stateb, params, settingsb, db, certb) != ERR_OK)
 		return FALSE;
@@ -403,11 +400,11 @@ bool_t btokBAUTHTest()
 	settingsa->rng = settingsb->rng = prngEchoStepR;
 	settingsa->rng_state = echoa;
 	settingsb->rng_state = echob;
-	prngEchoStart(echoa, randa, sizeof(randa));
-	prngEchoStart(echob, randb, sizeof(randb));
+	prngEchoStart(echoa, beltH(), 128);
+	prngEchoStart(echob, beltH() + 128, 128);
 	// инициализация
-	ASSERT(sizeof(statea) >= btokBAUTHterm_keep(params->l));
-	ASSERT(sizeof(stateb) >= btokBAUTHct_keep(params->l));
+	ASSERT(btokBAUTHterm_keep(params->l) <= sizeof(statea));
+	ASSERT(btokBAUTHct_keep(params->l) <= sizeof(stateb));
 	if (btokBAUTHtermStart(statea, params, settingsa, da, certa) != ERR_OK ||
 		btokBAUTHctStart(stateb, params, settingsb, db, certb) != ERR_OK)
 		return FALSE;

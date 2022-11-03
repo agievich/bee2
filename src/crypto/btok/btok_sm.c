@@ -22,6 +22,11 @@ version 3. See Copyright Notices in bee2/info.h.
 /*
 *******************************************************************************
 Базовая криптография
+
+Создание защищенного соединения:
+  key1 <- belt-keyrep(key, 0, <1>, 256)
+  key2 <- belt-keyrep(key, 0, <2>, 256)
+  ctr <- 0
 *******************************************************************************
 */
 
@@ -82,17 +87,6 @@ static size_t apduCmdCDFLenLen(const apdu_cmd_t* cmd)
 	return 3;
 }
 
-static size_t apduCmdCDFLenLen2(size_t cdf_len)
-{
-	if (cdf_len >= 65536)
-		return SIZE_MAX;
-	if (cdf_len == 0)
-		return 0;
-	if (cdf_len < 256)
-		return 1;
-	return 3;
-}
-
 static size_t apduCmdRDFLenLen(const apdu_cmd_t* cmd)
 {
 	ASSERT(apduCmdIsValid(cmd));
@@ -111,13 +105,27 @@ static size_t apduCmdRDFLenLen(const apdu_cmd_t* cmd)
 
 Установка защиты:
   CLA INS P1 P2 Lc CDF Le -> CLA* INS P1 P2 Lc* CDF* Le*:
-    CLA* = CLA | 0x04
-	Lc* = len(CDF*)
-	CDF* = [der(0x87, 0x02 || encr(CDF)) ||] [der(0x97, Le) ||] der(0x8E, tag)
-	Le* = 0x00 (если len(Lc*) == 1) или 0x0000 (если len(Lc*) == 2)
+    Lc = enc(len(CDF))
+	Le = enc(len(RDF))
+	CLA* = CLA | 0x04
+    Lc* = enc(len(CDF*))
+    CDF* = [der(0x87, 0x02 Y)] [der(0x97, Le)] der(0x8E, T)
+	Le* = \perp, 0x00 или 0x0000
+    Y = belt-cfb(CDF, key2, ctr)
+    T = belt-mac(CLA* INS P1 P2 [der(0x87, 0x02 Y)] [der(0x97, Le), key1]
+
+Правила формирования Le* и Lc*:
+1. Если len(RDF) == 0, то Le* = \perp, а Lc* определяется обычным образом:
+   len(Lc*) = 1, если len(CDF) < 256, и len(Lc*) = 3 в противном случае.
+2. Если len(CDF*) < 256 и len(RDF) <= 256, то Le* = 0x00, а len(Lc*) = 1.
+3. Если len(CDF*) >= 256 или len(RDF) > 256, то Le* = 0x0000, а len(Lc*) = 3.
+
+Обратим внимание, что в последнем случае len(Lc*) = 3, даже если 
+len(CDF*) < 256. Форма кодирования len(CDF*) повышается до расширенной,
+чтобы соответствовать форме кодирования len(RDF).
 
 \remark Минимальная длина защищенной команды:
-  4 (hdr) + 1 (cdf_len_len) + 10 (mac) + 1 (rdf_len_len) = 16.
+  4 (hdr) + 1 (cdf_len_len) + 10 (mac) + 0 (rdf_len_len) = 15.
 *******************************************************************************
 */
 
@@ -170,12 +178,13 @@ err_t btokSMCmdWrap(octet apdu[], size_t* count, const apdu_cmd_t* cmd,
 	c = derEnc(0, 0x8E, 0, 8);
 	ASSERT(c != SIZE_MAX);
 	cdf_len += c;
-	// новая длина длины cdf
-	cdf_len_len = apduCmdCDFLenLen2(cdf_len);
-	if (cdf_len_len == SIZE_MAX)
-		return ERR_BAD_APDU;
-	// новая длина длины rdf
-	rdf_len_len = cdf_len_len == 1 ? 1 : 2;
+	// новые длины длин cdf и rdf
+	if (cmd->rdf_len == 0)
+		cdf_len_len = cdf_len < 256 ? 1 : 3, rdf_len_len = 0;
+	else if (cmd->rdf_len <= 256 && cdf_len < 256)
+		cdf_len_len = rdf_len_len = 1;
+	else
+		cdf_len_len = 3, rdf_len_len = 2;
 	// общая длина
 	offset = 4 + cdf_len_len + cdf_len + rdf_len_len;
 	// не задан выходной буфер, т.е. нужно определить только его длину?
@@ -259,6 +268,7 @@ err_t btokSMCmdWrap(octet apdu[], size_t* count, const apdu_cmd_t* cmd,
 	}
 	// вычислить имитовставку
 	beltMACStart(st->stack, st->key1, 32);
+	beltMACStepA(apdu, 4, st->stack);
 	ASSERT(offset >= 4 + cdf_len_len);
 	beltMACStepA(apdu + 4 + cdf_len_len, offset - 4 - cdf_len_len, st->stack);
 	c = derTLEnc(apdu + offset, 0x8E, 8);
@@ -281,7 +291,6 @@ err_t btokSMCmdWrap(octet apdu[], size_t* count, const apdu_cmd_t* cmd,
 	return ERR_OK;
 }
 
-
 err_t btokSMCmdUnwrap(apdu_cmd_t* cmd, size_t* size, const octet apdu[],
 	size_t count, void* state)
 {
@@ -289,6 +298,7 @@ err_t btokSMCmdUnwrap(apdu_cmd_t* cmd, size_t* size, const octet apdu[],
 	size_t offset;
 	size_t c1, c2, c3;
 	size_t cdf_len;
+	size_t cdf_len_len;
 	const octet* cdf;
 	size_t rdf_len;
 	const octet* mac;
@@ -300,7 +310,7 @@ err_t btokSMCmdUnwrap(apdu_cmd_t* cmd, size_t* size, const octet apdu[],
 	// слишком короткая командв?
 	// нужно снять защиту с незащищенной команды?
 	// невозможно снять защиту?
-	if (count < 4 || state && count < 16 ||
+	if (count < 4 || state && count < 15 ||
 		state && (apdu[0] & 0x04) == 0 ||
 		!state && (apdu[0] & 0x04) != 0)
 		return ERR_BAD_APDU;
@@ -320,25 +330,25 @@ err_t btokSMCmdUnwrap(apdu_cmd_t* cmd, size_t* size, const octet apdu[],
 		return ERR_OK;
 	}
 	ASSERT(memIsDisjoint2(state, btokSM_keep(), apdu, count));
-	// разобрать длину защищенного поля cdf, частично проверить формат
+	// разобрать длину защищенного поля cdf
 	if (apdu[4] != 0)
 	{
 		len = apdu[4];
-		// корректная длина? код завершается октетом 0x00?
-		if (len == 0 || count != 4 + 1 + len + 1 ||
-			!memIsZero(apdu + 4 + 1 + len, 1))
+		cdf_len_len = 1;
+		if (len == 0)
 			return ERR_BAD_APDU;
-		offset = 4 + 1;
 	}
 	else
 	{
 		len = apdu[5], len *= 256, len += apdu[6];
-		// корректная длина? код завершается двумя октетами 0x00?
-		if (len < 256 || count != 4 + 3 + len + 2 ||
-			!memIsZero(apdu + 4 + 3 + len, 2))
+		cdf_len_len = 3;
+		if (apdu[4] != 0)
 			return ERR_BAD_APDU;
-		offset = 4 + 3;
 	}
+	offset = 4 + cdf_len_len;
+	// проверить длину кода
+	if (4 + cdf_len_len + len > count || 4 + cdf_len_len + len + 2 < count)
+		return ERR_BAD_APDU;
 	// разобрать защищенное поле cdf: шифртекст
 	c1 = derDec2(&cdf, &cdf_len, apdu + offset, len, 0x87);
 	if (c1 != SIZE_MAX)
@@ -363,13 +373,15 @@ err_t btokSMCmdUnwrap(apdu_cmd_t* cmd, size_t* size, const octet apdu[],
 				rdf_len = val[0];
 				if (rdf_len == 0)
 					rdf_len = 256;
+				if (cdf_len >= 256)
+					return ERR_BAD_APDU;
 			}
 			else if (rdf_len_len == 2)
 			{
 				rdf_len = val[0], rdf_len *= 256, rdf_len += val[1];
 				if (rdf_len == 0)
 					rdf_len = 65536;
-				if (rdf_len <= 256 || cdf_len == 0)
+				if (cdf_len < 256 && rdf_len <= 256 || cdf_len == 0)
 					return ERR_BAD_APDU;
 			}
 			else
@@ -377,12 +389,23 @@ err_t btokSMCmdUnwrap(apdu_cmd_t* cmd, size_t* size, const octet apdu[],
 				rdf_len = val[1], rdf_len *= 256, rdf_len += val[2];
 				if (rdf_len == 0)
 					rdf_len = 65536;
-				if (val[0] != 0 || rdf_len <= 256 || cdf_len != 0)
+				if (val[0] != 0 || cdf_len != 0 || rdf_len <= 256)
 					return ERR_BAD_APDU;
 			}
 		}
 		else
 			c2 = rdf_len = 0;
+		// еще раз проверить длину кода, а также его завершение 
+		// (мы только сейчас узнали rdf_len)
+		if (rdf_len == 0)
+			rdf_len_len = 0;
+		else if (len < 256 && rdf_len <= 256)
+			rdf_len_len = 1;
+		else
+			rdf_len_len = 2;
+		if (count != 4 + cdf_len_len + len + rdf_len_len ||
+			!memIsZero(apdu + 4 + cdf_len_len + len, rdf_len_len))
+			return ERR_BAD_APDU;
 	}
 	// разобрать защищенное поле cdf: имитовставка
 	c3 = derDec3(&mac, apdu + offset + c1 + c2, len - c1 - c2, 0x8E, 8);
@@ -408,6 +431,7 @@ err_t btokSMCmdUnwrap(apdu_cmd_t* cmd, size_t* size, const octet apdu[],
 		return ERR_BAD_LOGIC;
 	// проверить имитовставку
 	beltMACStart(st->stack, st->key1, 32);
+	beltMACStepA(apdu, 4, st->stack);
 	beltMACStepA(apdu + offset, c1 + c2, st->stack);
 	if (!beltMACStepV(mac, st->stack))
 		return ERR_BAD_MAC;
@@ -444,7 +468,9 @@ err_t btokSMCmdUnwrap(apdu_cmd_t* cmd, size_t* size, const octet apdu[],
 
 Установка защиты:
   RDF SW1 SW2 -> RDF* SW1 SW2:
-	RDF* = [der(0x87, 0x02 || encr(RDF)) ||] der(0x8E, tag)
+	RDF* = [der(0x87, 0x02 Y)] der(0x8E, T)
+	  Y = belt-cfb(RDF, key2, ctr)
+	  T = belt-mac([der(0x87, 0x02 Y)] SW1 SW2, key1)
 
 \remark Минимальная длина защищенного ответа:
   10 (mac) + 2 (sw) = 12.
@@ -534,6 +560,8 @@ err_t btokSMRespWrap(octet apdu[], size_t* count, const apdu_resp_t* resp,
 	// вычислить имитовставку
 	beltMACStart(st->stack, st->key1, 32);
 	beltMACStepA(apdu, offset, st->stack);
+	beltMACStepA(&resp->sw1, 1, st->stack);
+	beltMACStepA(&resp->sw2, 1, st->stack);
 	c = derTLEnc(apdu + offset, 0x8E, 8);
 	ASSERT(c != SIZE_MAX);
 	offset += c;
@@ -619,6 +647,7 @@ err_t btokSMRespUnwrap(apdu_resp_t* resp, size_t* size, const octet apdu[],
 	// проверить имитовставку
 	beltMACStart(st->stack, st->key1, 32);
 	beltMACStepA(apdu, c1, st->stack);
+	beltMACStepA(apdu + count - 2, 2, st->stack);
 	if (!beltMACStepV(mac, st->stack))
 		return ERR_BAD_MAC;
 	// заполнить поля ответа
