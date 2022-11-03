@@ -4,7 +4,7 @@
 \brief Smart card Application Protocol Data Unit
 \project bee2 [cryptographic library]
 \created 2022.10.31
-\version 2022.11.02
+\version 2022.11.03
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -101,8 +101,8 @@ size_t apduCmdEnc(octet apdu[], const apdu_cmd_t* cmd)
 		if (apdu)
 		{
 			ASSERT(memIsDisjoint2(apdu, 2, cmd, apduCmdSizeof(cmd)));
-			apdu[0] = (octet)(cmd->cdf_len / 256);
-			apdu[1] = (octet)cmd->cdf_len;
+			apdu[0] = (octet)(cmd->rdf_len / 256);
+			apdu[1] = (octet)cmd->rdf_len;
 		}
 		count += 2;
 	}
@@ -113,8 +113,8 @@ size_t apduCmdEnc(octet apdu[], const apdu_cmd_t* cmd)
 		{
 			ASSERT(memIsDisjoint2(apdu, 3, cmd, apduCmdSizeof(cmd)));
 			apdu[0] = 0;
-			apdu[1] = (octet)(cmd->cdf_len / 256);
-			apdu[2] = (octet)cmd->cdf_len;
+			apdu[1] = (octet)(cmd->rdf_len / 256);
+			apdu[2] = (octet)cmd->rdf_len;
 		}
 		count += 3;
 	}
@@ -185,8 +185,7 @@ size_t apduCmdDec(apdu_cmd_t* cmd, const octet apdu[], size_t count)
 		rdf_len = apdu[0], rdf_len *= 256, rdf_len += apdu[1];
 		if (rdf_len == 0)
 			rdf_len = 65536;
-		if (cdf_len_len == 0 || cdf_len_len == 1 ||
-			cdf_len < 256 && rdf_len <= 256)
+		if (cdf_len_len <= 1 || cdf_len < 256 && rdf_len <= 256)
 			return SIZE_MAX;
 		break;
 	case 3:
@@ -194,8 +193,7 @@ size_t apduCmdDec(apdu_cmd_t* cmd, const octet apdu[], size_t count)
 		rdf_len = apdu[1], rdf_len *= 256, rdf_len += apdu[2];
 		if (rdf_len == 0)
 			rdf_len = 65536;
-		if (apdu[0] != 0 || cdf_len_len == 1 ||
-			cdf_len < 256 && rdf_len <= 256)
+		if (apdu[0] != 0 || cdf_len_len != 0 || rdf_len <= 256)
 			return SIZE_MAX;
 		break;
 	default:

@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): Secure Messaging
 \project bee2 [cryptographic library]
 \created 2022.10.31
-\version 2022.11.02
+\version 2022.11.03
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -48,7 +48,7 @@ void btokSMStart(void* state, const octet key[32])
 	beltKRPStart(st->stack, key, 32, st->ctr);
 	st->ctr[0] = 1;
 	beltKRPStepG(st->key1, 32, st->ctr, st->stack);
-	st->ctr[1] = 2;
+	st->ctr[0] = 2;
 	beltKRPStepG(st->key2, 32, st->ctr, st->stack);
 	// ctr <- 0
 	st->ctr[0] = 0;
@@ -100,7 +100,7 @@ static size_t apduCmdRDFLenLen(const apdu_cmd_t* cmd)
 		return 0;
 	if (cmd->cdf_len < 256 && cmd->rdf_len <= 256)
 		return 1;
-	if (cmd->cdf_len == 0)
+	if (cmd->cdf_len != 0)
 		return 2;
 	return 3;
 }
@@ -245,14 +245,14 @@ err_t btokSMCmdWrap(octet apdu[], size_t* count, const apdu_cmd_t* cmd,
 			apdu[offset] = (octet)(cmd->rdf_len);
 		else if (l == 2)
 		{
-			apdu[offset] = (octet)(cmd->cdf_len / 256);
-			apdu[offset + 1] = (octet)cmd->cdf_len;
+			apdu[offset] = (octet)(cmd->rdf_len / 256);
+			apdu[offset + 1] = (octet)cmd->rdf_len;
 		}
 		else
 		{
 			apdu[offset] = 0;
-			apdu[offset + 1] = (octet)(cmd->cdf_len / 256);
-			apdu[offset + 2] = (octet)cmd->cdf_len;
+			apdu[offset + 1] = (octet)(cmd->rdf_len / 256);
+			apdu[offset + 2] = (octet)cmd->rdf_len;
 		}
 		// дальше
 		offset += l;

@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.79 (btok)
 \project bee2/test
 \created 2022.07.07
-\version 2022.11.02
+\version 2022.11.03
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -151,12 +151,12 @@ static bool_t btokSMTest()
 {
 	octet state_t[512];
 	octet state_ct[512];
-	octet stack[1024];
+	octet stack[4096];
 	apdu_cmd_t* cmd = (apdu_cmd_t*)stack;
-	apdu_cmd_t* cmd1 = (apdu_cmd_t*)(stack + 256);
-	apdu_resp_t* resp = (apdu_resp_t*)(stack + 2 * 256);
-	apdu_resp_t* resp1 = (apdu_resp_t*)(stack + 3 * 256);
-	octet apdu[256];
+	apdu_cmd_t* cmd1 = (apdu_cmd_t*)(stack + 1024);
+	apdu_resp_t* resp = (apdu_resp_t*)(stack + 2 * 1024);
+	apdu_resp_t* resp1 = (apdu_resp_t*)(stack + 3 * 1024);
+	octet apdu[1024];
 	size_t count;
 	size_t size;
 	// запустить SM
@@ -211,7 +211,7 @@ static bool_t btokSMTest()
 		btokSMCmdWrap(apdu, &count, cmd, state_t) != ERR_OK ||
 		count != 26 ||
 		!hexEq(apdu,
-			"04A4040414870502B17683409701008E0872E4A86020680D5300") ||
+			"04A40404148705020C4C0BFB9701008E08F71EFAADD16A0A2700") ||
 		btokSMCmdUnwrap(0, &size, apdu, count, state_ct) != ERR_OK ||
 		size != sizeof(apdu_cmd_t) + 4 ||
 		btokSMCmdUnwrap(cmd1, &size, apdu, count, state_ct) != ERR_OK ||
@@ -224,8 +224,8 @@ static bool_t btokSMTest()
 		btokSMRespWrap(apdu, &count, resp, state_t) != ERR_OK ||
 		count != 35 ||
 		!hexEq(apdu,
-			"871502366A98E96E008234D6A73861B2A7B500E9AAF8438E0857030C74AC0CF3"
-			"B89000") ||
+			"8715022A9042A60A85E50FAB446AC80B75F144B67EBD6D8E0813CA27A67F5E3D"
+			"729000") ||
 		btokSMRespUnwrap(0, &size, apdu, count, state_ct) != ERR_OK ||
 		size != sizeof(apdu_resp_t) + 20 ||
 		btokSMRespUnwrap(resp1, &size, apdu, count, state_ct) != ERR_OK ||
@@ -234,8 +234,8 @@ static bool_t btokSMTest()
 		return FALSE;
 	// защита команд и ответов: сочетания длин
 	cmd->cla = 0x00, cmd->ins = 0xA4, cmd->p1 = 0x04, cmd->p2 = 0x04;
-	for (cmd->cdf_len = 0; cmd->cdf_len < 130; ++cmd->cdf_len)
-		for (cmd->rdf_len = 0; cmd->rdf_len < 130; ++cmd->rdf_len)
+	for (cmd->cdf_len = 0; cmd->cdf_len <= 257; ++cmd->cdf_len)
+		for (cmd->rdf_len = 257; cmd->rdf_len <= 257; ++cmd->rdf_len)
 		{
 			if (btokSMCmdWrap(apdu, &count, cmd, state_t) != ERR_OK)
 				return FALSE;

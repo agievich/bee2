@@ -4,7 +4,7 @@
 \brief Tests for APDU formats
 \project bee2/test
 \created 2022.10.31
-\version 2022.10.31
+\version 2022.11.03
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -52,8 +52,8 @@ bool_t apduTest()
 		return FALSE;
 	// cmd: сочетания длин
 	cmd->cla = 0x00, cmd->ins = 0xA4, cmd->p1 = 0x04, cmd->p2 = 0x04;
-	for (cmd->cdf_len = 0; cmd->cdf_len < 130; ++cmd->cdf_len)
-		for (cmd->rdf_len = 0; cmd->rdf_len < 130; ++cmd->rdf_len)
+	for (cmd->cdf_len = 0; cmd->cdf_len <= 257; ++cmd->cdf_len)
+		for (cmd->rdf_len = 0; cmd->rdf_len <= 257; ++cmd->rdf_len)
 		{
 			count = apduCmdEnc(0, cmd);
 			ASSERT(count < sizeof(apdu));
