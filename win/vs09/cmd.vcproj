@@ -365,14 +365,6 @@
 				</File>
 			</Filter>
 			<Filter
-				Name="kg"
-				>
-				<File
-					RelativePath="..\..\cmd\kg\kg.c"
-					>
-				</File>
-			</Filter>
-			<Filter
 				Name="stamp"
 				>
 				<File
@@ -449,6 +441,22 @@
 				>
 				<File
 					RelativePath="..\..\cmd\sig\sig.c"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="es"
+				>
+				<File
+					RelativePath="..\..\cmd\es\es.c"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="kg"
+				>
+				<File
+					RelativePath="..\..\cmd\kg\kg.c"
 					>
 				</File>
 			</Filter>

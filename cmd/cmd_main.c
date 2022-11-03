@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: main
 \project bee2/cmd
 \created 2022.06.07
-\version 2022.10.28
+\version 2022.11.03
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -115,7 +115,7 @@ extern err_t pwdInit();
 extern err_t kgInit();
 extern err_t cvcInit();
 extern err_t sigInit();
-
+extern err_t esInit();
 #ifdef OS_WIN
 extern err_t stampInit();
 #endif
@@ -135,6 +135,8 @@ err_t cmdInit()
 	code = cvcInit();
 	ERR_CALL_CHECK(code);
     code = sigInit();
+	ERR_CALL_CHECK(code);
+    code = esInit();
 	ERR_CALL_CHECK(code);
 #ifdef OS_WIN
 	code = stampInit();

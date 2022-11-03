@@ -15,6 +15,7 @@ add_executable(bee2cmd
 	core/whereami.c
 	bsum/bsum.c
 	cvc/cvc.c
+	es/es.c
 	kg/kg.c
 	pwd/pwd.c
 	sig/sig.c
