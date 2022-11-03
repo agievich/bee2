@@ -4,29 +4,29 @@ Credits
 Developement lead
 -----------------
 
-- Sergey Agievich [agievich@{bsu.by|gmail.com}] 
+- Sergey Agievich
 
 Authors
 -------
 
-- Vlad Semenov [semenov.vlad.by@gmail.com]
-  - core/der, crypto/bash, crypto/bpki
+- Vlad Semenov
+  - core/der, crypto/bash, crypto/bpki, crypto/btok
   - code review
-- Stanislav Poruchnik [poruchnikstanislav@gmail.com] 
+- Stanislav Poruchnik
   - SAFE(math/zz)
 
 Contributors*
 ------------
 
-- Oleg Solovey [olegotory@gmail.com]
+- Oleg Solovey
   - code review
-- Michael Koypish [mkoypish@gmail.com]
+- Michael Koypish
   - code review
-- Stanislav Lipnickii [stas_lipnickii@mail.ru]
+- Stanislav Lipnickii
   - static analysis
 - Nastya Kozlovskaya
   - logo
-- Alexander Usikov [https://github.com/relonger]
+- Alexander Usikov
   - code review
 - Mikhail Novik
   - doc review

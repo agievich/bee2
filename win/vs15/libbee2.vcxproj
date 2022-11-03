@@ -396,6 +396,7 @@
     <ClCompile Include="..\..\src\crypto\belt\belt_wbl.c" />
     <ClCompile Include="..\..\src\crypto\botp.c" />
     <ClCompile Include="..\..\src\crypto\bpki.c" />
+    <ClCompile Include="..\..\src\crypto\btok\btok_bauth.c" />
     <ClCompile Include="..\..\src\crypto\btok\btok_cvc.c" />
     <ClCompile Include="..\..\src\crypto\btok\btok_pwd.c" />
     <ClCompile Include="..\..\src\crypto\btok\btok_sm.c" />

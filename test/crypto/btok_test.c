@@ -10,6 +10,7 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
+#include <bee2/core/err.h>
 #include <bee2/core/hex.h>
 #include <bee2/core/mem.h>
 #include <bee2/core/prng.h>
@@ -19,7 +20,11 @@ version 3. See Copyright Notices in bee2/info.h.
 #include <bee2/crypto/bign.h>
 #include <bee2/crypto/btok.h>
 
-#include <stdio.h>
+/*
+*******************************************************************************
+CV-сертификаты
+*******************************************************************************
+*/
 
 static bool_t btokCVCTest()
 {
@@ -147,6 +152,12 @@ static bool_t btokCVCTest()
 	return TRUE;
 }
 
+/*
+*******************************************************************************
+SM
+*******************************************************************************
+*/
+
 static bool_t btokSMTest()
 {
 	octet state_t[512];
@@ -259,7 +270,162 @@ static bool_t btokSMTest()
 	return TRUE;
 }
 
+/*
+*******************************************************************************
+BAUTH
+*******************************************************************************
+*/
+
+static const char _da[] =
+	"1F66B5B84B7339674533F0329C74F218"
+	"34281FED0732429E0C79235FC273E269";
+
+static const char _db[] =
+	"4C0E74B2CD5811AD21F23DE7E0FA742C"
+	"3ED6EC483C461CE15C33A77AA308B7D2";
+
+static const char _certa[] =
+	"416C696365"
+	"BD1A5650179D79E03FCEE49D4C2BD5DD"
+	"F54CE46D0CF11E4FF87BF7A890857FD0"
+	"7AC6A60361E8C8173491686D461B2826"
+	"190C2EDA5909054A9AB84D2AB9D99A90";
+
+static const char _certb[] =
+	"426F62"
+	"CCEEF1A313A406649D15DA0A851D486A"
+	"695B641B20611776252FFDCE39C71060"
+	"7C9EA1F33C23D20DFCB8485A88BE6523"
+	"A28ECC3215B47FA289D6C9BE1CE837C0";
+
+static err_t bakeTestCertVal(octet* pubkey, const bign_params* params,
+	const octet* data, size_t len)
+{
+	if (!memIsValid(params, sizeof(bign_params)) ||
+		(params->l != 128 && params->l != 192 && params->l != 256) ||
+		!memIsNullOrValid(pubkey, params->l / 2))
+		return ERR_BAD_INPUT;
+	if (!memIsValid(data, len) ||
+		len < params->l / 2)
+		return ERR_BAD_CERT;
+	if (pubkey)
+		memCopy(pubkey, data + (len - params->l / 2), params->l / 2);
+	return ERR_OK;
+}
+
+bool_t btokBAUTHTest() 
+{
+	bign_params params[1];
+	octet randa[16] = {
+		0,1,2,3,4,5,6,7,8,7,6,5,4,3,2,1,
+	};
+	octet randb[48] = {
+    	2,1,4,3,6,5,8,7,6,7,4,5,2,3,1,0,
+	    6,7,4,5,2,3,1,0,2,1,4,3,6,5,8,7,
+    	7,6,5,4,3,2,1,0,1,2,3,4,5,6,7,8,
+	};
+	octet echoa[64];
+	octet echob[64];
+	bake_settings settingsa[1];
+	bake_settings settingsb[1];
+	octet da[32];
+	octet db[32];
+	octet certdataa[5 /* Alice */ + 64 + 3 /* align */];
+	octet certdatab[3 /* Bob */ + 64 + 5 /* align */];
+	bake_cert certa[1];
+	bake_cert certb[1];
+	octet keya[32];
+	octet keyb[32];
+	octet statea[20000];
+	octet stateb[20000];
+	octet buf[1000];
+	// загрузить долговременные параметры
+	if (bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK)
+		return FALSE;
+	// настроить генераторы
+	ASSERT(prngEcho_keep() <= sizeof(echoa));
+	// загрузить личные ключи
+	hexTo(da, _da);
+	hexTo(db, _db);
+	// загрузить сертификаты
+	hexTo(certdataa, _certa);
+	hexTo(certdatab, _certb);
+	certa->data = certdataa;
+	certa->len = strLen(_certa) / 2;
+	certb->data = certdatab;
+	certb->len = strLen(_certb) / 2;
+	certa->val = certb->val = bakeTestCertVal;
+	// очистка
+	memSetZero(statea, sizeof(statea));
+	memSetZero(stateb, sizeof(stateb));
+	memSetZero(keya, sizeof(keya));
+	memSetZero(keyb, sizeof(keyb));
+	memSetZero(buf, sizeof(buf));
+	// задать настройки, с аутентификацией КТ
+	memSetZero(settingsa, sizeof(bake_settings));
+	memSetZero(settingsb, sizeof(bake_settings));
+	settingsa->kca = settingsb->kca = FALSE;
+	settingsa->kcb = settingsb->kcb = TRUE;
+	settingsa->rng = settingsb->rng = prngEchoStepR;
+	settingsa->rng_state = echoa;
+	settingsb->rng_state = echob;
+	prngEchoStart(echoa, randa, sizeof(randa));
+	prngEchoStart(echob, randb, sizeof(randb));
+	// инициализация
+	ASSERT(sizeof(statea) >= btokBAUTHterm_keep(params->l));
+	ASSERT(sizeof(stateb) >= btokBAUTHct_keep(params->l));
+	if (btokBAUTHtermStart(statea, params, settingsa, da, certa) != ERR_OK ||
+		btokBAUTHctStart(stateb, params, settingsb, db, certb) != ERR_OK)
+		return FALSE;
+	// шаги протокола, с аутентификацией КТ
+	if (btokBAUTHctStep2(buf, certa, stateb) != ERR_OK ||
+		btokBAUTHtermStep3(buf, buf, statea) != ERR_OK ||
+		btokBAUTHctStep4(buf, buf, stateb) != ERR_OK ||
+		btokBAUTHtermStep5(buf, 8 + 32 + certb->len,
+			bakeTestCertVal, statea) != ERR_OK)
+		return FALSE;
+	// извлечение ключей
+	if (btokBAUTHctStepG(keyb, stateb) != ERR_OK ||
+		btokBAUTHtermStepG(keya, statea) != ERR_OK ||
+		!memEq(keya, keyb, 32))
+		return FALSE;
+	// очистка
+	memSetZero(statea, sizeof(statea));
+	memSetZero(stateb, sizeof(stateb));
+	memSetZero(keya, sizeof(keya));
+	memSetZero(keyb, sizeof(keyb));
+	memSetZero(buf, sizeof(buf));
+	// задать настройки, без аутентификациии КТ
+	memSetZero(settingsa, sizeof(bake_settings));
+	memSetZero(settingsb, sizeof(bake_settings));
+	settingsa->kca = settingsb->kca = FALSE;
+	settingsa->kcb = settingsb->kcb = FALSE;
+	settingsa->rng = settingsb->rng = prngEchoStepR;
+	settingsa->rng_state = echoa;
+	settingsb->rng_state = echob;
+	prngEchoStart(echoa, randa, sizeof(randa));
+	prngEchoStart(echob, randb, sizeof(randb));
+	// инициализация
+	ASSERT(sizeof(statea) >= btokBAUTHterm_keep(params->l));
+	ASSERT(sizeof(stateb) >= btokBAUTHct_keep(params->l));
+	if (btokBAUTHtermStart(statea, params, settingsa, da, certa) != ERR_OK ||
+		btokBAUTHctStart(stateb, params, settingsb, db, certb) != ERR_OK)
+		return FALSE;
+	// шаги протокола, без аутентификациии КТ
+	if (btokBAUTHctStep2(buf, certa, stateb) != ERR_OK ||
+		btokBAUTHtermStep3(buf, buf, statea) != ERR_OK ||
+		btokBAUTHctStep4(buf, buf, stateb) != ERR_OK)
+		return FALSE;
+	// извлечение ключей
+	if (btokBAUTHctStepG(keyb, stateb) != ERR_OK ||
+		btokBAUTHtermStepG(keya, statea) != ERR_OK ||
+		!memEq(keya, keyb, 32))
+		return FALSE;
+	// все нормально
+	return TRUE;
+}
+
 bool_t btokTest()
 {
-	return btokCVCTest() && btokSMTest();
+	return btokCVCTest() && btokSMTest() && btokBAUTHTest();
 }

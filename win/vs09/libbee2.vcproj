@@ -802,6 +802,10 @@
 					Name="btok"
 					>
 					<File
+						RelativePath="..\..\src\crypto\btok\btok_bauth.c"
+						>
+					</File>
+					<File
 						RelativePath="..\..\src\crypto\btok\btok_cvc.c"
 						>
 					</File>
