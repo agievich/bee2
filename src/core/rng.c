@@ -4,7 +4,7 @@
 \brief Entropy sources and random number generators
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2022.10.28
+\version 2022.11.04
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -260,13 +260,13 @@ static err_t rngTRNGRead(void* buf, size_t* read, size_t count)
 	// генерация
 	for (; *read + 4 <= count; *read += 4, ++rand)
 		if (!rngRDStep(rand))
-			return ERR_OK;
+			return ERR_BAD_ENTROPY;
 	// неполный блок
 	if (*read < count)
 	{
 		rand = (u32*)((octet*)buf + count - 4);
 		if (!rngRDStep(rand))
-			return ERR_OK;
+			return ERR_BAD_ENTROPY;
 		*read = count;
 	}
 	return ERR_OK;
@@ -288,13 +288,13 @@ static err_t rngTRNG2Read(void* buf, size_t* read, size_t count)
 	// генерация
 	for (; *read + 4 <= count; *read += 4, ++rand)
 		if (!rngRDStep2(rand))
-			return ERR_OK;
+			return ERR_BAD_ENTROPY;
 	// неполный блок
 	if (*read < count)
 	{
 		rand = (u32*)((octet*)buf + count - 4);
 		if (!rngRDStep2(rand))
-			return ERR_OK;
+			return ERR_BAD_ENTROPY;
 		*read = count;
 	}
 	return ERR_OK;
@@ -424,7 +424,7 @@ static err_t rngSysRead(void* buf, size_t* read, size_t count)
 	{
 		*read = 0;
 		CryptReleaseContext(hprov, 0);
-		return ERR_BAD_RNG;
+		return ERR_BAD_ENTROPY;
 	}
 	// завершение
 	CryptReleaseContext(hprov, 0);

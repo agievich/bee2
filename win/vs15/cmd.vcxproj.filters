@@ -36,6 +36,9 @@
     <Filter Include="Source Files\core">
       <UniqueIdentifier>{b2ee0400-483e-4ae5-901e-56f2bd565271}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\es">
+      <UniqueIdentifier>{864685ed-1abf-4c54-b801-656724e1e542}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\cmd\bsum\bsum.c">
@@ -88,6 +91,9 @@
     </ClCompile>
     <ClCompile Include="..\..\cmd\core\whereami.c">
       <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\es\es.c">
+      <Filter>Source Files\es</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

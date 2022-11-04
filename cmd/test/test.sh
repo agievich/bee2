@@ -238,10 +238,10 @@ test_es() {
     || return 1
   if [ "$(wc -c dd | awk '{print $1}')" != "1024" ]; then
     return 1
+  fi
 
   return 0
 }
-
 
 run_test() {
   echo -n "Testing $1... "
@@ -253,5 +253,5 @@ run_test() {
   fi
 } 
 
-run_test ver && run_test pwd && run_test kg && run_test cvc\ 
+run_test ver && run_test pwd && run_test kg && run_test cvc \
   && run_test sig && run_test es
