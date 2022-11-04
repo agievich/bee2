@@ -3,7 +3,7 @@ rem ===========================================================================
 rem \brief Testing command-line interface
 rem \project bee2evp/cmd
 rem \created 2022.06.24
-rem \version 2022.10.28
+rem \version 2022.11.04
 rem ===========================================================================
 
 rem ===========================================================================
@@ -88,7 +88,7 @@ if %ERRORLEVEL% neq 0 goto Error
 bee2cmd pwd print share:"-pass pass:zed s1 s2 s3 s4 s5"
 if %ERRORLEVEL% neq 0 goto Error
 
-del /q ss1 ss2 ss3
+del /q ss1 ss2 ss3 2> nul
 
 bee2cmd pwd gen share:"-l192 -pass share:\"-pass pass:zed s1 s2 s3\" ss1 ss2 ss3"
 if %ERRORLEVEL% neq 0 goto Error
@@ -304,6 +304,23 @@ if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd sig vfy -anchor cert2 ff ff
 if %ERRORLEVEL% equ 0 goto Error
+
+echo ****** OK
+
+rem ===========================================================================
+rem  bee2cmd/es
+rem ===========================================================================
+
+del /q dd 1> nul
+
+bee2cmd es print
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd es read sys 1 dd
+if %ERRORLEVEL% neq 0 goto Error
+
+for %%A in (dd) do set dd_len=%%~zA
+if %dd_len% neq 1024 goto Error
 
 echo ****** OK
 

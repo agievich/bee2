@@ -3,7 +3,7 @@
 # \brief Testing command-line interface
 # \project bee2evp/cmd
 # \created 2022.06.24
-# \version 2022.10.27
+# \version 2022.11.04
 # =============================================================================
 
 bee2cmd=./bee2cmd
@@ -228,6 +228,21 @@ test_sig(){
   return 0
 }
 
+test_es() {
+  rm -rf dd\
+    || return 2
+
+  $bee2cmd es print \
+    || return 1
+  $bee2cmd es read sys 1 dd \
+    || return 1
+  if [ "$(wc -c dd | awk '{print $1}')" != "1024" ]; then
+    return 1
+
+  return 0
+}
+
+
 run_test() {
   echo -n "Testing $1... "
   (test_$1 > /dev/null)
@@ -238,4 +253,5 @@ run_test() {
   fi
 } 
 
-run_test ver && run_test pwd && run_test kg && run_test cvc && run_test sig
+run_test ver && run_test pwd && run_test kg && run_test cvc\ 
+  && run_test sig && run_test es

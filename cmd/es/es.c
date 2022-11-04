@@ -4,7 +4,7 @@
 \brief Dealing with entropy sources
 \project bee2/cmd 
 \created 2021.04.20
-\version 2022.11.03
+\version 2022.11.04
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -29,11 +29,12 @@ version 3. See Copyright Notices in bee2/info.h.
 
 Функционал:
 - перечень доступных источников энтропии;
+- проверка работоспосбности источников энтропии;
 - выгрузка данных от стандартных источников энтропии;
 - эксперименты с источником timer.
 
 Пример:
-  bee2cmd es list
+  bee2cmd es print
   bee2cmd es read trng2 128 file
 *******************************************************************************
 */
@@ -46,12 +47,12 @@ static int esUsage()
 	printf(
 		"bee2cmd/%s: %s\n"
 		"Usage:\n"
-		"  es list\n"
-		"    list available entropy sources\n"
+		"  es print\n"
+		"    list available entropy sources and determine their health\n"
 		"  es read <source> <count> <file>\n"
 		"    read <count> Kbytes from <source> and store them in <file>\n"
 		"  <source> in {trng, trng2, sys, timer, timerNN}\n"
-		"    timerNN -- use NN sleep delays to produce one output bit\n",
+		"    timerNNN -- use NNN sleep delays to produce one output bit\n",
 		_name, _descr
 	);
 	return -1;
@@ -59,13 +60,13 @@ static int esUsage()
 
 /*
 *******************************************************************************
-Перечень источников энтропии
+Информация об источниках энтропии
 
-list
+print
 *******************************************************************************
 */
 
-static err_t esList(int argc, char* argv[])
+static err_t esPrint(int argc, char* argv[])
 {
 	const char* sources[] = { "trng", "trng2", "sys", "timer" };
 	size_t pos;
@@ -75,11 +76,21 @@ static err_t esList(int argc, char* argv[])
 	if (argc != 0)
 		return ERR_CMD_PARAMS;
 	// опрос источников
-	printf("Avaliable sources:");
+	printf("Sources:");
 	for (pos = count = 0; pos < COUNT_OF(sources); ++pos)
 		if (rngESRead(&read, 0, 0, sources[pos]) == ERR_OK)
-			++count, printf(" %s", sources[pos]);
+		{
+			printf(" %s%c", sources[pos], 
+				rngESTest(sources[pos]) == ERR_OK ? '+' : '-');
+			++count;
+		}
 	printf(count ? "\n" : " none\n");
+	// общая работоспособность
+	printf("Health (at least two healthy sources): %c\n", 
+		rngESHealth() == ERR_OK ? '+' : '-');
+	printf("Health2 (there is a healthy physical source): %c\n", 
+		rngESHealth2() == ERR_OK ? '+' : '-');
+	printf("\\warning health is volatile\n");
 	return ERR_OK;
 }
 
@@ -154,11 +165,10 @@ static err_t esRead(int argc, char *argv[])
 		strCopy(source, "timer");
 	else if (strStartsWith(argv[0], "timer"))
 	{
-		//const char* num = argv[0] + strLen("timer");
 		strCopy(source, "timer");
 		argv[0]	+= strLen("timer");
 		if (!decIsValid(argv[0]) || !strLen(argv[0]) || 
-			strLen(argv[0]) > 2 || decCLZ(argv[0]))
+			strLen(argv[0]) > 3 || decCLZ(argv[0]))
 			return ERR_CMD_PARAMS;
 		par = (size_t)decToU32(argv[0]);
 	}
@@ -212,8 +222,8 @@ int esMain(int argc, char* argv[])
 		return esUsage();
 	// разбор команды
 	++argv, --argc;
-	if (strEq(argv[0], "list"))
-		code = esList(argc - 1, argv + 1);
+	if (strEq(argv[0], "print"))
+		code = esPrint(argc - 1, argv + 1);
 	else if (strEq(argv[0], "read"))
 		code = esRead(argc - 1, argv + 1);
 	else
