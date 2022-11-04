@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): Secure Messaging
 \project bee2 [cryptographic library]
 \created 2022.10.31
-\version 2022.11.03
+\version 2022.11.04
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -59,15 +59,16 @@ void btokSMStart(void* state, const octet key[32])
 	st->ctr[0] = 0;
 }
 
-void btokSMCtrInc(octet ctr[16])
+void btokSMCtrInc(void* state)
 {
+	btok_sm_st* st = (btok_sm_st*)state;
 	register word carry = 1;
 	size_t pos;
 	// pre
-	ASSERT(memIsValid(ctr, 16));
+	ASSERT(memIsValid(state, btokSM_keep()));
 	// инкремент
 	for (pos = 0; pos < 16; ++pos)
-		carry += ctr[pos], ctr[pos] = (octet)carry, carry >>= 8;
+		carry += st->ctr[pos], st->ctr[pos] = (octet)carry, carry >>= 8;
 	carry = 0;
 }
 
@@ -200,9 +201,8 @@ err_t btokSMCmdWrap(octet apdu[], size_t* count, const apdu_cmd_t* cmd,
 	}
 	ASSERT(memIsDisjoint2(apdu, offset, state, btokSM_keep()));
 	ASSERT(memIsDisjoint2(apdu, offset, cmd, apduCmdSizeof(cmd)));
-	// инкрементировать счетчик
+	// проверить счетчик
 	st = (btok_sm_st*)state;
-	btokSMCtrInc(st->ctr);
 	if (st->ctr[0] % 2 != 1)
 		return ERR_BAD_LOGIC;
 	// уточнить заголовок
@@ -426,7 +426,6 @@ err_t btokSMCmdUnwrap(apdu_cmd_t* cmd, size_t* size, const octet apdu[],
 		return ERR_BAD_LOGIC;
 	// инкрементировать счетчик
 	st = (btok_sm_st*)state;
-	btokSMCtrInc(st->ctr);
 	if (st->ctr[0] % 2 != 1)
 		return ERR_BAD_LOGIC;
 	// проверить имитовставку
@@ -533,9 +532,8 @@ err_t btokSMRespWrap(octet apdu[], size_t* count, const apdu_resp_t* resp,
 	}
 	ASSERT(memIsDisjoint2(apdu, offset, state, btokSM_keep()));
 	ASSERT(memIsDisjoint2(apdu, offset, resp, apduRespSizeof(resp)));
-	// инкрементировать счетчик
+	// проверить счетчик
 	st = (btok_sm_st*)state;
-	btokSMCtrInc(st->ctr);
 	if (st->ctr[0] % 2 != 0)
 		return ERR_BAD_LOGIC;
 	// обработать rdf
@@ -641,7 +639,6 @@ err_t btokSMRespUnwrap(apdu_resp_t* resp, size_t* size, const octet apdu[],
 		return ERR_BAD_LOGIC;
 	// инкрементировать счетчик
 	st = (btok_sm_st*)state;
-	btokSMCtrInc(st->ctr);
 	if (st->ctr[0] % 2 != 0)
 		return ERR_BAD_LOGIC;
 	// проверить имитовставку

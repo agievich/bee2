@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.79 (btok)
 \project bee2/test
 \created 2022.07.07
-\version 2022.11.03
+\version 2022.11.04
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -217,6 +217,7 @@ static bool_t btokSMTest()
 		!memEq(resp, resp1, size))
 		return FALSE;
 	// обработка команды с защитой
+	btokSMCtrInc(state_t), btokSMCtrInc(state_ct);
 	if (btokSMCmdWrap(0, &count, cmd, state_t) != ERR_OK ||
 		count != 26 ||
 		btokSMCmdWrap(apdu, &count, cmd, state_t) != ERR_OK ||
@@ -234,17 +235,18 @@ static bool_t btokSMTest()
 		!memEq(cmd, cmd1, size))
 		return FALSE;
 	// обработка ответа с защитой
-	if (btokSMRespWrap(0, &count, resp, state_t) != ERR_OK ||
+	btokSMCtrInc(state_ct), btokSMCtrInc(state_t);
+	if (btokSMRespWrap(0, &count, resp, state_ct) != ERR_OK ||
 		count != 35 ||
-		btokSMRespWrap(apdu, &count, resp, state_t) != ERR_OK ||
+		btokSMRespWrap(apdu, &count, resp, state_ct) != ERR_OK ||
 		count != 35 ||
 		!hexEq(apdu,
 			"8715022A9042A60A85E50FAB446AC80B75F144B67EBD6D"
 			"8E082C4DE31DFAA17635"
 			"9000") ||
-		btokSMRespUnwrap(0, &size, apdu, count, state_ct) != ERR_OK ||
+		btokSMRespUnwrap(0, &size, apdu, count, state_t) != ERR_OK ||
 		size != sizeof(apdu_resp_t) + 20 ||
-		btokSMRespUnwrap(resp1, &size, apdu, count, state_ct) != ERR_OK ||
+		btokSMRespUnwrap(resp1, &size, apdu, count, state_t) != ERR_OK ||
 		size != sizeof(apdu_resp_t) + 20 ||
 		!memEq(resp, resp1, size))
 		return FALSE;
@@ -253,18 +255,22 @@ static bool_t btokSMTest()
 	for (cmd->cdf_len = 0; cmd->cdf_len <= 257; ++cmd->cdf_len)
 		for (cmd->rdf_len = 0; cmd->rdf_len <= 257; ++cmd->rdf_len)
 		{
+			btokSMCtrInc(state_t);
 			if (btokSMCmdWrap(apdu, &count, cmd, state_t) != ERR_OK)
 				return FALSE;
 			ASSERT(count < sizeof(apdu));
+			btokSMCtrInc(state_ct);
 			if (btokSMCmdUnwrap(cmd1, &size, apdu, count, state_ct) != ERR_OK)
 				return FALSE;
 			ASSERT(size < sizeof(stack) / 4);
 			if (!memEq(cmd, cmd1, size))
 				return FALSE;
 			resp->rdf_len = cmd->rdf_len;
+			btokSMCtrInc(state_ct);
 			if (btokSMRespWrap(apdu, &count, resp, state_ct) != ERR_OK)
 				return FALSE;
 			ASSERT(count < sizeof(apdu));
+			btokSMCtrInc(state_t);
 			if (btokSMRespUnwrap(resp1, &size, apdu, count, state_t) != ERR_OK)
 				return FALSE;
 			ASSERT(size < sizeof(stack) / 4);
