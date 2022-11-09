@@ -1,12 +1,11 @@
 /*
 *******************************************************************************
 \file bake.c
-\brief STB 34.101.66 (bake): key establishment protocols
+\brief STB 34.101.66 (bake): authenticated key establishment (AKE) protocols
 \project bee2 [cryptographic library]
-\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.04.14
-\version 2021.04.21
-\license This program is released under the GNU General Public License 
+\version 2022.11.09
+\license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */

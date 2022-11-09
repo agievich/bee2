@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.79 (btok)
 \project bee2/test
 \created 2022.07.07
-\version 2022.11.04
+\version 2022.11.09
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -284,6 +284,8 @@ static bool_t btokSMTest()
 /*
 *******************************************************************************
 BAUTH
+
+A = T, B = CT
 *******************************************************************************
 */
 
@@ -375,21 +377,21 @@ bool_t btokBAUTHTest()
 	prngEchoStart(echoa, beltH(), 128);
 	prngEchoStart(echob, beltH() + 128, 128);
 	// инициализация
-	ASSERT(btokBAUTHterm_keep(params->l) <= sizeof(statea));
-	ASSERT(btokBAUTHct_keep(params->l) <= sizeof(stateb));
-	if (btokBAUTHtermStart(statea, params, settingsa, da, certa) != ERR_OK ||
-		btokBAUTHctStart(stateb, params, settingsb, db, certb) != ERR_OK)
+	ASSERT(btokBAuthT_keep(params->l) <= sizeof(statea));
+	ASSERT(btokBAuthCT_keep(params->l) <= sizeof(stateb));
+	if (btokBAuthTStart(statea, params, settingsa, da, certa) != ERR_OK ||
+		btokBAuthCTStart(stateb, params, settingsb, db, certb) != ERR_OK)
 		return FALSE;
 	// шаги протокола, с аутентификацией КТ
-	if (btokBAUTHctStep2(buf, certa, stateb) != ERR_OK ||
-		btokBAUTHtermStep3(buf, buf, statea) != ERR_OK ||
-		btokBAUTHctStep4(buf, buf, stateb) != ERR_OK ||
-		btokBAUTHtermStep5(buf, 8 + 32 + certb->len,
+	if (btokBAuthCTStep2(buf, certa, stateb) != ERR_OK ||
+		btokBAuthTStep3(buf, buf, statea) != ERR_OK ||
+		btokBAuthCTStep4(buf, buf, stateb) != ERR_OK ||
+		btokBAuthTStep5(buf, 8 + 32 + certb->len,
 			bakeTestCertVal, statea) != ERR_OK)
 		return FALSE;
 	// извлечение ключей
-	if (btokBAUTHctStepG(keyb, stateb) != ERR_OK ||
-		btokBAUTHtermStepG(keya, statea) != ERR_OK ||
+	if (btokBAuthCTStepG(keyb, stateb) != ERR_OK ||
+		btokBAuthTStepG(keya, statea) != ERR_OK ||
 		!memEq(keya, keyb, 32))
 		return FALSE;
 	// очистка
@@ -409,19 +411,19 @@ bool_t btokBAUTHTest()
 	prngEchoStart(echoa, beltH(), 128);
 	prngEchoStart(echob, beltH() + 128, 128);
 	// инициализация
-	ASSERT(btokBAUTHterm_keep(params->l) <= sizeof(statea));
-	ASSERT(btokBAUTHct_keep(params->l) <= sizeof(stateb));
-	if (btokBAUTHtermStart(statea, params, settingsa, da, certa) != ERR_OK ||
-		btokBAUTHctStart(stateb, params, settingsb, db, certb) != ERR_OK)
+	ASSERT(btokBAuthT_keep(params->l) <= sizeof(statea));
+	ASSERT(btokBAuthCT_keep(params->l) <= sizeof(stateb));
+	if (btokBAuthTStart(statea, params, settingsa, da, certa) != ERR_OK ||
+		btokBAuthCTStart(stateb, params, settingsb, db, certb) != ERR_OK)
 		return FALSE;
 	// шаги протокола, без аутентификациии КТ
-	if (btokBAUTHctStep2(buf, certa, stateb) != ERR_OK ||
-		btokBAUTHtermStep3(buf, buf, statea) != ERR_OK ||
-		btokBAUTHctStep4(buf, buf, stateb) != ERR_OK)
+	if (btokBAuthCTStep2(buf, certa, stateb) != ERR_OK ||
+		btokBAuthTStep3(buf, buf, statea) != ERR_OK ||
+		btokBAuthCTStep4(buf, buf, stateb) != ERR_OK)
 		return FALSE;
 	// извлечение ключей
-	if (btokBAUTHctStepG(keyb, stateb) != ERR_OK ||
-		btokBAUTHtermStepG(keya, statea) != ERR_OK ||
+	if (btokBAuthCTStepG(keyb, stateb) != ERR_OK ||
+		btokBAuthTStepG(keya, statea) != ERR_OK ||
 		!memEq(keya, keyb, 32))
 		return FALSE;
 	// все нормально
