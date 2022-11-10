@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): cryptographic tokens
 \project bee2 [cryptographic library]
 \created 2022.07.04
-\version 2022.11.09
+\version 2022.11.10
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -458,9 +458,65 @@ err_t btokSMRespUnwrap(
 
 \section btok-bauth Протокол BAUTH
 
-Протокол выполняется между криптографическим токеном (КТ) и терминалом (T).
+Протокол выполняется между терминалом (T) и криптографическим токеном
+(КТ, cryptographic token = CT).
+
+Для настройки протокола используется структура bake_settings (см. bake.h).
+В терминах протоколов Bake в роли стороны A выступает терминал, в роли
+стороны B -- криптографический токен.
+
+Терминал всегда подтверждает сформированный ключ, т.е. проходит аутентификацию
+перед КТ. Поэтому в структуре bake_settings флаг kca должен равняться TRUE.
+
+КТ проходит аутентификацию перед КТ опционально: в структуре bake_settings
+флаг kcb может принимать как значение TRUE, так и значение FALSE.
+
+\expect{ERR_BAD_INPUT} Все входные указатели, за исключением оговоренных
+случаев, корректны.
+
+\expect При пошаговом выполнении протокола данные, переданные при инициализации
+через указатели, остаются корректными и постоянными на протяжении всего
+выполнения протокола.
 *******************************************************************************
 */
+
+/*!	\brief Длина состояния функций BAUTH на стороне Т
+
+	Определяется длина состояния (в октетах) функций протокола BAUTH на
+	стороне Т.
+	\return Длина состояния.
+*/
+size_t btokBAuthT_keep(
+	size_t l						/*!< [in] уровень стойкости */
+);
+
+/*!	\brief Инициализация протокола BAUTH на стороне Т
+
+	По параметрам params, настройкам settings, личному ключу [l / 4]privkey
+	и сертификату cert соответствующего открытого ключа в state формируются
+	структуры данных, необходимые для выполнения протокола BAUTH на стороне T.
+	\pre По адресу state зарезервировано btokBAuthT_keep() октетов.
+	\expect{ERR_BAD_PARAMS} Параметры params корректны.
+	\expect{ERR_BAD_INPUT} settings->kca == TRUE.
+	\expect{ERR_BAD_INPUT} Указатель settings->helloa нулевой, либо буфер
+	[settings->helloa_len]settings->helloa корректен. Аналогичное требование
+	касается полей settings->hellob, settings->hellob_len.
+	\expect{ERR_BAD_RNG} Генератор settings->rng (с состоянием
+	settings->rng_state) корректен.
+	\expect Генератор settings->rng является криптографически стойким.
+	\expect{ERR_BAD_CERT} Сертификат cert корректен.
+	\expect Ключ privkey и сертификат cert согласованы. Если согласование
+	нарушено, то протокол будет завершен с ошибкой.
+	\return ERR_OK, если инициализация успешно выполнена, и код ошибки
+	в противном случае.
+*/
+err_t btokBAuthTStart(
+	void* state,					/*!< [out] состояние */
+	const bign_params* params,		/*!< [in] долговременные параметры */
+	const bake_settings* settings,	/*!< [in] настройки */
+	const octet privkey[],			/*!< [in] личный ключ */
+	const bake_cert* cert			/*!< [in] сертификат */
+);
 
 /*!	\brief Длина состояния функций BAUTH на стороне КТ
 
@@ -479,7 +535,7 @@ size_t btokBAuthCT_keep(
 	структуры данных, необходимые для выполнения протокола BAUTH на стороне КТ.
 	\pre По адресу state зарезервировано btokBAuthCT_keep() октетов.
 	\expect{ERR_BAD_PARAMS} Параметры params корректны.
-	\expect{ERR_BAD_INPUT} settings->kca == TRUE && settings->kcb == TRUE.
+	\expect{ERR_BAD_INPUT} settings->kca == TRUE.
 	\expect{ERR_BAD_INPUT} Указатель settings->helloa нулевой, либо буфер 
 	[settings->helloa_len]settings->helloa корректен. Аналогичное требование
 	касается полей settings->hellob, settings->hellob_len.
@@ -515,11 +571,30 @@ err_t btokBAuthCTStep2(
 	void* state					/*!< [in/out] состояние */
 );
 
+/*!	\brief Шаг 3 протокола BAUTH
+
+	Т выполняет шаг 3 протокола BAUTH, обрабатывая сообщение
+	M1 = [5 l / 8 + 16]in и используя состояние state.
+	При успешном выполнении шага формируется сообщение M2 = [8]out,
+	если не требуется аутентификация перед Т, или M2 = [8 + 16]out, если
+	требуется.
+	\expect btokBAuthTStart() < btokBAuthTStep3().
+	\expect btokBAuthCTStep2() << btokBAuthTStep3().
+	\return ERR_OK, если шаг успешно выполнен, и код ошибки в противном случае.
+*/
+err_t btokBAuthTStep3(
+	octet out[],			/*!< [out] выходное сообщение M2 */
+	const octet in[],		/*!< [in] входное сообщение M1 */
+	void* state				/*!< [in/out] состояние */
+);
+
 /*!	\brief Шаг 4 протокола BAUTH
 
-	КТ выполняет шаг 4 протокола BAUTH, обрабатывая сообщение
-	M2 = [8 + l / 8]in и используя состояние state. При успешном выполнении
-	шага формируется сообщение M3 = [l / 4 + cert->len + 8]out.
+	КТ выполняет шаг 4 протокола BAUTH, обрабатывая сообщение M2 = [8]in,
+	если не требуется аутентификация перед Т, или M2 = [8 + 16]in,
+	если не требуется, и используя состояние state. Если аутентификация
+	перед КТ требуется, то при успешном выполнении шага формируется
+	сообщение M3 = [l / 4 + cert->len + 8]out.
 	\expect btokBAuthCTStep2() < btokBAuthCTStep4().
 	\expect btokBAuthTStep3() << btokBAuthCTStep4().
 	\return ERR_OK, если шаг успешно выполнен, и код ошибки в противном случае.
@@ -527,6 +602,24 @@ err_t btokBAuthCTStep2(
 err_t btokBAuthCTStep4(
 	octet out[],			/*!< [out] выходное сообщение M3 */
 	const octet in[],		/*!< [in] входное сообщение M2 */
+	void* state				/*!< [in/out] состояние */
+);
+
+/*!	\brief Шаг 5 протокола BAUTH
+
+	Т выполняет шаг 5 протокола BAUTH, обрабатывая сообщение M3 = [in_len]in
+	и используя состояние state. Т проверяет присланный в M3 сертификат
+	КТ с помощью функции val_ct.
+	\expect{ERR_BAD_LOGIC} settings->kcb == TRUE, т.е. требуется аутентификация
+	КТ перед Т.
+	\expect btokBAuthTStep3() < btokBAuthTStep5().
+	\expect btokBAuthCTStep4() << btokBAuthTStep5().
+	\return ERR_OK, если шаг успешно выполнен, и код ошибки в противном случае.
+*/
+err_t btokBAuthTStep5(
+	const octet in[],		/*!< [in] входное сообщение M3 */
+	size_t in_len,			/*!< [in] длина in */
+	bake_certval_i val_ct,	/*!< [in] функция проверки сертификата КТ */
 	void* state				/*!< [in/out] состояние */
 );
 
@@ -543,82 +636,13 @@ err_t btokBAuthCTStepG(
 	void* state				/*!< [in/out] состояние */
 );
 
-/*!	\brief Длина состояния функций BAUTH на стороне Т
-
-	Определяется длина состояния (в октетах) функций протокола BAUTH на
-	стороне Т.
-	\return Длина состояния.
-*/
-size_t btokBAuthT_keep(
-	size_t l						/*!< [in] уровень стойкости */
-);
-
-/*!	\brief Инициализация протокола BAUTH на стороне Т
-
-	По параметрам params, настройкам settings, личному ключу [l / 4]privkey 
-	и сертификату cert соответствующего открытого ключа в state формируются 
-	структуры данных, необходимые для выполнения протокола BAUTH на стороне T.
-	\pre По адресу state зарезервировано btokBAuthT_keep() октетов.
-	\expect{ERR_BAD_PARAMS} Параметры params корректны.
-	\expect{ERR_BAD_INPUT} settings->kca == TRUE && settings->kcb == TRUE.
-	\expect{ERR_BAD_INPUT} Указатель settings->helloa нулевой, либо буфер 
-	[settings->helloa_len]settings->helloa корректен. Аналогичное требование
-	касается полей settings->hellob, settings->hellob_len.
-	\expect{ERR_BAD_RNG} Генератор settings->rng (с состоянием 
-	settings->rng_state) корректен.
-	\expect Генератор settings->rng является криптографически стойким.
-	\expect{ERR_BAD_CERT} Сертификат cert корректен.
-	\expect Ключ privkey и сертификат cert согласованы. Если согласование
-	нарушено, то протокол будет завершен с ошибкой.
-	\return ERR_OK, если инициализация успешно выполнена, и код ошибки 
-	в противном случае.
-*/
-err_t btokBAuthTStart(
-	void* state,					/*!< [out] состояние */
-	const bign_params* params,		/*!< [in] долговременные параметры */
-	const bake_settings* settings,	/*!< [in] настройки */
-	const octet privkey[],			/*!< [in] личный ключ */
-	const bake_cert* cert			/*!< [in] сертификат */
-);
-
-/*!	\brief Шаг 3 протокола BAUTH
-
-	Т выполняет шаг 3 протокола BAUTH с состоянием state, обрабатывая
-	сообщение M1 = [5 l / 8 + 16]in и используя состояние state.
-	При успешном выполнении шага формируется сообщение M2 = [8 + l / 8]out.
-	\expect btokBAuthTStart() < btokBAuthTStep3().
-	\expect btokBAuthCTStep2() << btokBAuthTStep3().
-	\return ERR_OK, если шаг успешно выполнен, и код ошибки в противном случае.
-*/
-err_t btokBAuthTStep3(
-	octet out[],			/*!< [out] выходное сообщение M2 */
-	const octet in[],		/*!< [in] входное сообщение M1 */
-	void* state				/*!< [in/out] состояние */
-);
-
-/*!	\brief Шаг 5 протокола BAUTH
-
-	Т выполняет шаг 5 протокола BAUTH, обрабатывая сообщение M4 = [in_len]in
-	и используя состояние state. Т проверяет присланный в M4 сертификат
-	криптографического токена с помощью функции val_ct.
-	\expect btokBAuthTStep3() < btokBAuthTStep6().
-	\expect btokBAuthCTStep4() << btokBAuthTStep5().
-	\return ERR_OK, если шаг успешно выполнен, и код ошибки в противном случае.
-*/
-err_t btokBAuthTStep5(
-	const octet in[],		/*!< [in] входное сообщение M3 */
-	size_t in_len,			/*!< [in] длина in */
-	bake_certval_i val_ct,	/*!< [in] функция проверки сертификата криптографического токена */
-	void* state				/*!< [in/out] состояние */
-);
-
 /*!	\brief Извлечение ключа протокола BAUTH на стороне T
 
 	Т определяет общий секретный ключ key, полученный с помощью протокола BAUTH
 	с состоянием state.
 	\expect Если КТ аутентифицируется перед терминалом, то 
-	btokBAuthTStep5() < btokBAuthTStepG(), иначе
-	btokBAuthTStep3() < btokBAuthTStepG().
+	btokBAuthTStep5() < btokBAuthTStepG(),
+	иначе btokBAuthTStep3() < btokBAuthTStepG().
 	\return ERR_OK, если ключ успешно извлечен, и код ошибки в противном случае.
 */
 err_t btokBAuthTStepG(

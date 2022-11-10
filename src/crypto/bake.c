@@ -4,7 +4,7 @@
 \brief STB 34.101.66 (bake): authenticated key establishment (AKE) protocols
 \project bee2 [cryptographic library]
 \created 2014.04.14
-\version 2022.11.09
+\version 2022.11.10
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -762,6 +762,7 @@ err_t bakeBSTSStart(void* state, const bign_params* params,
 	// проверить входные данные
 	if (!memIsValid(params, sizeof(bign_params)) ||
 		!memIsValid(settings, sizeof(bake_settings)) ||
+		settings->kca != TRUE || settings->kcb != TRUE ||
 		!memIsNullOrValid(settings->helloa, settings->helloa_len) ||
 		!memIsNullOrValid(settings->hellob, settings->hellob_len))
 		return ERR_BAD_INPUT;

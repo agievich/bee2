@@ -4,7 +4,7 @@
 \brief STB 34.101.66 (bake): authenticated key establishment (AKE) protocols
 \project bee2 [cryptographic library]
 \created 2014.04.14
-\version 2022.11.09
+\version 2022.11.10
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -73,7 +73,6 @@ bignStdParams(), проверить --- с помощью функции bignVal
 -	уровень стойкости l из перечня долговременных параметров;
 -	флаги kca, kcb из перечня настроек;
 -	указатель cert на собственный сертификат стороны протокола.
-.
 
 Для каждого протокола имеются две высокоуровневые функции с суффиксами RunA 
 и RunB. В этих функциях реализовано полное выполнение протокола от лица 

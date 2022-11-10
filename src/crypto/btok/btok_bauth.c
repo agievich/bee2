@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): BAUTH protocol
 \project bee2 [cryptographic library]
 \created 2022.02.22
-\version 2022.11.09
+\version 2022.11.10
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -24,8 +24,10 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/math/ww.h"
 #include "bee2/math/zz.h"
 
-
 /*
+*******************************************************************************
+Состояния
+
 ct:
 - dct: 4
 - Rct: 2, 4
@@ -60,36 +62,8 @@ t:
 
 A=T
 B=CT
+*******************************************************************************
 */
-
-typedef struct
-{
-	obj_hdr_t hdr;				/*< заголовок */
-// ptr_table {
-	ec_o* ec;					/*< описание эллиптической кривой */
-	word* d;					/*< [ec->f->n] долговременный личный ключ */
-	word* u;					/*< [ec->f->n] одноразовый личный ключ */
-	octet* V;					/*< [ec->f->no] ecX(V) */
-	octet* R;					/*< [l/8] одноразовый секретный ключ */
-// }
-	bign_params params[1];		/*< параметры */
-	bake_settings settings[1];	/*< настройки */
-	bake_cert cert[1];			/*< сертификат */
-	octet K0[32];				/*< ключ K0 */
-	octet data[];				/*< данные */
-} bake_bauth_ct_o;
-
-static size_t btokBAuthCT_deep(
-	size_t n, size_t f_deep, size_t ec_d, size_t ec_deep);
-
-size_t btokBAuthCT_keep(size_t l)
-{
-	const size_t n = W_OF_B(2 * l);
-	const size_t no = O_OF_B(2 * l);
-	return sizeof(bake_bauth_ct_o) +
-		bignStart_keep(l, btokBAuthCT_deep) +
-		2 * O_OF_W(n) + no + no / 2;
-}
 
 typedef struct
 {
@@ -121,6 +95,112 @@ size_t btokBAuthT_keep(size_t l)
 		3 * O_OF_W(n) + no / 2;
 }
 
+typedef struct
+{
+	obj_hdr_t hdr;				/*< заголовок */
+// ptr_table {
+	ec_o* ec;					/*< описание эллиптической кривой */
+	word* d;					/*< [ec->f->n] долговременный личный ключ */
+	word* u;					/*< [ec->f->n] одноразовый личный ключ */
+	octet* V;					/*< [ec->f->no] ecX(V) */
+	octet* R;					/*< [l/8] одноразовый секретный ключ */
+// }
+	bign_params params[1];		/*< параметры */
+	bake_settings settings[1];	/*< настройки */
+	bake_cert cert[1];			/*< сертификат */
+	octet K0[32];				/*< ключ K0 */
+	octet data[];				/*< данные */
+} bake_bauth_ct_o;
+
+static size_t btokBAuthCT_deep(
+	size_t n, size_t f_deep, size_t ec_d, size_t ec_deep);
+
+size_t btokBAuthCT_keep(size_t l)
+{
+	const size_t n = W_OF_B(2 * l);
+	const size_t no = O_OF_B(2 * l);
+	return sizeof(bake_bauth_ct_o) +
+		bignStart_keep(l, btokBAuthCT_deep) +
+		2 * O_OF_W(n) + no + no / 2;
+}
+
+/*
+*******************************************************************************
+Запуск
+*******************************************************************************
+*/
+
+err_t btokBAuthTStart(void* state, const bign_params* params,
+	const bake_settings* settings, const octet privkey[],
+	const bake_cert* cert)
+{
+	err_t code;
+	bake_bauth_t_o* s = (bake_bauth_t_o*)state;
+	size_t n, no;
+	// стек
+	word* Q;
+	void* stack;
+	// проверить входные данные
+	if (!memIsValid(params, sizeof(bign_params)) ||
+		!memIsValid(settings, sizeof(bake_settings)) ||
+		settings->kca != TRUE ||
+		!memIsNullOrValid(settings->helloa, settings->helloa_len) ||
+		!memIsNullOrValid(settings->hellob, settings->hellob_len))
+		return ERR_BAD_INPUT;
+	if (params->l != 128 && params->l != 192 && params->l != 256)
+		return ERR_BAD_PARAMS;
+	if (settings->rng == 0)
+		return ERR_BAD_RNG;
+	if (!memIsValid(privkey, params->l / 4) ||
+		!memIsValid(cert, sizeof(bake_cert)) ||
+		!memIsValid(cert->data, cert->len) ||
+		cert->val == 0)
+		return ERR_BAD_INPUT;
+	// загрузить параметры
+	code = bignStart(s->data, params);
+	ERR_CALL_CHECK(code);
+	s->ec = (ec_o*)s->data;
+	n = s->ec->f->n, no = s->ec->f->no;
+	// сохранить параметры
+	memCopy(s->params, params, sizeof(bign_params));
+	// сохранить настройки
+	memCopy(s->settings, settings, sizeof(bake_settings));
+	// настроить указатели
+	s->d = objEnd(s->ec, word);
+	s->Vct = s->d + n;
+	s->R = (octet*)(s->Vct + 2 * n);
+	// настроить заголовок
+	s->hdr.keep = sizeof(bake_bauth_t_o) + objKeep(s->ec) +
+		3 * O_OF_W(n) + no / 2;
+	s->hdr.p_count = 3;
+	s->hdr.o_count = 1;
+	// загрузить личный ключ
+	wwFrom(s->d, privkey, no);
+	// раскладка стека
+	Q = objEnd(s, word);
+	stack = Q + 2 * n;
+	// проверить сертификат и его открытый ключ
+	code = cert->val((octet*)Q, params, cert->data, cert->len);
+	ERR_CALL_CHECK(code);
+	if (!qrFrom(ecX(Q), (octet*)Q, s->ec->f, stack) ||
+		!qrFrom(ecY(Q, n), (octet*)Q + no, s->ec->f, stack) ||
+		!ecpIsOnA(Q, s->ec, stack))
+		return ERR_BAD_CERT;
+	// сохранить сертификат
+	memCopy(s->cert, cert, sizeof(bake_cert));
+	// все нормально
+	return code;
+}
+
+static size_t btokBAuthTStart_deep(size_t n, size_t f_deep, size_t ec_d,
+	size_t ec_deep)
+{
+	return O_OF_W(2 * n) +
+		utilMax(2,
+			f_deep,
+			ecpIsOnA_deep(n, f_deep));
+}
+
 err_t btokBAuthCTStart(void* state, const bign_params* params,
 	const bake_settings* settings, const octet privkey[],
 	const bake_cert* cert)
@@ -134,6 +214,7 @@ err_t btokBAuthCTStart(void* state, const bign_params* params,
 	// проверить входные данные
 	if (!memIsValid(params, sizeof(bign_params)) ||
 		!memIsValid(settings, sizeof(bake_settings)) ||
+		settings->kca != TRUE ||
 		!memIsNullOrValid(settings->helloa, settings->helloa_len) ||
 		!memIsNullOrValid(settings->hellob, settings->hellob_len))
 		return ERR_BAD_INPUT;
@@ -192,75 +273,11 @@ static size_t btokBAuthCTStart_deep(size_t n, size_t f_deep, size_t ec_d,
 			ecpIsOnA_deep(n, f_deep));
 }
 
-err_t btokBAuthTStart(void* state, const bign_params* params,
-	const bake_settings* settings, const octet privkey[],
-	const bake_cert* cert)
-{
-	err_t code;
-	bake_bauth_t_o* s = (bake_bauth_t_o*)state;
-	size_t n, no;
-	// стек
-	word* Q;
-	void* stack;
-	// проверить входные данные
-	if (!memIsValid(params, sizeof(bign_params)) ||
-		!memIsValid(settings, sizeof(bake_settings)) ||
-		!memIsNullOrValid(settings->helloa, settings->helloa_len) ||
-		!memIsNullOrValid(settings->hellob, settings->hellob_len))
-		return ERR_BAD_INPUT;
-	if (params->l != 128 && params->l != 192 && params->l != 256)
-		return ERR_BAD_PARAMS;
-	if (settings->rng == 0)
-		return ERR_BAD_RNG;
-	if (!memIsValid(privkey, params->l / 4) ||
-		!memIsValid(cert, sizeof(bake_cert)) ||
-		!memIsValid(cert->data, cert->len) ||
-		cert->val == 0)
-		return ERR_BAD_INPUT;
-	// загрузить параметры
-	code = bignStart(s->data, params);
-	ERR_CALL_CHECK(code);
-	s->ec = (ec_o*)s->data;
-	n = s->ec->f->n, no = s->ec->f->no;
-	// сохранить параметры
-	memCopy(s->params, params, sizeof(bign_params));
-	// сохранить настройки
-	memCopy(s->settings, settings, sizeof(bake_settings));
-	// настроить указатели
-	s->d = objEnd(s->ec, word);
-	s->Vct = s->d + n;
-	s->R = (octet*)(s->Vct + 2 * n);
-	// настроить заголовок
-	s->hdr.keep = sizeof(bake_bauth_t_o) + objKeep(s->ec) +
-		3 * O_OF_W(n) + no / 2;
-	s->hdr.p_count = 3;
-	s->hdr.o_count = 1;
-	// загрузить личный ключ
-	wwFrom(s->d, privkey, no);
-	// раскладка стека
-	Q = objEnd(s, word);
-	stack = Q + 2 * n;
-	// проверить сертификат и его открытый ключ
-	code = cert->val((octet*)Q, params, cert->data, cert->len);
-	ERR_CALL_CHECK(code);
-	if (!qrFrom(ecX(Q), (octet*)Q, s->ec->f, stack) ||
-		!qrFrom(ecY(Q, n), (octet*)Q + no, s->ec->f, stack) ||
-		!ecpIsOnA(Q, s->ec, stack))
-		return ERR_BAD_CERT;
-	// сохранить сертификат
-	memCopy(s->cert, cert, sizeof(bake_cert));
-	// все нормально
-	return code;
-}
-
-static size_t btokBAuthTStart_deep(size_t n, size_t f_deep, size_t ec_d,
-	size_t ec_deep)
-{
-	return O_OF_W(2 * n) +
-		utilMax(2,
-			f_deep,
-			ecpIsOnA_deep(n, f_deep));
-}
+/*
+*******************************************************************************
+Шаги
+*******************************************************************************
+*/
 
 err_t btokBAuthCTStep2(octet out[], const bake_cert* certt, void* state)
 {
@@ -374,9 +391,9 @@ err_t btokBAuthTStep3(octet out[], const octet in[], void* state)
 	beltHashStepH(Rct, no / 2, stack);
 	if (s->settings->kcb)
 	{
-  		// Rt <-R {0, 1}^l
-		s->settings->rng(s->R, no / 2, s->settings->rng_state);
-		beltHashStepH(s->R, no / 2, stack);
+  		// Rt <-R {0, 1}^128
+		s->settings->rng(s->R, 16, s->settings->rng_state);
+		beltHashStepH(s->R, 16, stack);
 	}
 	if (s->settings->helloa)
 		beltHashStepH(s->settings->helloa, s->settings->helloa_len, stack);
@@ -407,7 +424,7 @@ err_t btokBAuthTStep3(octet out[], const octet in[], void* state)
 	if (s->settings->kcb)
 	{
 		// out <- Tt || Rt
-		memCopy(out + 8, s->R, no / 2);
+		memCopy(out + 8, s->R, 16);
 	}
 	// все нормально
 	return ERR_OK;
@@ -488,10 +505,10 @@ err_t btokBAuthCTStep4(octet out[], const octet in[], void* state)
 		return ERR_AUTH;
 	if (s->settings->kcb)
 	{
-	    // t <- <beltHash(<Vct>_2l || <Rt>_l)>_l
+	    // t <- <beltHash(<Vct>_2l || Rt)>_l
 	    beltHashStart(stack);
 		beltHashStepH(s->V, no, stack);
-		beltHashStepH(in + 8, no / 2, stack);
+		beltHashStepH(in + 8, 16, stack);
 		beltHashStepG2((octet*)t, no / 2, stack);
 		wwFrom(t, t, no / 2);
 		// sct <- (uct - (2^l + t)dct) \mod q
@@ -545,9 +562,9 @@ err_t btokBAuthTStep5(const octet in[], size_t in_len, bake_certval_i val_ct,
 	if (!objIsOperable(s))
 		return ERR_BAD_INPUT;
 	n = s->ec->f->n, no = s->ec->f->no;
-	if ((s->settings->kcb ? (in_len < 8u + no) : (in_len > 0)) ||
-		!memIsValid(in, in_len) ||
-		val_ct == 0)
+	if (!s->settings->kcb)
+		return ERR_BAD_LOGIC;
+	if (in_len < 8 + no || !memIsValid(in, in_len) || val_ct == 0)
 		return ERR_BAD_INPUT;
 	// раскладка стека
 	Qct = objEnd(s, word);
@@ -556,7 +573,7 @@ err_t btokBAuthTStep5(const octet in[], size_t in_len, bake_certval_i val_ct,
 	V = (octet*)(sct + n);
 	t = (word*)V;
 	stack = V + no;
-	// Tct == beltMAC(Zsc, K1)?
+	// Tct == beltMAC(Zct, K1)?
 	beltMACStart(stack, s->K1, 32);
 	beltMACStepA(in, in_len - 8, stack);
 	beltMACStepG(mac, stack);
@@ -566,14 +583,14 @@ err_t btokBAuthTStep5(const octet in[], size_t in_len, bake_certval_i val_ct,
 	in_len -= 8;
 	{
 		blob_t Zct;
-		// sct || cert_sc <- beltCFBDecr(Zct, K2, 0^128)
+		// sct || cert_ct <- beltCFBDecr(Zct, K2, 0^128)
 		if ((Zct = blobCreate(in_len)) == 0)
 			return ERR_OUTOFMEMORY;
 		memCopy(Zct, in, in_len);
 		memSet(block0, 0, 16);
 		beltCFBStart(stack, s->K2, 32, block0);
 		beltCFBStepD(Zct, in_len, stack);
-		// sb \in {0, 1,..., q - 1}?
+		// sct \in {0, 1,..., q - 1}?
 		wwFrom(sct, Zct, no);
 		if (wwCmp(sct, s->ec->order, n) >= 0)
 		{
@@ -590,17 +607,17 @@ err_t btokBAuthTStep5(const octet in[], size_t in_len, bake_certval_i val_ct,
 		blobClose(Zct);
 		ERR_CALL_CHECK(code);
 	}
-	// t <- <beltHash(<Vct>_2l || <Rt>_l)>_l
+	// t <- <beltHash(<Vct>_2l || <Rt>)>_l
 	beltHashStart(stack);
 	qrTo(V, ecX(s->Vct), s->ec->f, stack);
 	beltHashStepH(V, no, stack);
-	beltHashStepH(s->R, no / 2, stack);
+	beltHashStepH(s->R, 16, stack);
 	beltHashStepG2((octet*)t, no / 2, stack);
 	wwFrom(t, t, no / 2);
 	// sct G + (2^l + t)Qct == Vct?
 	t[n / 2] = 1;
-	if (!ecAddMulA(Qct, s->ec, stack, 2, s->ec->base, sct, n,
-		Qct, t, n / 2 + 1))
+	if (!ecAddMulA(Qct, s->ec, stack, 2, s->ec->base, sct, n, Qct, t,
+		n / 2 + 1))
 		return ERR_BAD_PARAMS;
 	if (!wwEq(Qct, s->Vct, 2 * n))
 		return ERR_AUTH;
@@ -638,6 +655,12 @@ static size_t btokBAuthT_deep(size_t n, size_t f_deep, size_t ec_d,
 		btokBAuthTStep3_deep(n, f_deep, ec_d, ec_deep),
 		btokBAuthTStep5_deep(n, f_deep, ec_d, ec_deep));
 }
+
+/*
+*******************************************************************************
+Выгрузка ключа
+*******************************************************************************
+*/
 
 err_t btokBAuthCTStepG(octet key[32], void* state)
 {

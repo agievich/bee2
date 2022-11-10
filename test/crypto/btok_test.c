@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.79 (btok)
 \project bee2/test
 \created 2022.07.07
-\version 2022.11.09
+\version 2022.11.10
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -298,14 +298,14 @@ static const char _db[] =
 	"3ED6EC483C461CE15C33A77AA308B7D2";
 
 static const char _certa[] =
-	"416C696365"
+	"5430303030303031"
 	"BD1A5650179D79E03FCEE49D4C2BD5DD"
 	"F54CE46D0CF11E4FF87BF7A890857FD0"
 	"7AC6A60361E8C8173491686D461B2826"
 	"190C2EDA5909054A9AB84D2AB9D99A90";
 
 static const char _certb[] =
-	"426F62"
+	"4354303030303031"
 	"CCEEF1A313A406649D15DA0A851D486A"
 	"695B641B20611776252FFDCE39C71060"
 	"7C9EA1F33C23D20DFCB8485A88BE6523"
@@ -335,8 +335,8 @@ bool_t btokBAUTHTest()
 	bake_settings settingsb[1];
 	octet da[32];
 	octet db[32];
-	octet certdataa[5 /* Alice */ + 64 + 3 /* align */];
-	octet certdatab[3 /* Bob */ + 64 + 5 /* align */];
+	octet certdataa[8 /* Т0000001 */ + 64];
+	octet certdatab[8 /* СТ000001 */ + 64];
 	bake_cert certa[1];
 	bake_cert certb[1];
 	octet keya[32];
@@ -369,7 +369,7 @@ bool_t btokBAUTHTest()
 	// задать настройки, с аутентификацией КТ
 	memSetZero(settingsa, sizeof(bake_settings));
 	memSetZero(settingsb, sizeof(bake_settings));
-	settingsa->kca = settingsb->kca = FALSE;
+	settingsa->kca = settingsb->kca = TRUE;
 	settingsa->kcb = settingsb->kcb = TRUE;
 	settingsa->rng = settingsb->rng = prngEchoStepR;
 	settingsa->rng_state = echoa;
@@ -403,7 +403,7 @@ bool_t btokBAUTHTest()
 	// задать настройки, без аутентификациии КТ
 	memSetZero(settingsa, sizeof(bake_settings));
 	memSetZero(settingsb, sizeof(bake_settings));
-	settingsa->kca = settingsb->kca = FALSE;
+	settingsa->kca = settingsb->kca = TRUE;
 	settingsa->kcb = settingsb->kcb = FALSE;
 	settingsa->rng = settingsb->rng = prngEchoStepR;
 	settingsa->rng_state = echoa;
