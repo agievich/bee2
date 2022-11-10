@@ -3,7 +3,6 @@
 \file botp.с
 \brief STB 34.101.47/botp: OTP algorithms
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.11.02
 \version 2020.03.24
 \license This program is released under the GNU General Public License 

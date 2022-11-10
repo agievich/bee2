@@ -3,7 +3,6 @@
 \file bign_lcl.h
 \brief STB 34.101.45 (bign): local definitions
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.04.03
 \version 2016.07.05
 \license This program is released under the GNU General Public License 

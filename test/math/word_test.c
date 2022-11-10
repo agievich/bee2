@@ -3,7 +3,6 @@
 \file word_test.c
 \brief Tests for operations on machine words
 \project bee2/test
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.05.22
 \version 2017.01.11
 \license This program is released under the GNU General Public License

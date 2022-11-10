@@ -3,7 +3,6 @@
 \file bash_bench.c
 \brief Benchmarks for STB 34.101.77 (bash)
 \project bee2/test
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.15
 \version 2020.06.23
 \license This program is released under the GNU General Public License 

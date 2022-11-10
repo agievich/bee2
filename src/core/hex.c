@@ -3,7 +3,6 @@
 \file hex.c
 \brief Hexadecimal strings
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.10.29
 \version 2016.06.19
 \license This program is released under the GNU General Public License

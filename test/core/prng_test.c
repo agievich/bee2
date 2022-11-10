@@ -3,7 +3,6 @@
 \file prng_test.c
 \brief Tests for pseudorandom number generators
 \project bee2/test
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.06.30
 \version 2016.07.15
 \license This program is released under the GNU General Public License 

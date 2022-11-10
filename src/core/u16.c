@@ -3,7 +3,6 @@
 \file u16.c
 \brief 16-bit unsigned words
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.10.28
 \version 2019.07.08
 \license This program is released under the GNU General Public License

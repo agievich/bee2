@@ -3,7 +3,6 @@
 \file brng.c
 \brief STB 34.101.47 (brng): algorithms of pseudorandom number generation
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.01.31
 \version 2018.07.09
 \license This program is released under the GNU General Public License 

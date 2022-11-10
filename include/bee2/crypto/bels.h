@@ -3,7 +3,6 @@
 \file bels.h
 \brief STB 34.101.60 (bels): secret sharing algorithms
 \project bee2 [cryptographic library]
-\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.05.14
 \version 2021.04.15
 \license This program is released under the GNU General Public License 

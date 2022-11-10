@@ -3,7 +3,6 @@
 \file pri.c
 \brief Prime numbers
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.08.13
 \version 2016.07.15
 \license This program is released under the GNU General Public License 

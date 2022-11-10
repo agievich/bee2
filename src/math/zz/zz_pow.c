@@ -3,7 +3,6 @@
 \file zz_pow.c
 \brief Multiple-precision unsigned integers: modular exponentiation
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.22
 \version 2016.07.01
 \license This program is released under the GNU General Public License 

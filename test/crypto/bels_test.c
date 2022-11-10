@@ -3,7 +3,6 @@
 \file bels_test.c
 \brief Tests for STB 34.101.60 (bels)
 \project bee2/test
-\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.06.27
 \version 2021.04.15
 \license This program is released under the GNU General Public License 

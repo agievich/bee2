@@ -3,7 +3,6 @@
 \file g12s_test.c
 \brief Tests for GOST R 34.10-2012 (Russia)
 \project bee2/test
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.04.07
 \version 2016.07.15
 \license This program is released under the GNU General Public License 

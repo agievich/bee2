@@ -3,7 +3,6 @@
 \file bash_fneon.c
 \brief STB 34.101.77 (bash): bash-f optimized for ARM NEON
 \project bee2 [cryptographic library]
-\author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2020.10.26
 \version 2021.03.26
 \license This program is released under the GNU General Public License

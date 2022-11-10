@@ -3,7 +3,6 @@
 \file bash_test.c
 \brief Tests for STB 34.101.77 (bash)
 \project bee2/test
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.09.22
 \version 2020.08.03
 \license This program is released under the GNU General Public License 

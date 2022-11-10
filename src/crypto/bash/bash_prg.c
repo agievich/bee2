@@ -3,7 +3,6 @@
 \file bash_prg.c
 \brief STB 34.101.77 (bash): programmable algorithms
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2018.10.30
 \version 2020.08.03
 \license This program is released under the GNU General Public License 

@@ -3,7 +3,6 @@
 \file belt_pbkdf.c
 \brief STB 34.101.31 (belt): PBKDF (password-based key derivation)
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
 \version 2017.09.28
 \license This program is released under the GNU General Public License 

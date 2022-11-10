@@ -3,7 +3,6 @@
 \file dec_test.c
 \brief Tests for decimal strings
 \project bee2/test
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2015.11.09
 \version 2015.11.11
 \license This program is released under the GNU General Public License 

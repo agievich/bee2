@@ -3,7 +3,6 @@
 \file belt_bde.c
 \brief STB 34.101.31 (belt): BDE (Blockwise Disk Encryption)
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2018.06.28
 \version 2020.03.24
 \license This program is released under the GNU General Public License 

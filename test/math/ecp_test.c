@@ -3,7 +3,6 @@
 \file ecp_test.c
 \brief Tests for elliptic curves over prime fields
 \project bee2/test
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2017.05.29
 \version 2017.08.23
 \license This program is released under the GNU General Public License 

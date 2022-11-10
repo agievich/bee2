@@ -3,7 +3,6 @@
 \file zz_mul.c
 \brief Multiple-precision unsigned integers: multiplicative operations
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.22
 \version 2019.06.26
 \license This program is released under the GNU General Public License 

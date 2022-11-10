@@ -3,7 +3,6 @@
 \file bign.h
 \brief STB 34.101.45 (bign): digital signature and key transport algorithms
 \project bee2 [cryptographic library]
-\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.27
 \version 2021.04.20
 \license This program is released under the GNU General Public License 

@@ -2,8 +2,7 @@
 *******************************************************************************
 \file stamp.rc
 \brief Windows resources
-\project bee2/apps/stamp
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\project bee2/cmd
 \created 2011.10.18
 \version 2013.02.27
 \license This program is released under the GNU General Public License 

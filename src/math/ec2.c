@@ -3,7 +3,6 @@
 \file ec2.c
 \brief Elliptic curves over binary fields
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.06.26
 \version 2014.07.15
 \license This program is released under the GNU General Public License 

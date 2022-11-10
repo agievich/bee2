@@ -3,7 +3,6 @@
 \file dstu_test.c
 \brief Tests for DSTU 4145-2002 (Ukraine)
 \project bee2/test
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.03.01
 \version 2016.07.15
 \license This program is released under the GNU General Public License 

@@ -3,7 +3,6 @@
 \file mt_test.c
 \brief Tests for multithreading
 \project bee2/test
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2021.05.15
 \version 2021.05.18
 \license This program is released under the GNU General Public License 

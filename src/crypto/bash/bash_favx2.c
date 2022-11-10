@@ -3,7 +3,6 @@
 \file bash_favx2.c
 \brief STB 34.101.77 (bash): bash-f optimized for AVX2
 \project bee2 [cryptographic library]
-\author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2019.04.03
 \version 2021.03.26
 \license This program is released under the GNU General Public License

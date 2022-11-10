@@ -3,7 +3,6 @@
 \file hex_test.c
 \brief Tests for hexadecimal strings
 \project bee2/test
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2016.06.17
 \version 2016.06.17
 \license This program is released under the GNU General Public License 

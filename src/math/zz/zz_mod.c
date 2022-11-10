@@ -3,8 +3,6 @@
 \file zz_mod.c
 \brief Multiple-precision unsigned integers: modular arithmetic
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
-\author (C) Stanislav Poruchnik [poruchnikstanislav@gmail.com]
 \created 2012.04.22
 \version 2019.06.30
 \license This program is released under the GNU General Public License 

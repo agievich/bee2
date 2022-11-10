@@ -3,7 +3,6 @@
 \file brng_test.c
 \brief Tests for STB 34.101.47 (brng)
 \project bee2/test
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.04.01
 \version 2018.07.09
 \license This program is released under the GNU General Public License 

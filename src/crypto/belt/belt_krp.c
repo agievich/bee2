@@ -3,7 +3,6 @@
 \file belt_krp.c
 \brief STB 34.101.31 (belt): KRP (keyrep = key diversification + meshing)
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
 \version 2020.03.24
 \license This program is released under the GNU General Public License 

@@ -3,7 +3,6 @@
 \file tm_test.c
 \brief Tests for time management
 \project bee2/test
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
 \version 2022.07.12
 \license This program is released under the GNU General Public License 

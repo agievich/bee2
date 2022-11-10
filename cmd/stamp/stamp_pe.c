@@ -2,8 +2,7 @@
 *******************************************************************************
 \file stamp_pe.c
 \brief Parsing of Windows PE Executables
-\project bee2/stamp
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\project bee2/cmd
 \created 2011.10.18
 \version 2016.05.24
 \license This program is released under the GNU General Public License 

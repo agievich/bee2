@@ -3,7 +3,6 @@
 \file belt_che.c
 \brief STB 34.101.31 (belt): CHE (Ctr-Hash-Encrypt) authenticated encryption
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2020.03.20
 \version 2020.07.31
 \license This program is released under the GNU General Public License 

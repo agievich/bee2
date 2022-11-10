@@ -3,7 +3,6 @@
 \file dstu.h
 \brief DSTU 4145-2002 (Ukraine): digital signature algorithms
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.27
 \version 2017.01.11
 \license This program is released under the GNU General Public License 

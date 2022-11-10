@@ -3,8 +3,6 @@
 \file bash_hash.c
 \brief STB 34.101.77 (bash): hashing algorithms
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
-\author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2014.07.15
 \version 2021.02.03
 \license This program is released under the GNU General Public License 

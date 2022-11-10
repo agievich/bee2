@@ -3,7 +3,6 @@
 \file belt_sde.c
 \brief STB 34.101.31 (belt): SDE (Sectorwise Disk Encryption)
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2018.09.01
 \version 2020.03.24
 \license This program is released under the GNU General Public License 

@@ -3,7 +3,6 @@
 \file u32_test.c
 \brief Tests for operations on 32-bit words
 \project bee2/test
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2017.01.11
 \version 2019.07.08
 \license This program is released under the GNU General Public License

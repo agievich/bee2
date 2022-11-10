@@ -3,7 +3,6 @@
 \file belt_fmt.c
 \brief STB 34.101.31 (belt): FMT (format preserving encryption)
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2017.09.28
 \version 2021.01.21
 \license This program is released under the GNU General Public License 

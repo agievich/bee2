@@ -3,7 +3,6 @@
 \file bake_demo.c
 \brief Demo for STB 34.101.66 (bake)
 \project bee2/test
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.05.03
 \version 2017.01.17
 \license This program is released under the GNU General Public License 

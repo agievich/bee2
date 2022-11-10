@@ -3,7 +3,6 @@
 \file zz_test.c
 \brief Tests for multiple-precision unsigned integers
 \project bee2/test
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.15
 \version 2021.06.30
 \license This program is released under the GNU General Public License 

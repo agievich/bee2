@@ -3,7 +3,6 @@
 \file gf2.h
 \brief Binary fields
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.17
 \version 2015.02.01
 \license This program is released under the GNU General Public License 

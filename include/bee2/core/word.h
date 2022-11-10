@@ -3,7 +3,6 @@
 \file word.h
 \brief Machine words
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.18
 \version 2019.06.27
 \license This program is released under the GNU General Public License 

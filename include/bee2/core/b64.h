@@ -3,7 +3,6 @@
 \file b64.h
 \brief The Base64 encoding
 \project bee2 [cryptographic library]
-\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2016.06.16
 \version 2021.04.21
 \license This program is released under the GNU General Public License 

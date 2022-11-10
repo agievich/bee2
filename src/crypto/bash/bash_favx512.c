@@ -4,7 +4,6 @@
 \brief STB 34.101.77 (bash): bash-f optimized for AVX512
 \remark AVX512 is interpreted here only as AVX512F
 \project bee2 [cryptographic library]
-\author (C) Vlad Semenov [semenov.vlad.by@gmail.com]
 \created 2019.04.03
 \version 2021.03.25
 \license This program is released under the GNU General Public License

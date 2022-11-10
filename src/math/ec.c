@@ -3,7 +3,6 @@
 \file ec.c
 \brief Elliptic curves
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.03.04
 \version 2015.11.09
 \license This program is released under the GNU General Public License 

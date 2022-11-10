@@ -3,7 +3,6 @@
 \file pfok.h
 \brief Draft of RD_RB: key establishment protocols based on finite fields
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.06.30
 \version 2017.10.10
 \license This program is released under the GNU General Public License 

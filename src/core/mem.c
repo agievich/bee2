@@ -3,7 +3,6 @@
 \file mem.c
 \brief Memory management
 \project bee2 [cryptographic library]
-\author Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
 \version 2019.07.09
 \license This program is released under the GNU General Public License

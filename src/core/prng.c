@@ -3,7 +3,6 @@
 \file prng.c
 \brief Pseudorandom number generators
 \project bee2 [cryptographic library]
-\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.05.02
 \version 2016.07.15
 \license This program is released under the GNU General Public License 
