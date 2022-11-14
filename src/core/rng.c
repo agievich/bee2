@@ -4,7 +4,7 @@
 \brief Entropy sources and random number generators
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2022.11.04
+\version 2022.11.14
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -145,18 +145,30 @@ bool_t rngTestFIPS4(const octet buf[2500])
 #include <intrin.h>
 #include <immintrin.h>
 
-#define rngCPUID(info, id) __cpuid((int*)info, id)
+#define rngCPUID(info, id) __cpuidex((int*)info, id, 0)
 #define rngRDStep(val) _rdseed32_step(val)
 #define rngRDStep2(val) _rdrand32_step(val)
 
 #elif defined(_MSC_VER) && defined(_M_IX86)
 
-#pragma intrinsic(__cpuid)
-
-#define rngCPUID(info, id) __cpuid((int*)info, id)
-
+#define cpuid		__asm _emit 0x0F __asm _emit 0xA2
 #define rdseed_eax	__asm _emit 0x0F __asm _emit 0xC7 __asm _emit 0xF8
 #define rdrand_eax	__asm _emit 0x0F __asm _emit 0xC7 __asm _emit 0xF0
+
+static void rngCPUID(u32 info[4], u32 id)
+{
+	u32 a, b, c, d;
+	__asm {
+		mov eax, id
+		xor ecx, ecx
+		cpuid
+		mov a, eax
+		mov b, ebx
+		mov c, ecx
+		mov d, edx
+	}
+	info[0] = a, info[1] = b, info[2] = c, info[3] = d; 
+}
 
 static int rngRDStep(u32* val)
 {
@@ -166,7 +178,7 @@ static int rngRDStep(u32* val)
 		rdseed_eax
 		jnc err
 		mov edx, val
-		mov[edx], eax
+		mov [edx], eax
 	}
 	return 1;
 err:
@@ -181,7 +193,7 @@ static int rngRDStep2(u32* val)
 		rdrand_eax
 		jnc err
 		mov edx, val
-		mov[edx], eax
+		mov [edx], eax
 	}
 	return 1;
 err:
@@ -192,7 +204,8 @@ err:
 
 #include <cpuid.h>
 
-#define rngCPUID(info, id) __cpuid(id, info[0], info[1], info[2], info[3])
+#define rngCPUID(info, id) \
+	__cpuid_count(id, 0, info[0], info[1], info[2], info[3])
 
 static int rngRDStep(u32* val)
 {
