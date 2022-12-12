@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.79 (btok)
 \project bee2/test
 \created 2022.07.07
-\version 2022.11.10
+\version 2022.12.12
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -19,6 +19,82 @@ version 3. See Copyright Notices in bee2/info.h.
 #include <bee2/crypto/belt.h>
 #include <bee2/crypto/bign.h>
 #include <bee2/crypto/btok.h>
+
+/*
+*******************************************************************************
+Парольный автомат
+*******************************************************************************
+*/
+
+static bool_t btokPwdTest()
+{
+	btok_pwd_state state;
+	// начальное состояние
+	state.pin = pin3;
+	state.auth = auth_none;
+	// верный PIN
+	if (!btokPwdTransition(&state, pin_ok) ||
+		state.pin != pin3 || state.auth != auth_pin)
+		return FALSE;
+	// деактивировать PIN
+	if (!btokPwdTransition(&state, pin_deactivate) ||
+		state.pin != pind || state.auth != auth_none)
+		return FALSE;
+	// активировать PIN
+	if (btokPwdTransition(&state, pin_ok) ||
+		!btokPwdTransition(&state, puk_ok) ||
+		!btokPwdTransition(&state, pin_activate) ||
+		state.pin != pin3 || state.auth != auth_puk)
+		return FALSE;
+	// активировать CAN
+	if (!btokPwdTransition(&state, can_bad) ||
+		!btokPwdTransition(&state, can_ok) ||
+		state.pin != pin3 || state.auth != auth_can)
+		return FALSE;
+	// неверный PIN
+	if (!btokPwdTransition(&state, pin_bad) ||
+		state.pin != pin2 || state.auth != auth_can ||
+		!btokPwdTransition(&state, pin_bad) ||
+		state.pin != pins || state.auth != auth_can ||
+		btokPwdTransition(&state, pin_bad) ||
+		!btokPwdTransition(&state, can_ok) ||
+		state.pin != pin1 || state.auth != auth_can ||
+		!btokPwdTransition(&state, pin_bad) ||
+		state.pin != pin0 || state.auth != auth_can)
+		return FALSE;
+	// неверный PUK
+	if (!btokPwdTransition(&state, auth_close) ||
+		!btokPwdTransition(&state, puk_bad) ||
+		state.pin != puk9 || state.auth != auth_none ||
+		!btokPwdTransition(&state, puk_bad) ||
+		state.pin != puk8 || state.auth != auth_none ||
+		!btokPwdTransition(&state, puk_bad) ||
+		state.pin != puk7 || state.auth != auth_none ||
+		!btokPwdTransition(&state, puk_bad) ||
+		state.pin != puk6 || state.auth != auth_none ||
+		!btokPwdTransition(&state, puk_bad) ||
+		state.pin != puk5 || state.auth != auth_none ||
+		!btokPwdTransition(&state, puk_bad) ||
+		state.pin != puk4 || state.auth != auth_none ||
+		!btokPwdTransition(&state, puk_bad) ||
+		state.pin != puk3 || state.auth != auth_none ||
+		!btokPwdTransition(&state, puk_bad) ||
+		state.pin != puk2 || state.auth != auth_none ||
+		!btokPwdTransition(&state, puk_bad) ||
+		state.pin != puk1 || state.auth != auth_none ||
+		!btokPwdTransition(&state, puk_bad) ||
+		state.pin != puk0 || state.auth != auth_none)
+		return FALSE;
+	// верные PUK и CAN при полной блокировке PIN
+	if (btokPwdTransition(&state, pin_ok) ||
+		!btokPwdTransition(&state, puk_ok) ||
+		state.pin != puk0 || state.auth != auth_puk ||
+		!btokPwdTransition(&state, can_ok) ||
+		state.pin != puk0 || state.auth != auth_can)
+		return FALSE;
+	// все нормально
+	return TRUE;
+}
 
 /*
 *******************************************************************************
@@ -432,5 +508,5 @@ bool_t btokBAUTHTest()
 
 bool_t btokTest()
 {
-	return btokCVCTest() && btokSMTest() && btokBAUTHTest();
+	return btokPwdTest() && btokCVCTest() && btokSMTest() && btokBAUTHTest();
 }
