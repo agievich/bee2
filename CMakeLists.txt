@@ -54,7 +54,7 @@ if (BASH_PLATFORM)
     set(BASH_NEON ON BOOL)
     add_definitions(-DBASH_NEON)
   elseif(NOT ${BASH_PLATFORM} STREQUAL BASH_64)
-    message(WARNING "Unknown BASH_PLATFORM (${BASH_PLATFORM}). This option will be ignored") 
+    message(WARNING "Unknown BASH_PLATFORM (${BASH_PLATFORM}). This option will be ignored")
     unset(BASH_PLATFORM CACHE)
   endif()
 endif()
@@ -63,8 +63,14 @@ if (BASH_PLATFORM)
   message(STATUS "Requested BASH_PLATFORM: ${BASH_PLATFORM}")
 endif()
 
+# Lists of watnings:
+# * https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html
+# * https://clang.llvm.org/docs/DiagnosticsReference.html
+
 set(CMAKE_C_WARNINGS
-  "-Wall -Wextra -W -Wdeclaration-after-statement -Wwrite-strings -Wlogical-op -Wno-parentheses -Wno-unused-parameter -Wno-strict-aliasing")
+  "-Wall -Wextra -W -Wdeclaration-after-statement -Wwrite-strings -Wlogical-op \
+    -Wno-parentheses -Wno-unused-parameter -Wno-strict-aliasing \
+    -Wno-xor-used-as-pow")
 
 if(${CMAKE_C_COMPILER_ID} STREQUAL GNU)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_WARNINGS}")
@@ -81,7 +87,7 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL GNU)
   set(CMAKE_C_FLAGS_DEBUG       "-O0 -g3")
   set(CMAKE_C_FLAGS_COVERAGE    "-O0 -g3 -coverage")
   set(CMAKE_C_FLAGS_ASAN        "-Werror -fsanitize=address -fno-common -O3")
-  set(CMAKE_C_FLAGS_ASANDBG     "-Werror -fsanitize=address -fno-common -O1 -g3 -fno-omit-frame-pointer -fno-optimize-sibling-calls ")
+  set(CMAKE_C_FLAGS_ASANDBG     "-Werror -fsanitize=address -fno-common -O1 -g3 -fno-omit-frame-pointer -fno-optimize-sibling-calls")
   set(CMAKE_C_FLAGS_CHECK       "-Werror -O1 -Wcast-qual")
 endif(${CMAKE_C_COMPILER_ID} STREQUAL GNU)
 
