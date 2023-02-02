@@ -4,7 +4,7 @@
 \brief 64-bit words
 \project bee2 [cryptographic library]
 \created 2015.10.28
-\version 2022.07.05
+\version 2023.02.02
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -81,7 +81,7 @@ u64 u64Rev(
 	Выполняется реверс октетов массива [count]buf из u64-слов.
 */
 void u64Rev2(
-	u64 buf[],			/*!< [in/out] массив слов */
+	u64 buf[],			/*!< [in,out] массив слов */
 	size_t count		/*!< [in] число элементов */
 );
 

@@ -4,7 +4,7 @@
 \brief Draft of RD_RB: key establishment protocols based on finite fields
 \project bee2 [cryptographic library]
 \created 2014.06.30
-\version 2017.10.10
+\version 2023.02.02
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -211,7 +211,7 @@ err_t pfokGenKeypair(
 	octet pubkey[],				/*!< [out] открытый ключ */
 	const pfok_params* params,	/*!< [in] долговременные параметры */
 	gen_i rng,					/*!< [in] генератор случайных чисел */
-	void* rng_state				/*!< [in/out] состояние генератора */
+	void* rng_state				/*!< [in,out] состояние генератора */
 );
 
 /*!	\brief Проверка открытого ключа

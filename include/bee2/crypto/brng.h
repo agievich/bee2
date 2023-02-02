@@ -4,7 +4,7 @@
 \brief STB 34.101.47 (brng): algorithms of pseudorandom number generation
 \project bee2 [cryptographic library]
 \created 2013.01.31
-\version 2018.10.30
+\version 2023.02.02
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -138,9 +138,9 @@ void brngCTRStart(
 	вызываемые сразу после brngCTRStart(), не эквивалентны друг другу.
 */
 void brngCTRStepR(
-	void* buf,			/*!< [in/out] дополн. / псевдослучайные данные */
+	void* buf,			/*!< [in,out] дополн. / псевдослучайные данные */
 	size_t count,		/*!< [in] число октетов buf */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Получение синхропосылки режима CTR
@@ -154,7 +154,7 @@ void brngCTRStepR(
 */
 void brngCTRStepG(
 	octet iv[32],		/*!< [out] синхропосылка */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Генерация в режиме CTR
@@ -174,10 +174,10 @@ void brngCTRStepG(
 	дополняясь нулевыми октетами.
 */
 err_t brngCTRRand(
-	void* buf,				/*!< [in/out] дополн. / псевдослучайные данные */
+	void* buf,				/*!< [in,out] дополн. / псевдослучайные данные */
 	size_t count,			/*!< [in] число октетов buf */
 	const octet key[32],	/*!< [in] ключ */
-	octet iv[32]			/*!< [in/out] первонач. / обновл. синхропосылка */
+	octet iv[32]			/*!< [in,out] первонач. / обновл. синхропосылка */
 );
 
 /*
@@ -230,7 +230,7 @@ void brngHMACStart(
 void brngHMACStepR(
 	void* buf,			/*!< [out] псевдослучайные данные */
 	size_t count,		/*!< [in] размер buf в октетах */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Генерация в режиме HMAC

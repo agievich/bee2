@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2012.04.19
-\version 2019.06.13
+\version 2023.02.02
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -510,7 +510,7 @@ bool_t ecIsOperable2(
 	\deep{stack} ecCreateGroup_deep(f_deep).
 */
 bool_t ecCreateGroup(
-	ec_o* ec,				/*!< [in/out] описание кривой */
+	ec_o* ec,				/*!< [in,out] описание кривой */
 	const octet xbase[],	/*!< [in] x-координата базовой точки */
 	const octet ybase[],	/*!< [in] y-координата базовой точки */
 	const octet order[],	/*!< [in] порядок группы точек */

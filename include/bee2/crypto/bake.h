@@ -4,7 +4,7 @@
 \brief STB 34.101.66 (bake): authenticated key establishment (AKE) protocols
 \project bee2 [cryptographic library]
 \created 2014.04.14
-\version 2022.11.10
+\version 2023.02.02
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -244,7 +244,7 @@ err_t bakeBMQVStart(
 */
 err_t bakeBMQVStep2(
 	octet out[],			/*!< [out] выходное сообщение M1 */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 /*!	\brief Шаг 3 протокола BMQV
@@ -261,7 +261,7 @@ err_t bakeBMQVStep3(
 	octet out[],			/*!< [out] выходное сообщение M2 */
 	const octet in[],		/*!< [in] входное сообщение M1 */
 	const bake_cert* certb,	/*!< [in] сертификат стороны B */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 /*!	\brief Шаг 4 протокола BMQV
@@ -277,7 +277,7 @@ err_t bakeBMQVStep4(
 	octet out[],			/*!< [out] выходное сообщение M3 */
 	const octet in[],		/*!< [in] входное сообщение M2 */
 	const bake_cert* certa,	/*!< [in] сертификат стороны A */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 /*!	\brief Шаг 5 протокола BMQV
@@ -291,7 +291,7 @@ err_t bakeBMQVStep4(
 */
 err_t bakeBMQVStep5(
 	const octet in[8],		/*!< [in] входное сообщение M3 */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 /*!	\brief Извлечение ключа протокола BMQV
@@ -306,7 +306,7 @@ err_t bakeBMQVStep5(
 */
 err_t bakeBMQVStepG(
 	octet key[32],			/*!< [out] общий ключ */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 /*!	\brief Выполнение BMQV стороной B
@@ -330,7 +330,7 @@ err_t bakeBMQVRunB(
 	const bake_cert* certa,			/*!< [in] сертификат стороны A */
 	read_i read,					/*!< [in] функция чтения */
 	write_i write,					/*!< [in] функция записи */
-	void* file						/*!< [in/out] канал связи */
+	void* file						/*!< [in,out] канал связи */
 );
 
 /*!	\brief Выполнение BMQV стороной A
@@ -354,7 +354,7 @@ err_t bakeBMQVRunA(
 	const bake_cert* certb,			/*!< [in] сертификат стороны B */
 	read_i read,					/*!< [in] функция чтения */
 	write_i write,					/*!< [in] функция записи */
-	void* file						/*!< [in/out] канал связи */
+	void* file						/*!< [in,out] канал связи */
 );
 
 /*!
@@ -412,7 +412,7 @@ err_t bakeBSTSStart(
 */
 err_t bakeBSTSStep2(
 	octet out[],			/*!< [out] выходное сообщение M1 */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 /*!	\brief Шаг 3 протокола BSTS
@@ -427,7 +427,7 @@ err_t bakeBSTSStep2(
 err_t bakeBSTSStep3(
 	octet out[],			/*!< [out] выходное сообщение M2 */
 	const octet in[],		/*!< [in] входное сообщение M1 */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 /*!	\brief Шаг 4 протокола BSTS
@@ -445,7 +445,7 @@ err_t bakeBSTSStep4(
 	const octet in[],		/*!< [in] входное сообщение M2 */
 	size_t in_len,			/*!< [in] длина in */
 	bake_certval_i vala,	/*!< [in] функция проверки сертификата стороны A */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 /*!	\brief Шаг 5 протокола BSTS
@@ -461,7 +461,7 @@ err_t bakeBSTSStep5(
 	const octet in[],		/*!< [in] входное сообщение M3 */
 	size_t in_len,			/*!< [in] длина in */
 	bake_certval_i valb,	/*!< [in] функция проверки сертификата стороны B */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 /*!	\brief Извлечение ключа протокола BSTS
@@ -476,7 +476,7 @@ err_t bakeBSTSStep5(
 */
 err_t bakeBSTSStepG(
 	octet key[32],			/*!< [out] общий ключ */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 /*!	\brief Выполнение BSTS стороной B
@@ -500,7 +500,7 @@ err_t bakeBSTSRunB(
 	bake_certval_i vala,			/*!< [in] функция проверки сертификата A */
 	read_i read,					/*!< [in] функция чтения */
 	write_i write,					/*!< [in] функция записи */
-	void* file						/*!< [in/out] канал связи */
+	void* file						/*!< [in,out] канал связи */
 );
 
 /*!	\brief Выполнение BSTS стороной A
@@ -524,7 +524,7 @@ err_t bakeBSTSRunA(
 	bake_certval_i valb,			/*!< [in] функция проверки сертификата B */
 	read_i read,					/*!< [in] функция чтения */
 	write_i write,					/*!< [in] функция записи */
-	void* file						/*!< [in/out] канал связи */
+	void* file						/*!< [in,out] канал связи */
 );
 
 /*!
@@ -577,7 +577,7 @@ err_t bakeBPACEStart(
 */
 err_t bakeBPACEStep2(
 	octet out[],			/*!< [out] выходное сообщение M1 */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 /*!	\brief Шаг 3 протокола BPACE
@@ -592,7 +592,7 @@ err_t bakeBPACEStep2(
 err_t bakeBPACEStep3(
 	octet out[],			/*!< [out] выходное сообщение M2 */
 	const octet in[],		/*!< [in] входное сообщение M1 */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 /*!	\brief Шаг 4 протокола BPACE
@@ -607,7 +607,7 @@ err_t bakeBPACEStep3(
 err_t bakeBPACEStep4(
 	octet out[],			/*!< [out] выходное сообщение M3 */
 	const octet in[],		/*!< [in] входное сообщение M2 */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 /*!	\brief Шаг 5 протокола BPACE
@@ -622,7 +622,7 @@ err_t bakeBPACEStep4(
 err_t bakeBPACEStep5(
 	octet out[],			/*!< [out] выходное сообщение M4 */
 	const octet in[],		/*!< [in] входное сообщение M3 */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 /*!	\brief Шаг 6 протокола BPACE
@@ -636,7 +636,7 @@ err_t bakeBPACEStep5(
 */
 err_t bakeBPACEStep6(
 	const octet in[8],		/*!< [in] входное сообщение M4 */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 /*!	\brief Извлечение ключа протокола BPACE
@@ -651,7 +651,7 @@ err_t bakeBPACEStep6(
 */
 err_t bakeBPACEStepG(
 	octet key[32],			/*!< [out] общий ключ */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 /*!	\brief Выполнение BPACE стороной B
@@ -672,7 +672,7 @@ err_t bakeBPACERunB(
 	size_t pwd_len,					/*!< [in] длина пароля */
 	read_i read,					/*!< [in] функция чтения */
 	write_i write,					/*!< [in] функция записи */
-	void* file						/*!< [in/out] канал связи */
+	void* file						/*!< [in,out] канал связи */
 );
 
 /*!	\brief Выполнение BPACE стороной A
@@ -693,7 +693,7 @@ err_t bakeBPACERunA(
 	size_t pwd_len,					/*!< [in] длина пароля */
 	read_i read,					/*!< [in] функция чтения */
 	write_i write,					/*!< [in] функция записи */
-	void* file						/*!< [in/out] канал связи */
+	void* file						/*!< [in,out] канал связи */
 );
 
 #ifdef __cplusplus

@@ -4,7 +4,7 @@
 \brief DSTU 4145-2002 (Ukraine): digital signature algorithms
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2017.01.11
+\version 2023.02.02
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -153,7 +153,7 @@ err_t dstuGenPoint(
 	octet point[],					/*!< [out] точка */
 	const dstu_params* params,		/*!< [in] долговременные параметры */
 	gen_i rng,						/*!< [in] генератор случайных чисел */
-	void* rng_state					/*!< [in/out] состояние генератора */
+	void* rng_state					/*!< [in,out] состояние генератора */
 );
 
 /*!	\brief Проверка точки
@@ -224,7 +224,7 @@ err_t dstuGenKeypair(
 	octet pubkey[],					/*!< [out] открытый ключ */
 	const dstu_params* params,		/*!< [in] долговременные параметры */
 	gen_i rng,						/*!< [in] генератор случайных чисел */
-	void* rng_state					/*!< [in/out] состояние генератора */
+	void* rng_state					/*!< [in,out] состояние генератора */
 );
 
 /*
@@ -257,7 +257,7 @@ err_t dstuSign(
 	size_t hash_len,				/*!< [in] длина хэш-значения в октетах */
 	const octet privkey[],			/*!< [in] личный ключ */
 	gen_i rng,						/*!< [in] генератор случайных чисел */
-	void* rng_state					/*!< [in/out] состояние генератора */
+	void* rng_state					/*!< [in,out] состояние генератора */
 );
 
 /*!	\brief Проверка ЭЦП

@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): cryptographic tokens
 \project bee2 [cryptographic library]
 \created 2022.07.04
-\version 2022.12.12
+\version 2023.02.02
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -233,7 +233,7 @@ typedef struct
 	и FALSE в противном случае.
 */
 bool_t btokPwdTransition(
-	btok_pwd_state* state,		/*!< [in/out] состояние */
+	btok_pwd_state* state,		/*!< [in,out] состояние */
 	btok_pwd_event event		/*!< [in] событие */
 );
 
@@ -345,7 +345,7 @@ err_t btokCVCCheck2(
 err_t btokCVCWrap(
     octet cert[],				/*!< [out] сертификат */
 	size_t* cert_len,			/*!< [out] длина cert в октетах */
-	btok_cvc_t* cvc,			/*!< [in/out] содержание сертификата */
+	btok_cvc_t* cvc,			/*!< [in,out] содержание сертификата */
 	const octet privkey[],		/*!< [in] личный ключ */
 	size_t privkey_len			/*!< [in] длина privkey в октетах */
 );
@@ -394,7 +394,7 @@ err_t btokCVCUnwrap(
 err_t btokCVCIss(
 	octet cert[],				/*!< [out] сертификат */
 	size_t* cert_len,			/*!< [out] длина cert в октетах */
-	btok_cvc_t* cvc,			/*!< [in/out] содержание сертификата */
+	btok_cvc_t* cvc,			/*!< [in,out] содержание сертификата */
 	const octet certa[],		/*!< [in] сертификат издателя */
 	size_t certa_len,			/*!< [in] длина certa в октетах */
 	const octet privkeya[],		/*!< [in] личный ключ издателя */
@@ -560,7 +560,7 @@ void btokSMStart(
 	значениями счетчика. Установка и снятие защиты ответов -- с четными.
 */
 void btokSMCtrInc(
-	void* state				/*!< [in/out] состояние SM */
+	void* state				/*!< [in,out] состояние SM */
 );
 
 /*!	\brief Кодирование и установка защиты команды с помощью SM
@@ -579,7 +579,7 @@ err_t btokSMCmdWrap(
 	octet apdu[],				/*!< [out] код команды */
 	size_t* count,				/*!< [out] длина кода команды */
 	const apdu_cmd_t* cmd,		/*!< [in] команда */
-	void* state					/*!< [in/out] состояние SM */
+	void* state					/*!< [in,out] состояние SM */
 );
 
 /*!	\brief Декодирование и снятие защиты команды с помощью SM
@@ -603,7 +603,7 @@ err_t btokSMCmdUnwrap(
 	size_t* size,				/*!< [out] размер буфера для команды */
 	const octet apdu[],			/*!< [in] код команды */
 	size_t count,				/*!< [in] длина кода команды */
-	void* state					/*!< [in/out] состояние SM */
+	void* state					/*!< [in,out] состояние SM */
 );
 
 /*!	\brief Кодирование и установка защиты ответа с помощью SM
@@ -621,7 +621,7 @@ err_t btokSMRespWrap(
 	octet apdu[],				/*!< [out] код ответа */
 	size_t* count,				/*!< [out] длина кода ответа */
 	const apdu_resp_t* resp,	/*!< [in] ответ */
-	void* state					/*!< [in/out] состояние SM */
+	void* state					/*!< [in,out] состояние SM */
 );
 
 /*!	\brief Декодирование и снятие защиты ответа с помощью SM
@@ -643,7 +643,7 @@ err_t btokSMRespUnwrap(
 	size_t* size,				/*!< [out] размер буфера для ответа */
 	const octet apdu[],			/*!< [in] код ответа */
 	size_t count,				/*!< [in] длина кода ответа */
-	void* state					/*!< [in/out] состояние SM */
+	void* state					/*!< [in,out] состояние SM */
 );
 
 /*!
@@ -762,7 +762,7 @@ err_t btokBAuthCTStart(
 err_t btokBAuthCTStep2(
 	octet out[],				/*!< [out] выходное сообщение M1 */
 	const bake_cert* certt,		/*!< [in] сертификат терминала */
-	void* state					/*!< [in/out] состояние */
+	void* state					/*!< [in,out] состояние */
 );
 
 /*!	\brief Шаг 3 протокола BAUTH
@@ -779,7 +779,7 @@ err_t btokBAuthCTStep2(
 err_t btokBAuthTStep3(
 	octet out[],			/*!< [out] выходное сообщение M2 */
 	const octet in[],		/*!< [in] входное сообщение M1 */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 /*!	\brief Шаг 4 протокола BAUTH
@@ -796,7 +796,7 @@ err_t btokBAuthTStep3(
 err_t btokBAuthCTStep4(
 	octet out[],			/*!< [out] выходное сообщение M3 */
 	const octet in[],		/*!< [in] входное сообщение M2 */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 /*!	\brief Шаг 5 протокола BAUTH
@@ -814,7 +814,7 @@ err_t btokBAuthTStep5(
 	const octet in[],		/*!< [in] входное сообщение M3 */
 	size_t in_len,			/*!< [in] длина in */
 	bake_certval_i val_ct,	/*!< [in] функция проверки сертификата КТ */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 /*!	\brief Извлечение ключа протокола BAUTH на стороне КТ
@@ -827,7 +827,7 @@ err_t btokBAuthTStep5(
 */
 err_t btokBAuthCTStepG(
 	octet key[32],			/*!< [out] общий ключ */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 /*!	\brief Извлечение ключа протокола BAUTH на стороне T
@@ -841,7 +841,7 @@ err_t btokBAuthCTStepG(
 */
 err_t btokBAuthTStepG(
 	octet key[32],			/*!< [out] общий ключ */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 #ifdef __cplusplus

@@ -4,7 +4,7 @@
 \brief Memory management
 \project bee2 [cryptographic library]
 \created 2012.07.16
-\version 2022.07.05
+\version 2023.02.02
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -108,7 +108,7 @@ void memSet(
 	Все биты буфера [count]buf инвертируются.
 */
 void memNeg( 
-	void* buf,			/*< [in/out] буфер */
+	void* buf,			/*< [in,out] буфер */
 	size_t count		/*< [in] число октетов */
 );
 
@@ -393,7 +393,7 @@ void memXor(
 	\pre Буфер dest либо не пересекается, либо совпадает с буфером src.
 */
 void memXor2(
-	void* dest,			/*!< [in/out] второе слагаемое / сумма */
+	void* dest,			/*!< [in,out] второе слагаемое / сумма */
 	const void* src,	/*!< [in] первое слагаемое */
 	size_t count		/*!< [in] число октетов */
 );
@@ -404,8 +404,8 @@ void memXor2(
 	\pre Буферы buf1 и buf2 не пересекаются.
 */
 void memSwap(
-	void* buf1,		/*!< [in/out] первый буфер */
-	void* buf2,		/*!< [in/out] второй буфер */
+	void* buf1,		/*!< [in,out] первый буфер */
+	void* buf2,		/*!< [in,out] второй буфер */
 	size_t count	/*!< [in] число октетов */
 );
 

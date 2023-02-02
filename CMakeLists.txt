@@ -14,11 +14,6 @@ option(BUILD_CMD "Build cmds." ON)
 option(BUILD_TESTS "Build tests." ON)
 option(BUILD_DOC "Build documentation (doxygen required)." OFF)
 option(INSTALL_HEADERS "Install headers." ON)
-#option(BASH_32 "Optimize Bash for 32-bit platforms." OFF)
-#option(BASH_SSE2 "Optimize Bash for SSE2 instructions." OFF)
-#option(BASH_AVX2 "Optimize Bash for AVX2 instructions." OFF)
-#option(BASH_AVX512 "Optimize Bash for AVX512 instructions." OFF)
-#option(BASH_NEON "Optimize Bash for ARM NEON instructions." OFF)
 
 string(REGEX MATCH "Clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER_ID}")
 

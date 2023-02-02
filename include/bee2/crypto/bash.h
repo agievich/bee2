@@ -4,7 +4,7 @@
 \brief STB 34.101.77 (bash): sponge-based algorithms
 \project bee2 [cryptographic library]
 \created 2014.07.15
-\version 2021.04.21
+\version 2023.02.02
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -132,8 +132,8 @@ size_t bashF_deep();
 	\pre Буфер block корректен.
 */
 void bashF(
-	octet block[192],	/*!< [in/out] прообраз/образ */
-	void* stack			/*!< [in/out] стек */
+	octet block[192],	/*!< [in,out] прообраз/образ */
+	void* stack			/*!< [in,out] стек */
 );
 
 /*
@@ -170,7 +170,7 @@ void bashHashStart(
 void bashHashStepH(
 	const void* buf,	/*!< [in] данные */
 	size_t count,		/*!< [in] число октетов данных */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Определение хэш-значения
@@ -186,7 +186,7 @@ void bashHashStepH(
 void bashHashStepG(
 	octet hash[],		/*!< [out] хэш-значение */
 	size_t hash_len,	/*!< [in] длина hash */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Проверка хэш-значения
@@ -202,7 +202,7 @@ void bashHashStepG(
 bool_t bashHashStepV(
 	const octet hash[],	/*!< [in] контрольное хэш-значение */
 	size_t hash_len,	/*!< [in] длина hash */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Хэширование
@@ -335,7 +335,7 @@ void bashPrgRestart(
 	\remark В начале загрузки завершается предыдущая команда.
 */
 void bashPrgAbsorbStart(
-	void* state			/*!< [in/out] автомат */
+	void* state			/*!< [in,out] автомат */
 );
 
 /*!	\brief Шаг загрузки данных
@@ -346,7 +346,7 @@ void bashPrgAbsorbStart(
 void bashPrgAbsorbStep(
 	const void* buf,	/*!< [in] данные */
 	size_t count,		/*!< [in] число октетов данных */
-	void* state			/*!< [in/out] автомат */
+	void* state			/*!< [in,out] автомат */
 );
 
 /*!	\brief Загрузка данных
@@ -357,7 +357,7 @@ void bashPrgAbsorbStep(
 void bashPrgAbsorb(
 	const void* buf,	/*!< [in] данные */
 	size_t count,		/*!< [in] число октетов данных */
-	void* state			/*!< [in/out] автомат */
+	void* state			/*!< [in,out] автомат */
 );
 
 /*!	\brief Начало выгрузки данных
@@ -367,7 +367,7 @@ void bashPrgAbsorb(
 	\remark В начале выгрузки завершается предыдущая команда.
 */
 void bashPrgSqueezeStart(
-	void* state			/*!< [in/out] автомат */
+	void* state			/*!< [in,out] автомат */
 );
 
 /*!	\brief Шаг выгрузки данных
@@ -378,7 +378,7 @@ void bashPrgSqueezeStart(
 void bashPrgSqueezeStep(
 	void* buf,			/*!< [out] данные */
 	size_t count,		/*!< [in] число октетов данных */
-	void* state			/*!< [in/out] автомат */
+	void* state			/*!< [in,out] автомат */
 );
 
 /*!	\brief Выгрузка данных
@@ -389,7 +389,7 @@ void bashPrgSqueezeStep(
 void bashPrgSqueeze(
 	void* buf,			/*!< [out] данные */
 	size_t count,		/*!< [in] число октетов данных */
-	void* state			/*!< [in/out] автомат */
+	void* state			/*!< [in,out] автомат */
 );
 
 /*!	\brief Начало зашифрования
@@ -400,7 +400,7 @@ void bashPrgSqueeze(
 	\remark В начале зашифрования завершается предыдущая команда.
 */
 void bashPrgEncrStart(
-	void* state			/*!< [in/out] автомат */
+	void* state			/*!< [in,out] автомат */
 );
 
 /*!	\brief Шаг зашифрования
@@ -410,9 +410,9 @@ void bashPrgEncrStart(
 	\expect bashPrgEncrStart() < bashPrgEncrStep()*.
 */
 void bashPrgEncrStep(
-	void* buf,			/*!< [in/out] данные */
+	void* buf,			/*!< [in,out] данные */
 	size_t count,		/*!< [in] число октетов данных */
-	void* state			/*!< [in/out] автомат */
+	void* state			/*!< [inout] автомат */
 );
 
 /*!	\brief Зашифрование
@@ -422,9 +422,9 @@ void bashPrgEncrStep(
 	\expect bashPrgStart() < bashPrgEncr()*.
 */
 void bashPrgEncr(
-	void* buf,			/*!< [in/out] данные */
+	void* buf,			/*!< [in,out] данные */
 	size_t count,		/*!< [in] число октетов данных */
-	void* state			/*!< [in/out] автомат */
+	void* state			/*!< [in,out] автомат */
 );
 
 /*!	\brief Начало расшифрования
@@ -435,7 +435,7 @@ void bashPrgEncr(
 	\remark В начале расшифрования завершается предыдущая команда.
 */
 void bashPrgDecrStart(
-	void* state			/*!< [in/out] автомат */
+	void* state			/*!< [in,out] автомат */
 );
 
 /*!	\brief Шаг расшифрования
@@ -444,9 +444,9 @@ void bashPrgDecrStart(
 	\expect bashPrgDecrStart() < bashPrgDecrStep()*.
 */
 void bashPrgDecrStep(
-	void* buf,			/*!< [in/out] данные */
+	void* buf,			/*!< [in,out] данные */
 	size_t count,		/*!< [in] число октетов данных */
-	void* state			/*!< [in/out] автомат */
+	void* state			/*!< [in,out] автомат */
 );
 
 /*!	\brief Расшифрование
@@ -456,9 +456,9 @@ void bashPrgDecrStep(
 	\expect bashPrgStart() < bashPrgDecr()*.
 */
 void bashPrgDecr(
-	void* buf,			/*!< [in/out] данные */
+	void* buf,			/*!< [in,out] данные */
 	size_t count,		/*!< [in] число октетов данных */
-	void* state			/*!< [in/out] автомат */
+	void* state			/*!< [in,out] автомат */
 );
 
 /*!	\brief Необратимое изменение автомата
@@ -468,7 +468,7 @@ void bashPrgDecr(
 	\expect bashPrgStart() < bashPrgRatchet().
 */
 void bashPrgRatchet(
-	void* state			/*!< [in/out] автомат */
+	void* state			/*!< [in,out] автомат */
 );
 
 #ifdef __cplusplus

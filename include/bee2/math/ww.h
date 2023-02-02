@@ -4,7 +4,7 @@
 \brief Arbitrary length words
 \project bee2 [cryptographic library]
 \created 2012.04.18
-\version 2019.06.27
+\version 2023.02.02
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -120,8 +120,8 @@ void wwCopy(
 	\pre Буфер b не пересекается с буфером a.
 */
 void wwSwap(
-	word a[],		/*!< [in/out] первое слово */
-	word b[],		/*!< [in/out] второе слово */
+	word a[],		/*!< [in,out] первое слово */
+	word b[],		/*!< [in,out] второе слово */
 	size_t n		/*!< [in] длина a и b в машинных словах */
 );
 
@@ -213,7 +213,7 @@ void wwXor(
 	\pre Буфер b либо не пересекается, либо совпадает с буфером a.
 */
 void wwXor2(
-	word b[],		/*!< [in/out] второе слагаемое / сумма */
+	word b[],		/*!< [in,out] второе слагаемое / сумма */
 	const word a[],	/*!< [in] первое слагаемое */
 	size_t n		/*!< [in] длина a в машинных словах */
 );
@@ -373,7 +373,7 @@ word wwGetBits(
 	\pre val == FALSE || val == TRUE.
 */
 void wwSetBit(
-	word a[],			/*!< [in/out] обрабатываемое слово */
+	word a[],			/*!< [in,out] обрабатываемое слово */
 	size_t pos,			/*!< [in] номер разряда */
 	register bool_t val	/*!< [in] устанавливаемое значение */
 );
@@ -497,7 +497,7 @@ size_t wwNAF(
 	число 2^shift с приведением результата  mod 2^{n * B_PER_W}.
 */
 void wwShLo(
-	word a[],		/*!< [in/out] сдвигаемое слово */
+	word a[],		/*!< [in,out] сдвигаемое слово */
 	size_t n,		/*!< [in] длина a в машинных словах */
 	size_t shift	/*!< [in] величина сдвига */
 );
@@ -509,7 +509,7 @@ void wwShLo(
 	\return Машинное слово, составленное из вытесненных последними разрядов.
 */
 word wwShLoCarry(
-	word a[],		/*!< [in/out] сдвигаемое слово */
+	word a[],		/*!< [in,out] сдвигаемое слово */
 	size_t n,		/*!< [in] длина a в машинных словах */
 	size_t shift,	/*!< [in] величина сдвига */
 	word carry		/*!< [in] машинное слово заема */
@@ -535,7 +535,7 @@ void wwShHi(
 	\return Машинное слово, составленное из вытесненных последними разрядов.
 */
 word wwShHiCarry(
-	word a[],		/*!< [in/out] сдвигаемое слово */
+	word a[],		/*!< [in,out] сдвигаемое слово */
 	size_t n,		/*!< [in] длина a в машинных словах */
 	size_t shift,	/*!< [in] величина сдвига */
 	word carry		/*!< [in] машинное слово заема */
@@ -547,7 +547,7 @@ word wwShHiCarry(
 	0, 1,..., min(pos, n * B_PER_W) - 1.
 */
 void wwTrimLo(
-	word a[],		/*!< [in/out] обрабатываемое слово */
+	word a[],		/*!< [in,out] обрабатываемое слово */
 	size_t n,		/*!< [in] длина a в машинных словах */
 	size_t pos		/*!< [in] граница обнуляемых разрядов */
 );
@@ -561,7 +561,7 @@ void wwTrimLo(
 	приведение mod 2^pos.
 */
 void wwTrimHi(
-	word a[],		/*!< [in/out] обрабатываемое слово */
+	word a[],		/*!< [in,out] обрабатываемое слово */
 	size_t n,		/*!< [in] длина a в машинных словах */
 	size_t pos		/*!< [in] номер первого обнуляемого разряда */
 );

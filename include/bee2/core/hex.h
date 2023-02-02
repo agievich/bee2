@@ -4,7 +4,7 @@
 \brief Hexadecimal strings
 \project bee2 [cryptographic library]
 \created 2015.10.29
-\version 2022.06.17
+\version 2023.02.02
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -61,7 +61,7 @@ bool_t hexIsValid(
 	Строчные символы строки hex преобразуются в прописные.
 */
 void hexUpper(
-	char* hex			/*!< [in/out] шестнадцатеричная строка */
+	char* hex			/*!< [in,out] шестнадцатеричная строка */
 );
 
 /*!	\brief К нижнему регистру
@@ -69,7 +69,7 @@ void hexUpper(
 	Прописные символы строки hex преобразуются в строчные.
 */
 void hexLower(
-	char* hex			/*!< [in/out] шестнадцатеричная строка */
+	char* hex			/*!< [in,out] шестнадцатеричная строка */
 );
 
 /*!	\brief Совпадает с шестнадцатеричной строкой?

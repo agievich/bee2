@@ -4,7 +4,7 @@
 \brief Common info
 \project bee2 [cryptographic library]
 \created 2012.04.01
-\version 2016.07.07
+\version 2023.02.02
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices at the end of this file.
 *******************************************************************************
@@ -47,7 +47,7 @@ version 3. See Copyright Notices at the end of this file.
 \section descr Описание
 
 Библиотека Bee2 реализует алгоритмы и протоколы криптографических 
-стандартов Республики Беларусь (СТБ 34.101.31, 45, 47, 60, 66).
+стандартов Республики Беларусь (СТБ 34.101.31,45,47,60,66,77,78,79).
 
 Библиотека написана на языке Си, без ассемблерных вставок и поэтому 
 компилируется практически на любой аппаратно-программной платформе. 
@@ -94,17 +94,18 @@ version 3. See Copyright Notices at the end of this file.
 mkdir build
 cd build
 cmake [-DCMAKE_BUILD_TYPE={Release|Debug|Coverage|ASan|ASanDbg|MemSan|MemSanDbg|Check}]\
-      [-DBUILD_FAST=ON] ..
+      [-DBUILD_FAST=ON]\
+      [-DBASH_PLATFORM={BASH_32|BASH_64|BASH_AVX2|BASH_AVX512|BASH_NEON}] ..
 \endverbatim
 
 Конфигурации:
-   
-# Release -- окончательная (по умолчанию);
-# Debug -- отладочная;
-# Coverage -- со средствами мониторинга покрытия;
-# ASan, ASanDbg -- со средствами проверки адресов (AddressSanitizer);
-# MemSan, MemSanDbg -- со средствами проверки памяти (MemorySanitizer);
-# Check -- строгие правила компиляции.
+
+- Release -- окончательная (по умолчанию);
+- Debug -- отладочная;
+- Coverage -- со средствами мониторинга покрытия;
+- ASan, ASanDbg -- со средствами проверки адресов (AddressSanitizer);
+- MemSan, MemSanDbg -- со средствами проверки памяти (MemorySanitizer);
+- Check -- строгие правила компиляции.
 
 Опция BUILD_FAST (по умолчанию отключена) переключает между безопасными 
 (constant-time) и быстрыми (non-constant-time) редакциями функций.

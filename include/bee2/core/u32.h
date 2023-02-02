@@ -4,7 +4,7 @@
 \brief 32-bit words
 \project bee2 [cryptographic library]
 \created 2015.10.28
-\version 2019.07.08
+\version 2023.02.02
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -70,7 +70,7 @@ u32 u32Rev(
 	Выполняется реверс октетов массива [count]buf из u32-слов.
 */
 void u32Rev2(
-	u32 buf[],			/*!< [in/out] массив слов */
+	u32 buf[],			/*!< [in,out] массив слов */
 	size_t count		/*!< [in] число элементов */
 );
 	
