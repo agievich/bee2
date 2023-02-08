@@ -63,12 +63,12 @@ endif()
 # * https://clang.llvm.org/docs/DiagnosticsReference.html
 
 set(CMAKE_C_WARNINGS
-  "-Wall -Wextra -W -Wdeclaration-after-statement -Wwrite-strings -Wlogical-op \
+  "-Wall -Wextra -W -Wdeclaration-after-statement -Wwrite-strings \
     -Wno-parentheses -Wno-unused-parameter -Wno-strict-aliasing \
     -Wno-xor-used-as-pow")
 
-if(${CMAKE_C_COMPILER_ID} STREQUAL GNU)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_WARNINGS}")
+if(${CMAKE_C_COMPILER_ID} STREQUAL "GNU")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_WARNINGS} -Wlogical-op")
   if(BASH_SSE2)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse2")
   elseif(BASH_AVX2)
@@ -84,9 +84,9 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL GNU)
   set(CMAKE_C_FLAGS_ASAN        "-Werror -fsanitize=address -fno-common -O3")
   set(CMAKE_C_FLAGS_ASANDBG     "-Werror -fsanitize=address -fno-common -O1 -g3 -fno-omit-frame-pointer -fno-optimize-sibling-calls")
   set(CMAKE_C_FLAGS_CHECK       "-Werror -O1 -Wcast-qual")
-endif(${CMAKE_C_COMPILER_ID} STREQUAL GNU)
+endif(${CMAKE_C_COMPILER_ID} STREQUAL "GNU")
 
-if(${CMAKE_C_COMPILER_ID} STREQUAL CLANG)
+if(${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
   set(CMAKE_C_WARNINGS "${CMAKE_C_WARNINGS} -Wno-parentheses-equality -Wno-logical-op-parentheses -Wno-bitwise-op-parentheses")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_WARNINGS}")
   if(BASH_SSE2)
@@ -106,9 +106,9 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL CLANG)
   set(CMAKE_C_FLAGS_MEMSAN      "-Werror -fsanitize=memory -O3")
   set(CMAKE_C_FLAGS_MEMSANDBG   "-Werror -fsanitize=memory -O1 -g3 -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize-memory-track-origins=2")
   set(CMAKE_C_FLAGS_CHECK       "-Werror -O1")
-endif(${CMAKE_C_COMPILER_ID} STREQUAL CLANG)
+endif(${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
 
-if(${CMAKE_C_COMPILER_ID} STREQUAL MSVC)
+if(${CMAKE_C_COMPILER_ID} STREQUAL "MSVC")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
   if(BASH_SSE2)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /arch:SSE2")
@@ -117,7 +117,7 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL MSVC)
   elseif(BASH_AVX512)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /arch:AVX512")
   endif()
-endif(${CMAKE_C_COMPILER_ID} STREQUAL MSVC)
+endif(${CMAKE_C_COMPILER_ID} STREQUAL "MSVC")
 
 if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
   if(CMAKE_COMPILER_IS_GNUCC)
