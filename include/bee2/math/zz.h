@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2023.02.02
+\version 2023.02.10
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -591,18 +591,16 @@ size_t zzLCM_deep(size_t n, size_t m);
 	\code
 		d <- \gcd(a, b),
 	\endcode
-	а также sign \in {0, 1} и положительные числа [m]da и [n]db такие, что
+	а также положительные числа [m]da и [n]db (коэффициенты Безу) такие, что
 	\code
-		a * da - b * db == (-1)^sign d
+		da * a - db * b == d
 	\endcode
-	(коэффициенты Безу).
 	\pre a != 0 && b != 0.
 	\pre Буферы d, da, db не пересекаются между собой и с буферами a, b.
-	\return sign (0, если a * da - b * db = d, и 1, если b * db - a * da = d).
 	\deep{stack} zzExGCD_deep(n, m).
 	\safe Функция нерегулярна.
 */
-int zzExGCD(
+void zzExGCD(
 	word d[],			/*!< [out] н.о.д. */
 	word da[],			/*!< [out] первый коэффициент Безу */
 	word db[],			/*!< [out] второй коэффициент Безу */
