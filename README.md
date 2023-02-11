@@ -25,10 +25,11 @@ Bee2 fully supports the following standards
 5. STB 34.101.66 (bake): key establishment protocols over elliptic curves. 
 6. STB 34.101.77 (bash): sponge-based algorithms. 
 
-Bee2 partially supports cryptographic data formats defined in the following 
-standards:
+Bee2 partially supports cryptographic mechanisms and data formats defined in 
+the following standards:
 
 7. STB 34.101.78 (bpki): a PKI profile. 
+8. STB 34.101.79 (btok): cryptographic tokens. 
 
 Additionally, Bee2 implements digital signature algorithms standardized in 
 Russia and Ukraine.
