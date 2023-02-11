@@ -4,9 +4,9 @@
 \brief Common info
 \project bee2 [cryptographic library]
 \created 2012.04.01
-\version 2023.02.02
-\license This program is released under the GNU General Public License 
-version 3. See Copyright Notices at the end of this file.
+\version 2023.02.12
+\copyright The Bee2 authors
+\license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
@@ -110,7 +110,7 @@ cmake [-DCMAKE_BUILD_TYPE={Release|Debug|Coverage|ASan|ASanDbg|MemSan|MemSanDbg|
 Опция BUILD_FAST (по умолчанию отключена) переключает между безопасными 
 (constant-time) и быстрыми (non-constant-time) редакциями функций.
 
-Компиляция и линковка:
+Сборка:
 
 \verbatim
 make
@@ -130,32 +130,8 @@ make install
 
 \section license Лицензия
 
-Библиотека распространяется на условиях GNU General Public License версии 3
-(GNU GPL v3). 
+Библиотека распространяется на условиях Apache License, Version 2.0. 
 
-\verbatim
-
-Bee2: a cryptographic library
-Copyright (c) 2012-2015, Bee2 authors
-
-This file is part of Bee2. Bee2 is legal property of its developers,
-whose names are not listed here. Please refer to source files for contact 
-information. 
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-\endverbatim
 *******************************************************************************
 */
 

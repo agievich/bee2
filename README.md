@@ -73,15 +73,16 @@ Build types (`Release` by default):
 The `BUILD_FAST` option (`OFF` by default) switches from safe (constant-time) 
 functions to fast (non-constant-time) ones.
 
-The `BASH_PLATFORM` option (`BASH_64` by default) requests to use a specific 
-implementation of the STB 34.101.77 algorithms optimized for a given hardware platform. 
-The request may be rejected if it conflicts with other options.
+The `BASH_PLATFORM` option (`BASH_64` by default) requests to use a specific
+implementation of the STB 34.101.77 algorithms optimized for a given hardware
+platform. The request may be rejected if it conflicts with other options.
 
 License
 -------
 
-Bee2 is released under the terms of the GNU General Public License version 3
-(GNU GPLv3). See [LICENSE](LICENSE) for more information.
+Bee2 is distributed under the Apache License version 2.0. See 
+[Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0) or 
+[LICENSE](LICENSE.txt) for details.
 
 Related projects
 ----------------
