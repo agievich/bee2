@@ -5,8 +5,8 @@
 \project bee2 [cryptographic library]
 \created 2013.09.14
 \version 2014.04.17
-\license This program is released under the GNU General Public License 
-version 3. See Copyright Notices in bee2/info.h.
+\copyright The Bee2 authors
+\license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
