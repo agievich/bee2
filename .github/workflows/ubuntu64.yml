@@ -30,8 +30,5 @@ jobs:
       run: ctest -C ${{env.BUILD_TYPE}} --verbose
 
     - name: Coverage
-      uses: danielealbano/lcov-action@v1
-      with:
-          gcov_path: /usr/bin/gcov-9
-          remove_patterns: 3rdparty,tests
+      uses: codecov/codecov-action@v3
 
