@@ -13,11 +13,10 @@ jobs:
     strategy:
       matrix:
         include:
-        - env: 
-            BUILD_TYPE: MemSan
-            BUILD_FAST: ON
-            BASH_PLATFORM: BASH_AVX2
-            CC: gcc
+        - BUILD_TYPE: MemSan
+          BUILD_FAST: ON
+          BASH_PLATFORM: BASH_AVX2
+          CC: gcc
     steps:
     - name: Get source
       uses: actions/checkout@v3
