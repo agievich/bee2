@@ -2,7 +2,7 @@ name: Fast test on Ubuntu x64
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "actions" ]
   pull_request:
     branches: [ "master" ]
 
