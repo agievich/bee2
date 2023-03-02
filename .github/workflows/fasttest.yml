@@ -8,7 +8,6 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
     name: Build $BUILD_TYPE/Fast=$BUILD_FAST/$BASH_PLATFORM/$CC
     runs-on: ubuntu-latest
     strategy:
@@ -19,8 +18,6 @@ jobs:
             BUILD_FAST: ON
             BASH_PLATFORM: BASH_AVX2
             CC: gcc
-          run_cmd:
-            ctest --verbose
     steps:
     - name: Get source
       uses: actions/checkout@v3
