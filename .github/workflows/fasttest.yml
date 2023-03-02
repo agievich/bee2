@@ -6,15 +6,21 @@ on:
   pull_request:
     branches: [ "master" ]
 
-env:
-  BUILD_TYPE: Release
-  BUILD_FAST: ON  
-  BASH_PLATFORM: BASH_64
-
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    name: Build $BUILD_TYPE/Fast=$BUILD_FAST/$BASH_PLATFORM/$CC
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+        - env: 
+            BUILD_TYPE: MemSan
+            BUILD_FAST: ON
+            BASH_PLATFORM: BASH_AVX2
+            CC: gcc
+          run_cmd:
+            ctest --verbose
     steps:
     - name: Get source
       uses: actions/checkout@v3
