@@ -5,8 +5,8 @@
 \project bee2/test
 \created 2014.11.18
 \version 2020.06.23
-\license This program is released under the GNU General Public License 
-version 3. See Copyright Notices in bee2/info.h.
+\copyright The Bee2 authors
+\license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 

@@ -4,9 +4,9 @@
 \brief Multiple-precision unsigned integers
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2019.06.27
-\license This program is released under the GNU General Public License 
-version 3. See Copyright Notices in bee2/info.h.
+\version 2023.02.10
+\copyright The Bee2 authors
+\license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
@@ -124,7 +124,7 @@ word zzAdd(
 	\return Слово переноса carry.
 */
 word zzAdd2(
-	word b[],			/*!< [in/out] первое слагаемое / сумма */
+	word b[],			/*!< [in,out] первое слагаемое / сумма */
 	const word a[],		/*!< [in] второе слагаемое */
 	size_t n			/*!< [in] длина a, b в машинных словах */
 );
@@ -171,7 +171,7 @@ word zzAddW(
 	\return Слово переноса carry.
 */
 word zzAddW2(
-	word a[],			/*!< [in/out] слагаемое / сумма */
+	word a[],			/*!< [in,out] слагаемое / сумма */
 	size_t n,			/*!< [in] длина a в машинных словах */
 	register word w		/*!< [in] второе слагаемое */
 );
@@ -247,7 +247,7 @@ word zzSub(
 	\return Слово заема borrow.
 */
 word zzSub2(
-	word b[],			/*!< [in/out] уменьшаемое / разность */
+	word b[],			/*!< [in,out] уменьшаемое / разность */
 	const word a[],		/*!< [in] вычитаемое */
 	size_t n			/*!< [in] длина a, b в машинных словах */
 );
@@ -277,7 +277,7 @@ word zzSubW(
 	\return Слово заема borrow.
 */
 word zzSubW2(
-	word a[],			/*!< [in/out] уменьшаемое / разность */
+	word a[],			/*!< [in,out] уменьшаемое / разность */
 	size_t n,			/*!< [in] длина a в машинных словах */
 	register word w		/*!< [in] вычитаемое */
 );
@@ -328,7 +328,7 @@ word zzMulW(
 	\return Слово переноса carry.
 */
 word zzAddMulW(
-	word b[],			/*!< [in/out] слагаемое / сумма */
+	word b[],			/*!< [in,out] слагаемое / сумма */
 	const word a[],		/*!< [in] первый множитель */
 	size_t n,			/*!< [in] длина a, b в машинных словах */
 	register word w		/*!< [in] второй множитель */
@@ -344,7 +344,7 @@ word zzAddMulW(
 	\return Слово заема borrow.
 */
 word zzSubMulW(
-	word b[],			/*!< [in/out] вычитаемое / разность */
+	word b[],			/*!< [in,out] вычитаемое / разность */
 	const word a[],		/*!< [in] первый множитель */
 	size_t n,			/*!< [in] длина a, b в машинных словах */
 	register word w		/*!< [in] второй множитель */
@@ -591,18 +591,16 @@ size_t zzLCM_deep(size_t n, size_t m);
 	\code
 		d <- \gcd(a, b),
 	\endcode
-	а также sign \in {0, 1} и положительные числа [m]da и [n]db такие, что
+	а также положительные числа [m]da и [n]db (коэффициенты Безу) такие, что
 	\code
-		a * da - b * db == (-1)^sign d
+		da * a - db * b == d
 	\endcode
-	(коэффициенты Безу).
 	\pre a != 0 && b != 0.
 	\pre Буферы d, da, db не пересекаются между собой и с буферами a, b.
-	\return sign (0, если a * da - b * db = d, и 1, если b * db - a * da = d).
 	\deep{stack} zzExGCD_deep(n, m).
 	\safe Функция нерегулярна.
 */
-int zzExGCD(
+void zzExGCD(
 	word d[],			/*!< [out] н.о.д. */
 	word da[],			/*!< [out] первый коэффициент Безу */
 	word db[],			/*!< [out] второй коэффициент Безу */
@@ -760,7 +758,7 @@ void FAST(zzSubWMod)(word b[], const word a[], register word w,
 	\safe Имеется ускоренная нерегулярная редакция.
 */
 void zzNegMod(
-	word b[],			/*!< [in/out] обратное число */
+	word b[],			/*!< [in,out] обратное число */
 	const word a[],		/*!< [in] число */
 	const word mod[],	/*!< [in] модуль */
 	size_t n			/*!< [in] длина чисел в машинных словах */
@@ -961,7 +959,7 @@ bool_t zzRandMod(
 	const word mod[],	/*!< [in] модуль */
 	size_t n,			/*!< [in] длина a и mod в машинных словах */
 	gen_i rng,			/*!< [in] генератор случайных чисел */
-	void* rng_state		/*!< [in/out] состояние генератора */
+	void* rng_state		/*!< [in,out] состояние генератора */
 );
 
 /*!	\brief Случайный ненулевой вычет по модулю
@@ -987,7 +985,7 @@ bool_t zzRandNZMod(
 	const word mod[],	/*!< [in] модуль */
 	size_t n,			/*!< [in] длина a и mod в машинных словах */
 	gen_i rng,			/*!< [in] генератор случайных чисел */
-	void* rng_state		/*!< [in/out] состояние генератора */
+	void* rng_state		/*!< [in,out] состояние генератора */
 );
 
 /*!
@@ -1014,7 +1012,7 @@ bool_t zzRandNZMod(
 	\safe Функция нерегулярна.
 */
 void zzRed(
-	word a[],					/*!< [in/out] делимое / остаток */
+	word a[],					/*!< [in,out] делимое / остаток */
 	const word mod[],			/*!< [in] модуль */
 	size_t n,					/*!< [in] длина mod в машинных словах */
 	void* stack					/*!< [in] вспомогательная память */
@@ -1033,7 +1031,7 @@ size_t zzRed_deep(size_t n);
 	\safe Имеется ускоренная нерегулярная редакция.
 */
 void zzRedCrand(
-	word a[],					/*!< [in/out] делимое / остаток */
+	word a[],					/*!< [in,out] делимое / остаток */
 	const word mod[],			/*!< [in] модуль Крэндалла */
 	size_t n,					/*!< [in] длина mod в машинных словах */
 	void* stack					/*!< [in] вспомогательная память (не исп.) */
@@ -1075,7 +1073,7 @@ size_t zzRedBarrStart_deep(size_t n);
 	\safe Имеется ускоренная нерегулярная редакция.
 */
 void zzRedBarr(
-	word a[],					/*!< [in/out] делимое / остаток */
+	word a[],					/*!< [in,out] делимое / остаток */
 	const word mod[],			/*!< [in] модуль */
 	size_t n,					/*!< [in] длина mod в машинных словах */
 	const word barr_param[],	/*!< [in] параметр Барретта */
@@ -1108,7 +1106,7 @@ size_t zzRedBarr_deep(size_t n);
 	\safe Имеется ускоренная нерегулярная редакция.
 */
 void zzRedMont(
-	word a[],					/*!< [in/out] входное число / результат */
+	word a[],					/*!< [in,out] входное число / результат */
 	const word mod[],			/*!< [in] модуль */
 	size_t n,					/*!< [in] длина mod в машинных словах */
 	register word mont_param,	/*!< [in] параметр Монтгомери */
@@ -1138,7 +1136,7 @@ size_t zzRedMont_deep(size_t n);
 	\safe Имеется ускоренная нерегулярная редакция.
 */
 void zzRedCrandMont(
-	word a[],					/*!< [in/out] входное число / результат */
+	word a[],					/*!< [in,out] входное число / результат */
 	const word mod[],			/*!< [in] модуль */
 	size_t n,					/*!< [in] длина mod в машинных словах */
 	register word mont_param,	/*!< [in] параметр Монтгомери */

@@ -25,10 +25,11 @@ Bee2 fully supports the following standards
 5. STB 34.101.66 (bake): key establishment protocols over elliptic curves. 
 6. STB 34.101.77 (bash): sponge-based algorithms. 
 
-Bee2 partially supports cryptographic data formats defined in the following 
-standards:
+Bee2 partially supports cryptographic mechanisms and data formats defined in 
+the following standards:
 
 7. STB 34.101.78 (bpki): a PKI profile. 
+8. STB 34.101.79 (btok): cryptographic tokens. 
 
 Additionally, Bee2 implements digital signature algorithms standardized in 
 Russia and Ukraine.
@@ -73,15 +74,16 @@ Build types (`Release` by default):
 The `BUILD_FAST` option (`OFF` by default) switches from safe (constant-time) 
 functions to fast (non-constant-time) ones.
 
-The `BASH_PLATFORM` option (`BASH_64` by default) requests to use a specific 
-implementation of the STB 34.101.77 algorithms optimized for a given hardware platform. 
-The request may be rejected if it conflicts with other options.
+The `BASH_PLATFORM` option (`BASH_64` by default) requests to use a specific
+implementation of the STB 34.101.77 algorithms optimized for a given hardware
+platform. The request may be rejected if it conflicts with other options.
 
 License
 -------
 
-Bee2 is released under the terms of the GNU General Public License version 3
-(GNU GPLv3). See [LICENSE](LICENSE) for more information.
+Bee2 is distributed under the Apache License version 2.0. See 
+[Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0) or 
+[LICENSE](LICENSE.txt) for details.
 
 Related projects
 ----------------

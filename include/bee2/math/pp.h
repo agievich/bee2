@@ -4,9 +4,9 @@
 \brief Binary polynomials
 \project bee2 [cryptographic library]
 \created 2012.03.01
-\version 2016.05.18
-\license This program is released under the GNU General Public License 
-version 3. See Copyright Notices in bee2/info.h.
+\version 2023.02.02
+\copyright The Bee2 authors
+\license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
@@ -112,7 +112,7 @@ size_t ppMulW_deep(size_t n);
 	\deep{stack} ppAddMulW_deep(n).
 */
 word ppAddMulW(
-	word b[],			/*!< [in/out] слагаемое / сумма */
+	word b[],			/*!< [in,out] слагаемое / сумма */
 	const word a[],		/*!< [in] первый множитель */
 	size_t n,			/*!< [in] длина a в машинных словах */
 	register word w,	/*!< [in] второй множитель */
@@ -437,7 +437,7 @@ typedef struct
 	\deep{stack} ppRed_deep(n).
 */
 void ppRed(
-	word a[],					/*!< [in/out] делимое / остаток */
+	word a[],					/*!< [in,out] делимое / остаток */
 	const word mod[],			/*!< [in] модуль */
 	size_t n,					/*!< [in] длина mod в машинных словах */
 	void* stack					/*!< [in] вспомогательная память */
@@ -454,7 +454,7 @@ size_t ppRed_deep(size_t n);
 	\pre p->m - p->k >= B_PER_W.
 */
 void ppRedTrinomial(
-	word a[],					/*!< [in/out] делимое / остаток */
+	word a[],					/*!< [in,out] делимое / остаток */
 	const pp_trinom_st* p		/*!< [in] описание трехчлена */
 );
 
@@ -467,7 +467,7 @@ void ppRedTrinomial(
 	\pre params->k < B_PER_W.
 */
 void ppRedPentanomial(
-	word a[],					/*!< [in/out] делимое / остаток */
+	word a[],					/*!< [in,out] делимое / остаток */
 	const pp_pentanom_st* p		/*!< [in] описание пятичлена */
 );
 
@@ -479,7 +479,7 @@ void ppRedPentanomial(
 	который используется в стандартах Belt и GCM.
 */
 void ppRedBelt(
-	word a[]					/*!< [in/out] делимое / остаток */
+	word a[]					/*!< [in,out] делимое / остаток */
 );
 
 /*

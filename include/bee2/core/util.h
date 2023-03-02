@@ -4,9 +4,9 @@
 \brief Utilities
 \project bee2 [cryptographic library]
 \created 2012.07.16
-\version 2021.05.18
-\license This program is released under the GNU General Public License 
-version 3. See Copyright Notices in bee2/info.h.
+\version 2023.02.02
+\copyright The Bee2 authors
+\license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
@@ -201,7 +201,7 @@ size_t utilMax(
 u32 utilCRC32(
 	const void* buf,	/*!< [in] буфер */
 	size_t count,		/*!< [in] число октетов */
-	u32 state			/*!< [in/out] состояние */
+	u32 state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Контрольная сумма FNV32
@@ -218,7 +218,7 @@ u32 utilCRC32(
 u32 utilFNV32(
 	const void* buf,	/*!< [in] буфер */
 	size_t count,		/*!< [in] число октетов */
-	u32 state			/*!< [in/out] состояние */
+	u32 state			/*!< [in,out] состояние */
 );
 
 /*!	\brief 32-разрядный нонс

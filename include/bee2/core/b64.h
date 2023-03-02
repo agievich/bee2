@@ -4,9 +4,9 @@
 \brief The Base64 encoding
 \project bee2 [cryptographic library]
 \created 2016.06.16
-\version 2021.04.21
-\license This program is released under the GNU General Public License 
-version 3. See Copyright Notices in bee2/info.h.
+\version 2023.02.02
+\copyright The Bee2 authors
+\license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
@@ -98,7 +98,7 @@ void b64From(
 */
 void b64To(
 	void* dest,			/*!< [out] память-приемник */
-	size_t* count,		/*!< [in/out] размер dest / декодированных данных */
+	size_t* count,		/*!< [in,out] размер dest / декодированных данных */
 	const char* src		/*!< [in] строка-источник */
 );
 

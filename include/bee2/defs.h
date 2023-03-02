@@ -4,9 +4,9 @@
 \brief Basic definitions
 \project bee2 [cryptographic library]
 \created 2012.04.01
-\version 2022.07.05
-\license This program is released under the GNU General Public License 
-version 3. See Copyright Notices in bee2/info.h.
+\version 2023.02.02
+\copyright The Bee2 authors
+\license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
@@ -517,7 +517,7 @@ typedef u32 err_t;
 typedef void (*gen_i)(
 	void* buf,			/*!< [out] случайные числа */
 	size_t count,		/*!< [in] число октетов */
-	void* state			/*!< [in/out] cостояние */
+	void* state			/*!< [in,out] cостояние */
 );
 
 /*!
@@ -546,7 +546,7 @@ typedef err_t (*read_i)(
 	size_t* read,		/*!< [out] число прочитанных октетов */
 	void* buf,			/*!< [out] прочитанные данные */
 	size_t count,		/*!< [in] длина buf в октетах */
-	void* file			/*!< [in/out] описание файла */
+	void* file			/*!< [in,out] описание файла */
 );
 
 /*!
@@ -566,7 +566,7 @@ typedef err_t (*write_i)(
 	size_t* written,	/*!< [out] число записанных октетов */
 	const void* buf,	/*!< [in] записываемые данные */
 	size_t count,		/*!< [in] длина buf в октетах */
-	void* file			/*!< [in/out] описание файла */
+	void* file			/*!< [in,out] описание файла */
 );
 
 #endif /* __BEE2_DEFS_H */

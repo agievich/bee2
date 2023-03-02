@@ -4,9 +4,9 @@
 \brief Multithreading
 \project bee2 [cryptographic library]
 \created 2014.10.10
-\version 2021.05.18
-\license This program is released under the GNU General Public License 
-version 3. See Copyright Notices in bee2/info.h.
+\version 2023.02.02
+\copyright The Bee2 authors
+\license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
@@ -101,7 +101,7 @@ bool_t mtMtxIsValid(
 	блокировки (в другом потоке).
 */
 void mtMtxLock(
-	mt_mtx_t* mtx		/*!< [in/out] мьютекс */
+	mt_mtx_t* mtx		/*!< [in,out] мьютекс */
 );
 
 /*!	\brief Разблокировка мьютекса
@@ -111,7 +111,7 @@ void mtMtxLock(
 	\pre Мьютекс корректен.
 */
 void mtMtxUnlock(
-	mt_mtx_t* mtx		/*!< [in/out] мьютекс */
+	mt_mtx_t* mtx		/*!< [in,out] мьютекс */
 );
 
 /*!	\brief Закрытие мьютекса
@@ -123,7 +123,7 @@ void mtMtxUnlock(
 	последствиям.
 */
 void mtMtxClose(
-	mt_mtx_t* mtx		/*!< [in/out] мьютекс */
+	mt_mtx_t* mtx		/*!< [in,out] мьютекс */
 );
 
 /*!
@@ -159,7 +159,7 @@ void mtSleep(
 	к mtCallOnce(), и FALSE в противном случае.
 */
 bool_t mtCallOnce(
-	size_t* once,	/*!< [in/out] триггер */
+	size_t* once,	/*!< [in,out] триггер */
 	void (*fn)()	/*!< [in] функция */
 );
 
@@ -185,7 +185,7 @@ bool_t mtCallOnce(
 	\return Новое значение счетчика.
 */
 size_t mtAtomicIncr(
-	size_t* ctr		/*!< [in/out] счетчик */
+	size_t* ctr		/*!< [in,out] счетчик */
 );
 
 /*!	\brief Атомарный декремент
@@ -195,7 +195,7 @@ size_t mtAtomicIncr(
 	\return Новое значение счетчика.
 */
 size_t mtAtomicDecr(
-	size_t* ctr		/*!< [in/out] счетчик */
+	size_t* ctr		/*!< [in,out] счетчик */
 );
 
 /*!	\brief Атомарное сравнение с заменой
@@ -205,7 +205,7 @@ size_t mtAtomicDecr(
 	\return Первоначальное значение счетчика.
 */
 size_t mtAtomicCmpSwap(
-	size_t* ctr,	/*!< [in/out] счетчик */
+	size_t* ctr,	/*!< [in,out] счетчик */
 	size_t cmp,		/*!< [in] сравниваемое значение */
 	size_t swap		/*!< [in] новое значение */
 );

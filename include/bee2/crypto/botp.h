@@ -4,9 +4,9 @@
 \brief STB 34.101.47/botp: OTP algorithms
 \project bee2 [cryptographic library]
 \created 2015.11.02
-\version 2019.06.13
-\license This program is released under the GNU General Public License 
-version 3. See Copyright Notices in bee2/info.h.
+\version 2023.02.02
+\copyright The Bee2 authors
+\license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
@@ -169,7 +169,7 @@ void botpHOTPStepS(
 */
 void botpHOTPStepR(
 	char* otp,			/*!< [out] одноразовый пароль */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Проверка очередного пароля в режиме HOTP
@@ -184,7 +184,7 @@ void botpHOTPStepR(
 */
 bool_t botpHOTPStepV(
 	const char* otp,		/*!< [in] контрольный пароль */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 /*!	\brief Возврат счетчика
@@ -282,7 +282,7 @@ void botpTOTPStart(
 void botpTOTPStepR(
 	char* otp,			/*!< [out] одноразовый пароль */
 	tm_time_t t,		/*!< [in] округленная отметка времени */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Проверка очередного пароля в режиме TOTP
@@ -297,7 +297,7 @@ void botpTOTPStepR(
 bool_t botpTOTPStepV(
 	const char* otp,		/*!< [in] контрольный пароль */
 	tm_time_t t,			/*!< [in] округленная отметка времени */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 /*!	\brief Генерация пароля в режиме TOTP
@@ -422,7 +422,7 @@ void botpOCRAStepR(
 	const octet q[],	/*!< [in] запрос */
 	size_t q_len,		/*!< [in] длина запроса в октетах */
 	tm_time_t t,		/*!< [in] округленная отметка времени */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Проверка очередного пароля в режиме OCRA
@@ -445,7 +445,7 @@ bool_t botpOCRAStepV(
 	const octet q[],	/*!< [in] запрос */
 	size_t q_len,		/*!< [in] длина запроса в октетах */
 	tm_time_t t,		/*!< [in] округленная отметка времени */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Возврат счетчика

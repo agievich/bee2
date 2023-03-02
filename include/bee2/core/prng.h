@@ -4,9 +4,9 @@
 \brief Pseudorandom number generators
 \project bee2 [cryptographic library]
 \created 2014.05.02
-\version 2016.07.15
-\license This program is released under the GNU General Public License 
-version 3. See Copyright Notices in bee2/info.h.
+\version 2023.02.02
+\copyright The Bee2 authors
+\license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
@@ -74,7 +74,7 @@ void prngCOMBOStart(
 void prngCOMBOStepR(
 	void* buf,				/*!< [out] буфер */
 	size_t count,			/*!< [in] размер буфера (в октетах) */
-	void* state				/*!< [in/out] состояние COMBO */
+	void* state				/*!< [in,out] состояние COMBO */
 );
 
 /*!
@@ -123,7 +123,7 @@ void prngEchoStart(
 void prngEchoStepR(
 	void* buf,				/*!< [out] буфер */
 	size_t count,			/*!< [in] размер буфера (в октетах) */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 /*!
@@ -168,7 +168,7 @@ void prngSTBStart(
 void prngSTBStepR(
 	void* buf,				/*!< [out] буфер */
 	size_t count,			/*!< [in] размер буфера (в октетах) */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 #ifdef __cplusplus

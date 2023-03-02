@@ -4,9 +4,9 @@
 \brief Entropy sources and random number generators
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2022.11.14
-\license This program is released under the GNU General Public License 
-version 3. See Copyright Notices in bee2/info.h.
+\version 2023.02.08
+\copyright The Bee2 authors
+\license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
@@ -53,13 +53,10 @@ bool_t rngTestFIPS2(const octet buf[2500])
 {
 	u32 s[16];
 	size_t i = 2500;
-	size_t s1 = 0;
 	ASSERT(memIsValid(buf, 2500));
 	memSetZero(s, sizeof(s));
 	while (i--)
 		++s[buf[i] & 15], ++s[buf[i] >> 4];
-	for (i = 0; i < 16; ++i)
-		s1 += s[i];
 	s[0] *= s[0];
 	for (i = 1; i < 16; ++i)
 		s[0] += s[i] * s[i];

@@ -4,9 +4,9 @@
 \brief STB 34.101.60 (bels): secret sharing algorithms
 \project bee2 [cryptographic library]
 \created 2013.05.14
-\version 2021.04.15
-\license This program is released under the GNU General Public License 
-version 3. See Copyright Notices in bee2/info.h.
+\version 2023.02.02
+\copyright The Bee2 authors
+\license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
@@ -131,7 +131,7 @@ err_t belsGenM0(
 	octet m0[],				/*!< [out] общий открытый ключ */
 	size_t len,				/*!< [in] длина ключа в октетах */
 	gen_i ang,				/*!< [in] генератор произвольных чисел */
-	void* ang_state			/*!< [in/out] состояние генератора */
+	void* ang_state			/*!< [in,out] состояние генератора */
 );
 
 /*!	\brief Генерация открытых ключей пользователей
@@ -154,7 +154,7 @@ err_t belsGenMi(
 	size_t len,				/*!< [in] длина ключей в октетах */
 	const octet m0[],		/*!< [in] общий открытый ключ */
 	gen_i ang,				/*!< [in] генератор произвольных чисел */
-	void* ang_state			/*!< [in/out] состояние генератора */
+	void* ang_state			/*!< [in,out] состояние генератора */
 );
 
 /*!	\brief Генерация открытого ключа пользователя по идентификатору
@@ -212,7 +212,7 @@ err_t belsShare(
 	const octet m0[],		/*!< [in] общий открытый ключ */
 	const octet mi[],		/*!< [in] открытые ключи пользователей */
 	gen_i rng,				/*!< [in] генератор случайных чисел */
-	void* rng_state			/*!< [in/out] состояние генератора */
+	void* rng_state			/*!< [in,out] состояние генератора */
 );
 
 /*!	\brief Разделение секрета на стандартных открытых ключах
@@ -243,7 +243,7 @@ err_t belsShare2(
 	size_t len,				/*!< [in] длина секрета в октетах */
 	const octet s[],		/*!< [in] секрет */
 	gen_i rng,				/*!< [in] генератор случайных чисел */
-	void* rng_state			/*!< [in/out] состояние генератора */
+	void* rng_state			/*!< [in,out] состояние генератора */
 );
 
 /*!	\brief Детерминированное разделение секрета на стандартных открытых ключах

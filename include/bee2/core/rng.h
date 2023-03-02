@@ -4,9 +4,9 @@
 \brief Entropy sources and random number generators
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2022.11.18
-\license This program is released under the GNU General Public License 
-version 3. See Copyright Notices in bee2/info.h.
+\version 2023.02.02
+\copyright The Bee2 authors
+\license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
@@ -276,7 +276,7 @@ bool_t rngIsValid();
 void rngStepR(
 	void* buf,				/*!< [out] буфер */
 	size_t count,			/*!< [in] размер буфера (в октетах) */
-	void* state				/*!< [in/out] состояние (игнорируется) */
+	void* state				/*!< [in,out] состояние (игнорируется) */
 );
 
 /*!	\brief Облегченная генерация случайных чисел
@@ -293,7 +293,7 @@ void rngStepR(
 void rngStepR2(
 	void* buf,				/*!< [out] буфер */
 	size_t count,			/*!< [in] размер буфера (в октетах) */
-	void* state				/*!< [in/out] состояние (игнорируется) */
+	void* state				/*!< [in,out] состояние (игнорируется) */
 );
 
 /*!	\brief Обновление ключа генератора

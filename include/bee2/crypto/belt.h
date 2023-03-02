@@ -4,9 +4,9 @@
 \brief STB 34.101.31 (belt): data encryption and integrity algorithms
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2020.07.31
-\license This program is released under the GNU General Public License 
-version 3. See Copyright Notices in bee2/info.h.
+\version 2023.02.02
+\copyright The Bee2 authors
+\license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
@@ -190,7 +190,7 @@ void beltKeyExpand2(
 	Результат зашифрования возвращается по адресу block.
 */
 void beltBlockEncr(
-	octet block[16],		/*!< [in/out] блок */
+	octet block[16],		/*!< [in,out] блок */
 	const u32 key[8]		/*!< [in] ключ */
 );
 
@@ -201,7 +201,7 @@ void beltBlockEncr(
 	по адресу block.
 */
 void beltBlockEncr2(
-	u32 block[4],			/*!< [in/out] блок */
+	u32 block[4],			/*!< [in,out] блок */
 	const u32 key[8]		/*!< [in] ключ */
 );
 
@@ -212,10 +212,10 @@ void beltBlockEncr2(
 	Результат зашифрования возвращается через входные слова.
 */
 void beltBlockEncr3(
-	u32* a,				/*!< [in/out] слово a */
-	u32* b,				/*!< [in/out] слово b */
-	u32* c,				/*!< [in/out] слово c */
-	u32* d,				/*!< [in/out] слово d */
+	u32* a,				/*!< [in,out] слово a */
+	u32* b,				/*!< [in,out] слово b */
+	u32* c,				/*!< [in,out] слово c */
+	u32* d,				/*!< [in,out] слово d */
 	const u32 key[8]	/*!< [in] ключ */
 );
 
@@ -225,7 +225,7 @@ void beltBlockEncr3(
 	Результат расшифрования возвращается по адресу block.
 */
 void beltBlockDecr(
-	octet block[16],		/*!< [in/out] блок */
+	octet block[16],		/*!< [in,out] блок */
 	const u32 key[8]		/*!< [in] ключ */
 );
 
@@ -236,7 +236,7 @@ void beltBlockDecr(
 	по адресу block.
 */
 void beltBlockDecr2(
-	u32 block[4],			/*!< [in/out] блок */
+	u32 block[4],			/*!< [in,out] блок */
 	const u32 key[8]		/*!< [in] ключ */
 );
 
@@ -247,10 +247,10 @@ void beltBlockDecr2(
 	Результат расшифрования возвращается через входные слова.
 */
 void beltBlockDecr3(
-	u32* a,				/*!< [in/out] слово a */
-	u32* b,				/*!< [in/out] слово b */
-	u32* c,				/*!< [in/out] слово c */
-	u32* d,				/*!< [in/out] слово d */
+	u32* a,				/*!< [in,out] слово a */
+	u32* b,				/*!< [in,out] слово b */
+	u32* c,				/*!< [in,out] слово c */
+	u32* d,				/*!< [in,out] слово d */
 	const u32 key[8]	/*!< [in] ключ */
 );
 
@@ -289,9 +289,9 @@ void beltWBLStart(
 	\expect beltWBLStart() < beltWBLStepE()*.
 */
 void beltWBLStepE(
-	void* buf,			/*!< [in/out] открытый текст / шифртекст  */
+	void* buf,			/*!< [in,out] открытый текст / шифртекст  */
 	size_t count,		/*!< [in] число октетов текста */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Расшифрование в режиме WBL
@@ -302,9 +302,9 @@ void beltWBLStepE(
 	\expect beltWBLStart() < beltWBLStepD()*.
 */
 void beltWBLStepD(
-	void* buf,			/*!< [in/out] шифртекст / открытый текст */
+	void* buf,			/*!< [in,out] шифртекст / открытый текст */
 	size_t count,		/*!< [in] число октетов данных */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Расшифрование в режиме WBL с двумя частями
@@ -323,10 +323,10 @@ void beltWBLStepD(
 	.
 */
 void beltWBLStepD2(
-	void* buf1,		/*!< [in/out] первая часть шифртекста / открытого текста */
-	void* buf2,		/*!< [in/out] вторая часть шифртекста / открытого текста */
+	void* buf1,		/*!< [in,out] первая часть шифртекста / открытого текста */
+	void* buf2,		/*!< [in,out] вторая часть шифртекста / открытого текста */
 	size_t count,	/*!< [in] длина текста */
-	void* state		/*!< [in/out] состояние */
+	void* state		/*!< [in,out] состояние */
 );
 
 /*!	\brief Продолженное зашифрование в режиме WBL
@@ -340,9 +340,9 @@ void beltWBLStepD2(
 	одноразового ключа в СТБ 34.101.45. Поэтому функции назначен суффикс R.
 */
 void beltWBLStepR(
-	void* buf,			/*!< [in/out] открытый текст / шифртекст  */
+	void* buf,			/*!< [in,out] открытый текст / шифртекст  */
 	size_t count,		/*!< [in] число октетов текста */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*
@@ -365,9 +365,9 @@ size_t beltCompr_deep();
 	\deep{stack} beltCompr_deep().
 */
 void beltCompr(
-	u32 h[8],			/*!< [in/out] первая часть входа/выход */
+	u32 h[8],			/*!< [in,out] первая часть входа/выход */
 	const u32 X[8],		/*!< [in] вторая часть входа */
-	void* stack			/*!< [in/out] стек */
+	void* stack			/*!< [in,out] стек */
 );
 
 /*!	\brief Сжатие форматированных данных со сложением
@@ -379,10 +379,10 @@ void beltCompr(
 	\deep{stack} beltCompr_deep().
 */
 void beltCompr2(
-	u32 s[4],			/*!< [in/out] сумма */
-	u32 h[8],			/*!< [in/out] первая часть входа/выход */
+	u32 s[4],			/*!< [in,out] сумма */
+	u32 h[8],			/*!< [in,out] первая часть входа/выход */
 	const u32 X[8],		/*!< [in] вторая часть входа */
-	void* stack			/*!< [in/out] стек */
+	void* stack			/*!< [in,out] стек */
 );
 
 /*
@@ -427,9 +427,9 @@ void beltECBStart(
 	а затем еще 17. Но нельзя зашифровать сначала 32 октета, а затем еще 1.
 */
 void beltECBStepE(
-	void* buf,			/*!< [in/out] открытый текст / шифртекст */
+	void* buf,			/*!< [in,out] открытый текст / шифртекст */
 	size_t count,		/*!< [in] число октетов текста */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Расшифрование в режиме ECB
@@ -441,9 +441,9 @@ void beltECBStepE(
 	\remark Сохраняются замечания по функции beltECBStepE().
 */
 void beltECBStepD(
-	void* buf,			/*!< [in/out] шифртекст / открытый текст */
+	void* buf,			/*!< [in,out] шифртекст / открытый текст */
 	size_t count,		/*!< [in] число октетов текста */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Зашифрование в режиме ECB
@@ -527,9 +527,9 @@ void beltCBCStart(
 	а затем еще 17. Но нельзя зашифровать сначала 32 октета, а затем еще 1.
 */
 void beltCBCStepE(
-	void* buf,			/*!< [in/out] открытый текст / шифртекст */
+	void* buf,			/*!< [in,out] открытый текст / шифртекст */
 	size_t count,		/*!< [in] число октетов текста */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Расшифрование в режиме CBC
@@ -541,9 +541,9 @@ void beltCBCStepE(
 	\remark Сохраняются замечания по функции beltCBCStepE().
 */
 void beltCBCStepD(
-	void* buf,			/*!< [in/out] шифртекст / открытый текст */
+	void* buf,			/*!< [in,out] шифртекст / открытый текст */
 	size_t count,		/*!< [in] число октетов текста */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Зашифрование в режиме CBC
@@ -623,9 +623,9 @@ void beltCFBStart(
 	\expect beltCFBStart() < beltCFBStepE()*.
 */
 void beltCFBStepE(
-	void* buf,			/*!< [in/out] открытый текст / шифртекст */
+	void* buf,			/*!< [in,out] открытый текст / шифртекст */
 	size_t count,		/*!< [in] число октетов текста */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Расшифрование в режиме CFB
@@ -635,9 +635,9 @@ void beltCFBStepE(
 	\expect beltCFBStart() < beltCFBStepD()*.
 */
 void beltCFBStepD(
-	void* buf,			/*!< [in/out] шифртекст / открытый текст */
+	void* buf,			/*!< [in,out] шифртекст / открытый текст */
 	size_t count,		/*!< [in] число октетов текста */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Зашифрование в режиме CFB
@@ -711,9 +711,9 @@ void beltCTRStart(
 	\expect beltCTRStart() < beltCTRStepE()*.
 */
 void beltCTRStepE(
-	void* buf,			/*!< [in/out] открытый текст / шифртекст */
+	void* buf,			/*!< [in,out] открытый текст / шифртекст */
 	size_t count,		/*!< [in] число октетов текста */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Расшифрование фрагмента в режиме CTR
@@ -777,7 +777,7 @@ void beltMACStart(
 void beltMACStepA(
 	const void* buf,	/*!< [in] данные */
 	size_t count,		/*!< [in] число октетов данных */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Определение имитовставки в режиме MAC
@@ -790,7 +790,7 @@ void beltMACStepA(
 */
 void beltMACStepG(
 	octet mac[8],		/*!< [out] имитовставка */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Определение усеченной имитовставки в режиме MAC
@@ -806,7 +806,7 @@ void beltMACStepG(
 void beltMACStepG2(
 	octet mac[],		/*!< [out] имитовставка */
 	size_t mac_len,		/*!< [in] длина имитовставки */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Проверка имитовставки в режиме MAC
@@ -818,7 +818,7 @@ void beltMACStepG2(
 */
 bool_t beltMACStepV(
 	const octet mac[8],	/*!< [in] контрольная имитовставка */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Проверка усеченной имитовставки
@@ -832,7 +832,7 @@ bool_t beltMACStepV(
 bool_t beltMACStepV2(
 	const octet mac[],	/*!< [in] контрольная имитовставка */
 	size_t mac_len,		/*!< [out] длина mac */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Имитозащита в режиме MAC
@@ -887,9 +887,9 @@ void beltDWPStart(
 	\expect beltDWPStart() < beltDWPStepE()*.
 */
 void beltDWPStepE(
-	void* buf,			/*!< [in/out] критические данные */
+	void* buf,			/*!< [in,out] критические данные */
 	size_t count,		/*!< [in] число октетов данных */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Имитозащита открытого фрагмента в режиме DWP
@@ -902,7 +902,7 @@ void beltDWPStepE(
 void beltDWPStepI(
 	const void* buf,	/*!< [in] открытые данные */
 	size_t count,		/*!< [in] число октетов данных */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Имитозащита критического фрагмента в режиме DWP
@@ -917,7 +917,7 @@ void beltDWPStepI(
 void beltDWPStepA(
 	const void* buf,	/*!< [in] критические данные */
 	size_t count,		/*!< [in] число октетов данных */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Определение имитовставки в режиме DWP
@@ -931,7 +931,7 @@ void beltDWPStepA(
 */
 void beltDWPStepG(
 	octet mac[8],		/*!< [out] имитовставка */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Проверка имитовставки в режиме DWP
@@ -947,7 +947,7 @@ void beltDWPStepG(
 */
 bool_t beltDWPStepV(
 	const octet mac[8],	/*!< [in] контрольная имитовставка */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Расшифрование критического фрагмента в режиме DWP
@@ -959,9 +959,9 @@ bool_t beltDWPStepV(
 	\expect beltDWPStepA()* < beltDWPStepD().
 */
 void beltDWPStepD(
-	void* buf,			/*!< [in/out] критические данные */
+	void* buf,			/*!< [in,out] критические данные */
 	size_t count,		/*!< [in] число октетов данных */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Установка защиты в режиме DWP
@@ -1052,9 +1052,9 @@ void beltCHEStart(
 	\expect beltCHEStart() < beltCHEStepE()*.
 */
 void beltCHEStepE(
-	void* buf,			/*!< [in/out] критические данные */
+	void* buf,			/*!< [in,out] критические данные */
 	size_t count,		/*!< [in] число октетов данных */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Имитозащита открытого фрагмента в режиме CHE
@@ -1067,7 +1067,7 @@ void beltCHEStepE(
 void beltCHEStepI(
 	const void* buf,	/*!< [in] открытые данные */
 	size_t count,		/*!< [in] число октетов данных */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Имитозащита критического фрагмента в режиме CHE
@@ -1082,7 +1082,7 @@ void beltCHEStepI(
 void beltCHEStepA(
 	const void* buf,	/*!< [in] критические данные */
 	size_t count,		/*!< [in] число октетов данных */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Определение имитовставки в режиме CHE
@@ -1096,7 +1096,7 @@ void beltCHEStepA(
 */
 void beltCHEStepG(
 	octet mac[8],		/*!< [out] имитовставка */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Проверка имитовставки в режиме CHE
@@ -1112,7 +1112,7 @@ void beltCHEStepG(
 */
 bool_t beltCHEStepV(
 	const octet mac[8],	/*!< [in] контрольная имитовставка */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Расшифрование критического фрагмента в режиме CHE
@@ -1124,9 +1124,9 @@ bool_t beltCHEStepV(
 	\expect beltCHEStepA()* < beltCHEStepD().
 */
 void beltCHEStepD(
-	void* buf,			/*!< [in/out] критические данные */
+	void* buf,			/*!< [in,out] критические данные */
 	size_t count,		/*!< [in] число октетов данных */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Установка защиты в режиме CHE
@@ -1273,7 +1273,7 @@ void beltHashStart(
 void beltHashStepH(
 	const void* buf,	/*!< [in] данные */
 	size_t count,		/*!< [in] число октетов данных */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Определение хэш-значения
@@ -1286,7 +1286,7 @@ void beltHashStepH(
 */
 void beltHashStepG(
 	octet hash[32],		/*!< [out] хэш-значение */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Определение усеченного хэш-значения
@@ -1303,7 +1303,7 @@ void beltHashStepG(
 void beltHashStepG2(
 	octet hash[],		/*!< [out] хэш-значение */
 	size_t hash_len,	/*!< [out] длина hash */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Проверка хэш-значения
@@ -1314,7 +1314,7 @@ void beltHashStepG2(
 */
 bool_t beltHashStepV(
 	const octet hash[32],	/*!< [in] контрольные хэш-значение */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 /*!	\brief Проверка усеченного хэш-значения
@@ -1328,7 +1328,7 @@ bool_t beltHashStepV(
 bool_t beltHashStepV2(
 	const octet hash[],	/*!< [in] контрольное хэш-значение */
 	size_t hash_len,	/*!< [out] длина hash */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Хэширование
@@ -1380,9 +1380,9 @@ void beltBDEStart(
 	\expect beltBDEStart() < beltBDEStepE()*.
 */
 void beltBDEStepE(
-	void* buf,			/*!< [in/out] открытый текст / шифртекст */
+	void* buf,			/*!< [in,out] открытый текст / шифртекст */
 	size_t count,		/*!< [in] число октетов текста */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Шаг расшифрования в режиме BDE
@@ -1393,9 +1393,9 @@ void beltBDEStepE(
 	\expect beltBDEStart() < beltBDEStepD()*.
 */
 void beltBDEStepD(
-	void* buf,			/*!< [in/out] шифртекст / открытый текст */
+	void* buf,			/*!< [in,out] шифртекст / открытый текст */
 	size_t count,		/*!< [in] число октетов текста */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Зашифрование в режиме BDE
@@ -1475,10 +1475,10 @@ void beltSDEStart(
 	\expect beltSDEStart() < beltSDEStepE()*.
 */
 void beltSDEStepE(
-	void* buf,			/*!< [in/out] открытый текст / шифртекст */
+	void* buf,			/*!< [in,out] открытый текст / шифртекст */
 	size_t count,		/*!< [in] число октетов текста */
 	const octet iv[16],	/*!< [in] синхропосылка */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Шаг расшифрования в режиме SDE
@@ -1489,10 +1489,10 @@ void beltSDEStepE(
 	\expect beltSDEStart() < beltSDEStepD()*.
 */
 void beltSDEStepD(
-	void* buf,			/*!< [in/out] шифртекст / открытый текст */
+	void* buf,			/*!< [in,out] шифртекст / открытый текст */
 	size_t count,		/*!< [in] число октетов текста */
 	const octet iv[16],	/*!< [in] синхропосылка */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Зашифрование в режиме SDE
@@ -1567,7 +1567,7 @@ size_t beltFMT_keep(
 	\remark Буферы key и state могут пересекаться.
 */
 void beltFMTStart(
-	void* state,		/*!< [in/out] состояние */
+	void* state,		/*!< [in,out] состояние */
 	u32 mod,			/*!< [in] размер алфавита */
 	size_t count,		/*!< [in] длина слов */
 	const octet key[],	/*!< [in] ключ */
@@ -1586,9 +1586,9 @@ void beltFMTStart(
 	\remark При нулевом указателе iv используется нулевая синхропосылка.
 */
 void beltFMTStepE(
-	u16 buf[],				/*!< [in/out] открытый текст / шифртекст  */
+	u16 buf[],				/*!< [in,out] открытый текст / шифртекст  */
 	const octet iv[16],		/*!< [in] синхропосылка */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 /*!	\brief Шаг расшифрования в режиме FMT
@@ -1603,9 +1603,9 @@ void beltFMTStepE(
 	\remark При нулевом указателе iv используется нулевая синхропосылка.
 */
 void beltFMTStepD(
-	u16 buf[],				/*!< [in/out] шифртекст / открытый текст */
+	u16 buf[],				/*!< [in,out] шифртекст / открытый текст */
 	const octet iv[16],		/*!< [in] синхропосылка */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 /*!	\brief Зашифрование в режиме FMT
@@ -1701,7 +1701,7 @@ void beltKRPStepG(
 	octet key_[],			/*!< [out] преобразованный ключ */
 	size_t key_len,			/*!< [in] длина key в октетах */
 	const octet header[16],	/*!< [in] заголовок key_ */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 /*!	\brief Преобразование ключа
@@ -1762,7 +1762,7 @@ void beltHMACStart(
 void beltHMACStepA(
 	const void* buf,	/*!< [in] данные */
 	size_t count,		/*!< [in] число октетов данных */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Определение имитовставки в режиме HMAC
@@ -1773,7 +1773,7 @@ void beltHMACStepA(
 */
 void beltHMACStepG(
 	octet mac[32],		/*!< [out] имитовставка */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Определение усеченной имитовставки в режиме HMAC
@@ -1789,7 +1789,7 @@ void beltHMACStepG(
 void beltHMACStepG2(
 	octet mac[],		/*!< [out] имитовставка */
 	size_t mac_len,		/*!< [in] длина имитовставки */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Проверка имитовставки в режиме HMAC
@@ -1800,7 +1800,7 @@ void beltHMACStepG2(
 */
 bool_t beltHMACStepV(
 	const octet mac[32],	/*!< [in] контрольная имитовставка */
-	void* state				/*!< [in/out] состояние */
+	void* state				/*!< [in,out] состояние */
 );
 
 /*!	\brief Проверка усеченной имитовставки
@@ -1814,7 +1814,7 @@ bool_t beltHMACStepV(
 bool_t beltHMACStepV2(
 	const octet mac[],	/*!< [in] контрольная имитовставка */
 	size_t mac_len,		/*!< [out] длина mac */
-	void* state			/*!< [in/out] состояние */
+	void* state			/*!< [in,out] состояние */
 );
 
 /*!	\brief Имитозащита в режиме HMAC

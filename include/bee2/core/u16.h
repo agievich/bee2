@@ -4,9 +4,9 @@
 \brief 16-bit words
 \project bee2 [cryptographic library]
 \created 2015.10.28
-\version 2019.07.08
-\license This program is released under the GNU General Public License 
-version 3. See Copyright Notices in bee2/info.h.
+\version 2023.02.02
+\copyright The Bee2 authors
+\license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
@@ -69,7 +69,7 @@ u16 u16Rev(
 	Выполняется реверс октетов массива [count]buf из u16-слов.
 */
 void u16Rev2(
-	u16 buf[],			/*!< [in/out] приемник */
+	u16 buf[],			/*!< [in,out] приемник */
 	size_t count		/*!< [in] число элементов */
 );
 

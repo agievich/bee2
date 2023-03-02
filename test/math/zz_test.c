@@ -4,9 +4,9 @@
 \brief Tests for multiple-precision unsigned integers
 \project bee2/test
 \created 2014.07.15
-\version 2021.06.30
-\license This program is released under the GNU General Public License 
-version 3. See Copyright Notices in bee2/info.h.
+\version 2023.02.10
+\copyright The Bee2 authors
+\license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
@@ -380,7 +380,6 @@ static bool_t zzTestGCD()
 		for (na = 1; na < n; ++na)
 		for (nb = 1; nb < n; ++nb)
 		{
-			int sign;
 			// zzGCD / zzLCM / zzMul
 			zzGCD(t, a, na, b, nb, stack);
 			zzLCM(t1, a, na, b, nb, stack);
@@ -389,13 +388,10 @@ static bool_t zzTestGCD()
 			if (wwCmp2(p, na + nb, p1, na + nb + MIN2(na, nb)) != 0)
 				return FALSE;
 			// zzExGCD / zzMul
-			sign = zzExGCD(t, t1, t1 + n, a, na, b, nb, stack);
+			zzExGCD(t, t1, t1 + n, a, na, b, nb, stack);
 			zzMul(p, t1, nb, a, na, stack);
 			zzMul(p1, t1 + n, na, b, nb, stack);
-			if (sign == 1)
-				zzSub2(p, p1, na + nb);
-			else 
-				zzSub(p, p1, p, na + nb);
+			zzSub2(p, p1, na + nb);
 			if (wwCmp2(p, na + nb, t, MIN2(na, nb)) != 0)
 				return FALSE;
 		}

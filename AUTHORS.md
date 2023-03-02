@@ -41,9 +41,11 @@ Contributors*
 - Uladzimir Palukha
   - code review
 - Mikhail Mitskevich
-  - build scripts
+  - build scripts, license issues
 - Alexander Zhirkevich
   - cmd/sig, cmd/rng, cmd/test
+- Vladimir Komisarenko
+  - fuzzing
 
 ---
 *in chronological order of the first contribution

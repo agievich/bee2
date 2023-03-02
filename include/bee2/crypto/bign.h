@@ -4,9 +4,9 @@
 \brief STB 34.101.45 (bign): digital signature and key transport algorithms
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2021.04.20
-\license This program is released under the GNU General Public License 
-version 3. See Copyright Notices in bee2/info.h.
+\version 2023.02.02
+\copyright The Bee2 authors
+\license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
@@ -133,7 +133,7 @@ err_t bignValParams(
 */
 err_t bignOidToDER(
 	octet oid_der[],	/*!< [out] DER-код идентификатора */
-	size_t* oid_len,	/*!< [in/out] длина буфера oid_der / длина DER-кода */
+	size_t* oid_len,	/*!< [in,out] длина буфера oid_der / длина DER-кода */
 	const char* oid		/*!< [in] строковое представление идентификатора */
 );
 
@@ -160,7 +160,7 @@ err_t bignGenKeypair(
 	octet pubkey[],				/*!< [out] открытый ключ */
 	const bign_params* params,	/*!< [in] долговременные параметры */
 	gen_i rng,					/*!< [in] генератор случайных чисел */
-	void* rng_state				/*!< [in/out] состояние генератора */
+	void* rng_state				/*!< [in,out] состояние генератора */
 );
 
 /*!	\brief Проверка пары ключей
@@ -257,7 +257,7 @@ err_t bignSign(
 	const octet hash[],			/*!< [in] хэш-значение */
 	const octet privkey[],		/*!< [in] личный ключ */
 	gen_i rng,					/*!< [in] генератор случайных чисел */
-	void* rng_state				/*!< [in/out] состояние генератора */
+	void* rng_state				/*!< [in,out] состояние генератора */
 );
 
 /*!	\brief Детерминированная выработка ЭЦП
@@ -342,7 +342,7 @@ err_t bignKeyWrap(
 	const octet header[16],		/*!< [in] заголовок ключа */
 	const octet pubkey[],		/*!< [in] открытый ключ получателя */
 	gen_i rng,					/*!< [in] генератор случайных чисел */
-	void* rng_state				/*!< [in/out] состояние генератора */
+	void* rng_state				/*!< [in,out] состояние генератора */
 );
 
 /*!	\brief Разбор токена ключа
@@ -437,7 +437,7 @@ err_t bignIdSign(
 	const octet hash[],			/*!< [in] хэш-значение сообщения */
 	const octet id_privkey[],	/*!< [in] личный ключ */
 	gen_i rng,					/*!< [in] генератор случайных чисел */
-	void* rng_state				/*!< [in/out] состояние генератора */
+	void* rng_state				/*!< [in,out] состояние генератора */
 );
 
 /*!	\brief Детерминированная выработка идентификационной ЭЦП

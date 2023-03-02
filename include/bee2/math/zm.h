@@ -4,9 +4,9 @@
 \brief Quotient rings of integers modulo m
 \project bee2 [cryptographic library]
 \created 2013.09.14
-\version 2014.07.15
-\license This program is released under the GNU General Public License 
-version 3. See Copyright Notices in bee2/info.h.
+\version 2023.02.02
+\copyright The Bee2 authors
+\license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
@@ -85,7 +85,6 @@ c <- a * b * R^{-1} \mod mod,
 	По модулю [no]mod, представленному строкой октетов, создается описание r 
 	кольца Z / (mod). При вычислениях в кольце используется обычная редукция.
 	\pre no > 0 && mod[no - 1] > 0.
-	\return Признак успеха.
 	\post r->no == no и r->n == W_OF_O(no).
 	\keep{r} zmCreatePlain_keep(no).
 	\deep{stack} zmCreatePlain_deep(no).
@@ -106,7 +105,6 @@ size_t zmCreatePlain_deep(size_t no);
 	кольца Z / (mod). При вычислениях в кольце используется редукция Крэндалла.
 	\pre no > 0 && mod[no - 1] > 0.
 	\pre mod == B^n - c, где n >= 2 && 0 < c < B.
-	\return Признак успеха.
 	\post r->no == no и r->n == W_OF_O(no).
 	\keep{r} zmCreateCrand_keep(no).
 	\deep{stack} zmCreateCrand_deep(no).
@@ -167,7 +165,6 @@ size_t zmCreateMont_deep(size_t no);
 	кольца Z / (mod). Подбирается оптимальное (с точки зрения эффективности 
 	вычислений) описание.
 	\pre no > 0 && mod[no - 1] > 0.
-	\return Признак успеха.
 	\post r->no == no и r->n == W_OF_O(no).
 	\remark Оптимальное кольцо подбирается с учетом следующих 
 	результатов экспериментов (2013.09.17):

@@ -1,12 +1,12 @@
-﻿/*
+/*
 *******************************************************************************
 \file g12s.h
 \brief GOST R 34.10-94 (Russia): digital signature algorithms
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2015.08.27
-\license This program is released under the GNU General Public License 
-version 3. See Copyright Notices in bee2/info.h.
+\version 2023.02.02
+\copyright The Bee2 authors
+\license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
@@ -162,11 +162,11 @@ little-endian. Первая половинка pubkey кодирует x-коо�
 	случае.
 */
 err_t g12sGenKeypair(
-	octet privkey[],				/*!< [out] личный ключ */
+	octet privkey[],			/*!< [out] личный ключ */
 	octet pubkey[],				/*!< [out] открытый ключ */
 	const g12s_params* params,	/*!< [in] долговременные параметры */
 	gen_i rng,					/*!< [in] генератор случайных чисел */
-	void* rng_state				/*!< [in/out] состояние генератора */
+	void* rng_state				/*!< [in,out] состояние генератора */
 );
 
 /*!
@@ -201,12 +201,12 @@ hash состоит из l / 8 октетов, sig -- из l / 4 октетов.
 	случае.
 */
 err_t g12sSign(
-	octet sig[],					/*!< [out] подпись */
+	octet sig[],				/*!< [out] подпись */
 	const g12s_params* params,	/*!< [in] долговременные параметры */
 	const octet hash[],			/*!< [in] хэш-значение */
 	const octet privkey[],		/*!< [in] личный ключ */
 	gen_i rng,					/*!< [in] генератор случайных чисел */
-	void* rng_state				/*!< [in/out] состояние генератора */
+	void* rng_state				/*!< [in,out] состояние генератора */
 );
 
 /*!	\brief Проверка ЭЦП
