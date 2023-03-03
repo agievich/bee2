@@ -4,7 +4,7 @@
 \brief Entropy sources and random number generators
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2023.02.08
+\version 2023.03.03
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -670,7 +670,10 @@ void rngClose()
 	if (mtAtomicCmpSwap(&_ctr, 1, 0) > 0)
 	{
 		mtMtxLock(_mtx);
-		(_ctr) ? --_ctr : blobClose(_state), _state = 0;
+		if (_ctr)
+			--_ctr;
+		else
+			blobClose(_state), _state = 0;
 		mtMtxUnlock(_mtx);
 	}
 }
