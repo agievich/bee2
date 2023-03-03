@@ -17,6 +17,18 @@ jobs:
           BUILD_FAST: ON
           BASH_PLATFORM: BASH_AVX2
           CC: gcc
+        - BUILD_TYPE: Check
+          BUILD_FAST: OFF
+          BASH_PLATFORM: BASH_SSE2
+          CC: clang
+        - BUILD_TYPE: Release
+          BUILD_FAST: ON 
+          BASH_PLATFORM: BASH_32 
+          CC: clang
+        - BUILD_TYPE: ASan
+          BUILD_FAST: OFF 
+          BASH_PLATFORM: BASH_64
+          CC: gcc
     steps:
     - name: Get source
       uses: actions/checkout@v3
