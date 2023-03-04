@@ -41,7 +41,8 @@ Contributors*
 - Uladzimir Palukha
   - code review
 - Mikhail Mitskevich
-  - build scripts, license issues
+  - build scripts, Github Actions
+  - license issues
 - Alexander Zhirkevich
   - cmd/sig, cmd/rng, cmd/test
 - Vladimir Komisarenko

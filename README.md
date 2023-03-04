@@ -3,7 +3,8 @@ Bee2: a cryptographic library
 
 ![](img/bee2.png)
 
-[![Build Status](https://travis-ci.com/agievich/bee2.svg?branch=master)](https://travis-ci.com/agievich/bee2)
+[![Travis CI Build Status](https://travis-ci.com/agievich/bee2.svg?branch=master)](https://travis-ci.com/agievich/bee2)
+[![Github Actions Build Status](https://github.com/agievich/bee2/actions/workflows/build.yml/badge.svg)](https://github.com/agievich/bee2/actions/workflows/build.yml)
 [![Coverity Static Analysis](https://scan.coverity.com/projects/8544/badge.svg)](https://scan.coverity.com/projects/agievich-bee2)
 [![Coverage Analysis](https://codecov.io/gh/agievich/bee2/coverage.svg?branch=master)](https://codecov.io/gh/agievich/bee2?branch=master)
 

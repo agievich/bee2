@@ -1,4 +1,6 @@
-name: Build and run tests on the baseline platform
+# Build and run tests on the baseline platform
+
+name: build
 
 on:
   push:
