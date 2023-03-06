@@ -15,20 +15,24 @@ jobs:
     strategy:
       matrix:
         include:
-        - BUILD_TYPE: MemSan
-          BUILD_FAST: ON
-          BASH_PLATFORM: BASH_AVX2
+        - BUILD_TYPE: Release
+          BUILD_FAST: OFF
+          BASH_PLATFORM: BASH_64
           CC: gcc
         - BUILD_TYPE: Check
           BUILD_FAST: OFF
           BASH_PLATFORM: BASH_SSE2
           CC: clang
-        - BUILD_TYPE: Release
-          BUILD_FAST: ON 
-          BASH_PLATFORM: BASH_32 
-          CC: clang
         - BUILD_TYPE: ASan
-          BUILD_FAST: OFF 
+          BUILD_FAST: OFF
+          BASH_PLATFORM: BASH_32
+          CC: gcc
+        - BUILD_TYPE: MemSan
+          BUILD_FAST: ON
+          BASH_PLATFORM: BASH_AVX2
+          CC: clang
+        - BUILD_TYPE: Debug
+          BUILD_FAST: ON
           BASH_PLATFORM: BASH_64
           CC: gcc
     steps:
