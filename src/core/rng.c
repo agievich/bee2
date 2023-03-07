@@ -4,7 +4,7 @@
 \brief Entropy sources and random number generators
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2023.03.03
+\version 2023.03.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -137,7 +137,7 @@ bool_t rngTestFIPS4(const octet buf[2500])
 *******************************************************************************
 */
 
-#if	(_MSC_VER >= 1600) && (defined(_M_IX86) || defined(_M_X64))
+#if (_MSC_VER >= 1600) && (defined(_M_IX86) || defined(_M_X64))
 
 #include <intrin.h>
 #include <immintrin.h>
@@ -197,7 +197,8 @@ err:
 	return 0;
 }
 
-#elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+#elif (defined(__GNUC__) || defined(__clang__)) && \
+  (defined(__i386__) || defined(__x86_64__))
 
 #include <cpuid.h>
 
@@ -206,15 +207,15 @@ err:
 
 static int rngRDStep(u32* val)
 {
-	octet ok;
-	asm volatile("rdseed %0; setc %1" : "=r" (*val), "=qm" (ok));
+	octet ok = 0;
+	asm ("rdseed %0; setc %1" : "=r" (*val), "=qm" (ok));
 	return ok;
 }
 
 static int rngRDStep2(u32* val)
 {
-	octet ok;
-	asm volatile("rdrand %0; setc %1" : "=r" (*val), "=qm" (ok));
+	octet ok = 0;
+	asm ("rdrand %0; setc %1" : "=r" (*val), "=qm" (ok));
 	return ok;
 }
 
@@ -261,10 +262,10 @@ static err_t rngTRNGRead(void* buf, size_t* read, size_t count)
 	ASSERT(memIsValid(read, O_PER_S));
 	ASSERT(memIsValid(buf, count));
 	// есть источник?
+	*read = 0;
 	if (!rngTRNGIsAvail())
 		return ERR_FILE_NOT_FOUND;
 	// короткий буфер?
-	*read = 0;
 	if (count < 4)
 		return ERR_OK;
 	// генерация
@@ -289,10 +290,10 @@ static err_t rngTRNG2Read(void* buf, size_t* read, size_t count)
 	ASSERT(memIsValid(read, O_PER_S));
 	ASSERT(memIsValid(buf, count));
 	// есть источник?
+	*read = 0;
 	if (!rngTRNG2IsAvail())
 		return ERR_FILE_NOT_FOUND;
 	// короткий буфер?
-	*read = 0;
 	if (count < 4)
 		return ERR_OK;
 	// генерация

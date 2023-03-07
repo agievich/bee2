@@ -4,7 +4,7 @@
 \brief Tests for APDU formats
 \project bee2/test
 \created 2022.10.31
-\version 2022.11.03
+\version 2023.03.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -52,6 +52,7 @@ bool_t apduTest()
 		return FALSE;
 	// cmd: сочетания длин
 	cmd->cla = 0x00, cmd->ins = 0xA4, cmd->p1 = 0x04, cmd->p2 = 0x04;
+	memSet(cmd->cdf, 0x36, 257);
 	for (cmd->cdf_len = 0; cmd->cdf_len <= 257; ++cmd->cdf_len)
 		for (cmd->rdf_len = 0; cmd->rdf_len <= 257; ++cmd->rdf_len)
 		{
