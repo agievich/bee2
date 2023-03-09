@@ -1,0 +1,35 @@
+# Measure code coverage using Codecov
+
+name: coverage
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  run:
+    name: Measure code coverage
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install lcov
+      run: sudo apt install -y lcov
+    - name: Get source
+      uses: actions/checkout@v3
+    - name: Configure CMake
+      run: CC=gcc cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Coverage
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build
+    - name: Run tests
+      working-directory: ${{github.workspace}}/build
+      run: |
+        lcov -c -i -d src -d cmd -o coverage_base.info
+        test/testbee2
+        cp ../cmd/test/test.sh cmd && cd cmd && ./test.sh
+    - name: Upload coverage reports to Codecov
+      working-directory: ${{github.workspace}}/build
+      run: |
+        lcov -c -d src -d cmd -o coverage_test.info
+        lcov -a coverage_base.info -a coverage_test.info -o coverage.info
+        bash <(curl -s https://codecov.io/bash) -f coverage.info
