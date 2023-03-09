@@ -4,7 +4,7 @@
 \brief Tests for memory functions
 \project bee2/test
 \created 2014.02.01
-\version 2022.07.05
+\version 2023.03.06
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -18,6 +18,13 @@
 /*
 *******************************************************************************
 Тестирование
+
+\remark Если не инициализировать буфер buf, то компилятор GCC при обработке 
+вызова memIsValid(buf, sizeof(buf)) выдаст предупреждение 
+-Wmaybe-uninitialized:
+> In addition, passing a pointer (or in C++, a reference) to an uninitialized 
+object to a const-qualified function argument is also diagnosed by this 
+warning (https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html).
 *******************************************************************************
 */
 
@@ -31,6 +38,7 @@ bool_t memTest()
 	size_t i;
 	// pre
 	CASSERT(sizeof(buf) == sizeof(buf1));
+	memSetZero(buf, sizeof(buf));
 	if (!memIsValid(buf, sizeof(buf)) || !memIsValid(0, 0))
 		return FALSE;
 	// alloc (считаем, что памяти хватает)

@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.79 (btok)
 \project bee2/test
 \created 2022.07.07
-\version 2022.12.12
+\version 2023.03.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -328,6 +328,8 @@ static bool_t btokSMTest()
 		return FALSE;
 	// защита команд и ответов: сочетания длин
 	cmd->cla = 0x00, cmd->ins = 0xA4, cmd->p1 = 0x04, cmd->p2 = 0x04;
+	memSet(cmd->cdf, 0x36, 257);
+	memSet(resp->rdf, 0x5C, 257);
 	for (cmd->cdf_len = 0; cmd->cdf_len <= 257; ++cmd->cdf_len)
 		for (cmd->rdf_len = 0; cmd->rdf_len <= 257; ++cmd->rdf_len)
 		{
