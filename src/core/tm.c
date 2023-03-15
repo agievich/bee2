@@ -4,7 +4,7 @@
 \brief Time and timers
 \project bee2 [cryptographic library]
 \created 2012.05.10
-\version 2022.10.28
+\version 2023.03.15
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -25,12 +25,12 @@ in mach tick units with to convert it to nanoseconds". Можно понять, 
 
 \todo Протестировать все возможности.
 \todo Определять частоту без временной задержки.
+\todo Многозадачность в tmFreq().
 *******************************************************************************
 */
 
-#if defined(_MSC_VER)
-
-#if defined(_M_IX86) || defined (_M_IA64) || defined (_M_X64)
+#if defined(_MSC_VER) && \
+  defined(_M_IX86) || defined (_M_IA64) || defined (_M_X64)
 
 #pragma intrinsic(__rdtsc)
 tm_ticks_t tmTicks()
@@ -46,14 +46,37 @@ tm_ticks_t tmFreq()
 		tm_ticks_t start = tmTicks();
 		tm_ticks_t overhead = tmTicks() - start;
 		start = tmTicks();
-		Sleep(100);
-		freq = tmTicks() - start - overhead;
-		freq *= 10;
+		mtSleep(100);
+		freq = (tmTicks() - start - overhead) * 10;
 	}
 	return freq;
 }
 
-#else
+#elif (defined(__GNUC__) || defined(__clang__)) && \
+  (defined(__i386__) || defined(__x86_64__))
+
+#include <x86intrin.h>
+
+tm_ticks_t tmTicks()
+{
+	return (tm_ticks_t)_rdtsc();
+}
+
+tm_ticks_t tmFreq()
+{
+	static tm_ticks_t freq = 0;
+	if (freq == 0)
+	{
+		tm_ticks_t start = tmTicks();
+		tm_ticks_t overhead = tmTicks() - start;
+		start = tmTicks();
+		mtSleep(100);
+		freq = (tmTicks() - start - overhead) * 10;
+	}
+	return freq;
+}
+
+#elif defined(OS_WINDOWS)
 
 #include <windows.h>
 
@@ -71,49 +94,6 @@ tm_ticks_t tmFreq()
 	if (QueryPerformanceFrequency(&freq))
 		return (tm_ticks_t)freq.QuadPart;
 	return (tm_ticks_t)CLOCKS_PER_SEC;
-}
-
-#endif
-
-#elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
-
-#if defined(__x86_64__)
-
-tm_ticks_t tmTicks()
-{
-	register u32 hi;
-	register u32 lo;
-	__asm__ __volatile__("rdtsc" : "=a"(lo), "=d"(hi));
-	return (tm_ticks_t)lo | (tm_ticks_t)hi << 32;
-}
-
-#else
-
-tm_ticks_t tmTicks()
-{
-	register tm_ticks_t x;
-	__asm__ volatile (".byte 0x0f, 0x31" : "=A" (x));
-	return x;
-}
-
-#endif
-
-tm_ticks_t tmFreq()
-{
-	static tm_ticks_t freq = 0;
-	if (freq == 0)
-	{
-		struct timespec ts;
-		tm_ticks_t start;
-		tm_ticks_t overhead;
-		ts.tv_sec = 0, ts.tv_nsec = 100000000;
-		start = tmTicks();
-		overhead = tmTicks() - start;
-		nanosleep(&ts, 0);
-		freq = tmTicks() - start - overhead;
-		freq *= 10;
-	}
-	return freq;
 }
 
 #elif defined(OS_APPLE) && defined(U64_SUPPORT)
