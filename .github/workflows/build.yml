@@ -22,7 +22,7 @@ jobs:
         - BUILD_TYPE: Check
           BUILD_FAST: OFF
           BASH_PLATFORM: BASH_SSE2
-          CC: clang
+          CC: gcc
         - BUILD_TYPE: ASan
           BUILD_FAST: OFF
           BASH_PLATFORM: BASH_32
@@ -34,7 +34,7 @@ jobs:
         - BUILD_TYPE: Debug
           BUILD_FAST: ON
           BASH_PLATFORM: BASH_64
-          CC: gcc
+          CC: clang
     steps:
     - name: Get source
       uses: actions/checkout@v3

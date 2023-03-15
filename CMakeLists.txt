@@ -85,7 +85,7 @@ if(CMAKE_COMPILER_IS_GNUCC)
   set(CMAKE_C_FLAGS_COVERAGE    "-O0 -g3 -coverage")
   set(CMAKE_C_FLAGS_ASAN        "-fsanitize=address -fno-common -O3")
   set(CMAKE_C_FLAGS_ASANDBG     "-fsanitize=address -fno-common -O1 -g3 -fno-omit-frame-pointer -fno-optimize-sibling-calls")
-  set(CMAKE_C_FLAGS_CHECK       "-Werror -O1 -Wcast-qual")
+  set(CMAKE_C_FLAGS_CHECK       "-Werror -O1 -Wcast-qual -fanalyzer")
 endif(CMAKE_COMPILER_IS_GNUCC)
 
 if(CMAKE_COMPILER_IS_CLANG)
