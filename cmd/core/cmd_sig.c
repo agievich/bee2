@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: signing files
 \project bee2/cmd
 \created 2022.08.20
-\version 2022.10.31
+\version 2023.03.15
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -288,10 +288,10 @@ static err_t cmdSigHash(octet hash[], size_t hash_len, const char* file,
 	// определить размер файла
 	file_size = cmdFileSize(file);
 	code = file_size != SIZE_MAX ? ERR_OK : ERR_FILE_READ;
-	ERR_CALL_CHECK(code);
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// определить размер хэшируемой части файла
 	code = drop <= file_size ? ERR_OK : ERR_BAD_FORMAT;
-	ERR_CALL_CHECK(code);
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	file_size -= drop;
 	// открыть файл для чтения
 	fp = fopen(file, "rb");

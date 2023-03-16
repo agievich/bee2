@@ -4,7 +4,7 @@
 \brief Sign files and verify signatures
 \project bee2/cmd
 \created 2022.08.01
-\version 2022.10.27
+\version 2023.03.15
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -155,7 +155,7 @@ static err_t sigSelfTest()
 *******************************************************************************
 Выработка подписи
 
- sig sign [-certs <certs>] -pass <scheme> <file> <sig>
+sig sign [-certs <certs>] -pass <scheme> <file> <sig>
 *******************************************************************************
 */
 
@@ -242,7 +242,7 @@ static err_t sigSign(int argc, char* argv[])
 *******************************************************************************
 Проверка подписи
 
- sig vfy {-pubkey <pubkey> | -anchor <anchor>} <file> <sig>
+sig vfy {-pubkey <pubkey> | -anchor <anchor>} <file> <sig>
 *******************************************************************************
 */
 
@@ -267,7 +267,7 @@ static err_t sigVfy(int argc, char* argv[])
 	code = cmdBlobCreate(stack, count);
 	ERR_CALL_CHECK(code);
 	code = cmdFileReadAll(stack, &count, argv[1]);
-	ERR_CALL_CHECK(code);
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// проверить подпись
 	if (strEq(argv[0], "-pubkey"))
 		code = cmdSigVerify(argv[2], argv[3], stack, count);

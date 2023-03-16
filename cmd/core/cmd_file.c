@@ -1,10 +1,10 @@
 /*
 *******************************************************************************
-\file cmd_core.c
-\brief Command-line interface to Bee2: manage files
+\file cmd_file.c
+\brief Command-line interface to Bee2: file management
 \project bee2/cmd 
 \created 2022.06.08
-\version 2022.10.27
+\version 2023.03.15
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -77,6 +77,7 @@ err_t cmdFileReadAll(octet buf[], size_t* count, const char* file)
 		octet o[1];
 		ASSERT(memIsValid(buf, *count));
 		code = (fp = fopen(file, "rb")) ? ERR_OK : ERR_FILE_OPEN;
+		ERR_CALL_CHECK(code);
 		if (fread(buf, 1, *count, fp) != *count || fread(o, 1, 1, fp) != 0)
 			code = ERR_FILE_READ;
 		fclose(fp);
