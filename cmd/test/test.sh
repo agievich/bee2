@@ -3,10 +3,11 @@
 # \brief Testing command-line interface
 # \project bee2evp/cmd
 # \created 2022.06.24
-# \version 2022.11.04
+# \version 2023.03.16
 # =============================================================================
 
 bee2cmd=./bee2cmd
+this=$(basename $BASH_SOURCE)
 
 function pause() {
  read -s -n 1 -p "Press any key to continue..."
@@ -17,6 +18,24 @@ test_ver() {
   $bee2cmd ver \
     || return 1
   $bee2cmd ver ver \
+    && return 1
+  return 0
+}
+
+test_bsum() {
+  rm -rf check32 check256 \
+    || return 2
+  $bee2cmd bsum -bash31 $bee2cmd \
+    && return 1
+  $bee2cmd bsum -bash32 $bee2cmd $this > check32 \
+    || return 1
+  $bee2cmd bsum -bash32 -c check32 \
+    || return 1
+  $bee2cmd bsum $bee2cmd $this > check256 \
+    || return 1
+  $bee2cmd bsum -belt-hash -c check256 \
+    || return 1
+  $bee2cmd bsum -c check32 \
     && return 1
   return 0
 }
@@ -245,7 +264,7 @@ test_es() {
 
 run_test() {
   echo -n "Testing $1... "
-  (test_$1 > /dev/null)
+  (test_$1 > /dev/null 2>&1)
   if [ $? -eq 0 ]; then 
     echo "Success"
   else 
@@ -253,5 +272,5 @@ run_test() {
   fi
 } 
 
-run_test ver && run_test pwd && run_test kg && run_test cvc \
+run_test ver && run_test bsum && run_test pwd && run_test kg && run_test cvc \
   && run_test sig && run_test es
