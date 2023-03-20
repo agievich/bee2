@@ -4,7 +4,7 @@
 \brief Time and timers
 \project bee2 [cryptographic library]
 \created 2012.05.10
-\version 2023.03.15
+\version 2023.03.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -25,35 +25,22 @@ in mach tick units with to convert it to nanoseconds". Можно понять, 
 
 \todo Протестировать все возможности.
 \todo Определять частоту без временной задержки.
-\todo Многозадачность в tmFreq().
 *******************************************************************************
 */
 
-#if defined(_MSC_VER) && \
-  defined(_M_IX86) || defined (_M_IA64) || defined (_M_X64)
+#if defined(_M_IX86) || defined (_M_IA64) || defined (_M_X64) || \
+	defined(__i386__) || defined(__x86_64__)
+
+#if defined(_MSC_VER)
 
 #pragma intrinsic(__rdtsc)
+
 tm_ticks_t tmTicks()
 {
 	return (tm_ticks_t)__rdtsc();
 }
 
-tm_ticks_t tmFreq()
-{
-	static tm_ticks_t freq = 0;
-	if (freq == 0)
-	{
-		tm_ticks_t start = tmTicks();
-		tm_ticks_t overhead = tmTicks() - start;
-		start = tmTicks();
-		mtSleep(100);
-		freq = (tmTicks() - start - overhead) * 10;
-	}
-	return freq;
-}
-
-#elif (defined(__GNUC__) || defined(__clang__)) && \
-  (defined(__i386__) || defined(__x86_64__))
+#elif defined(__GNUC__) || defined(__clang__)
 
 #include <x86intrin.h>
 
@@ -62,18 +49,27 @@ tm_ticks_t tmTicks()
 	return (tm_ticks_t)_rdtsc();
 }
 
+#endif
+
+static tm_ticks_t _freq;
+
+static void tmCalcFreq()
+{
+	tm_ticks_t start;
+	tm_ticks_t overhead;
+	start = tmTicks();
+	overhead = tmTicks() - start;
+	start = tmTicks();
+	mtSleep(100);
+	_freq = tmTicks();
+	_freq = (_freq - start - overhead) * 10;
+}
+
+static size_t _once;
+
 tm_ticks_t tmFreq()
 {
-	static tm_ticks_t freq = 0;
-	if (freq == 0)
-	{
-		tm_ticks_t start = tmTicks();
-		tm_ticks_t overhead = tmTicks() - start;
-		start = tmTicks();
-		mtSleep(100);
-		freq = (tmTicks() - start - overhead) * 10;
-	}
-	return freq;
+	return mtCallOnce(&_once, tmCalcFreq) ? _freq : 0;
 }
 
 #elif defined(OS_WINDOWS)
