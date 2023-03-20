@@ -4,7 +4,7 @@
 \brief STB 34.101.66 (bake): authenticated key establishment (AKE) protocols
 \project bee2 [cryptographic library]
 \created 2014.04.14
-\version 2022.11.10
+\version 2023.03.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -1334,9 +1334,8 @@ err_t bakeBSTSRunA(octet key[32], const bign_params* params,
 	// создать блоб
 	if (params->l != 128 && params->l != 192 && params->l != 256)
 		return ERR_BAD_PARAMS;
-	blob = blobCreate(MAX2(512, params->l / 2) +
-		3 * params->l / 4 + certa->len + 8 +
-		bakeBSTS_keep(params->l));
+	blob = blobCreate(MAX2(512, params->l / 2) + 3 * params->l / 4 +
+		certa->len + 8 + bakeBSTS_keep(params->l));
 	if (blob == 0)
 		return ERR_OUTOFMEMORY;
 	// раскладка блоба

@@ -4,7 +4,7 @@
 \brief Manage CV-certificates
 \project bee2/cmd 
 \created 2022.07.12
-\version 2022.10.27
+\version 2023.03.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -817,8 +817,7 @@ int cvcMain(int argc, char* argv[])
 	else
 		code = ERR_CMD_NOT_FOUND;
 	// завершить
-	if (code != ERR_OK || 
-		code == ERR_OK && (strEq(argv[0], "val") || strEq(argv[0], "match")))
+	if (code != ERR_OK || strEq(argv[0], "val") || strEq(argv[0], "match"))
 		printf("bee2cmd/%s: %s\n", _name, errMsg(code));
 	return (int)code;
 }

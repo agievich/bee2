@@ -4,7 +4,7 @@
 \brief Distinguished Encoding Rules
 \project bee2 [cryptographic library]
 \created 2014.04.21
-\version 2022.11.01
+\version 2023.03.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -1022,7 +1022,8 @@ size_t derTSEQEncStop(octet der[], size_t pos, const der_anchor_t* anchor)
 	{
 		ASSERT(anchor->der + t_count == der - len - l_count);
 		memMove(der - len + pos, der - len, len);
-		derLEnc(der - len - l_count, len);
+		if (derLEnc(der - len - l_count, len) != l_count1)
+			return SIZE_MAX;
 	}
 	return pos;
 }

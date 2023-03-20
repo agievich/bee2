@@ -4,7 +4,7 @@
 \brief Basic definitions
 \project bee2 [cryptographic library]
 \created 2012.04.01
-\version 2023.02.02
+\version 2023.03.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -193,7 +193,7 @@ T == octet.
 *******************************************************************************
 */
 
-#if defined(_WIN32) || defined(_WIN64) || defined(_WINNT) ||\
+#if defined(_WIN32) || defined(_WIN64) || defined(__WINNT) ||\
 	defined(__WIN32__) || defined(__WIN64__)  || defined(__WINNT__)
 	#define OS_WIN
 	#undef OS_UNIX

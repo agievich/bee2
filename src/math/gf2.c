@@ -4,7 +4,7 @@
 \brief Binary fields
 \project bee2 [cryptographic library]
 \created 2012.04.17
-\version 2015.11.03
+\version 2023.03.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -400,7 +400,7 @@ bool_t gf2Create(qr_o* f, const size_t p[4], void* stack)
 		gf2_trinom_st* t;
 		size_t n1;
 		// нарушены соглашения?
-		if (p[2] != 0 || p[3] != 0)
+		if (p[3] != 0)
 			return FALSE;
 		// нарушены условия функции ppRedTrinomial?
 		if (p[0] % 8 == 0 || p[1] >= p[0] || p[0] - p[1] < B_PER_W)
@@ -465,7 +465,7 @@ bool_t gf2Create(qr_o* f, const size_t p[4], void* stack)
 		if (p[3] == 0)
 			return FALSE;
 		// нарушены условия функции ppRedPentanomial?
-		if (p[1] >= p[0] || p[2] >= p[1] || p[3] >= p[2] || p[3] == 0 ||
+		if (p[1] >= p[0] || p[2] >= p[1] || p[3] >= p[2] || 
 			p[0] - p[1] < B_PER_W || p[1] >= B_PER_W)
 			return FALSE;
 		// зафиксировать размерность

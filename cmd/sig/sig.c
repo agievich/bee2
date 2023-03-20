@@ -322,8 +322,7 @@ static int sigMain(int argc, char* argv[])
     else
 		code = ERR_CMD_NOT_FOUND;
 	// завершить
-	if (code != ERR_OK ||
-		code == ERR_OK && strEq(argv[0], "vfy"))
+	if (code != ERR_OK || strEq(argv[0], "vfy"))
 		printf("bee2cmd/%s: %s\n", _name, errMsg(code));
 	return (int)code;
 }

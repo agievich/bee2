@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.47/botp
 \project bee2/test
 \created 2015.11.06
-\version 2019.08.30
+\version 2023.03.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -106,7 +106,8 @@ bool_t botpTest()
 	beltHash(p, beltH(), 13);
 	hexFrom(p_str, p, 32);
 	hexFrom(s_str, beltH(), 64); 
-	botpOCRAStart(state, suite, beltH() + 128, 32);
+	if (!botpOCRAStart(state, suite, beltH() + 128, 32))
+		return FALSE;
 	botpOCRAStepS(state, ctr, p, beltH());
 	botpOCRAStepG(ctr, state);
 	t /= 60;

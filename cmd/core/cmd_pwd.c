@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: password management
 \project bee2/cmd 
 \created 2022.06.13
-\version 2022.10.26
+\version 2023.03.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -169,7 +169,6 @@ static err_t cmdPwdGenShare_internal(cmd_pwd_t* pwd, size_t scount,
 	epki = salt + 8;
 	// сгенерировать пароль
 	rngStepR(pwd_bin, len, 0);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// разделить пароль на частичные секреты
 	code = belsShare2(share, scount, threshold, len, pwd_bin, rngStepR, 0);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));

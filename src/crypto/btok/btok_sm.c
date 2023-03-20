@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): Secure Messaging
 \project bee2 [cryptographic library]
 \created 2022.10.31
-\version 2022.11.04
+\version 2023.03.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -335,8 +335,6 @@ err_t btokSMCmdUnwrap(apdu_cmd_t* cmd, size_t* size, const octet apdu[],
 	{
 		len = apdu[4];
 		cdf_len_len = 1;
-		if (len == 0)
-			return ERR_BAD_APDU;
 	}
 	else
 	{
@@ -421,9 +419,6 @@ err_t btokSMCmdUnwrap(apdu_cmd_t* cmd, size_t* size, const octet apdu[],
 		}
 		return ERR_OK;
 	}
-	// нужно снять защиту, а состояние SM не передано?
-	if (!state)
-		return ERR_BAD_LOGIC;
 	// инкрементировать счетчик
 	st = (btok_sm_st*)state;
 	if (st->ctr[0] % 2 != 1)
@@ -634,9 +629,6 @@ err_t btokSMRespUnwrap(apdu_resp_t* resp, size_t* size, const octet apdu[],
 		}
 		return ERR_OK;
 	}
-	// нужно снять защиту, а состояние SM не передано?
-	if (!state)
-		return ERR_BAD_LOGIC;
 	// инкрементировать счетчик
 	st = (btok_sm_st*)state;
 	if (st->ctr[0] % 2 != 0)
