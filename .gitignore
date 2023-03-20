@@ -62,6 +62,6 @@
 
 # Specific files
 .aux
-.coverity
+.tools
 build
 clear.cmd
