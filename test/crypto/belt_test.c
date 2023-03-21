@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.31 (belt)
 \project bee2/test
 \created 2012.06.20
-\version 2020.04.15
+\version 2023.03.21
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -717,6 +717,19 @@ bool_t beltTest()
 		if (!memEq(str, str1, 9 * 2))
 			return FALSE;
 	}
+	// belt-keyexpand: тест A.27-1
+	beltKeyExpand(buf, beltH() + 128, 16);
+	if (!hexEq(buf,
+		"E9DEE72C8F0C0FA62DDB49F46F739647"
+		"E9DEE72C8F0C0FA62DDB49F46F739647"))
+		return FALSE;
+	// belt-keyrep: тест A.27-2
+	beltKeyExpand2((u32*)buf, beltH() + 128, 24);
+	u32To(buf, 32, (u32*)buf);
+	if (!hexEq(buf,
+		"E9DEE72C8F0C0FA62DDB49F46F739647"
+		"06075316ED247A374B09A17E8450BF66"))
+		return FALSE;
 	// belt-keyrep: тест A.28-1
 	memSetZero(level, 12);
 	level[0] = 1;
