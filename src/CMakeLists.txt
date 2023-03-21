@@ -54,6 +54,7 @@ set(src
   crypto/dstu.c
   crypto/g12s.c
   crypto/pfok.c
+  crypto/bacc.c
   math/ec.c
   math/ec2.c
   math/ecp.c
