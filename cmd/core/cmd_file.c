@@ -64,6 +64,22 @@ err_t cmdFileWrite(const char* file, const octet buf[], size_t count)
 	return code;
 }
 
+err_t cmdFileRead(octet buf[], size_t count, const char* file){
+    err_t code;
+    // pre
+    ASSERT(strIsValid(file));
+    ASSERT(memIsValid(buf, count));
+    // читать
+    FILE* fp;
+    octet o[1];
+    code = (fp = fopen(file, "rb")) ? ERR_OK : ERR_FILE_OPEN;
+    ERR_CALL_CHECK(code);
+    if (fread(buf, 1, count, fp) != count)
+        code = ERR_FILE_READ;
+    fclose(fp);
+    return code;
+}
+
 err_t cmdFileReadAll(octet buf[], size_t* count, const char* file)
 {
 	err_t code;

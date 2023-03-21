@@ -160,6 +160,13 @@ err_t cmdFileWrite(
 	size_t count		/*!< [in] длина буфера */
 );
 
+/*!	\brief Чтение файла
+
+	Буфер [count]buf прочитывается из файла file.
+	\return ERR_OK в случае успеха и код ошибки в противном случае.
+*/
+err_t cmdFileRead(octet buf[], size_t count, const char* file);
+
 /*!	\brief Чтение всего файла
 
 	Буфер [?count]buf прочитывается из файла file. При ненулевом buf

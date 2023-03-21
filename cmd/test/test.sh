@@ -262,6 +262,103 @@ test_es() {
   return 0
 }
 
+test_bacc(){
+
+  for l in 128 192 256 ; do
+
+    rm acc.bin key.bin key2.bin key3.bin key4.bin
+
+    $bee2cmd bacc init -l$l acc.bin \
+        || return 1
+
+    $bee2cmd kg gen -pass pass:key -l$l key.bin \
+        || return 1
+    $bee2cmd kg gen -pass pass:key -l$l key2.bin \
+        || return 1
+    $bee2cmd kg gen -pass pass:key -l$l key3.bin \
+        || return 1
+    $bee2cmd kg gen -pass pass:key -l$l key4.bin \
+        || return 1
+
+    cp acc.bin acc_old.bin
+
+    rm proof
+
+    $bee2cmd bacc add -pass pass:key key.bin acc.bin \
+        || return 1
+    $bee2cmd bacc prvadd -pass pass:key key.bin acc_old.bin acc.bin proof \
+        || return 1
+    $bee2cmd bacc vfyadd proof acc_old.bin acc.bin \
+        || return 1
+
+    cp acc.bin acc_old.bin
+
+    rm proof
+
+    $bee2cmd bacc add  -pass pass:key key2.bin acc.bin \
+        || return 1
+    $bee2cmd bacc prvadd -pass pass:key key2.bin acc_old.bin acc.bin proof \
+        || return 1
+    $bee2cmd bacc vfyadd proof acc_old.bin acc.bin \
+        || return 1
+
+    cp acc.bin acc_old.bin
+
+    rm proof
+
+    $bee2cmd bacc add -pass pass:key key3.bin acc.bin \
+        || return 1
+    $bee2cmd bacc prvadd -pass pass:key key3.bin acc_old.bin acc.bin proof \
+        || return 1
+    $bee2cmd bacc vfyadd proof acc_old.bin acc.bin \
+        || return 1
+
+    rm proof
+
+    $bee2cmd bacc prvadd -pass pass:key key4.bin acc_old.bin acc.bin proof \
+        || return 1
+    $bee2cmd bacc vfyadd proof acc_old.bin acc.bin \
+        && return 1
+
+    rm pubkey.bin pubkey2.bin pubkey3.bin pubkey4.bin
+
+    $bee2cmd bacc der -pass pass:key key.bin acc.bin pubkey.bin \
+        || return 1
+    $bee2cmd bacc der -pass pass:key key2.bin acc.bin pubkey2.bin \
+        || return 1
+    $bee2cmd bacc der -pass pass:key key3.bin acc.bin pubkey3.bin \
+        || return 1
+    $bee2cmd bacc der -pass pass:key key4.bin acc.bin pubkey4.bin \
+        && return 1
+
+    rm proof
+
+    $bee2cmd bacc prvder -pass pass:key key.bin acc.bin proof \
+        || return 1
+    $bee2cmd bacc vfyder pubkey.bin acc.bin proof \
+        || return 1
+
+    rm proof
+
+    $bee2cmd bacc prvder -adata key2.bin -pass pass:key key2.bin acc.bin proof \
+        || return 1
+    $bee2cmd bacc vfyder -adata key2.bin pubkey2.bin acc.bin proof \
+        || return 1
+
+    rm proof
+
+    $bee2cmd bacc prvder -adata key2.bin -pass pass:key key3.bin acc.bin proof \
+        || return 1
+    $bee2cmd bacc vfyder -adata key3.bin pubkey3.bin acc.bin proof \
+        && return 1
+    $bee2cmd bacc prvder -pass pass:key key4.bin acc.bin proof \
+        && return 1
+
+    done
+    return 0
+}
+
+
 run_test() {
   echo -n "Testing $1... "
   (test_$1 > /dev/null 2>&1)
@@ -273,4 +370,4 @@ run_test() {
 } 
 
 run_test ver && run_test bsum && run_test pwd && run_test kg && run_test cvc \
-  && run_test sig && run_test es
+  && run_test sig && run_test es && run_test bacc
