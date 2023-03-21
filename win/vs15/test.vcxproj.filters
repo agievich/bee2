@@ -130,5 +130,8 @@
     <ClCompile Include="..\..\test\core\apdu_test.c">
       <Filter>Source Files\core</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\test\core\blob_test.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
