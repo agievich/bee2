@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: terminal
 \project bee2/cmd 
 \created 2022.06.08
-\version 2022.10.25
+\version 2023.03.21
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -29,8 +29,8 @@ https://askcodes.net/questions/how-to-implement-getch---function-of-c-in-linux-
 #include <termios.h>
 #include <unistd.h>
 #include <stdio.h>
-//#include <sys/select.h>
 #include <sys/ioctl.h>
+#include <sys/socket.h>
 
 bool_t cmdTermKbhit()
 {
