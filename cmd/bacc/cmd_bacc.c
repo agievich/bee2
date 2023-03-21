@@ -55,7 +55,8 @@ static int baccUsage()
     return -1;
 }
 
-static err_t baccCreate(int argc, char* argv[]){
+static err_t baccCreate(int argc, char* argv[])
+{
     octet a[128 + sizeof (u32)];
     u32 len = 0;
     err_t code = ERR_OK;
@@ -92,7 +93,8 @@ static err_t baccCreate(int argc, char* argv[]){
 
     memCopy(a, &len, sizeof (u32));
 
-    if (!rngIsValid()){
+    if (!rngIsValid())
+    {
         code = cmdRngStart(0);
         ERR_CALL_CHECK(code);
     }
@@ -103,7 +105,8 @@ static err_t baccCreate(int argc, char* argv[]){
     return cmdFileWrite(*argv, a, len/2 + sizeof(u32));
 }
 
-static err_t baccAdd(int argc, char* argv[]){
+static err_t baccAdd(int argc, char* argv[])
+{
 
     size_t acc_size;
     size_t privkey_len;
@@ -191,7 +194,8 @@ static err_t baccAdd(int argc, char* argv[]){
     return code;
 }
 
-static err_t baccPrvAdd(int argc, char* argv[]) {
+static err_t baccPrvAdd(int argc, char* argv[])
+{
 
     err_t code = ERR_OK;
     u32 l;
@@ -233,7 +237,8 @@ static err_t baccPrvAdd(int argc, char* argv[]) {
 
     ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 
-    if (!pwd || argc != 4) {
+    if (!pwd || argc != 4)
+    {
         return ERR_CMD_PARAMS;
     }
 
@@ -287,7 +292,8 @@ static err_t baccPrvAdd(int argc, char* argv[]) {
     ERR_CALL_HANDLE(code,(cmdBlobClose(acc),cmdBlobClose(acc_new)));
 
     // инициализации ГСЧ
-    if (!rngIsValid()){
+    if (!rngIsValid())
+    {
         code = cmdRngStart(0);
         ERR_CALL_HANDLE(code,(cmdBlobClose(acc),cmdBlobClose(acc_new)));
     }
@@ -300,6 +306,9 @@ static err_t baccPrvAdd(int argc, char* argv[]) {
             key, rngStepR, 0);
     ERR_CALL_HANDLE(code,(cmdBlobClose(acc),cmdBlobClose(acc_new)));
 
+    code = cmdFileValNotExist(1,(argv + 3));
+    ERR_CALL_HANDLE(code,(cmdBlobClose(acc),cmdBlobClose(acc_new)));
+
     //записать proof в файл
     code = cmdFileWrite(*(argv + 3), proof, baccDHPrvAdd_keep(l, acc_len));
 
@@ -310,16 +319,16 @@ static err_t baccPrvAdd(int argc, char* argv[]) {
     return code;
 }
 
-static err_t baccVfyAdd(int argc, char* argv[]){
+static err_t baccVfyAdd(int argc, char* argv[])
+{
     err_t code;
     u32 l;
     octet *acc, *acc_new, *proof,  *stack;
     size_t acc_size, acc_new_size, proof_size;
     size_t acc_len, acc_new_len;
 
-    if (argc != 3) {
+    if (argc != 3)
         return ERR_CMD_PARAMS;
-    }
 
     // прочитать l
     code = cmdFileRead((octet *) &l, sizeof(l), *(argv + 1));
@@ -327,7 +336,6 @@ static err_t baccVfyAdd(int argc, char* argv[]){
 
     if (l != 128 && l != 192 && l != 256)
         return ERR_BAD_INPUT;
-
 
     //размер аккумулятора
     acc_size = cmdFileSize(*(argv + 1));
@@ -373,7 +381,7 @@ static err_t baccVfyAdd(int argc, char* argv[]){
     code = cmdBlobCreate(stack,baccDHVfyAdd_deep(l, acc_len));
     ERR_CALL_HANDLE(code,(cmdBlobClose(acc), cmdBlobClose(acc_new), cmdBlobClose(proof)));
 
-    //создать proof
+    //проверить proof
     code = baccDHVfyAdd(
             l, proof,
             acc + sizeof(u32), acc_new + sizeof (u32),
@@ -431,7 +439,8 @@ static err_t baccDer(int argc, char* argv[]){
 
     ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 
-    if (!pwd || argc != 3) {
+    if (!pwd || argc != 3)
+    {
         return ERR_CMD_PARAMS;
     }
 
@@ -442,7 +451,8 @@ static err_t baccDer(int argc, char* argv[]){
     ERR_CALL_CHECK(code);
 
     //инициализация ГСЧ
-    if (!rngIsValid()){
+    if (!rngIsValid())
+    {
         code = cmdRngStart(1);
         ERR_CALL_CHECK(code);
     }
@@ -475,6 +485,9 @@ static err_t baccDer(int argc, char* argv[]){
     // создать открытый ключ
     if (baccDHDer(pubkey, l, acc + sizeof (u32), acc_len, privkey) == SIZE_MAX)
         ERR_CALL_HANDLE(ERR_BAD_PRIVKEY, cmdBlobClose(acc));
+
+    code = cmdFileValNotExist(1,(argv + 2));
+    ERR_CALL_HANDLE(code, cmdBlobClose(acc));
 
     //записать ключ в файл
     code = cmdFileWrite(*(argv+2), pubkey, l / 2);
@@ -536,7 +549,8 @@ static err_t baccPrvDer(int argc, char* argv[]){
                 if (code != ERR_OK)
                     break;
                 code = cmdFileReadAll(adata, &adata_size,*argv);
-                if (code != ERR_OK) {
+                if (code != ERR_OK)
+                {
                     cmdBlobClose(adata);
                     break;
                 }
@@ -553,7 +567,8 @@ static err_t baccPrvDer(int argc, char* argv[]){
 
     ERR_CALL_HANDLE(code, (cmdPwdClose(pwd), cmdBlobClose(adata)));
 
-    if (!pwd || argc != 3) {
+    if (!pwd || argc != 3)
+    {
         return ERR_CMD_PARAMS;
     }
 
@@ -590,7 +605,8 @@ static err_t baccPrvDer(int argc, char* argv[]){
     acc_len = (acc_size - sizeof (u32)) / (baccGq_keep(l));
 
     // инициализация ГСЧ
-    if (!rngIsValid()){
+    if (!rngIsValid())
+    {
         code = cmdRngStart(0);
         ERR_CALL_HANDLE(code, (cmdBlobClose(acc),cmdBlobClose(adata)));
     }
@@ -608,6 +624,8 @@ static err_t baccPrvDer(int argc, char* argv[]){
     cmdBlobClose(stack);
     ERR_CALL_HANDLE(code, (cmdBlobClose(acc),cmdBlobClose(adata),cmdBlobClose(proof)));
 
+    code = cmdFileValNotExist(1,(argv + 2));
+    ERR_CALL_HANDLE(code, (cmdBlobClose(acc),cmdBlobClose(adata),cmdBlobClose(proof)));
 
     //записать доказательство в файл
     code = cmdFileWrite(*(argv + 2), proof, baccDHPrvDer_keep(l, acc_len));
@@ -619,7 +637,8 @@ static err_t baccPrvDer(int argc, char* argv[]){
     return code;
 }
 
-static err_t baccVfyDer(int argc, char* argv[]){
+static err_t baccVfyDer(int argc, char* argv[])
+{
     err_t code;
     u32 l;
     octet pubkey[128];
@@ -628,9 +647,12 @@ static err_t baccVfyDer(int argc, char* argv[]){
     size_t acc_len;
     octet *stack;
 
-    while (argc && strStartsWith(*argv, "-")) {
-        if (strStartsWith(*argv, "-adata")) {
-            if (adata) {
+    while (argc && strStartsWith(*argv, "-"))
+    {
+        if (strStartsWith(*argv, "-adata"))
+        {
+            if (adata)
+            {
                 code = ERR_CMD_DUPLICATE;
                 break;
             }
@@ -640,12 +662,14 @@ static err_t baccVfyDer(int argc, char* argv[]){
             if (code != ERR_OK)
                 break;
 
-            if (adata_size > 0) {
+            if (adata_size > 0)
+            {
                 code = cmdBlobCreate(adata, adata_size);
                 if (code != ERR_OK)
                     break;
                 code = cmdFileReadAll(adata, &adata_size, *argv);
-                if (code != ERR_OK) {
+                if (code != ERR_OK)
+                {
                     cmdBlobClose(adata);
                     break;
                 }
@@ -654,9 +678,8 @@ static err_t baccVfyDer(int argc, char* argv[]){
         }
     }
 
-    if (argc != 3) {
+    if (argc != 3)
         ERR_CALL_HANDLE(ERR_CMD_PARAMS,cmdBlobClose(adata));
-    }
 
     key_size = cmdFileSize(*(argv));
     if (key_size == SIZE_MAX)
@@ -714,7 +737,8 @@ static err_t baccVfyDer(int argc, char* argv[]){
     return code;
 }
 
-static int baccMain(int argc, char* argv[]){
+static int baccMain(int argc, char* argv[])
+{
 
     err_t code;
     // справка
@@ -742,7 +766,7 @@ static int baccMain(int argc, char* argv[]){
     if(code == ERR_BAD_PARAMS || code == ERR_CMD_NOT_FOUND)
         return baccUsage();
     // завершить
-    if (code != ERR_OK || strEq(argv[0], "vfy"))
+    if (code != ERR_OK)
         printf("bee2cmd/%s: %s\n", _name, errMsg(code));
     return (int)code;
 }
