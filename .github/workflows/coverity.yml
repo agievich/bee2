@@ -1,0 +1,44 @@
+﻿# Static Analysis using Coverity Scan
+
+name: coverity
+on:
+  push:
+    branches: [ "coverity" ]
+  pull_request:
+    branches: [ "coverity" ]
+
+jobs:
+  coverity:
+    name: Static analysis
+    runs-on: ubuntu-latest
+    env:
+      COVERITY_URL: https://scan.coverity.com
+      COVERITY_PROJECT: bee2
+      COVERITY_USER: ${{ secrets.COVERITY_USER }}
+      COVERITY_EMAIL: ${{ secrets.COVERITY_EMAIL }}
+      COVERITY_TOKEN: ${{ secrets.COVERITY_TOKEN }}
+    steps:
+    - name: Get source
+      uses: actions/checkout@v3
+    - name: Coverity download
+      run: |
+        mkdir ${{github.workspace}}/cov-analysis-linux64
+        curl -fLsS $COVERITY_URL/download/linux64 \
+          --data "token=$COVERITY_TOKEN&project=$COVERITY_USER%2F$COVERITY_PROJECT" | \
+          tar xz --strip 1 -C ${{github.workspace}}/cov-analysis-linux64
+    - name: Coverity build
+      run: |
+        mkdir ${{github.workspace}}/build && cd ${{github.workspace}}/build
+        export PATH=$PATH:${{github.workspace}}/cov-analysis-linux64/bin
+        CC=gcc cmake -DCMAKE_BUILD_TYPE=Debug ..
+        cov-build --dir cov-int make
+        tar czf $COVERITY_PROJECT.tgz cov-int
+    - name: Coverity upload
+      working-directory: ${{github.workspace}}/build
+      run: >
+        curl --form token=$COVERITY_TOKEN
+        --form email=$COVERITY_EMAIL
+        --form file=@$COVERITY_PROJECT.tgz
+        --form version=$GITHUB_SHA
+        --form description=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+        $COVERITY_URL/builds?project=$COVERITY_USER%2F$COVERITY_PROJECT
