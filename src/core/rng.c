@@ -4,7 +4,7 @@
 \brief Entropy sources and random number generators
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2023.03.07
+\version 2023.03.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -227,16 +227,24 @@ static int rngRDStep2(u32* val)
 
 #endif
 
+static bool_t rngCPUIDIsManufId(const u32 info[4], const char id[12 + 1])
+{
+	ASSERT(strIsValid(id));
+	ASSERT(strLen(id) == 12);
+	return memEq(info + 1, id + 0, 4) &&
+		memEq(info + 3, id + 4, 4) &&
+		memEq(info + 2, id + 8, 4);
+}
+
 static bool_t rngTRNGIsAvail()
 {
 	u32 info[4];
-	// Intel?
+	// Intel or AMD?
 	rngCPUID(info, 0);
-	if (!memEq(info + 1, "Genu", 4) ||
-		!memEq(info + 3, "ineI", 4) ||
-		!memEq(info + 2, "ntel", 4))
+	if (!rngCPUIDIsManufId(info, "GenuineIntel") &&
+		!rngCPUIDIsManufId(info, "AuthenticAMD"))
 		return FALSE;
-	/* rdseed? */
+	// rdseed?
 	rngCPUID(info, 7);
 	return (info[1] & 0x00040000) != 0;
 }
@@ -244,11 +252,10 @@ static bool_t rngTRNGIsAvail()
 static bool_t rngTRNG2IsAvail()
 {
 	u32 info[4];
-	// Intel?
+	// Intel or AMD?
 	rngCPUID(info, 0);
-	if (!memEq(info + 1, "Genu", 4) ||
-		!memEq(info + 3, "ineI", 4) ||
-		!memEq(info + 2, "ntel", 4))
+	if (!rngCPUIDIsManufId(info, "GenuineIntel") &&
+		!rngCPUIDIsManufId(info, "AuthenticAMD"))
 		return FALSE;
 	// rdrand?
 	rngCPUID(info, 1);
