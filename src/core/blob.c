@@ -4,7 +4,7 @@
 \brief Blobs
 \project bee2 [cryptographic library]
 \created 2012.04.01
-\version 2015.12.09
+\version 2023.03.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -132,7 +132,7 @@ blob_t blobCopy(blob_t dest, const blob_t src)
 	ASSERT(blobIsValid(dest) && blobIsValid(src));
 	if (dest == src)
 		return dest;
-	size = blobSizeOf(src);
+	size = blobSize(src);
 	dest = blobResize(dest, size);
 	if (dest)
 		memCopy(dest, src, size);
@@ -142,14 +142,14 @@ blob_t blobCopy(blob_t dest, const blob_t src)
 bool_t blobEq(const blob_t blob1, const blob_t blob2)
 {
 	ASSERT(blobIsValid(blob1) && blobIsValid(blob2));
-	return blobSizeOf(blob1) == blobSizeOf(blob2) &&
-		memEq(blob1, blob2, blobSizeOf(blob1));
+	return blobSize(blob1) == blobSize(blob2) &&
+		memEq(blob1, blob2, blobSize(blob1));
 }
 
 int blobCmp(const blob_t blob1, const blob_t blob2)
 {
 	ASSERT(blobIsValid(blob1) && blobIsValid(blob2));
-	if (blobSizeOf(blob1) != blobSizeOf(blob2))
-		return blobSizeOf(blob1) < blobSizeOf(blob2) ? - 1 : 1;
-	return memCmp(blob1, blob2, blobSizeOf(blob1));
+	if (blobSize(blob1) != blobSize(blob2))
+		return blobSize(blob1) < blobSize(blob2) ? - 1 : 1;
+	return memCmp(blob1, blob2, blobSize(blob1));
 }
