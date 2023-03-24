@@ -1,0 +1,46 @@
+# Build and run tests on the Mac OS x64 platform
+
+name: macos
+
+on:
+  push:
+    branches: [ "arch", "actions" ]
+  pull_request:
+    branches: [ "arch", "actions" ]
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        include:
+        - BUILD_TYPE: Release
+          BUILD_FAST: OFF
+          BASH_PLATFORM: BASH_64
+          CC: gcc
+        - BUILD_TYPE: Release
+          BUILD_FAST: OFF
+          BASH_PLATFORM: BASH_64
+          CC: clang
+
+    steps:
+    - name: Get source
+      uses: actions/checkout@v3
+
+    - name: Install dependencies on macos
+      run: |
+        brew install cmake gcc 
+        cmake --version
+        gcc --version
+        clang --version
+
+    - name: Configure CMake
+      run: CC=${{matrix.CC}} cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} -DBUILD_FAST=${{matrix.BUILD_FAST}} -DBASH_PLATFORM=${{matrix.BASH_PLATFORM}} 
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config ${{matrix.BUILD_TYPE}}
+
+    - name: Test
+      working-directory: ${{github.workspace}}/build
+      run: ctest -C ${{matrix.BUILD_TYPE}} --verbose
