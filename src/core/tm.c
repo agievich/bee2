@@ -72,7 +72,7 @@ tm_ticks_t tmFreq()
 	return mtCallOnce(&_once, tmCalcFreq) ? _freq : 0;
 }
 
-#elif defined(OS_WINDOWS)
+#elif defined(_WIN32)
 
 #include <windows.h>
 
@@ -185,7 +185,7 @@ tm_time_t tmTimeRound(tm_time_t t0, tm_time_t ts)
 *******************************************************************************
 */
 
-#if defined(_MSC_VER)
+#if defined(_WIN32)
 #define localtime_r(et, lt) (localtime_s(lt, et) ? 0 : lt)
 #endif
 
