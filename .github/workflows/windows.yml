@@ -1,13 +1,11 @@
 # Build and run tests on the Windows x64 platform
 
 name: windows
-
 on:
   push:
-    branches: [ "arch", "actions" ]
+    branches: arch
   pull_request:
-    branches: [ "arch", "actions" ]
-
+    branches: arch
 jobs:
   build:
     name: Build and test
@@ -18,25 +16,19 @@ jobs:
         - BUILD_TYPE: Release
           BUILD_FAST: OFF
           BASH_PLATFORM: BASH_64
-
     steps:
     - name: Get source
       uses: actions/checkout@v3
-
     - name: Set up MinGW
       uses: egor-tensin/setup-mingw@v2
       with:
         platform: x64
-
     - name: Get CMake
       uses: symbitic/install-cmake@master
-
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} -DBUILD_FAST=${{matrix.BUILD_FAST}} -DBASH_PLATFORM=${{matrix.BASH_PLATFORM}} -G "MinGW Makefiles"
-
     - name: Build
-      run: cmake --build ${{github.workspace}}/build --config ${{matrix.BUILD_TYPE}}
-
+      run: cmake --build ${{github.workspace}}/build 
     - name: Test
       working-directory: ${{github.workspace}}/build
-      run: ctest -C ${{matrix.BUILD_TYPE}} --verbose
+      run: ctest --verbose

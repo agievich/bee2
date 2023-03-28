@@ -4,7 +4,7 @@
 \brief Time and timers
 \project bee2 [cryptographic library]
 \created 2012.05.10
-\version 2023.03.20
+\version 2023.03.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -72,7 +72,7 @@ tm_ticks_t tmFreq()
 	return mtCallOnce(&_once, tmCalcFreq) ? _freq : 0;
 }
 
-#elif defined(_WIN32)
+#elif defined(OS_WIN)
 
 #include <windows.h>
 
@@ -185,7 +185,7 @@ tm_time_t tmTimeRound(tm_time_t t0, tm_time_t ts)
 *******************************************************************************
 */
 
-#if defined(_WIN32)
+#if defined(OS_WIN)
 #define localtime_r(et, lt) (localtime_s(lt, et) ? 0 : lt)
 #endif
 
