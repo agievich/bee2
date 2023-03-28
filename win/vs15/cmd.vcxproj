@@ -487,8 +487,12 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\cmd\aead\aead.c" />
     <ClCompile Include="..\..\cmd\bsum\bsum.c" />
     <ClCompile Include="..\..\cmd\cmd_main.c" />
+    <ClCompile Include="..\..\cmd\core\cmd_aead.c" />
+    <ClCompile Include="..\..\cmd\core\cmd_aead_pke.c" />
+    <ClCompile Include="..\..\cmd\core\cmd_aead_pwd.c" />
     <ClCompile Include="..\..\cmd\core\cmd_arg.c" />
     <ClCompile Include="..\..\cmd\core\cmd_cvc.c" />
     <ClCompile Include="..\..\cmd\core\cmd_file.c" />

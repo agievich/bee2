@@ -36,6 +36,9 @@
     <Filter Include="Source Files\core">
       <UniqueIdentifier>{b2ee0400-483e-4ae5-901e-56f2bd565271}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\aead">
+      <UniqueIdentifier>{8044e34a-bd34-441b-9a23-d63118cc38c0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\cmd\bsum\bsum.c">
@@ -87,6 +90,18 @@
       <Filter>Source Files\core</Filter>
     </ClCompile>
     <ClCompile Include="..\..\cmd\core\whereami.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\aead\aead.c">
+      <Filter>Source Files\aead</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\core\cmd_aead.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\core\cmd_aead_pke.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\core\cmd_aead_pwd.c">
       <Filter>Source Files\core</Filter>
     </ClCompile>
   </ItemGroup>
