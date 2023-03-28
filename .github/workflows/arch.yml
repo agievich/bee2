@@ -5,9 +5,9 @@ name: arch
 
 on:
   push:
-    branches: master
+    branches: arch
   pull_request:
-    branches: master
+    branches: arch
 
 jobs:
   build:
