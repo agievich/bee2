@@ -1,11 +1,12 @@
 ﻿# Static Analysis using Coverity Scan
 
 name: coverity
+
 on:
   push:
-    branches: [ "coverity" ]
+    branches: coverity
   pull_request:
-    branches: [ "coverity" ]
+    branches: coverity
 
 jobs:
   coverity:
@@ -14,9 +15,9 @@ jobs:
     env:
       COVERITY_URL: https://scan.coverity.com
       COVERITY_PROJECT: bee2
-      COVERITY_USER: ${{ secrets.COVERITY_USER }}
-      COVERITY_EMAIL: ${{ secrets.COVERITY_EMAIL }}
-      COVERITY_TOKEN: ${{ secrets.COVERITY_TOKEN }}
+      COVERITY_USER: ${{secrets.COVERITY_USER}}
+      COVERITY_EMAIL: ${{secrets.COVERITY_EMAIL}}
+      COVERITY_TOKEN: ${{secrets.COVERITY_TOKEN}}
     steps:
     - name: Get source
       uses: actions/checkout@v3
