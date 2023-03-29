@@ -4,7 +4,7 @@
 \brief Tests for elliptic curves over prime fields
 \project bee2/test
 \created 2017.05.29
-\version 2017.08.23
+\version 2023.03.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -57,9 +57,10 @@ bool_t ecpTest()
 	// поле и эк
 	qr_o* f;
 	ec_o* ec;
-	// хватает памяти?
-	ASSERT(f_keep + ec_keep <= sizeof(state));
-	ASSERT(ec_deep  <= sizeof(stack));
+	// подготовить память
+	if (sizeof(state) < f_keep + ec_keep ||
+		sizeof(stack) < ec_deep)
+		return FALSE;
 	// создать f = GF(p)
 	hexToRev(t, p);
 	f = (qr_o*)(state + ec_keep);

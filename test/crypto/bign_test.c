@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.45 (bign)
 \project bee2/test
 \created 2012.08.27
-\version 2020.11.25
+\version 2023.03.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -113,9 +113,10 @@ bool_t bignTest()
 	char pwd[] = "B194BAC80A08F53B";
 	size_t iter = 10000;
 	octet key[32];
-	// создать стек
-	ASSERT(sizeof(brng_state) >= brngCTRX_keep());
-	ASSERT(sizeof(zz_stack) >= zzMulMod_deep(W_OF_O(32)));
+	// подготовить память
+	if (sizeof(brng_state) < brngCTRX_keep() ||
+		sizeof(zz_stack) < zzMulMod_deep(W_OF_O(32)))
+		return FALSE;
 	// проверить таблицы Б.1, Б.2, Б.3
 	if (bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.3") != ERR_OK ||
 		bignValParams(params) != ERR_OK)

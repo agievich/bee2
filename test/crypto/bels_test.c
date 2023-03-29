@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.60 (bels)
 \project bee2/test
 \created 2013.06.27
-\version 2021.04.15
+\version 2023.03.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -38,9 +38,10 @@ bool_t belsTest()
 	char id[] = "Alice";
 	octet echo_state[64];
 	octet combo_state[512];
-	// проверить состояния
-	ASSERT(sizeof(echo_state) >= prngEcho_keep());
-	ASSERT(sizeof(combo_state) >= prngCOMBO_keep());
+	// подготовить память
+	if (sizeof(echo_state) < prngEcho_keep() ||
+		sizeof(combo_state) < prngCOMBO_keep())
+		return FALSE;
 	// проверить таблицы A.1 -- A.4
 	for (len = 16; len <= 32; len += 8)
 		for (num = 0; num <= 16; ++num)

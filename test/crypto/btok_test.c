@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.79 (btok)
 \project bee2/test
 \created 2022.07.07
-\version 2023.03.07
+\version 2023.03.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -246,9 +246,11 @@ static bool_t btokSMTest()
 	octet apdu[1024];
 	size_t count;
 	size_t size;
+	// подготовить состояния
+	if (sizeof(state_t) < btokSM_keep() ||
+		sizeof(state_ct) < btokSM_keep())
+		return FALSE;
 	// запустить SM
-	ASSERT(btokSM_keep() <= sizeof(state_t));
-	ASSERT(btokSM_keep() <= sizeof(state_ct));
 	btokSMStart(state_t, beltH());
 	btokSMStart(state_ct, beltH());
 	// обработка команды без защиты
@@ -425,8 +427,11 @@ bool_t btokBAUTHTest()
 	// загрузить долговременные параметры
 	if (bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK)
 		return FALSE;
-	// настроить генераторы
-	ASSERT(prngEcho_keep() <= sizeof(echoa));
+	// подготовить память
+	if (sizeof(echoa) < prngEcho_keep() ||
+		sizeof(statea) < btokBAuthT_keep(128) ||
+		sizeof(stateb) < btokBAuthCT_keep(128))
+		return FALSE;
 	// загрузить личные ключи
 	hexTo(da, _da);
 	hexTo(db, _db);
@@ -455,8 +460,6 @@ bool_t btokBAUTHTest()
 	prngEchoStart(echoa, beltH(), 128);
 	prngEchoStart(echob, beltH() + 128, 128);
 	// инициализация
-	ASSERT(btokBAuthT_keep(params->l) <= sizeof(statea));
-	ASSERT(btokBAuthCT_keep(params->l) <= sizeof(stateb));
 	if (btokBAuthTStart(statea, params, settingsa, da, certa) != ERR_OK ||
 		btokBAuthCTStart(stateb, params, settingsb, db, certb) != ERR_OK)
 		return FALSE;
@@ -489,8 +492,6 @@ bool_t btokBAUTHTest()
 	prngEchoStart(echoa, beltH(), 128);
 	prngEchoStart(echob, beltH() + 128, 128);
 	// инициализация
-	ASSERT(btokBAuthT_keep(params->l) <= sizeof(statea));
-	ASSERT(btokBAuthCT_keep(params->l) <= sizeof(stateb));
 	if (btokBAuthTStart(statea, params, settingsa, da, certa) != ERR_OK ||
 		btokBAuthCTStart(stateb, params, settingsb, db, certb) != ERR_OK)
 		return FALSE;

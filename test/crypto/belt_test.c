@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.31 (belt)
 \project bee2/test
 \created 2012.06.20
-\version 2023.03.21
+\version 2023.03.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -133,23 +133,26 @@ bool_t beltTest()
 	octet level[12];
 	octet state[1024];
 	size_t count;
-	// создать стек
-	ASSERT(sizeof(state) >= 256);
-	ASSERT(sizeof(state) >= beltWBL_keep());
-	ASSERT(sizeof(state) >= beltCompr_deep());
-	ASSERT(sizeof(state) >= beltECB_keep());
-	ASSERT(sizeof(state) >= beltCBC_keep());
-	ASSERT(sizeof(state) >= beltCFB_keep());
-	ASSERT(sizeof(state) >= beltCTR_keep());
-	ASSERT(sizeof(state) >= beltMAC_keep());
-	ASSERT(sizeof(state) >= beltDWP_keep());
-	ASSERT(sizeof(state) >= beltCHE_keep());
-	ASSERT(sizeof(state) >= beltKWP_keep());
-	ASSERT(sizeof(state) >= beltHash_keep());
-	ASSERT(sizeof(state) >= beltBDE_keep());
-	ASSERT(sizeof(state) >= beltFMT_keep(65536, 17));
-	ASSERT(sizeof(state) >= beltKRP_keep());
-	ASSERT(sizeof(state) >= beltHMAC_keep());
+	// подготовить память
+	if (sizeof(state) < utilMax(17,
+		256,
+		beltWBL_keep(),
+		beltCompr_deep(),
+		beltECB_keep(),
+		beltCBC_keep(),
+		beltCFB_keep(),
+		beltCTR_keep(),
+		beltMAC_keep(),
+		beltDWP_keep(),
+		beltCHE_keep(),
+		beltKWP_keep(),
+		beltHash_keep(),
+		beltBDE_keep(),
+		beltSDE_keep(),
+		beltFMT_keep(65536, 17),
+		beltKRP_keep(),
+		beltHMAC_keep()))
+		return FALSE;
 	// belt-H
 	beltGenH(state);
 	if (!memEq(state, beltH(), 256))

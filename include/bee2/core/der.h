@@ -4,7 +4,7 @@
 \brief Distinguished Encoding Rules
 \project bee2 [cryptographic library]
 \created 2014.04.21
-\version 2022.11.01
+\version 2023.03.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -654,7 +654,7 @@ typedef struct
 	в коде в абстрактной (со свободной точкой отсчета) системе координат.
 	\pre Если der != 0, то по адресу der зарезервировано
 	derTSEQEncStart(anchor, 0, pos, tag) октетов.
-	\pre В tag установлен бит конструктивности.
+	\expect{SIZE_MAX} В tag установлен бит конструктивности.
 	\return Число октетов в префиксе DER-коде или SIZE_MAX в случае ошибки.
 */
 size_t derTSEQEncStart(
@@ -695,7 +695,7 @@ size_t derTSEQEncStop(
 	Определяется число октетов в префиксе DER-кода [<=count]der структуры
 	TSEQ с тегом tag. Одновременно в якоре anchor сохраняются данные,
 	необходимые для проверки префикса при завершении декодирования структуры.
-	\pre В tag установлен бит конструктивности.
+	\expect{SIZE_MAX} В tag установлен бит конструктивности.
 	\return Число октетов в префиксе DER-коде или SIZE_MAX в случае ошибки.
 */
 size_t derTSEQDecStart(
