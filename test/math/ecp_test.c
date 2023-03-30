@@ -16,6 +16,7 @@
 #include <bee2/core/util.h>
 #include <bee2/math/gfp.h>
 #include <bee2/math/ecp.h>
+#include <bee2/math/ww.h>
 
 /*
 *******************************************************************************
@@ -49,9 +50,8 @@ bool_t ecpTest()
 	// размерности
 	const size_t n = W_OF_O(no);
 	const size_t f_keep = gfpCreate_keep(no);
-	const size_t f_deep = gfpCreate_deep(no);
 	const size_t ec_keep = ecpCreateJ_keep(n);
-	const size_t ec_deep = ecpCreateJ_deep(n, f_deep);
+	const size_t f_deep = gfpCreate_deep(no);
 	// состояние и стек
 	octet state[2048];
 	octet stack[2048];
@@ -61,7 +61,7 @@ bool_t ecpTest()
 	ec_o* ec;
 	// подготовить память
 	if (sizeof(state) < f_keep + ec_keep ||
-		sizeof(stack) < ec_deep ||
+		sizeof(stack) < f_deep ||
 		sizeof(t) < 3 * no)
 		return FALSE;
 	// создать f = GF(p)
@@ -95,17 +95,17 @@ bool_t ecpTest()
 		!ecpIsSafeGroup(ec, 40, stack))
 		return FALSE;
 	// базовая точка имеет порядок q?
-	if (sizeof(stack) < ecHasOrderA_deep(n, ec->d, ec_deep, n) ||
+	if (sizeof(stack) < ecHasOrderA_deep(n, ec->d, ec->deep, n) ||
 		!ecHasOrderA(ec->base, ec, ec->order, n, stack))
 		return FALSE;
-	// утроить баовую точку разными способами
+	// утроить базовую точку разными способами
 	if (sizeof(t) < (2 + ec->d) * no ||
 		sizeof(stack) < utilMax(5,
-			ec_deep,
+			ec->deep,
 			ecpIsOnA_deep(n, f_deep),
 			ecpAddAA_deep(n, f_deep),
 			ecpSubAA_deep(n, f_deep),
-			ecMulA_deep(n, ec->d, ec_deep, 1)))
+			ecMulA_deep(n, ec->d, ec->deep, 1)))
 		return FALSE;
 	{
 		word* pts = (word*)t;
@@ -129,6 +129,62 @@ bool_t ecpTest()
 			!memEq(pts, pts + 2 * n, 2 * n))
 			return FALSE;
 		// утроить напрямую
+		if (!ec->froma || !ec->tpl || !ec->toa)
+			return FALSE;
+		ec->froma(pts + 2 * n, ec->base, ec, stack);
+		ec->tpl(pts + 2 * n, pts + 2 * n, ec, stack);
+		ec->toa(pts + 2 * n, pts + 2 * n, ec, stack);
+		if (!memEq(pts, pts + 2 * n, 2 * n))
+			return FALSE;
+	}
+	// вывести f = GF(p) за пределы ec
+	f = (qr_o*)(state + ec_keep);
+	memMove(f, objPtr(ec, 0, qr_o), f_keep);
+	// создать ec = EC_{a-1, b}(f)
+	hexToRev(t, a), --t[0], hexToRev(t + no, b);
+	ec = (ec_o*)state;
+	if (sizeof(stack) < ecpCreateJ_deep(n, f_deep) ||
+		!ecpCreateJ(ec, f, t, t + no, stack))
+		return FALSE;
+	// присоединить f к ec
+	objAppend(ec, f, 0);
+	// точка (xbase = 0, ybase) все еще лежит на ec: ybase^2 = b
+	hexToRev(t, xbase), hexToRev(t + no, ybase);
+	wwFrom(ec->base, t, no), wwFrom(ec->base + n, t + no, no);
+	ASSERT(wwIsZero(ec->base, n));
+	// утроить базовую точку разными способами
+	if (sizeof(t) < (2 + ec->d) * no ||
+		sizeof(stack) < utilMax(5,
+			ec->deep,
+			ecpIsOnA_deep(n, f_deep),
+			ecpAddAA_deep(n, f_deep),
+			ecpSubAA_deep(n, f_deep),
+			ecMulA_deep(n, ec->d, ec->deep, 1)))
+		return FALSE;
+	{
+		word* pts = (word*)t;
+		word d = 3;
+		// удвоить и сложить
+		if (!ecpIsOnA(ec->base, ec, stack) ||
+			!ecpAddAA(pts, ec->base, ec->base, ec, stack) ||
+			!ecpAddAA(pts, pts, ec->base, ec, stack))
+			return FALSE;
+		// дважды удвоить и вычесть
+		if (!ecpAddAA(pts + 2 * n, ec->base, ec->base, ec, stack) ||
+			!ecpAddAA(pts + 2 * n, pts + 2 * n, pts + 2 * n, ec, stack) ||
+			!ecpSubAA(pts + 2 * n, pts + 2 * n, ec->base, ec, stack) ||
+			!memEq(pts, pts + 2 * n, 2 * n))
+			return FALSE;
+		ecpNegA(pts + 2 * n, pts + 2 * n, ec);
+		if (ecpAddAA(pts + 2 * n, pts, pts + 2 * n, ec, stack))
+			return FALSE;
+		// вычислить кратную точку
+		if (!ecMulA(pts + 2 * n, ec->base, ec, &d, 1, stack) ||
+			!memEq(pts, pts + 2 * n, 2 * n))
+			return FALSE;
+		// утроить напрямую
+		if (!ec->froma || !ec->tpl || !ec->toa)
+			return FALSE;
 		ec->froma(pts + 2 * n, ec->base, ec, stack);
 		ec->tpl(pts + 2 * n, pts + 2 * n, ec, stack);
 		ec->toa(pts + 2 * n, pts + 2 * n, ec, stack);
