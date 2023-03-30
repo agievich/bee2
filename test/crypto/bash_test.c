@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.77 (bash)
 \project bee2/test
 \created 2015.09.22
-\version 2023.03.29
+\version 2023.03.30
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -34,11 +34,11 @@ bool_t bashTest()
 	size_t pos;
 	// подготовить память
 	if (sizeof(state) < utilMax(3,
-		bashF_deep(),
-		bashHash_keep(),
-		bashPrg_keep()))
+			bashF_deep(),
+			bashHash_keep(),
+			bashPrg_keep()) ||
+		sizeof(state) != sizeof(state1))
 		return FALSE;
-	ASSERT(sizeof(state) == sizeof(state1));
 	// A.2
 	memCopy(buf, beltH(), 192);
 	bashF(buf, state);

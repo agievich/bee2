@@ -4,7 +4,7 @@
 \brief Benchmarks for STB 34.101.77 (bash)
 \project bee2/test
 \created 2014.07.15
-\version 2023.03.29
+\version 2023.03.30
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -61,7 +61,6 @@ bool_t bashBench()
 			(unsigned)(ticks / 1024 / reps),
 			(unsigned)tmSpeed(reps, ticks));
 		// эксперимент c bashHashLLL
-		ASSERT(bashHash_keep() <= sizeof(bash_state));
 		for (l = 128; l <= 256; l += 64)
 		{
 			bashHashStart(bash_state, l);

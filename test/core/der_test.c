@@ -55,80 +55,67 @@ bool_t derTest()
 		char str[16];
 	} val;
 	// TL
-	count = derTLEnc(0, 0x7F21, 1000000);
-	if (count != 6 || derTLEnc(buf, 0x7F21, 1000000) != count)
-		return FALSE;
-	count = derTLDec(&tag, &len, buf, count);
-	if (count != 6 || tag != 0x7F21 || len != 1000000)
+	if ((count = derTLEnc(0, 0x7F21, 1000000)) != 6 ||
+		count > sizeof(buf) ||
+		derTLEnc(buf, 0x7F21, 1000000) != count ||
+		derTLDec(&tag, &len, buf, count) != 6 ||
+		tag != 0x7F21 || len != 1000000)
 		return FALSE;
 	// SIZE(0)
-	count = derSIZEEnc(0, 0);
-	if (count != 3)
-		return FALSE;
-	ASSERT(count <= sizeof(buf));
-	if (derSIZEEnc(buf, 0) != 3 ||
+	if ((count = derSIZEEnc(0, 0)) != 3 ||
+		count > sizeof(buf) ||
+		derSIZEEnc(buf, 0) != 3 ||
 		!hexEq(buf, "020100") ||
-		derTLDec(&tag, &len, buf, 1024) != 2 || tag != 2 || len != 1 ||
+		derTLDec(&tag, &len, buf, 1024) != 2 ||
+		tag != 2 || len != 1 ||
 		derSIZEDec(&val.size, buf, sizeof(buf)) != 3 ||
 		val.size != 0)
 		return FALSE;
 	// SIZE[APPLICATION 41](0)
-	count = derTSIZEEnc(0, tag = 0x5F29, 0);
-	if (count != 4)
-		return FALSE;
-	ASSERT(count <= sizeof(buf));
-	if (derTSIZEEnc(buf, tag, 0) != 4 ||
+	if ((count = derTSIZEEnc(0, tag = 0x5F29, 0)) != 4 ||
+		count > sizeof(buf) ||
+		derTSIZEEnc(buf, tag, 0) != 4 ||
 		!hexEq(buf, "5F290100") ||
 		derTSIZEDec(&val.size, buf, sizeof(buf), tag) != 4 ||
 		val.size != 0 ||
 		derTSIZEDec(&val.size, buf, sizeof(buf), tag + 1) != SIZE_MAX)
 		return FALSE;
 	// SIZE(127)
-	count = derSIZEEnc(0, 127);
-	if (count != 3)
-		return FALSE;
-	ASSERT(count <= sizeof(buf));
-	if (derSIZEEnc(buf, 127) != 3 ||
+	if ((count = derSIZEEnc(0, 127)) != 3 ||
+		count > sizeof(buf) ||
+		derSIZEEnc(buf, 127) != 3 ||
 		!hexEq(buf, "02017F") ||
 		derSIZEDec(&val.size, buf, sizeof(buf)) != 3 ||
 		val.size != 127)
 		return FALSE;
 	// SIZE(128)
-	count = derSIZEEnc(0, 128);
-	if (count != 4)
-		return FALSE;
-	ASSERT(count <= sizeof(buf));
-	if (derSIZEEnc(buf, 128) != 4 ||
+	if ((count = derSIZEEnc(0, 128)) != 4 ||
+		count > sizeof(buf) ||
+		derSIZEEnc(buf, 128) != 4 ||
 		!hexEq(buf, "02020080") ||
 		derSIZEDec(&val.size, buf, sizeof(buf)) != 4 ||
 		val.size != 128)
 		return FALSE;
 	// SIZE(256)
-	count = derSIZEEnc(0, 256);
-	if (count != 4)
-		return FALSE;
-	ASSERT(count <= sizeof(buf));
-	if (derSIZEEnc(buf, 256) != 4 ||
+	if ((count = derSIZEEnc(0, 256)) != 4 ||
+		count > sizeof(buf) ||
+		derSIZEEnc(buf, 256) != 4 ||
 		!hexEq(buf, "02020100") ||
 		derSIZEDec(&val.size, buf, sizeof(buf)) != 4 ||
 		val.size != 256)
 		return FALSE;
 	// NULL
-	count = derNULLEnc(0);
-	if (count != 2)
-		return FALSE;
-	ASSERT(count <= sizeof(buf));
-	if (derNULLEnc(buf) != 2 ||
+	if ((count = derNULLEnc(0)) != 2 ||
+		count > sizeof(buf) ||
+		derNULLEnc(buf) != 2 ||
 		!hexEq(buf, "0500") ||
 		derNULLDec(buf, sizeof(buf)) != 2)
 		return FALSE;
 	// BIT
 	hexTo(val.oct, "0123456789ABCDEF");
-	count = derBITEnc(0, val.oct, 61);
-	if (count != 11)
-		return FALSE;
-	ASSERT(count <= sizeof(buf));
-	if (derBITEnc(buf, val.oct, 61) != 11 ||
+	if ((count = derBITEnc(0, val.oct, 61)) != 11 ||
+		count > sizeof(buf) ||
+		derBITEnc(buf, val.oct, 61) != 11 ||
 		!hexEq(buf, "0309030123456789ABCDE8") ||
 		derBITDec2(val.oct, buf, sizeof(buf), 61) != 11 ||
 		!hexEq(val.oct, "0123456789ABCDE8") ||
@@ -146,11 +133,9 @@ bool_t derTest()
 		return FALSE;
 	// OCT
 	hexTo(val.oct, "0123456789ABCDEF");
-	count = derOCTEnc(0, val.oct, 8);
-	if (count != 10)
-		return FALSE;
-	ASSERT(count <= sizeof(buf));
-	if (derOCTEnc(buf, val.oct, 8) != 10 ||
+	if ((count = derOCTEnc(0, val.oct, 8)) != 10 ||
+		count > sizeof(buf) ||
+		derOCTEnc(buf, val.oct, 8) != 10 ||
 		!hexEq(buf, "04080123456789ABCDEF") ||
 		derOCTDec3(buf, sizeof(buf), val.oct, 8) != 10 ||
 		derOCTDec2(val.oct, buf, sizeof(buf), 8) != 10 ||
@@ -164,11 +149,9 @@ bool_t derTest()
 		derOCTDec(0, 0, buf, sizeof(buf)) != 10)
 		return FALSE;
 	// OID
-	count = derOIDEnc(0, "1.2.840.113549");
-	if (count != 8)
-		return FALSE;
-	ASSERT(count <= sizeof(buf));
-	if (derOIDEnc(buf, "1.2.840.113549") != 8 ||
+	if ((count = derOIDEnc(0, "1.2.840.113549")) != 8 ||
+		count > sizeof(buf) ||
+		derOIDEnc(buf, "1.2.840.113549") != 8 ||
 		!hexEq(buf, "06062A864886F70D") ||
 		derOIDDec(0, 0, buf, sizeof(buf)) != 8 || 
 		derOIDDec(val.oid, 0, buf, sizeof(buf)) != 8 || 
@@ -180,11 +163,9 @@ bool_t derTest()
 		derOIDDec2(buf, sizeof(buf), val.oid) != 8)
 		return FALSE;
 	// PSTR
-	count = derTPSTREnc(0, 0x42, "BYCA0000");
-	if (count != 10)
-		return FALSE;
-	ASSERT(count <= sizeof(buf));
-	if (derTPSTREnc(buf, 0x42, "BYCA0000") != 10 ||
+	if ((count = derTPSTREnc(0, 0x42, "BYCA0000")) != 10 ||
+		count > sizeof(buf) ||
+		derTPSTREnc(buf, 0x42, "BYCA0000") != 10 ||
 		!hexEq(buf, "42084259434130303030") ||
 		derTPSTRDec(0, 0, buf, sizeof(buf), 0x42) != 10 ||
 		derPSTRDec(0, 0, buf, sizeof(buf)) != SIZE_MAX ||
@@ -203,10 +184,9 @@ bool_t derTest()
 		derStep(derSEQEncStart(Seq1, 0, count), count);
 		derStep(derNULLEnc(0), count);
 		derStep(derSEQEncStop(0, count, Seq1), count);
-		if (count != 4)
+		if (count != 4 || count > sizeof(buf))
 			return FALSE;
 		// кодировать
-		ASSERT(count <= sizeof(buf));
 		count = 0;
 		derStep(derSEQEncStart(Seq1, buf, count), count);
 		derStep(derNULLEnc(buf + count), count);

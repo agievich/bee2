@@ -4,7 +4,7 @@
 \brief Tests for prime numbers
 \project bee2/test
 \created 2014.07.07
-\version 2023.03.29
+\version 2023.03.30
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -42,24 +42,23 @@ bool_t priTest()
 	for (i = 0; i < priBaseSize(); ++i)
 	{
 		a[0] = priBasePrime(i);
-		if (!priIsPrimeW(a[0], stack) || !priIsPrime(a, 1, stack))
+		if (!priIsPrimeW(a[0], stack) ||
+			!priIsPrime(a, 1, stack))
 			return FALSE;
 	}
 	// проверить простоту числа Ферма 2^{2^5} + 1
-	if (sizeof(stack) < priIsPrime_deep(W_OF_B(32)))
-		return FALSE;
 	wwSetZero(a, W_OF_B(32));
 	wwSetBit(a, 32, 1);
 	zzAddW2(a, W_OF_B(32), 1);
-	if (priIsPrime(a, W_OF_B(32), stack) != FALSE)
+	if (sizeof(stack) < priIsPrime_deep(W_OF_B(32)) ||
+		priIsPrime(a, W_OF_B(32), stack) != FALSE)
 		return FALSE;
 	// проверить простоту 13-го числа Мерсенна 2^521 - 1
-	if (sizeof(stack) < priRMTest_deep(W_OF_B(521)))
-		return FALSE;
 	wwSetZero(a, W_OF_B(521));
 	wwSetBit(a, 521, 1);
 	zzSubW2(a, W_OF_B(521), 1);
-	if (priRMTest(a, W_OF_B(521), 20, stack) != TRUE)
+	if (sizeof(stack) < priRMTest_deep(W_OF_B(521)) ||
+		priRMTest(a, W_OF_B(521), 20, stack) != TRUE)
 		return FALSE;
 	// остатки по простым из факторной базы
 	i = MIN2(COUNT_OF(mods), priBaseSize());
@@ -70,34 +69,32 @@ bool_t priTest()
 				mods[i] != zzModW2(a, W_OF_B(521), priBasePrime(i)))
 			return FALSE;
 	// найти 2-битовое нечетное простое число
-	if (sizeof(stack) < priNextPrime_deep(1, 0))
-		return FALSE;
 	a[0] = 2;
-	if (!priNextPrime(a, a, 1, SIZE_MAX, 0, B_PER_IMPOSSIBLE, stack) ||
+	if (sizeof(stack) < priNextPrime_deep(1, 0) ||
+		!priNextPrime(a, a, 1, SIZE_MAX, 0, B_PER_IMPOSSIBLE, stack) ||
 		a[0] != 3)
 		return FALSE;
 	// найти 10-битовое нечетное простое число
 	a[0] = 512;
-	if (!priNextPrime(a, a, 1, SIZE_MAX, 0, B_PER_IMPOSSIBLE, stack) ||
+	if (sizeof(stack) < priNextPrime_deep(1, 0) ||
+		!priNextPrime(a, a, 1, SIZE_MAX, 0, B_PER_IMPOSSIBLE, stack) ||
 		a[0] != 521)
 		return FALSE;
 	// найти следующее 10-битовое нечетное простое число
-	if (sizeof(stack) < priNextPrimeW_deep())
-		return FALSE;
-	if (!priNextPrimeW(a, ++a[0], stack) || a[0] != 523)
+	if (sizeof(stack) < priNextPrimeW_deep() ||
+		!priNextPrimeW(a, ++a[0], stack) ||
+		a[0] != 523)
 		return FALSE;
 	// убедиться, что 2^256 - 400 не является гладким
-	if (sizeof(stack) < priIsSmooth_deep(W_OF_B(256)))
-		return FALSE;
 	memSet(a, 0xFF, O_OF_B(256));
 	zzSubW2(a, W_OF_B(256), 400);
-	if (priIsSmooth(a, W_OF_B(256), priBaseSize(), stack))
+	if (sizeof(stack) < priIsSmooth_deep(W_OF_B(256)) ||
+		priIsSmooth(a, W_OF_B(256), priBaseSize(), stack))
 		return FALSE;
 	// найти простое число 2^256 - 357
 	if (priBaseSize() < 10 ||
-		sizeof(stack) < priNextPrime_deep(W_OF_B(256), 10))
-		return FALSE;
-	if (!priNextPrime(a, a, W_OF_B(256), 50, 10, B_PER_IMPOSSIBLE, stack) ||
+		sizeof(stack) < priNextPrime_deep(W_OF_B(256), 10) ||
+		!priNextPrime(a, a, W_OF_B(256), 50, 10, B_PER_IMPOSSIBLE, stack) ||
 		a[0] != WORD_MAX - 356 ||
 		!wwIsRepW(a + 1, W_OF_B(256) - 1, WORD_MAX))
 		return FALSE;
@@ -110,30 +107,30 @@ bool_t priTest()
 	// построить 289-битовое простое вида 2r(2^256 - 189) + 1
 	if (priBaseSize() < 10 ||
 		sizeof(stack) < priExtendPrime_deep(289, W_OF_B(256), 0) ||
-		sizeof(stack) < priIsPrime_deep(W_OF_B(256)))
-		return FALSE;
-	if (!priExtendPrime(p, 289, a, W_OF_B(256), SIZE_MAX, 0, prngCOMBOStepR, 
-		combo_state, stack) || !priIsPrime(p, W_OF_B(289), stack))
+		!priExtendPrime(p, 289, a, W_OF_B(256), SIZE_MAX, 0, prngCOMBOStepR, 
+			combo_state, stack) ||
+		sizeof(stack) < priIsPrime_deep(W_OF_B(256)) ||
+		!priIsPrime(p, W_OF_B(289), stack))
 		return FALSE;
 	// удостовериться, что в интервале (2^256 - 188, 2^256 - 1) нет простых
 	zzAddW2(a, W_OF_B(256), 1);
-	if (priNextPrime(a, a, W_OF_B(256), 200, 0, B_PER_IMPOSSIBLE, stack))
+	if (sizeof(stack) < priNextPrime_deep(W_OF_B(256), 200) ||
+		priNextPrime(a, a, W_OF_B(256), 200, 0, B_PER_IMPOSSIBLE, stack))
 		return FALSE;
 	// проверить, что 2^256 - 29237 является простым Жермен
-	if (sizeof(stack) < priIsSieved_deep(10) ||
-		sizeof(stack) < priIsSGPrime_deep(W_OF_B(256)))
-		return FALSE;
 	memSet(a, 0xFF, O_OF_B(256));
 	a[0] = WORD_MAX - 29236;
-	if (!priIsSieved(a, W_OF_B(256), 10, stack) || 
+	if (sizeof(stack) < priIsSieved_deep(10) ||
+		sizeof(stack) < priIsSGPrime_deep(W_OF_B(256)) ||
+		!priIsSieved(a, W_OF_B(256), 10, stack) ||
 		!priIsSGPrime(a, W_OF_B(256), stack) != 0)
 		return FALSE;
 	// построить простое 23 = 2 * 11 + 1 (за одну попытку)
-	if (sizeof(stack) < priExtendPrime_deep(5, 1, 10))
-		return FALSE;
 	a[0] = 11;
-	if (!priExtendPrime(p, 5, a, 1, SIZE_MAX, 0, 
-		prngCOMBOStepR, combo_state, stack) || p[0] != 23)
+	if (sizeof(stack) < priExtendPrime_deep(5, 1, 10) ||
+		!priExtendPrime(p, 5, a, 1, SIZE_MAX, 0,
+			prngCOMBOStepR, combo_state, stack) ||
+		p[0] != 23)
 		return FALSE;
 	// все нормально
 	return TRUE;

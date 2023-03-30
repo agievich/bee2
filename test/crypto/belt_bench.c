@@ -4,7 +4,7 @@
 \brief Benchmarks for STB 34.101.31 (belt)
 \project bee2/test
 \created 2014.11.18
-\version 2023.03.29
+\version 2023.03.30
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -120,7 +120,6 @@ bool_t beltBench()
 		(unsigned)(ticks / 1024 / reps),
 		(unsigned)tmSpeed(reps, ticks));
 	// cкорость belt-hash
-	ASSERT(beltHash_keep() <= sizeof(belt_state));
 	beltHashStart(belt_state);
 	for (i = 0, ticks = tmTicks(); i < reps; ++i)
 		beltHashStepH(buf, 1024, belt_state);

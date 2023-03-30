@@ -343,7 +343,10 @@ bool_t bakeDemo()
 	octet keya[32];
 	octet keyb[32];
 	// подготовить память
-	if (sizeof(echoa) < prngEcho_keep())
+	if (sizeof(echoa) < prngEcho_keep() ||
+		sizeof(file_data) < strLen(_bmqv_data) / 2 ||
+		sizeof(file_data) < strLen(_bsts_data) / 2 ||
+		sizeof(file_data) < strLen(_bpace_data) / 2)
 		return FALSE;
 	// загрузить долговременные параметры
 	if (bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK)
@@ -370,7 +373,6 @@ bool_t bakeDemo()
 	// тест Б.2
 	hexTo(randa, _bmqv_randa);
 	hexTo(randb, _bmqv_randb);
-	ASSERT(sizeof(file_data) >= sizeof(_bmqv_data) / 2);
 	hexTo(file_data, _bmqv_data);
 	if (fileCreate(filea, file_data, strlen(_bmqv_data) / 2) != ERR_OK ||
 		fileCreate(fileb, file_data, strlen(_bmqv_data) / 2) != ERR_OK)
@@ -390,7 +392,6 @@ bool_t bakeDemo()
 	// тест Б.3
 	hexTo(randa, _bsts_randa);
 	hexTo(randb, _bsts_randb);
-	ASSERT(sizeof(file_data) >= strlen(_bsts_data) / 2);
 	hexTo(file_data, _bsts_data);
 	if (fileCreate(filea, file_data, strlen(_bsts_data) / 2) != ERR_OK ||
 		fileCreate(fileb, file_data, strlen(_bsts_data) / 2) != ERR_OK)
@@ -410,7 +411,6 @@ bool_t bakeDemo()
 	// тест Б.4
 	hexTo(randa, _bpace_randa);
 	hexTo(randb, _bpace_randb);
-	ASSERT(sizeof(file_data) >= strlen(_bsts_data) / 2);
 	hexTo(file_data, _bpace_data);
 	if (fileCreate(filea, file_data, strlen(_bpace_data) / 2) != ERR_OK ||
 		fileCreate(fileb, file_data, strlen(_bpace_data) / 2) != ERR_OK)
