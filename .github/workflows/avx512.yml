@@ -1,0 +1,34 @@
+# Build and run tests using the AVX-512 instruction set
+
+name: avx512
+
+on:
+  push:
+    branches: arch
+  pull_request:
+    branches: arch
+
+jobs:
+  run:
+    name: Build and test
+    runs-on: ubuntu-latest
+    env:
+      SDE_URL: https://downloadmirror.intel.com/732268
+      SDE_NAME: sde-external-9.7.0-2022-05-09-lin
+    steps:
+    - name: Get source
+      uses: actions/checkout@v3
+    - name: Configure CMake
+      run: >
+        CC=gcc cmake -B ${{github.workspace}}/build 
+        -DCMAKE_BUILD_TYPE=Debug
+        -DBASH_PLATFORM=BASH_AVX512
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build
+    - name: Download SDE
+      run: |
+        curl --output sde.tar.xz $SDE_URL/$SDE_NAME.tar.xz
+        tar -xf sde.tar.xz
+    - name: Run tests
+      run:
+        $SDE_NAME/sde64 -spr -- build/test/testbee2
