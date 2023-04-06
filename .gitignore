@@ -65,3 +65,4 @@
 .tools
 build
 clear.cmd
+build_*

@@ -1,0 +1,76 @@
+{
+  "group": {
+    "default": {
+      "targets": [
+        "fedora",
+        "debian"
+      ]
+    }
+  },
+  "target": {
+    "fedora": {
+      "context": ".",
+      "dockerfile": "dockerfiles/rawhide.Dockerfile",
+      "tags": [
+        "docker.io/btls/fedora:cdev"
+      ],
+      "platforms": [
+        "linux/amd64",
+        "linux/arm64",
+        "linux/ppc64le",
+        "linux/s390x"
+      ],
+      "output": [
+        "type=registry"
+      ]
+    },
+    "debian": {
+      "context": ".",
+      "dockerfile": "dockerfiles/debian.Dockerfile",
+      "tags": [
+        "docker.io/btls/debian:cdev"
+      ],
+      "platforms": [
+        "linux/386",
+        "linux/amd64",
+        "linux/arm/v7",
+        "linux/arm64",
+        "linux/mips64le",
+        "linux/ppc64le",
+        "linux/s390x"       
+      ],
+      "output": [
+        "type=registry"
+      ]
+    },
+    "bee2d": {
+      "context": ".",
+      "dockerfile": "dockerfiles/bee2d.Dockerfile",
+      "tags": [
+        "bee2:debian"
+      ],
+      "platforms": [
+        "linux/386",
+        "linux/amd64",
+        "linux/arm/v7",
+        "linux/arm64",
+        "linux/mips64le",
+        "linux/ppc64le",
+        "linux/s390x" 
+      ]
+    },
+    "bee2f": {
+      "context": ".",
+      "dockerfile": "dockerfiles/bee2f.Dockerfile",
+      "tags": [
+        "bee2:fedora"
+      ],
+      "platforms": [
+        "linux/amd64",
+        "linux/arm64",
+        "linux/ppc64le",
+        "linux/s390x"
+      ]
+    }
+  }
+}
