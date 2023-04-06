@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.79 (btok)
 \project bee2/test
 \created 2022.07.07
-\version 2023.03.07
+\version 2023.03.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -112,9 +112,12 @@ static bool_t btokCVCTest()
 	octet privkey0[64];
 	octet privkey1[48];
 	octet privkey2[32];
-	octet cert0[400]; size_t cert0_len;
-	octet cert1[400]; size_t cert1_len;
-	octet cert2[400]; size_t cert2_len;
+	octet cert0[400];
+	size_t cert0_len, cert0_len1;
+	octet cert1[400];
+	size_t cert1_len, cert1_len1;
+	octet cert2[400];
+	size_t cert2_len, cert2_len1;
 	// запустить ГПСЧ
 	prngEchoStart(echo, beltH(), 256);
 	// определить максимальную длину сертификата
@@ -136,17 +139,19 @@ static bool_t btokCVCTest()
 	if (btokCVCWrap(0, 0, cvc0, privkey0, 64) != ERR_OK)
 		return FALSE;
 	cvc0->pubkey_len = 0;
-	if (btokCVCWrap(0, &cert0_len, cvc0, privkey0, 64) != ERR_OK)
+	if (btokCVCWrap(0, &cert0_len, cvc0, privkey0, 64) != ERR_OK ||
+		cert0_len != 365 || cert0_len > sizeof(cert0))
 		return FALSE;
-	ASSERT(cert0_len == 365);
 	// выпустить cert0
 	memSetZero(cvc0->authority, sizeof(cvc0->authority));
 	strCopy(cvc0->authority, "BYCA0000");
 	memSetZero(cvc0->holder, sizeof(cvc0->holder));
 	strCopy(cvc0->holder, "BYCA0000");
-	if (btokCVCWrap(cert0, &cert0_len, cvc0, privkey0, 64) != ERR_OK)
+	if (btokCVCWrap(0, &cert0_len, cvc0, privkey0, 64) != ERR_OK ||
+		cert0_len > 365 || cert0_len > sizeof(cert0) ||
+		btokCVCWrap(cert0, &cert0_len1, cvc0, privkey0, 64) != ERR_OK ||
+		cert0_len1 != cert0_len)
 		return FALSE;
-	ASSERT(cert0_len < 365);
 	// разобрать cert0
 	if (btokCVCUnwrap(cvc1, cert0, cert0_len, 0, 0) != ERR_OK ||
 		btokCVCUnwrap(cvc1, cert0, cert0_len, cvc0->pubkey,
@@ -172,10 +177,11 @@ static bool_t btokCVCTest()
 		btokCVCCheck(cvc1) != ERR_OK)
 		return FALSE;
 	// создать pre-cert1 (запрос на выпуск сертификата)
-	if (btokCVCWrap(0, &cert1_len, cvc1, privkey1, 48) != ERR_OK)
-		return FALSE;
-	ASSERT(cert1_len <= sizeof(cert1));
-	if (btokCVCWrap(cert1, 0, cvc1, privkey1, 48) != ERR_OK)
+	if (btokCVCWrap(0, &cert1_len, cvc1, privkey1, 48) != ERR_OK ||
+		cert1_len > sizeof(cert1) ||
+		btokCVCWrap(cert1, 0, cvc1, privkey1, 48) != ERR_OK ||
+		btokCVCWrap(cert1, &cert1_len1, cvc1, privkey1, 48) != ERR_OK ||
+		cert1_len1 != cert1_len)
 		return FALSE;
 	// разобрать pre-cert1:
 	// - извлечь открытый ключ,
@@ -188,10 +194,10 @@ static bool_t btokCVCTest()
 		!strEq(cvc1->authority, cvc0->holder))
 		return FALSE;
 	// создать cert1
-	if (btokCVCWrap(0, &cert1_len, cvc1, privkey0, 64) != ERR_OK)
-		return FALSE;
-	ASSERT(cert1_len <= sizeof(cert1));
-	if (btokCVCWrap(cert1, &cert1_len, cvc1, privkey0, 64) != ERR_OK)
+	if (btokCVCWrap(0, &cert1_len, cvc1, privkey0, 64) != ERR_OK ||
+		cert1_len > sizeof(cert1) ||
+		btokCVCWrap(cert1, &cert1_len1, cvc1, privkey0, 64) != ERR_OK ||
+		cert1_len1 != cert1_len)
 		return FALSE;
 	// составить cvc2
 	memSetZero(cvc2, sizeof(btok_cvc_t));
@@ -212,10 +218,13 @@ static bool_t btokCVCTest()
 			privkey1, 48) == ERR_OK ||
 		btokCVCIss(cert2, &cert2_len, cvc2, cert1, cert1_len,
 			privkey1, 48 + 1) == ERR_OK ||
-		btokCVCIss(cert2, &cert2_len, cvc2, cert1, cert1_len,
-			privkey1, 48) != ERR_OK)
+		btokCVCIss(0, &cert2_len, cvc2, cert1, cert1_len,
+			privkey1, 48) != ERR_OK ||
+		cert2_len > sizeof(cert2) ||
+		btokCVCIss(cert2, &cert2_len1, cvc2, cert1, cert1_len,
+			privkey1, 48) != ERR_OK ||
+		cert2_len1 != cert2_len)
 		return FALSE;
-	ASSERT(cert2_len <= sizeof(cert2));
 	// проверить сертификаты
 	if (btokCVCVal(cert1, cert1_len, cert0, cert0_len, 0) != ERR_OK ||
 		btokCVCVal(cert2, cert2_len, cert1, cert1_len, 0) != ERR_OK ||
@@ -244,11 +253,13 @@ static bool_t btokSMTest()
 	apdu_resp_t* resp = (apdu_resp_t*)(stack + 2 * 1024);
 	apdu_resp_t* resp1 = (apdu_resp_t*)(stack + 3 * 1024);
 	octet apdu[1024];
-	size_t count;
-	size_t size;
+	size_t count, count1;
+	size_t size, size1;
+	// подготовить состояния
+	if (sizeof(state_t) < btokSM_keep() ||
+		sizeof(state_ct) < btokSM_keep())
+		return FALSE;
 	// запустить SM
-	ASSERT(btokSM_keep() <= sizeof(state_t));
-	ASSERT(btokSM_keep() <= sizeof(state_ct));
 	btokSMStart(state_t, beltH());
 	btokSMStart(state_ct, beltH());
 	// обработка команды без защиты
@@ -334,25 +345,31 @@ static bool_t btokSMTest()
 		for (cmd->rdf_len = 0; cmd->rdf_len <= 257; ++cmd->rdf_len)
 		{
 			btokSMCtrInc(state_t);
-			if (btokSMCmdWrap(apdu, &count, cmd, state_t) != ERR_OK)
+			if (btokSMCmdWrap(apdu, &count, cmd, state_t) != ERR_OK ||
+				count > sizeof(apdu) ||
+				btokSMCmdWrap(apdu, &count1, cmd, state_t) != ERR_OK ||
+				count1 != count)
 				return FALSE;
-			ASSERT(count < sizeof(apdu));
 			btokSMCtrInc(state_ct);
-			if (btokSMCmdUnwrap(cmd1, &size, apdu, count, state_ct) != ERR_OK)
-				return FALSE;
-			ASSERT(size < sizeof(stack) / 4);
-			if (!memEq(cmd, cmd1, size))
+			if (btokSMCmdUnwrap(0, &size, apdu, count, state_ct) != ERR_OK ||
+				size > sizeof(stack) / 4 ||
+				btokSMCmdUnwrap(cmd1, &size1, apdu, count, state_ct)
+					!= ERR_OK ||
+				size1 != size || !memEq(cmd, cmd1, size))
 				return FALSE;
 			resp->rdf_len = cmd->rdf_len;
 			btokSMCtrInc(state_ct);
-			if (btokSMRespWrap(apdu, &count, resp, state_ct) != ERR_OK)
+			if (btokSMRespWrap(0, &count, resp, state_ct) != ERR_OK ||
+				count > sizeof(apdu) ||
+				btokSMRespWrap(apdu, &count1, resp, state_ct) != ERR_OK ||
+				count1 != count)
 				return FALSE;
-			ASSERT(count < sizeof(apdu));
 			btokSMCtrInc(state_t);
-			if (btokSMRespUnwrap(resp1, &size, apdu, count, state_t) != ERR_OK)
-				return FALSE;
-			ASSERT(size < sizeof(stack) / 4);
-			if (!memEq(resp, resp1, size))
+			if (btokSMRespUnwrap(0, &size, apdu, count, state_t) != ERR_OK ||
+				size > sizeof(stack) / 4 ||
+				btokSMRespUnwrap(resp1, &size1, apdu, count, state_t)
+					!= ERR_OK ||
+				size1 != size || !memEq(resp, resp1, size))
 				return FALSE;
 		}
 	// все хорошо
@@ -425,8 +442,11 @@ bool_t btokBAUTHTest()
 	// загрузить долговременные параметры
 	if (bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK)
 		return FALSE;
-	// настроить генераторы
-	ASSERT(prngEcho_keep() <= sizeof(echoa));
+	// подготовить память
+	if (sizeof(echoa) < prngEcho_keep() ||
+		sizeof(statea) < btokBAuthT_keep(128) ||
+		sizeof(stateb) < btokBAuthCT_keep(128))
+		return FALSE;
 	// загрузить личные ключи
 	hexTo(da, _da);
 	hexTo(db, _db);
@@ -455,8 +475,6 @@ bool_t btokBAUTHTest()
 	prngEchoStart(echoa, beltH(), 128);
 	prngEchoStart(echob, beltH() + 128, 128);
 	// инициализация
-	ASSERT(btokBAuthT_keep(params->l) <= sizeof(statea));
-	ASSERT(btokBAuthCT_keep(params->l) <= sizeof(stateb));
 	if (btokBAuthTStart(statea, params, settingsa, da, certa) != ERR_OK ||
 		btokBAuthCTStart(stateb, params, settingsb, db, certb) != ERR_OK)
 		return FALSE;
@@ -489,8 +507,6 @@ bool_t btokBAUTHTest()
 	prngEchoStart(echoa, beltH(), 128);
 	prngEchoStart(echob, beltH() + 128, 128);
 	// инициализация
-	ASSERT(btokBAuthT_keep(params->l) <= sizeof(statea));
-	ASSERT(btokBAuthCT_keep(params->l) <= sizeof(stateb));
 	if (btokBAuthTStart(statea, params, settingsa, da, certa) != ERR_OK ||
 		btokBAuthCTStart(stateb, params, settingsb, db, certb) != ERR_OK)
 		return FALSE;

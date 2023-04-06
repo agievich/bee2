@@ -4,7 +4,7 @@
 \brief Tests for compound objects
 \project bee2/test
 \created 2013.04.16
-\version 2015.04.25
+\version 2023.03.30
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -59,7 +59,8 @@ bool_t objTest()
 	obj2->p2 = obj2->a2;
 	memSet(obj2->a2, 0x22, sizeof(obj2->a2));
 	// подготовить буфер
-	ASSERT(sizeof(buf) >= objKeep(obj1) + 2 * objKeep(obj2));
+	if (sizeof(buf) < objKeep(obj1) + 2 * objKeep(obj2))
+		return FALSE;
 	memSetZero(buf, sizeof(buf));
 	// копировать obj2 в buf
 	objCopy(buf, obj2);

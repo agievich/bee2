@@ -4,9 +4,9 @@ name: coverage
 
 on:
   push:
-    branches: [ "master" ]
+    branches: master
   pull_request:
-    branches: [ "master" ]
+    branches: master
 
 jobs:
   run:
@@ -18,7 +18,9 @@ jobs:
     - name: Get source
       uses: actions/checkout@v3
     - name: Configure CMake
-      run: CC=gcc cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Coverage
+      run: >
+        CC=gcc cmake -B ${{github.workspace}}/build 
+        -DCMAKE_BUILD_TYPE=Coverage
     - name: Build
       run: cmake --build ${{github.workspace}}/build
     - name: Run tests

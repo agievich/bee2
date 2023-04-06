@@ -4,7 +4,7 @@
 \brief Benchmarks for STB 34.101.31 (belt)
 \project bee2/test
 \created 2014.11.18
-\version 2020.06.23
+\version 2023.03.30
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -35,14 +35,26 @@ bool_t beltBench()
 	octet hash[32];
 	size_t i;
 	tm_ticks_t ticks;
+	// подготовить стек
+	if (sizeof(combo_state) < prngCOMBO_keep() ||
+		sizeof(belt_state) < utilMax(10,
+			beltECB_keep(),
+			beltCBC_keep(),
+			beltCFB_keep(),
+			beltCTR_keep(),
+			beltMAC_keep(),
+			beltDWP_keep(),
+			beltCHE_keep(),
+			beltHash_keep(),
+			beltBDE_keep(),
+			beltSDE_keep()))
+		return FALSE;
 	// псевдослучайная генерация объектов
-	ASSERT(prngCOMBO_keep() <= sizeof(combo_state));
 	prngCOMBOStart(combo_state, utilNonce32());
 	prngCOMBOStepR(buf, sizeof(buf), combo_state);
 	prngCOMBOStepR(key, sizeof(key), combo_state);
 	prngCOMBOStepR(iv, sizeof(iv), combo_state);
 	// cкорость belt-ecb
-	ASSERT(beltECB_keep() <= sizeof(belt_state));
 	beltECBStart(belt_state, key, 32);
 	for (i = 0, ticks = tmTicks(); i < reps; ++i)
 		beltECBStepE(buf, 1024, belt_state),
@@ -52,7 +64,6 @@ bool_t beltBench()
 		(unsigned)(ticks / 2048 / reps),
 		(unsigned)tmSpeed(2 * reps, ticks));
 	// cкорость belt-cbc
-	ASSERT(beltCFB_keep() <= sizeof(belt_state));
 	beltCBCStart(belt_state, key, 32, iv);
 	for (i = 0, ticks = tmTicks(); i < reps; ++i)
 		beltCBCStepE(buf, 1024, belt_state),
@@ -62,7 +73,6 @@ bool_t beltBench()
 		(unsigned)(ticks / 2048 / reps),
 		(unsigned)tmSpeed(2 * reps, ticks));
 	// cкорость belt-cfb
-	ASSERT(beltCFB_keep() <= sizeof(belt_state));
 	beltCFBStart(belt_state, key, 32, iv);
 	for (i = 0, ticks = tmTicks(); i < reps; ++i)
 		beltCFBStepE(buf, 1024, belt_state),
@@ -72,7 +82,6 @@ bool_t beltBench()
 		(unsigned)(ticks / 2048 / reps),
 		(unsigned)tmSpeed(2 * reps, ticks));
 	// cкорость belt-ctr
-	ASSERT(beltCTR_keep() <= sizeof(belt_state));
 	beltCTRStart(belt_state, key, 32, iv);
 	for (i = 0, ticks = tmTicks(); i < reps; ++i)
 		beltCTRStepE(buf, 1024, belt_state),
@@ -82,7 +91,6 @@ bool_t beltBench()
 		(unsigned)(ticks / 2048 / reps),
 		(unsigned)tmSpeed(2 * reps, ticks));
 	// cкорость belt-mac
-	ASSERT(beltMAC_keep() <= sizeof(belt_state));
 	beltMACStart(belt_state, key, 32);
 	for (i = 0, ticks = tmTicks(); i < reps; ++i)
 		beltMACStepA(buf, 1024, belt_state);
@@ -92,7 +100,6 @@ bool_t beltBench()
 		(unsigned)(ticks / 1024 / reps),
 		(unsigned)tmSpeed(reps, ticks));
 	// cкорость belt-dwp
-	ASSERT(beltDWP_keep() <= sizeof(belt_state));
 	beltDWPStart(belt_state, key, 32, iv);
 	for (i = 0, ticks = tmTicks(); i < reps; ++i)
 		beltDWPStepE(buf, 1024, belt_state),
@@ -102,8 +109,17 @@ bool_t beltBench()
 	printf("beltBench::belt-dwp:  %3u cpb [%5u kBytes/sec]\n",
 		(unsigned)(ticks / 1024 / reps),
 		(unsigned)tmSpeed(reps, ticks));
+	// cкорость belt-che
+	beltCHEStart(belt_state, key, 32, iv);
+	for (i = 0, ticks = tmTicks(); i < reps; ++i)
+		beltCHEStepE(buf, 1024, belt_state),
+		beltCHEStepA(buf, 1024, belt_state);
+	beltCHEStepG(hash, belt_state);
+	ticks = tmTicks() - ticks;
+	printf("beltBench::belt-che:  %3u cpb [%5u kBytes/sec]\n",
+		(unsigned)(ticks / 1024 / reps),
+		(unsigned)tmSpeed(reps, ticks));
 	// cкорость belt-hash
-	ASSERT(beltHash_keep() <= sizeof(belt_state));
 	beltHashStart(belt_state);
 	for (i = 0, ticks = tmTicks(); i < reps; ++i)
 		beltHashStepH(buf, 1024, belt_state);
@@ -112,6 +128,24 @@ bool_t beltBench()
 	printf("beltBench::belt-hash: %3u cpb [%5u kBytes/sec]\n",
 		(unsigned)(ticks / 1024 / reps),
 		(unsigned)tmSpeed(reps, ticks));
+	// cкорость belt-bde
+	beltBDEStart(belt_state, key, 32, iv);
+	for (i = 0, ticks = tmTicks(); i < reps; ++i)
+		beltBDEStepE(buf, 1024, belt_state),
+		beltBDEStepD(buf, 1024, belt_state);
+	ticks = tmTicks() - ticks;
+	printf("beltBench::belt-bde:  %3u cpb [%5u kBytes/sec]\n",
+		(unsigned)(ticks / 2048 / reps),
+		(unsigned)tmSpeed(2 * reps, ticks));
+	// cкорость belt-sde
+	beltSDEStart(belt_state, key, 32);
+	for (i = 0, ticks = tmTicks(); i < reps; ++i)
+		beltSDEStepE(buf, 1024, iv, belt_state),
+		beltSDEStepD(buf, 1024, iv, belt_state);
+	ticks = tmTicks() - ticks;
+	printf("beltBench::belt-sde:  %3u cpb [%5u kBytes/sec]\n",
+		(unsigned)(ticks / 2048 / reps),
+		(unsigned)tmSpeed(2 * reps, ticks));
 	// все нормально
 	return TRUE;
 }

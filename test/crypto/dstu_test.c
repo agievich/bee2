@@ -4,7 +4,7 @@
 \brief Tests for DSTU 4145-2002 (Ukraine)
 \project bee2/test
 \created 2012.03.01
-\version 2016.07.15
+\version 2023.03.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -47,6 +47,10 @@ bool_t dstuTest()
 	octet sig[2 * DSTU_SIZE];
 	size_t ld;
 	octet state[512];
+	// подготовить память
+	if (sizeof(state) < prngEcho_keep() ||
+		sizeof(state) < prngCOMBO_keep())
+		return FALSE;
 	// тест Б.1 [загрузка параметров]
 	if (dstuStdParams(params, "1.2.804.2.1.1.1.1.3.1.1.1.2.0") != ERR_OK ||
 		dstuValParams(params) != ERR_OK)
@@ -55,7 +59,6 @@ bool_t dstuTest()
 	hexToRev(buf, 
 		"0183F60FDF7951FF47D67193F8D073790C1C"
 		"9B5A3E");
-	ASSERT(sizeof(state) >= prngEcho_keep());
 	prngEchoStart(state, buf, memNonZeroSize(params->n, O_OF_B(163)));
 	if (dstuGenKeypair(privkey, pubkey, params, prngEchoStepR, 
 			state) != ERR_OK ||
@@ -92,7 +95,6 @@ bool_t dstuTest()
 	if (dstuVerify(params, ld, hash, 21, sig, pubkey) == ERR_OK)
 		return FALSE;
 	// создать генератор COMBO
-	ASSERT(sizeof(state) >= prngCOMBO_keep());
 	prngCOMBOStart(state, utilNonce32());
 	// максимальная длина ЭЦП
 	ld = B_OF_O(2 * DSTU_SIZE);

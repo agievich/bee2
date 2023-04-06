@@ -4,7 +4,7 @@
 \brief Tests for multiple-precision unsigned integers
 \project bee2/test
 \created 2014.07.15
-\version 2023.02.10
+\version 2023.03.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -37,8 +37,10 @@ static bool_t zzTestAdd()
 	ASSERT(COUNT_OF(b) >= n);
 	ASSERT(COUNT_OF(c) >= n);
 	ASSERT(COUNT_OF(c1) >= n);
+	// подготовить память
+	if (sizeof(combo_state) < prngCOMBO_keep())
+		return FALSE;
 	// инициализировать генератор COMBO
-	ASSERT(prngCOMBO_keep() <= sizeof(combo_state));
 	prngCOMBOStart(combo_state, utilNonce32());
 	// сложение / вычитание
 	for (reps = 0; reps < 500; ++reps)
@@ -124,12 +126,15 @@ static bool_t zzTestMul()
 	ASSERT(COUNT_OF(c1) >= 2 * n);
 	ASSERT(COUNT_OF(b1) >= n + 1);
 	ASSERT(COUNT_OF(r1) >= n);
-	ASSERT(zzMul_deep(n, n) <= sizeof(stack));
-	ASSERT(zzSqr_deep(n) <= sizeof(stack));
-	ASSERT(zzDiv_deep(2 * n, n) <= sizeof(stack));
-	ASSERT(zzMod_deep(2 * n, n) <= sizeof(stack));
+	// подготовить память
+	if (sizeof(combo_state) < prngCOMBO_keep() ||
+		sizeof(stack) < utilMax(4,
+			zzMul_deep(n, n),
+			zzSqr_deep(n),
+			zzDiv_deep(2 * n, n),
+			zzMod_deep(2 * n, n)))
+		return FALSE;
 	// инициализировать генератор COMBO
-	ASSERT(prngCOMBO_keep() <= sizeof(combo_state));
 	prngCOMBOStart(combo_state, utilNonce32());
 	// умножение / деление
 	for (reps = 0; reps < 500; ++reps)
@@ -217,18 +222,21 @@ static bool_t zzTestMod()
 	ASSERT(COUNT_OF(t) >= n);
 	ASSERT(COUNT_OF(t1) >= n);
 	ASSERT(COUNT_OF(mod) >= n);
-	ASSERT(zzPowerMod_deep(n, 1) <= sizeof(stack));
-	ASSERT(zzMulMod_deep(n) <= sizeof(stack));
-	ASSERT(zzSqrMod_deep(n) <= sizeof(stack));
-	ASSERT(zzMod_deep(n, n) <= sizeof(stack));
-	ASSERT(zzJacobi_deep(n, n) <= sizeof(stack));
-	ASSERT(zzGCD_deep(n, n) <= sizeof(stack));
-	ASSERT(zzIsCoprime_deep(n, n) <= sizeof(stack));
-	ASSERT(zzDivMod_deep(n) <= sizeof(stack));
-	ASSERT(zzInvMod_deep(n) <= sizeof(stack));
-	ASSERT(zzAlmostInvMod_deep(n) <= sizeof(stack));
+	// подготовить память
+	if (sizeof(combo_state) < prngCOMBO_keep() ||
+		sizeof(stack) < utilMax(10,
+			zzPowerMod_deep(n, 1),
+			zzMulMod_deep(n),
+			zzSqrMod_deep(n),
+			zzMod_deep(n, n),
+			zzJacobi_deep(n, n),
+			zzGCD_deep(n, n),
+			zzIsCoprime_deep(n, n),
+			zzDivMod_deep(n),
+			zzInvMod_deep(n),
+			zzAlmostInvMod_deep(n)))
+		return FALSE;
 	// инициализировать генератор COMBO
-	ASSERT(prngCOMBO_keep() <= sizeof(combo_state));
 	prngCOMBOStart(combo_state, utilNonce32());
 	// возведение в степень
 	wwRepW(mod, n, WORD_MAX);
@@ -360,12 +368,15 @@ static bool_t zzTestGCD()
 	ASSERT(COUNT_OF(t1) >= 2 * n);
 	ASSERT(COUNT_OF(p) >= 2 * n);
 	ASSERT(COUNT_OF(p1) >= 3 * n);
-	ASSERT(zzMul_deep(n, n) <= sizeof(stack));
-	ASSERT(zzGCD_deep(n, n) <= sizeof(stack));
-	ASSERT(zzLCM_deep(n, n) <= sizeof(stack));
-	ASSERT(zzExGCD_deep(n, n) <= sizeof(stack));
+	// подготовить память
+	if (sizeof(combo_state) < prngCOMBO_keep() ||
+		sizeof(stack) < utilMax(4,
+			zzMul_deep(n, n),
+			zzGCD_deep(n, n),
+			zzLCM_deep(n, n),
+			zzExGCD_deep(n, n)))
+		return FALSE;
 	// инициализировать генератор COMBO
-	ASSERT(prngCOMBO_keep() <= sizeof(combo_state));
 	prngCOMBOStart(combo_state, utilNonce32());
 	// эксперименты
 	for (reps = 0; reps < 100; ++reps)
@@ -415,14 +426,17 @@ static bool_t zzTestRed()
 	ASSERT(COUNT_OF(t) >= 2 * n);
 	ASSERT(COUNT_OF(t1) >= 2 * n);
 	ASSERT(COUNT_OF(mod) >= n);
-	ASSERT(zzRed_deep(n) <= sizeof(stack));
-	ASSERT(zzRedCrand_deep(n) <= sizeof(stack));
-	ASSERT(zzRedBarrStart_deep(n) <= sizeof(stack));
-	ASSERT(zzRedBarr_deep(n) <= sizeof(stack));
-	ASSERT(zzRedMont_deep(n) <= sizeof(stack));
-	ASSERT(zzRedCrandMont_deep(n) <= sizeof(stack));
+	// подготовить память
+	if (sizeof(combo_state) < prngCOMBO_keep() ||
+		sizeof(stack) < utilMax(6,
+			zzRed_deep(n),
+			zzRedCrand_deep(n),
+			zzRedBarrStart_deep(n),
+			zzRedBarr_deep(n),
+			zzRedMont_deep(n),
+			zzRedCrandMont_deep(n)))
+		return FALSE;
 	// инициализировать генератор COMBO
-	ASSERT(prngCOMBO_keep() <= sizeof(combo_state));
 	prngCOMBOStart(combo_state, utilNonce32());
 	// редукция
 	for (reps = 0; reps < 500; ++reps)
@@ -507,11 +521,14 @@ static bool_t zzTestEtc()
 	ASSERT(COUNT_OF(a) >= n);
 	ASSERT(COUNT_OF(b) >= 2 * n);
 	ASSERT(COUNT_OF(t) >= (2 * n + 1) / 2);
-	ASSERT(zzSqr_deep(n) <= sizeof(stack));
-	ASSERT(zzSqrt_deep(n) <= sizeof(stack));
-	ASSERT(zzJacobi_deep(2 * n, n) <= sizeof(stack));
+	// подготовить память
+	if (sizeof(combo_state) < prngCOMBO_keep() ||
+		sizeof(stack) < utilMax(3,
+			zzSqr_deep(n),
+			zzSqrt_deep(n),
+			zzJacobi_deep(2 * n, n)))
+		return FALSE;
 	// инициализировать генератор COMBO
-	ASSERT(prngCOMBO_keep() <= sizeof(combo_state));
 	prngCOMBOStart(combo_state, utilNonce32());
 	// символ Якоби
 	for (reps = 0; reps < 500; ++reps)

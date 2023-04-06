@@ -1,11 +1,13 @@
 # Build and run tests on the Mac OS x64 platform
 
 name: macos
+
 on:
   push:
     branches: arch
   pull_request:
     branches: arch
+
 jobs:
   build:
     name: Build and test
@@ -31,7 +33,11 @@ jobs:
         gcc --version
         clang --version
     - name: Configure CMake
-      run: CC=${{matrix.CC}} cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} -DBUILD_FAST=${{matrix.BUILD_FAST}} -DBASH_PLATFORM=${{matrix.BASH_PLATFORM}} 
+      run: >
+        CC=${{matrix.CC}} cmake -B ${{github.workspace}}/build 
+        -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} 
+        -DBUILD_FAST=${{matrix.BUILD_FAST}} 
+        -DBASH_PLATFORM=${{matrix.BASH_PLATFORM}} 
     - name: Build
       run: cmake --build ${{github.workspace}}/build 
     - name: Test

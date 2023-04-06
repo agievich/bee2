@@ -4,7 +4,7 @@
 \brief Benchmarks for STB 34.101.77 (bash)
 \project bee2/test
 \created 2014.07.15
-\version 2020.06.23
+\version 2023.03.30
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -35,8 +35,13 @@ bool_t bashBench()
 	octet buf[1024];
 	octet hash[64];
 	size_t l, d;
+	// подготовить память
+	if (sizeof(belt_state) < beltHash_keep() ||
+		sizeof(bash_state) < bashPrg_keep() ||
+		sizeof(bash_state) < bashHash_keep() ||
+		sizeof(combo_state) < prngCOMBO_keep())
+		return FALSE;
 	// заполнить buf псевдослучайными числами
-	ASSERT(prngCOMBO_keep() <= sizeof(combo_state));
 	prngCOMBOStart(combo_state, utilNonce32());
 	prngCOMBOStepR(buf, sizeof(buf), combo_state);
 	// платформа
@@ -47,7 +52,6 @@ bool_t bashBench()
 		size_t i;
 		tm_ticks_t ticks;
 		// эксперимент c belt
-		ASSERT(beltHash_keep() <= sizeof(belt_state));
 		beltHashStart(belt_state);
 		for (i = 0, ticks = tmTicks(); i < reps; ++i)
 			beltHashStepH(buf, sizeof(buf), belt_state);
@@ -57,7 +61,6 @@ bool_t bashBench()
 			(unsigned)(ticks / 1024 / reps),
 			(unsigned)tmSpeed(reps, ticks));
 		// эксперимент c bashHashLLL
-		ASSERT(bashHash_keep() <= sizeof(bash_state));
 		for (l = 128; l <= 256; l += 64)
 		{
 			bashHashStart(bash_state, l);
@@ -71,7 +74,6 @@ bool_t bashBench()
 				(unsigned)tmSpeed(reps, ticks));
 		}
 		// эксперимент с bash-prg-hashLLLD
-		ASSERT(bashPrg_keep() <= sizeof(bash_state));
 		for (l = 128; l <= 256; l += 64)
 		for (d = 1; d <= 2; ++d)
 		{
@@ -87,7 +89,6 @@ bool_t bashBench()
 				(unsigned)tmSpeed(reps, ticks));
 		}
 		// эксперимент с bash-prg-aeLLLD
-		ASSERT(bashPrg_keep() <= sizeof(bash_state));
 		for (l = 128; l <= 256; l += 64)
 		for (d = 1; d <= 2; ++d)
 		{

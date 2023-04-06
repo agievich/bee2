@@ -4,7 +4,7 @@
 \brief STB 34.101.66 (bake): authenticated key establishment (AKE) protocols
 \project bee2 [cryptographic library]
 \created 2014.04.14
-\version 2023.03.20
+\version 2023.03.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -1122,7 +1122,6 @@ err_t bakeBSTSStep5(const octet in[], size_t in_len, bake_certval_i valb,
 	word* Qb;			/* [2 * n] */
 	word* sb;			/* [n] */
 	octet* block1;		/* [16] (совпадает с Qb) */
-	octet* Tb;			/* [8] (следует за block1) */
 	void* stack;
 	// проверить входные данные
 	if (!objIsOperable(s))
@@ -1137,8 +1136,6 @@ err_t bakeBSTSStep5(const octet in[], size_t in_len, bake_certval_i valb,
 	sb = Qb + 2 * n;
 	stack = sb + n;
 	block1 = (octet*)Qb;
-	Tb = block1 + 16;
-	ASSERT(Tb + 8 <= (octet*)stack);
 	// Tb == beltMAC(Yb || 1^128, K1)?
 	memSet(block1, 0xFF, 16);
 	beltMACStart(stack, s->K1, 32);

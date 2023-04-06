@@ -1,0 +1,43 @@
+# Build and run tests on different architectures
+# \thanks https://github.com/uraimo/run-on-arch-action
+
+name: arch
+
+on:
+  push:
+    branches: arch
+  pull_request:
+    branches: arch
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+        - arch: aarch64
+          distro: ubuntu_latest
+          BASH_PLATFORM: BASH_NEON
+        - arch: s390x
+          distro: ubuntu_latest
+          BASH_PLATFORM: BASH_64
+    steps:
+    - name: Get source
+      uses: actions/checkout@v3
+    - name: Build and run
+      uses: uraimo/run-on-arch-action@v2
+      with:
+        arch: ${{matrix.arch}}
+        distro: ${{matrix.distro}}
+        # this speeds up builds
+        githubToken: ${{github.token}}
+        install: |
+          apt-get update -q -y
+          apt-get install -q -y cmake
+        run: |
+          cmake -B ${{github.workspace}}/build \
+            -DBASH_PLATFORM=${{matrix.BASH_PLATFORM}} 
+          cmake --build ${{github.workspace}}/build
+          cd ${{github.workspace}}/build
+          ./test/testbee2 

@@ -4,7 +4,7 @@
 \brief Tests for GOST R 34.10-2012 (Russia)
 \project bee2/test
 \created 2014.04.07
-\version 2016.07.15
+\version 2023.03.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -34,6 +34,10 @@ bool_t g12sTest()
 	octet hash[64];
 	octet sig[2 * G12S_ORDER_SIZE];
 	octet echo[64];
+	// подготовить память
+	if (sizeof(echo) < prngEcho_keep() ||
+		sizeof(echo) < prngCOMBO_keep())
+		return FALSE;
 	// тест A.1 [загрузка параметров]
 	if (g12sStdParams(params, "1.2.643.2.2.35.0") != ERR_OK ||
 		g12sValParams(params) != ERR_OK)
@@ -42,7 +46,6 @@ bool_t g12sTest()
 	hexToRev(buf, 
 		"7A929ADE789BB9BE10ED359DD39A72C1"
 		"1B60961F49397EEE1D19CE9891EC3B28");
-	ASSERT(sizeof(echo) >= prngEcho_keep());
 	prngEchoStart(echo, buf, 32);
 	if (g12sGenKeypair(privkey, pubkey, params, prngEchoStepR, echo) 
 		!= ERR_OK ||
@@ -83,7 +86,6 @@ bool_t g12sTest()
 		"3091A0E8514669700EE7508E508B1020"
 		"72E8123B2200A0563322DAD2827E2714"
 		"A2636B7BFD18AADFC62967821FA18DD4");
-	ASSERT(sizeof(echo) >= prngEcho_keep());
 	prngEchoStart(echo, buf, 64);
 	if (g12sGenKeypair(privkey, pubkey, params, prngEchoStepR, echo) 
 		!= ERR_OK ||

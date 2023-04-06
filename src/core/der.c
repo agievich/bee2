@@ -4,7 +4,7 @@
 \brief Distinguished Encoding Rules
 \project bee2 [cryptographic library]
 \created 2014.04.21
-\version 2023.03.20
+\version 2023.03.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -987,9 +987,8 @@ size_t derTSEQEncStart(der_anchor_t* anchor, octet der[], size_t pos, u32 tag)
 {
 	ASSERT(memIsValid(anchor, sizeof(der_anchor_t)));
 	// проверить тег
-	if (!derTIsValid(tag))
+	if (!derTIsValid(tag) || !derTIsConstructive(tag))
 		return SIZE_MAX;
-	ASSERT(derTIsConstructive(tag));
 	// бросить якорь
 	anchor->der = der;
 	anchor->pos = pos;
@@ -1035,7 +1034,9 @@ size_t derTSEQDecStart(der_anchor_t* anchor, const octet der[], size_t count,
 	size_t l_count;
 	// pre
 	ASSERT(memIsValid(anchor, sizeof(der_anchor_t)));
-	ASSERT(derTIsConstructive(tag));
+	// проверить тег
+	if (!derTIsConstructive(tag))
+		return SIZE_MAX;
 	// бросить якорь
 	anchor->der = der;
 	// декодировать тег

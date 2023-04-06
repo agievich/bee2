@@ -100,6 +100,9 @@ bool_t pfokTest()
 	octet vb[O_OF_B(638)];
 	octet yb[O_OF_B(638)];
 	octet key[32];
+	// подготовить память
+	if (sizeof(combo_state) < prngCOMBO_keep())
+		return FALSE;
 	// тест PFOK.GENP.1
 	if (!pfokTestTestParams())
 		return FALSE;
@@ -131,7 +134,6 @@ bool_t pfokTest()
 	if (pfokStdParams(params, 0, "test") != ERR_OK)
 		return FALSE;
 	// сгенерировать ключи
-	ASSERT(prngCOMBO_keep() <= sizeof(combo_state));
 	prngCOMBOStart(combo_state, utilNonce32());
 	if (pfokGenKeypair(ua, vb, params, prngCOMBOStepR, combo_state) != ERR_OK ||
 		pfokValPubkey(params, vb) != ERR_OK ||

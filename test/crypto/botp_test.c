@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.47/botp
 \project bee2/test
 \created 2015.11.06
-\version 2023.03.20
+\version 2023.03.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -36,10 +36,12 @@ bool_t botpTest()
 	char s_str[136];
 	tm_time_t t;
 	octet state[2048];
-	// создать стек
-	ASSERT(sizeof(state) >= botpHOTP_keep());
-	ASSERT(sizeof(state) >= botpTOTP_keep());
-	ASSERT(sizeof(state) >= botpOCRA_keep());
+	// подготовить память
+	if (sizeof(state) < utilMax(3,
+		botpHOTP_keep(),
+		botpTOTP_keep(),
+		botpOCRA_keep()))
+		return FALSE;
 	// HOTP.1
 	memCopy(ctr, beltH() + 192, 8); 
 	botpHOTPStart(state, 8, beltH() + 128, 32);

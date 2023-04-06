@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2012.04.19
-\version 2023.02.02
+\version 2023.03.30
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -269,7 +269,7 @@ typedef void (*ec_sub_i)(
 	void* stack				/*!< [in] вспомогательная память */
 );
 
-/*!	\brief Вычитание аффинной точки точек
+/*!	\brief Вычитание аффинной точки
 
 	На эллиптической кривой ec определяется разность [ec->d * ec->f->n]c 
 	проективной точки [ec->d * ec->f->n]a и аффинной точки [2 * ec->f->n]b:

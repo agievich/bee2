@@ -1,11 +1,13 @@
 # Build and run tests on the Windows x64 platform
 
 name: windows
+
 on:
   push:
     branches: arch
   pull_request:
     branches: arch
+
 jobs:
   build:
     name: Build and test
@@ -26,7 +28,11 @@ jobs:
     - name: Get CMake
       uses: symbitic/install-cmake@master
     - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} -DBUILD_FAST=${{matrix.BUILD_FAST}} -DBASH_PLATFORM=${{matrix.BASH_PLATFORM}} -G "MinGW Makefiles"
+      run: > 
+        cmake -B ${{github.workspace}}/build 
+        -DCMAKE_BUILD_TYPE=${{matrix.BUILD_TYPE}} 
+        -DBUILD_FAST=${{matrix.BUILD_FAST}} 
+        -DBASH_PLATFORM=${{matrix.BASH_PLATFORM}} -G "MinGW Makefiles"
     - name: Build
       run: cmake --build ${{github.workspace}}/build 
     - name: Test
