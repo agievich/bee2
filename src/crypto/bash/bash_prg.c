@@ -4,7 +4,7 @@
 \brief STB 34.101.77 (bash): programmable algorithms
 \project bee2 [cryptographic library]
 \created 2018.10.30
-\version 2020.08.03
+\version 2023.04.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -27,7 +27,7 @@
 Данные загружаются в буфер и выгружаются из буфера блоками по buf_len октетов.
 
 В бесключевом режиме память содержит 2dl битов, в ключевом -- (l + dl/2) битов.
-Эти факты используются в функции bashPrgIsKeymode() для проверки того, что
+Эти факты используются в макросе bashPrgIsKeymode() для проверки того, что
 автомат находится в ключевом режиме.
 
 Первый бит памяти является контрольным -- он инвертируется в bashPrgCommit().
@@ -71,17 +71,15 @@ size_t bashPrg_keep()
 
 /*
 *******************************************************************************
-Вспомогательные функции
+Вспомогательные макросы
+
+\remark bashPrgIsKeymode: (192 - buf_len) ==? (l + d * l / 2) / 8
 *******************************************************************************
 */
 
-static bool_t bashPrgIsKeymode(const void* state)
-{
-	const bash_prg_st* st = (const bash_prg_st*)state;
-	ASSERT(memIsValid(st, bashPrg_keep()));
-	// (192 - buf_len) ==? (l + d * l / 2) / 8
-	return 16 * (192 - st->buf_len) == st->l * (2 + st->d);
-}
+#define bashPrgIsKeymode(state)\
+	(16 * (192 - ((const bash_prg_st*)state)->buf_len) == \
+		((const bash_prg_st*)state)->l * (2 + ((const bash_prg_st*)state)->d))
 
 /*
 *******************************************************************************
