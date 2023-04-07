@@ -41,7 +41,7 @@ Contributors*
 - Uladzimir Palukha
   - code review
 - Mikhail Mitskevich
-  - build scripts, Github Actions
+  - build scripts, Github Actions, Docker
   - license issues
 - Alexander Zhirkevich
   - cmd/sig, cmd/rng, cmd/test
