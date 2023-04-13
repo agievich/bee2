@@ -11,12 +11,12 @@ RUN rm -rf ./build_gcc; mkdir build_gcc
 RUN rm -rf ./build_clang; mkdir build_clang
 
 WORKDIR /usr/src/build_gcc
-RUN cmake ..
+RUN CC=gcc cmake ..
 RUN make
 RUN ctest --verbose
 
 WORKDIR /usr/src/build_clang
-RUN cmake ..
+RUN CC=clang cmake ..
 RUN make
 RUN ctest --verbose
 
