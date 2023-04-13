@@ -4,7 +4,7 @@
 \brief Multithreading
 \project bee2 [cryptographic library]
 \created 2014.10.10
-\version 2021.05.18
+\version 2023.04.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -247,7 +247,7 @@ size_t mtAtomicDecr(size_t* ctr)
 }
 
 size_t mtAtomicCmpSwap(size_t* ctr, size_t cmp, size_t swap)
-{mtMtxTryLock
+{
 	return InterlockedCompareExchange16(ctr, swap, cmp);
 }
 
@@ -258,8 +258,6 @@ size_t mtAtomicCmpSwap(size_t* ctr, size_t cmp, size_t swap)
 #endif // O_PER_S
 
 #elif defined OS_UNIX
-
-#include <time.h>
 
 size_t mtAtomicIncr(size_t* ctr)
 {
