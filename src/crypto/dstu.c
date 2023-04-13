@@ -4,7 +4,7 @@
 \brief DSTU 4145-2002 (Ukraine): digital signature algorithms
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2016.04.22
+\version 2023.04.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -551,7 +551,7 @@ err_t dstuValParams(const dstu_params* params)
 {
 	err_t code;
 	// состояние
-	ec_o* ec;
+	ec_o* ec = 0;
 	void* stack;
 	// старт
 	code = _dstuCreateEc(&ec, params, _dstuValParams_deep);
@@ -589,7 +589,7 @@ err_t dstuGenPoint(octet point[], const dstu_params* params, gen_i rng,
 {
 	err_t code;
 	// состояние
-	ec_o* ec;
+	ec_o* ec = 0;
 	word* x;
 	word* y;
 	word* t;
@@ -653,7 +653,7 @@ err_t dstuValPoint(const dstu_params* params, const octet point[])
 {
 	err_t code;
 	// состояние
-	ec_o* ec;
+	ec_o* ec = 0;
 	word* x;
 	word* y;
 	void* stack;
@@ -692,7 +692,7 @@ err_t dstuCompressPoint(octet xpoint[], const dstu_params* params,
 {
 	err_t code;
 	// состояние
-	ec_o* ec;
+	ec_o* ec = 0;
 	word* x;
 	word* y;
 	void* stack;
@@ -749,7 +749,7 @@ err_t dstuRecoverPoint(octet point[], const dstu_params* params,
 	err_t code;
 	register bool_t trace;
 	// состояние
-	ec_o* ec;
+	ec_o* ec = 0;
 	word* x;
 	word* y;
 	void* stack;
@@ -840,7 +840,7 @@ err_t dstuGenKeypair(octet privkey[], octet pubkey[],
 	err_t code;
 	size_t order_n, order_no, order_nb;
 	// состояние
-	ec_o* ec;
+	ec_o* ec = 0;
 	word* d;
 	word* x;
 	word* y;
@@ -920,7 +920,7 @@ err_t dstuSign(octet sig[], const dstu_params* params, size_t ld,
 	err_t code;
 	size_t order_n, order_no, order_nb;
 	// состояние
-	ec_o* ec;
+	ec_o* ec = 0;
 	word* e;		/* эфемерный лк */
 	word* h;		/* хэш-значение как элемент поля */
 	word* x;		/* х-координата эфемерного ок */
@@ -1037,7 +1037,7 @@ err_t dstuVerify(const dstu_params* params, size_t ld, const octet hash[],
 	err_t code;
 	size_t order_n, order_no, order_nb, i;
 	// состояние
-	ec_o* ec;
+	ec_o* ec = 0;
 	word* h;		/* хэш-значение как элемент поля */
 	word* x;		/* х-координата эфемерного ок */
 	word* y;		/* y-координата эфемерного ок */

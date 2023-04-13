@@ -4,7 +4,7 @@
 \brief GOST R 34.10-94 (Russia): digital signature algorithms
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2016.04.22
+\version 2023.04.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -719,7 +719,7 @@ err_t g12sValParams(const g12s_params* params)
 {
 	err_t code;
 	// состояние
-	ec_o* ec;
+	ec_o* ec = 0;
 	void* stack;
 	// старт
 	code = g12sCreateEc(&ec, params, g12sValParams_deep);
@@ -758,7 +758,7 @@ err_t g12sGenKeypair(octet privkey[], octet pubkey[],
 	err_t code;
 	size_t m, mo;
 	// состояние
-	ec_o* ec;
+	ec_o* ec = 0;
 	word* d;				/* [m] личный ключ */
 	word* Q;				/* [2n] открытый ключ */	
 	void* stack;
@@ -826,7 +826,7 @@ err_t g12sSign(octet sig[], const g12s_params* params, const octet hash[],
 	err_t code;
 	size_t m, mo;
 	// состояние
-	ec_o* ec;
+	ec_o* ec = 0;
 	word* d;		/* [m] личный ключ */
 	word* e;		/* [m] обработанное хэш-значение */
 	word* k;		/* [m] одноразовый ключ */
@@ -933,7 +933,7 @@ err_t g12sVerify(const g12s_params* params, const octet hash[],
 	err_t code;
 	size_t m, mo;
 	// состояние
-	ec_o* ec;
+	ec_o* ec = 0;
 	word* Q;		/* [2n] открытый ключ / точка R */
 	word* r;		/* [m] первая (старшая) часть подписи */
 	word* s;		/* [m] вторая часть подписи */
