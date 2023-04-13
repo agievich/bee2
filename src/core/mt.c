@@ -204,51 +204,63 @@ pthread_mutex_trylock() (<pthread.h>) и TryEnterCriticalSection() (WinAPI).
 
 size_t mtAtomicIncr(size_t* ctr)
 {
-	return InterlockedIncrement64(ctr);
+	ASSERT(memIsAligned(ctr, O_PER_S));
+	return InterlockedIncrement64((i64 volatile*)ctr);
 }
 
 size_t mtAtomicDecr(size_t* ctr)
 {
-	return InterlockedDecrement64(ctr);
+	ASSERT(memIsAligned(ctr, O_PER_S));
+	return InterlockedDecrement64((i64 volatile*)ctr);
 }
 
 size_t mtAtomicCmpSwap(size_t* ctr, size_t cmp, size_t swap)
 {
-	return InterlockedCompareExchange64(ctr, swap, cmp);
+	ASSERT(memIsAligned(ctr, O_PER_S));
+	return InterlockedCompareExchange64((i64 volatile*)ctr,
+		(i64)swap, (i64)cmp);
 }
 
 #elif (O_PER_S == 4)
 
 size_t mtAtomicIncr(size_t* ctr)
 {
-	return InterlockedIncrement(ctr);
+	ASSERT(memIsAligned(ctr, O_PER_S));
+	return InterlockedIncrement((i32 volatile*)ctr);
 }
 
 size_t mtAtomicDecr(size_t* ctr)
 {
-	return InterlockedDecrement(ctr);
+	ASSERT(memIsAligned(ctr, O_PER_S));
+	return InterlockedDecrement((i32 volatile*)ctr);
 }
 
 size_t mtAtomicCmpSwap(size_t* ctr, size_t cmp, size_t swap)
 {
-	return InterlockedCompareExchange(ctr, swap, cmp);
+	ASSERT(memIsAligned(ctr, O_PER_S));
+	return InterlockedCompareExchange((i32 volatile*)ctr,
+		(i32)swap, (i32)cmp);
 }
 
 #elif (O_PER_S == 2)
 
 size_t mtAtomicIncr(size_t* ctr)
 {
-	return InterlockedIncrement16(ctr);
+	ASSERT(memIsAligned(ctr, O_PER_S));
+	return InterlockedIncrement16((i16 volatile*)ctr);
 }
 
 size_t mtAtomicDecr(size_t* ctr)
 {
-	return InterlockedDecrement16(ctr);
+	ASSERT(memIsAligned(ctr, O_PER_S));
+	return InterlockedDecrement16((i16 volatile*)ctr);
 }
 
 size_t mtAtomicCmpSwap(size_t* ctr, size_t cmp, size_t swap)
 {
-	return InterlockedCompareExchange16(ctr, swap, cmp);
+	ASSERT(memIsAligned(ctr, O_PER_S));
+	return InterlockedCompareExchange16((i16 volatile*)ctr,
+		(i16)swap, (i16)cmp);
 }
 
 #else
