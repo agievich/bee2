@@ -4,7 +4,7 @@
 \brief Time and timers
 \project bee2 [cryptographic library]
 \created 2012.05.10
-\version 2023.03.28
+\version 2023.04.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -186,7 +186,12 @@ tm_time_t tmTimeRound(tm_time_t t0, tm_time_t ts)
 */
 
 #if defined(OS_WIN)
-#define localtime_r(et, lt) (localtime_s(lt, et) ? 0 : lt)
+
+static struct tm* localtime_r(const time_t* timep, struct tm* result)
+{
+	return localtime_s(result, timep) ? 0 : result;
+}
+
 #endif
 
 bool_t tmDate(size_t* y, size_t* m, size_t* d)
