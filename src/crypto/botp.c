@@ -4,7 +4,7 @@
 \brief STB 34.101.47/botp: OTP algorithms
 \project bee2 [cryptographic library]
 \created 2015.11.02
-\version 2020.03.24
+\version 2023.04.21
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -115,7 +115,7 @@ typedef struct
 	octet ctr[8];		/*< счетчик */
 	octet ctr1[8];		/*< копия счетчика */
 	octet mac[32];		/*< имитовставка */
-	char otp[10];		/*< текущий пароль */
+	char otp[16];		/*< текущий пароль */
 	octet stack[];		/*< [2 * beltHMAC_deep()] */
 } botp_hotp_st;
 
@@ -239,7 +239,7 @@ typedef struct
 	size_t digit;		/*< число цифр в пароле */
 	octet t[8];			/*< округленная отметка времени */
 	octet mac[32];		/*< имитовставка */
-	char otp[10];		/*< текущий пароль */
+	char otp[16];		/*< текущий пароль */
 	octet stack[];		/*< [2 * beltHMAC_deep()] */
 } botp_totp_st;
 
@@ -356,7 +356,7 @@ typedef struct botp_ocra_st
 	octet t[8];			/*< отметка времени */
 	tm_time_t ts;		/*< шаг времени */
 	octet mac[32];		/*< имитовставка */
-	char otp[10];		/*< текущий пароль */
+	char otp[16];		/*< текущий пароль */
 	octet stack[];		/*< [2 * beltHMAC_deep()] */
 } botp_ocra_st;
 
