@@ -175,6 +175,8 @@ test_cvc() {
     || return 1
   $bee2cmd cvc val -date 400101 cert0 cert1 cert2 \
     && return 1
+  $bee2cmd cvc val cert0 cert1 cert2 \
+    || return 1
   return 0
 }
 

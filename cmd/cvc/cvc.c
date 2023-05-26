@@ -4,7 +4,7 @@
 \brief Manage CV-certificates
 \project bee2/cmd 
 \created 2022.07.12
-\version 2023.03.20
+\version 2023.05.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -621,6 +621,9 @@ static err_t cvcIss(int argc, char* argv[])
 Проверка
 
 cvc val options <certa> <certb> ... <cert>
+
+\remark Дата проверки, указанная в options, касается только последнего
+сертификата цепочки -- дата должна попадать в срок действия сертификата.
 *******************************************************************************
 */
 
@@ -644,10 +647,6 @@ static err_t cvcVal(int argc, char* argv[])
 	argc -= readc, argv += readc;
 	if (argc < 2)
 		code = ERR_CMD_PARAMS;
-	ERR_CALL_CHECK(code);
-	// обработать дату
-	if (memIsZero(date, 6) && !tmDate2(date))
-		code = ERR_BAD_TIMER;
 	ERR_CALL_CHECK(code);
 	// проверить наличие/отсутствие файлов
 	code = cmdFileValExist(argc, argv);
@@ -679,8 +678,10 @@ static err_t cvcVal(int argc, char* argv[])
 		code = cmdFileReadAll(cert, &cert_len, *argv);
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		// проверить очередной сертификат
-		code = btokCVCVal2(cvc1, cert, cert_len, cvc, 
-			argc == 0 ? date : 0);
+		if (argc == 0 && !memIsZero(date, 6))
+			code = btokCVCVal2(cvc1, cert, cert_len, cvc, date);
+		else 
+			code = btokCVCVal2(cvc1, cert, cert_len, cvc, 0);
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		// подготовиться к проверке следующего сертификата
 		memCopy(cvc, cvc1, sizeof(btok_cvc_t));

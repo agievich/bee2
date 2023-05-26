@@ -247,6 +247,9 @@ if %ERRORLEVEL% neq 0 goto Error
 bee2cmd cvc val -date 400101 cert0 cert1 cert2
 if %ERRORLEVEL% equ 0 goto Error
 
+bee2cmd cvc val cert0 cert1 cert2
+if %ERRORLEVEL% neq 0 goto Error
+
 echo ****** OK
 
 rem ===========================================================================
