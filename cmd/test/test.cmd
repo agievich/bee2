@@ -3,7 +3,7 @@ rem ===========================================================================
 rem \brief Testing command-line interface
 rem \project bee2evp/cmd
 rem \created 2022.06.24
-rem \version 2023.03.16
+rem \version 2023.05.26
 rem ===========================================================================
 
 rem ===========================================================================
@@ -188,14 +188,14 @@ echo ****** Testing bee2cmd/cvc...
 del /q cert0 cert1 cert2 req1 req2 2> nul
 
 bee2cmd cvc root -authority BYCA0000 -from 220707 -until 990707 ^
--pass pass:root -eid EEEEEEEEEE -esign 7777 privkey0 cert0
+  -pass pass:root -eid EEEEEEEEEE -esign 7777 privkey0 cert0
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd cvc print cert0
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd cvc req -authority BYCA0000 -holder BYCA1000 -from 220712 ^
--until 221130 -pass pass:trent -eid DDDDDDDDDD -esign 3333 privkey1 req1
+  -until 221130 -pass pass:trent -eid DDDDDDDDDD -esign 3333 privkey1 req1
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd cvc print req1
@@ -208,7 +208,7 @@ bee2cmd cvc print cert1
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd cvc req -authority BYCA1000 -holder "590082394654" -from 220712 ^
--until 391231 -pass pass:alice -eid 8888888888 -esign 1111 privkey2 req2
+  -until 391231 -pass pass:alice -eid 8888888888 -esign 1111 privkey2 req2
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd cvc iss -pass pass:trent privkey1 cert1 req2 cert2
@@ -280,7 +280,12 @@ if %ERRORLEVEL% equ 0 goto Error
 
 del /q ss 1> nul
 
-bee2cmd sig sign -certs "cert2 cert1" -pass pass:alice privkey2 ff ss
+bee2cmd sig sign -certs "cert2 cert1" -date 400101 -pass pass:alice ^
+  privkey2 ff ss
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd sig sign -certs "cert2 cert1" -date 230526 -pass pass:alice ^
+  privkey2 ff ss
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd sig vfy -pubkey pubkey2 ff ss
@@ -324,7 +329,7 @@ if %ERRORLEVEL% neq 0 goto Error
 bee2cmd sig vfy -anchor cert1 ff ss
 if %ERRORLEVEL% equ 0 goto Error
 
-bee2cmd sig sign -pass pass:alice privkey2 ff ff
+bee2cmd sig sign -pass pass:alice -date 230526 privkey2 ff ff
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd sig vfy -pubkey pubkey2 ff ff

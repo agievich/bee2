@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: managing CV-certificates
 \project bee2/cmd
 \created 2022.08.20
-\version 2022.10.25
+\version 2023.05.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -51,8 +51,8 @@ err_t cmdCVCPrint(btok_cvc_t* cvc)
 	ASSERT(cvc->sig_len <= 96);
 	hexFrom(hex, cvc->sig, cvc->sig_len);
 	printf(
-		"from = 20%c%c-%c%c-%c%c\n"
-		"until = 20%c%c-%c%c-%c%c\n"
+		"from = %c%c%c%c%c%c\n"
+		"until = %c%c%c%c%c%c\n"
 		"sig = %s\n",
 		cvc->from[0] + '0', cvc->from[1] + '0',
 		cvc->from[2] + '0', cvc->from[3] + '0',

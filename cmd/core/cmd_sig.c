@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: signing files
 \project bee2/cmd
 \created 2022.08.20
-\version 2023.03.15
+\version 2023.05.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -69,7 +69,8 @@ static bool_t cmdSigSeemsValid(const cmd_sig_t* sig)
 			return FALSE;
 		cert += cert_len, certs_len -= cert_len;
 	}
-	return TRUE;
+	// проверить дату
+	return memIsZero(sig->date, 6) || tmDateIsValid2(sig->date);
 }
 
 static size_t cmdSigEnc(octet buf[], const cmd_sig_t* sig)
@@ -82,6 +83,9 @@ static size_t cmdSigEnc(octet buf[], const cmd_sig_t* sig)
 	derEncStep(derSEQEncStart(Signature, buf, count), buf, count);
 	// ...сертификаты...
 	derEncStep(derEnc(buf, 0x30, sig->certs, sig->certs_len), buf, count);
+	// ...дата...
+	if (!memIsZero(sig->date, 6))
+		derEncStep(derOCTEnc(buf, sig->date, 6), buf, count);
 	// ...подпись...
 	derEncStep(derOCTEnc(buf, sig->sig, sig->sig_len), buf, count);
 	// ...завершить кодирование
@@ -106,6 +110,10 @@ static size_t cmdSigDec(cmd_sig_t* sig, const octet der[], size_t count)
 	if (len > sizeof(sig->certs))
 		return SIZE_MAX;
 	memCopy(sig->certs, val, sig->certs_len = len);
+	// ...дата...
+	memSetZero(sig->date, 6);
+	if (derOCTDec2(0, ptr, count, 6) != SIZE_MAX)
+		derDecStep(derOCTDec2(sig->date, ptr, count, 6), ptr, count);
 	// ...подпись...
 	if (derOCTDec2(0, ptr, count, sig->sig_len = 48) == SIZE_MAX &&
 		derOCTDec2(0, ptr, count, sig->sig_len = 72) == SIZE_MAX &&
@@ -255,15 +263,15 @@ static err_t cmdSigRead(cmd_sig_t* sig, size_t* der_len, const char* file)
 *******************************************************************************
 Хэширование файла
 
-Хэшируется содержимое file без заключительных drop октетов и цепочка
-сертификатов [certs_len]certs, т.е. буфер
-  file[:-drop] || [certs_len]certs.
+Хэшируются содержимое file без заключительных drop октетов,
+цепочка сертификатов [certs_len]certs и дата date, т.е. буфер
+  file[:-drop] || [certs_len]certs || [6]date.
 Алгоритм хэширования определяется по длине возвращаемого хэш-значения.
 *******************************************************************************
 */
 
 static err_t cmdSigHash(octet hash[], size_t hash_len, const char* file,
-	size_t drop, const octet certs[], size_t certs_len)
+	size_t drop, const octet certs[], size_t certs_len, const octet date[6])
 {
 	const size_t buf_size = 4096;
 	err_t code;
@@ -316,11 +324,13 @@ static err_t cmdSigHash(octet hash[], size_t hash_len, const char* file,
 	if (hash_len == 32)
 	{
 		beltHashStepH(certs, certs_len, hash_state);
+		beltHashStepH(date, 6, hash_state);
 		beltHashStepG(hash, hash_state);
 	}
 	else
 	{
 		bashHashStepH(certs, certs_len, hash_state);
+		beltHashStepH(date, 6, hash_state);
 		bashHashStepG(hash, hash_len, hash_state);
 	}
 	cmdBlobClose(stack);
@@ -375,8 +385,11 @@ static err_t cmdSigCertsVal(const cmd_sig_t* sig)
 			ASSERT(cert_len != SIZE_MAX);
 			certs_len -= cert_len;
 		}
-		// проверить пару
-		code = btokCVCVal2(cvc, cert, cert_len, cvca, 0);
+		// проверить пару сертификатов
+		if (cert == sig->certs && !memIsZero(sig->date, 6))
+			code = btokCVCVal2(cvc, cert, cert_len, cvca, sig->date);
+		else
+			code = btokCVCVal2(cvc, cert, cert_len, cvca, 0);
 		ERR_CALL_CHECK(code);
 		// издатель <- эмитент
 		certa = cert, certa_len = cert_len;
@@ -503,7 +516,7 @@ static err_t cmdSigCertsMatch(const cmd_sig_t* sig, const octet privkey[],
 */
 
 err_t cmdSigSign(const char* sig_file, const char* file, const char* certs,
-	const octet privkey[], size_t privkey_len)
+	const octet date[6], const octet privkey[], size_t privkey_len)
 {
 	err_t code;
 	void* stack;
@@ -517,8 +530,11 @@ err_t cmdSigSign(const char* sig_file, const char* file, const char* certs,
 	// входной контроль
 	if (!strIsValid(sig_file) || !strIsValid(file) ||
 		!(privkey_len == 32 || privkey_len == 48 || privkey_len == 64) ||
+		!memIsValid(date, 6) ||
 		!memIsValid(privkey, privkey_len))
 		return ERR_BAD_INPUT;
+	if (!memIsZero(date, 6) && !tmDateIsValid2(date))
+		return ERR_BAD_DATE;
 	// создать и разметить стек
 	code = cmdBlobCreate(stack,
 		sizeof(cmd_sig_t) + sizeof(bign_params) + oid_len + 2 * privkey_len);
@@ -528,6 +544,8 @@ err_t cmdSigSign(const char* sig_file, const char* file, const char* certs,
 	oid_der = (octet*)(params + 1);
 	hash = oid_der + 16;
 	t = hash + privkey_len;
+	// зафиксировать дату
+	memCopy(sig->date, date, 6);
 	// собрать сертификаты
 	code = cmdSigCertsCollect(sig, certs);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
@@ -539,7 +557,8 @@ err_t cmdSigSign(const char* sig_file, const char* file, const char* certs,
 	{
 		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		code = cmdSigHash(hash, 32, file, 0, sig->certs, sig->certs_len);
+		code = cmdSigHash(hash, 32, file, 0, sig->certs, sig->certs_len,
+			sig->date);
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.31.81");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
@@ -549,7 +568,8 @@ err_t cmdSigSign(const char* sig_file, const char* file, const char* certs,
 	{
 		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.2");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		code = cmdSigHash(hash, 48, file, 0, sig->certs, sig->certs_len);
+		code = cmdSigHash(hash, 48, file, 0, sig->certs, sig->certs_len, 
+			sig->date);
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.77.12");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
@@ -559,7 +579,8 @@ err_t cmdSigSign(const char* sig_file, const char* file, const char* certs,
 	{
 		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.3");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		code = cmdSigHash(hash, 64, file, 0, sig->certs, sig->certs_len);
+		code = cmdSigHash(hash, 64, file, 0, sig->certs, sig->certs_len,
+			sig->date);
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.77.13");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
@@ -645,7 +666,8 @@ err_t cmdSigVerify(const char* file, const char* sig_file,
 	{
 		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		code = cmdSigHash(hash, 32, file, der_len, sig->certs, sig->certs_len);
+		code = cmdSigHash(hash, 32, file, der_len, sig->certs, sig->certs_len,
+			sig->date);
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.31.81");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
@@ -655,7 +677,8 @@ err_t cmdSigVerify(const char* file, const char* sig_file,
 	{
 		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.2");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		code = cmdSigHash(hash, 48, file, der_len, sig->certs, sig->certs_len);
+		code = cmdSigHash(hash, 48, file, der_len, sig->certs, sig->certs_len,
+			sig->date);
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.77.12");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
@@ -665,7 +688,8 @@ err_t cmdSigVerify(const char* file, const char* sig_file,
 	{
 		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.3");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		code = cmdSigHash(hash, 64, file, der_len, sig->certs, sig->certs_len);
+		code = cmdSigHash(hash, 64, file, der_len, sig->certs, sig->certs_len,
+			sig->date);
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.77.13");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
@@ -726,7 +750,8 @@ err_t cmdSigVerify2(const char* file, const char* sig_file,
 	{
 		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		code = cmdSigHash(hash, 32, file, der_len, sig->certs, sig->certs_len);
+		code = cmdSigHash(hash, 32, file, der_len, sig->certs, sig->certs_len,
+			sig->date);
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.31.81");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
@@ -736,7 +761,8 @@ err_t cmdSigVerify2(const char* file, const char* sig_file,
 	{
 		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.2");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		code = cmdSigHash(hash, 48, file, der_len, sig->certs, sig->certs_len);
+		code = cmdSigHash(hash, 48, file, der_len, sig->certs, sig->certs_len,
+			sig->date);
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.77.12");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
@@ -746,7 +772,8 @@ err_t cmdSigVerify2(const char* file, const char* sig_file,
 	{
 		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.3");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		code = cmdSigHash(hash, 64, file, der_len, sig->certs, sig->certs_len);
+		code = cmdSigHash(hash, 64, file, der_len, sig->certs, sig->certs_len,
+			sig->date);
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.77.13");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
@@ -851,6 +878,13 @@ err_t cmdSigPrint(const char* sig_file)
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		offset += cert_len;
 	}
+	// печатать дату
+	if (!memIsZero(sig->date, 6))
+		printf(
+			"signing_date = %c%c%c%c%c%c\n",
+			sig->date[0] + '0', sig->date[1] + '0',
+			sig->date[2] + '0', sig->date[3] + '0',
+			sig->date[4] + '0', sig->date[5] + '0');
 	// печатать подпись
 	hexFrom(hex, sig->sig, sig->sig_len);
 	printf("sig = %s\n", hex);

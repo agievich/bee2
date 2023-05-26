@@ -4,7 +4,7 @@
 \brief Sign files and verify signatures
 \project bee2/cmd
 \created 2022.08.01
-\version 2023.03.15
+\version 2023.05.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -17,6 +17,7 @@
 #include <bee2/core/hex.h>
 #include <bee2/core/prng.h>
 #include <bee2/core/str.h>
+#include <bee2/core/tm.h>
 #include <bee2/core/util.h>
 #include <bee2/crypto/belt.h>
 #include <bee2/crypto/bign.h>
@@ -54,8 +55,8 @@
   bee2cmd sig vfy -pubkey pubkey2 file sig_file
   bee2cmd sig print sig_file
 [встроенная подпись]
-  bee2cmd sig sign -certs "cert2 cert1 cert0" -pass pass:alice privkey2 \
-    file file
+  bee2cmd sig sign -certs "cert2 cert1 cert0" -date 230526 -pass pass:alice \
+    privkey2 file file
   bee2cmd sig vfy -anchor cert0 file file
   bee2cmd sig vfy -pubkey pubkey2 file file
   bee2cmd sig print file
@@ -75,7 +76,7 @@ static int sigUsage()
     printf(
         "bee2cmd/%s: %s\n"
         "Usage:\n"
-        "  sig sign [-certs <certs>] -pass <scheme> <privkey> <file> <sig>\n"
+        "  sig sign options <privkey> <file> <sig>\n"
         "    sign <file> using <privkey> and store the signature in <sig>\n"
 		"  sig vfy {-pubkey <pubkey> | -anchor <anchor>} <file> <sig>\n"
 		"    verify <sig> of <file> using either <pubkey> or <anchor>\n"
@@ -90,6 +91,7 @@ static int sigUsage()
 		"    file with a trusted sertificate\n"
 		"  options:\n"
         "    -certs <certs> -- certificate chain\n"
+		"    -date <date> -- date of signing\n"
         "    -pass <scheme> -- password description\n",
         _name, _descr
     );
@@ -155,7 +157,7 @@ static err_t sigSelfTest()
 *******************************************************************************
 Выработка подписи
 
-sig sign [-certs <certs>] -pass <scheme> <file> <sig>
+sig sign [-certs <certs>] [-date] -pass <scheme> <file> <sig>
 *******************************************************************************
 */
 
@@ -163,12 +165,15 @@ static err_t sigSign(int argc, char* argv[])
 {
 	err_t code;
 	const char* certs = 0;
+	octet date[6];
 	cmd_pwd_t pwd = 0;
 	size_t privkey_len;
 	octet* privkey;
 	// самотестирование
 	code = sigSelfTest();
 	ERR_CALL_CHECK(code);
+	// без даты по умолчанию
+	memSetZero(date, 6);
 	// разобрать опции
 	while (argc && strStartsWith(*argv, "-"))
 	{
@@ -188,6 +193,34 @@ static err_t sigSign(int argc, char* argv[])
 			ASSERT(argc > 0);
 			certs = *argv;
 			++argv, --argc;
+		}
+		if (strStartsWith(*argv, "-date"))
+		{
+			if (!memIsZero(date, 6))
+			{
+				code = ERR_CMD_DUPLICATE;
+				break;
+			}
+			if (!memIsZero(date, 6))
+			{
+				code = ERR_CMD_DUPLICATE;
+				break;
+			}
+			--argc, ++argv;
+			if (strLen(*argv) != 6 || !strIsNumeric(*argv))
+			{
+				code = ERR_BAD_DATE;
+				break;
+			}
+			memCopy(date, *argv, 6);
+			date[0] -= '0', date[1] -= '0', date[2] -= '0';
+			date[3] -= '0', date[4] -= '0', date[5] -= '0';
+			if (!tmDateIsValid2(date))
+			{
+				code = ERR_BAD_DATE;
+				break;
+			}
+			--argc, ++argv;
 		}
 		else if (strStartsWith(*argv, "-pass"))
 		{
@@ -232,7 +265,7 @@ static err_t sigSign(int argc, char* argv[])
 	cmdPwdClose(pwd);
 	ERR_CALL_HANDLE(code, cmdBlobClose(privkey));
 	// подписать
-	code = cmdSigSign(argv[2], argv[1], certs, privkey, privkey_len);
+	code = cmdSigSign(argv[2], argv[1], certs, date, privkey, privkey_len);
 	// завершить
 	cmdBlobClose(privkey);
 	return code;
