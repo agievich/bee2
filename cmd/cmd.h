@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2
 \project bee2/cmd
 \created 2022.06.09
-\version 2023.05.22
+\version 2023.05.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -127,6 +127,24 @@ err_t cmdRngKbRead(
 */
 err_t cmdRngStart(
 	bool_t verbose			/*!< [in] печатать подробности */
+);
+
+/*
+*******************************************************************************
+Дата
+*******************************************************************************
+*/
+
+/*!	\brief Разбор даты
+
+	По строке str формата YYMMDD формируется дата date. При str == "000000" в
+	date устанавливается текущая дата.
+	\return ERR_OK, если строка имеет нужный формат и дата сформирована, и код
+	ошибки в противном случае.
+*/
+err_t cmdDateParse(
+	octet date[6],					/*!< [out] дата */
+	const char* str					/*!< [in] строка */
 );
 
 /*
@@ -400,7 +418,9 @@ CV-сертификаты
 	\return ERR_OK, если печать успешно выполнена, и код ошибки
 	в противном случае. 
 */
-err_t cmdCVCPrint(btok_cvc_t* cvc);
+err_t cmdCVCPrint(
+	const btok_cvc_t* cvc			/*!< [in] сертификат*/
+);
 
 /*
 *******************************************************************************

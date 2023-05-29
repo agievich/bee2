@@ -3,7 +3,7 @@
 # \brief Testing command-line interface
 # \project bee2evp/cmd
 # \created 2022.06.24
-# \version 2023.05.26
+# \version 2023.05.29
 # =============================================================================
 
 bee2cmd=./bee2cmd
@@ -132,14 +132,14 @@ test_kg() {
 }
 
 test_cvc() {
-  rm -rf cert0 cert1 cert2 req1 req2 \
+  rm -rf cert0 cert1 cert2 req1 req2 req3 \
     || return 2
   $bee2cmd cvc root -authority BYCA0000 -from 220707 -until 990707 \
     -pass pass:root -eid EEEEEEEEEE -esign 7777 privkey0 cert0 \
     || return 1
   $bee2cmd cvc print cert0 \
     || return 1
-  $bee2cmd cvc req -pass pass:trent  -authority BYCA0000 -holder BYCA1000 \
+  $bee2cmd cvc req -pass pass:trent -authority BYCA0000 -holder BYCA1000 \
     -from 220712 -until 221130 -eid DDDDDDDDDD -esign 3333 privkey1 req1 \
     || return 1
   $bee2cmd cvc print req1 \
@@ -150,6 +150,9 @@ test_cvc() {
     || return 1
   $bee2cmd cvc req -authority BYCA1000 -from 220712 -until 391231 -esign 1111 \
     -holder "590082394654" -pass pass:alice -eid 8888888888 privkey2 req2 \
+    || return 1
+  $bee2cmd cvc req -authority BYCA1000 -from 000000 -until 000000 \
+    -holder "590082394654" -pass pass:alice privkey2 req3 \
     || return 1
   $bee2cmd cvc iss -pass pass:trent privkey1 cert1 req2 cert2 \
     || return 1
@@ -174,6 +177,8 @@ test_cvc() {
   $bee2cmd cvc val -date 221201 cert0 cert1 cert2 \
     || return 1
   $bee2cmd cvc val -date 400101 cert0 cert1 cert2 \
+    && return 1
+  $bee2cmd cvc val -date cert0 cert1 cert2 \
     && return 1
   $bee2cmd cvc val cert0 cert1 cert2 \
     || return 1

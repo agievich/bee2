@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: managing CV-certificates
 \project bee2/cmd
 \created 2022.08.20
-\version 2023.05.26
+\version 2023.05.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -24,7 +24,7 @@
 *******************************************************************************
 */
 
-err_t cmdCVCPrint(btok_cvc_t* cvc)
+err_t cmdCVCPrint(const btok_cvc_t* cvc)
 {
 	err_t code;
 	char* hex;

@@ -3,7 +3,7 @@ rem ===========================================================================
 rem \brief Testing command-line interface
 rem \project bee2evp/cmd
 rem \created 2022.06.24
-rem \version 2023.05.26
+rem \version 2023.05.29
 rem ===========================================================================
 
 rem ===========================================================================
@@ -185,7 +185,7 @@ rem ===========================================================================
 
 echo ****** Testing bee2cmd/cvc...
 
-del /q cert0 cert1 cert2 req1 req2 2> nul
+del /q cert0 cert1 cert2 req1 req2 req3 2> nul
 
 bee2cmd cvc root -authority BYCA0000 -from 220707 -until 990707 ^
   -pass pass:root -eid EEEEEEEEEE -esign 7777 privkey0 cert0
@@ -209,6 +209,10 @@ if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd cvc req -authority BYCA1000 -holder "590082394654" -from 220712 ^
   -until 391231 -pass pass:alice -eid 8888888888 -esign 1111 privkey2 req2
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvc req -authority BYCA1000 -holder "590082394654" -from 000000 ^
+  -until 000000 -pass pass:alice privkey2 req3
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd cvc iss -pass pass:trent privkey1 cert1 req2 cert2
@@ -245,6 +249,9 @@ bee2cmd cvc val -date 221201 cert0 cert1 cert2
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd cvc val -date 400101 cert0 cert1 cert2
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd cvc val -date cert0 cert1 cert2
 if %ERRORLEVEL% equ 0 goto Error
 
 bee2cmd cvc val cert0 cert1 cert2

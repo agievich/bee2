@@ -52,7 +52,7 @@
   bee2cmd cvc match -pass pass:alice privkey2 cert2
   bee2cmd cvc val cert0 cert0
   bee2cmd cvc val -date 220712 cert0 cert1
-  bee2cmd cvc val -date 221201 cert0 cert1 cert2
+  bee2cmd cvc val -date 000000 cert0 cert1 cert2
 *******************************************************************************
 */
 
@@ -244,19 +244,9 @@ static err_t cvcParseOptions(btok_cvc_t* cvc, cmd_pwd_t* pwd, octet date[6],
 				break;
 			}
 			--argc, ++argv;
-			if (strLen(*argv) != 6 || !strIsNumeric(*argv))
-			{
-				code = ERR_BAD_DATE;
+			code = cmdDateParse(cvc->from, *argv);
+			if (code != ERR_OK)
 				break;
-			}
-			memCopy(cvc->from, *argv, 6);
-			cvc->from[0] -= '0', cvc->from[1] -= '0', cvc->from[2] -= '0';
-			cvc->from[3] -= '0', cvc->from[4] -= '0', cvc->from[5] -= '0';
-			if (!tmDateIsValid2(cvc->from))
-			{
-				code = ERR_BAD_DATE;
-				break;
-			}
 			--argc, ++argv;
 		}
 		// until
@@ -273,19 +263,9 @@ static err_t cvcParseOptions(btok_cvc_t* cvc, cmd_pwd_t* pwd, octet date[6],
 				break;
 			}
 			--argc, ++argv;
-			if (strLen(*argv) != 6 || !strIsNumeric(*argv))
-			{
-				code = ERR_BAD_DATE;
+			code = cmdDateParse(cvc->until, *argv);
+			if (code != ERR_OK)
 				break;
-			}
-			memCopy(cvc->until, *argv, 6);
-			cvc->until[0] -= '0', cvc->until[1] -= '0', cvc->until[2] -= '0';
-			cvc->until[3] -= '0', cvc->until[4] -= '0', cvc->until[5] -= '0';
-			if (!tmDateIsValid2(cvc->until))
-			{
-				code = ERR_BAD_DATE;
-				break;
-			}
 			--argc, ++argv;
 		}
 		// eid
@@ -366,19 +346,9 @@ static err_t cvcParseOptions(btok_cvc_t* cvc, cmd_pwd_t* pwd, octet date[6],
 				break;
 			}
 			--argc, ++argv;
-			if (strLen(*argv) != 6 || !strIsNumeric(*argv))
-			{
-				code = ERR_BAD_DATE;
+			code = cmdDateParse(date, *argv);
+			if (code != ERR_OK)
 				break;
-			}
-			memCopy(date, *argv, 6);
-			date[0] -= '0', date[1] -= '0', date[2] -= '0';
-			date[3] -= '0', date[4] -= '0', date[5] -= '0';
-			if (!tmDateIsValid2(date))
-			{
-				code = ERR_BAD_DATE;
-				break;
-			}
 			--argc, ++argv;
 		}
 		else

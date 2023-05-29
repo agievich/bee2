@@ -491,6 +491,7 @@
     <ClCompile Include="..\..\cmd\cmd_main.c" />
     <ClCompile Include="..\..\cmd\core\cmd_arg.c" />
     <ClCompile Include="..\..\cmd\core\cmd_cvc.c" />
+    <ClCompile Include="..\..\cmd\core\cmd_date.c" />
     <ClCompile Include="..\..\cmd\core\cmd_file.c" />
     <ClCompile Include="..\..\cmd\core\cmd_privkey.c" />
     <ClCompile Include="..\..\cmd\core\cmd_pwd.c" />

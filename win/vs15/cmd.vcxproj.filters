@@ -95,6 +95,9 @@
     <ClCompile Include="..\..\cmd\es\es.c">
       <Filter>Source Files\es</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\cmd\core\cmd_date.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\cmd\cmd.h">

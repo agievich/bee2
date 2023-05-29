@@ -201,25 +201,10 @@ static err_t sigSign(int argc, char* argv[])
 				code = ERR_CMD_DUPLICATE;
 				break;
 			}
-			if (!memIsZero(date, 6))
-			{
-				code = ERR_CMD_DUPLICATE;
-				break;
-			}
 			--argc, ++argv;
-			if (strLen(*argv) != 6 || !strIsNumeric(*argv))
-			{
-				code = ERR_BAD_DATE;
+			code = cmdDateParse(date, *argv);
+			if (code != ERR_OK)
 				break;
-			}
-			memCopy(date, *argv, 6);
-			date[0] -= '0', date[1] -= '0', date[2] -= '0';
-			date[3] -= '0', date[4] -= '0', date[5] -= '0';
-			if (!tmDateIsValid2(date))
-			{
-				code = ERR_BAD_DATE;
-				break;
-			}
 			--argc, ++argv;
 		}
 		else if (strStartsWith(*argv, "-pass"))
