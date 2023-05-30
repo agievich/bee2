@@ -4,7 +4,7 @@
 \brief Manage CV-certificates
 \project bee2/cmd 
 \created 2022.07.12
-\version 2023.05.26
+\version 2023.05.30
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -43,10 +43,10 @@
   bee2cmd cvc root -authority BYCA0000 -from 220707 -until 990707 \
 	-pass pass:root -eid EEEEEEEEEE -esign 7777 privkey0 cert0
   bee2cmd cvc print cert0
-  bee2cmd cvc req -pass pass:trent  -authority BYCA0000 -holder BYCA1000 \
+  bee2cmd cvc req -pass pass:trent -authority BYCA0000 -holder BYCA1023 \
 	-from 220712 -until 221130 -eid DDDDDDDDDD -esign 3333 privkey1 req1
   bee2cmd cvc iss -pass pass:root privkey0 cert0 req1 cert1
-  bee2cmd cvc req -authority BYCA1000 -from 220712 -until 391231 -esign 1111 \
+  bee2cmd cvc req -authority BYCA1023 -from 220712 -until 391231 -esign 1111 \
 	-holder "590082394654" -pass pass:alice -eid 8888888888 privkey2 req2
   bee2cmd cvc iss -pass pass:trent privkey1 cert1 req2 cert2
   bee2cmd cvc match -pass pass:alice privkey2 cert2
@@ -81,11 +81,11 @@ static int cvcUsage()
 		"    containers with private keys\n"
 		"  options:\n"
 		"    -authority <name> -- authority (issuer)  [root], req\n"
-		"    -holder <name> -- holder (owner)         [root], req\n"
-		"    -from <YYMMDD> -- starting date          root, req\n"
-		"    -until <YYMMDD> -- expiration date       root, req\n"
-		"    -eid <10*hex> -- eId access template     [root], [req]\n"
-		"    -esign <4*hex> -- eSign access template  [root], [req]\n"
+		"    -holder <name> -- holder (owner)         [root], req, [iss]\n"
+		"    -from <YYMMDD> -- starting date          root, req, [iss]\n"
+		"    -until <YYMMDD> -- expiration date       root, req, [iss]\n"
+		"    -eid <10*hex> -- eId access template     [root], [req], [iss]\n"
+		"    -esign <4*hex> -- eSign access template  [root], [req], [iss]\n"
 		"    -pass <scheme> -- password description   root, req, iss, match\n"
 		"    -date <YYMMDD> -- validation date        [val]\n",
 		_name, _descr
@@ -449,7 +449,7 @@ cvc req options <privkey> <req>
 static err_t cvcReq(int argc, char* argv[])
 {
 	err_t code;
-	btok_cvc_t cvc;
+	btok_cvc_t cvc[1];
 	cmd_pwd_t pwd;
 	int readc;
 	size_t privkey_len;
@@ -460,14 +460,14 @@ static err_t cvcReq(int argc, char* argv[])
 	code = cvcSelfTest();
 	ERR_CALL_CHECK(code);
 	// обработать опции
-	code = cvcParseOptions(&cvc, &pwd, 0, &readc, argc, argv);
+	code = cvcParseOptions(cvc, &pwd, 0, &readc, argc, argv);
 	ERR_CALL_CHECK(code);
 	argc -= readc, argv += readc;
 	if (argc != 2)
 		code = ERR_CMD_PARAMS;
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	// проверить, что authority != holder
-	if (strEq(cvc.authority, cvc.holder))
+	if (strEq(cvc->authority, cvc->holder))
 		code = ERR_BAD_NAME;
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	// проверить наличие/отсутствие файлов
@@ -485,14 +485,14 @@ static err_t cvcReq(int argc, char* argv[])
 	cmdPwdClose(pwd);
 	ERR_CALL_HANDLE(code, cmdBlobClose(privkey));
 	// определить длину предсертификата
-	ASSERT(cvc.pubkey_len == 0);
-	code = btokCVCWrap(0, &req_len, &cvc, privkey, privkey_len);
+	ASSERT(cvc->pubkey_len == 0);
+	code = btokCVCWrap(0, &req_len, cvc, privkey, privkey_len);
 	ERR_CALL_HANDLE(code, cmdBlobClose(privkey));
-	ASSERT(cvc.pubkey_len != 0);
+	ASSERT(cvc->pubkey_len != 0);
 	// создать предсертификат
 	code = cmdBlobCreate(req, req_len);
 	ERR_CALL_HANDLE(code, cmdBlobClose(privkey));
-	code = btokCVCWrap(req, 0, &cvc, privkey, privkey_len);
+	code = btokCVCWrap(req, 0, cvc, privkey, privkey_len);
 	cmdBlobClose(privkey);
 	ERR_CALL_HANDLE(code, cmdBlobClose(req));
 	// записать сертификат
@@ -507,12 +507,30 @@ static err_t cvcReq(int argc, char* argv[])
 Выпуск сертификата
 
 cvc iss options <privkeya> <certa> <req> <cert>
+
+\remark Разрешенные поля options: holder, from, until, eid, esign.
+Запрещенные поля: authority.
+
+\remark Поле holder в командной строке подавляет одноименное поле в <req>.
+Другими словами, эмитент может изменять имя владельца в его сертификате.
+Например, имеется последовательность имен, и эмитент выбирает в ней первое
+неиспользованное имя.
+
+\remark Поля from и until в командной строке подавляют одноименные поля
+в <req>. Другими словами, эмитент может изменять срок действия сертификата.
+
+\remark Поля eid и esign в командной строке накладываются побитово по правилу
+AND на одноименные поля в <req>. Другими словами, эмитент может ужесточать
+права доступа, например, в соответствии с определенной политикой доступа.
+Отсутствие поля eid или esign в командной строке означает полный отказ
+в доступе.
 *******************************************************************************
 */
 
 static err_t cvcIss(int argc, char* argv[])
 {
 	err_t code;
+	btok_cvc_t cvc0[1];
 	cmd_pwd_t pwd;
 	int readc;
 	size_t privkeya_len;
@@ -525,12 +543,18 @@ static err_t cvcIss(int argc, char* argv[])
 	octet* req;
 	octet* cert;
 	btok_cvc_t* cvc;
+	size_t pos;
 	// самотестирование
 	code = cvcSelfTest();
 	ERR_CALL_CHECK(code);
 	// обработать опции
-	code = cvcParseOptions(0, &pwd, 0, &readc, argc, argv);
+	code = cvcParseOptions(cvc0, &pwd, 0, &readc, argc, argv);
 	ERR_CALL_CHECK(code);
+	// опция authority запрещена
+	if (strLen(cvc0->authority))
+		code = ERR_CMD_PARAMS;
+	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
+	// некорректное число аргументов?
 	argc -= readc, argv += readc;
 	if (argc != 4)
 		code = ERR_CMD_PARAMS;
@@ -573,6 +597,17 @@ static err_t cvcIss(int argc, char* argv[])
 	// разобрать запрос
 	code = btokCVCUnwrap(cvc, req, req_len, cvc->pubkey, 0);
 	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(stack)));
+	// перенести в сертификат опции командной строки
+	if (strLen(cvc0->holder))
+		strCopy(cvc->holder, cvc0->holder);
+	if (!memIsZero(cvc0->from, 6))
+		memCopy(cvc->from, cvc0->from, 6);
+	if (!memIsZero(cvc0->until, 6))
+		memCopy(cvc->until, cvc0->until, 6);
+	for (pos = 0; pos < sizeof(cvc->hat_eid); ++pos)
+		cvc->hat_eid[pos] &= cvc0->hat_eid[pos];
+	for (pos = 0; pos < sizeof(cvc->hat_esign); ++pos)
+		cvc->hat_eid[pos] &= cvc0->hat_esign[pos];
 	// выпустить сертификат
 	code = btokCVCIss(cert, &cert_len, cvc, certa, certa_len, privkeya,
 		privkeya_len);
@@ -588,7 +623,7 @@ static err_t cvcIss(int argc, char* argv[])
 
 /*
 *******************************************************************************
-Проверка
+Проверка цепочки
 
 cvc val options <certa> <certb> ... <cert>
 
@@ -663,7 +698,7 @@ static err_t cvcVal(int argc, char* argv[])
 
 /*
 *******************************************************************************
-Выпуск сертификата
+Проверка соответствия между личным ключом и сертификатом
 
 cvc match options <privkey> <cert>
 *******************************************************************************

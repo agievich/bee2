@@ -3,7 +3,7 @@
 # \brief Testing command-line interface
 # \project bee2evp/cmd
 # \created 2022.06.24
-# \version 2023.05.29
+# \version 2023.05.30
 # =============================================================================
 
 bee2cmd=./bee2cmd
@@ -140,18 +140,22 @@ test_cvc() {
   $bee2cmd cvc print cert0 \
     || return 1
   $bee2cmd cvc req -pass pass:trent -authority BYCA0000 -holder BYCA1000 \
-    -from 220712 -until 221130 -eid DDDDDDDDDD -esign 3333 privkey1 req1 \
+    -from 220711 -until 221231 -eid FFFFFFFFFF -esign 7777 privkey1 req1 \
     || return 1
   $bee2cmd cvc print req1 \
     || return 1
-  $bee2cmd cvc iss -pass pass:root privkey0 cert0 req1 cert1 \
+  $bee2cmd cvc iss -authority BYCA0000 -pass pass:root privkey0 cert0 \
+    req1 cert1 \
+    && return 1
+  $bee2cmd cvc iss -from 220712 -until 221130 -holder BYCA1023 \
+    -eid DDDDDDDDDD -esign BBBB -pass pass:root privkey0 cert0 req1 cert1 \
     || return 1
   $bee2cmd cvc print cert1 \
     || return 1
-  $bee2cmd cvc req -authority BYCA1000 -from 220712 -until 391231 -esign 1111 \
+  $bee2cmd cvc req -authority BYCA1023 -from 220712 -until 391231 -esign 1111 \
     -holder "590082394654" -pass pass:alice -eid 8888888888 privkey2 req2 \
     || return 1
-  $bee2cmd cvc req -authority BYCA1000 -from 000000 -until 000000 \
+  $bee2cmd cvc req -authority BYCA1023 -from 000000 -until 000000 \
     -holder "590082394654" -pass pass:alice privkey2 req3 \
     || return 1
   $bee2cmd cvc iss -pass pass:trent privkey1 cert1 req2 cert2 \

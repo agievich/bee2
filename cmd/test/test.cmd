@@ -3,7 +3,7 @@ rem ===========================================================================
 rem \brief Testing command-line interface
 rem \project bee2evp/cmd
 rem \created 2022.06.24
-rem \version 2023.05.29
+rem \version 2023.05.30
 rem ===========================================================================
 
 rem ===========================================================================
@@ -194,24 +194,28 @@ if %ERRORLEVEL% neq 0 goto Error
 bee2cmd cvc print cert0
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd cvc req -authority BYCA0000 -holder BYCA1000 -from 220712 ^
-  -until 221130 -pass pass:trent -eid DDDDDDDDDD -esign 3333 privkey1 req1
+bee2cmd cvc req -authority BYCA0000 -holder BYCA1000 -from 220711 ^
+  -until 221231 -pass pass:trent -eid FFFFFFFFFF -esign 7777 privkey1 req1
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd cvc print req1
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd cvc iss -pass pass:root privkey0 cert0 req1 cert1
+bee2cmd cvc iss -authority BYCA0000 -pass pass:root privkey0 cert0 req1 cert1
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd cvc iss -from 220712 -until 221130 -holder BYCA1023 ^
+  -eid DDDDDDDDDD -esign BBBB -pass pass:root privkey0 cert0 req1 cert1
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd cvc print cert1
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd cvc req -authority BYCA1000 -holder "590082394654" -from 220712 ^
+bee2cmd cvc req -authority BYCA1023 -holder "590082394654" -from 220712 ^
   -until 391231 -pass pass:alice -eid 8888888888 -esign 1111 privkey2 req2
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd cvc req -authority BYCA1000 -holder "590082394654" -from 000000 ^
+bee2cmd cvc req -authority BYCA1023 -holder "590082394654" -from 000000 ^
   -until 000000 -pass pass:alice privkey2 req3
 if %ERRORLEVEL% neq 0 goto Error
 
