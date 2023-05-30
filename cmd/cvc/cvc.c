@@ -74,8 +74,8 @@ static int cvcUsage()
 		"    validate <certb> ... <cert> using <certa> as an anchor\n"
 		"  cvc match options <privkey> <cert>\n"
 		"    check the match between <privkey> and <cert>\n"
-		"  cvc print <cert>\n"
-		"    print <cert> info\n"
+		"  cvc print [-{authority|holder|from|until|eid|esign|pubkey}] <cert>\n"
+		"    print <cert> info: all fields or a specific field\n"
 		"  .\n"
 		"  <privkey>, <privkeya>\n"
 		"    containers with private keys\n"
@@ -607,7 +607,7 @@ static err_t cvcIss(int argc, char* argv[])
 	for (pos = 0; pos < sizeof(cvc->hat_eid); ++pos)
 		cvc->hat_eid[pos] &= cvc0->hat_eid[pos];
 	for (pos = 0; pos < sizeof(cvc->hat_esign); ++pos)
-		cvc->hat_eid[pos] &= cvc0->hat_esign[pos];
+		cvc->hat_esign[pos] &= cvc0->hat_esign[pos];
 	// выпустить сертификат
 	code = btokCVCIss(cert, &cert_len, cvc, certa, certa_len, privkeya,
 		privkeya_len);
@@ -755,7 +755,7 @@ static err_t cvcMatch(int argc, char* argv[])
 *******************************************************************************
 Печать
 
-cvc print <cert>
+cvc print [-{authority|holder|from|until|eid|esign|pubkey}] <cert>
 *******************************************************************************
 */
 
@@ -766,9 +766,17 @@ static err_t cvcPrint(int argc, char* argv[])
 	void* stack;
 	octet* cert;
 	btok_cvc_t* cvc;
+	const char* scope = 0;
 	// обработать опции
-	if (argc != 1)
+	if (argc < 1 || argc > 2)
 		return ERR_CMD_PARAMS;
+	if (argc == 2)
+	{
+		scope = argv[0];
+		if (strLen(scope) < 1 || scope[0] != '-')
+			return ERR_CMD_PARAMS;
+		++scope, --argc, ++argv;
+	}
 	// проверить наличие/отсутствие файлов
 	code = cmdFileValExist(1, argv);
 	ERR_CALL_CHECK(code);
@@ -787,7 +795,7 @@ static err_t cvcPrint(int argc, char* argv[])
 	code = btokCVCUnwrap(cvc, cert, cert_len, 0, 0);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// печатать содержимое
-	code = cmdCVCPrint(cvc);
+	code = cmdCVCPrint(cvc, scope);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// завершить
 	cmdBlobClose(stack);

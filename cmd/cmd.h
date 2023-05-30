@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2
 \project bee2/cmd
 \created 2022.06.09
-\version 2023.05.29
+\version 2023.05.30
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -414,12 +414,16 @@ CV-сертификаты
 
 /*!	\brief Печать CV-сертификата
 
-	Печатается содержимое CV-сертификата cvc.
+	Печатается область CV-сертификата cvc, заданная строкой scope:
+	- если scope != 0, то печатается поле с именем scope ("authority",
+	  "holder", "from", "until", "eid", "esign" или "pubkey");
+	- если scope == 0, то печатаются все поля сертификата.
 	\return ERR_OK, если печать успешно выполнена, и код ошибки
 	в противном случае. 
 */
 err_t cmdCVCPrint(
-	const btok_cvc_t* cvc			/*!< [in] сертификат*/
+	const btok_cvc_t* cvc,			/*!< [in] сертификат */
+	const char* scope				/*!< [in] область печати */
 );
 
 /*

@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: signing files
 \project bee2/cmd
 \created 2022.08.20
-\version 2023.05.26
+\version 2023.05.30
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -874,7 +874,7 @@ err_t cmdSigPrint(const char* sig_file)
 	{
 		code = cmdSigCertsGet(cvc, &cert_len, sig, offset);
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		code = cmdCVCPrint(cvc);
+		code = cmdCVCPrint(cvc, 0);
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		offset += cert_len;
 	}

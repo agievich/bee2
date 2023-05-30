@@ -166,6 +166,20 @@ test_cvc() {
     || return 1
   $bee2cmd cvc print cert2 \
     || return 1
+
+  if [ "$($bee2cmd cvc print -from cert1)" != "220712" ]; then 
+    return 1
+  fi
+  if [ "$($bee2cmd cvc print -until cert1)" != "221130" ]; then 
+    return 1
+  fi
+  if [ "$($bee2cmd cvc print -eid cert1)" != "DDDDDDDDDD" ]; then 
+    return 1
+  fi
+  if [ "$($bee2cmd cvc print -esign cert1)" != "3333" ]; then 
+    return 1
+  fi
+
   $bee2cmd cvc val cert0 cert0 \
     || return 1
   $bee2cmd cvc val -date 220707 cert0 cert1 \

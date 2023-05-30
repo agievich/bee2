@@ -231,6 +231,26 @@ if %ERRORLEVEL% equ 0 goto Error
 bee2cmd cvc print cert2
 if %ERRORLEVEL% neq 0 goto Error
 
+for /f "tokens=* USEBACKQ" %%F in (`bee2cmd cvc print -from cert1`) do (
+  set from=%%F
+)
+if "%from%" neq "220712" goto Error
+
+for /f "tokens=* USEBACKQ" %%F in (`bee2cmd cvc print -until cert1`) do (
+  set until=%%F
+)
+if "%until%" neq "221130" goto Error
+
+for /f "tokens=* USEBACKQ" %%F in (`bee2cmd cvc print -eid cert1`) do (
+  set eid=%%F
+)
+if "%eid%" neq "DDDDDDDDDD" goto Error
+
+for /f "tokens=* USEBACKQ" %%F in (`bee2cmd cvc print -esign cert1`) do (
+  set esign=%%F
+)
+if "%esign%" neq "3333" goto Error
+
 bee2cmd cvc val cert0 cert0
 if %ERRORLEVEL% neq 0 goto Error
 
