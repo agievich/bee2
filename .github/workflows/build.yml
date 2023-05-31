@@ -50,3 +50,6 @@ jobs:
     - name: Test
       working-directory: ${{github.workspace}}/build
       run: ctest --verbose
+    - name: Test bee2cmd
+      working-directory: ${{github.workspace}}/build/cmd
+      run: bash ../../cmd/test/test.sh

@@ -3,11 +3,18 @@
 # \brief Testing command-line interface
 # \project bee2evp/cmd
 # \created 2022.06.24
-# \version 2023.03.16
+# \version 2023.05.26
 # =============================================================================
 
-bee2cmd=./bee2cmd
-this=$(basename $BASH_SOURCE)
+bee2cmd="${BEE2CMD:-./bee2cmd}"
+if [ ! -f "${bee2cmd}" ]; then
+  bee2cmd=$(command -v bee2cmd)
+  if [ ! -f "${bee2cmd}" ]; then
+    echo "Set path to bee2cmd executable file to BEE2CMD environment variable or run this script from containing folder."
+    exit 1
+  fi
+fi
+this=$(realpath $BASH_SOURCE)
 
 function pause() {
  read -s -n 1 -p "Press any key to continue..."

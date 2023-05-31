@@ -38,3 +38,6 @@ jobs:
     - name: Test
       working-directory: ${{github.workspace}}/build
       run: ctest --verbose
+    - name: Test bee2cmd
+      working-directory: ${{github.workspace}}/build
+      run: copy ../cmd/test/test.cmd cmd && cd cmd && test.cmd
