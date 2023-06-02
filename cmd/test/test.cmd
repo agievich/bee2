@@ -3,7 +3,7 @@ rem ===========================================================================
 rem \brief Testing command-line interface
 rem \project bee2evp/cmd
 rem \created 2022.06.24
-rem \version 2023.05.30
+rem \version 2023.06.02
 rem ===========================================================================
 
 rem ===========================================================================
@@ -185,7 +185,7 @@ rem ===========================================================================
 
 echo ****** Testing bee2cmd/cvc...
 
-del /q cert0 cert1 cert2 req1 req2 req3 2> nul
+del /q cert0 req1 cert1 pubkey1 req2 cert2 req3 2> nul
 
 bee2cmd cvc root -authority BYCA0000 -from 220707 -until 990707 ^
   -pass pass:root -eid EEEEEEEEEE -esign 7777 privkey0 cert0
@@ -210,6 +210,12 @@ if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd cvc print cert1
 if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvc extr -pubkey cert1 pubkey1
+if %ERRORLEVEL% neq 0 goto Error
+
+for %%A in (pubkey1) do set pubkey1_len=%%~zA
+if %pubkey1_len% neq 96 goto Error
 
 bee2cmd cvc req -authority BYCA1023 -holder "590082394654" -from 220712 ^
   -until 391231 -pass pass:alice -eid 8888888888 -esign 1111 privkey2 req2
@@ -280,6 +286,17 @@ if %ERRORLEVEL% equ 0 goto Error
 
 bee2cmd cvc val cert0 cert1 cert2
 if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvc cut -pass pass:trent -until 391230 privkey1 cert1 cert2
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvc val cert0 cert1 cert2
+if %ERRORLEVEL% neq 0 goto Error
+
+for /f "tokens=* USEBACKQ" %%F in (`bee2cmd cvc print -until cert2`) do (
+  set until=%%F
+)
+if "%until%" neq "391230" goto Error
 
 echo ****** OK
 

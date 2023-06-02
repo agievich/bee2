@@ -4,7 +4,7 @@
 \brief Manage CV-certificates
 \project bee2/cmd 
 \created 2022.07.12
-\version 2023.05.30
+\version 2023.06.02
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -43,6 +43,8 @@
   bee2cmd cvc root -authority BYCA0000 -from 220707 -until 990707 \
 	-pass pass:root -eid EEEEEEEEEE -esign 7777 privkey0 cert0
   bee2cmd cvc print cert0
+  bee2cmd cvc print -holder cert0
+  bee2cmd cvc extr -pubkey cert0 pubkey0
   bee2cmd cvc req -pass pass:trent -authority BYCA0000 -holder BYCA1023 \
 	-from 220712 -until 221130 -eid DDDDDDDDDD -esign 3333 privkey1 req1
   bee2cmd cvc iss -pass pass:root privkey0 cert0 req1 cert1
@@ -64,30 +66,36 @@ static int cvcUsage()
 	printf(
 		"bee2cmd/%s: %s\n"
 		"Usage:\n"
-		"  cvc root options <privkeya> <certa>\n"
+		"  cvc root [options] <privkeya> <certa>\n"
 		"    issue a self-signed certificate <certa>\n"
-		"  cvc req options <privkey> <req>\n"
+		"  cvc req [options] <privkey> <req>\n"
 		"    generate a pre-certificate <req>\n"
-		"  cvc iss options <privkeya> <certa> <req> <cert>\n"
+		"  cvc iss [options] <privkeya> <certa> <req> <cert>\n"
 		"    issue <cert> based on <req> and subordinate to <certa>\n"
-		"  cvc val options <certa> <certb> ... <cert>\n"
+		"  cvc cut [options] <privkeya> <certa> <cert>\n"
+		"    shorten the lifetime of <cert> subordinate to <certa>\n"
+		"  cvc val [options] <certa> <certb> ... <cert>\n"
 		"    validate <certb> ... <cert> using <certa> as an anchor\n"
-		"  cvc match options <privkey> <cert>\n"
+		"  cvc match [options] <privkey> <cert>\n"
 		"    check the match between <privkey> and <cert>\n"
-		"  cvc print [-{authority|holder|from|until|eid|esign|pubkey}] <cert>\n"
+		"  cvc print [field] <cert>\n"
 		"    print <cert> info: all fields or a specific field\n"
+		"  cvc extr [-pubkey] <cert> <pubkey>\n"
+		"    extract <pubkey> from <cert>\n"
 		"  .\n"
 		"  <privkey>, <privkeya>\n"
 		"    containers with private keys\n"
 		"  options:\n"
-		"    -authority <name> -- authority (issuer)  [root], req\n"
-		"    -holder <name> -- holder (owner)         [root], req, [iss]\n"
-		"    -from <YYMMDD> -- starting date          root, req, [iss]\n"
-		"    -until <YYMMDD> -- expiration date       root, req, [iss]\n"
-		"    -eid <10*hex> -- eId access template     [root], [req], [iss]\n"
-		"    -esign <4*hex> -- eSign access template  [root], [req], [iss]\n"
-		"    -pass <scheme> -- password description   root, req, iss, match\n"
-		"    -date <YYMMDD> -- validation date        [val]\n",
+		"    -authority <name> -- authority      [root] req\n"
+		"    -holder <name> -- holder            [root] req [iss]\n"
+		"    -from <YYMMDD> -- starting date     root req [iss]\n"
+		"    -until <YYMMDD> -- expiration date  root req [iss] cut\n"
+		"    -eid <10*hex> -- eId access         [root] [req] [iss]\n"
+		"    -esign <4*hex> -- eSign access      [root] [req] [iss]\n"
+		"    -pass <scheme> -- password          root req iss cut match extr\n"
+		"    -date <YYMMDD> -- validation date   [val]\n"
+		"  field:\n"
+		"    {-authority|-holder|-from|-until|-eid|-esign|-pubkey}\n",
 		_name, _descr
 	);
 	return -1;
@@ -156,23 +164,34 @@ static err_t cvcSelfTest()
 нулевым, и тогда соответствующая опция не возвращается. Более того, ее указание
 в командной строке считается ошибкой.
 
+По адресам eid и esign возвращаются признаки наличия в командной строке
+одноименных опций. При указании нулевого адреса наличие в командной строке
+соответствующей опции считается ошибкой. Передача ненулевого eid (ожидаются
+флаги доступа к eId) и нулевого cvc (флаги некуда сохранить) является ошибкой.
+Логика распространяется на указатель esign.
+
+Передача ненулевого pwd является запросом на построение пароля по параметрам
+командной строки. Запрос должен быть обязательно исполнен.
+
 В случае успеха по адресу readc возвращается число обработанных аргументов.
 *******************************************************************************
 */
 
-static err_t cvcParseOptions(btok_cvc_t* cvc, cmd_pwd_t* pwd, octet date[6],
-	int* readc, int argc, char* argv[])
+static err_t cvcParseOptions(btok_cvc_t* cvc, bool_t* eid, bool_t* esign, 
+	cmd_pwd_t* pwd, octet date[6], int* readc, int argc, char* argv[])
 {
 	err_t code = ERR_OK;
-	bool_t eid = FALSE;
-	bool_t esign = FALSE;
 	// pre
 	ASSERT(memIsNullOrValid(cvc, sizeof(btok_cvc_t)));
+	ASSERT(memIsNullOrValid(eid, sizeof(bool_t)));
+	ASSERT(memIsNullOrValid(esign, sizeof(bool_t)));
 	ASSERT(memIsNullOrValid(pwd, sizeof(cmd_pwd_t)));
 	ASSERT(memIsNullOrValid(date, 6));
 	ASSERT(memIsValid(readc, sizeof(int)));
 	// подготовить выходные данные
 	cvc ? memSetZero(cvc, sizeof(btok_cvc_t)) : 0;
+	eid ? *eid = 0 : 0;
+	esign ? *esign = 0 : 0;
 	pwd ? *pwd = 0 : 0;
 	date ? memSetZero(date, 6) : 0;
 	// обработать опции
@@ -271,12 +290,12 @@ static err_t cvcParseOptions(btok_cvc_t* cvc, cmd_pwd_t* pwd, octet date[6],
 		// eid
 		else if (strEq(*argv, "-eid"))
 		{
-			if (!cvc)
+			if (!cvc || !eid)
 			{
 				code = ERR_CMD_PARAMS;
 				break;
 			}
-			if (eid)
+			if (*eid)
 			{
 				code = ERR_CMD_DUPLICATE;
 				break;
@@ -288,18 +307,18 @@ static err_t cvcParseOptions(btok_cvc_t* cvc, cmd_pwd_t* pwd, octet date[6],
 				break;
 			}
 			hexTo(cvc->hat_eid, *argv);
-			eid = TRUE;
+			*eid = TRUE;
 			--argc, ++argv;
 		}
 		// esign
 		else if (strEq(*argv, "-esign"))
 		{
-			if (!cvc)
+			if (!cvc || !esign)
 			{
 				code = ERR_CMD_PARAMS;
 				break;
 			}
-			if (esign)
+			if (*esign)
 			{
 				code = ERR_CMD_DUPLICATE;
 				break;
@@ -311,7 +330,7 @@ static err_t cvcParseOptions(btok_cvc_t* cvc, cmd_pwd_t* pwd, octet date[6],
 				break;
 			}
 			hexTo(cvc->hat_esign, *argv);
-			esign = TRUE;
+			*esign = TRUE;
 			--argc, ++argv;
 		}
 		// password
@@ -374,14 +393,21 @@ static err_t cvcParseOptions(btok_cvc_t* cvc, cmd_pwd_t* pwd, octet date[6],
 *******************************************************************************
 Выпуск самоподписанного сертификата
 
-cvc root options <privkeya> <certa>
+cvc root [options] <privkeya> <certa>
+
+\remark Обязательные options:
+  pass, authority и/или holder, from, until.
+Разрешенные:
+  eid, esign.
 *******************************************************************************
 */
 
 static err_t cvcRoot(int argc, char* argv[])
 {
 	err_t code;
-	btok_cvc_t cvc;
+	btok_cvc_t cvc[1];
+	bool_t eid;
+	bool_t esign;
 	cmd_pwd_t pwd;
 	int readc;
 	size_t privkey_len;
@@ -392,18 +418,18 @@ static err_t cvcRoot(int argc, char* argv[])
 	code = cvcSelfTest();
 	ERR_CALL_CHECK(code);
 	// обработать опции
-	code = cvcParseOptions(&cvc, &pwd, 0, &readc, argc, argv);
+	code = cvcParseOptions(cvc, &eid, &esign, &pwd, 0, &readc, argc, argv);
 	ERR_CALL_CHECK(code);
 	argc -= readc, argv += readc;
 	if (argc != 2)
 		code = ERR_CMD_PARAMS;
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	// доопределить cvc и проверить, что authority == holder
-	if (!strLen(cvc.authority))
-		strCopy(cvc.authority, cvc.holder);
-	else if (!strLen(cvc.holder))
-		strCopy(cvc.holder, cvc.authority);
-	if (!strEq(cvc.authority, cvc.holder))
+	if (!strLen(cvc->authority))
+		strCopy(cvc->authority, cvc->holder);
+	else if (!strLen(cvc->holder))
+		strCopy(cvc->holder, cvc->authority);
+	if (!strEq(cvc->authority, cvc->holder))
 		code = ERR_BAD_NAME;
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	// проверить наличие/отсутствие файлов
@@ -421,14 +447,14 @@ static err_t cvcRoot(int argc, char* argv[])
 	cmdPwdClose(pwd);
 	ERR_CALL_HANDLE(code, cmdBlobClose(privkey));
 	// определить длину сертификата
-	ASSERT(cvc.pubkey_len == 0);
-	code = btokCVCWrap(0, &cert_len, &cvc, privkey, privkey_len);
+	ASSERT(cvc->pubkey_len == 0);
+	code = btokCVCWrap(0, &cert_len, cvc, privkey, privkey_len);
 	ERR_CALL_HANDLE(code, cmdBlobClose(privkey));
-	ASSERT(cvc.pubkey_len != 0);
+	ASSERT(cvc->pubkey_len != 0);
 	// создать сертификат
 	code = cmdBlobCreate(cert, cert_len);
 	ERR_CALL_HANDLE(code, cmdBlobClose(privkey));
-	code = btokCVCWrap(cert, 0, &cvc, privkey, privkey_len);
+	code = btokCVCWrap(cert, 0, cvc, privkey, privkey_len);
 	cmdBlobClose(privkey);
 	ERR_CALL_HANDLE(code, cmdBlobClose(cert));
 	// записать сертификат
@@ -442,7 +468,12 @@ static err_t cvcRoot(int argc, char* argv[])
 *******************************************************************************
 Создание предсертификата (запроса)
 
-cvc req options <privkey> <req>
+cvc req [options] <privkey> <req>
+
+\remark Обязательные options:
+  pass, authority, holder, from, until.
+Разрешенные:
+  eid, esign.
 *******************************************************************************
 */
 
@@ -450,6 +481,8 @@ static err_t cvcReq(int argc, char* argv[])
 {
 	err_t code;
 	btok_cvc_t cvc[1];
+	bool_t eid;
+	bool_t esign;
 	cmd_pwd_t pwd;
 	int readc;
 	size_t privkey_len;
@@ -460,7 +493,7 @@ static err_t cvcReq(int argc, char* argv[])
 	code = cvcSelfTest();
 	ERR_CALL_CHECK(code);
 	// обработать опции
-	code = cvcParseOptions(cvc, &pwd, 0, &readc, argc, argv);
+	code = cvcParseOptions(cvc, &eid, &esign, &pwd, 0, &readc, argc, argv);
 	ERR_CALL_CHECK(code);
 	argc -= readc, argv += readc;
 	if (argc != 2)
@@ -506,10 +539,12 @@ static err_t cvcReq(int argc, char* argv[])
 *******************************************************************************
 Выпуск сертификата
 
-cvc iss options <privkeya> <certa> <req> <cert>
+cvc iss [options] <privkeya> <certa> <req> <cert>
 
-\remark Разрешенные поля options: holder, from, until, eid, esign.
-Запрещенные поля: authority.
+\remark Обязательные options:
+  pass.
+Разрешенные:
+  holder, from, until, eid, esign.
 
 \remark Поле holder в командной строке подавляет одноименное поле в <req>.
 Другими словами, эмитент может изменять имя владельца в его сертификате.
@@ -522,8 +557,6 @@ cvc iss options <privkeya> <certa> <req> <cert>
 \remark Поля eid и esign в командной строке накладываются побитово по правилу
 AND на одноименные поля в <req>. Другими словами, эмитент может ужесточать
 права доступа, например, в соответствии с определенной политикой доступа.
-Отсутствие поля eid или esign в командной строке означает полный отказ
-в доступе.
 *******************************************************************************
 */
 
@@ -531,6 +564,8 @@ static err_t cvcIss(int argc, char* argv[])
 {
 	err_t code;
 	btok_cvc_t cvc0[1];
+	bool_t eid;
+	bool_t esign;
 	cmd_pwd_t pwd;
 	int readc;
 	size_t privkeya_len;
@@ -543,14 +578,13 @@ static err_t cvcIss(int argc, char* argv[])
 	octet* req;
 	octet* cert;
 	btok_cvc_t* cvc;
-	size_t pos;
 	// самотестирование
 	code = cvcSelfTest();
 	ERR_CALL_CHECK(code);
 	// обработать опции
-	code = cvcParseOptions(cvc0, &pwd, 0, &readc, argc, argv);
+	code = cvcParseOptions(cvc0, &eid, &esign, &pwd, 0, &readc, argc, argv);
 	ERR_CALL_CHECK(code);
-	// опция authority запрещена
+	// есть запрещенные опции?
 	if (strLen(cvc0->authority))
 		code = ERR_CMD_PARAMS;
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
@@ -604,10 +638,18 @@ static err_t cvcIss(int argc, char* argv[])
 		memCopy(cvc->from, cvc0->from, 6);
 	if (!memIsZero(cvc0->until, 6))
 		memCopy(cvc->until, cvc0->until, 6);
-	for (pos = 0; pos < sizeof(cvc->hat_eid); ++pos)
-		cvc->hat_eid[pos] &= cvc0->hat_eid[pos];
-	for (pos = 0; pos < sizeof(cvc->hat_esign); ++pos)
-		cvc->hat_esign[pos] &= cvc0->hat_esign[pos];
+	if (eid)
+	{
+		size_t pos;
+		for (pos = 0; pos < sizeof(cvc->hat_eid); ++pos)
+			cvc->hat_eid[pos] &= cvc0->hat_eid[pos];
+	}
+	if (esign)
+	{
+		size_t pos;
+		for (pos = 0; pos < sizeof(cvc->hat_esign); ++pos)
+			cvc->hat_esign[pos] &= cvc0->hat_esign[pos];
+	}
 	// выпустить сертификат
 	code = btokCVCIss(cert, &cert_len, cvc, certa, certa_len, privkeya,
 		privkeya_len);
@@ -623,10 +665,105 @@ static err_t cvcIss(int argc, char* argv[])
 
 /*
 *******************************************************************************
+Сокращение срока действия сертификата
+
+cvc cut [options] <privkeya> <certa> <cert>
+
+\remark Обязательные options:
+  pass, until.
+*******************************************************************************
+*/
+
+static err_t cvcCut(int argc, char* argv[])
+{
+	err_t code;
+	btok_cvc_t cvc0[1];
+	cmd_pwd_t pwd;
+	int readc;
+	size_t privkeya_len;
+	octet* privkeya;
+	size_t certa_len;
+	size_t cert_len;
+	void* stack;
+	octet* certa;
+	octet* cert;
+	btok_cvc_t* cvc;
+	// самотестирование
+	code = cvcSelfTest();
+	ERR_CALL_CHECK(code);
+	// обработать опции
+	code = cvcParseOptions(cvc0, 0, 0, &pwd, 0, &readc, argc, argv);
+	ERR_CALL_CHECK(code);
+	// нужные опции установлены и нет запрещенных опций?
+	if (strLen(cvc0->authority) || strLen(cvc0->holder) ||
+		!memIsZero(cvc0->from, 6) || memIsZero(cvc0->until, 6))
+		code = ERR_CMD_PARAMS;
+	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
+	// некорректное число аргументов?
+	argc -= readc, argv += readc;
+	if (argc != 3)
+		code = ERR_CMD_PARAMS;
+	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
+	// проверить наличие/отсутствие файлов
+	code = cmdFileValExist(3, argv);
+	ERR_CALL_CHECK(code);
+	// прочитать личный ключ
+	privkeya_len = 0;
+	code = cmdPrivkeyRead(0, &privkeya_len, argv[0], pwd);
+	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
+	code = cmdBlobCreate(privkeya, privkeya_len);
+	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
+	code = cmdPrivkeyRead(privkeya, 0, argv[0], pwd);
+	cmdPwdClose(pwd);
+	ERR_CALL_HANDLE(code, cmdBlobClose(privkeya));
+	// определить длины сертификатов
+	code = cmdFileReadAll(0, &certa_len, argv[1]);
+	ERR_CALL_HANDLE(code, cmdBlobClose(privkeya));
+	code = cmdFileReadAll(0, &cert_len, argv[2]);
+	ERR_CALL_HANDLE(code, cmdBlobClose(privkeya));
+	// выделить память и разметить ее
+	code = cmdBlobCreate(stack, certa_len + cert_len + sizeof(btok_cvc_t));
+	ERR_CALL_HANDLE(code, cmdBlobClose(privkeya));
+	certa = (octet*)stack;
+	cert = certa + certa_len;
+	cvc = (btok_cvc_t*)(cert + cert_len);
+	// прочитать сертификаты
+	code = cmdFileReadAll(certa, &certa_len, argv[1]);
+	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(stack)));
+	code = cmdFileReadAll(cert, &cert_len, argv[2]);
+	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(stack)));
+	// проверить сертификат
+	code = btokCVCVal(cert, cert_len, certa, certa_len, 0);
+	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(stack)));
+	// разобрать сертификат
+	code = btokCVCUnwrap(cvc, cert, cert_len, 0, 0);
+	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(stack)));
+	// срок действия действительно сокращается?
+	if (memCmp(cvc->until, cvc0->until, 6) < 0)
+		code = ERR_BAD_DATE;
+	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(stack)));
+	// перенести в сертификат новую дату окончания
+	memCopy(cvc->until, cvc0->until, 6);
+	// выпустить сертификат
+	code = btokCVCIss(cert, 0, cvc, certa, certa_len, privkeya,	privkeya_len);
+	cmdBlobClose(privkeya);
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	// записать сертификат
+	code = cmdFileWrite(argv[2], cert, cert_len);
+	// завершить
+	cmdBlobClose(stack);
+	return code;
+}
+
+/*
+*******************************************************************************
 Проверка цепочки
 
-cvc val options <certa> <certb> ... <cert>
+cvc val [options] <certa> <certb> ... <cert>
 
+\remark Разрешенные options:
+  date.
+  
 \remark Дата проверки, указанная в options, касается только последнего
 сертификата цепочки -- дата должна попадать в срок действия сертификата.
 *******************************************************************************
@@ -647,7 +784,7 @@ static err_t cvcVal(int argc, char* argv[])
 	code = cvcSelfTest();
 	ERR_CALL_CHECK(code);
 	// обработать опции
-	code = cvcParseOptions(0, 0, date, &readc, argc, argv);
+	code = cvcParseOptions(0, 0, 0, 0, date, &readc, argc, argv);
 	ERR_CALL_CHECK(code);
 	argc -= readc, argv += readc;
 	if (argc < 2)
@@ -700,7 +837,10 @@ static err_t cvcVal(int argc, char* argv[])
 *******************************************************************************
 Проверка соответствия между личным ключом и сертификатом
 
-cvc match options <privkey> <cert>
+cvc match [options] <privkey> <cert>
+
+\remark Обязательные options:
+  pass.
 *******************************************************************************
 */
 
@@ -717,7 +857,7 @@ static err_t cvcMatch(int argc, char* argv[])
 	code = cvcSelfTest();
 	ERR_CALL_CHECK(code);
 	// обработать опции
-	code = cvcParseOptions(0, &pwd, 0, &readc, argc, argv);
+	code = cvcParseOptions(0, 0, 0, &pwd, 0, &readc, argc, argv);
 	ERR_CALL_CHECK(code);
 	argc -= readc, argv += readc;
 	if (argc != 2)
@@ -796,10 +936,59 @@ static err_t cvcPrint(int argc, char* argv[])
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// печатать содержимое
 	code = cmdCVCPrint(cvc, scope);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// завершить
 	cmdBlobClose(stack);
-	return ERR_OK;
+	return code;
+}
+
+/*
+*******************************************************************************
+Извлечение открытого ключа
+
+cvc extr [-pubkey] <cert> <pubkey>
+*******************************************************************************
+*/
+
+static err_t cvcExtr(int argc, char* argv[])
+{
+	err_t code;
+	size_t cert_len;
+	void* stack;
+	octet* cert;
+	btok_cvc_t* cvc;
+	// обработать опции
+	if (argc < 2 || argc > 3)
+		return ERR_CMD_PARAMS;
+	if (argc == 3)
+	{
+		if (!strEq(argv[0], "-pubkey"))
+			return ERR_CMD_PARAMS;
+		--argc, ++argv;
+	}
+	// проверить наличие/отсутствие файлов
+	code = cmdFileValExist(1, argv);
+	ERR_CALL_CHECK(code);
+	code = cmdFileValNotExist(1, argv + 1);
+	ERR_CALL_CHECK(code);
+	// определить длину сертификата
+	code = cmdFileReadAll(0, &cert_len, argv[0]);
+	ERR_CALL_CHECK(code);
+	// выделить память и разметить ее
+	code = cmdBlobCreate(stack, cert_len + sizeof(btok_cvc_t));
+	ERR_CALL_CHECK(code);
+	cert = (octet*)stack;
+	cvc = (btok_cvc_t*)(cert + cert_len);
+	// прочитать сертификат
+	code = cmdFileReadAll(cert, &cert_len, argv[0]);
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	// разобрать сертификат
+	code = btokCVCUnwrap(cvc, cert, cert_len, 0, 0);
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	// сохранить открытый ключ
+	code = cmdFileWrite(argv[1], cvc->pubkey, cvc->pubkey_len);
+	// завершить
+	cmdBlobClose(stack);
+	return code;
 }
 
 /*
@@ -822,12 +1011,16 @@ int cvcMain(int argc, char* argv[])
 		code = cvcReq(argc - 1, argv + 1);
 	else if (strEq(argv[0], "iss"))
 		code = cvcIss(argc - 1, argv + 1);
+	else if (strEq(argv[0], "cut"))
+		code = cvcCut(argc - 1, argv + 1);
 	else if (strEq(argv[0], "val"))
 		code = cvcVal(argc - 1, argv + 1);
 	else if (strEq(argv[0], "match"))
 		code = cvcMatch(argc - 1, argv + 1);
 	else if (strEq(argv[0], "print"))
 		code = cvcPrint(argc - 1, argv + 1);
+	else if (strEq(argv[0], "extr"))
+		code = cvcExtr(argc - 1, argv + 1);
 	else
 		code = ERR_CMD_NOT_FOUND;
 	// завершить

@@ -59,11 +59,11 @@ err_t cmdCVCPrint(const btok_cvc_t* cvc, const char* scope)
 	// печать всех полей
 	if (scope == 0)
 	{
-		printf("authority = \"");
+		printf("authority = ");
 		cmdCVCPrintName(cvc->authority);
-		printf("\"\nholder = \"");
+		printf("\nholder = ");
 		cmdCVCPrintName(cvc->holder);
-		printf("\"\npubkey = ");
+		printf("\npubkey = ");
 		code = cmdCVCPrintMem(cvc->pubkey, cvc->pubkey_len);
 		ERR_CALL_CHECK(code);
 		printf("\nhat_eid = ");
