@@ -87,14 +87,14 @@ static int cvcUsage()
 		"  <privkey>, <privkeya>\n"
 		"    containers with private keys\n"
 		"  options:\n"
-		"    -authority <name> -- authority      [root] req\n"
-		"    -holder <name> -- holder            [root] req [iss]\n"
-		"    -from <YYMMDD> -- starting date     root req [iss]\n"
-		"    -until <YYMMDD> -- expiration date  root req [iss] cut\n"
-		"    -eid <10*hex> -- eId access         [root] [req] [iss]\n"
-		"    -esign <4*hex> -- eSign access      [root] [req] [iss]\n"
-		"    -pass <scheme> -- password          root req iss cut match extr\n"
-		"    -date <YYMMDD> -- validation date   [val]\n"
+		"    -authority <name> -- authority (issuer)  [root] req\n"
+		"    -holder <name> -- holder (owner)         [root] req [iss]\n"
+		"    -from <YYMMDD> -- starting date          root req [iss]\n"
+		"    -until <YYMMDD> -- expiration date       root req [iss] cut\n"
+		"    -eid <10*hex> -- eId access template     [root] [req] [iss]\n"
+		"    -esign <4*hex> -- eSign access template  [root] [req] [iss]\n"
+		"    -pass <scheme> -- password description   root req iss cut match\n"
+		"    -date <YYMMDD> -- validation date        [val]\n"
 		"  field:\n"
 		"    {-authority|-holder|-from|-until|-eid|-esign|-pubkey}\n",
 		_name, _descr
@@ -396,10 +396,8 @@ static err_t cvcParseOptions(btok_cvc_t* cvc, bool_t* eid, bool_t* esign,
 
 cvc root [options] <privkeya> <certa>
 
-\remark Обязательные options:
-  pass, authority и/или holder, from, until.
-Разрешенные:
-  eid, esign.
+\remark Обязательные опции: pass, authority и/или holder, from, until.
+Разрешенные: eid, esign.
 *******************************************************************************
 */
 
@@ -471,10 +469,8 @@ static err_t cvcRoot(int argc, char* argv[])
 
 cvc req [options] <privkey> <req>
 
-\remark Обязательные options:
-  pass, authority, holder, from, until.
-Разрешенные:
-  eid, esign.
+\remark Обязательные опции: pass, authority, holder, from, until.
+Разрешенные: eid, esign.
 *******************************************************************************
 */
 
@@ -542,10 +538,8 @@ static err_t cvcReq(int argc, char* argv[])
 
 cvc iss [options] <privkeya> <certa> <req> <cert>
 
-\remark Обязательные options:
-  pass.
-Разрешенные:
-  holder, from, until, eid, esign.
+\remark Обязательные опции: pass.
+Разрешенные: holder, from, until, eid, esign.
 
 \remark Поле holder в командной строке подавляет одноименное поле в <req>.
 Другими словами, эмитент может изменять имя владельца в его сертификате.
@@ -557,7 +551,7 @@ cvc iss [options] <privkeya> <certa> <req> <cert>
 
 \remark Поля eid и esign в командной строке накладываются побитово по правилу
 AND на одноименные поля в <req>. Другими словами, эмитент может ужесточать
-права доступа, например, в соответствии с определенной политикой доступа.
+права доступа, например, cледуя определенной политике доступа.
 *******************************************************************************
 */
 
@@ -670,8 +664,7 @@ static err_t cvcIss(int argc, char* argv[])
 
 cvc cut [options] <privkeya> <certa> <cert>
 
-\remark Обязательные options:
-  pass, until.
+\remark Обязательные опции: pass, until.
 *******************************************************************************
 */
 
@@ -762,8 +755,7 @@ static err_t cvcCut(int argc, char* argv[])
 
 cvc val [options] <certa> <certb> ... <cert>
 
-\remark Разрешенные options:
-  date.
+\remark Разрешенные опции: date.
   
 \remark Дата проверки, указанная в options, касается только последнего
 сертификата цепочки -- дата должна попадать в срок действия сертификата.
@@ -840,8 +832,7 @@ static err_t cvcVal(int argc, char* argv[])
 
 cvc match [options] <privkey> <cert>
 
-\remark Обязательные options:
-  pass.
+\remark Обязательные опции: pass.
 *******************************************************************************
 */
 

@@ -55,21 +55,21 @@ static int kgUsage()
 	printf(
 		"bee2cmd/%s: %s\n"
 		"Usage:\n"
-		"  kg gen [-lnnn] -pass <scheme> <privkey>\n"
+		"  kg gen [-l<nnn>] -pass <scheme> <privkey>\n"
 		"    generate a private key and store it in <privkey>\n"
 		"  kg chp -passin <scheme> -passout <scheme> <privkey>\n"
 		"    change the password used to protect <privkey>\n"
 		"  kg val -pass <scheme> <privkey>\n"
 		"    validate <privkey>\n"
-		"  kg extr [-pubkey] -pass <scheme> <privkey> <pubkey>\n"
+		"  kg extr -pass <scheme> <privkey> <pubkey>\n"
 		"    calculate and extract <pubkey> from <privkey>\n"
 		"  kg print -pass <scheme> <privkey>\n"
 		"    validate <privkey> and print the corresponding public key\n"
 		"  options:\n"
-		"    -lnnn -- security level: -l128 (by default), -l192 or -l256\n"
-		"    -pass <scheme> -- description of a password\n"
-		"    -passin <scheme> -- description of an input password\n"
-		"    -passout <scheme> -- description of an output password\n",
+		"    -l<nnn> -- security level: 128 (by default), 192 or 256\n"
+		"    -pass <scheme> -- password description\n"
+		"    -passin <scheme> -- input password description\n"
+		"    -passout <scheme> -- output password description\n",
 		_name, _descr
 	);
 	return -1;

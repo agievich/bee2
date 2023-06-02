@@ -61,7 +61,15 @@ static int pwdUsage()
 		"  pwd val <scheme>\n"
 		"    validate a password built by <scheme>\n"
 		"  pwd print <scheme>\n"
-		"    print a password built by <scheme>\n",
+		"    print a password built by <scheme>\n"
+		"  schemes:\n"
+		"    pass:<pwd> -- direct password\n"
+		"    share:\"[options] <share1> <share2> ...\" -- shared password\n"
+		"      options:\n"
+		"        -t<nn> --- threshold (2 <= <nn> <= 16, 2 by default)\n"
+		"        -l<mmm> --- security level: 128, 192 or 256 (by default)\n"
+		"        -crc --- use 8-byte crc to check password integrity\n"
+		"        -pass <scheme> --- password to protect shares\n",
 		_name, _descr
 	);
 	return -1;
