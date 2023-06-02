@@ -123,7 +123,7 @@ test_kg() {
   fi
   $bee2cmd kg gen -pass pass:alice privkey2 \
     || return 1
-  $bee2cmd kg pub -pass pass:alice privkey2 pubkey2 \
+  $bee2cmd kg extr -pass pass:alice privkey2 pubkey2 \
     || return 1
   if [ "$(wc -c pubkey2 | awk '{print $1}')" != "64" ]; then
     return 1
@@ -152,11 +152,12 @@ test_cvc() {
     || return 1
   $bee2cmd cvc print cert1 \
     || return 1
-  $bee2cmd cvc extr -pubkey cert1 pubkey1 \
+  $bee2cmd cvc extr cert1 pubkey1 \
     || return 1
   if [ "$(wc -c pubkey1 | awk '{print $1}')" != "96" ]; then
     return 1
   fi
+
   $bee2cmd cvc req -authority BYCA1023 -from 220712 -until 391231 -esign 1111 \
     -holder "590082394654" -pass pass:alice -eid 8888888888 privkey2 req2 \
     || return 1

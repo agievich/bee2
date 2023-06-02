@@ -44,7 +44,7 @@
 	-pass pass:root -eid EEEEEEEEEE -esign 7777 privkey0 cert0
   bee2cmd cvc print cert0
   bee2cmd cvc print -holder cert0
-  bee2cmd cvc extr -pubkey cert0 pubkey0
+  bee2cmd cvc extr cert0 pubkey0
   bee2cmd cvc req -pass pass:trent -authority BYCA0000 -holder BYCA1023 \
 	-from 220712 -until 221130 -eid DDDDDDDDDD -esign 3333 privkey1 req1
   bee2cmd cvc iss -pass pass:root privkey0 cert0 req1 cert1
@@ -55,6 +55,7 @@
   bee2cmd cvc val cert0 cert0
   bee2cmd cvc val -date 220712 cert0 cert1
   bee2cmd cvc val -date 000000 cert0 cert1 cert2
+  bee2cmd cvc cut -until 391230 -pass pass:trent privkey1 cert1 cert2
 *******************************************************************************
 */
 
@@ -78,10 +79,10 @@ static int cvcUsage()
 		"    validate <certb> ... <cert> using <certa> as an anchor\n"
 		"  cvc match [options] <privkey> <cert>\n"
 		"    check the match between <privkey> and <cert>\n"
+		"  cvc extr <cert> <pubkey>\n"
+		"    extract <pubkey> from <cert>\n"
 		"  cvc print [field] <cert>\n"
 		"    print <cert> info: all fields or a specific field\n"
-		"  cvc extr [-pubkey] <cert> <pubkey>\n"
-		"    extract <pubkey> from <cert>\n"
 		"  .\n"
 		"  <privkey>, <privkeya>\n"
 		"    containers with private keys\n"
@@ -893,6 +894,50 @@ static err_t cvcMatch(int argc, char* argv[])
 
 /*
 *******************************************************************************
+Извлечение открытого ключа
+
+cvc extr <cert> <pubkey>
+*******************************************************************************
+*/
+
+static err_t cvcExtr(int argc, char* argv[])
+{
+	err_t code;
+	size_t cert_len;
+	void* stack;
+	octet* cert;
+	btok_cvc_t* cvc;
+	// обработать опции
+	if (argc != 2)
+		return ERR_CMD_PARAMS;
+	// проверить наличие/отсутствие файлов
+	code = cmdFileValExist(1, argv);
+	ERR_CALL_CHECK(code);
+	code = cmdFileValNotExist(1, argv + 1);
+	ERR_CALL_CHECK(code);
+	// определить длину сертификата
+	code = cmdFileReadAll(0, &cert_len, argv[0]);
+	ERR_CALL_CHECK(code);
+	// выделить память и разметить ее
+	code = cmdBlobCreate(stack, cert_len + sizeof(btok_cvc_t));
+	ERR_CALL_CHECK(code);
+	cert = (octet*)stack;
+	cvc = (btok_cvc_t*)(cert + cert_len);
+	// прочитать сертификат
+	code = cmdFileReadAll(cert, &cert_len, argv[0]);
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	// разобрать сертификат
+	code = btokCVCUnwrap(cvc, cert, cert_len, 0, 0);
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	// сохранить открытый ключ
+	code = cmdFileWrite(argv[1], cvc->pubkey, cvc->pubkey_len);
+	// завершить
+	cmdBlobClose(stack);
+	return code;
+}
+
+/*
+*******************************************************************************
 Печать
 
 cvc print [-{authority|holder|from|until|eid|esign|pubkey}] <cert>
@@ -943,56 +988,6 @@ static err_t cvcPrint(int argc, char* argv[])
 
 /*
 *******************************************************************************
-Извлечение открытого ключа
-
-cvc extr [-pubkey] <cert> <pubkey>
-*******************************************************************************
-*/
-
-static err_t cvcExtr(int argc, char* argv[])
-{
-	err_t code;
-	size_t cert_len;
-	void* stack;
-	octet* cert;
-	btok_cvc_t* cvc;
-	// обработать опции
-	if (argc < 2 || argc > 3)
-		return ERR_CMD_PARAMS;
-	if (argc == 3)
-	{
-		if (!strEq(argv[0], "-pubkey"))
-			return ERR_CMD_PARAMS;
-		--argc, ++argv;
-	}
-	// проверить наличие/отсутствие файлов
-	code = cmdFileValExist(1, argv);
-	ERR_CALL_CHECK(code);
-	code = cmdFileValNotExist(1, argv + 1);
-	ERR_CALL_CHECK(code);
-	// определить длину сертификата
-	code = cmdFileReadAll(0, &cert_len, argv[0]);
-	ERR_CALL_CHECK(code);
-	// выделить память и разметить ее
-	code = cmdBlobCreate(stack, cert_len + sizeof(btok_cvc_t));
-	ERR_CALL_CHECK(code);
-	cert = (octet*)stack;
-	cvc = (btok_cvc_t*)(cert + cert_len);
-	// прочитать сертификат
-	code = cmdFileReadAll(cert, &cert_len, argv[0]);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-	// разобрать сертификат
-	code = btokCVCUnwrap(cvc, cert, cert_len, 0, 0);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-	// сохранить открытый ключ
-	code = cmdFileWrite(argv[1], cvc->pubkey, cvc->pubkey_len);
-	// завершить
-	cmdBlobClose(stack);
-	return code;
-}
-
-/*
-*******************************************************************************
 Главная функция
 *******************************************************************************
 */
@@ -1017,10 +1012,10 @@ int cvcMain(int argc, char* argv[])
 		code = cvcVal(argc - 1, argv + 1);
 	else if (strEq(argv[0], "match"))
 		code = cvcMatch(argc - 1, argv + 1);
-	else if (strEq(argv[0], "print"))
-		code = cvcPrint(argc - 1, argv + 1);
 	else if (strEq(argv[0], "extr"))
 		code = cvcExtr(argc - 1, argv + 1);
+	else if (strEq(argv[0], "print"))
+		code = cvcPrint(argc - 1, argv + 1);
 	else
 		code = ERR_CMD_NOT_FOUND;
 	// завершить

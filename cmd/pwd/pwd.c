@@ -4,7 +4,7 @@
 \brief Generate and manage passwords
 \project bee2/cmd 
 \created 2022.06.23
-\version 2022.10.21
+\version 2023.06.02
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -209,7 +209,7 @@ int pwdMain(int argc, char* argv[])
 	else
 		code = ERR_CMD_NOT_FOUND;
 	// завершить
-	if (code != ERR_OK || code == ERR_OK && strEq(argv[0], "val"))
+	if (code != ERR_OK || strEq(argv[0], "val"))
 		printf("bee2cmd/%s: %s\n", _name, errMsg(code));
 	return (int)code;
 }

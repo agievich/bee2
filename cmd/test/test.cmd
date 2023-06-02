@@ -171,7 +171,7 @@ if %pubkey1_len% neq 192 goto Error
 bee2cmd kg gen -pass pass:alice privkey2
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd kg pub -pass pass:alice privkey2 pubkey2
+bee2cmd kg extr -pass pass:alice privkey2 pubkey2
 if %ERRORLEVEL% neq 0 goto Error
 
 for %%A in (pubkey2) do set pubkey2_len=%%~zA
@@ -211,7 +211,7 @@ if %ERRORLEVEL% neq 0 goto Error
 bee2cmd cvc print cert1
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd cvc extr -pubkey cert1 pubkey1
+bee2cmd cvc extr cert1 pubkey1
 if %ERRORLEVEL% neq 0 goto Error
 
 for %%A in (pubkey1) do set pubkey1_len=%%~zA
