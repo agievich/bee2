@@ -11,6 +11,7 @@
 #include "bee2/math/ecp.h"
 #include "bee2/crypto/bign.h"
 #include "bign_lcl.h"
+#include "bee2/crypto/bake.h"
 
 
 static const char* curveOid(size_t l)
@@ -274,7 +275,7 @@ err_t baccGenKey(
 }
 
 
-err_t baccDHInit(octet * acc, size_t l, gen_i rng, void* rng_state) {
+err_t baccDHInit(octet * acc, size_t l, octet * msg, gen_i rng, void* rng_state) {
 
     err_t code;
     bign_params params[1];
@@ -284,6 +285,11 @@ err_t baccDHInit(octet * acc, size_t l, gen_i rng, void* rng_state) {
     ERR_CALL_CHECK(code)
 
     ASSERT(memIsValid(acc, l));
+
+    if (msg){
+        ASSERT(memIsValid(msg, l/4));
+        return bakeSWU(acc, params, msg);
+    }
 
     return baccGenKey(params, 0, acc, rng, rng_state);
 }
@@ -295,7 +301,7 @@ size_t baccDHAdd_keep(size_t l, size_t acc_len){
 err_t baccDHAdd(
     size_t l,
     octet * acc,
-    size_t* acc_len,
+    size_t acc_len,
     const octet* privkey
 ){
 
@@ -308,15 +314,14 @@ err_t baccDHAdd(
     ERR_CALL_CHECK(code)
 
     ASSERT(memIsValid(params, sizeof (bign_params)));
-    ASSERT(memIsValid(acc_len,sizeof (size_t)));
     ASSERT(memIsValid(privkey, baccZq_keep(l)));
 
     memCopy(g0, acc, baccGq_keep(l));
-    code = baccMul(params, acc, *acc_len, privkey);
+    code = baccMul(params, acc, acc_len, privkey);
     ERR_CALL_CHECK(code);
 
-    memCopy(acc + (*acc_len) * baccGq_keep(l), g0, baccGq_keep(l));
-    *acc_len = *acc_len+1;
+    memCopy(acc + acc_len * baccGq_keep(l), g0, baccGq_keep(l));
+    acc_len = acc_len+1;
 
     return code;
 }

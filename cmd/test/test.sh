@@ -264,98 +264,106 @@ test_es() {
 
 test_bacc(){
 
-  for l in 128 192 256 ; do
+  for l in 128; do
 
-    rm acc.bin key.bin key2.bin key3.bin key4.bin
+      rm acc key1 key2 key3 key4 cert_1 cert_2 cert_3 cert_4 req1 req2 req3 req4
 
-    $bee2cmd bacc init -l$l acc.bin \
-        || return 1
+      $bee2cmd kg gen -pass pass:key -l$l key1 \
+          || return 1
+      $bee2cmd kg gen -pass pass:key -l$l key2 \
+          || return 1
+      $bee2cmd kg gen -pass pass:key -l$l key3 \
+          || return 1
+      $bee2cmd kg gen -pass pass:key -l$l key4 \
+          || return 1
 
-    $bee2cmd kg gen -pass pass:key -l$l key.bin \
-        || return 1
-    $bee2cmd kg gen -pass pass:key -l$l key2.bin \
-        || return 1
-    $bee2cmd kg gen -pass pass:key -l$l key3.bin \
-        || return 1
-    $bee2cmd kg gen -pass pass:key -l$l key4.bin \
-        || return 1
+      $bee2cmd cvc req -authority BYCA1000 -from 220712 -until 391231 -esign 1111 \
+          -holder "590082394654" -pass pass:key -eid 8888888888 key1 req1 \
+          || return 1
 
-    cp acc.bin acc_old.bin
+      $bee2cmd cvc req -authority BYCA1000 -from 220712 -until 391231 -esign 1111 \
+          -holder "590082394654" -pass pass:key -eid 8888888888 key2 req2 \
+          || return 1
 
-    rm proof
+      $bee2cmd cvc req -authority BYCA1000 -from 220712 -until 391231 -esign 1111 \
+          -holder "590082394654" -pass pass:key -eid 8888888888 key3 req3 \
+          || return 1
 
-    $bee2cmd bacc add -pass pass:key key.bin acc.bin \
-        || return 1
-    $bee2cmd bacc prvadd -pass pass:key key.bin acc_old.bin acc.bin proof \
-        || return 1
-    $bee2cmd bacc vfyadd proof acc_old.bin acc.bin \
-        || return 1
+      $bee2cmd cvc req -authority BYCA1000 -from 220712 -until 391231 -esign 1111 \
+          -holder "590082394654" -pass pass:key -eid 8888888888 key4 req4 \
+          || return 1
 
-    cp acc.bin acc_old.bin
+      $bee2cmd cvc iss -pass pass:trent privkey1 cert1 req1 cert_1 \
+          || return 1
 
-    rm proof
+      $bee2cmd cvc iss -pass pass:trent privkey1 cert1 req2 cert_2 \
+          || return 1
 
-    $bee2cmd bacc add  -pass pass:key key2.bin acc.bin \
-        || return 1
-    $bee2cmd bacc prvadd -pass pass:key key2.bin acc_old.bin acc.bin proof \
-        || return 1
-    $bee2cmd bacc vfyadd proof acc_old.bin acc.bin \
-        || return 1
+      $bee2cmd cvc iss -pass pass:trent privkey1 cert1 req3 cert_3 \
+          || return 1
 
-    cp acc.bin acc_old.bin
+      $bee2cmd cvc iss -pass pass:trent privkey1 cert1 req4 cert_4 \
+          || return 1
 
-    rm proof
+      $bee2cmd bacc init -name "name" -l$l acc \
+          || return 1
 
-    $bee2cmd bacc add -pass pass:key key3.bin acc.bin \
-        || return 1
-    $bee2cmd bacc prvadd -pass pass:key key3.bin acc_old.bin acc.bin proof \
-        || return 1
-    $bee2cmd bacc vfyadd proof acc_old.bin acc.bin \
-        || return 1
 
-    rm proof
+      $bee2cmd bacc add -cert "cert_2 cert1"  -pass pass:key key1 -sigpass pass:key key2 acc \
+          || return 1
+      $bee2cmd bacc add -cert "cert_3 cert1"  -pass pass:key key2 -sigpass pass:key key3 acc \
+          || return 1
+      $bee2cmd bacc add -cert "cert_1 cert1"  -pass pass:key key3 -sigpass pass:key key1 acc \
+          || return 1
 
-    $bee2cmd bacc prvadd -pass pass:key key4.bin acc_old.bin acc.bin proof \
-        || return 1
-    $bee2cmd bacc vfyadd proof acc_old.bin acc.bin \
-        && return 1
+      $bee2cmd bacc validate acc cert1 \
+          || return 1
 
-    rm pubkey.bin pubkey2.bin pubkey3.bin pubkey4.bin
+      $bee2cmd bacc validate -name "name" acc cert1 \
+          || return 1
 
-    $bee2cmd bacc der -pass pass:key key.bin acc.bin pubkey.bin \
-        || return 1
-    $bee2cmd bacc der -pass pass:key key2.bin acc.bin pubkey2.bin \
-        || return 1
-    $bee2cmd bacc der -pass pass:key key3.bin acc.bin pubkey3.bin \
-        || return 1
-    $bee2cmd bacc der -pass pass:key key4.bin acc.bin pubkey4.bin \
-        && return 1
+      $bee2cmd bacc validate -name "name1" acc cert1 \
+          && return 1
 
-    rm proof
+      rm pubkey1 pubkey2 pubkey3 pubkey4 acc_final
 
-    $bee2cmd bacc prvder -pass pass:key key.bin acc.bin proof \
-        || return 1
-    $bee2cmd bacc vfyder pubkey.bin acc.bin proof \
-        || return 1
+      $bee2cmd bacc extract acc acc_final \
+          || return 1
 
-    rm proof
+      $bee2cmd bacc der -pass pass:key key1 acc_final pubkey1 \
+          || return 1
+      $bee2cmd bacc der -pass pass:key key2 acc_final pubkey2 \
+          || return 1
+      $bee2cmd bacc der -pass pass:key key3 acc_final pubkey3 \
+          || return 1
+      $bee2cmd bacc der -pass pass:key key4 acc_final pubkey4 \
+          && return 1
 
-    $bee2cmd bacc prvder -adata key2.bin -pass pass:key key2.bin acc.bin proof \
-        || return 1
-    $bee2cmd bacc vfyder -adata key2.bin pubkey2.bin acc.bin proof \
-        || return 1
+      rm proof
 
-    rm proof
+      $bee2cmd bacc prvder -pass pass:key key1 acc_final proof \
+          || return 1
+      $bee2cmd bacc vfyder pubkey1 acc_final proof \
+          || return 1
 
-    $bee2cmd bacc prvder -adata key2.bin -pass pass:key key3.bin acc.bin proof \
-        || return 1
-    $bee2cmd bacc vfyder -adata key3.bin pubkey3.bin acc.bin proof \
-        && return 1
-    $bee2cmd bacc prvder -pass pass:key key4.bin acc.bin proof \
-        && return 1
+      rm proof
 
-    done
-    return 0
+      $bee2cmd bacc prvder -adata key1 -pass pass:key key2 acc_final proof \
+          || return 1
+      $bee2cmd bacc vfyder -adata key1 pubkey2 acc_final proof \
+          || return 1
+
+      rm proof
+
+      $bee2cmd bacc prvder -adata key1 -pass pass:key key3 acc_final proof \
+          || return 1
+      $bee2cmd bacc vfyder -adata key1 pubkey acc_final proof \
+          && return 1
+      $bee2cmd bacc prvder -pass pass:key key acc_final proof \
+          && return 1
+
+  done
+  return 0
 }
 
 

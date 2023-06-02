@@ -479,6 +479,16 @@ err_t cmdSigSign(
 	size_t privkey_len			/*!< [in] длина личного ключа */
 );
 
+err_t cmdSigSign2(
+    octet *sig_der,             /*!< [out] der код подписи */
+    size_t * sig_len,           /*!< [out] длина der кода */
+    const octet * data,         /*!< [in] цепочка сертификатов */
+    size_t data_size,           /*!< [in] личный ключ */
+    const char* certs,          /*!< [in] длина личного ключа */
+    const octet privkey[],
+    size_t privkey_len
+);
+
 /*!	\brief Проверка подписи файла на открытом ключе
 
 	Подпись содержимого файла file, размещенная в sig_file, проверяется
@@ -501,6 +511,7 @@ err_t cmdSigVerify(
 	size_t pubkey_len			/*!< [in] длина открытого ключа */
 );
 
+
 /*!	\brief Проверка подписи файла на доверенном сертификате
 
 	Подпись содержимого файла file, размещенная в sig_file, проверяется
@@ -522,6 +533,18 @@ err_t cmdSigVerify2(
 	const char* sig_file,		/*!< [in] файл подписи */
 	const octet anchor[],		/*!< [in] доверенный сертификат */
 	size_t anchor_len			/*!< [in] длина anchor */
+);
+
+/*!	\brief Проверка подписи загруженного в память файла на доверенном сертификате
+    Аналог cmdSigVerify2 для загруженного в память файла data
+    \return ERR_OK, если подпись корректна, и код ошибки в противном случае.
+*/
+err_t cmdSigVerify3(
+    const octet * data,			/*!< [in] подписанные данные */
+    size_t data_len,			/*!< [in] длина подписанны данных */
+    const octet * sig_der,		/*!< [in] der-код подписи */
+    const octet anchor[],		/*!< [in] доверенный сертификат */
+    size_t anchor_len			/*!< [in] длина anchor */
 );
 
 /*!	\brief Самопроверка подписи на открытом ключе

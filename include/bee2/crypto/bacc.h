@@ -12,6 +12,8 @@
 
 /** \brief Инициализация слепого аккумулятора
 
+    Если [l/4]msg != NULL, то точка ЭК строится при помощи алгоритма bakeSWU.
+
     \precondition По адрессу acc выделено baccGq_keep(l) октетов памяти
 
     \return ERR_OK в услучае успеха, код ошибки в обратном случае
@@ -19,6 +21,7 @@
 err_t baccDHInit(
     octet * acc,                    /*!< [out] аккумулятор */
     size_t l,                       /*!< [in]  уровень стойкости (128/192/256) */
+    octet * msg,                    /*!< [in] сообщение */
     gen_i rng,                      /*!< [in]  ГСЧ */
     void* rng_state                 /*!< [in/out]  состояние ГСЧ */
 );
@@ -38,7 +41,7 @@ size_t baccDHAdd_keep(size_t l, size_t acc_len);
 err_t baccDHAdd(
     size_t l,               /*!< уровень стойкости аккумулятора */
     octet * acc,            /*!< [in/out] аккумулятор */
-    size_t* acc_len,        /*!< [in/out] длина аккумулятора (кол-во добавленных ключей) */
+    size_t acc_len,         /*!< [in] длина аккумулятора (кол-во добавленных ключей) */
     const octet* privkey    /*!< [in] личный ключ */
 );
 

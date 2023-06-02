@@ -327,6 +327,54 @@ static err_t cmdSigHash(octet hash[], size_t hash_len, const char* file,
 	return code;
 }
 
+static err_t cmdSigHash2(octet hash[], size_t hash_len, const octet * data, size_t data_size,
+                        size_t drop, const octet certs[], size_t certs_len)
+{
+    const size_t buf_size = 4096;
+    err_t code;
+    octet* stack;
+    octet* hash_state;
+    // pre
+    ASSERT(hash_len == 32 || hash_len == 48 || hash_len == 64);
+    ASSERT(memIsValid(hash, hash_len));
+    // выделить память
+    code = cmdBlobCreate(stack, buf_size +
+                                (hash_len == 32 ? beltHash_keep() : bashHash_keep()));
+    ERR_CALL_CHECK(code);
+    // запустить хэширование
+    hash_state = stack + buf_size;
+    if (hash_len == 32)
+        beltHashStart(hash_state);
+    else
+        bashHashStart(hash_state, hash_len * 4);
+    // определить размер файла
+    code = data_size != SIZE_MAX ? ERR_OK : ERR_FILE_READ;
+    ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+    // определить размер хэшируемой части файла
+    code = drop <= data_size ? ERR_OK : ERR_BAD_FORMAT;
+    ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+    data_size -= drop;
+    // хэшировать файл
+    if (hash_len == 32)
+        beltHashStepH(data, data_size, hash_state);
+    else
+        bashHashStepH(data, data_size, hash_state);
+
+    // завершить
+    if (hash_len == 32)
+    {
+        beltHashStepH(certs, certs_len, hash_state);
+        beltHashStepG(hash, hash_state);
+    }
+    else
+    {
+        bashHashStepH(certs, certs_len, hash_state);
+        bashHashStepG(hash, hash_len, hash_state);
+    }
+    cmdBlobClose(stack);
+    return code;
+}
+
 /*
 *******************************************************************************
 Цепочка сертификатов
@@ -585,6 +633,90 @@ err_t cmdSigSign(const char* sig_file, const char* file, const char* certs,
 	return code;
 }
 
+err_t cmdSigSign2(octet *sig_der, size_t * sig_len, const octet * data, size_t data_size, const char* certs,
+                 const octet privkey[], size_t privkey_len)
+{
+    cmd_sig_t *sig;
+    err_t code;
+    void* stack;
+    bign_params* params;
+    octet* oid_der;
+    size_t oid_len = 16;
+    octet* hash;
+    octet* t;
+    size_t t_len;
+    // входной контроль
+    if (!memIsValid(data,data_size) ||
+        !(privkey_len == 32 || privkey_len == 48 || privkey_len == 64) ||
+        !memIsValid(privkey, privkey_len))
+        return ERR_BAD_INPUT;
+    // создать и разметить стек
+    code = cmdBlobCreate(stack,
+                         sizeof(cmd_sig_t) + sizeof(bign_params) + oid_len + 2 * privkey_len);
+    ERR_CALL_CHECK(code);
+    sig = (cmd_sig_t*)stack;
+    params = (bign_params*)(sig + 1);
+    oid_der = (octet*)(params + 1);
+    hash = oid_der + 16;
+    t = hash + privkey_len;
+    // собрать сертификаты
+    code = cmdSigCertsCollect(sig, certs);
+    ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+    // проверить соответствие личному ключу
+    code = cmdSigCertsMatch(sig, privkey, privkey_len);
+    ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+    // загрузить параметры и хэшировать
+    if (privkey_len == 32)
+    {
+        code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1");
+        ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+        code = cmdSigHash2(hash, 32, data,data_size, 0, sig->certs, sig->certs_len);
+        ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+        code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.31.81");
+        ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+        ASSERT(oid_len == 11);
+    }
+    else if (privkey_len == 48)
+    {
+        code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.2");
+        ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+        code = cmdSigHash2(hash, 48, data,data_size, 0, sig->certs, sig->certs_len);
+        ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+        code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.77.12");
+        ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+        ASSERT(oid_len == 11);
+    }
+    else
+    {
+        code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.3");
+        ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+        code = cmdSigHash2(hash, 64, data,data_size, 0, sig->certs, sig->certs_len);
+        ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+        code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.77.13");
+        ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+        ASSERT(oid_len == 11);
+    }
+    // получить случайные числа
+    if (rngIsValid())
+        rngStepR(t, t_len = privkey_len, 0);
+    else
+        t_len = 0;
+    // подписать
+    code = bignSign2(sig->sig, params, oid_der, oid_len, hash, privkey,
+                     t, t_len);
+    ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+    sig->sig_len = privkey_len / 2 * 3;
+
+    *sig_len = cmdSigEnc(sig_der, sig);
+
+    if (*sig_len == SIZE_MAX)
+        code = ERR_BAD_SIG;
+
+    // завершить
+    cmdBlobClose(stack);
+    return code;
+}
+
 /*
 *******************************************************************************
 Проверка подписи
@@ -761,6 +893,83 @@ err_t cmdSigVerify2(const char* file, const char* sig_file,
 	cmdBlobClose(stack);
 	return code;
 }
+
+err_t cmdSigVerify3(const octet * data, size_t data_size, const octet * sig_der,
+                    const octet anchor[], size_t anchor_len)
+{
+    err_t code;
+    void* stack;
+    cmd_sig_t* sig;
+    btok_cvc_t* cvc;
+    bign_params* params;
+    octet* oid_der;
+    size_t oid_len = 16;
+    octet* hash;
+    size_t der_len;
+    // входной контроль
+    if (!memIsValid(data, data_size) ||
+        !memIsValid(anchor, anchor_len))
+        return ERR_BAD_INPUT;
+    // создать и разметить стек
+    code = cmdBlobCreate(stack, sizeof(cmd_sig_t) + sizeof(btok_cvc_t) +
+                                sizeof(bign_params) + oid_len + 64);
+    ERR_CALL_CHECK(code);
+    sig = (cmd_sig_t*)stack;
+    cvc = (btok_cvc_t*)(sig + 1);
+    params = (bign_params*)(cvc + 1);
+    oid_der = (octet*)(params + 1);
+    hash = oid_der + oid_len;
+    // читать подпись
+    code = cmdSigDec(sig, sig_der, SIZE_MAX) == SIZE_MAX ? ERR_BAD_SIG : ERR_OK;
+    ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+
+    // проверить сертификаты
+    code = cmdSigCertsVal2(sig, anchor, anchor_len);
+    ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+    // выделить первый сертификат
+    code = cmdSigCertsGet(cvc, 0, sig, 0);
+    ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+    // загрузить параметры и хэшировать
+    if (cvc->pubkey_len == 64)
+    {
+        code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1");
+        ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+        code = cmdSigHash2(hash, 32, data, data_size, 0, sig->certs, sig->certs_len);
+        ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+        code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.31.81");
+        ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+        ASSERT(oid_len == 11);
+    }
+    else if (cvc->pubkey_len == 96)
+    {
+        code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.2");
+        ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+        code = cmdSigHash2(hash, 48, data,data_size, 0, sig->certs, sig->certs_len);
+        ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+        code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.77.12");
+        ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+        ASSERT(oid_len == 11);
+    }
+    else
+    {
+        code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.3");
+        ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+        code = cmdSigHash2(hash, 64, data,data_size, 0, sig->certs, sig->certs_len);
+        ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+        code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.77.13");
+        ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+        ASSERT(oid_len == 11);
+    }
+    // проверить открытый ключ
+    code = cvc->pubkey_len == params->l / 2 &&
+           bignValPubkey(params, cvc->pubkey);
+    ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+    // проверить подпись
+    code = bignVerify(params, oid_der, oid_len, hash, sig->sig, cvc->pubkey);
+    cmdBlobClose(stack);
+    return code;
+}
+
 
 /*
 *******************************************************************************
