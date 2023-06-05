@@ -4,7 +4,7 @@
 \brief Sign files and verify signatures
 \project bee2/cmd
 \created 2022.08.01
-\version 2023.05.23
+\version 2023.06.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -342,7 +342,7 @@ static int sigMain(int argc, char* argv[])
 	// завершить
 	if (code != ERR_OK || strEq(argv[0], "vfy"))
 		printf("bee2cmd/%s: %s\n", _name, errMsg(code));
-	return (int)code;
+	return code != ERR_OK ? -1 : 0;
 }
 
 err_t sigInit()

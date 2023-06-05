@@ -4,7 +4,7 @@
 \brief Errors
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2022.10.31
+\version 2023.06.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -81,6 +81,7 @@ static const err_msg _messages[] = {
 	{ERR_BAD_HASH, "Incorrect hash"},
 	{ERR_BAD_SIG, "Incorrect signature"},
 	{ERR_BAD_MAC, "Incorrect authentication tag"},
+	{ERR_BAD_CRC, "Incorrect checksum"},
 	{ERR_BAD_KEYTOKEN, "Invalid key token"},
 	{ERR_BAD_LOGIC, "Incorrect (protocol) logic"},
 	{ERR_BAD_PWD, "Incorrect password"},

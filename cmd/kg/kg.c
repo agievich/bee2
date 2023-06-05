@@ -4,7 +4,7 @@
 \brief Generate and manage private keys
 \project bee2/cmd 
 \created 2022.06.08
-\version 2023.06.02
+\version 2023.06.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -606,7 +606,7 @@ int kgMain(int argc, char* argv[])
 	// завершить
 	if (code != ERR_OK || strEq(argv[0], "val"))
 		printf("bee2cmd/%s: %s\n", _name, errMsg(code));
-	return (int)code;
+	return code != ERR_OK ? -1 : 0;
 }
 
 /*

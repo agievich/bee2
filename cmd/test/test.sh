@@ -3,7 +3,7 @@
 # \brief Testing command-line interface
 # \project bee2evp/cmd
 # \created 2022.06.24
-# \version 2023.06.02
+# \version 2023.06.05
 # =============================================================================
 
 bee2cmd=./bee2cmd
@@ -59,7 +59,9 @@ test_pwd() {
     && return 1
   $bee2cmd pwd gen share:"-l128 -l256 -pass pass:zed s1 s2" \
     && return 1
-  $bee2cmd pwd gen share:"-l256 -t3 -pass pass:zed s1 s2 s3 s4 s5" \
+  $bee2cmd pwd gen share:"-l128 -crc -t3 -pass pass:zed s1 s2 s3 s4 s5" \
+    && return 1
+  $bee2cmd pwd gen share:"-l256 -crc -t3 -pass pass:zed s1 s2 s3 s4 s5" \
     || return 1
   $bee2cmd pwd val share:"-t3 -pass pass:zed s1 s2" \
     && return 1
@@ -75,7 +77,11 @@ test_pwd() {
     && return 1
   $bee2cmd pwd val share:"-l256 -pass pass:zed s1 s2 s3" \
     || return 1
+  $bee2cmd pwd val share:"-l256 -crc -pass pass:zed s1 s2 s3" \
+    || return 1
   $bee2cmd pwd val share:"-pass pass:zed s2 s3 s4 s5" \
+    || return 1
+  $bee2cmd pwd val share:"-pass pass:zed -crc s2 s3 s4 s5" \
     || return 1
   $bee2cmd pwd print share:"-l128 -pass pass:zed s5 s1 s3" \
     && return 1
@@ -94,6 +100,9 @@ test_pwd() {
     || return 1
   $bee2cmd pwd print share:"-pass share:\"-pass pass:zed s2 s4 s1\" ss3 ss1" \
     || return 1
+  $bee2cmd pwd print \
+    share:"-pass share:\"-pass pass:zed s2 s4 s1\" -crc ss3 ss1" \
+    && return 1
   return 0
 }
 
@@ -169,7 +178,7 @@ test_cvc() {
   $bee2cmd cvc match -pass pass:alice privkey2 cert2 \
     || return 1
   $bee2cmd cvc match -pass pass:alisa privkey2 cert2 \
-    || return 1
+    && return 1
   $bee2cmd cvc print cert2 \
     || return 1
 

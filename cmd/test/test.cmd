@@ -3,7 +3,7 @@ rem ===========================================================================
 rem \brief Testing command-line interface
 rem \project bee2evp/cmd
 rem \created 2022.06.24
-rem \version 2023.06.02
+rem \version 2023.06.05
 rem ===========================================================================
 
 rem ===========================================================================
@@ -80,7 +80,10 @@ if %ERRORLEVEL% equ 0 goto Error
 bee2cmd pwd gen share:"-l128 -l256 -pass pass:zed s1 s2"
 if %ERRORLEVEL% equ 0 goto Error
 
-bee2cmd pwd gen share:"-l256 -t3 -pass pass:zed s1 s2 s3 s4 s5"
+bee2cmd pwd gen share:"-l128 -t3 -crc -pass pass:zed s1 s2 s3 s4 s5"
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd pwd gen share:"-l256 -t3 -crc -pass pass:zed s1 s2 s3 s4 s5"
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd pwd val share:"-t3 -pass pass:zed s1 s2"
@@ -104,7 +107,13 @@ if %ERRORLEVEL% equ 0 goto Error
 bee2cmd pwd val share:"-l256 -pass pass:zed s1 s2 s3"
 if %ERRORLEVEL% neq 0 goto Error
 
+bee2cmd pwd val share:"-l256 -crc -pass pass:zed s1 s2 s3"
+if %ERRORLEVEL% neq 0 goto Error
+
 bee2cmd pwd val share:"-pass pass:zed s2 s3 s4 s5"
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd pwd val share:"-pass pass:zed -crc s2 s3 s4 s5"
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd pwd print share:"-l128 -pass pass:zed s5 s1 s3"
@@ -129,6 +138,9 @@ if %ERRORLEVEL% equ 0 goto Error
 
 bee2cmd pwd val share:"-pass share:\"-pass pass:zed s1 s2 s3\" ss2 ss3"
 if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd pwd val share:"-pass -crc share:\"-pass pass:zed s1 s2 s3\" ss2 ss3"
+if %ERRORLEVEL% equ 0 goto Error
 
 echo ****** OK
 

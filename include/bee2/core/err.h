@@ -4,7 +4,7 @@
 \brief Errors
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2022.10.31
+\version 2023.06.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -180,20 +180,22 @@ Crypto
 #define ERR_BAD_SIG					_ERR_REG(510)
 /* некорректная имитовставка */
 #define ERR_BAD_MAC					_ERR_REG(511)
+/* некорректная контрольная сумма */
+#define ERR_BAD_CRC					_ERR_REG(512)
 /* некорректный токен ключа */
-#define ERR_BAD_KEYTOKEN			_ERR_REG(512)
+#define ERR_BAD_KEYTOKEN			_ERR_REG(513)
 /* неверная логика (протокола) */
-#define ERR_BAD_LOGIC				_ERR_REG(513)
+#define ERR_BAD_LOGIC				_ERR_REG(514)
 /* неверный пароль */
-#define ERR_BAD_PWD					_ERR_REG(514)
+#define ERR_BAD_PWD					_ERR_REG(515)
 /* ключ не найден */
-#define ERR_KEY_NOT_FOUND			_ERR_REG(515)
+#define ERR_KEY_NOT_FOUND			_ERR_REG(516)
 /* отсутствует доверие */
-#define ERR_NO_TRUST				_ERR_REG(516)
+#define ERR_NO_TRUST				_ERR_REG(517)
 /* ошибка аутентификации */
-#define ERR_AUTH					_ERR_REG(517)
+#define ERR_AUTH					_ERR_REG(518)
 /* ошибка самотестирования */
-#define ERR_SELFTEST				_ERR_REG(518)
+#define ERR_SELFTEST				_ERR_REG(519)
 /* ошибка статистического тестирования */
 #define ERR_STATTEST				_ERR_REG(519)
 
