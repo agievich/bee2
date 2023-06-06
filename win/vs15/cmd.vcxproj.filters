@@ -98,6 +98,9 @@
     <ClCompile Include="..\..\cmd\core\cmd_date.c">
       <Filter>Source Files\core</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\cmd\core\cmd_print.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\cmd\cmd.h">

@@ -4,7 +4,7 @@
 \brief Sign files and verify signatures
 \project bee2/cmd
 \created 2022.08.01
-\version 2023.06.05
+\version 2023.06.06
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -12,6 +12,7 @@
 
 #include "../cmd.h"
 #include <bee2/core/blob.h>
+#include <bee2/core/dec.h>
 #include <bee2/core/err.h>
 #include <bee2/core/mem.h>
 #include <bee2/core/hex.h>
@@ -60,6 +61,8 @@
   bee2cmd sig vfy -anchor cert0 file file
   bee2cmd sig vfy -pubkey pubkey2 file file
   bee2cmd sig print file
+  bee2cmd sig print -certc file
+  bee2cmd sig print -date file
 *******************************************************************************
 */
 
@@ -76,24 +79,32 @@ static int sigUsage()
     printf(
         "bee2cmd/%s: %s\n"
         "Usage:\n"
-        "  sig sign options <privkey> <file> <sig>\n"
+        "  sig sign [options] <privkey> <file> <sig>\n"
         "    sign <file> using <privkey> and store the signature in <sig>\n"
 		"  sig vfy {-pubkey <pubkey> | -anchor <anchor>} <file> <sig>\n"
 		"    verify <sig> of <file> using either <pubkey> or <anchor>\n"
-		"  sig print <sig>\n"
-		"    print a signature stored in <sig>\n"
+		"  cvc extr -cert<n> <sig> <cert>\n"
+		"    extract from <sig> the <n>th certificate and store it in <cert>\n"
+		"    \remark the signing certificate comes first\n"
+		"  sig print [field] <sig>\n"
+		"    print <sig> info: all fields or a specific field\n"
 		"  .\n"
 		"  <privkey>\n"
         "    container with a private key\n"
 		"  <pubkey>\n"
-		"    file with a public key in hex\n"
+		"    file with a public key\n"
 		"  <anchor>\n"
 		"    file with a trusted sertificate\n"
 		"  options:\n"
-        "    -certs <certs> -- certificate chain\n"
-		"    -date <date> -- date of signing\n"
-        "    -pass <scheme> -- password description\n",
-        _name, _descr
+		"    -certs <certs> -- certificate chain (optional)\n"
+		"    -date <YYMMDD> -- date of signing (optional)\n"
+		"    -pass <scheme> -- password description\n"
+		"  field:\n"
+        "    {-certc|-date|-sig}\n"
+		"      -certc -- the number of attached certificates\n"
+		"      -date -- date of signing\n"
+		"      -sig -- baseline signature\n",
+		_name, _descr
     );
     return -1;
 }
@@ -157,7 +168,7 @@ static err_t sigSelfTest()
 *******************************************************************************
 Выработка подписи
 
-sig sign [-certs <certs>] [-date] -pass <scheme> <file> <sig>
+sig sign [-certs <certs>] [-date <YYMMDD>] -pass <scheme> <file> <sig>
 *******************************************************************************
 */
 
@@ -298,28 +309,68 @@ static err_t sigVfy(int argc, char* argv[])
 
 /*
 *******************************************************************************
+Извлечение сертификата из подписи
+
+sig extr -cert<n> <sig> <cert>
+*******************************************************************************
+*/
+
+static err_t sigExtr(int argc, char* argv[])
+{
+	err_t code;
+	const char* str;
+	size_t num;
+	// неверное число параметров?
+	if (argc != 3 || !strStartsWith(argv[0], "-cert"))
+		return ERR_CMD_PARAMS;
+	// определить номер сертификата
+	str = argv[0] + strLen("-cert");
+	if (!decIsValid(str) || decCLZ(str) || strLen(str) > 1)
+		return ERR_CMD_PARAMS;
+	num = (unsigned)decToU32(str);
+	// проверить наличие/отсутствие файлов
+	code = cmdFileValExist(1, argv + 1);
+	ERR_CALL_CHECK(code);
+	code = cmdFileValNotExist(1, argv + 2);
+	ERR_CALL_CHECK(code);
+	// извлечь сертификат
+	code = cmdSigExtr(argv[2], argv[1], num);
+	// завершить
+	return code;
+}
+
+/*
+*******************************************************************************
  Печать подписи
 
- sig print <sig>
+ sig print [{-date|-certc|-cert<n>}] <sig>
 *******************************************************************************
 */
 
 static err_t sigPrint(int argc, char * argv[])
 {
 	err_t code;
+	const char* scope = 0;
 	// обработать опции
-	if (argc != 1)
+	if (argc < 1 || argc > 2)
 		return ERR_CMD_PARAMS;
+	if (argc == 2)
+	{
+		scope = argv[0];
+		if (strLen(scope) < 1 || scope[0] != '-')
+			return ERR_CMD_PARAMS;
+		++scope, --argc, ++argv;
+	}
 	// проверить наличие файла подписи
 	code = cmdFileValExist(1, argv);
 	ERR_CALL_CHECK(code);
 	// печатать подпись
-	return cmdSigPrint(argv[0]);
+	return cmdSigPrint(argv[0], scope);
 }
 
 /*
 *******************************************************************************
-  Главная функция
+Главная функция
 *******************************************************************************
 */
 
@@ -333,9 +384,11 @@ static int sigMain(int argc, char* argv[])
     --argc, ++argv;
     if (strEq(argv[0], "sign"))
         code = sigSign(argc - 1, argv + 1);
-    else if (strEq(argv[0], "vfy"))
+    else if (strEq(argv[0], "vfy"))	
         code = sigVfy(argc - 1, argv + 1);
-    else if (strEq(argv[0], "print"))
+	else if (strEq(argv[0], "extr"))
+		code = sigExtr(argc - 1, argv + 1);
+	else if (strEq(argv[0], "print"))
         code = sigPrint(argc - 1, argv + 1);
     else
 		code = ERR_CMD_NOT_FOUND;

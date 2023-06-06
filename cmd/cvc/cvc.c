@@ -86,6 +86,8 @@ static int cvcUsage()
 		"  .\n"
 		"  <privkey>, <privkeya>\n"
 		"    containers with private keys\n"
+		"  <pubkey>\n"
+		"    file with a public key\n"
 		"  options:\n"
 		"    -authority <name> -- authority (issuer)  [root] req\n"
 		"    -holder <name> -- holder (owner)         [root] req [iss]\n"
@@ -96,7 +98,7 @@ static int cvcUsage()
 		"    -pass <scheme> -- password description   root req iss cut match\n"
 		"    -date <YYMMDD> -- validation date        [val]\n"
 		"  field:\n"
-		"    {-authority|-holder|-from|-until|-eid|-esign|-pubkey}\n",
+		"    {-authority|-holder|-from|-until|-eid|-esign|-pubkey|-sig}\n",
 		_name, _descr
 	);
 	return -1;

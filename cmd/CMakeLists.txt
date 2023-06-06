@@ -8,6 +8,7 @@ add_executable(bee2cmd
 	core/cmd_cvc.c
 	core/cmd_date.c
 	core/cmd_file.c
+	core/cmd_print.c
 	core/cmd_privkey.c
 	core/cmd_pwd.c
 	core/cmd_rng.c

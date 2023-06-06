@@ -493,6 +493,7 @@
     <ClCompile Include="..\..\cmd\core\cmd_cvc.c" />
     <ClCompile Include="..\..\cmd\core\cmd_date.c" />
     <ClCompile Include="..\..\cmd\core\cmd_file.c" />
+    <ClCompile Include="..\..\cmd\core\cmd_print.c" />
     <ClCompile Include="..\..\cmd\core\cmd_privkey.c" />
     <ClCompile Include="..\..\cmd\core\cmd_pwd.c" />
     <ClCompile Include="..\..\cmd\core\cmd_rng.c" />

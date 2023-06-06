@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: signing files
 \project bee2/cmd
 \created 2022.08.20
-\version 2023.05.30
+\version 2023.05.06
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -12,8 +12,9 @@
 
 #include "../cmd.h"
 #include <bee2/core/err.h>
-#include <bee2/core/der.h>
 #include <bee2/core/blob.h>
+#include <bee2/core/der.h>
+#include <bee2/core/dec.h>
 #include <bee2/core/hex.h>
 #include <bee2/core/mem.h>
 #include <bee2/core/rng.h>
@@ -843,52 +844,122 @@ err_t cmdSigSelfVerify2(const octet anchor[], size_t anchor_len)
 
 /*
 *******************************************************************************
-Печать подписи
+Извлечение сертификата
 *******************************************************************************
 */
 
-err_t cmdSigPrint(const char* sig_file)
+err_t cmdSigExtr(const char* cert_file, const char* sig_file, size_t num)
 {
 	err_t code;
 	void* stack;
 	cmd_sig_t* sig;
-	btok_cvc_t* cvc;
-	char* hex;
-	size_t offset;
+	size_t certs_len;
+	octet* cert;
 	size_t cert_len;
+	size_t i;
 	// входной контроль
-	if (!strIsValid(sig_file))
+	if (!strIsValid(sig_file) || !strIsValid(cert_file))
 		return ERR_BAD_INPUT;
 	// создать и разметить стек
-	code = cmdBlobCreate(stack,
-		sizeof(cmd_sig_t) + sizeof(btok_cvc_t) + 2 * 96 + 1);
+	code = cmdBlobCreate(stack, sizeof(cmd_sig_t));
 	ERR_CALL_CHECK(code);
 	sig = (cmd_sig_t*)stack;
-	cvc = (btok_cvc_t*)(sig + 1);
-	hex = (char*)(cvc + 1);
 	// читать подпись
 	code = cmdSigRead(sig, 0, sig_file);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-	// печатать сертификаты
-	for (offset = 0; offset < sig->certs_len; )
+	// искать нужный сертификат
+	certs_len = sig->certs_len, cert = sig->certs, i = 0;
+	do
 	{
-		code = cmdSigCertsGet(cvc, &cert_len, sig, offset);
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		code = cmdCVCPrint(cvc, 0);
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		offset += cert_len;
+		cert_len = btokCVCLen(cert, certs_len);
+		if (cert_len == SIZE_MAX)
+		{
+			code = ERR_BAD_CERT;
+			break;
+		}
+		// сертификат найден?
+		if (++i == num)
+		{
+			// сохранить его
+			code = cmdFileWrite(cert_file, cert, cert_len);
+			break;
+		}
+		certs_len -= cert_len, cert += cert_len;
 	}
-	// печатать дату
-	if (!memIsZero(sig->date, 6))
-		printf(
-			"signing_date = %c%c%c%c%c%c\n",
-			sig->date[0] + '0', sig->date[1] + '0',
-			sig->date[2] + '0', sig->date[3] + '0',
-			sig->date[4] + '0', sig->date[5] + '0');
-	// печатать подпись
-	hexFrom(hex, sig->sig, sig->sig_len);
-	printf("sig = %s\n", hex);
+	while (1);
 	// завершить
 	cmdBlobClose(stack);
+	return code;
+}
+
+/*
+*******************************************************************************
+Печать подписи
+*******************************************************************************
+*/
+
+static err_t cmdSigPrintCertc(const cmd_sig_t* sig)
+{
+	size_t certs_len;
+	const octet* cert;
+	size_t cert_len;
+	size_t count;
+	// определить число сертификатов
+	certs_len = sig->certs_len, cert = sig->certs, count = 0;
+	while (certs_len)
+	{
+		cert_len = btokCVCLen(cert, certs_len);
+		if (cert_len == SIZE_MAX)
+			return ERR_BAD_CERT;
+		certs_len -= cert_len, cert += cert_len, ++count;
+	}
+	// печатать число сертификатов
+	printf("%u", (unsigned)count);
+	return ERR_OK;
+}
+
+err_t cmdSigPrint(const char* sig_file, const char* scope)
+{
+	err_t code;
+	void* stack;
+	cmd_sig_t* sig;
+	// входной контроль
+	if (!strIsValid(sig_file) || !strIsValid(scope))
+		return ERR_BAD_INPUT;
+	// создать и разметить стек
+	code = cmdBlobCreate(stack, sizeof(cmd_sig_t));
+	ERR_CALL_CHECK(code);
+	sig = (cmd_sig_t*)stack;
+	// читать подпись
+	code = cmdSigRead(sig, 0, sig_file);
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	// печать всех полей
+	if (scope == 0)
+	{
+		printf("certc: ");
+		code = cmdSigPrintCertc(sig);
+		ERR_CALL_CHECK(code);
+		if (!memIsZero(sig->date, 6))
+		{
+			printf("\ndate:  ");
+			code = cmdPrintDate(sig->date);
+			ERR_CALL_CHECK(code);
+		}
+		printf("\nsig:   ");
+		code = cmdPrintMem2(sig->sig, sig->sig_len);
+	}
+	// печать отдельных полей
+	else if (strEq(scope, "certc"))
+		code = cmdSigPrintCertc(sig);
+	else if (strEq(scope, "date"))
+		code = memIsZero(sig->date, 6) ?
+			ERR_BAD_DATE : cmdPrintDate(sig->date);
+	else if (strEq(scope, "sig"))
+		code = cmdPrintMem(sig->sig, sig->sig_len);
+	else
+		code = ERR_CMD_PARAMS;
+	// завершить
+	ERR_CALL_CHECK(code);
+	printf("\n");
 	return code;
 }

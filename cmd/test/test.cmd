@@ -3,7 +3,7 @@ rem ===========================================================================
 rem \brief Testing command-line interface
 rem \project bee2evp/cmd
 rem \created 2022.06.24
-rem \version 2023.06.05
+rem \version 2023.06.06
 rem ===========================================================================
 
 rem ===========================================================================
@@ -318,7 +318,7 @@ rem ===========================================================================
 
 echo ****** Testing bee2cmd/sig...
 
-del /q ff ss 2> nul
+del /q ff ss cert21 2> nul
 
 echo test > ff
 echo sig > ss
@@ -400,6 +400,26 @@ if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd sig vfy -anchor cert2 ff ff
 if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd sig extr -cert1 ss cert21
+if %ERRORLEVEL% neq 0 goto Error
+
+fc /b cert21 cert2 1> nul
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig print ss
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig print ff
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig print -date ss
+if %ERRORLEVEL% equ 0 goto Error
+
+for /f "tokens=* USEBACKQ" %%F in (`bee2cmd sig print -certc ss`) do (
+  set certc=%%F
+)
+if "%certc%" neq "1" goto Error
 
 echo ****** OK
 

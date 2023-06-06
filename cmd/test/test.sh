@@ -228,7 +228,7 @@ test_cvc() {
 }
 
 test_sig(){
-  rm -rf ss ff\
+  rm -rf ss ff cert21\
     || return 2
 
   echo test > ff
@@ -296,6 +296,21 @@ test_sig(){
     && return 1
   $bee2cmd sig print ff \
     || return 1
+
+  $bee2cmd sig extr -cert1 ss cert21 \
+    || return 1
+  diff cert2 cert21 \
+    || return 1
+
+  $bee2cmd sig print ss \
+    || return 1
+  $bee2cmd sig print ff \
+    || return 1
+  $bee2cmd sig print -date ss \
+    && return 1
+  if [ "$($bee2cmd sig print -certc ss)" != "1" ]; then 
+    return 1
+  fi
 
   return 0
 }

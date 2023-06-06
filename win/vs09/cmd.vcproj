@@ -416,6 +416,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\cmd\core\cmd_print.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\cmd\core\cmd_privkey.c"
 					>
 				</File>
