@@ -864,49 +864,77 @@ err_t cmdSigSelfVerify2(const octet anchor[], size_t anchor_len)
 
 /*
 *******************************************************************************
-Извлечение сертификата
+Извлечение объекта
 *******************************************************************************
 */
 
-err_t cmdSigExtr(const char* cert_file, const char* sig_file, size_t num)
+err_t cmdSigExtr(const char* obj_file, const char* sig_file, const char* scope)
 {
 	err_t code;
 	void* stack;
 	cmd_sig_t* sig;
-	size_t certs_len;
-	octet* cert;
-	size_t cert_len;
-	size_t i;
+	size_t der_len;
 	// входной контроль
-	if (!strIsValid(sig_file) || !strIsValid(cert_file))
+	if (!strIsValid(sig_file) || !strIsValid(obj_file) || !strIsValid(scope))
 		return ERR_BAD_INPUT;
+	if (!strEq(scope, "body") &&
+		!strEq(scope, "sig") &&
+		!strStartsWith(scope, "cert"))
+		return ERR_CMD_PARAMS;
 	// создать и разметить стек
 	code = cmdBlobCreate(stack, sizeof(cmd_sig_t));
 	ERR_CALL_CHECK(code);
 	sig = (cmd_sig_t*)stack;
 	// читать подпись
-	code = cmdSigRead(sig, 0, sig_file);
+	code = cmdSigRead(sig, &der_len, sig_file);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-	// искать нужный сертификат
-	certs_len = sig->certs_len, cert = sig->certs, i = 0;
-	do
+	// извлечь сертификат?
+	if (strStartsWith(scope, "cert"))
 	{
-		cert_len = btokCVCLen(cert, certs_len);
-		if (cert_len == SIZE_MAX)
+		size_t num;
+		size_t certs_len;
+		const octet* cert;
+		size_t cert_len;
+		size_t pos;
+		// определить номер сертификата
+		scope += strLen("cert");
+		if (!decIsValid(scope) || strLen(scope) != 1)
+			code = ERR_CMD_PARAMS;
+		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		num = decToU32(scope);
+		// искать сертификат
+		certs_len = sig->certs_len, cert = sig->certs, cert_len = pos = 0;
+		while (certs_len)
 		{
+			cert_len = btokCVCLen(cert, certs_len);
+			if (cert_len == SIZE_MAX || pos == num)
+				break;
+			certs_len -= cert_len, cert += cert_len, ++pos;
+		}
+		// найден? записать в файл
+		if (pos == num && cert_len != 0 && cert_len != SIZE_MAX)
+			code = cmdFileWrite(obj_file, cert, cert_len);
+		else
 			code = ERR_BAD_CERT;
-			break;
-		}
-		// сертификат найден?
-		if (++i == num)
-		{
-			// сохранить его
-			code = cmdFileWrite(cert_file, cert, cert_len);
-			break;
-		}
-		certs_len -= cert_len, cert += cert_len;
 	}
-	while (1);
+	else if (strEq(scope, "body"))
+	{
+		size_t size = cmdFileSize(sig_file);
+		if (size == SIZE_MAX)
+			code = ERR_FILE_READ;
+		else if (size == der_len)
+			code = ERR_BAD_FORMAT;
+		else
+			code = cmdFileDup(obj_file, sig_file, 0, size - der_len);
+	}
+	else
+	{
+		size_t size = cmdFileSize(sig_file);
+		if (size == SIZE_MAX)
+			code = ERR_FILE_READ;
+		else
+			code = cmdFileDup(obj_file, sig_file, size - der_len, der_len);
+	}
 	// завершить
 	cmdBlobClose(stack);
 	return code;

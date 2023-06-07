@@ -318,7 +318,7 @@ rem ===========================================================================
 
 echo ****** Testing bee2cmd/sig...
 
-del /q ff ss cert21 2> nul
+del /q ff ss cert01 cert11 cert21 body sig 2> nul
 
 echo test > ff
 echo sig > ss
@@ -378,6 +378,30 @@ if %ERRORLEVEL% neq 0 goto Error
 bee2cmd sig vfy -anchor cert0 ff ff
 if %ERRORLEVEL% neq 0 goto Error
 
+bee2cmd sig extr -cert0 ff cert01
+if %ERRORLEVEL% neq 0 goto Error
+
+fc /b cert01 cert0 1> nul
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig extr -cert1 ff cert11
+if %ERRORLEVEL% neq 0 goto Error
+
+fc /b cert1 cert11 1> nul
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig extr -cert2 ff cert21
+if %ERRORLEVEL% neq 0 goto Error
+
+fc /b cert2 cert21 1> nul
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig extr -body ff body
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig extr -sig ff sig
+if %ERRORLEVEL% neq 0 goto Error
+
 del /q ss 2> nul
 
 bee2cmd sig sign -certs cert2 -pass pass:alice privkey2 ff ss
@@ -400,12 +424,6 @@ if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd sig vfy -anchor cert2 ff ff
 if %ERRORLEVEL% equ 0 goto Error
-
-bee2cmd sig extr -cert1 ss cert21
-if %ERRORLEVEL% neq 0 goto Error
-
-fc /b cert21 cert2 1> nul
-if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd sig print ss
 if %ERRORLEVEL% neq 0 goto Error

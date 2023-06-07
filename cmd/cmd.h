@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2
 \project bee2/cmd
 \created 2022.06.09
-\version 2023.06.02
+\version 2023.06.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -216,6 +216,19 @@ err_t cmdFileWrite(
 	const char* file,	/*!< [in] файл */
 	const octet buf[],	/*!< [in] буфер */
 	size_t count		/*!< [in] длина буфера */
+);
+
+/*!	\brief Дублирование содержимого файла
+
+	В файле ifile пропускаются первые skip октетов, а следующие count октетов
+	переписываются в файл ofile.
+	\return ERR_OK в случае успеха и код ошибки в противном случае.
+*/
+err_t cmdFileDup(
+	const char* ofile,	/*!< [in] выходной файл */
+	const char* ifile,	/*!< [in] входной файл */
+	size_t skip,		/*!< [in] число пропускаемых октетов */
+	size_t count		/*!< [in] число дубируемых октетов */
 );
 
 /*!	\brief Чтение всего файла
@@ -627,19 +640,21 @@ err_t cmdSigSelfVerify2(
 	size_t anchor_len			/*!< [in] длина anchor */
 );
 
-/*!	\brief Извлечение сертификата из подписи
+/*!	\brief Извлечение объекта из подписи
 
 	Из подписи, размещенной в файле sig_file, извлекается и сохраняется в файле
-	cert_file сертификат с номером num.
-	\return ERR_OK, если сертификат успешно извлечен, и код ошибки в противном
+	file объект, описанный строкой scope:
+	- n-й сертификат, если scope == "cert<n>" (нумерация от нуля, сертификат
+	  подписанта идет последним);
+	- подписанное содержимое, если scope == "body";
+	- собственно подпись, если scope == "sig".
+	\return ERR_OK, если объект успешно извлечен, и код ошибки в противном
 	случае.
-	\remark Нумерация сертификатов ведется от нуля. Первым идет сертификат
-	подписанта.
 */
 err_t cmdSigExtr(
-	const char* cert_file,		/*!< [in] файл сертификата */
+	const char* obj_file,		/*!< [in] файл c объектом */
 	const char* sig_file,		/*!< [in] файл подписи */
-	size_t num					/*!< [in] номер сертификата */
+	const char* scope			/*!< [in] область */
 );
 
 /*!	\brief Печать подписи

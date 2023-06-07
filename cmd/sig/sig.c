@@ -81,11 +81,15 @@ static int sigUsage()
         "Usage:\n"
         "  sig sign [options] <privkey> <file> <sig>\n"
         "    sign <file> using <privkey> and store the signature in <sig>\n"
-		"  sig vfy {-pubkey <pubkey> | -anchor <anchor>} <file> <sig>\n"
+		"  sig vfy {-pubkey <pubkey>|-anchor <anchor>} <file> <sig>\n"
 		"    verify <sig> of <file> using either <pubkey> or <anchor>\n"
-		"  sig extr -cert<n> <sig> <cert>\n"
-		"    extract from <sig> the <n>th certificate and store it in <cert>\n"
-		"    \remark the signing certificate comes last\n"
+		"  sig extr {-cert<n>|-body|-sig} <sig> <file>\n"
+		"    extract from <sig> an object and store it in <file>\n"
+		"    -cert<n> -- the <n>th attached certificate\n"
+		"      \remark certificates are numbered from zero\n"
+		"      \remark the signing certificate comes last\n"
+		"    -body -- the signed body\n"
+		"    -sig -- the signature itself\n"
 		"  sig print [field] <sig>\n"
 		"    print <sig> info: all fields or a specific field\n"
 		"  .\n"
@@ -310,32 +314,30 @@ static err_t sigVfy(int argc, char* argv[])
 
 /*
 *******************************************************************************
-Извлечение сертификата из подписи
+Извлечение из подписи объекта
 
-sig extr -cert<n> <sig> <cert>
+sig extr {-cert<n>|-body|-sig} <sig> <file>
 *******************************************************************************
 */
 
 static err_t sigExtr(int argc, char* argv[])
 {
 	err_t code;
-	const char* str;
-	size_t num;
-	// неверное число параметров?
-	if (argc != 3 || !strStartsWith(argv[0], "-cert"))
+	const char* scope;
+	// обработать опции
+	if (argc != 3)
 		return ERR_CMD_PARAMS;
-	// определить номер сертификата
-	str = argv[0] + strLen("-cert");
-	if (!decIsValid(str) || decCLZ(str) || strLen(str) > 1)
+	scope = argv[0];
+	if (strLen(scope) < 1 || scope[0] != '-')
 		return ERR_CMD_PARAMS;
-	num = (unsigned)decToU32(str);
+	++scope, --argc, ++argv;
 	// проверить наличие/отсутствие файлов
-	code = cmdFileValExist(1, argv + 1);
+	code = cmdFileValExist(1, argv);
 	ERR_CALL_CHECK(code);
-	code = cmdFileValNotExist(1, argv + 2);
+	code = cmdFileValNotExist(1, argv + 1);
 	ERR_CALL_CHECK(code);
-	// извлечь сертификат
-	code = cmdSigExtr(argv[2], argv[1], num);
+	// извлечь объект
+	code = cmdSigExtr(argv[1], argv[0], scope);
 	// завершить
 	return code;
 }

@@ -228,7 +228,7 @@ test_cvc() {
 }
 
 test_sig(){
-  rm -rf ss ff cert21\
+  rm -rf ss ff cert01 cert11 cert21 body sig\
     || return 2
 
   echo test > ff
@@ -267,6 +267,24 @@ test_sig(){
     && return 1
   $bee2cmd sig sign -certs "cert0 cert1 cert2" -pass pass:alice privkey2 ff ff \
     || return 1
+
+  $bee2cmd sig extr -cert0 ff cert01 \
+    || return 1
+  diff cert0 cert01 \
+    || return 1
+  $bee2cmd sig extr -cert1 ff cert11 \
+    || return 1
+  diff cert1 cert11 \
+    || return 1
+  $bee2cmd sig extr -cert2 ff cert21 \
+    || return 1
+  diff cert2 cert21 \
+    || return 1
+  $bee2cmd sig extr -body ff body \
+    || return 1
+  $bee2cmd sig extr -sig ff sig \
+    || return 1
+
   $bee2cmd sig vfy -pubkey pubkey2 ff ff \
     || return 1
   $bee2cmd sig vfy -anchor cert2 ff ff \
@@ -298,14 +316,7 @@ test_sig(){
   $bee2cmd sig print ff \
     || return 1
 
-  $bee2cmd sig extr -cert1 ss cert21 \
-    || return 1
-  diff cert2 cert21 \
-    || return 1
-
   $bee2cmd sig print ss \
-    || return 1
-  $bee2cmd sig print ff \
     || return 1
   $bee2cmd sig print -date ss \
     && return 1

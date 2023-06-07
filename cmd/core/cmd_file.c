@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: file management
 \project bee2/cmd 
 \created 2022.06.08
-\version 2023.03.15
+\version 2023.06.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -90,6 +90,64 @@ err_t cmdFileReadAll(octet buf[], size_t* count, const char* file)
 		ERR_CALL_CHECK(code);
 		*count = size;
 	}
+	return code;
+}
+
+/*
+*******************************************************************************
+Дублирование
+*******************************************************************************
+*/
+
+err_t cmdFileDup(const char* ofile, const char* ifile,
+	size_t skip, size_t count)
+{
+	const size_t buf_size = 4096;
+	err_t code;
+	FILE* ifp;
+	FILE* ofp;
+	size_t size;
+	void* buf;
+	// pre
+	ASSERT(strIsValid(ifile) && strIsValid(ofile));
+	// проверить длину входного файла
+	size = cmdFileSize(ifile);
+	if (size == SIZE_MAX || skip + count > size)
+		return ERR_FILE_READ;
+	// открыть входной файл
+	ifp = fopen(ifile, "rb");
+	if (!ifp)
+		return ERR_FILE_OPEN;
+	// пропустить skip октетов
+	if ((size_t)(long int)skip != skip ||
+		fseek(ifp, (long int)skip, SEEK_SET))
+	{
+		fclose(ifp);
+		return ERR_FILE_READ;
+	}
+	// открыть выходной файл
+	ofp = fopen(ofile, "wb");
+	if (!ofp)
+	{
+		fclose(ifp);
+		return ERR_FILE_CREATE;
+	}
+	// подготовить память
+	code = cmdBlobCreate(buf, buf_size);
+	ERR_CALL_HANDLE(code, (fclose(ofp), fclose(ifp)));
+	// дублировать
+	while (count && code == ERR_OK)
+	{
+		size_t c = MIN2(buf_size, count);
+		if (fread(buf, 1, c, ifp) != c)
+			code = ERR_FILE_READ;
+		else if (fwrite(buf, 1, c, ofp) != c)
+			code = ERR_FILE_WRITE;
+		count -= c;
+	}
+	// завершить
+	cmdBlobClose(buf);
+	fclose(ofp), fclose(ifp);
 	return code;
 }
 
