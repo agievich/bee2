@@ -4,7 +4,7 @@
 \brief Manage CV-certificates
 \project bee2/cmd 
 \created 2022.07.12
-\version 2023.06.05
+\version 2023.06.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -266,6 +266,7 @@ static err_t cvcParseOptions(btok_cvc_t* cvc, bool_t* eid, bool_t* esign,
 				break;
 			}
 			--argc, ++argv;
+			ASSERT(argc > 0);
 			code = cmdDateParse(cvc->from, *argv);
 			if (code != ERR_OK)
 				break;
@@ -285,6 +286,7 @@ static err_t cvcParseOptions(btok_cvc_t* cvc, bool_t* eid, bool_t* esign,
 				break;
 			}
 			--argc, ++argv;
+			ASSERT(argc > 0);
 			code = cmdDateParse(cvc->until, *argv);
 			if (code != ERR_OK)
 				break;
@@ -304,6 +306,7 @@ static err_t cvcParseOptions(btok_cvc_t* cvc, bool_t* eid, bool_t* esign,
 				break;
 			}
 			--argc, ++argv;
+			ASSERT(argc > 0);
 			if (strLen(*argv) != 10 || !hexIsValid(*argv))
 			{
 				code = ERR_BAD_ACL;
@@ -327,6 +330,7 @@ static err_t cvcParseOptions(btok_cvc_t* cvc, bool_t* eid, bool_t* esign,
 				break;
 			}
 			--argc, ++argv;
+			ASSERT(argc > 0);
 			if (strLen(*argv) != 4 || !hexIsValid(*argv))
 			{
 				code = ERR_BAD_ACL;
@@ -350,6 +354,7 @@ static err_t cvcParseOptions(btok_cvc_t* cvc, bool_t* eid, bool_t* esign,
 				break;
 			}
 			--argc, ++argv;
+			ASSERT(argc > 0);
 			if ((code = cmdPwdRead(pwd, *argv)) != ERR_OK)
 				break;
 			--argc, ++argv;
@@ -368,6 +373,7 @@ static err_t cvcParseOptions(btok_cvc_t* cvc, bool_t* eid, bool_t* esign,
 				break;
 			}
 			--argc, ++argv;
+			ASSERT(argc > 0);
 			code = cmdDateParse(date, *argv);
 			if (code != ERR_OK)
 				break;

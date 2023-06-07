@@ -4,7 +4,7 @@
 \brief Sign files and verify signatures
 \project bee2/cmd
 \created 2022.08.01
-\version 2023.06.06
+\version 2023.06.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -83,9 +83,9 @@ static int sigUsage()
         "    sign <file> using <privkey> and store the signature in <sig>\n"
 		"  sig vfy {-pubkey <pubkey> | -anchor <anchor>} <file> <sig>\n"
 		"    verify <sig> of <file> using either <pubkey> or <anchor>\n"
-		"  cvc extr -cert<n> <sig> <cert>\n"
+		"  sig extr -cert<n> <sig> <cert>\n"
 		"    extract from <sig> the <n>th certificate and store it in <cert>\n"
-		"    \remark the signing certificate comes first\n"
+		"    \remark the signing certificate comes last\n"
 		"  sig print [field] <sig>\n"
 		"    print <sig> info: all fields or a specific field\n"
 		"  .\n"
@@ -103,7 +103,7 @@ static int sigUsage()
         "    {-certc|-date|-sig}\n"
 		"      -certc -- the number of attached certificates\n"
 		"      -date -- date of signing\n"
-		"      -sig -- baseline signature\n",
+		"      -sig -- base signature\n",
 		_name, _descr
     );
     return -1;
@@ -205,7 +205,7 @@ static err_t sigSign(int argc, char* argv[])
 			certs = *argv;
 			++argv, --argc;
 		}
-		if (strStartsWith(*argv, "-date"))
+		else if (strStartsWith(*argv, "-date"))
 		{
 			if (!memIsZero(date, 6))
 			{
@@ -213,6 +213,7 @@ static err_t sigSign(int argc, char* argv[])
 				break;
 			}
 			--argc, ++argv;
+			ASSERT(argc > 0);
 			code = cmdDateParse(date, *argv);
 			if (code != ERR_OK)
 				break;

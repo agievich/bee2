@@ -249,12 +249,13 @@ test_sig(){
 
   rm -rf ss
 
-  $bee2cmd sig sign -date 400101 -certs "cert2 cert1" -pass pass:alice \
+  $bee2cmd sig sign -date 400101 -certs "cert1 cert2" -pass pass:alice \
     privkey2 ff ss \
     && return 1
-  $bee2cmd sig sign -date 230526 -certs "cert2 cert1" -pass pass:alice \
+  $bee2cmd sig sign -date 230526 -certs "cert1 cert2" -pass pass:alice \
     privkey2 ff ss \
     || return 1
+
   $bee2cmd sig vfy -pubkey pubkey2 ff ss \
     || return 1
   $bee2cmd sig vfy -anchor cert2 ff ss \
@@ -264,7 +265,7 @@ test_sig(){
 
   $bee2cmd sig vfy -anchor cert0 ff ss \
     && return 1
-  $bee2cmd sig sign -certs "cert2 cert1 cert0" -pass pass:alice privkey2 ff ff \
+  $bee2cmd sig sign -certs "cert0 cert1 cert2" -pass pass:alice privkey2 ff ff \
     || return 1
   $bee2cmd sig vfy -pubkey pubkey2 ff ff \
     || return 1

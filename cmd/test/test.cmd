@@ -343,11 +343,11 @@ if %ERRORLEVEL% equ 0 goto Error
 
 del /q ss 1> nul
 
-bee2cmd sig sign -certs "cert2 cert1" -date 400101 -pass pass:alice ^
+bee2cmd sig sign -certs "cert1 cert2" -date 400101 -pass pass:alice ^
   privkey2 ff ss
 if %ERRORLEVEL% equ 0 goto Error
 
-bee2cmd sig sign -certs "cert2 cert1" -date 230526 -pass pass:alice ^
+bee2cmd sig sign -certs "cert1 cert2" -date 230526 -pass pass:alice ^
   privkey2 ff ss
 if %ERRORLEVEL% neq 0 goto Error
 
@@ -363,7 +363,7 @@ if %ERRORLEVEL% neq 0 goto Error
 bee2cmd sig vfy -anchor cert0 ff ss
 if %ERRORLEVEL% equ 0 goto Error
 
-bee2cmd sig sign -certs "cert2 cert1 cert0" -pass pass:alice privkey2 ff ff
+bee2cmd sig sign -certs "cert0 cert1 cert2" -pass pass:alice privkey2 ff ff
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd sig vfy -pubkey pubkey2 ff ff

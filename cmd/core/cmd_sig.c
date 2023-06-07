@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: signing files
 \project bee2/cmd
 \created 2022.08.20
-\version 2023.05.06
+\version 2023.05.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -347,56 +347,53 @@ static err_t cmdSigHash(octet hash[], size_t hash_len, const char* file,
 static err_t cmdSigCertsVal(const cmd_sig_t* sig)
 {
 	err_t code;
+	void* stack;
 	size_t certs_len;
 	const octet* cert;
 	size_t cert_len;
-	btok_cvc_t cvc[1];
-	const octet* certa;
-	size_t certa_len;
-	btok_cvc_t cvca[1];
+	btok_cvc_t* cvca;
+	btok_cvc_t* cvc;
 	// pre
 	ASSERT(memIsValid(sig, sizeof(cmd_sig_t)));
 	// нет сертификатов?
 	if (!sig->certs_len)
 		return ERR_OK;
-	// найти и разобрать последний сертификат
-	certs_len = sig->certs_len, certa = sig->certs;
-	certa_len = btokCVCLen(certa, certs_len);
-	ASSERT(certa_len != SIZE_MAX);
-	while (certs_len > certa_len)
-	{
-		certa += certa_len;
-		certa_len = btokCVCLen(certa, certs_len);
-		ASSERT(certa_len != SIZE_MAX);
-		certs_len -= certa_len;
-	} 
-	code = btokCVCUnwrap(cvca, certa, certa_len, 0, 0);
+	// выделить и разметить память
+	code = cmdBlobCreate(stack, 2 * sizeof(btok_cvc_t));
 	ERR_CALL_CHECK(code);
-	// цикл по парам (эмитент, издатель)
-	while (certa != sig->certs)
+	cvca = (btok_cvc_t*)stack;
+	cvc = cvca + 1;
+	// найти и разобрать первый сертификат
+	certs_len = sig->certs_len, cert = sig->certs;
+	cert_len = btokCVCLen(cert, certs_len);
+	if (cert_len == SIZE_MAX)
+		code = ERR_BAD_CERT;
+	ERR_CALL_CHECK(code);
+	code = btokCVCUnwrap(cvca, cert, cert_len, 0, 0);
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	certs_len -= cert_len, cert += cert_len;
+	// цикл по остальным сертификатам
+	while (certs_len)
 	{
-		// определить сертификат эмитента
-		certs_len = sig->certs_len, cert = sig->certs;
+		// разобрать сертификат
 		cert_len = btokCVCLen(cert, certs_len);
-		ASSERT(cert_len != SIZE_MAX);
-		while (cert + cert_len < certa)
-		{
-			cert += cert_len;
-			cert_len = btokCVCLen(cert, certs_len);
-			ASSERT(cert_len != SIZE_MAX);
-			certs_len -= cert_len;
-		}
-		// проверить пару сертификатов
-		if (cert == sig->certs && !memIsZero(sig->date, 6))
+		if (cert_len == SIZE_MAX)
+			code = ERR_BAD_CERT;
+		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		// проверить сертификат
+		if (cert_len == certs_len && !memIsZero(sig->date, 6))
 			code = btokCVCVal2(cvc, cert, cert_len, cvca, sig->date);
 		else
 			code = btokCVCVal2(cvc, cert, cert_len, cvca, 0);
-		ERR_CALL_CHECK(code);
+		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		// к следующему сертификату
+		certs_len -= cert_len, cert += cert_len;
 		// издатель <- эмитент
-		certa = cert, certa_len = cert_len;
 		memCopy(cvca, cvc, sizeof(btok_cvc_t));
 	}
-	return ERR_OK;
+	// завершить
+	cmdBlobClose(stack);
+	return code;
 }
 
 static err_t cmdSigCertsVal2(const cmd_sig_t* sig, const octet anchor[],
@@ -494,6 +491,8 @@ static err_t cmdSigCertsMatch(const cmd_sig_t* sig, const octet privkey[],
 	size_t privkey_len)
 {
 	err_t code;
+	size_t certs_len;
+	const octet* cert;
 	size_t cert_len;
 	// pre
 	ASSERT(memIsValid(sig, sizeof(cmd_sig_t)));
@@ -501,12 +500,19 @@ static err_t cmdSigCertsMatch(const cmd_sig_t* sig, const octet privkey[],
 	// нет сертификатов?
 	if (!sig->certs_len)
 		return ERR_OK;
-	// выделить первый сертификат
-	cert_len = btokCVCLen(sig->certs, sig->certs_len);
-	code = cert_len != SIZE_MAX ? ERR_OK : ERR_BAD_CERT;
-	ERR_CALL_CHECK(code);
+	// найти последний сертификат
+	certs_len = sig->certs_len, cert = sig->certs, cert_len = 0;
+	do
+	{
+		cert += cert_len;
+		cert_len = btokCVCLen(cert, certs_len);
+		code = cert_len != SIZE_MAX ? ERR_OK : ERR_BAD_CERT;
+		ERR_CALL_CHECK(code);
+		certs_len -= cert_len;
+	}
+	while (certs_len);
 	// проверить соответствие
-	code = btokCVCMatch(sig->certs, cert_len, privkey, privkey_len);
+	code = btokCVCMatch(cert, cert_len, privkey, privkey_len);
 	return code;
 }
 
@@ -652,11 +658,19 @@ err_t cmdSigVerify(const char* file, const char* sig_file,
 	// проверить сертификаты
 	code = cmdSigCertsVal(sig);	
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-	// выделить первый сертификат
+	// есть сертификаты?
 	if (sig->certs_len)
 	{
-		code = cmdSigCertsGet(cvc, 0, sig, 0);
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		size_t offset;
+		size_t cert_len;
+		// найти последний сертификат
+		for (offset = 0; offset < sig->certs_len; )
+		{
+			code = cmdSigCertsGet(cvc, &cert_len, sig, offset);
+			ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+			offset += cert_len;
+		}
+		// проверить открытый ключ последнего сертификата
 		if (pubkey_len != cvc->pubkey_len ||
 			!memEq(pubkey, cvc->pubkey, pubkey_len))
 			code = ERR_BAD_PUBKEY;
@@ -717,6 +731,8 @@ err_t cmdSigVerify2(const char* file, const char* sig_file,
 	size_t oid_len = 16;
 	octet* hash;
 	size_t der_len;
+	size_t offset;
+	size_t cert_len;
 	// входной контроль
 	if (!strIsValid(file) || !strIsValid(sig_file) ||
 		!memIsValid(anchor, anchor_len))
@@ -743,9 +759,13 @@ err_t cmdSigVerify2(const char* file, const char* sig_file,
 	// проверить сертификаты
 	code = cmdSigCertsVal2(sig, anchor, anchor_len);	
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-	// выделить первый сертификат
-	code = cmdSigCertsGet(cvc, 0, sig, 0);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	// найти последний сертификат
+	for (offset = 0; offset < sig->certs_len; )
+	{
+		code = cmdSigCertsGet(cvc, &cert_len, sig, offset);
+		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		offset += cert_len;
+	}
 	// загрузить параметры и хэшировать
 	if (cvc->pubkey_len == 64)
 	{
