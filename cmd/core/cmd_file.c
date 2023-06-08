@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: file management
 \project bee2/cmd 
 \created 2022.06.08
-\version 2023.06.07
+\version 2023.06.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -99,28 +99,25 @@ err_t cmdFileReadAll(octet buf[], size_t* count, const char* file)
 *******************************************************************************
 */
 
-err_t cmdFileDup(const char* ofile, const char* ifile,
-	size_t skip, size_t count)
+err_t cmdFileDup(const char* ofile, const char* ifile, size_t skip,
+	size_t count)
 {
 	const size_t buf_size = 4096;
 	err_t code;
 	FILE* ifp;
 	FILE* ofp;
-	size_t size;
 	void* buf;
 	// pre
 	ASSERT(strIsValid(ifile) && strIsValid(ofile));
-	// проверить длину входного файла
-	size = cmdFileSize(ifile);
-	if (size == SIZE_MAX || skip + count > size)
-		return ERR_FILE_READ;
+	// переполнение?
+	if ((size_t)(long int)skip != skip)
+		return ERR_BAD_INPUT;
 	// открыть входной файл
 	ifp = fopen(ifile, "rb");
 	if (!ifp)
 		return ERR_FILE_OPEN;
 	// пропустить skip октетов
-	if ((size_t)(long int)skip != skip ||
-		fseek(ifp, (long int)skip, SEEK_SET))
+	if (fseek(ifp, (long int)skip, SEEK_SET))
 	{
 		fclose(ifp);
 		return ERR_FILE_READ;
@@ -135,16 +132,27 @@ err_t cmdFileDup(const char* ofile, const char* ifile,
 	// подготовить память
 	code = cmdBlobCreate(buf, buf_size);
 	ERR_CALL_HANDLE(code, (fclose(ofp), fclose(ifp)));
-	// дублировать
-	while (count && code == ERR_OK)
-	{
-		size_t c = MIN2(buf_size, count);
-		if (fread(buf, 1, c, ifp) != c)
-			code = ERR_FILE_READ;
-		else if (fwrite(buf, 1, c, ofp) != c)
-			code = ERR_FILE_WRITE;
-		count -= c;
-	}
+	// дублировать count октетов
+	if (count != SIZE_MAX)
+		while (count && code == ERR_OK)
+		{
+			size_t c = MIN2(buf_size, count);
+			if (fread(buf, 1, c, ifp) != c)
+				code = ERR_FILE_READ;
+			else if (fwrite(buf, 1, c, ofp) != c)
+				code = ERR_FILE_WRITE;
+			count -= c;
+		}
+	// дублировать все
+	else
+		while (code == ERR_OK)
+		{
+			size_t c = fread(buf, 1, buf_size, ifp);
+			if (c != buf_size && !feof(ifp))
+				code = ERR_FILE_READ;
+			else if (fwrite(buf, 1, c, ofp) != c)
+				code = ERR_FILE_WRITE;
+		}
 	// завершить
 	cmdBlobClose(buf);
 	fclose(ofp), fclose(ifp);

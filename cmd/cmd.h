@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2
 \project bee2/cmd
 \created 2022.06.09
-\version 2023.06.07
+\version 2023.06.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -221,14 +221,15 @@ err_t cmdFileWrite(
 /*!	\brief Дублирование содержимого файла
 
 	В файле ifile пропускаются первые skip октетов, а следующие count октетов
-	переписываются в файл ofile.
+	переписываются в файл ofile. При count == SIZE_MAX переписываются все
+	оставшиеся октеты ifile.
 	\return ERR_OK в случае успеха и код ошибки в противном случае.
 */
 err_t cmdFileDup(
 	const char* ofile,	/*!< [in] выходной файл */
 	const char* ifile,	/*!< [in] входной файл */
 	size_t skip,		/*!< [in] число пропускаемых октетов */
-	size_t count		/*!< [in] число дубируемых октетов */
+	size_t count		/*!< [in] число дублируемых октетов */
 );
 
 /*!	\brief Чтение всего файла

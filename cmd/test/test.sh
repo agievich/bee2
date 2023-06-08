@@ -3,7 +3,7 @@
 # \brief Testing command-line interface
 # \project bee2evp/cmd
 # \created 2022.06.24
-# \version 2023.06.05
+# \version 2023.06.08
 # =============================================================================
 
 bee2cmd=./bee2cmd
@@ -231,8 +231,8 @@ test_sig(){
   rm -rf ss ff cert01 cert11 cert21 body sig\
     || return 2
 
-  echo test > ff
-  echo sig > ss
+  echo test> ff
+  echo sig> ss
 
   $bee2cmd sig vfy -pubkey pubkey2 ff ss \
     && return 1
@@ -282,6 +282,9 @@ test_sig(){
     || return 1
   $bee2cmd sig extr -body ff body \
     || return 1
+  if [[ $(< body) != "test" ]]; then
+    return 1
+  fi
   $bee2cmd sig extr -sig ff sig \
     || return 1
 
@@ -294,7 +297,7 @@ test_sig(){
   $bee2cmd sig vfy -anchor cert0 ff ff \
     || return 1
 
-  rm -rf ss
+  rm -rf ss body
 
   $bee2cmd sig sign -certs cert2 -pass pass:alice privkey2 ff ss \
     || return 1
@@ -305,6 +308,8 @@ test_sig(){
   $bee2cmd sig vfy -anchor cert2 ff ss \
     || return 1
   $bee2cmd sig vfy -anchor cert1 ff ss \
+    && return 1
+  $bee2cmd sig extr -body ss body \
     && return 1
 
   $bee2cmd sig sign -pass pass:alice -date 230526 privkey2 ff ff \
