@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): cryptographic tokens
 \project bee2 [cryptographic library]
 \created 2022.07.04
-\version 2023.02.02
+\version 2023.06.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -410,7 +410,7 @@ err_t btokCVCIss(
 */
 size_t btokCVCLen(
 	const octet der[],			/*!< [in] DER-код */
-	size_t count				/*!< [in] длина privkey в октетах */
+	size_t count				/*!< [in] длина der в октетах */
 );
 
 /*!	\brief Проверка CV-сертификата

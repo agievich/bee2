@@ -4,7 +4,7 @@
 \brief Errors
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2023.06.05
+\version 2023.06.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -36,6 +36,9 @@ static const err_msg _messages[] = {
 	{ERR_BAD_LENGTH, "Invalid length"},
 	{ERR_BAD_INPUT, "Invalid input data"},
 	{ERR_OUTOFMEMORY, "Out of memory"},
+	{ERR_OVERFLOW, "Overflow"},
+	{ERR_NOT_FOUND, "Object not found"},
+	{ERR_ALREADY_EXISTS, "Object already exists"},
 	{ERR_ACCESS_DENIED, "Access denied"},
 	{ERR_NOT_READY, "Device is not ready"},
 	{ERR_BUSY, "Device is busy"},
@@ -75,7 +78,6 @@ static const err_msg _messages[] = {
 	{ERR_BAD_PRIVKEY, "Invalid private key"},
 	{ERR_BAD_PUBKEY, "Invalid public key"},
 	{ERR_BAD_KEYPAIR, "Invalid private/public keypair"},
-	{ERR_BAD_CERT, "Incorrect public key certificate"},
 	{ERR_BAD_SHAREDKEY, "Incorrect shared key"},
 	{ERR_BAD_SHAREKEY, "Incorrect secret share"},
 	{ERR_BAD_HASH, "Incorrect hash"},
@@ -83,6 +85,9 @@ static const err_msg _messages[] = {
 	{ERR_BAD_MAC, "Incorrect authentication tag"},
 	{ERR_BAD_CRC, "Incorrect checksum"},
 	{ERR_BAD_KEYTOKEN, "Invalid key token"},
+	{ERR_BAD_CERT, "Invalid public key certificate"},
+	{ERR_BAD_ANCHOR, "Invalid anchor certificate"},
+	{ERR_BAD_CERTRING, "Invalid certificate ring"},
 	{ERR_BAD_LOGIC, "Incorrect (protocol) logic"},
 	{ERR_BAD_PWD, "Incorrect password"},
 	{ERR_KEY_NOT_FOUND, "Unable to find the key"},

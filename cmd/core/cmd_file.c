@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: file management
 \project bee2/cmd 
 \created 2022.06.08
-\version 2023.06.08
+\version 2023.06.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -28,7 +28,7 @@
 size_t cmdFileSize(const char* file)
 {
 	FILE* fp;
-	long int size;
+	long size;
 	ASSERT(strIsValid(file));
 	if (!(fp = fopen(file, "rb")))
 		return SIZE_MAX;
@@ -41,6 +41,47 @@ size_t cmdFileSize(const char* file)
 	fclose(fp);
 	return (size == -1L) ? SIZE_MAX : (size_t)size;
 }
+
+#if defined OS_UNIX
+
+#include <unistd.h>
+
+err_t cmdFileTrunc(const char* file, size_t size)
+{
+	ASSERT(strIsValid(file));
+	if ((size_t)(long)size != size)
+		return ERR_OVERFLOW;
+	return truncate(file, (off_t)size) == 0 ? ERR_OK : ERR_FILE_WRITE;
+}
+
+#elif defined OS_WIN
+
+#include <windows.h>
+
+err_t cmdFileTrunc(const char* file, size_t size)
+{
+	err_t code = ERR_OK;
+	HANDLE h;
+	ASSERT(strIsValid(file));
+	if ((size_t)(LONG)size != size)
+		return ERR_OVERFLOW;
+	if ((h = CreateFileA(file, GENERIC_WRITE, FILE_SHARE_WRITE, NULL,
+		OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)) == INVALID_HANDLE_VALUE)
+		return ERR_FILE_OPEN;
+	if (SetFilePointer(h, (LONG)size, 0, FILE_BEGIN) ==
+		INVALID_SET_FILE_POINTER)
+		code = ERR_FILE_READ;
+	else if (!SetEndOfFile(h))
+		code = ERR_FILE_WRITE;
+	CloseHandle(h);
+	return code;
+}
+
+#else
+
+#error "Not implemented"
+
+#endif
 
 /*
 *******************************************************************************
@@ -57,6 +98,22 @@ err_t cmdFileWrite(const char* file, const octet buf[], size_t count)
 	ASSERT(memIsValid(buf, count));
 	// записать
 	code = (fp = fopen(file, "wb")) ? ERR_OK : ERR_FILE_CREATE;
+	ERR_CALL_CHECK(code);
+	code = count == fwrite(buf, 1, count, fp) ? ERR_OK : ERR_FILE_WRITE;
+	fclose(fp);
+	// завершить
+	return code;
+}
+
+err_t cmdFileAppend(const char* file, const octet buf[], size_t count)
+{
+	err_t code;
+	FILE* fp;
+	// pre
+	ASSERT(strIsValid(file));
+	ASSERT(memIsValid(buf, count));
+	// записать
+	code = (fp = fopen(file, "ab")) ? ERR_OK : ERR_FILE_OPEN;
 	ERR_CALL_CHECK(code);
 	code = count == fwrite(buf, 1, count, fp) ? ERR_OK : ERR_FILE_WRITE;
 	fclose(fp);
@@ -110,14 +167,14 @@ err_t cmdFileDup(const char* ofile, const char* ifile, size_t skip,
 	// pre
 	ASSERT(strIsValid(ifile) && strIsValid(ofile));
 	// переполнение?
-	if ((size_t)(long int)skip != skip)
-		return ERR_BAD_INPUT;
+	if ((size_t)(long)skip != skip)
+		return ERR_OVERFLOW;
 	// открыть входной файл
 	ifp = fopen(ifile, "rb");
 	if (!ifp)
 		return ERR_FILE_OPEN;
 	// пропустить skip октетов
-	if (fseek(ifp, (long int)skip, SEEK_SET))
+	if (fseek(ifp, (long)skip, SEEK_SET))
 	{
 		fclose(ifp);
 		return ERR_FILE_READ;

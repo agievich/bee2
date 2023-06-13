@@ -4,7 +4,7 @@
 \brief Generate and manage private keys
 \project bee2/cmd 
 \created 2022.06.08
-\version 2023.06.05
+\version 2023.06.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -69,7 +69,8 @@ static int kgUsage()
 		"    -l<nnn> -- security level: 128 (by default), 192 or 256\n"
 		"    -pass <scheme> -- password description\n"
 		"    -passin <scheme> -- input password description\n"
-		"    -passout <scheme> -- output password description\n",
+		"    -passout <scheme> -- output password description\n"
+		,
 		_name, _descr
 	);
 	return -1;

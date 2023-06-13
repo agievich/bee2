@@ -4,7 +4,7 @@
 \brief Dealing with entropy sources
 \project bee2/cmd 
 \created 2021.04.20
-\version 2022.11.04
+\version 2023.06.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -52,7 +52,8 @@ static int esUsage()
 		"  es read <source> <count> <file>\n"
 		"    read <count> Kbytes from <source> and store them in <file>\n"
 		"  <source> in {trng, trng2, sys, timer, timerNN}\n"
-		"    timerNNN -- use NNN sleep delays to produce one output bit\n",
+		"    timerNNN -- use NNN sleep delays to produce one output bit\n"
+		,
 		_name, _descr
 	);
 	return -1;

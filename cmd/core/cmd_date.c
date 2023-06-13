@@ -36,7 +36,7 @@ err_t cmdDateParse(octet date[6], const char* str)
 	if (memIsZero(date, 6))
 	{
 		if (!tmDate2(date))
-			return ERR_BAD_DATE;
+			return ERR_BAD_TIMER;
 	}
 	else if (!tmDateIsValid2(date))
 		return ERR_BAD_DATE;

@@ -4,7 +4,7 @@
 \brief Generate and manage passwords
 \project bee2/cmd 
 \created 2022.06.23
-\version 2023.06.05
+\version 2023.06.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -69,7 +69,8 @@ static int pwdUsage()
 		"        -t<nn> --- threshold (2 <= <nn> <= 16, 2 by default)\n"
 		"        -l<mmm> --- password bitlen: 128, 192 or 256 (by default)\n"
 		"        -crc --- the password contains 64-bit crc (<mmm> != 128)\n"
-		"        -pass <scheme> --- password to protect shares\n",
+		"        -pass <scheme> --- password to protect shares\n"
+		,
 		_name, _descr
 	);
 	return -1;

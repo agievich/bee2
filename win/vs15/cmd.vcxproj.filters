@@ -39,6 +39,9 @@
     <Filter Include="Source Files\es">
       <UniqueIdentifier>{864685ed-1abf-4c54-b801-656724e1e542}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\cvr">
+      <UniqueIdentifier>{5a9b2cdc-aada-4113-9765-ddce84daef05}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\cmd\bsum\bsum.c">
@@ -100,6 +103,9 @@
     </ClCompile>
     <ClCompile Include="..\..\cmd\core\cmd_print.c">
       <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\cvr\cvr.c">
+      <Filter>Source Files\cvr</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

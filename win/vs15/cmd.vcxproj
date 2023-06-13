@@ -501,6 +501,7 @@
     <ClCompile Include="..\..\cmd\core\cmd_term.c" />
     <ClCompile Include="..\..\cmd\core\whereami.c" />
     <ClCompile Include="..\..\cmd\cvc\cvc.c" />
+    <ClCompile Include="..\..\cmd\cvr\cvr.c" />
     <ClCompile Include="..\..\cmd\es\es.c" />
     <ClCompile Include="..\..\cmd\kg\kg.c" />
     <ClCompile Include="..\..\cmd\pwd\pwd.c" />

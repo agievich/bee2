@@ -4,7 +4,7 @@
 \brief Sign files and verify signatures
 \project bee2/cmd
 \created 2022.08.01
-\version 2023.06.07
+\version 2023.06.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -52,14 +52,14 @@
 [внешняя подпись]
   bee2cmd sig sign -certs "cert2 cert1 cert0" -pass pass:alice privkey2 \
     file sig_file
-  bee2cmd sig vfy -anchor cert0 file sig_file
-  bee2cmd sig vfy -pubkey pubkey2 file sig_file
+  bee2cmd sig val -anchor cert0 file sig_file
+  bee2cmd sig val -pubkey pubkey2 file sig_file
   bee2cmd sig print sig_file
 [встроенная подпись]
   bee2cmd sig sign -certs "cert2 cert1 cert0" -date 230526 -pass pass:alice \
     privkey2 file file
-  bee2cmd sig vfy -anchor cert0 file file
-  bee2cmd sig vfy -pubkey pubkey2 file file
+  bee2cmd sig val -anchor cert0 file file
+  bee2cmd sig val -pubkey pubkey2 file file
   bee2cmd sig print file
   bee2cmd sig print -certc file
   bee2cmd sig print -date file
@@ -81,15 +81,15 @@ static int sigUsage()
         "Usage:\n"
         "  sig sign [options] <privkey> <file> <sig>\n"
         "    sign <file> using <privkey> and store the signature in <sig>\n"
-		"  sig vfy {-pubkey <pubkey>|-anchor <anchor>} <file> <sig>\n"
+		"  sig val {-pubkey <pubkey>|-anchor <anchor>} <file> <sig>\n"
 		"    verify <sig> of <file> using either <pubkey> or <anchor>\n"
 		"  sig extr {-cert<n>|-body|-sig} <sig> <file>\n"
 		"    extract from <sig> an object and store it in <file>\n"
-		"    -cert<n> -- the <n>th attached certificate\n"
-		"      \remark certificates are numbered from zero\n"
-		"      \remark the signing certificate comes last\n"
-		"    -body -- the signed body\n"
-		"    -sig -- the signature itself\n"
+		"      -cert<n> -- the <n>th attached certificate\n"
+		"        \\remark certificates are numbered from zero\n"
+		"        \\remark the signing certificate comes last\n"
+		"      -body -- the signed body\n"
+		"      -sig -- the signature itself\n"
 		"  sig print [field] <sig>\n"
 		"    print <sig> info: all fields or a specific field\n"
 		"  .\n"
@@ -107,7 +107,8 @@ static int sigUsage()
         "    {-certc|-date|-sig}\n"
 		"      -certc -- the number of attached certificates\n"
 		"      -date -- date of signing\n"
-		"      -sig -- base signature\n",
+		"      -sig -- base signature\n"
+		,
 		_name, _descr
     );
     return -1;
@@ -276,11 +277,11 @@ static err_t sigSign(int argc, char* argv[])
 *******************************************************************************
 Проверка подписи
 
-sig vfy {-pubkey <pubkey> | -anchor <anchor>} <file> <sig>
+sig val {-pubkey <pubkey> | -anchor <anchor>} <file> <sig>
 *******************************************************************************
 */
 
-static err_t sigVfy(int argc, char* argv[])
+static err_t sigVal(int argc, char* argv[])
 {
 	err_t code;
 	size_t count;
@@ -387,8 +388,8 @@ static int sigMain(int argc, char* argv[])
     --argc, ++argv;
     if (strEq(argv[0], "sign"))
         code = sigSign(argc - 1, argv + 1);
-    else if (strEq(argv[0], "vfy"))	
-        code = sigVfy(argc - 1, argv + 1);
+    else if (strEq(argv[0], "val"))	
+        code = sigVal(argc - 1, argv + 1);
 	else if (strEq(argv[0], "extr"))
 		code = sigExtr(argc - 1, argv + 1);
 	else if (strEq(argv[0], "print"))
@@ -396,7 +397,7 @@ static int sigMain(int argc, char* argv[])
     else
 		code = ERR_CMD_NOT_FOUND;
 	// завершить
-	if (code != ERR_OK || strEq(argv[0], "vfy"))
+	if (code != ERR_OK || strEq(argv[0], "val"))
 		printf("bee2cmd/%s: %s\n", _name, errMsg(code));
 	return code != ERR_OK ? -1 : 0;
 }

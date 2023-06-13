@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2
 \project bee2/cmd
 \created 2022.06.09
-\version 2023.06.08
+\version 2023.06.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -207,6 +207,16 @@ size_t cmdFileSize(
 	const char* file		/*!< [in] имя файла */
 );
 
+/*!	\brief Сокращение файла
+
+	Файл с именем file сокращается до size октетов.
+	\return ERR_OK в случае успеха и код ошибки в противном случае.
+*/
+err_t cmdFileTrunc(
+	const char* file,		/*!< [in] имя файла */
+	size_t size				/*!< [in] новый размер */
+);
+
 /*!	\brief Запись в файл
 
 	Создается файл file и в него записывается буфер [count]buf.
@@ -218,11 +228,23 @@ err_t cmdFileWrite(
 	size_t count		/*!< [in] длина буфера */
 );
 
+/*!	\brief Дозапись в файл
+
+	В конец файла file дописывается буфер [count]buf.
+	\return ERR_OK в случае успеха и код ошибки в противном случае.
+	\remark Если file не существует, то он создается.
+*/
+err_t cmdFileAppend(
+	const char* file,	/*!< [in] файл */
+	const octet buf[],	/*!< [in] буфер */
+	size_t count		/*!< [in] длина буфера */
+);
+
 /*!	\brief Дублирование содержимого файла
 
 	В файле ifile пропускаются первые skip октетов, а следующие count октетов
 	переписываются в файл ofile. При count == SIZE_MAX переписываются все
-	оставшиеся октеты ifile.
+	октеты ifile вплоть до конца файла.
 	\return ERR_OK в случае успеха и код ошибки в противном случае.
 */
 err_t cmdFileDup(
@@ -562,6 +584,19 @@ err_t cmdSigSign(
 	const octet date[6],		/*!< [in] дата подписания */
 	const octet privkey[],		/*!< [in] личный ключ */
 	size_t privkey_len			/*!< [in] длина личного ключа */
+);
+
+/*!	\brief Чтение подписи
+
+	Из файла sig_file прочитывается подпись sig. При ненулевом sig_len по этому
+	адресу возвращается длина DER-кода подписи.
+	\return ERR_OK, если подпись успешно прочитана, и код ошибки в противном
+	случае.
+*/
+err_t cmdSigRead(
+	cmd_sig_t* sig,				/*!< [out] подпись */
+	size_t* sig_len,			/*!< [out] длина DER-кода подписи */
+	const char* sig_file		/*!< [in] файл с подписью */
 );
 
 /*!	\brief Проверка подписи файла на открытом ключе

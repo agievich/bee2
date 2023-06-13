@@ -3,7 +3,7 @@
 # \brief Testing command-line interface
 # \project bee2evp/cmd
 # \created 2022.06.24
-# \version 2023.06.08
+# \version 2023.06.13
 # =============================================================================
 
 bee2cmd=./bee2cmd
@@ -234,17 +234,17 @@ test_sig(){
   echo test> ff
   echo sig> ss
 
-  $bee2cmd sig vfy -pubkey pubkey2 ff ss \
+  $bee2cmd sig val -pubkey pubkey2 ff ss \
     && return 1
-  $bee2cmd sig vfy -anchor cert0 ff ss \
+  $bee2cmd sig val -anchor cert0 ff ss \
     && return 1
-  $bee2cmd sig vfy -anchor cert2 ff ss \
+  $bee2cmd sig val -anchor cert2 ff ss \
     && return 1
-  $bee2cmd sig vfy -pubkey pubkey2 ff ff \
+  $bee2cmd sig val -pubkey pubkey2 ff ff \
     && return 1
-  $bee2cmd sig vfy -anchor cert0 ff ff \
+  $bee2cmd sig val -anchor cert0 ff ff \
     && return 1
-  $bee2cmd sig vfy -anchor cert2 ff ff \
+  $bee2cmd sig val -anchor cert2 ff ff \
     && return 1
 
   rm -rf ss
@@ -256,14 +256,14 @@ test_sig(){
     privkey2 ff ss \
     || return 1
 
-  $bee2cmd sig vfy -pubkey pubkey2 ff ss \
+  $bee2cmd sig val -pubkey pubkey2 ff ss \
     || return 1
-  $bee2cmd sig vfy -anchor cert2 ff ss \
+  $bee2cmd sig val -anchor cert2 ff ss \
     || return 1
-  $bee2cmd sig vfy -anchor cert1 ff ss \
+  $bee2cmd sig val -anchor cert1 ff ss \
     || return 1
 
-  $bee2cmd sig vfy -anchor cert0 ff ss \
+  $bee2cmd sig val -anchor cert0 ff ss \
     && return 1
   $bee2cmd sig sign -certs "cert0 cert1 cert2" -pass pass:alice privkey2 ff ff \
     || return 1
@@ -288,13 +288,13 @@ test_sig(){
   $bee2cmd sig extr -sig ff sig \
     || return 1
 
-  $bee2cmd sig vfy -pubkey pubkey2 ff ff \
+  $bee2cmd sig val -pubkey pubkey2 ff ff \
     || return 1
-  $bee2cmd sig vfy -anchor cert2 ff ff \
+  $bee2cmd sig val -anchor cert2 ff ff \
     || return 1
-  $bee2cmd sig vfy -anchor cert1 ff ff \
+  $bee2cmd sig val -anchor cert1 ff ff \
     || return 1
-  $bee2cmd sig vfy -anchor cert0 ff ff \
+  $bee2cmd sig val -anchor cert0 ff ff \
     || return 1
 
   rm -rf ss body
@@ -303,20 +303,20 @@ test_sig(){
     || return 1
   $bee2cmd sig print ss \
     || return 1
-  $bee2cmd sig vfy -pubkey pubkey2 ff ss \
+  $bee2cmd sig val -pubkey pubkey2 ff ss \
     || return 1
-  $bee2cmd sig vfy -anchor cert2 ff ss \
+  $bee2cmd sig val -anchor cert2 ff ss \
     || return 1
-  $bee2cmd sig vfy -anchor cert1 ff ss \
+  $bee2cmd sig val -anchor cert1 ff ss \
     && return 1
   $bee2cmd sig extr -body ss body \
     && return 1
 
   $bee2cmd sig sign -pass pass:alice -date 230526 privkey2 ff ff \
     || return 1
-  $bee2cmd sig vfy -pubkey pubkey2 ff ff \
+  $bee2cmd sig val -pubkey pubkey2 ff ff \
     || return 1
-  $bee2cmd sig vfy -anchor cert2 ff ff \
+  $bee2cmd sig val -anchor cert2 ff ff \
     && return 1
   $bee2cmd sig print ff \
     || return 1

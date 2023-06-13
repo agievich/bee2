@@ -468,6 +468,14 @@
 					>
 				</File>
 			</Filter>
+			<Filter
+				Name="cvr"
+				>
+				<File
+					RelativePath="..\..\cmd\cvr\cvr.c"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
