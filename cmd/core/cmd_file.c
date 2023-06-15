@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: file management
 \project bee2/cmd 
 \created 2022.06.08
-\version 2023.06.13
+\version 2023.06.15
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -41,47 +41,6 @@ size_t cmdFileSize(const char* file)
 	fclose(fp);
 	return (size == -1L) ? SIZE_MAX : (size_t)size;
 }
-
-#if defined OS_UNIX
-
-#include <unistd.h>
-
-err_t cmdFileTrunc(const char* file, size_t size)
-{
-	ASSERT(strIsValid(file));
-	if ((size_t)(long)size != size)
-		return ERR_OVERFLOW;
-	return truncate(file, (off_t)size) == 0 ? ERR_OK : ERR_FILE_WRITE;
-}
-
-#elif defined OS_WIN
-
-#include <windows.h>
-
-err_t cmdFileTrunc(const char* file, size_t size)
-{
-	err_t code = ERR_OK;
-	HANDLE h;
-	ASSERT(strIsValid(file));
-	if ((size_t)(LONG)size != size)
-		return ERR_OVERFLOW;
-	if ((h = CreateFileA(file, GENERIC_WRITE, FILE_SHARE_WRITE, NULL,
-		OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)) == INVALID_HANDLE_VALUE)
-		return ERR_FILE_OPEN;
-	if (SetFilePointer(h, (LONG)size, 0, FILE_BEGIN) ==
-		INVALID_SET_FILE_POINTER)
-		code = ERR_FILE_READ;
-	else if (!SetEndOfFile(h))
-		code = ERR_FILE_WRITE;
-	CloseHandle(h);
-	return code;
-}
-
-#else
-
-#error "Not implemented"
-
-#endif
 
 /*
 *******************************************************************************

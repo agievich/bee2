@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2
 \project bee2/cmd
 \created 2022.06.09
-\version 2023.06.13
+\version 2023.06.15
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -205,16 +205,6 @@ err_t cmdPrintDate(
 */
 size_t cmdFileSize(
 	const char* file		/*!< [in] имя файла */
-);
-
-/*!	\brief Сокращение файла
-
-	Файл с именем file сокращается до size октетов.
-	\return ERR_OK в случае успеха и код ошибки в противном случае.
-*/
-err_t cmdFileTrunc(
-	const char* file,		/*!< [in] имя файла */
-	size_t size				/*!< [in] новый размер */
 );
 
 /*!	\brief Запись в файл
