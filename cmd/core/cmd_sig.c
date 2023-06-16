@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: signing files
 \project bee2/cmd
 \created 2022.08.20
-\version 2023.05.07
+\version 2023.06.16
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -353,7 +353,7 @@ static err_t cmdSigCertsVal(const cmd_sig_t* sig)
 	cert_len = btokCVCLen(cert, certs_len);
 	if (cert_len == SIZE_MAX)
 		code = ERR_BAD_CERT;
-	ERR_CALL_CHECK(code);
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	code = btokCVCUnwrap(cvca, cert, cert_len, 0, 0);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	certs_len -= cert_len, cert += cert_len;
