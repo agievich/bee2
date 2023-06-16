@@ -370,6 +370,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\test\crypto\bign96_test.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\test\crypto\bign_test.c"
 					>
 				</File>

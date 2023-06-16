@@ -4,7 +4,7 @@
 \brief Bee2 testing
 \project bee2/test
 \created 2014.04.02
-\version 2023.03.21
+\version 2023.06.16
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -98,6 +98,7 @@ int testMath()
 extern bool_t beltTest();
 extern bool_t beltBench();
 extern bool_t bignTest();
+extern bool_t bign96Test();
 extern bool_t brngTest();
 extern bool_t belsTest();
 extern bool_t bakeTest();
@@ -121,6 +122,8 @@ int testCrypto()
 	code = beltBench(), ret |= !code;
 	code = bashBench(), ret |= !code;
 	printf("bignTest: %s\n", (code = bignTest()) ? "OK" : "Err"), ret |= !code;
+	printf("bign96Test: %s\n", (code = bign96Test()) ? "OK" : "Err"),
+		ret |= !code;
 	printf("botpTest: %s\n", (code = botpTest()) ? "OK" : "Err"), ret |= !code;
 	printf("brngTest: %s\n", (code = brngTest()) ? "OK" : "Err"), ret |= !code;
 	printf("belsTest: %s\n", (code = belsTest()) ? "OK" : "Err"), ret |= !code;

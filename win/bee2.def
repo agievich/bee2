@@ -130,7 +130,7 @@ EXPORTS
 	bignIdSign					@315
 	bignIdSign2					@316
 	bignIdVerify				@317
-	
+
 	brngCTR_keep				@401
 	brngCTRStart				@402
 	brngCTRStepR				@403
@@ -270,3 +270,13 @@ EXPORTS
 	btokCVCLen					@1506
 	btokCVCVal					@1507
 	btokCVCVal2					@1508
+
+	bign96StdParams				@1601
+	bign96ValParams				@1602
+	bign96GenKeypair			@1603
+	bign96ValKeypair			@1604
+	bign96ValPubkey				@1605
+	bign96CalcPubkey			@1606
+	bign96Sign					@1607
+	bign96Sign2					@1608
+	bign96Verify				@1609

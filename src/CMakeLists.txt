@@ -44,6 +44,7 @@ set(src
   crypto/belt/belt_mac.c
   crypto/belt/belt_pbkdf.c
   crypto/bign.c
+  crypto/bign96.c
   crypto/bpki.c
   crypto/botp.c
   crypto/brng.c

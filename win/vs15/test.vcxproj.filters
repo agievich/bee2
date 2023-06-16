@@ -136,5 +136,8 @@
     <ClCompile Include="..\..\test\math\ww_test.c">
       <Filter>Source Files\math</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\test\crypto\bign96_test.c">
+      <Filter>Source Files\crypto</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
