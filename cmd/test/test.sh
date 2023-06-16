@@ -3,7 +3,7 @@
 # \brief Testing command-line interface
 # \project bee2evp/cmd
 # \created 2022.06.24
-# \version 2023.06.13
+# \version 2023.06.16
 # =============================================================================
 
 bee2cmd=./bee2cmd
@@ -216,7 +216,7 @@ test_cvc() {
   $bee2cmd cvc val cert0 cert1 cert2 \
     || return 1
 
-  $bee2cmd cvc cut -pass pass:trent -until 391230 privkey1 cert1 cert2 \
+  $bee2cmd cvc shorten -pass pass:trent -until 391230 privkey1 cert1 cert2 \
     || return 1
   $bee2cmd cvc val cert0 cert1 cert2 \
     || return 1
@@ -332,6 +332,58 @@ test_sig(){
   return 0
 }
 
+test_cvr(){
+  rm -rf privkey3 req3 cert3 ring2 cert21 cert31 \
+    || return 2
+
+  $bee2cmd kg gen -pass pass:bob privkey3 \
+    || return 1
+  $bee2cmd cvc req -authority BYCA1023 -from 221030 -until 391231 \
+    -holder 590082394655 -pass pass:bob privkey3 req3 \
+    || return 1
+  $bee2cmd cvc iss -pass pass:trent privkey1 cert1 req3 cert3 \
+    || return 1
+
+  $bee2cmd cvr init -pass pass:alice privkey2 cert2 ring2 \
+    || return 1
+  $bee2cmd cvr add -pass pass:alice privkey2 cert2 cert3 ring2 \
+    || return 1
+  $bee2cmd cvr add -pass pass:alice privkey2 cert2 cert3 ring2 \
+    && return 1
+  $bee2cmd cvr val cert2 ring2 \
+    || return 1
+  $bee2cmd sig val -anchor cert2 ring2 ring2 \
+    || return 1
+  $bee2cmd cvr extr -cert0 ring2 cert31 \
+    || return 1
+  diff cert3 cert31 \
+    || return 1
+  $bee2cmd sig extr -cert0 ring2 cert21 \
+    || return 1
+  diff cert2 cert21 \
+    || return 1
+  $bee2cmd cvr print ring2 \
+    || return 1
+  $bee2cmd cvr print -certc ring2 \
+    || return 1
+  $bee2cmd sig print ring2 \
+    || return 1
+  $bee2cmd cvr add -pass pass:alice privkey2 cert2 cert0 ring2 \
+    || return 1
+  $bee2cmd cvr add -pass pass:alice privkey2 cert2 cert1 ring2 \
+    || return 1
+  if [ "$($bee2cmd cvr print -certc ring2)" != "3" ]; then 
+    return 1
+  fi
+  $bee2cmd cvr del -pass pass:alice privkey2 cert2 cert1 ring2 \
+    || return 1
+  $bee2cmd cvr del -pass pass:alice privkey2 cert2 cert0 ring2 \
+    || return 1
+  $bee2cmd cvr del -pass pass:alice privkey2 cert2 cert0 ring2 \
+
+  return 0
+}
+
 test_es() {
   rm -rf dd\
     || return 2
@@ -358,4 +410,4 @@ run_test() {
 } 
 
 run_test ver && run_test bsum && run_test pwd && run_test kg && run_test cvc \
-  && run_test sig && run_test es
+  && run_test sig && run_test cvr && run_test es

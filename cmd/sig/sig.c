@@ -4,7 +4,7 @@
 \brief Sign files and verify signatures
 \project bee2/cmd
 \created 2022.08.01
-\version 2023.06.13
+\version 2023.06.16
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -33,36 +33,26 @@
 - проверка ЭЦП;
 - печать ЭЦП.
 
-Пример:
-[подготовка ключей]
-  bee2cmd kg gen -l256 -pass pass:root privkey0
-  bee2cmd kg gen -l192 -pass pass:trent privkey1
-  bee2cmd kg gen -pass pass:alice privkey2
-  bee2cmd kg pub -pass pass:alice pubkey2
-[выпуск сертификатов]
-  bee2cmd cvc root -authority BYCA0000 -from 220707 -until 990707 \
-    -pass pass:root -eid EEEEEEEEEE -esign 7777 privkey0 cert0
-  bee2cmd cvc print cert0
-  bee2cmd cvc req -pass pass:trent  -authority BYCA0000 -holder BYCA1000 \
-    -from 220712 -until 221130 -eid DDDDDDDDDD -esign 3333 privkey1 req1
-  bee2cmd cvc iss -pass pass:root privkey0 cert0 req1 cert1
-  bee2cmd cvc req -authority BYCA1000 -from 220712 -until 391231 -esign 1111 \
-    -holder "590082394654" -pass pass:alice -eid 8888888888 privkey2 req2
-  bee2cmd cvc iss -pass pass:trent privkey1 cert1 req2 cert2
-[внешняя подпись]
-  bee2cmd sig sign -certs "cert2 cert1 cert0" -pass pass:alice privkey2 \
-    file sig_file
-  bee2cmd sig val -anchor cert0 file sig_file
-  bee2cmd sig val -pubkey pubkey2 file sig_file
+Пример (после примера в cvc.c):
+  # внешняя подпись
+  bee2cmd sig sign -certs "cert0 cert1 cert2" -pass pass:alice privkey2 \
+    cert0 sig_file
+  bee2cmd sig val -anchor cert0 cert0 sig_file
+  bee2cmd sig val -pubkey pubkey2 cert0 sig_file
   bee2cmd sig print sig_file
-[встроенная подпись]
-  bee2cmd sig sign -certs "cert2 cert1 cert0" -date 230526 -pass pass:alice \
-    privkey2 file file
-  bee2cmd sig val -anchor cert0 file file
-  bee2cmd sig val -pubkey pubkey2 file file
-  bee2cmd sig print file
-  bee2cmd sig print -certc file
-  bee2cmd sig print -date file
+  # встроенная подпись
+  bee2cmd sig sign -certs "cert0 cert1 cert2" -date 230526 -pass pass:alice \
+    privkey2 sig_file sig_file
+  bee2cmd sig val -anchor cert0 sig_file sig_file
+  bee2cmd sig val -pubkey pubkey2 sig_file sig_file
+  bee2cmd sig print sig_file
+  bee2cmd sig print -certc sig_file
+  bee2cmd sig print -date sig_file
+  # извлечение частей
+  bee2cmd sig extr -body sig_file body
+  bee2cmd sig extr -sig sig_file sig
+  bee2cmd sig extr -body sig_file body
+  bee2cmd sig extr -cert0 sig_file cert01
 *******************************************************************************
 */
 

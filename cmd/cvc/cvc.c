@@ -4,7 +4,7 @@
 \brief Manage CV-certificates
 \project bee2/cmd 
 \created 2022.07.12
-\version 2023.06.13
+\version 2023.06.16
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -37,25 +37,30 @@
 - печать полей сертификата.
 
 Пример:
+  # подготовка ключей
   bee2cmd kg gen -l256 -pass pass:root privkey0
   bee2cmd kg gen -l192 -pass pass:trent privkey1
   bee2cmd kg gen -pass pass:alice privkey2
+  bee2cmd kg extr -pass pass:alice privkey2 pubkey2
+  # выпуск сертификатов
   bee2cmd cvc root -authority BYCA0000 -from 220707 -until 990707 \
-	-pass pass:root -eid EEEEEEEEEE -esign 7777 privkey0 cert0
+    -pass pass:root -eid EEEEEEEEEE -esign 7777 privkey0 cert0
   bee2cmd cvc print cert0
   bee2cmd cvc print -holder cert0
   bee2cmd cvc extr cert0 pubkey0
   bee2cmd cvc req -pass pass:trent -authority BYCA0000 -holder BYCA1023 \
-	-from 220712 -until 221130 -eid DDDDDDDDDD -esign 3333 privkey1 req1
+    -from 220712 -until 221130 -eid DDDDDDDDDD -esign 3333 privkey1 req1
   bee2cmd cvc iss -pass pass:root privkey0 cert0 req1 cert1
   bee2cmd cvc req -authority BYCA1023 -from 220712 -until 391231 -esign 1111 \
-	-holder "590082394654" -pass pass:alice -eid 8888888888 privkey2 req2
+    -holder 590082394654 -pass pass:alice -eid 8888888888 privkey2 req2
   bee2cmd cvc iss -pass pass:trent privkey1 cert1 req2 cert2
+  # проверка сертификатов
   bee2cmd cvc match -pass pass:alice privkey2 cert2
   bee2cmd cvc val cert0 cert0
   bee2cmd cvc val -date 220712 cert0 cert1
   bee2cmd cvc val -date 000000 cert0 cert1 cert2
-  bee2cmd cvc cut -until 391230 -pass pass:trent privkey1 cert1 cert2
+  # сокращение срока действия
+  bee2cmd cvc shorten -until 391230 -pass pass:trent privkey1 cert1 cert2
 *******************************************************************************
 */
 
@@ -73,7 +78,7 @@ static int cvcUsage()
 		"    generate a pre-certificate <req>\n"
 		"  cvc iss [options] <privkeya> <certa> <req> <cert>\n"
 		"    issue <cert> based on <req> and subordinate to <certa>\n"
-		"  cvc cut [options] <privkeya> <certa> <cert>\n"
+		"  cvc shorten [options] <privkeya> <certa> <cert>\n"
 		"    shorten the lifetime of <cert> subordinate to <certa>\n"
 		"  cvc val [options] <certa> <certb> ... <cert>\n"
 		"    validate <certb> ... <cert> using <certa> as an anchor\n"
@@ -89,14 +94,14 @@ static int cvcUsage()
 		"  <pubkey>\n"
 		"    file with a public key\n"
 		"  options:\n"
-		"    -authority <name> -- authority (issuer)  [root] req\n"
-		"    -holder <name> -- holder (owner)         [root] req [iss]\n"
-		"    -from <YYMMDD> -- starting date          root req [iss]\n"
-		"    -until <YYMMDD> -- expiration date       root req [iss] cut\n"
-		"    -eid <10*hex> -- eId access template     [root] [req] [iss]\n"
-		"    -esign <4*hex> -- eSign access template  [root] [req] [iss]\n"
-		"    -pass <scheme> -- password description   root req iss cut match\n"
-		"    -date <YYMMDD> -- validation date        [val]\n"
+		"    -authority <name> -- authority       [root] req\n"
+		"    -holder <name> -- holder             [root] req [iss]\n"
+		"    -from <YYMMDD> -- starting date      root req [iss]\n"
+		"    -until <YYMMDD> -- expiration date   root req [iss] cut\n"
+		"    -eid <10*hex> -- eId access mask     [root] [req] [iss]\n"
+		"    -esign <4*hex> -- eSign access mask  [root] [req] [iss]\n"
+		"    -pass <scheme> -- password           root req iss shorten match\n"
+		"    -date <YYMMDD> -- validation date    [val]\n"
 		"  field:\n"
 		"    {-authority|-holder|-from|-until|-eid|-esign|-pubkey|-sig}\n"
 		,
@@ -671,13 +676,13 @@ static err_t cvcIss(int argc, char* argv[])
 *******************************************************************************
 Сокращение срока действия сертификата
 
-cvc cut [options] <privkeya> <certa> <cert>
+cvc shorten [options] <privkeya> <certa> <cert>
 
 \remark Обязательные опции: pass, until.
 *******************************************************************************
 */
 
-static err_t cvcCut(int argc, char* argv[])
+static err_t cvcShorten(int argc, char* argv[])
 {
 	err_t code;
 	btok_cvc_t cvc0[1];
@@ -1006,8 +1011,8 @@ int cvcMain(int argc, char* argv[])
 		code = cvcReq(argc - 1, argv + 1);
 	else if (strEq(argv[0], "iss"))
 		code = cvcIss(argc - 1, argv + 1);
-	else if (strEq(argv[0], "cut"))
-		code = cvcCut(argc - 1, argv + 1);
+	else if (strEq(argv[0], "shorten"))
+		code = cvcShorten(argc - 1, argv + 1);
 	else if (strEq(argv[0], "val"))
 		code = cvcVal(argc - 1, argv + 1);
 	else if (strEq(argv[0], "match"))

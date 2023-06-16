@@ -4,7 +4,7 @@
 \brief Generate and manage passwords
 \project bee2/cmd 
 \created 2022.06.23
-\version 2023.06.08
+\version 2023.06.16
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -40,9 +40,9 @@
 функций cmdPwdGen(), cmdPwdRead().
 
 Пример:
-  bee2cmd pwd gen share:"-l256 -t3 -pass pass:zed s1 s2 s3 s4 s5"
-  bee2cmd pwd gen share:"-l192 -pass share:\"-pass pass:zed s1 s2 s3\"
-    ss1 ss2 ss3"
+  bee2cmd pwd gen share:"-l256 -t3 -crc -pass pass:zed s1 s2 s3 s4 s5"
+  bee2cmd pwd gen \
+    share:"-l192 -pass share:\"-crc -pass pass:zed s1 s2 s3\" ss1 ss2 ss3"
   bee2cmd pwd val share:"-pass share:\"-pass pass:zed s2 s4 s1\" ss3 ss1"
   bee2cmd pwd print share:"-pass share:\"-pass pass:zed s2 s4 s1\" ss3 ss1"
 *******************************************************************************

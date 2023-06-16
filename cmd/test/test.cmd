@@ -3,7 +3,7 @@ rem ===========================================================================
 rem \brief Testing command-line interface
 rem \project bee2evp/cmd
 rem \created 2022.06.24
-rem \version 2023.06.13
+rem \version 2023.06.16
 rem ===========================================================================
 
 rem ===========================================================================
@@ -299,7 +299,7 @@ if %ERRORLEVEL% equ 0 goto Error
 bee2cmd cvc val cert0 cert1 cert2
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd cvc cut -pass pass:trent -until 391230 privkey1 cert1 cert2
+bee2cmd cvc shorten -pass pass:trent -until 391230 privkey1 cert1 cert2
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd cvc val cert0 cert1 cert2
@@ -450,10 +450,86 @@ if "%certc%" neq "1" goto Error
 echo ****** OK
 
 rem ===========================================================================
+rem  bee2cmd/cvr
+rem ===========================================================================
+
+echo ****** Testing bee2cmd/cvr...
+
+del /q privkey3 req3 cert3 ring2 cert21 cert31 2> nul
+
+bee2cmd kg gen -pass pass:bob privkey3
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvc req -authority BYCA1023 -from 221030 -until 391231 ^
+  -holder 590082394655 -pass pass:bob privkey3 req3
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvc iss -pass pass:trent privkey1 cert1 req3 cert3
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvr init -pass pass:alice privkey2 cert2 ring2
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvr add -pass pass:alice privkey2 cert2 cert3 ring2
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvr add -pass pass:alice privkey2 cert2 cert3 ring2
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd cvr val cert2 ring2
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig val -anchor cert2 ring2 ring2
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvr extr -cert0 ring2 cert31
+if %ERRORLEVEL% neq 0 goto Error
+
+fc /b cert31 cert3 1> nul
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig extr -cert0 ring2 cert21
+if %ERRORLEVEL% neq 0 goto Error
+
+fc /b cert21 cert2 1> nul
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvr print ring2
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvr print -certc ring2
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig print ring2
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvr add -pass pass:alice privkey2 cert2 cert0 ring2
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvr add -pass pass:alice privkey2 cert2 cert1 ring2
+if %ERRORLEVEL% neq 0 goto Error
+
+for /f "tokens=* USEBACKQ" %%F in (`bee2cmd cvr print -certc ring2`) do (
+  set certc=%%F
+)
+if "%certc%" neq "3" goto Error
+
+bee2cmd cvr del -pass pass:alice privkey2 cert2 cert1 ring2
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvr del -pass pass:alice privkey2 cert2 cert0 ring2
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvr del -pass pass:alice privkey2 cert2 cert0 ring2
+if %ERRORLEVEL% equ 0 goto Error
+
+echo ****** OK
+
+rem ===========================================================================
 rem  bee2cmd/es
 rem ===========================================================================
 
-del /q dd 1> nul
+del /q dd 2> nul
 
 bee2cmd es print
 if %ERRORLEVEL% neq 0 goto Error
