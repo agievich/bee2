@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: managing CV-certificates
 \project bee2/cmd
 \created 2022.08.20
-\version 2022.10.25
+\version 2023.06.06
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -14,8 +14,8 @@
 #include <bee2/core/err.h>
 #include <bee2/core/blob.h>
 #include <bee2/core/hex.h>
+#include <bee2/core/str.h>
 #include <bee2/core/util.h>
-#include <bee2/crypto/btok.h>
 #include <stdio.h>
 
 /*
@@ -24,44 +24,56 @@
 *******************************************************************************
 */
 
-err_t cmdCVCPrint(btok_cvc_t* cvc)
+err_t cmdCVCPrint(const btok_cvc_t* cvc, const char* scope)
 {
-	err_t code;
-	char* hex;
+	err_t code = ERR_OK;
 	// проверить содержимое
 	code = btokCVCCheck(cvc);
 	ERR_CALL_CHECK(code);
-	// выделить память и разметить ее
-	code = cmdBlobCreate(hex, 2 * 128 + 1);
-	ERR_CALL_CHECK(code);
-	// печатать содержимое
-	ASSERT(cvc->pubkey_len <= 128);
-	hexFrom(hex, cvc->pubkey, cvc->pubkey_len);
-	printf(
-		"authority = \"%s\"\n"
-		"holder = \"%s\"\n"
-		"pubkey = %s\n",
-		cvc->authority, cvc->holder, hex);
-	hexFrom(hex, cvc->hat_eid, 5);
-	hexFrom(hex + 16, cvc->hat_esign, 2);
-	printf(
-		"hat_eid = %s\n"
-		"hat_esign = %s\n",
-		hex, hex + 16);
-	ASSERT(cvc->sig_len <= 96);
-	hexFrom(hex, cvc->sig, cvc->sig_len);
-	printf(
-		"from = 20%c%c-%c%c-%c%c\n"
-		"until = 20%c%c-%c%c-%c%c\n"
-		"sig = %s\n",
-		cvc->from[0] + '0', cvc->from[1] + '0',
-		cvc->from[2] + '0', cvc->from[3] + '0',
-		cvc->from[4] + '0', cvc->from[5] + '0',
-		cvc->until[0] + '0', cvc->until[1] + '0',
-		cvc->until[2] + '0', cvc->until[3] + '0',
-		cvc->until[4] + '0', cvc->until[5] + '0',
-		hex);
+	// печать всех полей
+	if (scope == 0)
+	{
+		printf("authority: %s\n", cvc->authority);
+		printf("holder:    %s\n", cvc->holder);
+		printf("pubkey:    ");
+		code = cmdPrintMem2(cvc->pubkey, cvc->pubkey_len);
+		ERR_CALL_CHECK(code);
+		printf("\nhat_eid:   ");
+		code = cmdPrintMem(cvc->hat_eid, sizeof(cvc->hat_eid));
+		ERR_CALL_CHECK(code);
+		printf("\nhat_esign: ");
+		code = cmdPrintMem(cvc->hat_esign, sizeof(cvc->hat_esign));
+		ERR_CALL_CHECK(code);
+		printf("\nfrom:      ");
+		code = cmdPrintDate(cvc->from);
+		ERR_CALL_CHECK(code);
+		printf("\nuntil:     ");
+		code = cmdPrintDate(cvc->until);
+		ERR_CALL_CHECK(code);
+		printf("\nsig:       ");
+		code = cmdPrintMem2(cvc->sig, cvc->sig_len);
+	}
+	// печать отдельных полей
+	else if (strEq(scope, "authority"))
+		printf("%s", cvc->authority);
+	else if (strEq(scope, "holder"))
+		printf("%s", cvc->holder);
+	else if (strEq(scope, "from"))
+		code = cmdPrintDate(cvc->from);
+	else if (strEq(scope, "until"))
+		code = cmdPrintDate(cvc->until);
+	else if (strEq(scope, "eid"))
+		code = cmdPrintMem(cvc->hat_eid, sizeof(cvc->hat_eid));
+	else if (strEq(scope, "esign"))
+		code = cmdPrintMem(cvc->hat_esign, sizeof(cvc->hat_esign));
+	else if (strEq(scope, "pubkey"))
+		code = cmdPrintMem(cvc->pubkey, cvc->pubkey_len);
+	else if (strEq(scope, "sig"))
+		code = cmdPrintMem(cvc->sig, cvc->sig_len);
+	else
+		code = ERR_CMD_PARAMS;
 	// завершить
-	cmdBlobClose(hex);
-	return ERR_OK;
+	ERR_CALL_CHECK(code);
+	printf("\n");
+	return code;
 }

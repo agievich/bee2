@@ -4,7 +4,7 @@
 \brief Generate and manage passwords
 \project bee2/cmd 
 \created 2022.06.23
-\version 2022.10.21
+\version 2023.06.16
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -40,9 +40,9 @@
 функций cmdPwdGen(), cmdPwdRead().
 
 Пример:
-  bee2cmd pwd gen share:"-l256 -t3 -pass pass:zed s1 s2 s3 s4 s5"
-  bee2cmd pwd gen share:"-l192 -pass share:\"-pass pass:zed s1 s2 s3\"
-    ss1 ss2 ss3"
+  bee2cmd pwd gen share:"-l256 -t3 -crc -pass pass:zed s1 s2 s3 s4 s5"
+  bee2cmd pwd gen \
+    share:"-l192 -pass share:\"-crc -pass pass:zed s1 s2 s3\" ss1 ss2 ss3"
   bee2cmd pwd val share:"-pass share:\"-pass pass:zed s2 s4 s1\" ss3 ss1"
   bee2cmd pwd print share:"-pass share:\"-pass pass:zed s2 s4 s1\" ss3 ss1"
 *******************************************************************************
@@ -61,7 +61,16 @@ static int pwdUsage()
 		"  pwd val <scheme>\n"
 		"    validate a password built by <scheme>\n"
 		"  pwd print <scheme>\n"
-		"    print a password built by <scheme>\n",
+		"    print a password built by <scheme>\n"
+		"  schemes:\n"
+		"    pass:<pwd> -- direct password\n"
+		"    share:\"[options] <share1> <share2> ...\" -- shared password\n"
+		"      options:\n"
+		"        -t<nn> --- threshold (2 <= <nn> <= 16, 2 by default)\n"
+		"        -l<mmm> --- password bitlen: 128, 192 or 256 (by default)\n"
+		"        -crc --- the password contains 64-bit crc (<mmm> != 128)\n"
+		"        -pass <scheme> --- password to protect shares\n"
+		,
 		_name, _descr
 	);
 	return -1;
@@ -129,6 +138,8 @@ static err_t pwdSelfTest()
 /*
 *******************************************************************************
 Генерация пароля
+
+pwd gen <scheme>
 *******************************************************************************
 */
 
@@ -136,14 +147,17 @@ static err_t pwdGen(int argc, char* argv[])
 {
 	err_t code = ERR_OK;
 	cmd_pwd_t pwd = 0;
+	// верное число параметров?
+	if (argc != 1)
+		return ERR_BAD_PARAMS;
 	// самотестирование
 	code = pwdSelfTest();
 	ERR_CALL_CHECK(code);
 	// запустить ГСЧ
 	code = cmdRngStart(TRUE);
 	ERR_CALL_CHECK(code);
-	// разобрать опции и генерировать пароль
-	code = (argc == 1) ? cmdPwdGen(&pwd, *argv) : ERR_CMD_PARAMS;
+	// генерировать пароль
+	code = cmdPwdGen(&pwd, *argv);
 	cmdPwdClose(pwd);
 	return code;
 }
@@ -151,6 +165,8 @@ static err_t pwdGen(int argc, char* argv[])
 /*
 *******************************************************************************
 Проверка пароля
+
+pwd val <scheme>
 *******************************************************************************
 */
 
@@ -158,11 +174,14 @@ static err_t pwdVal(int argc, char* argv[])
 {
 	err_t code = ERR_OK;
 	cmd_pwd_t pwd = 0;
+	// верное число параметров?
+	if (argc != 1)
+		return ERR_BAD_PARAMS;
 	// самотестирование
 	code = pwdSelfTest();
 	ERR_CALL_CHECK(code);
-	// разобрать опции и определить пароль
-	code = (argc == 1) ? cmdPwdRead(&pwd, *argv) : ERR_CMD_PARAMS;
+	// определить пароль (с одновременной проверкой)
+	code = cmdPwdRead(&pwd, *argv);
 	cmdPwdClose(pwd);
 	return code;
 }
@@ -170,6 +189,8 @@ static err_t pwdVal(int argc, char* argv[])
 /*
 *******************************************************************************
 Печать пароля
+
+pwd print <scheme>
 *******************************************************************************
 */
 
@@ -177,8 +198,11 @@ static err_t pwdPrint(int argc, char* argv[])
 {
 	err_t code = ERR_OK;
 	cmd_pwd_t pwd = 0;
-	// разобрать опции и определить пароль
-	code = (argc == 1) ? cmdPwdRead(&pwd, *argv) : ERR_CMD_PARAMS;
+	// верное число параметров?
+	if (argc != 1)
+		return ERR_BAD_PARAMS;
+	// определить пароль
+	code = cmdPwdRead(&pwd, *argv);
 	ERR_CALL_CHECK(code);
 	// печатать пароль
 	printf("%s\n", pwd);
@@ -209,9 +233,9 @@ int pwdMain(int argc, char* argv[])
 	else
 		code = ERR_CMD_NOT_FOUND;
 	// завершить
-	if (code != ERR_OK || code == ERR_OK && strEq(argv[0], "val"))
+	if (code != ERR_OK || strEq(argv[0], "val"))
 		printf("bee2cmd/%s: %s\n", _name, errMsg(code));
-	return (int)code;
+	return code != ERR_OK ? -1 : 0;
 }
 
 /*

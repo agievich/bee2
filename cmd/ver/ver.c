@@ -4,7 +4,7 @@
 \brief Version and build information
 \project bee2/cmd 
 \created 2022.06.22
-\version 2022.10.21
+\version 2023.06.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -35,7 +35,8 @@ static int verUsage()
 		"bee2cmd/%s: %s\n"
 		"Usage:\n"
 		"  ver\n"
-		"    print version and build information\n",
+		"    print version and build information\n"
+		,
 		_name, _descr
 	);
 	return -1;

@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: signing files
 \project bee2/cmd
 \created 2022.08.20
-\version 2023.03.15
+\version 2023.05.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -12,8 +12,9 @@
 
 #include "../cmd.h"
 #include <bee2/core/err.h>
-#include <bee2/core/der.h>
 #include <bee2/core/blob.h>
+#include <bee2/core/der.h>
+#include <bee2/core/dec.h>
 #include <bee2/core/hex.h>
 #include <bee2/core/mem.h>
 #include <bee2/core/rng.h>
@@ -69,7 +70,8 @@ static bool_t cmdSigSeemsValid(const cmd_sig_t* sig)
 			return FALSE;
 		cert += cert_len, certs_len -= cert_len;
 	}
-	return TRUE;
+	// проверить дату
+	return memIsZero(sig->date, 6) || tmDateIsValid2(sig->date);
 }
 
 static size_t cmdSigEnc(octet buf[], const cmd_sig_t* sig)
@@ -82,6 +84,9 @@ static size_t cmdSigEnc(octet buf[], const cmd_sig_t* sig)
 	derEncStep(derSEQEncStart(Signature, buf, count), buf, count);
 	// ...сертификаты...
 	derEncStep(derEnc(buf, 0x30, sig->certs, sig->certs_len), buf, count);
+	// ...дата...
+	if (!memIsZero(sig->date, 6))
+		derEncStep(derOCTEnc(buf, sig->date, 6), buf, count);
 	// ...подпись...
 	derEncStep(derOCTEnc(buf, sig->sig, sig->sig_len), buf, count);
 	// ...завершить кодирование
@@ -106,6 +111,10 @@ static size_t cmdSigDec(cmd_sig_t* sig, const octet der[], size_t count)
 	if (len > sizeof(sig->certs))
 		return SIZE_MAX;
 	memCopy(sig->certs, val, sig->certs_len = len);
+	// ...дата...
+	memSetZero(sig->date, 6);
+	if (derOCTDec2(0, ptr, count, 6) != SIZE_MAX)
+		derDecStep(derOCTDec2(sig->date, ptr, count, 6), ptr, count);
 	// ...подпись...
 	if (derOCTDec2(0, ptr, count, sig->sig_len = 48) == SIZE_MAX &&
 		derOCTDec2(0, ptr, count, sig->sig_len = 72) == SIZE_MAX &&
@@ -127,15 +136,14 @@ static size_t cmdSigDec(cmd_sig_t* sig, const octet der[], size_t count)
 *******************************************************************************
 */
 
-static err_t cmdSigWrite(const char* file, const cmd_sig_t* sig)
+static err_t cmdSigWrite(const char* sig_file, const cmd_sig_t* sig)
 {
 	err_t code;
 	octet* der;
 	size_t len;
-	FILE* fp;
 	// pre
 	ASSERT(cmdSigSeemsValid(sig));
-	ASSERT(strIsValid(file));
+	ASSERT(strIsValid(sig_file));
 	// определить длину DER-кода
 	len = cmdSigEnc(0, sig);
 	code = len != SIZE_MAX ? ERR_OK : ERR_BAD_SIG;
@@ -146,27 +154,21 @@ static err_t cmdSigWrite(const char* file, const cmd_sig_t* sig)
 	// кодировать
 	cmdSigEnc(der, sig);
 	memRev(der, len);
-	// открыть файл для записи
-	fp = fopen(file, "wb");
-	code = fp ? ERR_OK : ERR_FILE_CREATE;
-	ERR_CALL_HANDLE(code, cmdBlobClose(der));
-	// записать код
-	code = fwrite(der, 1, len, fp) == len ? ERR_OK : ERR_FILE_WRITE;
+	// записать код в файл
+	code = cmdFileWrite(sig_file, der, len);
 	// завершить
-	fclose(fp);
 	cmdBlobClose(der);
 	return code;
 }
 
-static err_t cmdSigAppend(const char* file, const cmd_sig_t* sig)
+static err_t cmdSigAppend(const char* sig_file, const cmd_sig_t* sig)
 {
 	err_t code;
 	octet* der;
 	size_t len;
-	FILE* fp;
 	// pre
 	ASSERT(cmdSigSeemsValid(sig));
-	ASSERT(strIsValid(file));
+	ASSERT(strIsValid(sig_file));
 	// определить длину DER-кода
 	len = cmdSigEnc(0, sig);
 	code = len != SIZE_MAX ? ERR_OK : ERR_BAD_SIG;
@@ -177,19 +179,14 @@ static err_t cmdSigAppend(const char* file, const cmd_sig_t* sig)
 	// кодировать
 	cmdSigEnc(der, sig);
 	memRev(der, len);
-	// открыть файл для записи
-	fp = fopen(file, "ab");
-	code = fp ? ERR_OK : ERR_FILE_OPEN;
-	ERR_CALL_HANDLE(code, cmdBlobClose(der));
-	// записать код
-	code = fwrite(der, 1, len, fp) == len ? ERR_OK : ERR_FILE_WRITE;
+	// дописать код к файлу
+	code = cmdFileAppend(sig_file, der, len);
 	// завершить
-	fclose(fp);
 	cmdBlobClose(der);
 	return code;
 }
 
-static err_t cmdSigRead(cmd_sig_t* sig, size_t* der_len, const char* file)
+err_t cmdSigRead(cmd_sig_t* sig, size_t* sig_len, const char* sig_file)
 {
 	err_t code;
 	size_t file_size;
@@ -201,19 +198,19 @@ static err_t cmdSigRead(cmd_sig_t* sig, size_t* der_len, const char* file)
 	u32 tag;
 	// pre
 	ASSERT(memIsValid(sig, sizeof(cmd_sig_t)));
-	ASSERT(strIsValid(file));
+	ASSERT(memIsNullOrValid(sig_len, O_PER_S));
+	ASSERT(strIsValid(sig_file));
 	// определить длину суффикса файла
-	file_size = cmdFileSize(file);
+	file_size = cmdFileSize(sig_file);
 	code = file_size == SIZE_MAX ? ERR_FILE_READ : ERR_OK;
 	ERR_CALL_CHECK(code);
 	count = MIN2(file_size, sizeof(suffix));
 	// открыть файл для чтения
-	fp = fopen(file, "rb");
+	fp = fopen(sig_file, "rb");
 	code = fp ? ERR_OK : ERR_FILE_OPEN;
 	ERR_CALL_CHECK(code);
 	// читать суффикс
-	code = fseek(fp, (long)(file_size - count), SEEK_SET) == 0 ?
-		ERR_OK : ERR_FILE_READ;
+	code = fseek(fp, -(long)count, SEEK_END) == 0 ? ERR_OK : ERR_FILE_READ;
 	ERR_CALL_HANDLE(code, fclose(fp));
 	code = fread(suffix, 1, count, fp) == count ? ERR_OK : ERR_FILE_READ;
 	ERR_CALL_HANDLE(code, fclose(fp));
@@ -241,11 +238,8 @@ static err_t cmdSigRead(cmd_sig_t* sig, size_t* der_len, const char* file)
 	memRev(der, count);
 	code = cmdSigDec(sig, der, count) == count ? ERR_OK : ERR_BAD_SIG;
 	// возвратить длину DER-кода
-	if (der_len)
-	{
-		ASSERT(memIsValid(der_len, sizeof(size_t)));
-		*der_len = count;
-	}
+	if (sig_len)
+		*sig_len = count;
 	// завершить
 	cmdBlobClose(der);
 	return code;
@@ -255,15 +249,15 @@ static err_t cmdSigRead(cmd_sig_t* sig, size_t* der_len, const char* file)
 *******************************************************************************
 Хэширование файла
 
-Хэшируется содержимое file без заключительных drop октетов и цепочка
-сертификатов [certs_len]certs, т.е. буфер
-  file[:-drop] || [certs_len]certs.
+Хэшируются содержимое file без заключительных drop октетов,
+цепочка сертификатов [certs_len]certs и дата date, т.е. буфер
+  file[:-drop] || [certs_len]certs || [6]date.
 Алгоритм хэширования определяется по длине возвращаемого хэш-значения.
 *******************************************************************************
 */
 
 static err_t cmdSigHash(octet hash[], size_t hash_len, const char* file,
-	size_t drop, const octet certs[], size_t certs_len)
+	size_t drop, const octet certs[], size_t certs_len, const octet date[6])
 {
 	const size_t buf_size = 4096;
 	err_t code;
@@ -316,11 +310,13 @@ static err_t cmdSigHash(octet hash[], size_t hash_len, const char* file,
 	if (hash_len == 32)
 	{
 		beltHashStepH(certs, certs_len, hash_state);
+		beltHashStepH(date, 6, hash_state);
 		beltHashStepG(hash, hash_state);
 	}
 	else
 	{
 		bashHashStepH(certs, certs_len, hash_state);
+		beltHashStepH(date, 6, hash_state);
 		bashHashStepG(hash, hash_len, hash_state);
 	}
 	cmdBlobClose(stack);
@@ -336,53 +332,53 @@ static err_t cmdSigHash(octet hash[], size_t hash_len, const char* file,
 static err_t cmdSigCertsVal(const cmd_sig_t* sig)
 {
 	err_t code;
+	void* stack;
 	size_t certs_len;
 	const octet* cert;
 	size_t cert_len;
-	btok_cvc_t cvc[1];
-	const octet* certa;
-	size_t certa_len;
-	btok_cvc_t cvca[1];
+	btok_cvc_t* cvca;
+	btok_cvc_t* cvc;
 	// pre
 	ASSERT(memIsValid(sig, sizeof(cmd_sig_t)));
 	// нет сертификатов?
 	if (!sig->certs_len)
 		return ERR_OK;
-	// найти и разобрать последний сертификат
-	certs_len = sig->certs_len, certa = sig->certs;
-	certa_len = btokCVCLen(certa, certs_len);
-	ASSERT(certa_len != SIZE_MAX);
-	while (certs_len > certa_len)
-	{
-		certa += certa_len;
-		certa_len = btokCVCLen(certa, certs_len);
-		ASSERT(certa_len != SIZE_MAX);
-		certs_len -= certa_len;
-	} 
-	code = btokCVCUnwrap(cvca, certa, certa_len, 0, 0);
+	// выделить и разметить память
+	code = cmdBlobCreate(stack, 2 * sizeof(btok_cvc_t));
 	ERR_CALL_CHECK(code);
-	// цикл по парам (эмитент, издатель)
-	while (certa != sig->certs)
+	cvca = (btok_cvc_t*)stack;
+	cvc = cvca + 1;
+	// найти и разобрать первый сертификат
+	certs_len = sig->certs_len, cert = sig->certs;
+	cert_len = btokCVCLen(cert, certs_len);
+	if (cert_len == SIZE_MAX)
+		code = ERR_BAD_CERT;
+	ERR_CALL_CHECK(code);
+	code = btokCVCUnwrap(cvca, cert, cert_len, 0, 0);
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	certs_len -= cert_len, cert += cert_len;
+	// цикл по остальным сертификатам
+	while (certs_len)
 	{
-		// определить сертификат эмитента
-		certs_len = sig->certs_len, cert = sig->certs;
+		// разобрать сертификат
 		cert_len = btokCVCLen(cert, certs_len);
-		ASSERT(cert_len != SIZE_MAX);
-		while (cert + cert_len < certa)
-		{
-			cert += cert_len;
-			cert_len = btokCVCLen(cert, certs_len);
-			ASSERT(cert_len != SIZE_MAX);
-			certs_len -= cert_len;
-		}
-		// проверить пару
-		code = btokCVCVal2(cvc, cert, cert_len, cvca, 0);
-		ERR_CALL_CHECK(code);
+		if (cert_len == SIZE_MAX)
+			code = ERR_BAD_CERT;
+		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		// проверить сертификат
+		if (cert_len == certs_len && !memIsZero(sig->date, 6))
+			code = btokCVCVal2(cvc, cert, cert_len, cvca, sig->date);
+		else
+			code = btokCVCVal2(cvc, cert, cert_len, cvca, 0);
+		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		// к следующему сертификату
+		certs_len -= cert_len, cert += cert_len;
 		// издатель <- эмитент
-		certa = cert, certa_len = cert_len;
 		memCopy(cvca, cvc, sizeof(btok_cvc_t));
 	}
-	return ERR_OK;
+	// завершить
+	cmdBlobClose(stack);
+	return code;
 }
 
 static err_t cmdSigCertsVal2(const cmd_sig_t* sig, const octet anchor[],
@@ -399,7 +395,7 @@ static err_t cmdSigCertsVal2(const cmd_sig_t* sig, const octet anchor[],
 	{
 		cert_len = btokCVCLen(cert, certs_len);
 		if (cert_len == SIZE_MAX)
-			return ERR_BAD_CERT;
+			return ERR_BAD_ANCHOR;
 		if (cert_len == anchor_len && memEq(cert, anchor, cert_len))
 			break;
 		cert += cert_len, certs_len -= cert_len;
@@ -480,6 +476,8 @@ static err_t cmdSigCertsMatch(const cmd_sig_t* sig, const octet privkey[],
 	size_t privkey_len)
 {
 	err_t code;
+	size_t certs_len;
+	const octet* cert;
 	size_t cert_len;
 	// pre
 	ASSERT(memIsValid(sig, sizeof(cmd_sig_t)));
@@ -487,12 +485,19 @@ static err_t cmdSigCertsMatch(const cmd_sig_t* sig, const octet privkey[],
 	// нет сертификатов?
 	if (!sig->certs_len)
 		return ERR_OK;
-	// выделить первый сертификат
-	cert_len = btokCVCLen(sig->certs, sig->certs_len);
-	code = cert_len != SIZE_MAX ? ERR_OK : ERR_BAD_CERT;
-	ERR_CALL_CHECK(code);
+	// найти последний сертификат
+	certs_len = sig->certs_len, cert = sig->certs, cert_len = 0;
+	do
+	{
+		cert += cert_len;
+		cert_len = btokCVCLen(cert, certs_len);
+		code = cert_len != SIZE_MAX ? ERR_OK : ERR_BAD_CERT;
+		ERR_CALL_CHECK(code);
+		certs_len -= cert_len;
+	}
+	while (certs_len);
 	// проверить соответствие
-	code = btokCVCMatch(sig->certs, cert_len, privkey, privkey_len);
+	code = btokCVCMatch(cert, cert_len, privkey, privkey_len);
 	return code;
 }
 
@@ -503,7 +508,7 @@ static err_t cmdSigCertsMatch(const cmd_sig_t* sig, const octet privkey[],
 */
 
 err_t cmdSigSign(const char* sig_file, const char* file, const char* certs,
-	const octet privkey[], size_t privkey_len)
+	const octet date[6], const octet privkey[], size_t privkey_len)
 {
 	err_t code;
 	void* stack;
@@ -517,8 +522,11 @@ err_t cmdSigSign(const char* sig_file, const char* file, const char* certs,
 	// входной контроль
 	if (!strIsValid(sig_file) || !strIsValid(file) ||
 		!(privkey_len == 32 || privkey_len == 48 || privkey_len == 64) ||
+		!memIsValid(date, 6) ||
 		!memIsValid(privkey, privkey_len))
 		return ERR_BAD_INPUT;
+	if (!memIsZero(date, 6) && !tmDateIsValid2(date))
+		return ERR_BAD_DATE;
 	// создать и разметить стек
 	code = cmdBlobCreate(stack,
 		sizeof(cmd_sig_t) + sizeof(bign_params) + oid_len + 2 * privkey_len);
@@ -528,6 +536,8 @@ err_t cmdSigSign(const char* sig_file, const char* file, const char* certs,
 	oid_der = (octet*)(params + 1);
 	hash = oid_der + 16;
 	t = hash + privkey_len;
+	// зафиксировать дату
+	memCopy(sig->date, date, 6);
 	// собрать сертификаты
 	code = cmdSigCertsCollect(sig, certs);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
@@ -539,7 +549,8 @@ err_t cmdSigSign(const char* sig_file, const char* file, const char* certs,
 	{
 		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		code = cmdSigHash(hash, 32, file, 0, sig->certs, sig->certs_len);
+		code = cmdSigHash(hash, 32, file, 0, sig->certs, sig->certs_len,
+			sig->date);
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.31.81");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
@@ -549,7 +560,8 @@ err_t cmdSigSign(const char* sig_file, const char* file, const char* certs,
 	{
 		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.2");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		code = cmdSigHash(hash, 48, file, 0, sig->certs, sig->certs_len);
+		code = cmdSigHash(hash, 48, file, 0, sig->certs, sig->certs_len, 
+			sig->date);
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.77.12");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
@@ -559,7 +571,8 @@ err_t cmdSigSign(const char* sig_file, const char* file, const char* certs,
 	{
 		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.3");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		code = cmdSigHash(hash, 64, file, 0, sig->certs, sig->certs_len);
+		code = cmdSigHash(hash, 64, file, 0, sig->certs, sig->certs_len,
+			sig->date);
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.77.13");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
@@ -602,7 +615,7 @@ err_t cmdSigVerify(const char* file, const char* sig_file,
 	octet* oid_der;
 	size_t oid_len = 16;
 	octet* hash;
-	size_t der_len;
+	size_t sig_len;
 	// входной контроль
 	if (!strIsValid(file) || !strIsValid(sig_file) ||
 		!(pubkey_len == 64 || pubkey_len == 96 || pubkey_len == 128) ||
@@ -618,23 +631,31 @@ err_t cmdSigVerify(const char* file, const char* sig_file,
 	oid_der = (octet*)(params + 1);
 	hash = oid_der + oid_len;
 	// читать подпись
-	code = cmdSigRead(sig, &der_len, sig_file);	
+	code = cmdSigRead(sig, &sig_len, sig_file);	
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// подпись в отдельном файле?
 	if (!cmdFileAreSame(file, sig_file))
 	{
-		code = der_len == cmdFileSize(sig_file) ? ERR_OK : ERR_BAD_FORMAT;
+		code = sig_len == cmdFileSize(sig_file) ? ERR_OK : ERR_BAD_FORMAT;
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		der_len = 0;
+		sig_len = 0;
 	}
 	// проверить сертификаты
 	code = cmdSigCertsVal(sig);	
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-	// выделить первый сертификат
+	// есть сертификаты?
 	if (sig->certs_len)
 	{
-		code = cmdSigCertsGet(cvc, 0, sig, 0);
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		size_t offset;
+		size_t cert_len;
+		// найти последний сертификат
+		for (offset = 0; offset < sig->certs_len; )
+		{
+			code = cmdSigCertsGet(cvc, &cert_len, sig, offset);
+			ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+			offset += cert_len;
+		}
+		// проверить открытый ключ последнего сертификата
 		if (pubkey_len != cvc->pubkey_len ||
 			!memEq(pubkey, cvc->pubkey, pubkey_len))
 			code = ERR_BAD_PUBKEY;
@@ -645,7 +666,8 @@ err_t cmdSigVerify(const char* file, const char* sig_file,
 	{
 		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		code = cmdSigHash(hash, 32, file, der_len, sig->certs, sig->certs_len);
+		code = cmdSigHash(hash, 32, file, sig_len, sig->certs, sig->certs_len,
+			sig->date);
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.31.81");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
@@ -655,7 +677,8 @@ err_t cmdSigVerify(const char* file, const char* sig_file,
 	{
 		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.2");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		code = cmdSigHash(hash, 48, file, der_len, sig->certs, sig->certs_len);
+		code = cmdSigHash(hash, 48, file, sig_len, sig->certs, sig->certs_len,
+			sig->date);
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.77.12");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
@@ -665,7 +688,8 @@ err_t cmdSigVerify(const char* file, const char* sig_file,
 	{
 		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.3");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		code = cmdSigHash(hash, 64, file, der_len, sig->certs, sig->certs_len);
+		code = cmdSigHash(hash, 64, file, sig_len, sig->certs, sig->certs_len,
+			sig->date);
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.77.13");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
@@ -691,7 +715,9 @@ err_t cmdSigVerify2(const char* file, const char* sig_file,
 	octet* oid_der;
 	size_t oid_len = 16;
 	octet* hash;
-	size_t der_len;
+	size_t sig_len;
+	size_t offset;
+	size_t cert_len;
 	// входной контроль
 	if (!strIsValid(file) || !strIsValid(sig_file) ||
 		!memIsValid(anchor, anchor_len))
@@ -706,27 +732,32 @@ err_t cmdSigVerify2(const char* file, const char* sig_file,
 	oid_der = (octet*)(params + 1);
 	hash = oid_der + oid_len;
 	// читать подпись
-	code = cmdSigRead(sig, &der_len, sig_file);	
+	code = cmdSigRead(sig, &sig_len, sig_file);	
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// подпись в отдельном файле?
 	if (!cmdFileAreSame(file, sig_file))
 	{
-		code = der_len == cmdFileSize(sig_file) ? ERR_OK : ERR_BAD_FORMAT;
+		code = sig_len == cmdFileSize(sig_file) ? ERR_OK : ERR_BAD_FORMAT;
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		der_len = 0;
+		sig_len = 0;
 	}
 	// проверить сертификаты
 	code = cmdSigCertsVal2(sig, anchor, anchor_len);	
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-	// выделить первый сертификат
-	code = cmdSigCertsGet(cvc, 0, sig, 0);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	// найти последний сертификат
+	for (offset = 0; offset < sig->certs_len; )
+	{
+		code = cmdSigCertsGet(cvc, &cert_len, sig, offset);
+		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		offset += cert_len;
+	}
 	// загрузить параметры и хэшировать
 	if (cvc->pubkey_len == 64)
 	{
 		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		code = cmdSigHash(hash, 32, file, der_len, sig->certs, sig->certs_len);
+		code = cmdSigHash(hash, 32, file, sig_len, sig->certs, sig->certs_len,
+			sig->date);
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.31.81");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
@@ -736,7 +767,8 @@ err_t cmdSigVerify2(const char* file, const char* sig_file,
 	{
 		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.2");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		code = cmdSigHash(hash, 48, file, der_len, sig->certs, sig->certs_len);
+		code = cmdSigHash(hash, 48, file, sig_len, sig->certs, sig->certs_len,
+			sig->date);
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.77.12");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
@@ -746,7 +778,8 @@ err_t cmdSigVerify2(const char* file, const char* sig_file,
 	{
 		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.3");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		code = cmdSigHash(hash, 64, file, der_len, sig->certs, sig->certs_len);
+		code = cmdSigHash(hash, 64, file, sig_len, sig->certs, sig->certs_len,
+			sig->date);
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.77.13");
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
@@ -816,45 +849,150 @@ err_t cmdSigSelfVerify2(const octet anchor[], size_t anchor_len)
 
 /*
 *******************************************************************************
-Печать подписи
+Извлечение объекта
 *******************************************************************************
 */
 
-err_t cmdSigPrint(const char* sig_file)
+err_t cmdSigExtr(const char* obj_file, const char* sig_file, const char* scope)
 {
 	err_t code;
 	void* stack;
 	cmd_sig_t* sig;
-	btok_cvc_t* cvc;
-	char* hex;
-	size_t offset;
-	size_t cert_len;
+	size_t sig_len;
 	// входной контроль
-	if (!strIsValid(sig_file))
+	if (!strIsValid(sig_file) || !strIsValid(obj_file) || !strIsValid(scope))
 		return ERR_BAD_INPUT;
+	if (!strEq(scope, "body") &&
+		!strEq(scope, "sig") &&
+		!strStartsWith(scope, "cert"))
+		return ERR_CMD_PARAMS;
 	// создать и разметить стек
-	code = cmdBlobCreate(stack,
-		sizeof(cmd_sig_t) + sizeof(btok_cvc_t) + 2 * 96 + 1);
+	code = cmdBlobCreate(stack, sizeof(cmd_sig_t));
 	ERR_CALL_CHECK(code);
 	sig = (cmd_sig_t*)stack;
-	cvc = (btok_cvc_t*)(sig + 1);
-	hex = (char*)(cvc + 1);
+	// читать подпись
+	code = cmdSigRead(sig, &sig_len, sig_file);
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	// извлечь сертификат?
+	if (strStartsWith(scope, "cert"))
+	{
+		size_t num;
+		size_t certs_len;
+		const octet* cert;
+		size_t cert_len;
+		size_t pos;
+		// определить номер сертификата
+		scope += strLen("cert");
+		if (!decIsValid(scope) || strLen(scope) != 1)
+			code = ERR_CMD_PARAMS;
+		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		num = decToU32(scope);
+		// искать сертификат
+		certs_len = sig->certs_len, cert = sig->certs, cert_len = pos = 0;
+		while (certs_len)
+		{
+			cert_len = btokCVCLen(cert, certs_len);
+			if (cert_len == SIZE_MAX || pos == num)
+				break;
+			certs_len -= cert_len, cert += cert_len, ++pos;
+		}
+		// найден? записать в файл
+		if (pos == num && cert_len != 0 && cert_len != SIZE_MAX)
+			code = cmdFileWrite(obj_file, cert, cert_len);
+		else
+			code = ERR_BAD_CERT;
+	}
+	else if (strEq(scope, "body"))
+	{
+		size_t size = cmdFileSize(sig_file);
+		if (size == SIZE_MAX)
+			code = ERR_FILE_READ;
+		else if (size == sig_len)
+			code = ERR_BAD_FORMAT;
+		else
+			code = cmdFileDup(obj_file, sig_file, 0, size - sig_len);
+	}
+	else
+	{
+		size_t size = cmdFileSize(sig_file);
+		if (size == SIZE_MAX)
+			code = ERR_FILE_READ;
+		else
+			code = cmdFileDup(obj_file, sig_file, size - sig_len, sig_len);
+	}
+	// завершить
+	cmdBlobClose(stack);
+	return code;
+}
+
+/*
+*******************************************************************************
+Печать подписи
+*******************************************************************************
+*/
+
+static err_t cmdSigPrintCertc(const cmd_sig_t* sig)
+{
+	size_t certs_len;
+	const octet* cert;
+	size_t cert_len;
+	size_t count;
+	// определить число сертификатов
+	certs_len = sig->certs_len, cert = sig->certs, count = 0;
+	while (certs_len)
+	{
+		cert_len = btokCVCLen(cert, certs_len);
+		if (cert_len == SIZE_MAX)
+			return ERR_BAD_CERT;
+		certs_len -= cert_len, cert += cert_len, ++count;
+	}
+	// печатать число сертификатов
+	printf("%u", (unsigned)count);
+	return ERR_OK;
+}
+
+err_t cmdSigPrint(const char* sig_file, const char* scope)
+{
+	err_t code;
+	void* stack;
+	cmd_sig_t* sig;
+	// входной контроль
+	if (!strIsValid(sig_file) || !strIsValid(scope))
+		return ERR_BAD_INPUT;
+	// создать и разметить стек
+	code = cmdBlobCreate(stack, sizeof(cmd_sig_t));
+	ERR_CALL_CHECK(code);
+	sig = (cmd_sig_t*)stack;
 	// читать подпись
 	code = cmdSigRead(sig, 0, sig_file);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-	// печатать сертификаты
-	for (offset = 0; offset < sig->certs_len; )
+	// печать всех полей
+	if (scope == 0)
 	{
-		code = cmdSigCertsGet(cvc, &cert_len, sig, offset);
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		code = cmdCVCPrint(cvc);
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		offset += cert_len;
+		printf("certc: ");
+		code = cmdSigPrintCertc(sig);
+		ERR_CALL_CHECK(code);
+		if (!memIsZero(sig->date, 6))
+		{
+			printf("\ndate:  ");
+			code = cmdPrintDate(sig->date);
+			ERR_CALL_CHECK(code);
+		}
+		printf("\nsig:   ");
+		code = cmdPrintMem2(sig->sig, sig->sig_len);
 	}
-	// печатать подпись
-	hexFrom(hex, sig->sig, sig->sig_len);
-	printf("sig = %s\n", hex);
+	// печать отдельных полей
+	else if (strEq(scope, "certc"))
+		code = cmdSigPrintCertc(sig);
+	else if (strEq(scope, "date"))
+		code = memIsZero(sig->date, 6) ?
+			ERR_BAD_DATE : cmdPrintDate(sig->date);
+	else if (strEq(scope, "sig"))
+		code = cmdPrintMem(sig->sig, sig->sig_len);
+	else
+		code = ERR_CMD_PARAMS;
 	// завершить
-	cmdBlobClose(stack);
+	ERR_CALL_CHECK(code);
+	printf("\n");
 	return code;
 }

@@ -4,7 +4,7 @@
 \brief Integrity control of Windows PE Executables
 \project bee2/cmd
 \created 2011.10.18
-\version 2022.06.23
+\version 2023.06.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -55,7 +55,8 @@ static int stampUsage()
 		"    check a stamp of filename\n"
 		"\\pre  filename is a PE-module (exe or dll)\n"
 		"\\pre resource file of the target module must contains the string\n"
-		"  %d %d {\"0123456789ABCDEF0123456789ABCDEF\"}\n",
+		"  %d %d {\"0123456789ABCDEF0123456789ABCDEF\"}\n"
+		,
 		_name, _descr,
 		STAMP_ID, STAMP_TYPE
 	);

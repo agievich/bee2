@@ -3,7 +3,7 @@ rem ===========================================================================
 rem \brief Testing command-line interface
 rem \project bee2evp/cmd
 rem \created 2022.06.24
-rem \version 2023.03.16
+rem \version 2023.06.16
 rem ===========================================================================
 
 rem ===========================================================================
@@ -80,7 +80,10 @@ if %ERRORLEVEL% equ 0 goto Error
 bee2cmd pwd gen share:"-l128 -l256 -pass pass:zed s1 s2"
 if %ERRORLEVEL% equ 0 goto Error
 
-bee2cmd pwd gen share:"-l256 -t3 -pass pass:zed s1 s2 s3 s4 s5"
+bee2cmd pwd gen share:"-l128 -t3 -crc -pass pass:zed s1 s2 s3 s4 s5"
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd pwd gen share:"-l256 -t3 -crc -pass pass:zed s1 s2 s3 s4 s5"
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd pwd val share:"-t3 -pass pass:zed s1 s2"
@@ -104,7 +107,13 @@ if %ERRORLEVEL% equ 0 goto Error
 bee2cmd pwd val share:"-l256 -pass pass:zed s1 s2 s3"
 if %ERRORLEVEL% neq 0 goto Error
 
+bee2cmd pwd val share:"-l256 -crc -pass pass:zed s1 s2 s3"
+if %ERRORLEVEL% neq 0 goto Error
+
 bee2cmd pwd val share:"-pass pass:zed s2 s3 s4 s5"
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd pwd val share:"-pass pass:zed -crc s2 s3 s4 s5"
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd pwd print share:"-l128 -pass pass:zed s5 s1 s3"
@@ -129,6 +138,9 @@ if %ERRORLEVEL% equ 0 goto Error
 
 bee2cmd pwd val share:"-pass share:\"-pass pass:zed s1 s2 s3\" ss2 ss3"
 if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd pwd val share:"-pass -crc share:\"-pass pass:zed s1 s2 s3\" ss2 ss3"
+if %ERRORLEVEL% equ 0 goto Error
 
 echo ****** OK
 
@@ -171,7 +183,7 @@ if %pubkey1_len% neq 192 goto Error
 bee2cmd kg gen -pass pass:alice privkey2
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd kg pub -pass pass:alice privkey2 pubkey2
+bee2cmd kg extr -pass pass:alice privkey2 pubkey2
 if %ERRORLEVEL% neq 0 goto Error
 
 for %%A in (pubkey2) do set pubkey2_len=%%~zA
@@ -185,30 +197,44 @@ rem ===========================================================================
 
 echo ****** Testing bee2cmd/cvc...
 
-del /q cert0 cert1 cert2 req1 req2 2> nul
+del /q cert0 req1 cert1 pubkey1 req2 cert2 req3 2> nul
 
 bee2cmd cvc root -authority BYCA0000 -from 220707 -until 990707 ^
--pass pass:root -eid EEEEEEEEEE -esign 7777 privkey0 cert0
+  -pass pass:root -eid EEEEEEEEEE -esign 7777 privkey0 cert0
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd cvc print cert0
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd cvc req -authority BYCA0000 -holder BYCA1000 -from 220712 ^
--until 221130 -pass pass:trent -eid DDDDDDDDDD -esign 3333 privkey1 req1
+bee2cmd cvc req -authority BYCA0000 -holder BYCA1000 -from 220711 ^
+  -until 221231 -pass pass:trent -eid FFFFFFFFFF -esign 7777 privkey1 req1
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd cvc print req1
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd cvc iss -pass pass:root privkey0 cert0 req1 cert1
+bee2cmd cvc iss -authority BYCA0000 -pass pass:root privkey0 cert0 req1 cert1
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd cvc iss -from 220712 -until 221130 -holder BYCA1023 ^
+  -eid DDDDDDDDDD -esign BBBB -pass pass:root privkey0 cert0 req1 cert1
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd cvc print cert1
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd cvc req -authority BYCA1000 -holder "590082394654" -from 220712 ^
--until 391231 -pass pass:alice -eid 8888888888 -esign 1111 privkey2 req2
+bee2cmd cvc extr cert1 pubkey1
+if %ERRORLEVEL% neq 0 goto Error
+
+for %%A in (pubkey1) do set pubkey1_len=%%~zA
+if %pubkey1_len% neq 96 goto Error
+
+bee2cmd cvc req -authority BYCA1023 -holder "590082394654" -from 220712 ^
+  -until 391231 -pass pass:alice -eid 8888888888 -esign 1111 privkey2 req2
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvc req -authority BYCA1023 -holder "590082394654" -from 000000 ^
+  -until 000000 -pass pass:alice privkey2 req3
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd cvc iss -pass pass:trent privkey1 cert1 req2 cert2
@@ -222,6 +248,26 @@ if %ERRORLEVEL% equ 0 goto Error
 
 bee2cmd cvc print cert2
 if %ERRORLEVEL% neq 0 goto Error
+
+for /f "tokens=* USEBACKQ" %%F in (`bee2cmd cvc print -from cert1`) do (
+  set from=%%F
+)
+if "%from%" neq "220712" goto Error
+
+for /f "tokens=* USEBACKQ" %%F in (`bee2cmd cvc print -until cert1`) do (
+  set until=%%F
+)
+if "%until%" neq "221130" goto Error
+
+for /f "tokens=* USEBACKQ" %%F in (`bee2cmd cvc print -eid cert1`) do (
+  set eid=%%F
+)
+if "%eid%" neq "DDDDDDDDDD" goto Error
+
+for /f "tokens=* USEBACKQ" %%F in (`bee2cmd cvc print -esign cert1`) do (
+  set esign=%%F
+)
+if "%esign%" neq "3333" goto Error
 
 bee2cmd cvc val cert0 cert0
 if %ERRORLEVEL% neq 0 goto Error
@@ -247,6 +293,23 @@ if %ERRORLEVEL% neq 0 goto Error
 bee2cmd cvc val -date 400101 cert0 cert1 cert2
 if %ERRORLEVEL% equ 0 goto Error
 
+bee2cmd cvc val -date cert0 cert1 cert2
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd cvc val cert0 cert1 cert2
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvc shorten -pass pass:trent -until 391230 privkey1 cert1 cert2
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvc val cert0 cert1 cert2
+if %ERRORLEVEL% neq 0 goto Error
+
+for /f "tokens=* USEBACKQ" %%F in (`bee2cmd cvc print -until cert2`) do (
+  set until=%%F
+)
+if "%until%" neq "391230" goto Error
+
 echo ****** OK
 
 rem ===========================================================================
@@ -255,82 +318,209 @@ rem ===========================================================================
 
 echo ****** Testing bee2cmd/sig...
 
-del /q ff ss 2> nul
+del /q ff ss cert01 cert11 cert21 body sig 2> nul
 
-echo test > ff
-echo sig > ss
+echo test> ff
+echo sig> ss
 
-bee2cmd sig vfy -pubkey pubkey2 ff ss
+bee2cmd sig val -pubkey pubkey2 ff ss
 if %ERRORLEVEL% equ 0 goto Error
 
-bee2cmd sig vfy -anchor cert0 ff ss
+bee2cmd sig val -anchor cert0 ff ss
 if %ERRORLEVEL% equ 0 goto Error
 
-bee2cmd sig vfy -anchor cert2 ff ss
+bee2cmd sig val -anchor cert2 ff ss
 if %ERRORLEVEL% equ 0 goto Error
 
-bee2cmd sig vfy -pubkey pubkey2 ff ss
+bee2cmd sig val -pubkey pubkey2 ff ss
 if %ERRORLEVEL% equ 0 goto Error
 
-bee2cmd sig vfy -anchor cert0 ff ff
+bee2cmd sig val -anchor cert0 ff ff
 if %ERRORLEVEL% equ 0 goto Error
 
-bee2cmd sig vfy -anchor cert2 ff ff
+bee2cmd sig val -anchor cert2 ff ff
 if %ERRORLEVEL% equ 0 goto Error
 
 del /q ss 1> nul
 
-bee2cmd sig sign -certs "cert2 cert1" -pass pass:alice privkey2 ff ss
-if %ERRORLEVEL% neq 0 goto Error
-
-bee2cmd sig vfy -pubkey pubkey2 ff ss
-if %ERRORLEVEL% neq 0 goto Error
-
-bee2cmd sig vfy -anchor cert2 ff ss
-if %ERRORLEVEL% neq 0 goto Error
-
-bee2cmd sig vfy -anchor cert1 ff ss
-if %ERRORLEVEL% neq 0 goto Error
-
-bee2cmd sig vfy -anchor cert0 ff ss
+bee2cmd sig sign -certs "cert1 cert2" -date 400101 -pass pass:alice ^
+  privkey2 ff ss
 if %ERRORLEVEL% equ 0 goto Error
 
-bee2cmd sig sign -certs "cert2 cert1 cert0" -pass pass:alice privkey2 ff ff
+bee2cmd sig sign -certs "cert1 cert2" -date 230526 -pass pass:alice ^
+  privkey2 ff ss
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd sig vfy -pubkey pubkey2 ff ff
+bee2cmd sig val -pubkey pubkey2 ff ss
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd sig vfy -anchor cert2 ff ff
+bee2cmd sig val -anchor cert2 ff ss
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd sig vfy -anchor cert1 ff ff
+bee2cmd sig val -anchor cert1 ff ss
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd sig vfy -anchor cert0 ff ff
+bee2cmd sig val -anchor cert0 ff ss
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd sig sign -certs "cert0 cert1 cert2" -pass pass:alice privkey2 ff ff
 if %ERRORLEVEL% neq 0 goto Error
 
-del /q ss 2> nul
+bee2cmd sig val -pubkey pubkey2 ff ff
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig val -anchor cert2 ff ff
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig val -anchor cert1 ff ff
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig val -anchor cert0 ff ff
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig extr -cert0 ff cert01
+if %ERRORLEVEL% neq 0 goto Error
+
+fc /b cert01 cert0 1> nul
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig extr -cert1 ff cert11
+if %ERRORLEVEL% neq 0 goto Error
+
+fc /b cert1 cert11 1> nul
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig extr -cert2 ff cert21
+if %ERRORLEVEL% neq 0 goto Error
+
+fc /b cert2 cert21 1> nul
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig extr -body ff body
+if %ERRORLEVEL% neq 0 goto Error
+
+for /f "tokens=* USEBACKQ" %%F in (`type body`) do (
+  set body=%%F
+)
+if "%body%" neq "test" goto Error
+
+bee2cmd sig extr -sig ff sig
+if %ERRORLEVEL% neq 0 goto Error
+
+del /q ss body 2> nul
 
 bee2cmd sig sign -certs cert2 -pass pass:alice privkey2 ff ss
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd sig vfy -pubkey pubkey2 ff ss
+bee2cmd sig val -pubkey pubkey2 ff ss
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd sig vfy -anchor cert2 ff ss
+bee2cmd sig val -anchor cert2 ff ss
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd sig vfy -anchor cert1 ff ss
+bee2cmd sig val -anchor cert1 ff ss
 if %ERRORLEVEL% equ 0 goto Error
 
-bee2cmd sig sign -pass pass:alice privkey2 ff ff
+bee2cmd sig extr -body ss body
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd sig sign -pass pass:alice -date 230526 privkey2 ff ff
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd sig vfy -pubkey pubkey2 ff ff
+bee2cmd sig val -pubkey pubkey2 ff ff
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd sig vfy -anchor cert2 ff ff
+bee2cmd sig val -anchor cert2 ff ff
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd sig print ss
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig print ff
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig print -date ss
+if %ERRORLEVEL% equ 0 goto Error
+
+for /f "tokens=* USEBACKQ" %%F in (`bee2cmd sig print -certc ss`) do (
+  set certc=%%F
+)
+if "%certc%" neq "1" goto Error
+
+echo ****** OK
+
+rem ===========================================================================
+rem  bee2cmd/cvr
+rem ===========================================================================
+
+echo ****** Testing bee2cmd/cvr...
+
+del /q privkey3 req3 cert3 ring2 cert21 cert31 2> nul
+
+bee2cmd kg gen -pass pass:bob privkey3
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvc req -authority BYCA1023 -from 221030 -until 391231 ^
+  -holder 590082394655 -pass pass:bob privkey3 req3
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvc iss -pass pass:trent privkey1 cert1 req3 cert3
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvr init -pass pass:alice privkey2 cert2 ring2
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvr add -pass pass:alice privkey2 cert2 cert3 ring2
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvr add -pass pass:alice privkey2 cert2 cert3 ring2
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd cvr val cert2 ring2
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig val -anchor cert2 ring2 ring2
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvr extr -cert0 ring2 cert31
+if %ERRORLEVEL% neq 0 goto Error
+
+fc /b cert31 cert3 1> nul
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig extr -cert0 ring2 cert21
+if %ERRORLEVEL% neq 0 goto Error
+
+fc /b cert21 cert2 1> nul
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvr print ring2
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvr print -certc ring2
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig print ring2
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvr add -pass pass:alice privkey2 cert2 cert0 ring2
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvr add -pass pass:alice privkey2 cert2 cert1 ring2
+if %ERRORLEVEL% neq 0 goto Error
+
+for /f "tokens=* USEBACKQ" %%F in (`bee2cmd cvr print -certc ring2`) do (
+  set certc=%%F
+)
+if "%certc%" neq "3" goto Error
+
+bee2cmd cvr del -pass pass:alice privkey2 cert2 cert1 ring2
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvr del -pass pass:alice privkey2 cert2 cert0 ring2
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd cvr del -pass pass:alice privkey2 cert2 cert0 ring2
 if %ERRORLEVEL% equ 0 goto Error
 
 echo ****** OK
@@ -339,7 +529,7 @@ rem ===========================================================================
 rem  bee2cmd/es
 rem ===========================================================================
 
-del /q dd 1> nul
+del /q dd 2> nul
 
 bee2cmd es print
 if %ERRORLEVEL% neq 0 goto Error

@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: file management
 \project bee2/cmd 
 \created 2022.06.08
-\version 2023.03.15
+\version 2023.06.15
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -28,7 +28,7 @@
 size_t cmdFileSize(const char* file)
 {
 	FILE* fp;
-	long int size;
+	long size;
 	ASSERT(strIsValid(file));
 	if (!(fp = fopen(file, "rb")))
 		return SIZE_MAX;
@@ -64,6 +64,22 @@ err_t cmdFileWrite(const char* file, const octet buf[], size_t count)
 	return code;
 }
 
+err_t cmdFileAppend(const char* file, const octet buf[], size_t count)
+{
+	err_t code;
+	FILE* fp;
+	// pre
+	ASSERT(strIsValid(file));
+	ASSERT(memIsValid(buf, count));
+	// записать
+	code = (fp = fopen(file, "ab")) ? ERR_OK : ERR_FILE_OPEN;
+	ERR_CALL_CHECK(code);
+	code = count == fwrite(buf, 1, count, fp) ? ERR_OK : ERR_FILE_WRITE;
+	fclose(fp);
+	// завершить
+	return code;
+}
+
 err_t cmdFileReadAll(octet buf[], size_t* count, const char* file)
 {
 	err_t code;
@@ -90,6 +106,72 @@ err_t cmdFileReadAll(octet buf[], size_t* count, const char* file)
 		ERR_CALL_CHECK(code);
 		*count = size;
 	}
+	return code;
+}
+
+/*
+*******************************************************************************
+Дублирование
+*******************************************************************************
+*/
+
+err_t cmdFileDup(const char* ofile, const char* ifile, size_t skip,
+	size_t count)
+{
+	const size_t buf_size = 4096;
+	err_t code;
+	FILE* ifp;
+	FILE* ofp;
+	void* buf;
+	// pre
+	ASSERT(strIsValid(ifile) && strIsValid(ofile));
+	// переполнение?
+	if ((size_t)(long)skip != skip)
+		return ERR_OVERFLOW;
+	// открыть входной файл
+	ifp = fopen(ifile, "rb");
+	if (!ifp)
+		return ERR_FILE_OPEN;
+	// пропустить skip октетов
+	if (fseek(ifp, (long)skip, SEEK_SET))
+	{
+		fclose(ifp);
+		return ERR_FILE_READ;
+	}
+	// открыть выходной файл
+	ofp = fopen(ofile, "wb");
+	if (!ofp)
+	{
+		fclose(ifp);
+		return ERR_FILE_CREATE;
+	}
+	// подготовить память
+	code = cmdBlobCreate(buf, buf_size);
+	ERR_CALL_HANDLE(code, (fclose(ofp), fclose(ifp)));
+	// дублировать count октетов
+	if (count != SIZE_MAX)
+		while (count && code == ERR_OK)
+		{
+			size_t c = MIN2(buf_size, count);
+			if (fread(buf, 1, c, ifp) != c)
+				code = ERR_FILE_READ;
+			else if (fwrite(buf, 1, c, ofp) != c)
+				code = ERR_FILE_WRITE;
+			count -= c;
+		}
+	// дублировать все
+	else
+		while (code == ERR_OK)
+		{
+			size_t c = fread(buf, 1, buf_size, ifp);
+			if (c != buf_size && !feof(ifp))
+				code = ERR_FILE_READ;
+			else if (fwrite(buf, 1, c, ofp) != c)
+				code = ERR_FILE_WRITE;
+		}
+	// завершить
+	cmdBlobClose(buf);
+	fclose(ofp), fclose(ifp);
 	return code;
 }
 

@@ -4,7 +4,7 @@
 \brief Errors
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2022.10.31
+\version 2023.06.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -70,18 +70,24 @@ Sys
 #define ERR_BAD_INPUT				_ERR_REG(108)
 /* не хватает памяти */
 #define ERR_OUTOFMEMORY				_ERR_REG(109)
+/* переполнение */
+#define ERR_OVERFLOW				_ERR_REG(110)
+/* объект не найден */
+#define ERR_NOT_FOUND				_ERR_REG(111)
+/* объект уже существует */
+#define ERR_ALREADY_EXISTS			_ERR_REG(112)
 /* доступ запрещен */
-#define ERR_ACCESS_DENIED			_ERR_REG(110)
+#define ERR_ACCESS_DENIED			_ERR_REG(113)
 /* устройство не готово */
-#define ERR_NOT_READY				_ERR_REG(111)
+#define ERR_NOT_READY				_ERR_REG(114)
 /* запрашиваемый ресурс занят */
-#define ERR_BUSY					_ERR_REG(112)
+#define ERR_BUSY					_ERR_REG(115)
 /* таймаут */
-#define ERR_TIMEOUT					_ERR_REG(113)
+#define ERR_TIMEOUT					_ERR_REG(116)
 /* не реализовано */
-#define ERR_NOT_IMPLEMENTED			_ERR_REG(114)
+#define ERR_NOT_IMPLEMENTED			_ERR_REG(117)
 /* последствия предыдущих ошибок */
-#define ERR_AFTER					_ERR_REG(115)
+#define ERR_AFTER					_ERR_REG(118)
 
 /*
 *******************************************************************************
@@ -168,34 +174,40 @@ Crypto
 #define ERR_BAD_PUBKEY				_ERR_REG(504)
 /* некорректная пара открытый / личный ключ */
 #define ERR_BAD_KEYPAIR				_ERR_REG(505)
-/* некорректный сертификат (открытого ключа) */
-#define ERR_BAD_CERT				_ERR_REG(506)
 /* некорректный общий ключ */
-#define ERR_BAD_SHAREDKEY			_ERR_REG(507)
+#define ERR_BAD_SHAREDKEY			_ERR_REG(506)
 /* некорректный частичный секрет */
-#define ERR_BAD_SHAREKEY			_ERR_REG(508)
+#define ERR_BAD_SHAREKEY			_ERR_REG(507)
 /* некорректное хэш-значение */
-#define ERR_BAD_HASH				_ERR_REG(509)
+#define ERR_BAD_HASH				_ERR_REG(508)
 /* некорректная ЭЦП */
-#define ERR_BAD_SIG					_ERR_REG(510)
+#define ERR_BAD_SIG					_ERR_REG(509)
 /* некорректная имитовставка */
-#define ERR_BAD_MAC					_ERR_REG(511)
+#define ERR_BAD_MAC					_ERR_REG(510)
+/* некорректная контрольная сумма */
+#define ERR_BAD_CRC					_ERR_REG(511)
 /* некорректный токен ключа */
 #define ERR_BAD_KEYTOKEN			_ERR_REG(512)
+/* некорректный сертификат (открытого ключа) */
+#define ERR_BAD_CERT				_ERR_REG(513)
+/* некорректный якорь сертификатов */
+#define ERR_BAD_ANCHOR				_ERR_REG(514)
+/* некорректное кольцо сертификатов */
+#define ERR_BAD_CERTRING			_ERR_REG(515)
 /* неверная логика (протокола) */
-#define ERR_BAD_LOGIC				_ERR_REG(513)
+#define ERR_BAD_LOGIC				_ERR_REG(516)
 /* неверный пароль */
-#define ERR_BAD_PWD					_ERR_REG(514)
+#define ERR_BAD_PWD					_ERR_REG(517)
 /* ключ не найден */
-#define ERR_KEY_NOT_FOUND			_ERR_REG(515)
+#define ERR_KEY_NOT_FOUND			_ERR_REG(518)
 /* отсутствует доверие */
-#define ERR_NO_TRUST				_ERR_REG(516)
+#define ERR_NO_TRUST				_ERR_REG(519)
 /* ошибка аутентификации */
-#define ERR_AUTH					_ERR_REG(517)
+#define ERR_AUTH					_ERR_REG(520)
 /* ошибка самотестирования */
-#define ERR_SELFTEST				_ERR_REG(518)
+#define ERR_SELFTEST				_ERR_REG(521)
 /* ошибка статистического тестирования */
-#define ERR_STATTEST				_ERR_REG(519)
+#define ERR_STATTEST				_ERR_REG(522)
 
 /*
 *******************************************************************************

@@ -6,7 +6,9 @@ endif()
 add_executable(bee2cmd
 	core/cmd_arg.c
 	core/cmd_cvc.c
+	core/cmd_date.c
 	core/cmd_file.c
+	core/cmd_print.c
 	core/cmd_privkey.c
 	core/cmd_pwd.c
 	core/cmd_rng.c
@@ -15,6 +17,7 @@ add_executable(bee2cmd
 	core/whereami.c
 	bsum/bsum.c
 	cvc/cvc.c
+	cvr/cvr.c
 	es/es.c
 	kg/kg.c
 	pwd/pwd.c

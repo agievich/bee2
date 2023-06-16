@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): CV certificates
 \project bee2 [cryptographic library]
 \created 2022.07.04
-\version 2023.03.29
+\version 2023.06.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -627,19 +627,18 @@ err_t btokCVCVal(const octet cert[], size_t cert_len,
 	cvca = cvc + 1;
 	// разобрать сертификаты
 	code = btokCVCUnwrap(cvca, certa, certa_len, 0, 0);
-	ERR_CALL_HANDLE(code, blobClose(cvca));
+	ERR_CALL_HANDLE(code, blobClose(state));
 	code = btokCVCUnwrap(cvc, cert, cert_len, cvca->pubkey, cvca->pubkey_len);
-	ERR_CALL_HANDLE(code, blobClose(cvc));
+	ERR_CALL_HANDLE(code, blobClose(state));
 	// проверить соответствие
 	code = btokCVCCheck2(cvc, cvca);
-	ERR_CALL_HANDLE(code, blobClose(cvc));
+	ERR_CALL_HANDLE(code, blobClose(state));
 	// проверить дату
 	if (date)
 	{
 		if (!tmDateIsValid2(date))
 			code = ERR_BAD_DATE;
-		else if (!tmDateLeq2(cvc->from, date) ||
-			!tmDateLeq2(date, cvc->until))
+		else if (!tmDateLeq2(cvc->from, date) || !tmDateLeq2(date, cvc->until))
 			code = ERR_OUTOFRANGE;
 	}
 	// завершить

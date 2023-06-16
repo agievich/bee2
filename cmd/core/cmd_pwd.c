@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: password management
 \project bee2/cmd 
 \created 2022.06.13
-\version 2023.03.20
+\version 2023.06.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -133,13 +133,15 @@ static err_t cmdPwdGenPass(cmd_pwd_t* pwd, const char* cmdline)
 */
 
 static err_t cmdPwdGenShare_internal(cmd_pwd_t* pwd, size_t scount,
-	size_t threshold, size_t len, char* shares[], const cmd_pwd_t spwd)
+	size_t threshold, size_t len, bool_t crc, char* shares[],
+	const cmd_pwd_t spwd)
 {
 	err_t code;
 	const size_t iter = 10000;
 	size_t epki_len;
 	void* stack;
 	octet* pwd_bin;
+	octet* state;
 	octet* share;
 	octet* salt;
 	octet* epki;
@@ -149,6 +151,7 @@ static err_t cmdPwdGenShare_internal(cmd_pwd_t* pwd, size_t scount,
 	ASSERT(2 <= scount && scount <= 16);
 	ASSERT(2 <= threshold && threshold <= scount);
 	ASSERT(len % 8 == 0 && len <= 32);
+	ASSERT(!crc || len != 16);
 	// пароль пока не создан
 	*pwd = 0;
 	// входной контроль
@@ -161,14 +164,25 @@ static err_t cmdPwdGenShare_internal(cmd_pwd_t* pwd, size_t scount,
 	code = bpkiShareWrap(0, &epki_len, 0, len + 1, 0, 0, 0, iter);
 	ERR_CALL_CHECK(code);
 	// выделить память и разметить ее
-	code = cmdBlobCreate(stack, len + scount * (len + 1) + epki_len + 8);
+	code = cmdBlobCreate(stack, len +
+		utilMax(2,
+			beltMAC_keep(),
+			scount * (len + 1) + epki_len + 8));
 	ERR_CALL_CHECK(code);
 	pwd_bin = (octet*)stack;
-	share = pwd_bin + len;
+	state = share = pwd_bin + len;
 	salt = share + scount * (len + 1);
 	epki = salt + 8;
 	// сгенерировать пароль
-	rngStepR(pwd_bin, len, 0);
+	if (crc)
+	{
+		rngStepR(pwd_bin, len - 8, 0);
+		beltMACStart(state, pwd_bin, len - 8);
+		beltMACStepA(pwd_bin, len - 8, state);
+		beltMACStepG(pwd_bin + len - 8, state);
+	}
+	else
+		rngStepR(pwd_bin, len, 0);
 	// разделить пароль на частичные секреты
 	code = belsShare2(share, scount, threshold, len, pwd_bin, rngStepR, 0);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
@@ -204,7 +218,7 @@ static err_t cmdPwdGenShare_internal(cmd_pwd_t* pwd, size_t scount,
 }
 
 static err_t cmdPwdReadShare_internal(cmd_pwd_t* pwd, size_t scount,
-	size_t len, char* shares[], const cmd_pwd_t spwd)
+	size_t len, bool_t crc, char* shares[], const cmd_pwd_t spwd)
 {
 	err_t code;
 	size_t epki_len;
@@ -212,6 +226,7 @@ static err_t cmdPwdReadShare_internal(cmd_pwd_t* pwd, size_t scount,
 	size_t epki_len_max;
 	void* stack;
 	octet* share;
+	octet* state;
 	octet* epki;
 	octet* pwd_bin;
 	size_t pos;
@@ -220,6 +235,7 @@ static err_t cmdPwdReadShare_internal(cmd_pwd_t* pwd, size_t scount,
 	ASSERT(cmdPwdIsValid(spwd));
 	ASSERT(2 <= scount && scount <= 16);
 	ASSERT(len % 8 == 0 && len <= 32);
+	ASSERT(!crc || len != 16);
 	// пароль пока не создан
 	*pwd = 0;
 	// определить длину частичного секрета
@@ -252,7 +268,7 @@ static err_t cmdPwdReadShare_internal(cmd_pwd_t* pwd, size_t scount,
 	// выделить память и разметить ее
 	code = cmdBlobCreate(stack, scount * (len + 1) + epki_len_max + 1 + len);
 	ERR_CALL_HANDLE(code, cmdPwdClose(*pwd));
-	share = (octet*)stack;
+	share = state = (octet*)stack;
 	epki = share + scount * (len + 1);
 	pwd_bin = epki + epki_len_max + 1;
 	// прочитать частичные секреты
@@ -280,6 +296,15 @@ static err_t cmdPwdReadShare_internal(cmd_pwd_t* pwd, size_t scount,
 	// собрать пароль
 	code = belsRecover2(pwd_bin, scount, len, share);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	// проверить пароль
+	if (crc)
+	{
+		beltMACStart(state, pwd_bin, len - 8);
+		beltMACStepA(pwd_bin, len - 8, state);
+		if (!beltMACStepV(pwd_bin + len - 8, state))
+			code = ERR_BAD_CRC;
+	}
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// создать выходной (текстовый) пароль
 	*pwd = cmdPwdCreate(2 * len);
 	code = *pwd ? ERR_OK : ERR_OUTOFMEMORY;
@@ -297,6 +322,7 @@ static err_t cmdPwdGenShare(cmd_pwd_t* pwd, const char* cmdline)
 	size_t offset = 0;
 	size_t threshold = 0;
 	size_t len = 0;
+	bool_t crc = FALSE;
 	cmd_pwd_t spwd = 0;
 	// составить список аргументов
 	code = cmdArgCreate(&argc, &argv, cmdline);
@@ -336,7 +362,28 @@ static err_t cmdPwdGenShare(cmd_pwd_t* pwd, const char* cmdline)
 				code = ERR_CMD_PARAMS;
 				goto final;
 			}
-			len /= 8, ++offset, --argc;
+			len /= 8;
+			if (len == 16 && crc)
+			{
+				code = ERR_CMD_PARAMS;
+				goto final;
+			}
+			++offset, --argc;
+		}
+		// контрольная сумма
+		else if (strStartsWith(argv[offset], "-crc"))
+		{
+			if (crc)
+			{
+				code = ERR_CMD_DUPLICATE;
+				goto final;
+			}
+			if (len == 16)
+			{
+				code = ERR_CMD_PARAMS;
+				goto final;
+			}
+			crc = TRUE, ++offset, --argc;
 		}
 		// пароль защиты частичных секретов
 		else if (strEq(argv[offset], "-pass"))
@@ -378,7 +425,7 @@ static err_t cmdPwdGenShare(cmd_pwd_t* pwd, const char* cmdline)
 	if ((code = cmdFileValNotExist(argc, argv + offset)) != ERR_OK)
 		goto final;
 	// построить пароль
-	code = cmdPwdGenShare_internal(pwd, (size_t)argc, threshold, len,
+	code = cmdPwdGenShare_internal(pwd, (size_t)argc, threshold, len, crc,
 		argv + offset, spwd);
 final:
 	cmdPwdClose(spwd);
@@ -394,6 +441,7 @@ static err_t cmdPwdReadShare(cmd_pwd_t* pwd, const char* cmdline)
 	size_t offset = 0;
 	size_t threshold = 0;
 	size_t len = 0;
+	bool_t crc = FALSE;
 	cmd_pwd_t spwd = 0;
 	// составить список аргументов
 	code = cmdArgCreate(&argc, &argv, cmdline);
@@ -433,7 +481,28 @@ static err_t cmdPwdReadShare(cmd_pwd_t* pwd, const char* cmdline)
 				code = ERR_CMD_PARAMS;
 				goto final;
 			}
-			len /= 8, ++offset, --argc;
+			len /= 8;
+			if (len == 16 && crc)
+			{
+				code = ERR_CMD_PARAMS;
+				goto final;
+			}
+			++offset, --argc;
+		}
+		// контрольная сумма
+		else if (strStartsWith(argv[offset], "-crc"))
+		{
+			if (crc)
+			{
+				code = ERR_CMD_DUPLICATE;
+				goto final;
+			}
+			if (len == 16)
+			{
+				code = ERR_CMD_PARAMS;
+				goto final;
+			}
+			crc = TRUE, ++offset, --argc;
 		}
 		// пароль защиты частичных секретов
 		else if (strEq(argv[offset], "-pass"))
@@ -475,7 +544,7 @@ static err_t cmdPwdReadShare(cmd_pwd_t* pwd, const char* cmdline)
 	if ((code = cmdFileValExist(argc, argv + offset)) != ERR_OK)
 		goto final;
 	// определить пароль
-	code = cmdPwdReadShare_internal(pwd, (size_t)argc, len,
+	code = cmdPwdReadShare_internal(pwd, (size_t)argc, len, crc,
 		argv + offset, spwd);
 final:
 	cmdPwdClose(spwd);

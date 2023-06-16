@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): cryptographic tokens
 \project bee2 [cryptographic library]
 \created 2022.07.04
-\version 2023.02.02
+\version 2023.06.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -410,7 +410,7 @@ err_t btokCVCIss(
 */
 size_t btokCVCLen(
 	const octet der[],			/*!< [in] DER-код */
-	size_t count				/*!< [in] длина privkey в октетах */
+	size_t count				/*!< [in] длина der в октетах */
 );
 
 /*!	\brief Проверка CV-сертификата
@@ -458,8 +458,8 @@ err_t btokCVCVal(
 	\remark Интерфейс ориентирован на проверку цепочки сертификатов.
 	Цепочка certa, certb, certc,... проверяется следующим образом:
 	- btokCVCUnwrap(cvca, certa, certa_len, 0, 0);
-	- btokCVCVal(cvcb, certb, certb_len, cvca, 0);
-	- btokCVCVal(cvcc, certc, certc_len, cvcb, date);
+	- btokCVCVal2(cvcb, certb, certb_len, cvca, 0);
+	- btokCVCVal2(cvcc, certc, certc_len, cvcb, date);
 	- ...
 	\remark Если certa является самоподписанным и требуется проверить его
 	подпись, то первая строчка в предыдущем коде должна выглядеть следующим

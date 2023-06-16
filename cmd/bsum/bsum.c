@@ -4,7 +4,7 @@
 \brief Hash files using belt-hash / bash-hash
 \project bee2/cmd 
 \created 2014.10.28
-\version 2022.07.05
+\version 2023.06.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -48,7 +48,8 @@ int bsumUsage()
 		"  bsum [hash_alg] -c <checksum_file>\n"
 		"  hash_alg:\n" 
 		"    -belt-hash (STB 34.101.31, by default)\n"
-		"    -bash32, -bash64, ..., -bash512 (STB 34.101.77)\n",
+		"    -bash32, -bash64, ..., -bash512 (STB 34.101.77)\n"
+		,
 		_name, _descr
 	);
 	return -1;
