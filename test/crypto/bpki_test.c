@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.78 (bpki) helpers
 \project bee2/test
 \created 2021.04.13
-\version 2023.03.30
+\version 2023.06.17
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -23,12 +23,28 @@ bool_t bpkiTest()
 	octet pwd[] = { 'z', 'e', 'd' };
 	size_t epki_len, epki_len1;
 	size_t key_len;
+	// создать контейнер с личным ключом (l = 96)
+	if (bpkiPrivkeyWrap(0, &epki_len, beltH(), 24,
+			pwd, sizeof(pwd), beltH() + 24, 10000) != ERR_OK ||
+		epki_len > sizeof(epki) ||
+		bpkiPrivkeyWrap(epki, &epki_len1, beltH(), 24,
+			pwd, sizeof(pwd), beltH() + 24, 10000) != ERR_OK ||
+		epki_len != epki_len1)
+		return FALSE;
+	// разобрать контейнер с личным ключом (l = 96)
+	if (bpkiPrivkeyUnwrap(0, &key_len, epki, epki_len,
+		pwd, sizeof(pwd)) != ERR_OK ||
+		key_len != 24 || key_len > sizeof(key) ||
+		bpkiPrivkeyUnwrap(key, &key_len, epki, epki_len,
+			pwd, sizeof(pwd)) != ERR_OK ||
+		key_len != 24 || !memEq(key, beltH(), 24))
+		return FALSE;
 	// создать контейнер с личным ключом (l = 128)
 	if (bpkiPrivkeyWrap(0, &epki_len, beltH(), 32,
-			pwd, sizeof(pwd), beltH() + 32, 10000) != ERR_OK ||
+			pwd, sizeof(pwd), beltH() + 32, 10001) != ERR_OK ||
 		epki_len > sizeof(epki) ||
 		bpkiPrivkeyWrap(epki, &epki_len1, beltH(), 32,
-			pwd, sizeof(pwd), beltH() + 32, 10000) != ERR_OK ||
+			pwd, sizeof(pwd), beltH() + 32, 10001) != ERR_OK ||
 		epki_len != epki_len1)
 		return FALSE;
 	// разобрать контейнер с личным ключом (l = 128)
@@ -41,10 +57,10 @@ bool_t bpkiTest()
 		return FALSE;
 	// создать контейнер с личным ключом (l = 192)
 	if (bpkiPrivkeyWrap(0, &epki_len, beltH(), 48,
-			pwd, sizeof(pwd), beltH() + 40, 10001) != ERR_OK ||
+			pwd, sizeof(pwd), beltH() + 40, 10002) != ERR_OK ||
 		epki_len > sizeof(epki) ||
 		bpkiPrivkeyWrap(epki, &epki_len1, beltH(), 48,
-			pwd, sizeof(pwd), beltH() + 40, 10001) != ERR_OK ||
+			pwd, sizeof(pwd), beltH() + 40, 10002) != ERR_OK ||
 		epki_len1 != epki_len)
 		return FALSE;
 	// разобрать контейнер с личным ключом (l = 192)
@@ -57,10 +73,10 @@ bool_t bpkiTest()
 		return FALSE;
 	// создать контейнер с личным ключом (l = 256)
 	if (bpkiPrivkeyWrap(0, &epki_len, beltH(), 64,
-			pwd, sizeof(pwd), beltH() + 48, 10002) != ERR_OK ||
+			pwd, sizeof(pwd), beltH() + 48, 10003) != ERR_OK ||
 		epki_len > sizeof(epki) ||
 		bpkiPrivkeyWrap(epki, &epki_len1, beltH(), 64,
-			pwd, sizeof(pwd), beltH() + 48, 10002) != ERR_OK ||
+			pwd, sizeof(pwd), beltH() + 48, 10003) != ERR_OK ||
 		epki_len1 != epki_len)
 		return FALSE;
 	// разобрать контейнер с личным ключом (l = 256)
@@ -114,7 +130,7 @@ bool_t bpkiTest()
 			pwd, sizeof(pwd), beltH() + 64, 10005) != ERR_OK ||
 		epki_len1 != epki_len)
 		return FALSE;
-	// разобрать контейнер с частичным секретом (l = 128)
+	// разобрать контейнер с частичным секретом (l = 256)
 	if (bpkiShareUnwrap(0, &key_len, epki, epki_len,
 			pwd, sizeof(pwd)) != ERR_OK ||
 		key_len != 33 ||
