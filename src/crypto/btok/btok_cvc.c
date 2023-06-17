@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): CV certificates
 \project bee2 [cryptographic library]
 \created 2022.07.04
-\version 2023.06.13
+\version 2023.06.17
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -22,6 +22,7 @@
 #include "bee2/crypto/bash.h"
 #include "bee2/crypto/belt.h"
 #include "bee2/crypto/bign.h"
+#include "bee2/crypto/bign96.h"
 #include "bee2/crypto/btok.h"
 
 /*
@@ -41,33 +42,55 @@ static const char oid_esign_auth_ext[] = "1.2.112.0.2.0.34.101.79.8.1";
 *******************************************************************************
 */
 
+static err_t btokStdParams(bign_params* params, size_t privkey_len)
+{
+	err_t code;
+	switch (privkey_len)
+	{
+	case 24:
+		code = bign96StdParams(params, "1.2.112.0.2.0.34.101.45.3.0");
+		break;
+	case 32:
+		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1");
+		break;
+	case 48:
+		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.2");
+		break;
+	case 64:
+		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.3");
+		break;
+	default:
+		code = ERR_BAD_INPUT;
+	}
+	return code;		
+}
+
 static err_t btokPubkeyCalc(octet pubkey[], const octet privkey[],
 	size_t privkey_len)
 {
 	err_t code;
 	bign_params params[1];
-	if (privkey_len != 32 && privkey_len != 48 && privkey_len != 64)
-		return ERR_BAD_INPUT;
-	code = bignStdParams(params,
-		privkey_len == 32 ? "1.2.112.0.2.0.34.101.45.3.1" :
-		privkey_len == 48 ? "1.2.112.0.2.0.34.101.45.3.2" :
-		"1.2.112.0.2.0.34.101.45.3.3");
+	// загрузить параметры
+	code = btokStdParams(params, privkey_len);
 	ERR_CALL_CHECK(code);
-	return bignCalcPubkey(pubkey, params, privkey);
+	// вычислить ключ
+	return privkey_len == 24 ? bign96CalcPubkey(pubkey, params, privkey) :
+		bignCalcPubkey(pubkey, params, privkey);
 }
 
 static err_t btokPubkeyVal(const octet pubkey[], size_t pubkey_len)
 {
 	err_t code;
 	bign_params params[1];
-	if (pubkey_len != 64 && pubkey_len != 96 && pubkey_len != 128)
+	// входной контроль
+	if (pubkey_len % 2)
 		return ERR_BAD_INPUT;
-	code = bignStdParams(params,
-		pubkey_len == 64 ? "1.2.112.0.2.0.34.101.45.3.1" :
-		pubkey_len == 96 ? "1.2.112.0.2.0.34.101.45.3.2" :
-		"1.2.112.0.2.0.34.101.45.3.3");
+	// загрузить параметры
+	code = btokStdParams(params, pubkey_len / 2);
 	ERR_CALL_CHECK(code);
-	return bignValPubkey(params, pubkey);
+	// проверить ключ
+	return pubkey_len == 48 ? bign96ValPubkey(params, pubkey) :
+		bignValPubkey(params, pubkey);
 }
 
 static err_t btokKeypairVal(const octet privkey[], size_t privkey_len,
@@ -75,67 +98,55 @@ static err_t btokKeypairVal(const octet privkey[], size_t privkey_len,
 {
 	err_t code;
 	bign_params params[1];
-	if (privkey_len != 32 && privkey_len != 48 && privkey_len != 64)
-		return ERR_BAD_INPUT;
+	// входной еонтроль
 	if (pubkey_len != 2 * privkey_len)
 		return ERR_BAD_KEYPAIR;
-	code = bignStdParams(params,
-		privkey_len == 32 ? "1.2.112.0.2.0.34.101.45.3.1" :
-		privkey_len == 48 ? "1.2.112.0.2.0.34.101.45.3.2" :
-		"1.2.112.0.2.0.34.101.45.3.3");
+	// загрузить параметры
+	code = btokStdParams(params, privkey_len);
 	ERR_CALL_CHECK(code);
-	return bignValKeypair(params, privkey, pubkey);
+	// проверить пару ключей
+	return privkey_len == 24 ? bign96ValKeypair(params, privkey, pubkey) :
+		bignValKeypair(params, privkey, pubkey);
 }
 
 static err_t btokSign(octet sig[], const void* buf, size_t count,
 	const octet privkey[], size_t privkey_len)
 {
 	err_t code;
+	bign_params params[1];
+	octet oid_der[16];
+	size_t oid_len;
 	void* stack;
-	bign_params* params;
-	octet* oid_der;
-	size_t oid_len = 16;
 	octet* hash;
 	octet* t;
 	size_t t_len;
-	// pre
-	ASSERT(privkey_len == 32 || privkey_len == 48 || privkey_len == 64);
+	// загрузить параметры
+	code = btokStdParams(params, privkey_len);
+	ERR_CALL_CHECK(code);
 	// создать и разметить стек
-	stack = blobCreate(sizeof(bign_params) + oid_len + 2 * privkey_len);
+	stack = blobCreate(
+		MAX2(beltHash_keep(), bashHash_keep()) + 2 * privkey_len);
 	if (!stack)
 		return ERR_OUTOFMEMORY;
-	params = (bign_params*)stack;
-	oid_der = (octet*)stack + sizeof(bign_params);
-	hash = oid_der + 16;
+	hash = (octet*)stack + MAX2(beltHash_keep(), bashHash_keep());
 	t = hash + privkey_len;
-	// загрузить параметры и хэшировать
-	if (privkey_len == 32)
+	// хэшировать
+	if (privkey_len <= 32)
 	{
-		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1");
-		ERR_CALL_HANDLE(code, blobClose(stack));
-		code = beltHash(hash, buf, count);
-		ERR_CALL_HANDLE(code, blobClose(stack));
+		beltHashStart(stack);
+		beltHashStepH(buf, count, stack);
+		beltHashStepG2(hash, privkey_len, stack);
 		code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.31.81");
-		ERR_CALL_HANDLE(code, blobClose(stack));
-		ASSERT(oid_len == 11);
-	}
-	else if (privkey_len == 48)
-	{
-		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.2");
-		ERR_CALL_HANDLE(code, blobClose(stack));
-		code = bashHash(hash, 192, buf, count);
-		ERR_CALL_HANDLE(code, blobClose(stack));
-		code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.77.12");
 		ERR_CALL_HANDLE(code, blobClose(stack));
 		ASSERT(oid_len == 11);
 	}
 	else
 	{
-		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.3");
-		ERR_CALL_HANDLE(code, blobClose(stack));
-		code = bashHash(hash, 256, buf, count);
-		ERR_CALL_HANDLE(code, blobClose(stack));
-		code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.77.13");
+		bashHashStart(stack, privkey_len * 4);
+		bashHashStepH(buf, count, stack);
+		bashHashStepG(hash, privkey_len, stack);
+		code = bignOidToDER(oid_der, &oid_len, privkey_len == 48 ? 
+			"1.2.112.0.2.0.34.101.77.12" : "1.2.112.0.2.0.34.101.77.13");
 		ERR_CALL_HANDLE(code, blobClose(stack));
 		ASSERT(oid_len == 11);
 	}
@@ -145,7 +156,13 @@ static err_t btokSign(octet sig[], const void* buf, size_t count,
 	else
 		t_len = 0;
 	// подписать
-	code = bignSign2(sig, params, oid_der, oid_len, hash, privkey, t, t_len);
+	if (privkey_len == 24)
+		code = bign96Sign2(sig, params, oid_der, oid_len, hash, privkey,
+			t, t_len);
+	else
+		code = bignSign2(sig, params, oid_der, oid_len, hash, privkey,
+			t, t_len);
+	// завершить
 	blobClose(stack);
 	return code;
 }
@@ -154,56 +171,54 @@ static err_t btokVerify(const void* buf, size_t count, const octet sig[],
 	const octet pubkey[], size_t pubkey_len)
 {
 	err_t code;
+	bign_params params[1];
+	octet oid_der[16];
+	size_t oid_len;
 	void* stack;
-	bign_params* params;
-	octet* oid_der;
-	size_t oid_len = 16;
 	octet* hash;
-	// pre
-	ASSERT(pubkey_len == 64 || pubkey_len == 96 || pubkey_len == 128);
+	// входной контроль
+	if (pubkey_len % 2)
+		return ERR_BAD_INPUT;
+	// загрузить параметры
+	code = btokStdParams(params, pubkey_len / 2);
 	// создать и разметить стек
-	stack = blobCreate(sizeof(bign_params) + oid_len + pubkey_len / 2);
+	stack = blobCreate(
+		MAX2(beltHash_keep(), bashHash_keep()) + pubkey_len / 2);
 	if (!stack)
 		return ERR_OUTOFMEMORY;
-	params = (bign_params*)stack;
-	oid_der = (octet*)stack + sizeof(bign_params);
-	hash = oid_der + oid_len;
-	// загрузить параметры и хэшировать
-	if (pubkey_len == 64)
+	hash = (octet*)stack + MAX2(beltHash_keep(), bashHash_keep());
+	// хэшировать
+	if (pubkey_len <= 64)
 	{
-		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1");
-		ERR_CALL_HANDLE(code, blobClose(stack));
-		code = beltHash(hash, buf, count);
-		ERR_CALL_HANDLE(code, blobClose(stack));
+		beltHashStart(stack);
+		beltHashStepH(buf, count, stack);
+		beltHashStepG2(hash, pubkey_len / 2, stack);
 		code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.31.81");
-		ERR_CALL_HANDLE(code, blobClose(stack));
-		ASSERT(oid_len == 11);
-	}
-	else if (pubkey_len == 96)
-	{
-		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.2");
-		ERR_CALL_HANDLE(code, blobClose(stack));
-		code = bashHash(hash, 192, buf, count);
-		ERR_CALL_HANDLE(code, blobClose(stack));
-		code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.77.12");
 		ERR_CALL_HANDLE(code, blobClose(stack));
 		ASSERT(oid_len == 11);
 	}
 	else
 	{
-		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.3");
-		ERR_CALL_HANDLE(code, blobClose(stack));
-		code = bashHash(hash, 256, buf, count);
-		ERR_CALL_HANDLE(code, blobClose(stack));
-		code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.77.13");
+		bashHashStart(stack, pubkey_len * 2);
+		bashHashStepH(buf, count, stack);
+		bashHashStepG(hash, pubkey_len / 2, stack);
+		code = bignOidToDER(oid_der, &oid_len, pubkey_len == 96 ? 
+			"1.2.112.0.2.0.34.101.77.12" : "1.2.112.0.2.0.34.101.77.13");
 		ERR_CALL_HANDLE(code, blobClose(stack));
 		ASSERT(oid_len == 11);
 	}
 	// проверить открытый ключ
-	code = bignValPubkey(params, pubkey);
+	if (pubkey_len == 48)
+		code = bign96ValPubkey(params, pubkey);
+	else
+		code = bignValPubkey(params, pubkey);
 	ERR_CALL_HANDLE(code, blobClose(stack));
 	// проверить подпись
-	code = bignVerify(params, oid_der, oid_len, hash, sig, pubkey);
+	if (pubkey_len == 48)
+		code = bign96Verify(params, oid_der, oid_len, hash, sig, pubkey);
+	else
+		code = bignVerify(params, oid_der, oid_len, hash, sig, pubkey);
+	// завершить
 	blobClose(stack);
 	return code;
 }
@@ -237,8 +252,8 @@ static bool_t btokCVCSeemsValid(const btok_cvc_t* cvc)
 		tmDateIsValid2(cvc->from) &&
 		tmDateIsValid2(cvc->until) &&
 		tmDateLeq2(cvc->from, cvc->until) &&
-		(cvc->pubkey_len == 64 || cvc->pubkey_len == 96 ||
-			cvc->pubkey_len == 128);
+		(cvc->pubkey_len == 48 || cvc->pubkey_len == 64 || 
+			cvc->pubkey_len == 96 || cvc->pubkey_len == 128);
 }
 
 err_t btokCVCCheck(const btok_cvc_t* cvc)
@@ -388,7 +403,7 @@ static size_t btokCVCBodyDec(btok_cvc_t* cvc, const octet body[], size_t count)
 	derDecStep(derTSEQDecStart(PubKey, ptr, count, 0x7F49), ptr, count);
 	derDecStep(derOIDDec2(ptr, count, oid_bign_pubkey), ptr, count);
 	if (derBITDec(0, &len, ptr, count) == SIZE_MAX ||
-		len != 512 && len != 768 && len != 1024)
+		len != 384 && len != 512 && len != 768 && len != 1024)
 		return SIZE_MAX;
 	cvc->pubkey_len = len / 8;
 	derDecStep(derBITDec(cvc->pubkey, 0, ptr, count), ptr, count);
@@ -447,7 +462,8 @@ err_t btokCVCWrap(octet cert[], size_t* cert_len, btok_cvc_t* cvc,
 	size_t t;
 	// проверить входные данные
 	if (!memIsValid(cvc, sizeof(btok_cvc_t)) ||
-		privkey_len != 32 && privkey_len != 48 && privkey_len != 64 ||
+		privkey_len != 24 && 
+			privkey_len != 32 && privkey_len != 48 && privkey_len != 64 ||
 		!memIsValid(privkey, privkey_len) ||
 		!memIsNullOrValid(cert_len, O_PER_S))
 		return ERR_BAD_INPUT;
@@ -501,7 +517,7 @@ err_t btokCVCUnwrap(btok_cvc_t* cvc, const octet cert[], size_t cert_len,
 	size_t body_len;
 	// проверить входные данные
 	if (!memIsValid(cvc, sizeof(btok_cvc_t)) ||
-		pubkey_len != 0 &&
+		pubkey_len != 0 && pubkey_len != 48 &&
 			pubkey_len != 64 && pubkey_len != 96 &&	pubkey_len != 128 ||
 		pubkey_len == 0 && pubkey != 0 && pubkey != cvc->pubkey ||
 		!memIsValid(cert, cert_len) ||
