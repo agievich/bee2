@@ -3,14 +3,15 @@
 # \brief Testing command-line interface
 # \project bee2evp/cmd
 # \created 2022.06.24
-# \version 2023.06.16
+# \version 2023.06.18
 # =============================================================================
 
 bee2cmd="${BEE2CMD:-./bee2cmd}"
 if [ ! -f "${bee2cmd}" ]; then
   bee2cmd=$(command -v bee2cmd)
   if [ ! -f "${bee2cmd}" ]; then
-    echo "Set path to bee2cmd executable file to BEE2CMD environment variable or run this script from containing folder."
+    echo "Set path to bee2cmd executable file to BEE2CMD environment \
+      variable or run this script from containing folder."
     exit 1
   fi
 fi
@@ -114,14 +115,16 @@ test_pwd() {
 }
 
 test_kg() {
-  rm -rf privkey0 privkey1 privkey2 pubkey1 pubkey2 \
+  rm -rf privkey0 privkey1 privkey2 privkey3 pubkey1 pubkey2 pubkey3 \
     || return 2
+
   $bee2cmd kg gen -l256 -pass share:"-pass pass:zed s2 s3 s4" \
     && return 1
   $bee2cmd kg gen -l256 -pass share:"-pass pass:zed s2 s3 s4" -pass pass:zed \
     && return 1
   $bee2cmd kg gen -l256 -l192 -pass share:"-pass pass:zed s2 s3 s4" privkey0 \
     && return 1
+
   $bee2cmd kg gen -l256 -pass share:"-pass pass:zed s2 s3 s4" privkey0 \
     || return 1
   $bee2cmd kg val -pass share:"-pass pass:zed s1 s2 s4" privkey0 \
@@ -131,12 +134,14 @@ test_kg() {
     || return 1
   $bee2cmd kg print -pass pass:root privkey0 \
     || return 1
+
   $bee2cmd kg gen -pass pass:trent -l192 privkey1 \
     || return 1
   pubkey1="$($bee2cmd kg print -pass pass:"trent" privkey1)"
   if [ ${#pubkey1} != "192" ]; then
     return 1
   fi
+
   $bee2cmd kg gen -pass pass:alice privkey2 \
     || return 1
   $bee2cmd kg extr -pass pass:alice privkey2 pubkey2 \
@@ -144,17 +149,25 @@ test_kg() {
   if [ "$(wc -c pubkey2 | awk '{print $1}')" != "64" ]; then
     return 1
   fi
+
+  $bee2cmd kg gen -l96 -pass pass:bob privkey3 \
+    || return 1
+  $bee2cmd kg extr -pass pass:bob privkey3 pubkey3 \
+    || return 1
+
   return 0
 }
 
 test_cvc() {
-  rm -rf cert0 req1 cert1 pubkey1 req2 cert2 req3 \
+  rm -rf cert0 req1 cert1 pubkey1 req2 req21 cert2 req3 cert3 \
     || return 2
+
   $bee2cmd cvc root -authority BYCA0000 -from 220707 -until 990707 \
     -pass pass:root -eid EEEEEEEEEE -esign 7777 privkey0 cert0 \
     || return 1
   $bee2cmd cvc print cert0 \
     || return 1
+
   $bee2cmd cvc req -pass pass:trent -authority BYCA0000 -holder BYCA1000 \
     -from 220711 -until 221231 -eid FFFFFFFFFF -esign 7777 privkey1 req1 \
     || return 1
@@ -178,7 +191,7 @@ test_cvc() {
     -holder "590082394654" -pass pass:alice -eid 8888888888 privkey2 req2 \
     || return 1
   $bee2cmd cvc req -authority BYCA1023 -from 000000 -until 000000 \
-    -holder "590082394654" -pass pass:alice privkey2 req3 \
+    -holder "590082394654" -pass pass:alice privkey2 req21 \
     || return 1
   $bee2cmd cvc iss -pass pass:trent privkey1 cert1 req2 cert2 \
     || return 1
@@ -188,7 +201,6 @@ test_cvc() {
     && return 1
   $bee2cmd cvc print cert2 \
     || return 1
-
   if [ "$($bee2cmd cvc print -from cert1)" != "220712" ]; then 
     return 1
   fi
@@ -230,6 +242,14 @@ test_cvc() {
   if [ "$($bee2cmd cvc print -until cert2)" != "391230" ]; then 
     return 1
   fi
+
+  $bee2cmd cvc req -authority BYCA1023 -from 221030 -until 391231 \
+    -holder 590082394655 -pass pass:bob privkey3 req3 \
+    || return 1
+  $bee2cmd cvc print req3 \
+    || return 1
+  $bee2cmd cvc iss -pass pass:trent privkey1 cert1 req3 cert3 \
+    || return 1
 
   return 0
 }
@@ -336,20 +356,21 @@ test_sig(){
     return 1
   fi
 
+  $bee2cmd sig sign -pass pass:bob -certs "cert1 cert3" privkey3 ff ff \
+    || return 1
+  $bee2cmd sig val -pubkey pubkey3 ff ff \
+    || return 1
+  $bee2cmd sig val -anchor cert1 ff ff \
+    || return 1
+  $bee2cmd sig val -anchor cert3 ff ff \
+    || return 1
+
   return 0
 }
 
 test_cvr(){
-  rm -rf privkey3 req3 cert3 ring2 cert21 cert31 \
+  rm -rf ring2 cert21 cert31 \
     || return 2
-
-  $bee2cmd kg gen -pass pass:bob privkey3 \
-    || return 1
-  $bee2cmd cvc req -authority BYCA1023 -from 221030 -until 391231 \
-    -holder 590082394655 -pass pass:bob privkey3 req3 \
-    || return 1
-  $bee2cmd cvc iss -pass pass:trent privkey1 cert1 req3 cert3 \
-    || return 1
 
   $bee2cmd cvr init -pass pass:alice privkey2 cert2 ring2 \
     || return 1

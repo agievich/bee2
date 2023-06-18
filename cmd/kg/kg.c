@@ -4,7 +4,7 @@
 \brief Generate and manage private keys
 \project bee2/cmd 
 \created 2022.06.08
-\version 2023.06.16
+\version 2023.06.17
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -23,6 +23,7 @@
 #include <bee2/crypto/bels.h>
 #include <bee2/crypto/belt.h>
 #include <bee2/crypto/bign.h>
+#include <bee2/crypto/bign96.h>
 #include <bee2/crypto/bpki.h>
 #include <bee2/crypto/brng.h>
 #include <stdio.h>
@@ -66,7 +67,7 @@ static int kgUsage()
 		"  kg print -pass <scheme> <privkey>\n"
 		"    validate <privkey> and print the corresponding public key\n"
 		"  options:\n"
-		"    -l<nnn> -- security level: 128 (by default), 192 or 256\n"
+		"    -l<nnn> -- security level: 96, 128 (by default), 192 or 256\n"
 		"    -pass <scheme> -- password description\n"
 		"    -passin <scheme> -- input password description\n"
 		"    -passout <scheme> -- output password description\n"
@@ -74,6 +75,28 @@ static int kgUsage()
 		_name, _descr
 	);
 	return -1;
+}
+
+/*
+*******************************************************************************
+Вспомогательные функции
+*******************************************************************************
+*/
+
+static err_t kgStdParams(bign_params* params, size_t privkey_len)
+{
+	switch (privkey_len)
+	{
+	case 24:
+		return bign96StdParams(params, "1.2.112.0.2.0.34.101.45.3.0");
+	case 32:
+		return bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1");
+	case 48:
+		return bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.2");
+	case 64:
+		return bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.3");
+	}
+	return ERR_BAD_INPUT;
 }
 
 /*
@@ -184,8 +207,9 @@ static err_t kgGen(int argc, char* argv[])
 				code = ERR_CMD_DUPLICATE;
 				break;
 			}
-			if (!decIsValid(str) || decCLZ(str) || strLen(str) != 3 ||
-				(len = (size_t)decToU32(str)) % 64 || len < 128 || len > 256)
+			if (!decIsValid(str) || decCLZ(str) || strLen(str) > 3 ||
+				(len = (size_t)decToU32(str)) != 96 && len != 128 && 
+					len != 192 && len != 256)
 			{
 				code = ERR_CMD_PARAMS;
 				break;
@@ -226,12 +250,7 @@ static err_t kgGen(int argc, char* argv[])
 	// загрузить параметры
 	if (len == 0)
 		len = 32;
-	if (len == 32)
-		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1");
-	else if (len == 48)
-		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.2");
-	else
-		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.3");
+	code = kgStdParams(params, len);
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	// запустить ГСЧ
 	code = cmdRngStart(TRUE);
@@ -242,7 +261,8 @@ static err_t kgGen(int argc, char* argv[])
 	// генерировать ключ
 	privkey = (octet*)stack;
 	pubkey = privkey + len;
-	code = bignGenKeypair(privkey, pubkey, params, rngStepR, 0);
+	code = len == 24 ? bign96GenKeypair(privkey, pubkey, params, rngStepR, 0) :
+		bignGenKeypair(privkey, pubkey, params, rngStepR, 0);
 	ERR_CALL_HANDLE(code, (cmdBlobClose(stack), cmdPwdClose(pwd)));
 	// обновить ключ ГСЧ
 	rngRekey();
@@ -477,17 +497,14 @@ static err_t kgExtr(int argc, char* argv[])
 	code = cmdPrivkeyRead(privkey, &len, argv[0], pwd);
 	ERR_CALL_HANDLE(code, (cmdBlobClose(stack), cmdPwdClose(pwd)));
 	// определить открытый ключ
-	if (len == 32)
-		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1");
-	else if (len == 48)
-		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.2");
-	else
-		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.3");
-	if (code == ERR_OK)
-		code = bignCalcPubkey(pubkey, params, privkey);
+	code = kgStdParams(params, len);
+	ERR_CALL_HANDLE(code, (cmdBlobClose(stack), cmdPwdClose(pwd)));
+	code = len == 24 ? bign96CalcPubkey(pubkey, params, privkey) : 
+		bignCalcPubkey(pubkey, params, privkey);
 	ERR_CALL_HANDLE(code, (cmdBlobClose(stack), cmdPwdClose(pwd)));
 	// записать открытый ключ
 	code = cmdFileWrite(argv[1], pubkey, len * 2);
+	// завершить
 	cmdBlobClose(stack);
 	cmdPwdClose(pwd);
 	return code;
@@ -561,18 +578,15 @@ static err_t kgPrint(int argc, char* argv[])
 	code = cmdPrivkeyRead(privkey, &len, argv[0], pwd);
 	ERR_CALL_HANDLE(code, (cmdBlobClose(stack), cmdPwdClose(pwd)));
 	// определить открытый ключ
-	if (len == 32)
-		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1");
-	else if (len == 48)
-		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.2");
-	else
-		code = bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.3");
-	if (code == ERR_OK)
-		code = bignCalcPubkey(pubkey, params, privkey);
+	code = kgStdParams(params, len);
+	ERR_CALL_HANDLE(code, (cmdBlobClose(stack), cmdPwdClose(pwd)));
+	code = len == 24 ? bign96CalcPubkey(pubkey, params, privkey) : 
+		bignCalcPubkey(pubkey, params, privkey);
 	ERR_CALL_HANDLE(code, (cmdBlobClose(stack), cmdPwdClose(pwd)));
 	// печатать открытый ключ
 	hexFrom(hex, pubkey, len * 2);
 	printf("%s\n", hex);
+	// завершить
 	cmdBlobClose(stack);
 	cmdPwdClose(pwd);
 	return code;
