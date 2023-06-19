@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): block encryption
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2019.06.26
+\version 2023.06.19
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -285,8 +285,8 @@ G-блоки
 	*b ^= G21(*a + subkey(K, i, 5));\
 	*c ^= G5(*d + subkey(K, i, 6));\
 
-#define subkey_e(K, i, j) K[(7 * i - 7 + j) % 8]
-#define subkey_d(K, i, j) K[(7 * i - 1 - j) % 8]
+#define subkey_e(K, i, j) K[(7 * (i) - 7 + (j)) % 8]
+#define subkey_d(K, i, j) K[(7 * (i) - 1 - (j)) % 8]
 
 /*
 *******************************************************************************

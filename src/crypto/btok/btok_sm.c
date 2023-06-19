@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): Secure Messaging
 \project bee2 [cryptographic library]
 \created 2022.10.31
-\version 2023.03.20
+\version 2023.06.19
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -340,8 +340,6 @@ err_t btokSMCmdUnwrap(apdu_cmd_t* cmd, size_t* size, const octet apdu[],
 	{
 		len = apdu[5], len *= 256, len += apdu[6];
 		cdf_len_len = 3;
-		if (apdu[4] != 0)
-			return ERR_BAD_APDU;
 	}
 	offset = 4 + cdf_len_len;
 	// проверить длину кода

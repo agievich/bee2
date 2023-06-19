@@ -95,12 +95,6 @@ err_t cmdCVCsCreate(octet* certs, size_t* certs_len, const char* descr)
 	// pre
 	ASSERT(memIsValid(certs_len, O_PER_S));
 	ASSERT(memIsNullOrValid(certs, *certs_len));
-	// пустая строка?
-	if (!descr)
-	{
-		*certs_len = 0;
-		return ERR_OK;
-	}
 	ASSERT(strIsValid(descr));
 	// создать список файлов сертификатов
 	code = cmdArgCreate(&argc, &argv, descr);

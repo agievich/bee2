@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): CV certificates
 \project bee2 [cryptographic library]
 \created 2022.07.04
-\version 2023.06.18
+\version 2023.06.19
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -679,8 +679,7 @@ err_t btokCVCVal2(btok_cvc_t* cvc, const octet cert[], size_t cert_len,
 		stack = blobCreate(sizeof(btok_cvc_t));
 		if (!stack)
 			return ERR_OUTOFMEMORY;
-		if (!cvc)
-			cvc = (btok_cvc_t*)stack;
+		cvc = (btok_cvc_t*)stack;
 	}
 	// разобрать сертификат
 	code = btokCVCUnwrap(cvc, cert, cert_len, cvca->pubkey, cvca->pubkey_len);

@@ -281,6 +281,7 @@ static err_t cvrAdd(int argc, char* argv[])
 	// проверить вложенный в подпись сертификат
 	if (sig->certs_len != certa_len || !memEq(sig->certs, certa, certa_len))
 		code = ERR_BAD_ANCHOR;
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// проверить подпись кольца
 	code = cmdSigVerify2(argv[5], argv[5], certa, certa_len);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
@@ -405,6 +406,7 @@ static err_t cvrDel(int argc, char* argv[])
 	// проверить вложенный в подпись сертификат
 	if (sig->certs_len != certa_len || !memEq(sig->certs, certa, certa_len))
 		code = ERR_BAD_ANCHOR;
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// проверить подпись кольца
 	code = cmdSigVerify2(argv[5], argv[5], certa, certa_len);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));

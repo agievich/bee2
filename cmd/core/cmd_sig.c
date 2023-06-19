@@ -604,10 +604,12 @@ err_t cmdSigVerify2(const char* file, const char* sig_file,
 	// проверить цепочку
 	code = cmdCVCsVal(sig->certs, sig->certs_len, sig->date);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-	// найти и разобрать последний сертификат
+	// найти последний сертификат
 	code = cmdCVCsGetLast(&offset, &cert_len, sig->certs, sig->certs_len);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	// разобрать последний сертификат
 	code = btokCVCUnwrap(cvc, sig->certs + offset, cert_len, 0, 0);
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// загрузить долговременные параметры
 	code = cmdSigStdParams(params, cvc->pubkey_len / 2);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
