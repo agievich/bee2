@@ -941,7 +941,9 @@ INPUT                  = ../include/bee2/info.h \
                          ../include/bee2/crypto/bels.h \
                          ../include/bee2/crypto/belt.h \
                          ../include/bee2/crypto/bign.h \
+                         ../include/bee2/crypto/bign96.h \
                          ../include/bee2/crypto/botp.h \
+                         ../include/bee2/crypto/bpki.h \
                          ../include/bee2/crypto/brng.h \
                          ../include/bee2/crypto/btok.h \
                          ../include/bee2/crypto/dstu.h \
@@ -961,6 +963,7 @@ INPUT                  = ../include/bee2/info.h \
                          ../include/bee2/core/apdu.h \
                          ../include/bee2/core/b64.h \
                          ../include/bee2/core/blob.h \
+                         ../include/bee2/core/dec.h \
                          ../include/bee2/core/der.h \
                          ../include/bee2/core/err.h \
                          ../include/bee2/core/hex.h \
