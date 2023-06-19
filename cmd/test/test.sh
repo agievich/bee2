@@ -3,7 +3,7 @@
 # \brief Testing command-line interface
 # \project bee2evp/cmd
 # \created 2022.06.24
-# \version 2023.06.18
+# \version 2023.06.19
 # =============================================================================
 
 bee2cmd="${BEE2CMD:-./bee2cmd}"
@@ -382,6 +382,10 @@ test_cvr(){
     || return 1
   $bee2cmd sig val -anchor cert2 ring2 ring2 \
     || return 1
+  $bee2cmd cvr find ring2 cert3 \
+    || return 1
+  $bee2cmd cvr find ring2 cert2 \
+    && return 1
   $bee2cmd cvr extr -cert0 ring2 cert31 \
     || return 1
   diff cert3 cert31 \

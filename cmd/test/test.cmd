@@ -3,7 +3,7 @@ rem ===========================================================================
 rem \brief Testing command-line interface
 rem \project bee2evp/cmd
 rem \created 2022.06.24
-rem \version 2023.06.18
+rem \version 2023.06.19
 rem ===========================================================================
 
 rem ===========================================================================
@@ -499,6 +499,12 @@ if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd sig val -anchor cert2 ring2 ring2
 if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig find ring2 cert3
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig find ring2 cert2
+if %ERRORLEVEL% equ 0 goto Error
 
 bee2cmd cvr extr -cert0 ring2 cert31
 if %ERRORLEVEL% neq 0 goto Error
