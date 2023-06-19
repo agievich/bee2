@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: managing private keys
 \project bee2/cmd 
 \created 2022.06.20
-\version 2022.10.27
+\version 2023.06.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -40,7 +40,8 @@ err_t cmdPrivkeyWrite(const octet privkey[], size_t privkey_len,
 	size_t epki_len;
 	FILE* fp;
 	// pre
-	ASSERT(privkey_len == 32 || privkey_len == 48 || privkey_len == 64);
+	ASSERT(privkey_len == 24 || privkey_len == 32 || privkey_len == 48 || 
+		privkey_len == 64);
 	ASSERT(memIsValid(privkey, privkey_len));
 	ASSERT(strIsValid(file));
 	ASSERT(cmdPwdIsValid(pwd));
@@ -91,8 +92,8 @@ err_t cmdPrivkeyRead(octet privkey[], size_t* privkey_len, const char* file,
 	FILE* fp;
 	// pre
 	ASSERT(memIsNullOrValid(privkey_len, sizeof(size_t)));
-	ASSERT(!privkey_len || *privkey_len == 0 || *privkey_len == 32 ||
-		*privkey_len == 48 ||  *privkey_len == 64);
+	ASSERT(!privkey_len || *privkey_len == 0 || *privkey_len == 24 ||
+		*privkey_len == 32 || *privkey_len == 48 ||  *privkey_len == 64);
 	ASSERT(strIsValid(file));
 	ASSERT(cmdPwdIsValid(pwd));
 	// определить длину личного ключа по размеру контейнера
@@ -102,7 +103,7 @@ err_t cmdPrivkeyRead(octet privkey[], size_t* privkey_len, const char* file,
 		if ((epki_len = cmdFileSize(file)) == SIZE_MAX)
 			return ERR_FILE_READ;
 		// найти подходящую длину
-		for (len = 32; len <= 64; len += 16)
+		for (len = 24; len <= 64; len = len == 24 ? len + 8 : len + 16)
 		{
 			code = bpkiPrivkeyWrap(0, &epki_len_min, 0, len, 0, 0, 0, 10000);
 			ERR_CALL_CHECK(code);
@@ -128,7 +129,7 @@ err_t cmdPrivkeyRead(octet privkey[], size_t* privkey_len, const char* file,
 	// ключ определять не нужно?
 	if (!privkey)
 		return ERR_OK;
-	ASSERT(len % 16 == 0 && 32 <= len && len <= 64);
+	ASSERT(len == 24 || len == 32 || len == 48 || len == 64);
 	ASSERT(memIsValid(privkey, len));
 	// выделить память и разметить ее
 	code = cmdBlobCreate(stack, epki_len_max + 1);

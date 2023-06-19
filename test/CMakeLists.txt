@@ -24,6 +24,7 @@ add_executable(testbee2
 	crypto/belt_bench.c
 	crypto/belt_test.c
 	crypto/bign_test.c
+	crypto/bign96_test.c
 	crypto/botp_test.c
 	crypto/bpki_test.c
 	crypto/brng_test.c

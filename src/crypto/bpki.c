@@ -4,7 +4,7 @@
 \brief STB 34.101.78 (bpki): PKI helpers
 \project bee2 [cryptographic library]
 \created 2021.04.03
-\version 2022.07.07
+\version 2023.06.17
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -15,11 +15,8 @@
 #include "bee2/core/der.h"
 #include "bee2/core/mem.h"
 #include "bee2/core/util.h"
-#include "bee2/crypto/bels.h"
 #include "bee2/crypto/belt.h"
 #include "bee2/crypto/bpki.h"
-#include "bee2/crypto/bign.h"
-#include "bee2/crypto/brng.h"
 
 /*
 *******************************************************************************
@@ -50,6 +47,7 @@ do {\
 */
 
 static const char oid_bign_pubkey[] = "1.2.112.0.2.0.34.101.45.2.1";
+static const char oid_bign_curve192v1[] = "1.2.112.0.2.0.34.101.45.3.0";
 static const char oid_bign_curve256v1[] = "1.2.112.0.2.0.34.101.45.3.1";
 static const char oid_bign_curve384v1[] = "1.2.112.0.2.0.34.101.45.3.2";
 static const char oid_bign_curve512v1[] = "1.2.112.0.2.0.34.101.45.3.3";
@@ -82,14 +80,17 @@ static size_t bpkiPrivkeyEnc(octet pki[], const octet privkey[],
 	der_anchor_t BignAlgId[1];
 	size_t count = 0;
 	// проверить ключи
-	ASSERT(privkey_len == 32 || privkey_len == 48 || privkey_len == 64);
+	ASSERT(privkey_len == 24 || privkey_len == 32 || privkey_len == 48 || 
+		privkey_len == 64);
 	ASSERT(memIsNullOrValid(privkey, privkey_len));
 	// кодировать
 	derEncStep(derSEQEncStart(PKI, pki, count), pki, count);
 	 derEncStep(derSIZEEnc(pki, 0), pki, count);
 	 derEncStep(derSEQEncStart(BignAlgId, pki, count), pki, count);
 	  derEncStep(derOIDEnc(pki, oid_bign_pubkey), pki, count);
-	  if (privkey_len == 32)
+	  if (privkey_len == 24)
+		  derEncStep(derOIDEnc(pki, oid_bign_curve192v1), pki, count);
+	  else if (privkey_len == 32)
 		  derEncStep(derOIDEnc(pki, oid_bign_curve256v1), pki, count);
 	  else if (privkey_len == 48)
 		  derEncStep(derOIDEnc(pki, oid_bign_curve384v1), pki, count);
@@ -114,7 +115,9 @@ static size_t bpkiPrivkeyDec(octet privkey[], size_t* privkey_len,
 	 derDecStep(derSIZEDec2(ptr, count, 0), ptr, count);
 	 derDecStep(derSEQDecStart(BignAlgId, ptr, count), ptr, count);
 	  derDecStep(derOIDDec2(ptr, count, oid_bign_pubkey), ptr, count);
-	  if ((t = derOIDDec2(ptr, count, oid_bign_curve256v1)) != SIZE_MAX)
+	  if ((t = derOIDDec2(ptr, count, oid_bign_curve192v1)) != SIZE_MAX)
+		  len = 24;
+	  else if ((t = derOIDDec2(ptr, count, oid_bign_curve256v1)) != SIZE_MAX)
 		  len = 32;
 	  else if ((t = derOIDDec2(ptr, count, oid_bign_curve384v1)) != SIZE_MAX)
 		  len = 48;
@@ -314,7 +317,8 @@ err_t bpkiPrivkeyWrap(octet epki[], size_t* epki_len, const octet privkey[],
 	// проверить входные данные
 	if (iter < 10000)
 		return ERR_BAD_INPUT;
-	if (privkey_len != 32 && privkey_len != 48 && privkey_len != 64)
+	if (privkey_len != 32 && privkey_len != 24 && privkey_len != 48 && 
+		privkey_len != 64)
 		return ERR_BAD_PRIVKEY;
 	// определить длину epki
 	pki_len = bpkiPrivkeyEnc(0, privkey, privkey_len);

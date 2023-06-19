@@ -4,7 +4,7 @@
 \brief Manage CV-certificate rings
 \project bee2/cmd 
 \created 2023.06.08
-\version 2023.06.16
+\version 2023.06.19
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -46,12 +46,14 @@
   bee2cmd cvr add -pass pass:alice privkey2 cert2 cert3 ring2
   bee2cmd cvr val cert2 ring2
   bee2cmd sig val -anchor cert2 ring2 ring2
+  bee2cmd cvr find ring2 cert3
   bee2cmd cvr extr -cert0 ring2 cert31
   bee2cmd sig extr -cert0 ring2 cert21
   bee2cmd cvr print ring2
   bee2cmd cvr print -certc ring2
   bee2cmd sig print ring2
   bee2cmd cvr del -pass pass:alice privkey2 cert2 cert3 ring2
+  bee2cmd cvr find ring2 
 *******************************************************************************
 */
 
@@ -71,6 +73,8 @@ static int cvrUsage()
 		"    remove <cert> from <ring>\n"
 		"  cvr val <certa> <ring>\n"
 		"    validate <ring> using <certa> as an anchor\n"
+		"  cvr find <ring> <cert>\n"
+		"    find <cert> in <ring>\n"
 		"  cvr extr -cert<nnn> <ring> <file>\n"
 		"    extract from <ring> an object and store it in <file>\n"
 		"      -cert<nnn> -- the <nnn>th certificate\n"
@@ -150,124 +154,6 @@ static err_t cvrSelfTest()
 #define cmdBlobResize(b, blob, size)\
 	(((b) = blobResize(blob, size)) ? ERR_OK : ERR_OUTOFMEMORY)
 
-static err_t cvrCertsFind(size_t* offset, const octet* certs, size_t certs_len,
-	const octet* cert, size_t cert_len)
-{
-	ASSERT(memIsValid(certs, certs_len));
-	ASSERT(memIsValid(cert, cert_len));
-	ASSERT(memIsValid(offset, O_PER_S));
-	// цикл по сертификатам
-	for (*offset = 0; certs_len; )
-	{
-		size_t len = btokCVCLen(certs, certs_len);
-		if (len == SIZE_MAX)
-			return ERR_BAD_CERTRING;
-		if (len == cert_len && memEq(certs, cert, cert_len))
-			return ERR_OK;
-		*offset += len, certs += len, certs_len -= len;
-	}
-	return ERR_NOT_FOUND;
-}
-
-static err_t cvrCertsCount(size_t* count, const octet* certs, size_t certs_len)
-{
-	ASSERT(memIsValid(certs, certs_len));
-	ASSERT(memIsValid(count, O_PER_S));
-	// цикл по сертификатам
-	for (*count = 0; certs_len; ++*count)
-	{
-		size_t len = btokCVCLen(certs, certs_len);
-		if (len == SIZE_MAX)
-			return ERR_BAD_CERTRING;
-		certs += len, certs_len -= len;
-	}
-	return ERR_OK;
-}
-
-static err_t cvrCertsGet(size_t* offset, size_t* cert_len,
-	const octet* certs, size_t certs_len, size_t num)
-{
-	ASSERT(memIsValid(certs, certs_len));
-	ASSERT(memIsValid(offset, O_PER_S));
-	ASSERT(memIsValid(cert_len, O_PER_S));
-	// цикл по сертификатам
-	for (*offset = 0; certs_len; )
-	{
-		*cert_len = btokCVCLen(certs, certs_len);
-		if (*cert_len == SIZE_MAX)
-			return ERR_BAD_CERTRING;
-		if (num-- == 0)
-			return ERR_OK;
-		*offset += *cert_len, certs += *cert_len, certs_len -= *cert_len;
-	}
-	return ERR_OUTOFRANGE;
-}
-
-static err_t cvrCertsVal(const octet* certs, size_t certs_len)
-{
-	err_t code;
-	void* stack;
-	btok_cvc_t* cvc;
-	// pre
-	ASSERT(memIsValid(certs, certs_len));
-	// выделить и разметить память
-	code = cmdBlobCreate(stack, sizeof(btok_cvc_t));
-	cvc = (btok_cvc_t*)stack;
-	// цикл по сертификатам
-	while (certs_len)
-	{
-		// разобрать сертификат
-		size_t len = btokCVCLen(certs, certs_len);
-		if (len == SIZE_MAX)
-			code = ERR_BAD_CERTRING;
-		else 
-			code = btokCVCUnwrap(cvc, certs, len, 0, 0);
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		// к следующему
-		certs += len, certs_len -= len;
-	}
-	// завершить
-	cmdBlobClose(stack);
-	return code;
-}
-
-static err_t cvrCertsPrint(const octet* certs, size_t certs_len)
-{
-	err_t code;
-	void* stack;
-	btok_cvc_t* cvc;
-	// pre
-	ASSERT(memIsValid(certs, certs_len));
-	// выделить и разметить память
-	code = cmdBlobCreate(stack, sizeof(btok_cvc_t));
-	cvc = (btok_cvc_t*)stack;
-	// цикл по сертификатам
-	while (certs_len)
-	{
-		// разобрать сертификат
-		size_t len = btokCVCLen(certs, certs_len);
-		if (len == SIZE_MAX)
-			code = ERR_BAD_CERTRING;
-		else
-			code = btokCVCUnwrap(cvc, certs, len, 0, 0);
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		// печатать
-		printf("  %s (%u bits, issued by %s, ",
-			cvc->holder, (unsigned)cvc->pubkey_len * 2, cvc->authority);
-		code = cmdPrintDate(cvc->from);
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		printf("-");
-		code = cmdPrintDate(cvc->until);
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		printf(")\n");
-		// к следующему
-		certs += len, certs_len -= len;
-	}
-	// завершить
-	cmdBlobClose(stack);
-	return code;
-}
-
 /*
 *******************************************************************************
 Создание кольца
@@ -346,7 +232,6 @@ static err_t cvrAdd(int argc, char* argv[])
 	size_t ring_len;
 	void* ring;
 	octet* certs;
-	size_t offset;
 	octet date[6];
 	// самотестирование
 	code = cvrSelfTest();
@@ -387,6 +272,9 @@ static err_t cvrAdd(int argc, char* argv[])
 	// прочитать certa
 	code = cmdFileReadAll(certa, &certa_len, argv[3]);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	// проверить соответствие личного ключа и certa
+	code = btokCVCMatch(certa, certa_len, privkey, privkey_len);
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// прочитать подпись
 	code = cmdSigRead(sig, &sig_len, argv[5]);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
@@ -412,24 +300,23 @@ static err_t cvrAdd(int argc, char* argv[])
 	certs = (octet*)ring;
 	// искать сертификат
 	ASSERT(sig_len <= ring_len);
-	code = cvrCertsFind(&offset, certs, ring_len - sig_len, cert, cert_len);
+	code = cmdCVCsFind(0, certs, ring_len - sig_len, cert, cert_len);
 	if (code == ERR_OK)
 		code = ERR_ALREADY_EXISTS;
 	else if (code == ERR_NOT_FOUND)
 		code = ERR_OK;
 	ERR_CALL_HANDLE(code, (cmdBlobClose(ring), cmdBlobClose(stack)));
 	// добавить сертификат
-	ASSERT(offset + sig_len == ring_len);
-	if (offset + cert_len > ring_len)
+	if (cert_len > ring_len)
 	{
 		blob_t r;
-		code = cmdBlobResize(r, ring, offset + cert_len);
+		code = cmdBlobResize(r, ring, ring_len - sig_len + cert_len);
 		ERR_CALL_HANDLE(code, (cmdBlobClose(ring), cmdBlobClose(stack)));
 		ring = r, certs = (octet*)ring;
 	}
-	memCopy(certs + offset, cert, cert_len);
+	memCopy(certs + ring_len - sig_len, cert, cert_len);
 	// записать сертификаты в файл
-	code = cmdFileWrite(argv[5], certs, offset + cert_len);
+	code = cmdFileWrite(argv[5], certs, ring_len - sig_len + cert_len);
 	cmdBlobClose(ring);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// определить текущую дату
@@ -509,6 +396,9 @@ static err_t cvrDel(int argc, char* argv[])
 	// прочитать certa
 	code = cmdFileReadAll(certa, &certa_len, argv[3]);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	// проверить соответствие личного ключа и certa
+	code = btokCVCMatch(certa, certa_len, privkey, privkey_len);
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// прочитать подпись
 	code = cmdSigRead(sig, &sig_len, argv[5]);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
@@ -534,7 +424,7 @@ static err_t cvrDel(int argc, char* argv[])
 	certs = (octet*)ring;
 	// искать сертификат
 	ASSERT(sig_len <= ring_len);
-	code = cvrCertsFind(&offset, certs, ring_len - sig_len, cert, cert_len);
+	code = cmdCVCsFind(&offset, certs, ring_len - sig_len, cert, cert_len);
 	ERR_CALL_HANDLE(code, (cmdBlobClose(ring), cmdBlobClose(stack)));
 	// удалить сертификат
 	ASSERT(offset + cert_len + sig_len <= ring_len);
@@ -615,9 +505,61 @@ static err_t cvrVal(int argc, char* argv[])
 	certs = (octet*)ring;
 	// проверить сертификаты
 	ASSERT(sig_len <= ring_len);
-	code = cvrCertsVal(certs, ring_len - sig_len);
+	code = cmdCVCsCheck(certs, ring_len - sig_len);
 	// завершить
 	cmdBlobClose(ring);
+	cmdBlobClose(stack);
+	return code;
+}
+
+/*
+*******************************************************************************
+Поиск сертификата
+
+cvr find <ring> <cert>
+*******************************************************************************
+*/
+
+static err_t cvrFind(int argc, char* argv[])
+{
+	err_t code;
+	void* stack;
+	size_t cert_len;
+	octet* cert;
+	size_t sig_len;
+	cmd_sig_t* sig;
+	size_t ring_len;
+	octet* certs;
+	// обработать опции
+	if (argc != 2)
+		return ERR_CMD_PARAMS;
+	// проверить наличие файлов
+	code = cmdFileValExist(2, argv);
+	ERR_CALL_CHECK(code);
+	// определить длину cert
+	code = cmdFileReadAll(0, &cert_len, argv[1]);
+	ERR_CALL_CHECK(code);
+	// определить длину кольца
+	code = cmdFileReadAll(0, &ring_len, argv[0]);
+	ERR_CALL_CHECK(code);
+	// выделить и разметить память
+	code = cmdBlobCreate(stack, cert_len + MAX2(sizeof(cmd_sig_t), ring_len));
+	ERR_CALL_CHECK(code);
+	cert = (octet*)stack;
+	certs = cert + cert_len;
+	sig = (cmd_sig_t*)certs;
+	// прочитать cert
+	code = cmdFileReadAll(cert, &cert_len, argv[1]);
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	// определить длину подписи
+	code = cmdSigRead(sig, &sig_len, argv[0]);
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	// прочитать кольцо
+	code = cmdFileReadAll(certs, &ring_len, argv[0]);
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	// найти сертификат
+	code = cmdCVCsFind(0, certs, ring_len - sig_len, cert, cert_len);
+	// завершить
 	cmdBlobClose(stack);
 	return code;
 }
@@ -671,7 +613,7 @@ static err_t cvrExtr(int argc, char* argv[])
 	code = cmdFileReadAll(certs, &ring_len, argv[1]);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// найти сертификат
-	code = cvrCertsGet(&offset, &cert_len, certs, ring_len - sig_len, num);
+	code = cmdCVCsGet(&offset, &cert_len, certs, ring_len - sig_len, num);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// записать сертификат в файл
 	code = cmdFileWrite(argv[2], certs + offset, cert_len);
@@ -724,7 +666,7 @@ static err_t cvrPrint(int argc, char* argv[])
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// определить число сертификатов
 	ASSERT(sig_len <= ring_len);
-	code = cvrCertsCount(&count, certs, ring_len - sig_len);
+	code = cmdCVCsCount(&count, certs, ring_len - sig_len);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// печатать 
 	if (!scope)
@@ -733,7 +675,7 @@ static err_t cvrPrint(int argc, char* argv[])
 		if (count)
 		{
 			printf("certs:\n");
-			code = cvrCertsPrint(certs, ring_len - sig_len);
+			code = cmdCVCsPrint(certs, ring_len - sig_len);
 		}
 	}
 	else 
@@ -765,6 +707,8 @@ int cvrMain(int argc, char* argv[])
 		code = cvrDel(argc - 1, argv + 1);
 	else if (strEq(argv[0], "val"))
 		code = cvrVal(argc - 1, argv + 1);
+	else if (strEq(argv[0], "find"))
+		code = cvrFind(argc - 1, argv + 1);
 	else if (strEq(argv[0], "extr"))
 		code = cvrExtr(argc - 1, argv + 1);
 	else if (strEq(argv[0], "print"))
@@ -772,7 +716,7 @@ int cvrMain(int argc, char* argv[])
 	else
 		code = ERR_CMD_NOT_FOUND;
 	// завершить
-	if (code != ERR_OK || strEq(argv[0], "val"))
+	if (code != ERR_OK || strEq(argv[0], "val") || strEq(argv[0], "find"))
 		printf("bee2cmd/%s: %s\n", _name, errMsg(code));
 	return code != ERR_OK ? -1 : 0;
 }
