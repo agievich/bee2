@@ -4,7 +4,7 @@
 \brief Manage CV-certificates
 \project bee2/cmd 
 \created 2022.07.12
-\version 2023.06.16
+\version 2023.06.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -662,7 +662,6 @@ static err_t cvcIss(int argc, char* argv[])
 	// выпустить сертификат
 	code = btokCVCIss(cert, &cert_len, cvc, certa, certa_len, privkeya,
 		privkeya_len);
-	ASSERT(cert_len <= req_len + 96 - 48);
 	cmdBlobClose(privkeya);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// записать сертификат
