@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: file management
 \project bee2/cmd 
 \created 2022.06.08
-\version 2023.06.15
+\version 2023.06.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -48,7 +48,7 @@ size_t cmdFileSize(const char* file)
 *******************************************************************************
 */
 
-err_t cmdFileWrite(const char* file, const octet buf[], size_t count)
+err_t cmdFileWrite(const char* file, const void* buf, size_t count)
 {
 	err_t code;
 	FILE* fp;
@@ -64,7 +64,7 @@ err_t cmdFileWrite(const char* file, const octet buf[], size_t count)
 	return code;
 }
 
-err_t cmdFileAppend(const char* file, const octet buf[], size_t count)
+err_t cmdFileAppend(const char* file, const void* buf, size_t count)
 {
 	err_t code;
 	FILE* fp;
@@ -80,7 +80,7 @@ err_t cmdFileAppend(const char* file, const octet buf[], size_t count)
 	return code;
 }
 
-err_t cmdFileReadAll(octet buf[], size_t* count, const char* file)
+err_t cmdFileReadAll(void* buf, size_t* count, const char* file)
 {
 	err_t code;
 	// pre
@@ -90,11 +90,10 @@ err_t cmdFileReadAll(octet buf[], size_t* count, const char* file)
 	if (buf)
 	{
 		FILE* fp;
-		octet o[1];
 		ASSERT(memIsValid(buf, *count));
 		code = (fp = fopen(file, "rb")) ? ERR_OK : ERR_FILE_OPEN;
 		ERR_CALL_CHECK(code);
-		if (fread(buf, 1, *count, fp) != *count || fread(o, 1, 1, fp) != 0)
+		if (fread(buf, 1, *count, fp) != *count || getc(fp) != EOF)
 			code = ERR_FILE_READ;
 		fclose(fp);
 	}

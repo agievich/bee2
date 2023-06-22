@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2
 \project bee2/cmd
 \created 2022.06.09
-\version 2023.06.19
+\version 2023.06.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -214,7 +214,7 @@ size_t cmdFileSize(
 */
 err_t cmdFileWrite(
 	const char* file,	/*!< [in] файл */
-	const octet buf[],	/*!< [in] буфер */
+	const void* buf,	/*!< [in] буфер */
 	size_t count		/*!< [in] длина буфера */
 );
 
@@ -226,7 +226,7 @@ err_t cmdFileWrite(
 */
 err_t cmdFileAppend(
 	const char* file,	/*!< [in] файл */
-	const octet buf[],	/*!< [in] буфер */
+	const void* buf,	/*!< [in] буфер */
 	size_t count		/*!< [in] длина буфера */
 );
 
@@ -252,7 +252,7 @@ err_t cmdFileDup(
 	\return ERR_OK в случае успеха и код ошибки в противном случае.
 */
 err_t cmdFileReadAll(
-	octet buf[],		/*!< [in] буфер */
+	void* buf,			/*!< [in] буфер */
 	size_t* count,		/*!< [in] длина буфера */
 	const char* file	/*!< [in] файл */
 );
