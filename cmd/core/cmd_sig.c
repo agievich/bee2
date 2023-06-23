@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: signing files
 \project bee2/cmd
 \created 2022.08.20
-\version 2023.06.19
+\version 2023.06.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -525,7 +525,7 @@ err_t cmdSigVerify(const char* file, const char* sig_file,
 			code = ERR_BAD_PUBKEY;
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	}
-	// загрузить длдговременные параметры
+	// загрузить долговременные параметры
 	code = cmdSigStdParams(params, pubkey_len / 2);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// хэшировать
