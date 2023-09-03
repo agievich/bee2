@@ -444,6 +444,10 @@
 					RelativePath="..\..\include\bee2\crypto\pfok.h"
 					>
 				</File>
+				<File
+					RelativePath="..\..\include\bee2\crypto\stb99.h"
+					>
+				</File>
 			</Filter>
 			<Filter
 				Name="math"
@@ -704,6 +708,10 @@
 				</File>
 				<File
 					RelativePath="..\..\src\crypto\pfok.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\crypto\stb99.c"
 					>
 				</File>
 				<Filter

@@ -4,7 +4,7 @@
 \brief Draft of RD_RB: key establishment protocols in finite fields
 \project bee2 [cryptographic library]
 \created 2014.07.01
-\version 2020.11.05
+\version 2023.09.03
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -15,6 +15,7 @@
 #include "bee2/core/mem.h"
 #include "bee2/core/prng.h"
 #include "bee2/core/str.h"
+#include "bee2/core/u32.h"
 #include "bee2/core/util.h"
 #include "bee2/crypto/pfok.h"
 #include "bee2/math/pri.h"
@@ -64,7 +65,7 @@ static u32 const _rs[] =
 
 static const u32 _test_params_n = 256;
 
-static const u16 _test_params_z[] = {
+static const u16 _test_params_zi[] = {
 	40046, 43788,  1706, 57707, 58664,  8036, 56277, 12802, 
 	22211, 49982, 39997,  7717,  7896, 18474, 58455,  3341, 
 	30740, 54550, 18656, 61919, 54929, 55271, 27359, 45417, 
@@ -103,7 +104,7 @@ static const octet _test_params_g[] = {
 	0xB8, 0x81, 0x33, 0xC5, 0x97, 0xD3, 0x43, 0x2A,
 };
 
-static const u32 _test_params_lt[] = {
+static const u32 _test_params_li[] = {
 	637, 319, 160, 81, 41, 21,
 };
 
@@ -114,14 +115,16 @@ static const u32 _test_params_lt[] = {
 */
 
 // bdh-params (common)
+
 static const u32 _bdh_params_n = 256;
 
-static const u16 _bdh_params_z[] = {
+static const u16 _bdh_params_zi[] = {
 	1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 
 	18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
 };
 
 // bdh-params3
+
 static const char _bdh_params3_name[] = "1.2.112.0.2.0.1176.2.3.3.2";
 
 static const u32 _bdh_params3_l = 1022;
@@ -166,11 +169,12 @@ static const octet _bdh_params3_g[] = {
 	0xC8, 0xFE, 0xDC, 0x50, 0xD3, 0x3A, 0x2A, 0x32,
 };
 
-static const u32 _bdh_params3_lt[] = {
+static const u32 _bdh_params3_li[] = {
 	1021, 511, 256, 129, 65, 33, 17,
 };
 
 // bdh-params6
+
 static const char _bdh_params6_name[] = "1.2.112.0.2.0.1176.2.3.6.2";
 
 static const u32 _bdh_params6_l = 1534;
@@ -231,11 +235,12 @@ static const octet _bdh_params6_g[] = {
 	0xEF, 0x90, 0x3E, 0x5E, 0xB6, 0xA8, 0xE7, 0x24,
 };
 
-static const u32 _bdh_params6_lt[] = {
+static const u32 _bdh_params6_li[] = {
 	1533, 767, 384, 193, 97, 49, 25,
 };
 
 // bdh-params10
+
 static const char _bdh_params10_name[] = "1.2.112.0.2.0.1176.2.3.10.2";
 
 static const u32 _bdh_params10_l = 2462;
@@ -326,7 +331,7 @@ static const octet _bdh_params10_g[] = {
 	0xE5, 0x64, 0x83, 0x03,
 };
 
-static const u32 _bdh_params10_lt[] = {
+static const u32 _bdh_params10_li[] = {
 	2461, 1231, 616, 309, 155, 78, 40, 21,
 };
 
@@ -353,8 +358,8 @@ err_t pfokStdParams(pfok_params* params, pfok_seed* seed, const char* name)
 		memCopy(params->g, _test_params_g, sizeof(_test_params_g));
 		if (seed)
 		{
-			memCopy(seed->z, _test_params_z, sizeof(_test_params_z));
-			memCopy(seed->lt, _test_params_lt, sizeof(_test_params_lt));
+			memCopy(seed->zi, _test_params_zi, sizeof(_test_params_zi));
+			memCopy(seed->li, _test_params_li, sizeof(_test_params_li));
 		}
 		return ERR_OK;
 	}
@@ -367,8 +372,8 @@ err_t pfokStdParams(pfok_params* params, pfok_seed* seed, const char* name)
 		memCopy(params->g, _bdh_params3_g, sizeof(_bdh_params3_g));
 		if (seed)
 		{
-			memCopy(seed->z, _bdh_params_z, sizeof(_bdh_params_z));
-			memCopy(seed->lt, _bdh_params3_lt, sizeof(_bdh_params3_lt));
+			memCopy(seed->zi, _bdh_params_zi, sizeof(_bdh_params_zi));
+			memCopy(seed->li, _bdh_params3_li, sizeof(_bdh_params3_li));
 		}
 		return ERR_OK;
 	}
@@ -381,8 +386,8 @@ err_t pfokStdParams(pfok_params* params, pfok_seed* seed, const char* name)
 		memCopy(params->g, _bdh_params6_g, sizeof(_bdh_params6_g));
 		if (seed)
 		{
-			memCopy(seed->z, _bdh_params_z, sizeof(_bdh_params_z));
-			memCopy(seed->lt, _bdh_params6_lt, sizeof(_bdh_params6_lt));
+			memCopy(seed->zi, _bdh_params_zi, sizeof(_bdh_params_zi));
+			memCopy(seed->li, _bdh_params6_li, sizeof(_bdh_params6_li));
 		}
 		return ERR_OK;
 	}
@@ -395,8 +400,8 @@ err_t pfokStdParams(pfok_params* params, pfok_seed* seed, const char* name)
 		memCopy(params->g, _bdh_params10_g, sizeof(_bdh_params10_g));
 		if (seed)
 		{
-			memCopy(seed->z, _bdh_params_z, sizeof(_bdh_params_z));
-			memCopy(seed->lt, _bdh_params10_lt, sizeof(_bdh_params10_lt));
+			memCopy(seed->zi, _bdh_params_zi, sizeof(_bdh_params_zi));
+			memCopy(seed->li, _bdh_params10_li, sizeof(_bdh_params10_li));
 		}
 		return ERR_OK;
 	}
@@ -471,7 +476,7 @@ err_t pfokGenParams(pfok_params* params, const pfok_seed* seed,
 	size_t i;
 	size_t no, n;
 	size_t offset;
-	const u32* lt;
+	const u32* li;
 	// состояние 
 	void* state;
 	octet* stb_state;
@@ -488,32 +493,33 @@ err_t pfokGenParams(pfok_params* params, const pfok_seed* seed,
 	memSetZero(params, sizeof(pfok_params));
 	// проверить числа z[i]
 	for (i = 0; i < 31; ++i)
-		if (seed->z[i] == 0 || seed->z[i] >= 65257)
+		if (seed->zi[i] == 0 || seed->zi[i] >= 65257)
 			return ERR_BAD_PARAMS;
-	// проверить цепочку lt[i] и одновременно зафиксировать размерности
-	for (i = 0, lt = seed->lt; i < COUNT_OF(_ls); ++i)
-		if (lt[0] == _ls[i] - 1)
+	// проверить цепочку li[i] и одновременно зафиксировать размерности
+	for (i = 0, li = seed->li; i < COUNT_OF(_ls); ++i)
+		if (li[0] == _ls[i] - 1)
 			break;
 	if (i == COUNT_OF(_ls))
 		return ERR_BAD_PARAMS;
 	params->l = _ls[i], params->r = _rs[i], params->n = 256;
-	for (i = 1, offset = W_OF_B(lt[0]); lt[i] > 32; ++i)
+	for (i = 1, offset = W_OF_B(li[0]); li[i] > 32; ++i)
 	{
-		if (lt[i - 1] > 2 * lt[i] || 5 * lt[i] + 16 >= 4 * lt[i - 1])
+		if (li[i - 1] > 2 * li[i] || 
+			li[i] >= U32_MAX / 5 || 5 * li[i] + 16 >= 4 * li[i - 1])
 			return ERR_BAD_PARAMS;
-		offset += W_OF_B(lt[i]);
+		offset += W_OF_B(li[i]);
 	}
-	ASSERT(lt[i] > 16);
+	ASSERT(li[i] > 16);
 	// размерности
 	no = O_OF_B(params->l), n = W_OF_B(params->l);
 	// создать состояние
 	state = blobCreate(
-		prngSTB_keep() + O_OF_W(offset) + O_OF_B(lt[i]) + 
+		prngSTB_keep() + O_OF_W(offset) + O_OF_B(li[i]) + 
 		O_OF_W(n) +	zmMontCreate_keep(no) +
 		utilMax(6,
 			priNextPrimeW_deep(),
-			priExtendPrime_deep(params->l, n, (lt[0] + 3) / 4),
-			priIsSieved_deep((lt[0] + 3) / 4),
+			priExtendPrime_deep(params->l, n, (li[0] + 3) / 4),
+			priIsSieved_deep((li[0] + 3) / 4),
 			priIsSGPrime_deep(n),
 			zmMontCreate_deep(no), 
 			qrPower_deep(n, n, zmMontCreate_deep(no))));
@@ -522,56 +528,56 @@ err_t pfokGenParams(pfok_params* params, const pfok_seed* seed,
 	// раскладка состояния
 	stb_state = (octet*)state;
 	qi = (word*)(stb_state + prngSTB_keep());
-	p = qi + offset + W_OF_B(lt[i]);
+	p = qi + offset + W_OF_B(li[i]);
 	qr = (qr_o*)(p + n);
 	stack = (octet*)qr + zmMontCreate_keep(no);
 	// запустить генератор
-	prngSTBStart(stb_state, seed->z);
+	prngSTBStart(stb_state, seed->zi);
 	// основной цикл
 	while (1)
 	{
 		// первое (минимальное) простое?
-		if (lt[i] <= 32)
+		if (li[i] <= 32)
 		{
 			do
 			{
-				prngSTBStepR(qi + offset, O_OF_B(lt[i]), stb_state);
-				wwFrom(qi + offset, qi + offset, O_OF_B(lt[i]));
-				wwTrimHi(qi + offset, W_OF_B(lt[i]), lt[i] - 1);
-				wwSetBit(qi + offset, lt[i] - 1, 1);
+				prngSTBStepR(qi + offset, O_OF_B(li[i]), stb_state);
+				wwFrom(qi + offset, qi + offset, O_OF_B(li[i]));
+				wwTrimHi(qi + offset, W_OF_B(li[i]), li[i] - 1);
+				wwSetBit(qi + offset, li[i] - 1, 1);
 			}
 			while (!priNextPrimeW(qi + offset, qi[offset], stack));
 			// к следующему простому
-			offset -= W_OF_B(lt[--i]);
+			offset -= W_OF_B(li[--i]);
 		}
 		// обычное простое
 		else
 		{
-			size_t trials = (i == 0) ? 4 * lt[i] * lt[i] : 4 * lt[i];
-			size_t base_count = (lt[i] + 3) / 4;
+			size_t trials = (i == 0) ? 4 * li[i] * li[i] : 4 * li[i];
+			size_t base_count = (li[i] + 3) / 4;
 			// потенциальное отступление от Проекта, не влияющее на результат
 			if (base_count > priBaseSize())
 				base_count = priBaseSize();
 			// не удается построить новое простое?
-			if (!priExtendPrime(qi + offset, lt[i], 
-					qi + offset + W_OF_B(lt[i]), W_OF_B(lt[i + 1]), 
+			if (!priExtendPrime(qi + offset, li[i], 
+					qi + offset + W_OF_B(li[i]), W_OF_B(li[i + 1]), 
 					trials, base_count, prngSTBStepR, stb_state, stack))
 			{
 				// к предыдущему простому
-				offset += W_OF_B(lt[i++]);
+				offset += W_OF_B(li[i++]);
 				continue;
 			}
 			// не последнее простое?
 			if (i > 0)
 			{
 				// к следующему простому
-				offset -= W_OF_B(lt[--i]);
+				offset -= W_OF_B(li[--i]);
 				continue;
 			}
 			// обработать нового кандидата
-			on_q ? on_q(qi, W_OF_B(lt[0]), ++num) : 0;
+			on_q ? on_q(qi, W_OF_B(li[0]), ++num) : 0;
 			// p <- 2q_0 + 1
-			ASSERT(W_OF_B(lt[0]) == n);
+			ASSERT(W_OF_B(li[0]) == n);
 			wwCopy(p, qi, n);
 			wwShHi(p, n, 1);
 			p[0] |= 1;
@@ -586,14 +592,14 @@ err_t pfokGenParams(pfok_params* params, const pfok_seed* seed,
 	// построить кольцо Монтгомери
 	zmMontCreate(qr, params->p, no, params->l + 2, stack);
 	// сгенерировать g
-	g = qi + W_OF_B(lt[0]);
+	g = qi + W_OF_B(li[0]);
 	do
 	{
 		// g <- g + 1
 		for (i = 0; i < no && ++params->g[i] == 0;);
 		// p <- g^(q) [p == e или p == -e]
 		qrFrom(g, params->g, qr, stack);
-		qrPower(p, g, qi, W_OF_B(lt[0]), qr, stack);
+		qrPower(p, g, qi, W_OF_B(li[0]), qr, stack);
 	}
 	while (qrIsUnity(p, qr) || qrIsUnity(g, qr) || qrCmp(p, g, qr) == 0);
 	// все нормально

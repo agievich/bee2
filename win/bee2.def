@@ -280,3 +280,7 @@ EXPORTS
 	bign96Sign					@1607
 	bign96Sign2					@1608
 	bign96Verify				@1609
+
+	stb99StdParams				@1701
+	stb99GenParams				@1702
+	stb99ValParams				@1703

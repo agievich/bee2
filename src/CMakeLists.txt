@@ -54,6 +54,7 @@ set(src
   crypto/btok/btok_sm.c
   crypto/dstu.c
   crypto/g12s.c
+  crypto/stb99.c
   crypto/pfok.c
   math/ec.c
   math/ec2.c

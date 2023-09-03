@@ -264,6 +264,9 @@
     <ClCompile Include="..\..\src\crypto\bign96.c">
       <Filter>Source Files\crypto</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\crypto\stb99.c">
+      <Filter>Source Files\crypto</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\crypto\bign_lcl.h">
@@ -417,6 +420,9 @@
       <Filter>Header Files\core</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\bee2\crypto\bign96.h">
+      <Filter>Header Files\crypto</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\bee2\crypto\stb99.h">
       <Filter>Header Files\crypto</Filter>
     </ClInclude>
   </ItemGroup>

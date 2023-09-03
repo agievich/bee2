@@ -4,7 +4,7 @@
 \brief Prime numbers
 \project bee2 [cryptographic library]
 \created 2012.08.13
-\version 2016.07.15
+\version 2023.09.03
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -495,7 +495,7 @@ size_t priIsSmooth_deep(size_t n)
 *******************************************************************************
 Проверка простоты малых чисел
 
-Применяется тест Миллера --- Рабина со специально подобранными основаниями.
+Применяется тест Рабина -- Миллера со специально подобранными основаниями.
 Успешное завершение теста на всех основаниях из списка _base16 гарантирует
 простоту чисел вплоть до 1373653, из списка _base32 --- вплоть
 до 4759123141, из списка _base64 --- для всех 64-разрядных чисел.
@@ -843,81 +843,106 @@ size_t priNextPrime_deep(size_t n, size_t base_count)
 2) 2^{2r} \not\equiv 1 \mod p,
 то p -- простое.
 
-\remark Если l <= 2 * lq, где lq = bitlen(q), то условие 2r < 4q + 1 будет
+\remark Если l <= 2 * k, где k = bitlen(q), то условие 2r < 4q + 1 будет
 выполнено:
-2r = (p - 1) / q < 2^l / (2^{lq - 1}} = 2^{l - lq + 1} <= 2^{lq + 2} < 4q.
+2r = (p - 1) / q < 2^l / (2^{k - 1}} = 2^{l - k + 1} <= 2^{k + 2} < 4q.
 
 Построение p:
-1) t <-R {2^{l - 2} + 1,..., 2^{l - 1} - 1};
-2) t <- t + 2^{l - 1};
-3) r <- ceil(t / q);
-4) p <- 2qr + 1;
-5) если bitlen(p) != l, то вернуться к шагу 1.
+1) t <-R {2^{l - 2},..., 2^{l - 1} - 1};
+2) r <- ceil(t / q);
+3) p <- 2qr + 1;
+4) если bitlen(p) != l, то вернуться к шагу 1.
 
-\remark Если t укладывается в m слов, q -- в n слов, то r на шаге 3)
-укладывается в m - n + 1 слов. Действительно, максимальное r получается
-при t = B^m - 1, q = B^{n - 1} и равняется B^{m - n + 1} - 1.
+Если требуется, чтобы число r в представлении p = 2qr + 1 делилось на число a, 
+то построить p можно следующим образом:
+1) t <-R {2^{l - 2},..., 2^{l - 1} - 1};
+2) r' <- ceil(t / qa);
+3) p <- 2qar' + 1;
+4) если bitlen(p) != l, то вернуться к шагу 1.
+
+\remark Если t укладывается в nt слов, q занимает n слов, a занимает m слов, 
+то r на шаге 2) укладывается в nt - n - m + 3 слов и не обязательно в меньшее
+число слов. Действительно, максимальное r' получается  при
+	t = B^nt - 1, q = B^{n - 1} + 1, a = B^{m - 1}
+и достигает величины
+	r' = B^{nt - n - m + 2}
+при n близких к nt.
+В самом деле, при таких n и 
+	r* = B^{nt - n - m + 2} - 1
+величина
+	qar* = B^nt - B^{n + m - 2} + B^{nt - n + 1} - B^{m - 1} < B^nt - 1 = t,
+т. е.
+	r* < ceil(t / qa).
 *******************************************************************************
 */
 
-bool_t priExtendPrime(word p[], size_t l, const word q[], size_t n,
-	size_t trials, size_t base_count, gen_i rng, void* rng_state, void* stack)
+bool_t priExtendPrime2(word p[], size_t l, const word q[], size_t n,
+	const word a[], size_t m, size_t trials, size_t base_count, gen_i rng, 
+	void* rng_state, void* stack)
 {
-	const size_t m = W_OF_B(l);
-	const size_t mo = O_OF_B(l);
+	const size_t np = W_OF_B(l);
+	const size_t npo = O_OF_B(l);
 	size_t i;
+	size_t nqa;
 	// переменные в stack
-	word* r;
-	word* t;
-	word* four;
-	word* mods;
-	word* mods1;
+	word* qa;		/* [n + m] */
+	word* t;		/* [np + 2] */
+	word* r;		/* [np - n - m + 3] */
+	word* four;		/* [np] */
+	word* mods;		/* base_count */
+	word* mods1;	/* base_count */
 	qr_o* qr;
 	// pre
-	ASSERT(wwIsDisjoint2(q, n, p, m));
+	ASSERT(wwIsDisjoint2(p, np, q, n));
+	ASSERT(wwIsValid(a, m));
 	ASSERT(zzIsOdd(q, n) && wwCmpW(q, n, 3) >= 0);
-	ASSERT(wwBitSize(q, n) + 1 <= l && l <= 2 * wwBitSize(q, n));
+	ASSERT(n > 0 && q[n - 1] != 0 && m > 0 && a[m - 1] != 0);
+	ASSERT(wwBitSize(q, n) + wwBitSize(a, m) <= l);
+	ASSERT(l <= 2 * wwBitSize(q, n));
 	ASSERT(base_count <= priBaseSize());
 	ASSERT(rng != 0);
-	// подкорректировать n
-	n = wwWordSize(q, n);
 	// раскладка stack
-	r = (word*)stack;
-	t = r + m - n + 1;
-	four = t + m + 1;
-	mods = four + m;
+	qa = (word*)stack;
+	t = qa + n + m;
+	r = t + np + 2;
+	four = r + np - n - m + 3;
+	mods = four + np;
 	mods1 = mods + base_count;
 	qr = (qr_o*)(mods1 + base_count);
-	stack = (octet*)qr + zmCreate_keep(mo);
+	stack = (octet*)qr + zmCreate_keep(npo);
 	// малое p?
 	if (l < B_PER_W)
 		// при необходимости уменьшить факторную базу
 		while (base_count > 0 && 
 			priBasePrime(base_count - 1) > WORD_BIT_POS(l - 1))
 			--base_count;
+	// qa <- q * a
+	zzMul(qa, q, n, a, m, stack); 
+	ASSERT(wwBitSize(qa, n + m) + 1 <= l);
+	nqa = wwWordSize(qa, n + m);
 	// попытки
 	while (trials == SIZE_MAX || trials--)
 	{
 		// t <-R [2^{l - 2}, 2^{l - 1})
-		rng(t, mo, rng_state);
-		wwFrom(t, t, mo);
-		wwTrimHi(t, m, l - 2);
+		rng(t, npo, rng_state);
+		wwFrom(t, t, npo);
+		wwTrimHi(t, np, l - 2);
 		wwSetBit(t, l - 2, 1);
-		// r <- t \div q
-		zzDiv(r, t, t, m, q, n, stack);
-		if (!wwIsZero(t, m))
-			VERIFY(zzAddW2(r, m - n + 1, 1) == 0);
-		// t <- q * r
-		zzMul(t, q, n, r, m - n + 1, stack);
-		if (wwBitSize(t, m) > l - 1)
+		// r <- ceil(t / qa)
+		zzDiv(r, t, t, np, qa, nqa, stack);
+		if (!wwIsZero(t, nqa))
+			r[np - nqa + 1] = zzAddW2(r, np - nqa + 1, 1);
+		// t <- qa * r
+		zzMul(t, qa, nqa, r, np - nqa + 2, stack);
+		if (wwBitSize(t, np + 2) > l - 1)
 			continue;
 		// p <- 2 * t + 1
-		wwCopy(p, t, m);
-		wwShHi(p, m, 1);
+		wwCopy(p, t, np);
+		wwShHi(p, np, 1);
 		++p[0];
-		ASSERT(wwBitSize(p, m) == l);
+		ASSERT(wwBitSize(p, np) == l);
 		// рассчитать вычеты p, 2q по малым модулям
-		priBaseMod(mods, p, m, base_count);
+		priBaseMod(mods, p, np, base_count);
 		priBaseMod(mods1, q, n, base_count);
 		for (i = 0; i < base_count; ++i)
 			if ((mods1[i] += mods1[i]) >= _base[i])
@@ -933,13 +958,13 @@ bool_t priExtendPrime(word p[], size_t l, const word q[], size_t n,
 			if (i == base_count)
 			{
 				// создать кольцо вычетов \mod p
-				wwTo(t, mo, p);
-				zmCreate(qr, (octet*)t, mo, stack);
+				wwTo(t, npo, p);
+				zmCreate(qr, (octet*)t, npo, stack);
 				// four <- 4 [в кольце qr]
 				qrAdd(four, qr->unity, qr->unity, qr);
 				qrAdd(four, four, four, qr);
 				// 4^r \mod p != 1?
-				qrPower(t, four, r, m - n + 1, qr, stack);
+				qrPower(t, four, r, np - n + 1, qr, stack);
 				if (qrCmp(t, qr->unity, qr) != 0)
 				{
 					// (4^r)^q \mod p == 1?
@@ -949,13 +974,13 @@ bool_t priExtendPrime(word p[], size_t l, const word q[], size_t n,
 				}
 			}
 			// p <- p + 2q, переполнение?
-			if (zzAddW2(p + n, m - n, zzAdd2(p, q, n)) ||
-				zzAddW2(p + n, m - n, zzAdd2(p, q, n)) ||
-				wwBitSize(p, m) > l)
+			if (zzAddW2(p + n, np - n, zzAdd2(p, q, n)) ||
+				zzAddW2(p + n, np - n, zzAdd2(p, q, n)) ||
+				wwBitSize(p, np) > l)
 				break;
 			// r <- r + 1, t <- t + q, пересчитать mods
-			zzAddW2(r, m - n + 1, 1);
-			zzAddW2(t + n, m - n, zzAdd2(t, q, n));
+			zzAddW2(r, np - n + 1, 1);
+			zzAddW2(t + n, np - n, zzAdd2(t, q, n));
 			for (i = 0; i < base_count; ++i)
 				if ((mods[i] += mods1[i]) >= _base[i])
 					mods[i] -= _base[i];
@@ -967,16 +992,38 @@ bool_t priExtendPrime(word p[], size_t l, const word q[], size_t n,
 	return FALSE;
 }
 
+size_t priExtendPrime2_deep(size_t l, size_t n, size_t m, size_t base_count)
+{
+	const size_t np = W_OF_B(l);
+	const size_t npo = O_OF_B(l);
+	const size_t qr_deep = zmCreate_deep(npo);
+	ASSERT(np >= n);
+	ASSERT(np + 3 >= n + m);
+	return O_OF_W(3 * np + 5 + 2 * base_count) + 
+		zmCreate_keep(npo) +
+		utilMax(5,
+			zzMul_deep(n, m),
+			zzDiv_deep(np, n + m),
+			zzMul_deep(n + m, np - n - m + 3),
+			qr_deep,
+			qrPower_deep(np, np, qr_deep));
+}
+
+bool_t priExtendPrime(word p[], size_t l, const word q[], size_t n,
+	size_t trials, size_t base_count, gen_i rng, void* rng_state, void* stack)
+{
+	word* a;
+	// pre
+	ASSERT(memIsValid(stack, O_OF_W(1)));
+	// a <- 1
+	a = (word*)stack;
+	a[0] = 1;
+	// расширить
+	return priExtendPrime2(p, l, q, n, a, 1, trials, base_count, 
+		rng, rng_state, a + 1);
+}
+
 size_t priExtendPrime_deep(size_t l, size_t n, size_t base_count)
 {
-	const size_t m = W_OF_B(l);
-	const size_t mo = O_OF_B(l);
-	const size_t qr_deep = zmCreate_deep(mo);
-	ASSERT(m >= n);
-	return O_OF_W(m - n + 1 + m + 1 + m + 2 * base_count) + zmCreate_keep(mo) +
-		utilMax(4,
-			zzDiv_deep(m, n),
-			zzMul_deep(n, m - n + 1),
-			qr_deep,
-			qrPower_deep(m, m, qr_deep));
+	return  O_OF_W(1) + priExtendPrime2_deep(l, n, 1, base_count);
 }
