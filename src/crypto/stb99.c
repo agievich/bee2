@@ -4,7 +4,7 @@
 \brief STB 1176.2-99: parameters generation
 \project bee2 [cryptographic library]
 \created 2023.08.01
-\version 2023.09.03
+\version 2023.09.04
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -499,22 +499,20 @@ static bool_t stb99IsOperableParams(const stb99_params* params)
 *******************************************************************************
 Генерация параметров
 
-Строится простое g0 битовой длины близкой снизу к l и простое q битовой 
-длины r. Затем выбираются псевдослучайное R так, чтобы битовая длина 
-	p = 2 * g0 * q + 1.
-Затем проверяется простота p и, если p оказывается составным, строится 
-новое q и так далее.
-
-Дополнительно строится вычет
-	a <- d^((p-1)/q),
-отличный от единицы группы Монтгомери mod p. Этот вычет имеет порядок q 
-в группе.
+Схема генерации:
+1. Построить простое g0, битовая длина которого близка снизу к l - r.
+2. Построить простое q битовой длины r.
+3. Выбрать псевдослучайное R так, чтобы битовая длина p = 2 * g0 * q * R + 1
+   равнялась l.
+4. Проверить простоту p и, если p оказывается составным, вернуться к шагу 2.
+5. В группе Монтгомери mod p выбрать вычет a <- d^((p-1)/q), отличный от
+   единицы. Этот вычет имеет порядок q в группе.
+6. Возвратить p, q, a.
 *******************************************************************************
 */
 
-err_t stb99GenParams(stb99_params* params, stb99_seed* seed, stb99_on_q_i on_q)
+err_t stb99GenParams(stb99_params* params, stb99_seed* seed)
 {
-	size_t num = 0;
 	size_t i;
 	size_t n;
 	size_t no;
@@ -530,7 +528,7 @@ err_t stb99GenParams(stb99_params* params, stb99_seed* seed, stb99_on_q_i on_q)
 	// состояние 
 	void* state;
 	octet* stb_state;
-	word* gi;			/* промежуточные простые при построении p */
+	word* gi;			/* промежуточные простые при построении g0 */
 	word* fi;			/* промежуточные простые при построении q */
 	word* g0;
 	word* p;
@@ -589,14 +587,16 @@ err_t stb99GenParams(stb99_params* params, stb99_seed* seed, stb99_on_q_i on_q)
 		return ERR_BAD_PARAMS;
 	// создать состояние
 	state = blobCreate(
-		prngSTB_keep() + O_OF_W(gw) + 
-		O_OF_W(n) +	zmMontCreate_keep(no) +
-		utilMax(6,
+		prngSTB_keep() + O_OF_W(gw) +
+		O_OF_W(W_OF_B(di[0]) + 2 * n) + zmMontCreate_keep(no) +
+		utilMax(7,
 			priNextPrimeW_deep(),
-			priExtendPrime_deep(params->l, n, (di[0] + 3) / 4),
-			priExtendPrime_deep(params->r, m, (ri[0] + 3) / 4),
-			priExtendPrime2_deep(params->l, n, m, (di[0] + 3) / 4),
-			zmMontCreate_deep(no), 
+			priExtendPrime_deep(params->l, W_OF_B(di[1]), (di[0] + 3) / 4),
+			priExtendPrime_deep(params->r, W_OF_B(ri[1]), (ri[0] + 3) / 4),
+			priExtendPrime2_deep(params->l, W_OF_B(di[0]), W_OF_B(ri[1]),
+			(params->l + 3) / 4),
+			zmMontCreate_deep(no),
+			zzDiv_deep(n, m),
 			qrPower_deep(n, n, zmMontCreate_deep(no))));
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
@@ -605,7 +605,8 @@ err_t stb99GenParams(stb99_params* params, stb99_seed* seed, stb99_on_q_i on_q)
 	fi = gi = (word*)(stb_state + prngSTB_keep());
 	g0 = gi + gw;
 	p = g0 + W_OF_B(di[0]);
-	qr = (qr_o*)(p + n);
+	a = p + n;
+	qr = (qr_o*)(a + n);
 	stack = (octet*)qr + zmMontCreate_keep(no);
 	// запустить генератор
 	prngSTBStart(stb_state, seed->zi);
@@ -692,17 +693,13 @@ err_t stb99GenParams(stb99_params* params, stb99_seed* seed, stb99_on_q_i on_q)
 					offset += W_OF_B(ri[i++]);
 					continue;
 				}
-				// не последнее простое?
-				if (i > 0)
-				{
-					// к следующему простому
-					offset -= W_OF_B(ri[--i]);
-					continue;
-				}
 			}
+			// последнее простое?
+			if (i == 0)
+				break;
+			// к следующему простому
+			offset -= W_OF_B(ri[--i]);
 		}
-		// обработать новое q = [W_OF_B(ri[0])]fi
-		on_q ? on_q(fi, W_OF_B(ri[0]), ++num) : 0;
 		// построить p
 		trials = 4 * di[0];
 		base_count = (di[0] + 3) / 4;
@@ -738,7 +735,7 @@ err_t stb99GenParams(stb99_params* params, stb99_seed* seed, stb99_on_q_i on_q)
 		for (i = 0; i < no && ++seed->d[i] == 0;);
 	}
 	// сохранить a
-	wwTo(params->q, mo, fi);
+	wwTo(params->a, no, a);
 	// все нормально
 	blobClose(state);
 	return ERR_OK;

@@ -4,7 +4,7 @@
 \brief Draft of RD_RB: key establishment protocols in finite fields
 \project bee2 [cryptographic library]
 \created 2014.07.01
-\version 2023.09.03
+\version 2023.09.04
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -464,8 +464,11 @@ static bool_t pfokIsOperableParams(const pfok_params* params)
 ------------------------------------------------------------------
 
 Проверка примитивности g:
-g^(q) \neq e => g^(q) == - e
-g^(2) \neq e => g == e или g == -e
+	ord g = p - 1 <=> g^(q) \neq e, g
+Proof:
+	ord g = 1 => g = e  => g^(q) = e
+	ord g = 2 => g = -e => g^(q) = g
+	ord g = q           => g^(q) = e
 *******************************************************************************
 */
 
@@ -514,11 +517,11 @@ err_t pfokGenParams(pfok_params* params, const pfok_seed* seed,
 	no = O_OF_B(params->l), n = W_OF_B(params->l);
 	// создать состояние
 	state = blobCreate(
-		prngSTB_keep() + O_OF_W(offset) + O_OF_B(li[i]) + 
-		O_OF_W(n) +	zmMontCreate_keep(no) +
+		prngSTB_keep() + O_OF_W(offset) + O_OF_B(li[i]) +
+		O_OF_W(n) + zmMontCreate_keep(no) +
 		utilMax(6,
 			priNextPrimeW_deep(),
-			priExtendPrime_deep(params->l, n, (li[0] + 3) / 4),
+			priExtendPrime_deep(params->l, W_OF_B(li[1]), (li[0] + 3) / 4),
 			priIsSieved_deep((li[0] + 3) / 4),
 			priIsSGPrime_deep(n),
 			zmMontCreate_deep(no), 
@@ -593,15 +596,18 @@ err_t pfokGenParams(pfok_params* params, const pfok_seed* seed,
 	zmMontCreate(qr, params->p, no, params->l + 2, stack);
 	// сгенерировать g
 	g = qi + W_OF_B(li[0]);
-	do
+	while (1)
 	{
+		// проверить g
+		if (qrFrom(g, params->g, qr, stack) &&
+			qrIsZero(g, qr) && qrIsUnity(g, qr) &&
+			(qrPower(p, g, qi, W_OF_B(li[0]), qr, stack), 1) &&
+			!qrIsUnity(p, qr) &&
+			qrCmp(p, g, qr) != 0)
+			break;
 		// g <- g + 1
 		for (i = 0; i < no && ++params->g[i] == 0;);
-		// p <- g^(q) [p == e или p == -e]
-		qrFrom(g, params->g, qr, stack);
-		qrPower(p, g, qi, W_OF_B(li[0]), qr, stack);
 	}
-	while (qrIsUnity(p, qr) || qrIsUnity(g, qr) || qrCmp(p, g, qr) == 0);
 	// все нормально
 	blobClose(state);
 	return ERR_OK;
@@ -613,6 +619,7 @@ err_t pfokValParams(const pfok_params* params)
 	// состояние 
 	void* state;
 	word* p;
+	word* q;
 	word* g;
 	qr_o* qr;
 	void* stack;
@@ -646,8 +653,8 @@ err_t pfokValParams(const pfok_params* params)
 		return ERR_BAD_PARAMS;
 	}
 	// q -- простое?
-	wwShLo(p, n, 1);
-	if (!priIsPrime(p, n, stack))
+	wwShLo(q = p, n, 1);
+	if (!priIsPrime(q, n, stack))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;
@@ -655,8 +662,13 @@ err_t pfokValParams(const pfok_params* params)
 	// построить кольцо Монтгомери
 	zmMontCreate(qr, params->p, no, params->l + 2, stack);
 	// проверить g
-	qrFrom(g, params->g, qr, stack);
-	qrPower(p, g, p, W_OF_B(params->l - 1), qr, stack);
+	if (!qrFrom(g, params->g, qr, stack) ||
+		qrIsZero(g, qr) || qrIsUnity(g, qr))
+	{
+		blobClose(state);
+		return ERR_BAD_PARAMS;
+	}
+	qrPower(p, g, q, W_OF_B(params->l - 1), qr, stack);
 	if (qrIsUnity(p, qr) || qrIsUnity(g, qr) || qrCmp(p, g, qr) == 0)
 	{
 		blobClose(state);

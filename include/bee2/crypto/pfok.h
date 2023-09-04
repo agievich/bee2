@@ -4,7 +4,7 @@
 \brief Draft of RD_RB: key establishment protocols based on finite fields
 \project bee2 [cryptographic library]
 \created 2014.06.30
-\version 2023.08.03
+\version 2023.09.04
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -49,7 +49,7 @@ extern "C" {
 \section pfok-params Долговременные параметры
 
 Структура pfok_params описывает долговременные параметры pfok. Содержание 
-полей структуры определено в пунктах 3, 5.1, 5.2. 
+полей структуры определено в разделах 3, 5.1, 5.2. 
 
 В структуре pfok_params параметр l определяет используемое число октетов 
 в массивах p, g: используется O_OF_B(l) октетов. Неиспользуемые октеты 
