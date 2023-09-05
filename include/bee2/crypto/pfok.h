@@ -4,7 +4,7 @@
 \brief Draft of RD_RB: key establishment protocols based on finite fields
 \project bee2 [cryptographic library]
 \created 2014.06.30
-\version 2023.09.04
+\version 2023.09.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************

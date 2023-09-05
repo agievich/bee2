@@ -1,10 +1,10 @@
 /*
 *******************************************************************************
 \file stb99.c
-\brief STB 1176.2-99: parameters generation
+\brief STB 1176.2-99: generation of parameters
 \project bee2 [cryptographic library]
 \created 2023.08.01
-\version 2023.09.04
+\version 2023.09.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -462,7 +462,7 @@ err_t stb99StdParams(stb99_params* params, stb99_seed* seed, const char* name)
 *******************************************************************************
 Работоспособные параметры?
 
-Не проверяется простота p и q и порядок a. Проверяется только то, что
+Не проверяется простота p и q и порядок a. Проверяется только то, что:
 1)	битовая длина p равняется l;
 2)	0 < a < p;
 3)	битовая длина q равняется r.
@@ -505,8 +505,8 @@ static bool_t stb99IsOperableParams(const stb99_params* params)
 3. Выбрать псевдослучайное R так, чтобы битовая длина p = 2 * g0 * q * R + 1
    равнялась l.
 4. Проверить простоту p и, если p оказывается составным, вернуться к шагу 2.
-5. В группе Монтгомери mod p выбрать вычет a <- d^((p-1)/q), отличный от
-   единицы. Этот вычет имеет порядок q в группе.
+5. В группе Монтгомери B_p выбрать вычет a <- d^((p-1)/q), отличный от единицы.
+   Этот вычет имеет порядок q в группе.
 6. Возвратить p, q, a.
 *******************************************************************************
 */
@@ -594,7 +594,7 @@ err_t stb99GenParams(stb99_params* params, stb99_seed* seed)
 			priExtendPrime_deep(params->l, W_OF_B(di[1]), (di[0] + 3) / 4),
 			priExtendPrime_deep(params->r, W_OF_B(ri[1]), (ri[0] + 3) / 4),
 			priExtendPrime2_deep(params->l, W_OF_B(di[0]), W_OF_B(ri[1]),
-			(params->l + 3) / 4),
+				(params->l + 3) / 4),
 			zmMontCreate_deep(no),
 			zzDiv_deep(n, m),
 			qrPower_deep(n, n, zmMontCreate_deep(no))));
@@ -725,7 +725,12 @@ err_t stb99GenParams(stb99_params* params, stb99_seed* seed)
 	while (1)
 	{
 		// загрузить d
-		qrFrom(d, seed->d, qr, stack);
+		if (!qrFrom(d, seed->d, qr, stack))
+		{
+			memSetZero(seed->d, no);
+			seed->d[0] = 1;
+			continue;
+		}
 		// a <- d^((p - 1)/2)
 		qrPower(a, d, p, n - m + 1, qr, stack);
 		// a != e?
@@ -743,10 +748,12 @@ err_t stb99GenParams(stb99_params* params, stb99_seed* seed)
 
 err_t stb99ValParams(const stb99_params* params)
 {
-	size_t no, n;
+	size_t n;
+	size_t no;
 	// состояние 
 	void* state;
 	word* p;
+	word* q;
 	word* a;
 	qr_o* qr;
 	void* stack;
@@ -757,7 +764,7 @@ err_t stb99ValParams(const stb99_params* params)
 	if (!stb99IsOperableParams(params))
 		return ERR_BAD_PARAMS;
 	// размерности
-	no = O_OF_B(params->l), n = W_OF_B(params->l);
+	n = W_OF_B(params->l), no = O_OF_B(params->l);
 	// создать состояние
 	state = blobCreate(
 		2 * O_OF_W(n) + zmMontCreate_keep(no) +  
@@ -780,7 +787,7 @@ err_t stb99ValParams(const stb99_params* params)
 		return ERR_BAD_PARAMS;
 	}
 	// q -- простое?
-	wwShLo(p, n, 1);
+	wwShLo(q = p, n, 1);
 	if (!priIsPrime(p, n, stack))
 	{
 		blobClose(state);
@@ -790,8 +797,8 @@ err_t stb99ValParams(const stb99_params* params)
 	zmMontCreate(qr, params->p, no, params->l + 2, stack);
 	// проверить a
 	qrFrom(a, params->a, qr, stack);
-	qrPower(p, a, p, W_OF_B(params->l - 1), qr, stack);
-	if (qrIsUnity(p, qr) || qrIsUnity(a, qr) || qrCmp(p, a, qr) == 0)
+	qrPower(p, a, q, W_OF_B(params->l - 1), qr, stack);
+	if (!qrIsUnity(p, qr))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;

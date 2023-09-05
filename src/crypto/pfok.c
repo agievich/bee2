@@ -4,7 +4,7 @@
 \brief Draft of RD_RB: key establishment protocols in finite fields
 \project bee2 [cryptographic library]
 \created 2014.07.01
-\version 2023.09.04
+\version 2023.09.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -412,7 +412,7 @@ err_t pfokStdParams(pfok_params* params, pfok_seed* seed, const char* name)
 *******************************************************************************
 Работоспособные параметры?
 
-Не проверяется простота p и q и примитивность g. Проверяется только то, что
+Не проверяется простота p и q и примитивность g. Проверяется только то, что:
 1)	битовая длина p равняется l;
 2)	p \equiv 3 \mod 4;
 3)	0 < g < p.
@@ -466,6 +466,7 @@ static bool_t pfokIsOperableParams(const pfok_params* params)
 Проверка примитивности g:
 	ord g = p - 1 <=> g^(q) \neq e, g
 Proof:
+	g = 0				=> g^(q) = g
 	ord g = 1 => g = e  => g^(q) = e
 	ord g = 2 => g = -e => g^(q) = g
 	ord g = q           => g^(q) = e
@@ -477,9 +478,13 @@ err_t pfokGenParams(pfok_params* params, const pfok_seed* seed,
 {
 	size_t num = 0;
 	size_t i;
-	size_t no, n;
-	size_t offset;
+	size_t n;
+	size_t no;
 	const u32* li;
+	size_t qw;			/* число слов для хранения qi */
+	size_t offset;
+	size_t trials;
+	size_t base_count;
 	// состояние 
 	void* state;
 	octet* stb_state;
@@ -505,19 +510,21 @@ err_t pfokGenParams(pfok_params* params, const pfok_seed* seed,
 	if (i == COUNT_OF(_ls))
 		return ERR_BAD_PARAMS;
 	params->l = _ls[i], params->r = _rs[i], params->n = 256;
-	for (i = 1, offset = W_OF_B(li[0]); li[i] > 32; ++i)
+	for (i = 1, qw = W_OF_B(li[0]); li[i] > 32; ++i)
 	{
 		if (li[i - 1] > 2 * li[i] || 
 			li[i] >= U32_MAX / 5 || 5 * li[i] + 16 >= 4 * li[i - 1])
 			return ERR_BAD_PARAMS;
-		offset += W_OF_B(li[i]);
+		qw += W_OF_B(li[i]);
 	}
 	ASSERT(li[i] > 16);
+	ASSERT(W_OF_B(li[i]) == 1);
+	++qw;
 	// размерности
-	no = O_OF_B(params->l), n = W_OF_B(params->l);
+	n = W_OF_B(params->l), no = O_OF_B(params->l);
 	// создать состояние
 	state = blobCreate(
-		prngSTB_keep() + O_OF_W(offset) + O_OF_B(li[i]) +
+		prngSTB_keep() + O_OF_W(qw) +
 		O_OF_W(n) + zmMontCreate_keep(no) +
 		utilMax(6,
 			priNextPrimeW_deep(),
@@ -531,12 +538,13 @@ err_t pfokGenParams(pfok_params* params, const pfok_seed* seed,
 	// раскладка состояния
 	stb_state = (octet*)state;
 	qi = (word*)(stb_state + prngSTB_keep());
-	p = qi + offset + W_OF_B(li[i]);
+	p = qi + qw;
 	qr = (qr_o*)(p + n);
 	stack = (octet*)qr + zmMontCreate_keep(no);
 	// запустить генератор
 	prngSTBStart(stb_state, seed->zi);
 	// основной цикл
+	offset = qw - 1;
 	while (1)
 	{
 		// первое (минимальное) простое?
@@ -552,34 +560,29 @@ err_t pfokGenParams(pfok_params* params, const pfok_seed* seed,
 			while (!priNextPrimeW(qi + offset, qi[offset], stack));
 			// к следующему простому
 			offset -= W_OF_B(li[--i]);
+			continue;
 		}
 		// обычное простое
-		else
+		trials = (i == 0) ? 4 * li[i] * li[i] : 4 * li[i];
+		base_count = (li[i] + 3) / 4;
+		// потенциальное отступление от Проекта, не влияющее на результат
+		if (base_count > priBaseSize())
+			base_count = priBaseSize();
+		// не удается построить новое простое?
+		if (!priExtendPrime(qi + offset, li[i], 
+				qi + offset + W_OF_B(li[i]), W_OF_B(li[i + 1]), 
+				trials, base_count, prngSTBStepR, stb_state, stack))
 		{
-			size_t trials = (i == 0) ? 4 * li[i] * li[i] : 4 * li[i];
-			size_t base_count = (li[i] + 3) / 4;
-			// потенциальное отступление от Проекта, не влияющее на результат
-			if (base_count > priBaseSize())
-				base_count = priBaseSize();
-			// не удается построить новое простое?
-			if (!priExtendPrime(qi + offset, li[i], 
-					qi + offset + W_OF_B(li[i]), W_OF_B(li[i + 1]), 
-					trials, base_count, prngSTBStepR, stb_state, stack))
-			{
-				// к предыдущему простому
-				offset += W_OF_B(li[i++]);
-				continue;
-			}
-			// не последнее простое?
-			if (i > 0)
-			{
-				// к следующему простому
-				offset -= W_OF_B(li[--i]);
-				continue;
-			}
+			// к предыдущему простому
+			offset += W_OF_B(li[i++]);
+			continue;
+		}
+		// последнее простое?
+		if (i == 0)
+		{
 			// обработать нового кандидата
 			on_q ? on_q(qi, W_OF_B(li[0]), ++num) : 0;
-			// p <- 2q_0 + 1
+			// p <- 2 * q + 1
 			ASSERT(W_OF_B(li[0]) == n);
 			wwCopy(p, qi, n);
 			wwShHi(p, n, 1);
@@ -589,6 +592,9 @@ err_t pfokGenParams(pfok_params* params, const pfok_seed* seed,
 				priIsSGPrime(qi, n, stack))
 				break;
 		}
+		// нет, к следующему простому
+		else
+			offset -= W_OF_B(li[--i]);
 	}
 	// сохранить p
 	wwTo(params->p, no, p);
@@ -596,18 +602,16 @@ err_t pfokGenParams(pfok_params* params, const pfok_seed* seed,
 	zmMontCreate(qr, params->p, no, params->l + 2, stack);
 	// сгенерировать g
 	g = qi + W_OF_B(li[0]);
-	while (1)
+	ASSERT(W_OF_B(li[0]) + n <= qw);
+	do
 	{
-		// проверить g
-		if (qrFrom(g, params->g, qr, stack) &&
-			qrIsZero(g, qr) && qrIsUnity(g, qr) &&
-			(qrPower(p, g, qi, W_OF_B(li[0]), qr, stack), 1) &&
-			!qrIsUnity(p, qr) &&
-			qrCmp(p, g, qr) != 0)
-			break;
 		// g <- g + 1
 		for (i = 0; i < no && ++params->g[i] == 0;);
 	}
+	while (!qrFrom(g, params->g, qr, stack) ||
+		(qrPower(p, g, qi, W_OF_B(li[0]), qr, stack), 0) ||
+		qrIsUnity(p, qr) || 
+		qrCmp(p, g, qr) == 0);
 	// все нормально
 	blobClose(state);
 	return ERR_OK;
@@ -663,13 +667,9 @@ err_t pfokValParams(const pfok_params* params)
 	zmMontCreate(qr, params->p, no, params->l + 2, stack);
 	// проверить g
 	if (!qrFrom(g, params->g, qr, stack) ||
-		qrIsZero(g, qr) || qrIsUnity(g, qr))
-	{
-		blobClose(state);
-		return ERR_BAD_PARAMS;
-	}
-	qrPower(p, g, q, W_OF_B(params->l - 1), qr, stack);
-	if (qrIsUnity(p, qr) || qrIsUnity(g, qr) || qrCmp(p, g, qr) == 0)
+		(qrPower(p, g, q, W_OF_B(params->l - 1), qr, stack), 0) ||
+		qrIsUnity(p, qr) || 
+		qrCmp(p, g, qr) == 0)
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;

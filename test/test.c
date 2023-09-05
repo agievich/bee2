@@ -4,7 +4,7 @@
 \brief Bee2 testing
 \project bee2/test
 \created 2014.04.02
-\version 2023.06.16
+\version 2023.09.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -112,6 +112,7 @@ extern bool_t dstuTest();
 extern bool_t g12sTest();
 extern bool_t pfokTest();
 extern bool_t pfokTestStdParams();
+extern bool_t stb99Test();
 
 int testCrypto()
 {
@@ -133,6 +134,8 @@ int testCrypto()
 	printf("dstuTest: %s\n", (code = dstuTest()) ? "OK" : "Err"), ret |= !code;
 	printf("g12sTest: %s\n", (code = g12sTest()) ? "OK" : "Err"), ret |= !code;
 	printf("pfokTest: %s\n", (code = pfokTest()) ? "OK" : "Err"), ret |= !code;
+	printf("stb99Test: %s\n", (code = stb99Test()) ? "OK" : "Err"), 
+		ret |= !code;
 	return ret;
 }
 

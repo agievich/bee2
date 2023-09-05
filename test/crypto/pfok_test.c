@@ -4,7 +4,7 @@
 \brief Tests for Draft of RD_RB (pfok)
 \project bee2/test
 \created 2014.07.08
-\version 2022.06.07
+\version 2023.09.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -56,8 +56,8 @@ bool_t pfokTestTestParams()
 	if (pfokStdParams(params, seed, "test") != ERR_OK ||
 		pfokGenParams(params1, seed, _on_q_silent) != ERR_OK ||
 		pfokValParams(params1) != ERR_OK ||
-		!memEq(params->p, params1->p, O_OF_B(params->l)) ||
-		params->l != params1->l || params->r != params1->r)
+		params->l != params1->l || params->r != params1->r ||
+		!memEq(params->p, params1->p, O_OF_B(params->l)))
 		return FALSE;
 	// все нормально
 	return TRUE;
@@ -72,20 +72,20 @@ bool_t pfokTestStdParams()
 	if (pfokStdParams(params, seed, "1.2.112.0.2.0.1176.2.3.3.2") != ERR_OK ||
 		pfokValParams(params) != ERR_OK ||
 		pfokGenParams(params1, seed, _on_q) != ERR_OK ||
-		!memEq(params->p, params1->p, O_OF_B(params->l)) ||
-		params->l != params1->l || params->r != params1->r)
+		params->l != params1->l || params->r != params1->r ||
+		!memEq(params->p, params1->p, O_OF_B(params->l)))
 		return FALSE;
 	// тест PFOK.GENP.3
 	if (pfokStdParams(params, seed, "1.2.112.0.2.0.1176.2.3.6.2") != ERR_OK ||
 		pfokGenParams(params1, seed, _on_q) != ERR_OK ||
-		!memEq(params->p, params1->p, O_OF_B(params->l)) ||
-		params->l != params1->l || params->r != params1->r)
+		params->l != params1->l || params->r != params1->r ||
+		!memEq(params->p, params1->p, O_OF_B(params->l)))
 		return FALSE;
 	// тест PFOK.GENP.4
 	if (pfokStdParams(params, seed, "1.2.112.0.2.0.1176.2.3.10.2") != ERR_OK ||
 		pfokGenParams(params1, seed, _on_q) != ERR_OK ||
-		!memEq(params->p, params1->p, O_OF_B(params->l)) ||
-		params->l != params1->l || params->r != params1->r)
+		params->l != params1->l || params->r != params1->r ||
+		!memEq(params->p, params1->p, O_OF_B(params->l)))
 		return FALSE;
 	// все нормально
 	return TRUE;
