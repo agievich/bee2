@@ -104,7 +104,7 @@ bool_t pfokTest()
 	if (sizeof(combo_state) < prngCOMBO_keep())
 		return FALSE;
 	// тест PFOK.GENP.1
-	if (!pfokTestTestParams())
+	if (!pfokTestStdParams())
 		return FALSE;
 	// тест PFOK.GENG.1
 	if (pfokStdParams(params, 0, "test") != ERR_OK ||

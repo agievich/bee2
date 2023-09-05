@@ -4,7 +4,7 @@
 \brief Prime numbers
 \project bee2 [cryptographic library]
 \created 2012.08.13
-\version 2023.09.03
+\version 2023.09.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -853,11 +853,11 @@ size_t priNextPrime_deep(size_t n, size_t base_count)
 3) p <- 2qr + 1;
 4) если bitlen(p) != l, то вернуться к шагу 1.
 
-Если требуется, чтобы число r в представлении p = 2qr + 1 делилось на число a, 
-то построить p можно следующим образом:
+Если требуется, чтобы p - 1 кроме q делилось на число a, то построить p можно
+следующим образом: 
 1) t <-R {2^{l - 2},..., 2^{l - 1} - 1};
-2) r' <- ceil(t / qa);
-3) p <- 2qar' + 1;
+2) r <- ceil(t / qa);
+3) p <- 2qar + 1;
 4) если bitlen(p) != l, то вернуться к шагу 1.
 
 \remark Если t укладывается в nt слов, q занимает n слов, a занимает m слов, 
@@ -963,24 +963,25 @@ bool_t priExtendPrime2(word p[], size_t l, const word q[], size_t n,
 				// four <- 4 [в кольце qr]
 				qrAdd(four, qr->unity, qr->unity, qr);
 				qrAdd(four, four, four, qr);
-				// 4^r \mod p != 1?
-				qrPower(t, four, r, np - n + 1, qr, stack);
+				// (4^r)^a \mod p != 1?
+				qrPower(t, four, r, np - nqa + 1, qr, stack);
+				qrPower(t, t, a, m, qr, stack);
 				if (qrCmp(t, qr->unity, qr) != 0)
 				{
-					// (4^r)^q \mod p == 1?
+					// ((4^r)^a)^q \mod p == 1?
 					qrPower(t, t, q, n, qr, stack);
 					if (qrCmp(t, qr->unity, qr) == 0)
 						return TRUE;
 				}
 			}
-			// p <- p + 2q, переполнение?
-			if (zzAddW2(p + n, np - n, zzAdd2(p, q, n)) ||
-				zzAddW2(p + n, np - n, zzAdd2(p, q, n)) ||
+			// p <- p + 2 * qa, переполнение?
+			if (zzAddW2(p + nqa, np - nqa, zzAdd2(p, qa, nqa)) ||
+				zzAddW2(p + nqa, np - nqa, zzAdd2(p, qa, nqa)) ||
 				wwBitSize(p, np) > l)
 				break;
-			// r <- r + 1, t <- t + q, пересчитать mods
-			zzAddW2(r, np - n + 1, 1);
-			zzAddW2(t + n, np - n, zzAdd2(t, q, n));
+			// r <- r + 1, без переполнения
+			VERIFY(zzAddW2(r, np - nqa + 1, 1) == 0);
+			// пересчитать mods
 			for (i = 0; i < base_count; ++i)
 				if ((mods[i] += mods1[i]) >= _base[i])
 					mods[i] -= _base[i];

@@ -4,7 +4,7 @@
 \brief Primes
 \project bee2 [cryptographic library]
 \created 2012.08.13
-\version 2023.09.03
+\version 2023.09.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -292,11 +292,10 @@ size_t priExtendPrime_deep(size_t l, size_t n, size_t base_count);
 
 /*!	\brief Расширение простого с условием делимости
 
-	По базовому нечетному простому [n]q и неотрицательному [m]a 
-	строится расширенное простое [W_OF_B(l)]p битовой длины l, которое 
-	имеет вид 2 * q * r + 1, где r делится на a.
-	Число r строится с помощью генератора rng с состоянием rng_state.
-	Простота p проверяется так же, как в функции priExtendPrime().
+	По базовому нечетному простому [n]q и неотрицательному [m]a строится
+	расширенное простое [W_OF_B(l)]p битовой длины l, которое имеет вид
+	2 * q * a * r + 1. Число r строится с помощью генератора rng с состоянием
+	rng_state. Простота p проверяется так же, как в функции priExtendPrime().
 	Используется base_count простых из факторной базы, используется не более 
 	trials кандидатов p.
 	\pre Буфер p не пересекается с буфером q.
@@ -309,7 +308,7 @@ size_t priExtendPrime_deep(size_t l, size_t n, size_t base_count);
 	\return TRUE, если искомое простое найдено, и FALSE в противном случае.
 	\remark При trials == SIZE_MAX проверяются все возможные кандидаты.
 	\remark Для применения теоремы Демитко требуется выполнение условия 
-	2 * r < 4 * q + 1. Ограничение l <= 2 * wwBitSize(q, n) гарантирует
+	2 * a * r < 4 * q + 1. Ограничение l <= 2 * wwBitSize(q, n) гарантирует
 	выполнение этого условия.
 	\deep{stack} priExtendPrime2_deep(l, n, m, base_count).
 */

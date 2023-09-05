@@ -346,8 +346,10 @@ err_t pfokStdParams(pfok_params* params, pfok_seed* seed, const char* name)
 	if (!memIsValid(params, sizeof(pfok_params)) ||
 		!memIsNullOrValid(seed, sizeof(pfok_seed)))
 		return ERR_BAD_INPUT;
-	// подготовить params
+	// подготовить params и seed
 	memSetZero(params, sizeof(pfok_params));
+	if (seed)
+		memSetZero(seed, sizeof(pfok_seed));
 	// найти params
 	if (strEq(name, _test_params_name))
 	{
@@ -600,18 +602,22 @@ err_t pfokGenParams(pfok_params* params, const pfok_seed* seed,
 	wwTo(params->p, no, p);
 	// построить кольцо Монтгомери
 	zmMontCreate(qr, params->p, no, params->l + 2, stack);
-	// сгенерировать g
+	// загрузить параметр g
+	if (memCmpRev(params->g, params->p, no) >= 0)
+		memSetZero(params->g, no);
 	g = qi + W_OF_B(li[0]);
 	ASSERT(W_OF_B(li[0]) + n <= qw);
+	VERIFY(qrFrom(g, params->g, qr, stack));
+	// найти подходящее g
 	do
 	{
 		// g <- g + 1
-		for (i = 0; i < no && ++params->g[i] == 0;);
+		zzAddWMod(g, g, 1, qr->mod, n);
 	}
-	while (!qrFrom(g, params->g, qr, stack) ||
-		(qrPower(p, g, qi, W_OF_B(li[0]), qr, stack), 0) ||
-		qrIsUnity(p, qr) || 
-		qrCmp(p, g, qr) == 0);
+	while ((qrPower(p, g, qi, W_OF_B(li[0]), qr, stack), 0) ||
+		qrIsUnity(p, qr) || qrCmp(p, g, qr) == 0);
+	// сохранить g
+	wwTo(params->g, no, g);
 	// все нормально
 	blobClose(state);
 	return ERR_OK;
