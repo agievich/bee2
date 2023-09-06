@@ -119,8 +119,6 @@ int testCrypto()
 	bool_t code;
 	int ret = 0;
 
-	printf("pfokTest: %s\n", (code = pfokTest()) ? "OK" : "Err"), ret |= !code;
-
 	printf("stb99Test: %s\n", (code = stb99Test()) ? "OK" : "Err"),
 		ret |= !code;
 

@@ -4,7 +4,7 @@
 \brief STB 1176.2-99: generation of parameters
 \project bee2 [cryptographic library]
 \created 2023.08.01
-\version 2023.09.05
+\version 2023.09.06
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -623,7 +623,8 @@ err_t stb99GenParams(stb99_params* params, stb99_seed* seed)
 				wwFrom(gi + offset, gi + offset, O_OF_B(di[i]));
 				wwTrimHi(gi + offset, 1, di[i] - 1);
 				wwSetBit(gi + offset, di[i] - 1, 1);
-			} while (!priNextPrimeW(gi + offset, gi[offset], stack));
+			}
+			while (!priNextPrimeW(gi + offset, gi[offset], stack));
 		}
 		// обычное gi
 		else
@@ -668,10 +669,8 @@ err_t stb99GenParams(stb99_params* params, stb99_seed* seed)
 					wwFrom(fi + offset, fi + offset, O_OF_B(ri[i]));
 					wwTrimHi(fi + offset, 1, ri[i] - 1);
 					wwSetBit(fi + offset, ri[i] - 1, 1);
-				} while (!priNextPrimeW(fi + offset, fi[offset], stack));
-				// к следующему простому
-				offset -= W_OF_B(di[--i]);
-				continue;
+				}
+				while (!priNextPrimeW(fi + offset, fi[offset], stack));
 			}
 			// обычное fi
 			else
@@ -748,6 +747,8 @@ err_t stb99ValParams(const stb99_params* params)
 {
 	size_t n;
 	size_t no;
+	size_t m;
+	size_t mo;
 	// состояние 
 	void* state;
 	word* p;
@@ -763,18 +764,21 @@ err_t stb99ValParams(const stb99_params* params)
 		return ERR_BAD_PARAMS;
 	// размерности
 	n = W_OF_B(params->l), no = O_OF_B(params->l);
+	m = W_OF_B(params->r), mo = O_OF_B(params->r);
 	// создать состояние
 	state = blobCreate(
-		2 * O_OF_W(n) + zmMontCreate_keep(no) +  
-		utilMax(3,
+		O_OF_W(2 * n + m) + zmMontCreate_keep(no) +  
+		utilMax(4,
 			priIsPrime_deep(n),
+			zzMod_deep(n, m),
 			zmMontCreate_deep(no),
 			qrPower_deep(n, n, zmMontCreate_deep(no))));
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// раскладка состояния
 	p = (word*)state;
-	a = p + n;
+	q = p + n;
+	a = q + m;
 	qr = (qr_o*)(a + n);
 	stack = (octet*)qr + zmMontCreate_keep(no);
 	// p -- простое?
@@ -785,8 +789,16 @@ err_t stb99ValParams(const stb99_params* params)
 		return ERR_BAD_PARAMS;
 	}
 	// q -- простое?
-	wwShLo(q = p, n, 1);
-	if (!priIsPrime(p, n, stack))
+	wwFrom(q, params->q, mo);
+	if (!priIsPrime(q, m, stack))
+	{
+		blobClose(state);
+		return ERR_BAD_PARAMS;
+	}
+	// q |	p - 1?
+	zzSubW2(p, n, 1);
+	zzMod(p, p, n, q, m, stack);
+	if (!wwIsZero(p, m))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;
@@ -795,7 +807,7 @@ err_t stb99ValParams(const stb99_params* params)
 	zmMontCreate(qr, params->p, no, params->l + 2, stack);
 	// проверить a
 	qrFrom(a, params->a, qr, stack);
-	qrPower(p, a, q, W_OF_B(params->l - 1), qr, stack);
+	qrPower(p, a, q, W_OF_B(params->r), qr, stack);
 	if (!qrIsUnity(p, qr))
 	{
 		blobClose(state);
