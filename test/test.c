@@ -4,7 +4,7 @@
 \brief Bee2 testing
 \project bee2/test
 \created 2014.04.02
-\version 2023.09.05
+\version 2023.09.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -118,10 +118,6 @@ int testCrypto()
 {
 	bool_t code;
 	int ret = 0;
-
-	printf("stb99Test: %s\n", (code = stb99Test()) ? "OK" : "Err"),
-		ret |= !code;
-
 	printf("beltTest: %s\n", (code = beltTest()) ? "OK" : "Err"), ret |= !code;
 	printf("bashTest: %s\n", (code = bashTest()) ? "OK" : "Err"), ret |= !code;
 	code = beltBench(), ret |= !code;
@@ -138,6 +134,8 @@ int testCrypto()
 	printf("dstuTest: %s\n", (code = dstuTest()) ? "OK" : "Err"), ret |= !code;
 	printf("g12sTest: %s\n", (code = g12sTest()) ? "OK" : "Err"), ret |= !code;
 	printf("pfokTest: %s\n", (code = pfokTest()) ? "OK" : "Err"), ret |= !code;
+	printf("stb99Test: %s\n", (code = stb99Test()) ? "OK" : "Err"),
+		ret |= !code;
 	return ret;
 }
 

@@ -4,7 +4,7 @@
 \brief Draft of RD_RB: key establishment protocols in finite fields
 \project bee2 [cryptographic library]
 \created 2014.07.01
-\version 2023.09.05
+\version 2023.09.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -480,8 +480,7 @@ err_t pfokGenParams(pfok_params* params, const pfok_seed* seed,
 {
 	size_t num = 0;
 	size_t i;
-	size_t n;
-	size_t no;
+	size_t n, no;
 	const u32* li;
 	size_t qw;			/* число слов для хранения qi */
 	size_t offset;
@@ -582,7 +581,7 @@ err_t pfokGenParams(pfok_params* params, const pfok_seed* seed,
 		// последнее простое?
 		if (i == 0)
 		{
-			// обработать нового кандидата
+			// обработать новое q
 			on_q ? on_q(qi, W_OF_B(li[0]), ++num) : 0;
 			// p <- 2 * q + 1
 			ASSERT(W_OF_B(li[0]) == n);
@@ -625,7 +624,7 @@ err_t pfokGenParams(pfok_params* params, const pfok_seed* seed,
 
 err_t pfokValParams(const pfok_params* params)
 {
-	size_t no, n;
+	size_t n, no;
 	// состояние 
 	void* state;
 	word* p;
@@ -694,8 +693,8 @@ err_t pfokValParams(const pfok_params* params)
 err_t pfokGenKeypair(octet privkey[], octet pubkey[], 
 	const pfok_params* params, gen_i rng, void* rng_state)
 {
-	size_t no, n;
-	size_t mo, m;
+	size_t n, no;
+	size_t m, mo;
 	// состояние
 	void* state;
 	word* x;				/* [m] личный ключ */
@@ -709,8 +708,8 @@ err_t pfokGenKeypair(octet privkey[], octet pubkey[],
 	if (!pfokIsOperableParams(params))
 		return ERR_BAD_PARAMS;
 	// размерности
-	no = O_OF_B(params->l), n = W_OF_B(params->l);
-	mo = O_OF_B(params->r), m = W_OF_B(params->r);
+	n = W_OF_B(params->l), no = O_OF_B(params->l);
+	m = W_OF_B(params->r), mo = O_OF_B(params->r);
 	// проверить остальные входные данные
 	if (!memIsValid(privkey, mo) || !memIsValid(pubkey, no) || rng == 0)
 		return ERR_BAD_INPUT;
@@ -768,8 +767,8 @@ err_t pfokValPubkey(const pfok_params* params, const octet pubkey[])
 err_t pfokCalcPubkey(octet pubkey[], const pfok_params* params, 
 	const octet privkey[])
 {
-	size_t no, n;
-	size_t mo, m;
+	size_t n, no;
+	size_t m, mo;
 	// состояние
 	void* state;
 	word* x;				/* [m] личный ключ */
@@ -783,8 +782,8 @@ err_t pfokCalcPubkey(octet pubkey[], const pfok_params* params,
 	if (!pfokIsOperableParams(params))
 		return ERR_BAD_PARAMS;
 	// размерности
-	no = O_OF_B(params->l), n = W_OF_B(params->l);
-	mo = O_OF_B(params->r), m = W_OF_B(params->r);
+	n = W_OF_B(params->l), no = O_OF_B(params->l);
+	m = W_OF_B(params->r), mo = O_OF_B(params->r);
 	// проверить остальные входные данные
 	if (!memIsValid(privkey, mo) || !memIsValid(pubkey, no))
 		return ERR_BAD_INPUT;
@@ -829,8 +828,8 @@ err_t pfokCalcPubkey(octet pubkey[], const pfok_params* params,
 err_t pfokDH(octet sharekey[], const pfok_params* params, 
 	const octet privkey[], const octet pubkey[])
 {
-	size_t no, n;
-	size_t mo, m;
+	size_t n, no;
+	size_t m, mo;
 	// состояние
 	void* state;
 	word* x;				/* [m] личный ключ */
@@ -844,8 +843,8 @@ err_t pfokDH(octet sharekey[], const pfok_params* params,
 	if (!pfokIsOperableParams(params))
 		return ERR_BAD_PARAMS;
 	// размерности
-	no = O_OF_B(params->l), n = W_OF_B(params->l);
-	mo = O_OF_B(params->r), m = W_OF_B(params->r);
+	n = W_OF_B(params->l), no = O_OF_B(params->l);
+	m = W_OF_B(params->r), mo = O_OF_B(params->r);
 	// проверить остальные входные данные
 	if (!memIsValid(privkey, mo) || 
 		!memIsValid(pubkey, no) ||
@@ -895,8 +894,8 @@ err_t pfokMTI(octet sharekey[], const pfok_params* params,
 	const octet privkey[], const octet privkey1[], 
 	const octet pubkey[], const octet pubkey1[])
 {
-	size_t no, n;
-	size_t mo, m;
+	size_t n, no;
+	size_t m, mo;
 	// состояние
 	void* state;
 	word* x;				/* [m] личный ключ */
@@ -912,8 +911,8 @@ err_t pfokMTI(octet sharekey[], const pfok_params* params,
 	if (!pfokIsOperableParams(params))
 		return ERR_BAD_PARAMS;
 	// размерности
-	no = O_OF_B(params->l), n = W_OF_B(params->l);
-	mo = O_OF_B(params->r), m = W_OF_B(params->r);
+	n = W_OF_B(params->l), no = O_OF_B(params->l);
+	m = W_OF_B(params->r), mo = O_OF_B(params->r);
 	// проверить остальные входные данные
 	if (!memIsValid(privkey, mo) || 
 		!memIsValid(privkey1, mo) || 

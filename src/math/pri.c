@@ -4,7 +4,7 @@
 \brief Prime numbers
 \project bee2 [cryptographic library]
 \created 2012.08.13
-\version 2023.09.05
+\version 2023.09.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -930,8 +930,7 @@ bool_t priExtendPrime2(word p[], size_t l, const word q[], size_t n,
 		wwSetBit(t, l - 2, 1);
 		// r <- ceil(t / qa)
 		zzDiv(r, t, t, np, qa, nqa, stack);
-		if (!wwIsZero(t, nqa))
-			r[np - nqa + 1] = zzAddW2(r, np - nqa + 1, 1);
+		r[np - nqa + 1] = wwIsZero(t, nqa) ? 0 : zzAddW2(r, np - nqa + 1, 1);
 		// t <- qa * r
 		zzMul(t, qa, nqa, r, np - nqa + 2, stack);
 		if (wwBitSize(t, np + 2) > l - 1)
@@ -941,9 +940,9 @@ bool_t priExtendPrime2(word p[], size_t l, const word q[], size_t n,
 		wwShHi(p, np, 1);
 		++p[0];
 		ASSERT(wwBitSize(p, np) == l);
-		// рассчитать вычеты p, 2q по малым модулям
+		// рассчитать вычеты p, 2qa по малым модулям
 		priBaseMod(mods, p, np, base_count);
-		priBaseMod(mods1, q, n, base_count);
+		priBaseMod(mods1, qa, nqa, base_count);
 		for (i = 0; i < base_count; ++i)
 			if ((mods1[i] += mods1[i]) >= _base[i])
 				mods1[i] -= _base[i];
