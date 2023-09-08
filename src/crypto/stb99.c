@@ -4,7 +4,7 @@
 \brief STB 1176.2-99: generation of parameters
 \project bee2 [cryptographic library]
 \created 2023.08.01
-\version 2023.09.07
+\version 2023.09.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -15,7 +15,6 @@
 #include "bee2/core/mem.h"
 #include "bee2/core/prng.h"
 #include "bee2/core/str.h"
-#include "bee2/core/u32.h"
 #include "bee2/core/util.h"
 #include "bee2/crypto/stb99.h"
 #include "bee2/math/pri.h"
@@ -44,12 +43,12 @@ priNextPrimeVal(), которая находит гарантированно п
 *******************************************************************************
 */
 
-static u32 const _ls[] = 
+static size_t const _ls[] = 
 {
 	638, 766, 1022, 1118, 1310, 1534, 1790, 2046, 2334, 2462,
 };
 
-static u32 const _rs[] = 
+static size_t const _rs[] = 
 {
 	143, 154, 175, 182, 195, 208, 222, 235, 249, 257, 
 };
@@ -62,9 +61,9 @@ static u32 const _rs[] =
 
 static const char _test_params_name[] = "test";
 
-static const u32 _test_params_l = 638;
+static const size_t _test_params_l = 638;
 
-static const u32 _test_params_r = 143;
+static const size_t _test_params_r = 143;
 
 static const octet _test_params_p[] = {
 	0xD7, 0x7E, 0xB2, 0xB7, 0x32, 0x05, 0x93, 0xED,
@@ -103,11 +102,11 @@ static const u16 _test_params_zi[] = {
 	18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
 };
 
-static const u32 _test_params_di[] = {
+static const size_t _test_params_di[] = {
 	320, 161, 81, 41, 21,
 };
 
-static const u32 _test_params_ri[] = {
+static const size_t _test_params_ri[] = {
 	143, 72, 37, 19,
 };
 
@@ -136,9 +135,9 @@ static const octet _bds_params_d[] = {
 
 static const char _bds_params3_name[] = "1.2.112.0.2.0.1176.2.3.3.1";
 
-static const u32 _bds_params3_l = 1022;
+static const size_t _bds_params3_l = 1022;
 
-static const u32 _bds_params3_r = 175;
+static const size_t _bds_params3_r = 175;
 
 static const octet _bds_params3_p[] = {
 	0xE5, 0x91, 0xB1, 0x0E, 0x48, 0x70, 0x26, 0xBC,
@@ -184,11 +183,11 @@ static const octet _bds_params3_a[] = {
 	0xE2, 0xAB, 0xD2, 0xB9, 0x81, 0xF4, 0xA7, 0x0C,
 };
 
-static const u32 _bds_params3_di[] = {
+static const size_t _bds_params3_di[] = {
 	512, 257, 129, 65, 33, 17,
 };
 
-static const u32 _bds_params3_ri[] = {
+static const size_t _bds_params3_ri[] = {
 	175, 88, 45, 23,
 };
 
@@ -196,9 +195,9 @@ static const u32 _bds_params3_ri[] = {
 
 static const char _bds_params6_name[] = "1.2.112.0.2.0.1176.2.3.6.1";
 
-static const u32 _bds_params6_l = 1534;
+static const size_t _bds_params6_l = 1534;
 
-static const u32 _bds_params6_r = 208;
+static const size_t _bds_params6_r = 208;
 
 static const octet _bds_params6_p[] = {
 	0x53, 0x34, 0x95, 0x5E, 0xE5, 0xC6, 0xEB, 0x5B,
@@ -261,11 +260,11 @@ static const octet _bds_params6_a[] = {
 	0x8D, 0x33, 0xBD, 0xC1, 0x4B, 0xA5, 0x7C, 0x01,
 };
 
-static const u32 _bds_params6_di[] = {
+static const size_t _bds_params6_di[] = {
 	768, 385, 193, 97, 49, 25,
 };
 
-static const u32 _bds_params6_ri[] = {
+static const size_t _bds_params6_ri[] = {
 	208, 105, 53, 27,
 };
 
@@ -273,9 +272,9 @@ static const u32 _bds_params6_ri[] = {
 
 static const char _bds_params10_name[] = "1.2.112.0.2.0.1176.2.3.10.1";
 
-static const u32 _bds_params10_l = 2462;
+static const size_t _bds_params10_l = 2462;
 
-static const u32 _bds_params10_r = 257;
+static const size_t _bds_params10_r = 257;
 
 static const octet _bds_params10_p[] = {
 	0x95, 0x1D, 0x9B, 0x6F, 0x5F, 0x28, 0xF2, 0xF1, 
@@ -369,11 +368,11 @@ static const octet _bds_params10_a[] = {
 	0x04, 0x18, 0x92, 0x1E,
 };
 
-static const u32 _bds_params10_di[] = {
+static const size_t _bds_params10_di[] = {
 	1232, 617, 309, 155, 78, 40, 21,
 };
 
-static const u32 _bds_params10_ri[] = {
+static const size_t _bds_params10_ri[] = {
 	257, 129, 65, 33, 17,
 };
 
@@ -400,12 +399,13 @@ err_t stb99StdParams(stb99_params* params, stb99_seed* seed, const char* name)
 		memCopy(params->p, _test_params_p, sizeof(_test_params_p));
 		memCopy(params->q, _test_params_q, sizeof(_test_params_q));
 		memCopy(params->a, _test_params_a, sizeof(_test_params_a));
+		memCopy(params->d, _test_params_d, sizeof(_test_params_d));
 		if (seed)
 		{
+			seed->l = _test_params_l;
 			memCopy(seed->zi, _test_params_zi, sizeof(_test_params_zi));
 			memCopy(seed->di, _test_params_di, sizeof(_test_params_di));
 			memCopy(seed->ri, _test_params_ri, sizeof(_test_params_ri));
-			memCopy(seed->d, _test_params_d, sizeof(_test_params_d));
 		}
 		return ERR_OK;
 	}
@@ -416,12 +416,13 @@ err_t stb99StdParams(stb99_params* params, stb99_seed* seed, const char* name)
 		memCopy(params->p, _bds_params3_p, sizeof(_bds_params3_p));
 		memCopy(params->q, _bds_params3_q, sizeof(_bds_params3_q));
 		memCopy(params->a, _bds_params3_a, sizeof(_bds_params3_a));
+		memCopy(params->d, _bds_params_d, sizeof(_bds_params_d));
 		if (seed)
 		{
+			seed->l = _bds_params3_l;
 			memCopy(seed->zi, _bds_params_zi, sizeof(_bds_params_zi));
 			memCopy(seed->di, _bds_params3_di, sizeof(_bds_params3_di));
 			memCopy(seed->ri, _bds_params3_ri, sizeof(_bds_params3_ri));
-			memCopy(seed->d, _bds_params_d, sizeof(_bds_params_d));
 		}
 		return ERR_OK;
 	}
@@ -432,12 +433,13 @@ err_t stb99StdParams(stb99_params* params, stb99_seed* seed, const char* name)
 		memCopy(params->p, _bds_params6_p, sizeof(_bds_params6_p));
 		memCopy(params->q, _bds_params6_q, sizeof(_bds_params6_q));
 		memCopy(params->a, _bds_params6_a, sizeof(_bds_params6_a));
+		memCopy(params->d, _bds_params_d, sizeof(_bds_params_d));
 		if (seed)
 		{
+			seed->l = _bds_params6_l;
 			memCopy(seed->zi, _bds_params_zi, sizeof(_bds_params_zi));
 			memCopy(seed->di, _bds_params6_di, sizeof(_bds_params6_di));
 			memCopy(seed->ri, _bds_params6_ri, sizeof(_bds_params6_ri));
-			memCopy(seed->d, _bds_params_d, sizeof(_bds_params_d));
 		}
 		return ERR_OK;
 	}
@@ -448,12 +450,13 @@ err_t stb99StdParams(stb99_params* params, stb99_seed* seed, const char* name)
 		memCopy(params->p, _bds_params10_p, sizeof(_bds_params10_p));
 		memCopy(params->q, _bds_params10_q, sizeof(_bds_params10_q));
 		memCopy(params->a, _bds_params10_a, sizeof(_bds_params10_a));
+		memCopy(params->d, _bds_params_d, sizeof(_bds_params_d));
 		if (seed)
 		{
+			seed->l = _bds_params10_l;
 			memCopy(seed->zi, _bds_params_zi, sizeof(_bds_params_zi));
 			memCopy(seed->di, _bds_params10_di, sizeof(_bds_params10_di));
 			memCopy(seed->ri, _bds_params10_ri, sizeof(_bds_params10_ri));
-			memCopy(seed->d, _bds_params_d, sizeof(_bds_params_d));
 		}
 		return ERR_OK;
 	}
@@ -462,39 +465,122 @@ err_t stb99StdParams(stb99_params* params, stb99_seed* seed, const char* name)
 
 /*
 *******************************************************************************
-Работоспособные параметры?
-
-Не проверяется простота p и q и порядок a. Проверяется только то, что:
-1)	битовая длина p равняется l;
-2)	0 < a < p;
-3)	битовая длина q равняется r.
+Проверка затравочных параметров
 *******************************************************************************
 */
 
-static bool_t stb99IsOperableParams(const stb99_params* params)
+static err_t stb99ValZi(const stb99_seed* seed)
 {
-	size_t n;
-	ASSERT(memIsValid(params, sizeof(stb99_params)));
-	// проверить размерности
-	for (n = 0; n < COUNT_OF(_ls); ++n)
-		if (_ls[n] == params->l)
-			break;
-	if (n == COUNT_OF(_ls) || _rs[n] != params->r)
-		return FALSE;
-	// проверить p (старшие 3 бита -- 001?)
-	ASSERT((params->l + 2) % 8 == 0);
-	n = O_OF_B(params->l);
-	if (params->p[n - 1] >> 5 != 1)
-		return FALSE;
-	// проверить a
-	if (memIsZero(params->a, n) || memCmpRev(params->a, params->p, n) >= 0)
-		return FALSE;
-	// проверить q
-	n = O_OF_B(params->r);
-	if (params->q[n - 1] >> (params->r - 1) % 8 != 1)
-		return FALSE;
+	size_t i;
+	for (i = 0; i < 31; ++i)
+		if (seed->zi[i] == 0 || seed->zi[i] >= 65257)
+			return ERR_BAD_SEED;
+	return ERR_OK;
+}
+
+static err_t stb99ValDi(const stb99_seed* seed, size_t r)
+{
+	size_t i;
+	// проверить di[0]
+	if (seed->l > 2 * seed->di[0] ||
+		seed->di[0] >= SIZE_MAX / 8 ||
+		8 * seed->di[0] + r > 7 * seed->l)
+		return ERR_BAD_SEED;
+	// проверить цепочку di
+	for (i = 1; seed->di[i] > 32; ++i)
+		if (seed->di[i - 1] > 2 * seed->di[i] ||
+			seed->di[i] >= SIZE_MAX / 5 ||
+			5 * seed->di[i] + 16 >= 4 * seed->di[i - 1])
+			return ERR_BAD_SEED;
 	// все хорошо
-	return TRUE;
+	return ERR_OK;
+}
+
+static err_t stb99ValRi(const stb99_seed* seed, size_t r)
+{
+	size_t i;
+	// проверить ri[0]
+	if (seed->ri[0] != r)
+		return ERR_BAD_SEED;
+	// проверить цепочку ri
+	for (i = 1; seed->ri[i] > 32; ++i)
+		if (seed->ri[i - 1] > 2 * seed->ri[i] ||
+			seed->ri[i] >= SIZE_MAX / 5 ||
+			5 * seed->ri[i] + 16 >= 4 * seed->ri[i - 1])
+			return ERR_BAD_SEED;
+	// все хорошо
+	return ERR_OK;
+}
+
+err_t stb99ValSeed(const stb99_seed* seed)
+{
+	err_t code;
+	size_t i;
+	size_t r;
+	// проверить указатели
+	if (!memIsValid(seed, sizeof(stb99_seed)))
+		return ERR_BAD_INPUT;
+	// проверить l
+	for (i = 0; i < COUNT_OF(_ls); ++i)
+		if (_ls[i] == seed->l)
+			break;
+	if (i == COUNT_OF(_ls))
+		return ERR_BAD_SEED;
+	// определить r = r(l)
+	r = _rs[i];
+	// проверить числа zi
+	code = stb99ValZi(seed);
+	ERR_CALL_CHECK(code);
+	// проверить цепочку di
+	code = stb99ValDi(seed, r);
+	ERR_CALL_CHECK(code);
+	// проверить цепочку ri
+	code = stb99ValRi(seed, r);
+	ERR_CALL_CHECK(code);
+	// все хорошо
+	return ERR_OK;
+}
+
+err_t stb99FillSeed(stb99_seed* seed)
+{
+	size_t i;
+	size_t r;
+	// проверить указатели
+	if (!memIsValid(seed, sizeof(stb99_seed)))
+		return ERR_BAD_INPUT;
+	// проверить l
+	for (i = 0; i < COUNT_OF(_ls); ++i)
+		if (_ls[i] == seed->l)
+			break;
+	if (i == COUNT_OF(_ls))
+		return ERR_BAD_SEED;
+	// определить r = r(l)
+	r = _rs[i];
+	// проверить zi
+	if (stb99ValZi(seed) != ERR_OK)
+	{
+		if (!memIsZero(seed->zi, sizeof(seed->zi)))
+			return ERR_BAD_SEED;
+		for (i = 0; i < 31; ++i)
+			seed->zi[i] = (u16)(i + 1);
+	}
+	// проверить цепочку di
+	if (stb99ValDi(seed, r) != ERR_OK)
+	{
+		if (!memIsZero(seed->di, sizeof(seed->di)))
+			return ERR_BAD_SEED;
+		seed->di[0] = seed->l / 2 + 1;
+		for (i = 1; (seed->di[i] = seed->di[i - 1] / 2 + 1) > 32; ++i);
+	}
+	// проверить цепочку ri
+	if (stb99ValRi(seed, r) != ERR_OK)
+	{
+		if (!memIsZero(seed->ri, sizeof(seed->ri)))
+			return ERR_BAD_SEED;
+		seed->ri[0] = r;
+		for (i = 1; (seed->ri[i] = seed->ri[i - 1] / 2 + 1) > 32; ++i);
+	}
+	return ERR_OK;
 }
 
 /*
@@ -507,19 +593,19 @@ static bool_t stb99IsOperableParams(const stb99_params* params)
 3. Выбрать псевдослучайное R так, чтобы битовая длина p = 2 * g0 * q * R + 1
    равнялась l.
 4. Проверить простоту p и, если p оказывается составным, вернуться к шагу 2.
-5. В группе Монтгомери B_p выбрать вычет a <- d^((p-1)/q), отличный от единицы.
-   Этот вычет имеет порядок q в группе.
+5. Установить d <- 5.
+6. В группе Монтгомери B_p вычислить a <- d^((p-1)/q).
+7. Если a совпадает с единицей B_p, то d <- (d + 1) mod p и вернуться к шагу 6.
 6. Возвратить p, q, a.
 *******************************************************************************
 */
 
-err_t stb99GenParams(stb99_params* params, stb99_seed* seed)
+err_t stb99GenParams(stb99_params* params, const stb99_seed* seed)
 {
+	err_t code;
 	size_t i;
 	size_t n, no;
 	size_t m, mo;
-	const u32* di;
-	const u32* ri;
 	size_t gw;			/* число слов для хранения gi */
 	size_t fw;			/* число слов для хранения fi */
 	size_t offset;
@@ -536,62 +622,46 @@ err_t stb99GenParams(stb99_params* params, stb99_seed* seed)
 	word* a;
 	qr_o* qr;
 	void* stack;
-	// проверить указатели
-	if (!memIsValid(params, sizeof(stb99_params)) ||
-		!memIsValid(seed, sizeof(stb99_seed)))
-		return ERR_BAD_INPUT;
+	// проверить seed
+	code = stb99ValSeed(seed);
+	ERR_CALL_CHECK(code);
 	// подготовить params
+	if (!memIsValid(params, sizeof(stb99_params)))
+		return ERR_BAD_INPUT;
 	memSetZero(params, sizeof(stb99_params));
-	// проверить числа z[i]
-	for (i = 0; i < 31; ++i)
-		if (seed->zi[i] == 0 || seed->zi[i] >= 65257)
-			return ERR_BAD_PARAMS;
-	// проверить цепочку ri и одновременно определить l, r, fw
-	for (i = 0, ri = seed->ri; i < COUNT_OF(_rs); ++i)
-		if (ri[0] == _rs[i])
+	params->l = seed->l;
+	for (i = 0; i < COUNT_OF(_ls); ++i)
+		if (_ls[i] == params->l)
 			break;
-	if (i == COUNT_OF(_ls))
-		return ERR_BAD_PARAMS;
-	params->l = _ls[i], params->r = _rs[i];
-	for (i = 1, fw = W_OF_B(ri[0]); ri[i] > 32; ++i)
-	{
-		if (ri[i - 1] > 2 * ri[i] ||
-			ri[i] >= U32_MAX / 5 || 5 * ri[i] + 16 >= 4 * ri[i - 1])
-			return ERR_BAD_PARAMS;
-		fw += W_OF_B(ri[i]);
-	}
-	ASSERT(ri[i] > 16);
-	ASSERT(W_OF_B(ri[i]) == 1);
+	ASSERT(i != COUNT_OF(_ls));
+	params->r = _rs[i];
+	// определить fw
+	for (i = 1, fw = W_OF_B(seed->ri[0]); seed->ri[i] > 32; ++i)
+		fw += W_OF_B(seed->ri[i]);
+	ASSERT(seed->ri[i] > 16);
+	ASSERT(W_OF_B(seed->ri[i]) == 1);
 	fw += 1;
-	// проверить цепочку di и одновременно определить gw
-	di = seed->di;
-	if (params->l > 2 * di[0] ||
-		di[0] >= U32_MAX / 8 || 8 * di[0] + params->r > 7 * params->l)
-		return ERR_BAD_PARAMS;
-	for (i = 1, gw = W_OF_B(di[0]); di[i] > 32; ++i)
-	{
-		if (di[i - 1] > 2 * di[i] ||
-			di[i] >= U32_MAX / 5 || 5 * di[i] + 16 >= 4 * di[i - 1])
-			return ERR_BAD_PARAMS;
-		gw += W_OF_B(di[i]);
-	}
-	ASSERT(di[i] > 16);
-	ASSERT(W_OF_B(di[i]) == 1);
+	// определить gw
+	for (i = 1, gw = W_OF_B(seed->di[0]); seed->di[i] > 32; ++i)
+		gw += W_OF_B(seed->di[i]);
+	ASSERT(seed->di[i] > 16);
+	ASSERT(W_OF_B(seed->di[i]) == 1);
 	gw += 1;
 	ASSERT(gw > fw);
 	// размерности
 	n = W_OF_B(params->l), no = O_OF_B(params->l);
 	m = W_OF_B(params->r), mo = O_OF_B(params->r);
+	ASSERT(n <= gw);
 	// создать состояние
 	state = blobCreate(
 		prngSTB_keep() + O_OF_W(gw) +
-		O_OF_W(W_OF_B(di[0]) + 2 * n) + zmMontCreate_keep(no) +
-		utilMax(7,
+		O_OF_W(W_OF_B(seed->di[0]) + 2 * n) + zmMontCreate_keep(no) +
+		utilMax(6,
 			priNextPrimeW_deep(),
-			priExtendPrime_deep(params->l, W_OF_B(di[1]), (di[0] + 3) / 4),
-			priExtendPrime_deep(params->r, W_OF_B(ri[1]), (ri[0] + 3) / 4),
-			priExtendPrime2_deep(params->l, W_OF_B(di[0]), W_OF_B(ri[1]),
-			(params->l + 3) / 4),
+			priExtendPrime_deep(params->l, W_OF_B(seed->di[1]),
+				(seed->di[0] + 3) / 4),
+			priExtendPrime2_deep(params->l, W_OF_B(seed->di[0]),
+				W_OF_B(seed->ri[0]), (params->l + 3) / 4),
 			zmMontCreate_deep(no),
 			zzDiv_deep(n, m),
 			qrPower_deep(n, n, zmMontCreate_deep(no))));
@@ -599,9 +669,9 @@ err_t stb99GenParams(stb99_params* params, stb99_seed* seed)
 		return ERR_OUTOFMEMORY;
 	// раскладка состояния
 	stb_state = (octet*)state;
-	fi = gi = (word*)(stb_state + prngSTB_keep());
+	fi = gi = d = (word*)(stb_state + prngSTB_keep());
 	g0 = gi + gw;
-	p = g0 + W_OF_B(di[0]);
+	p = g0 + W_OF_B(seed->di[0]);
 	a = p + n;
 	qr = (qr_o*)(a + n);
 	stack = (octet*)qr + zmMontCreate_keep(no);
@@ -612,33 +682,33 @@ err_t stb99GenParams(stb99_params* params, stb99_seed* seed)
 	while (1)
 	{
 		// первое (минимальное) gi?
-		if (di[i] <= 32)
+		if (seed->di[i] <= 32)
 		{
 			ASSERT(offset == gw - 1);
 			do
 			{
-				prngSTBStepR(gi + offset, O_OF_B(di[i]), stb_state);
-				wwFrom(gi + offset, gi + offset, O_OF_B(di[i]));
-				wwTrimHi(gi + offset, 1, di[i] - 1);
-				wwSetBit(gi + offset, di[i] - 1, 1);
+				prngSTBStepR(gi + offset, O_OF_B(seed->di[i]), stb_state);
+				wwFrom(gi + offset, gi + offset, O_OF_B(seed->di[i]));
+				wwTrimHi(gi + offset, 1, seed->di[i] - 1);
+				wwSetBit(gi + offset, seed->di[i] - 1, 1);
 			}
 			while (!priNextPrimeW(gi + offset, gi[offset], stack));
 		}
 		// обычное gi
 		else
 		{
-			trials = 4 * di[i];
-			base_count = (di[i] + 3) / 4;
+			trials = 4 * seed->di[i];
+			base_count = (seed->di[i] + 3) / 4;
 			// потенциальное отступление от СТБ, не влияющее на результат
 			if (base_count > priBaseSize())
 				base_count = priBaseSize();
 			// не удается построить новое простое?
-			if (!priExtendPrime(gi + offset, di[i],
-				gi + offset + W_OF_B(di[i]), W_OF_B(di[i + 1]),
+			if (!priExtendPrime(gi + offset, seed->di[i],
+				gi + offset + W_OF_B(seed->di[i]), W_OF_B(seed->di[i + 1]),
 				trials, base_count, prngSTBStepR, stb_state, stack))
 			{
 				// к предыдущему простому
-				offset += W_OF_B(di[i++]);
+				offset += W_OF_B(seed->di[i++]);
 				continue;
 			}
 		}
@@ -646,45 +716,45 @@ err_t stb99GenParams(stb99_params* params, stb99_seed* seed)
 		if (i == 0)
 			break;
 		// к следующему простому
-		offset -= W_OF_B(di[--i]);
+		offset -= W_OF_B(seed->di[--i]);
 	}
 	// сохранить g0
-	wwCopy(g0, gi, W_OF_B(di[0]));
+	wwCopy(g0, gi, W_OF_B(seed->di[0]));
 	// построить цепочку fi
 	while (1)
 	{
-		for (i = 1; ri[i] > 32; ++i);
+		for (i = 1; seed->ri[i] > 32; ++i);
 		offset = fw - 1;
 		while (1)
 		{
 			// первое (минимальное) fi?
-			if (ri[i] <= 32)
+			if (seed->ri[i] <= 32)
 			{
 				ASSERT(offset == fw - 1);
 				do
 				{
-					prngSTBStepR(fi + offset, O_OF_B(ri[i]), stb_state);
-					wwFrom(fi + offset, fi + offset, O_OF_B(ri[i]));
-					wwTrimHi(fi + offset, 1, ri[i] - 1);
-					wwSetBit(fi + offset, ri[i] - 1, 1);
+					prngSTBStepR(fi + offset, O_OF_B(seed->ri[i]), stb_state);
+					wwFrom(fi + offset, fi + offset, O_OF_B(seed->ri[i]));
+					wwTrimHi(fi + offset, 1, seed->ri[i] - 1);
+					wwSetBit(fi + offset, seed->ri[i] - 1, 1);
 				}
 				while (!priNextPrimeW(fi + offset, fi[offset], stack));
 			}
 			// обычное fi
 			else
 			{
-				trials = 4 * ri[i];
-				base_count = (ri[i] + 3) / 4;
+				trials = 4 * seed->ri[i];
+				base_count = (seed->ri[i] + 3) / 4;
 				// потенциальное отступление от СТБ, не влияющее на результат
 				if (base_count > priBaseSize())
 					base_count = priBaseSize();
 				// не удается построить новое простое?
-				if (!priExtendPrime(fi + offset, ri[i],
-					fi + offset + W_OF_B(ri[i]), W_OF_B(ri[i + 1]),
+				if (!priExtendPrime(fi + offset, seed->ri[i],
+					fi + offset + W_OF_B(seed->ri[i]), W_OF_B(seed->ri[i + 1]),
 					trials, base_count, prngSTBStepR, stb_state, stack))
 				{
 					// к предыдущему простому
-					offset += W_OF_B(ri[i++]);
+					offset += W_OF_B(seed->ri[i++]);
 					continue;
 				}
 			}
@@ -692,15 +762,15 @@ err_t stb99GenParams(stb99_params* params, stb99_seed* seed)
 			if (i == 0)
 				break;
 			// к следующему простому
-			offset -= W_OF_B(ri[--i]);
+			offset -= W_OF_B(seed->ri[--i]);
 		}
 		// построить p
-		trials = 4 * di[0];
-		base_count = (di[0] + 3) / 4;
+		trials = 4 * seed->di[0];
+		base_count = (seed->di[0] + 3) / 4;
 		if (base_count > priBaseSize())
 			base_count = priBaseSize();
-		if (priExtendPrime2(p, params->l, g0, W_OF_B(di[0]),
-			fi, W_OF_B(ri[0]), trials, base_count,
+		if (priExtendPrime2(p, params->l, g0, W_OF_B(seed->di[0]),
+			fi, W_OF_B(seed->ri[0]), trials, base_count,
 			prngSTBStepR, stb_state, stack))
 			break;
 
@@ -713,15 +783,10 @@ err_t stb99GenParams(stb99_params* params, stb99_seed* seed)
 	// p <- (p - 1) / q
 	zzSubW2(p, n, 1);
 	zzDiv(p, a, p, n, gi, m, stack);
-	// загрузить параметр d
-	if (memIsZero(seed->d, no) || memCmpRev(seed->d, params->p, no) >= 0)
-	{
-		memSetZero(seed->d, no);
-		seed->d[0] = 5;
-	}
-	d = gi;
-	ASSERT(n <= gw);
-	VERIFY(qrFrom(d, seed->d, qr, stack));
+	// d <- 5
+	memSetZero(params->d, no);
+	params->d[0] = 5;
+	VERIFY(qrFrom(d, params->d, qr, stack));
 	// сгенерировать a
 	while (1)
 	{
@@ -735,11 +800,17 @@ err_t stb99GenParams(stb99_params* params, stb99_seed* seed)
 	}
 	// сохранить a и d
 	wwTo(params->a, no, a);
-	wwTo(seed->d, no, d);
+	wwTo(params->d, no, d);
 	// все нормально
 	blobClose(state);
 	return ERR_OK;
 }
+
+/*
+*******************************************************************************
+Проверка параметров
+*******************************************************************************
+*/
 
 err_t stb99ValParams(const stb99_params* params)
 {
@@ -749,51 +820,58 @@ err_t stb99ValParams(const stb99_params* params)
 	void* state;
 	word* p;
 	word* q;
+	word* t;
+	word* d;
 	word* a;
 	qr_o* qr;
 	void* stack;
 	// проверить указатели
 	if (!memIsValid(params, sizeof(stb99_params)))
 		return ERR_BAD_INPUT;
-	// работоспособные параметры?
-	if (!stb99IsOperableParams(params))
+	// проверить размерности
+	for (n = 0; n < COUNT_OF(_ls); ++n)
+		if (_ls[n] == params->l)
+			break;
+	if (n == COUNT_OF(_ls) || _rs[n] != params->r)
 		return ERR_BAD_PARAMS;
 	// размерности
 	n = W_OF_B(params->l), no = O_OF_B(params->l);
 	m = W_OF_B(params->r), mo = O_OF_B(params->r);
 	// создать состояние
 	state = blobCreate(
-		O_OF_W(2 * n + m) + zmMontCreate_keep(no) +  
+		O_OF_W(3 * n + 1) + zmMontCreate_keep(no) +  
 		utilMax(4,
 			priIsPrime_deep(n),
-			zzMod_deep(n, m),
+			zzDiv_deep(n, m),
 			zmMontCreate_deep(no),
-			qrPower_deep(n, n, zmMontCreate_deep(no))));
+			qrPower_deep(n, n - m + 1, zmMontCreate_deep(no))));
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// раскладка состояния
-	p = (word*)state;
+	p = d = (word*)state;
 	q = p + n;
-	a = q + m;
+	t = q + m;
+	a = t + n - m + 1;
 	qr = (qr_o*)(a + n);
 	stack = (octet*)qr + zmMontCreate_keep(no);
-	// p -- простое?
+	// p -- l-битовое простое?
 	wwFrom(p, params->p, no);
-	if (!priIsPrime(p, n, stack))
+	if (wwBitSize(p, n) != params->l || !priIsPrime(p, n, stack))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;
 	}
-	// q -- простое?
+	// q -- r-битовое простое?
 	wwFrom(q, params->q, mo);
-	if (!priIsPrime(q, m, stack))
+	if (wwBitSize(q, m) != params->r || !priIsPrime(q, m, stack))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;
 	}
-	// q |	p - 1?
+	// t <- (p - 1) div q
 	zzSubW2(p, n, 1);
-	zzMod(p, p, n, q, m, stack);
+	zzDiv(t, p, p, n, q, m, stack);
+	// q | p - 1?
 	if (!wwIsZero(p, m))
 	{
 		blobClose(state);
@@ -801,10 +879,22 @@ err_t stb99ValParams(const stb99_params* params)
 	}
 	// построить кольцо Монтгомери
 	zmMontCreate(qr, params->p, no, params->l + 2, stack);
-	// проверить a
-	qrFrom(a, params->a, qr, stack);
-	qrPower(p, a, q, W_OF_B(params->r), qr, stack);
-	if (!qrIsUnity(p, qr))
+	// загрузить d
+	if (!qrFrom(d, params->d, qr, stack))
+	{
+		blobClose(state);
+		return ERR_BAD_PARAMS;
+	}
+	// a <- d^((p - 1)/q) \neq e?
+	qrPower(a, d, t, n - m + 1, qr, stack);
+	if (qrIsUnity(a, qr))
+	{
+		blobClose(state);
+		return ERR_BAD_PARAMS;
+	}
+	// a == params->a?
+	wwFrom(d, params->a, no);
+	if (!wwEq(a, p, n))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;

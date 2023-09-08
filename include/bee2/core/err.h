@@ -4,7 +4,7 @@
 \brief Errors
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2023.06.13
+\version 2023.09.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -208,6 +208,8 @@ Crypto
 #define ERR_SELFTEST				_ERR_REG(521)
 /* ошибка статистического тестирования */
 #define ERR_STATTEST				_ERR_REG(522)
+/* некорректные затравочные параметры */
+#define ERR_BAD_SEED				_ERR_REG(523)
 
 /*
 *******************************************************************************

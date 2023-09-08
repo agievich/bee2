@@ -4,7 +4,7 @@
 \brief Errors
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2023.06.13
+\version 2023.09.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -95,6 +95,7 @@ static const err_msg _messages[] = {
 	{ERR_AUTH, "Authentication failed"},
 	{ERR_SELFTEST, "Self-tests failed"},
 	{ERR_STATTEST, "Statistical tests failed"},
+	{ERR_BAD_SEED, "Invalid seed"},
 	// cmd
 	{ERR_CMD_NOT_FOUND, "Command not found"},
 	{ERR_CMD_EXISTS, "Command is already registered"},

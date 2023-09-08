@@ -4,7 +4,7 @@
 \brief Tests for STB 1176.2-99[generation of parameters]
 \project bee2/test
 \created 2023.08.05
-\version 2023.08.07
+\version 2023.09.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -42,10 +42,19 @@
 
 bool_t stb99TestTestParams()
 {
+	stb99_seed seed[1];
+	stb99_seed seed1[1];
 	stb99_params params[1];
 	stb99_params params1[1];
-	stb99_seed seed[1];
-	// тест STB.GENP.1
+	// загрузочные параметры
+	memSetZero(seed, sizeof(stb99_seed));
+	seed->l = 638;
+	if (stb99ValSeed(seed) == ERR_OK ||
+		stb99FillSeed(seed) != ERR_OK ||
+		stb99StdParams(params, seed1, "test") != ERR_OK ||
+		!memEq(seed, seed1, sizeof(stb99_seed)))
+		return FALSE;
+	// тест GPQA.L01
 	if (stb99StdParams(params, seed, "test") != ERR_OK ||
 		stb99GenParams(params1, seed) != ERR_OK ||
 		stb99ValParams(params1) != ERR_OK ||
