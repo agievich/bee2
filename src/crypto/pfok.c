@@ -4,7 +4,7 @@
 \brief Draft of RD_RB: key establishment protocols in finite fields
 \project bee2 [cryptographic library]
 \created 2014.07.01
-\version 2020.11.05
+\version 2023.09.11
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -42,14 +42,14 @@ priNextPrimeVal(), которая находит гарантированно п
 Стандартные размерности
 *******************************************************************************
 */
-static u32 const _ls[] = 
+static size_t const _ls[] = 
 {
 	638, 702, 766, 862, 958, 1022, 1118, 
 	1214, 1310, 1438, 1534, 1662, 1790, 1918, 
 	2046, 2174, 2334, 2462, 2622, 2782, 2942, 
 };
 
-static u32 const _rs[] = 
+static size_t const _rs[] = 
 {
 	130, 136, 141, 149, 154, 161, 168,
 	175, 181, 188, 194, 201, 208, 214,
@@ -62,9 +62,9 @@ static u32 const _rs[] =
 *******************************************************************************
 */
 
-static const u32 _test_params_n = 256;
+static const size_t _test_params_n = 256;
 
-static const u16 _test_params_z[] = {
+static const u16 _test_params_zi[] = {
 	40046, 43788,  1706, 57707, 58664,  8036, 56277, 12802, 
 	22211, 49982, 39997,  7717,  7896, 18474, 58455,  3341, 
 	30740, 54550, 18656, 61919, 54929, 55271, 27359, 45417, 
@@ -73,9 +73,9 @@ static const u16 _test_params_z[] = {
 
 static const char _test_params_name[] = "test";
 
-static const u32 _test_params_l = 638;
+static const size_t _test_params_l = 638;
 
-static const u32 _test_params_r = 130;
+static const size_t _test_params_r = 130;
 
 static const octet _test_params_p[] = {
 	0xDF, 0x60, 0x3F, 0xB4, 0xB1, 0xCB, 0x6B, 0xEB, 
@@ -103,7 +103,7 @@ static const octet _test_params_g[] = {
 	0xB8, 0x81, 0x33, 0xC5, 0x97, 0xD3, 0x43, 0x2A,
 };
 
-static const u32 _test_params_lt[] = {
+static const size_t _test_params_li[] = {
 	637, 319, 160, 81, 41, 21,
 };
 
@@ -114,19 +114,21 @@ static const u32 _test_params_lt[] = {
 */
 
 // bdh-params (common)
-static const u32 _bdh_params_n = 256;
 
-static const u16 _bdh_params_z[] = {
+static const size_t _bdh_params_n = 256;
+
+static const u16 _bdh_params_zi[] = {
 	1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 
 	18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
 };
 
 // bdh-params3
+
 static const char _bdh_params3_name[] = "1.2.112.0.2.0.1176.2.3.3.2";
 
-static const u32 _bdh_params3_l = 1022;
+static const size_t _bdh_params3_l = 1022;
 
-static const u32 _bdh_params3_r = 161;
+static const size_t _bdh_params3_r = 161;
 
 static const octet _bdh_params3_p[] = {
 	0x6F, 0x5E, 0xBE, 0x31, 0xD7, 0x55, 0x76, 0x17,
@@ -166,16 +168,17 @@ static const octet _bdh_params3_g[] = {
 	0xC8, 0xFE, 0xDC, 0x50, 0xD3, 0x3A, 0x2A, 0x32,
 };
 
-static const u32 _bdh_params3_lt[] = {
+static const size_t _bdh_params3_li[] = {
 	1021, 511, 256, 129, 65, 33, 17,
 };
 
 // bdh-params6
+
 static const char _bdh_params6_name[] = "1.2.112.0.2.0.1176.2.3.6.2";
 
-static const u32 _bdh_params6_l = 1534;
+static const size_t _bdh_params6_l = 1534;
 
-static const u32 _bdh_params6_r = 194;
+static const size_t _bdh_params6_r = 194;
 
 static const octet _bdh_params6_p[] = {
 	0xC7, 0x51, 0x14, 0x7B, 0xED, 0x69, 0xF4, 0x2D,
@@ -231,16 +234,17 @@ static const octet _bdh_params6_g[] = {
 	0xEF, 0x90, 0x3E, 0x5E, 0xB6, 0xA8, 0xE7, 0x24,
 };
 
-static const u32 _bdh_params6_lt[] = {
+static const size_t _bdh_params6_li[] = {
 	1533, 767, 384, 193, 97, 49, 25,
 };
 
 // bdh-params10
+
 static const char _bdh_params10_name[] = "1.2.112.0.2.0.1176.2.3.10.2";
 
-static const u32 _bdh_params10_l = 2462;
+static const size_t _bdh_params10_l = 2462;
 
-static const u32 _bdh_params10_r = 240;
+static const size_t _bdh_params10_r = 240;
 
 static const octet _bdh_params10_p[] = {
 	0xDB, 0x80, 0x4A, 0x65, 0x29, 0x2D, 0x15, 0x9C,
@@ -326,7 +330,7 @@ static const octet _bdh_params10_g[] = {
 	0xE5, 0x64, 0x83, 0x03,
 };
 
-static const u32 _bdh_params10_lt[] = {
+static const size_t _bdh_params10_li[] = {
 	2461, 1231, 616, 309, 155, 78, 40, 21,
 };
 
@@ -341,8 +345,10 @@ err_t pfokStdParams(pfok_params* params, pfok_seed* seed, const char* name)
 	if (!memIsValid(params, sizeof(pfok_params)) ||
 		!memIsNullOrValid(seed, sizeof(pfok_seed)))
 		return ERR_BAD_INPUT;
-	// подготовить params
+	// подготовить params и seed
 	memSetZero(params, sizeof(pfok_params));
+	if (seed)
+		memSetZero(seed, sizeof(pfok_seed));
 	// найти params
 	if (strEq(name, _test_params_name))
 	{
@@ -353,8 +359,9 @@ err_t pfokStdParams(pfok_params* params, pfok_seed* seed, const char* name)
 		memCopy(params->g, _test_params_g, sizeof(_test_params_g));
 		if (seed)
 		{
-			memCopy(seed->z, _test_params_z, sizeof(_test_params_z));
-			memCopy(seed->lt, _test_params_lt, sizeof(_test_params_lt));
+			seed->l = _test_params_l;
+			memCopy(seed->zi, _test_params_zi, sizeof(_test_params_zi));
+			memCopy(seed->li, _test_params_li, sizeof(_test_params_li));
 		}
 		return ERR_OK;
 	}
@@ -367,8 +374,9 @@ err_t pfokStdParams(pfok_params* params, pfok_seed* seed, const char* name)
 		memCopy(params->g, _bdh_params3_g, sizeof(_bdh_params3_g));
 		if (seed)
 		{
-			memCopy(seed->z, _bdh_params_z, sizeof(_bdh_params_z));
-			memCopy(seed->lt, _bdh_params3_lt, sizeof(_bdh_params3_lt));
+			seed->l = _bdh_params3_l;
+			memCopy(seed->zi, _bdh_params_zi, sizeof(_bdh_params_zi));
+			memCopy(seed->li, _bdh_params3_li, sizeof(_bdh_params3_li));
 		}
 		return ERR_OK;
 	}
@@ -381,8 +389,9 @@ err_t pfokStdParams(pfok_params* params, pfok_seed* seed, const char* name)
 		memCopy(params->g, _bdh_params6_g, sizeof(_bdh_params6_g));
 		if (seed)
 		{
-			memCopy(seed->z, _bdh_params_z, sizeof(_bdh_params_z));
-			memCopy(seed->lt, _bdh_params6_lt, sizeof(_bdh_params6_lt));
+			seed->l = _bdh_params6_l;
+			memCopy(seed->zi, _bdh_params_zi, sizeof(_bdh_params_zi));
+			memCopy(seed->li, _bdh_params6_li, sizeof(_bdh_params6_li));
 		}
 		return ERR_OK;
 	}
@@ -395,8 +404,9 @@ err_t pfokStdParams(pfok_params* params, pfok_seed* seed, const char* name)
 		memCopy(params->g, _bdh_params10_g, sizeof(_bdh_params10_g));
 		if (seed)
 		{
-			memCopy(seed->z, _bdh_params_z, sizeof(_bdh_params_z));
-			memCopy(seed->lt, _bdh_params10_lt, sizeof(_bdh_params10_lt));
+			seed->l = _bdh_params10_l;
+			memCopy(seed->zi, _bdh_params_zi, sizeof(_bdh_params_zi));
+			memCopy(seed->li, _bdh_params10_li, sizeof(_bdh_params10_li));
 		}
 		return ERR_OK;
 	}
@@ -405,32 +415,126 @@ err_t pfokStdParams(pfok_params* params, pfok_seed* seed, const char* name)
 
 /*
 *******************************************************************************
+Проверка и настройка затравочных параметров
+*******************************************************************************
+*/
+
+static err_t pfokValZi(const pfok_seed* seed)
+{
+	size_t i;
+	for (i = 0; i < 31; ++i)
+		if (seed->zi[i] == 0 || seed->zi[i] >= 65257)
+			return ERR_BAD_SEED;
+	return ERR_OK;
+}
+
+static err_t pfokValLi(const pfok_seed* seed)
+{
+	size_t i;
+	// проверить li[0]
+	if (seed->li[0] != seed->l - 1)
+		return ERR_BAD_SEED;
+	// проверить цепочку li
+	for (i = 1; seed->li[i] > 16; ++i)
+		if (seed->li[i - 1] > 2 * seed->li[i] ||
+			seed->li[i] >= SIZE_MAX / 5 ||
+			5 * seed->li[i] + 16 >= 4 * seed->li[i - 1])
+			return ERR_BAD_SEED;
+	for (; i < COUNT_OF(seed->li); ++i)
+		if (seed->li[i] != 0)
+			return ERR_BAD_SEED;
+	// все хорошо
+	return ERR_OK;
+}
+
+err_t pfokValSeed(const pfok_seed* seed)
+{
+	err_t code;
+	size_t i;
+	// проверить указатели
+	if (!memIsValid(seed, sizeof(pfok_seed)))
+		return ERR_BAD_INPUT;
+	// проверить l
+	for (i = 0; i < COUNT_OF(_ls); ++i)
+		if (_ls[i] == seed->l)
+			break;
+	if (i == COUNT_OF(_ls))
+		return ERR_BAD_SEED;
+	// проверить числа zi
+	code = pfokValZi(seed);
+	ERR_CALL_CHECK(code);
+	// проверить цепочку li
+	code = pfokValLi(seed);
+	ERR_CALL_CHECK(code);
+	// все хорошо
+	return ERR_OK;
+}
+
+err_t pfokAdjSeed(pfok_seed* seed)
+{
+	size_t i;
+	// проверить указатели
+	if (!memIsValid(seed, sizeof(pfok_seed)))
+		return ERR_BAD_INPUT;
+	// проверить l
+	for (i = 0; i < COUNT_OF(_ls); ++i)
+		if (_ls[i] == seed->l)
+			break;
+	if (i == COUNT_OF(_ls))
+		return ERR_BAD_SEED;
+	// проверить zi
+	if (pfokValZi(seed) != ERR_OK)
+	{
+		if (!memIsZero(seed->zi, sizeof(seed->zi)))
+			return ERR_BAD_SEED;
+		for (i = 0; i < 31; ++i)
+			seed->zi[i] = (u16)(i + 1);
+	}
+	// проверить цепочку li
+	if (pfokValLi(seed) != ERR_OK)
+	{
+		if (!memIsZero(seed->li, sizeof(seed->li)))
+			return ERR_BAD_SEED;
+		seed->li[0] = seed->l - 1;
+		for (i = 1; (seed->li[i] = seed->li[i - 1] / 2 + 1) > 32; ++i);
+		ASSERT(seed->li[i] > 16);
+	}
+	return ERR_OK;
+}
+
+/*
+*******************************************************************************
 Работоспособные параметры?
 
-Не проверяется простота p и q и примитивность g. Проверяется только то, что
+Не проверяется простота p и q и примитивность g. Проверяется только то, что:
 1)	битовая длина p равняется l;
 2)	p \equiv 3 \mod 4;
-3)	0 < g < p.
+3)	0 < g < p;
+4)	n < l.
 *******************************************************************************
 */
 
 static bool_t pfokIsOperableParams(const pfok_params* params)
 {
-	size_t n;
+	size_t i;
+	size_t no;
 	ASSERT(memIsValid(params, sizeof(pfok_params)));
 	// проверить размерности
-	for (n = 0; n < COUNT_OF(_ls); ++n)
-		if (_ls[n] == params->l)
+	for (i = 0; i < COUNT_OF(_ls); ++i)
+		if (_ls[i] == params->l)
 			break;
-	if (n == COUNT_OF(_ls) || _rs[n] != params->r || params->n >= params->l)
+	if (i == COUNT_OF(_ls) || _rs[i] != params->r || params->n >= params->l)
 		return FALSE;
 	// проверить p (младшие два бита -- 11? старшие 3 бита -- 001?)
 	ASSERT((params->l + 2) % 8 == 0);
-	n = O_OF_B(params->l);
-	if (params->p[0] % 4 != 3 || params->p[n - 1] / 32 != 1)
+	no = O_OF_B(params->l);
+	if (params->p[0] % 4 != 3 || params->p[no - 1] / 32 != 1 ||
+		!memIsZero(params->g + no, sizeof(params->g) - no))
 		return FALSE;
 	// проверить g
-	return !memIsZero(params->g, n) && memCmpRev(params->g, params->p, n) < 0;
+	return !memIsZero(params->g, no) &&
+		memIsZero(params->g + no, sizeof(params->g) - no) &&
+		memCmpRev(params->g, params->p, no) < 0;
 }
 
 /*
@@ -459,19 +563,26 @@ static bool_t pfokIsOperableParams(const pfok_params* params)
 ------------------------------------------------------------------
 
 Проверка примитивности g:
-g^(q) \neq e => g^(q) == - e
-g^(2) \neq e => g == e или g == -e
+	ord g = p - 1 <=> g^(q) \neq e, g
+Proof:
+	g = 0				=> g^(q) = g
+	ord g = 1 => g = e  => g^(q) = e
+	ord g = 2 => g = -e => g^(q) = g
+	ord g = q           => g^(q) = e
 *******************************************************************************
 */
 
 err_t pfokGenParams(pfok_params* params, const pfok_seed* seed, 
 	pfok_on_q_i on_q)
 {
+	err_t code;
 	size_t num = 0;
 	size_t i;
-	size_t no, n;
+	size_t n, no;
+	size_t qw;			/* число слов для хранения qi */
 	size_t offset;
-	const u32* lt;
+	size_t trials;
+	size_t base_count;
 	// состояние 
 	void* state;
 	octet* stb_state;
@@ -480,98 +591,93 @@ err_t pfokGenParams(pfok_params* params, const pfok_seed* seed,
 	word* g;
 	qr_o* qr;
 	void* stack;
-	// проверить указатели
-	if (!memIsValid(params, sizeof(pfok_params)) ||
-		!memIsValid(seed, sizeof(pfok_seed)))
-		return ERR_BAD_INPUT;
+	// проверить seed
+	code = pfokValSeed(seed);
+	ERR_CALL_CHECK(code);
 	// подготовить params
+	if (!memIsValid(params, sizeof(pfok_params)))
+		return ERR_BAD_INPUT;
 	memSetZero(params, sizeof(pfok_params));
-	// проверить числа z[i]
-	for (i = 0; i < 31; ++i)
-		if (seed->z[i] == 0 || seed->z[i] >= 65257)
-			return ERR_BAD_PARAMS;
-	// проверить цепочку lt[i] и одновременно зафиксировать размерности
-	for (i = 0, lt = seed->lt; i < COUNT_OF(_ls); ++i)
-		if (lt[0] == _ls[i] - 1)
+	params->l = seed->l;
+	for (i = 0; i < COUNT_OF(_ls); ++i)
+		if (_ls[i] == params->l)
 			break;
-	if (i == COUNT_OF(_ls))
-		return ERR_BAD_PARAMS;
-	params->l = _ls[i], params->r = _rs[i], params->n = 256;
-	for (i = 1, offset = W_OF_B(lt[0]); lt[i] > 32; ++i)
-	{
-		if (lt[i - 1] > 2 * lt[i] || 5 * lt[i] + 16 >= 4 * lt[i - 1])
-			return ERR_BAD_PARAMS;
-		offset += W_OF_B(lt[i]);
-	}
-	ASSERT(lt[i] > 16);
+	ASSERT(i != COUNT_OF(_ls));
+	params->r = _rs[i], params->n = 256;
+	// определить qw
+	for (i = 1, qw = W_OF_B(seed->li[0]); seed->li[i] > 32; ++i)
+		qw += W_OF_B(seed->li[i]);
+	ASSERT(seed->li[i] > 16);
+	ASSERT(W_OF_B(seed->li[i]) == 1);
+	qw += 1;
 	// размерности
-	no = O_OF_B(params->l), n = W_OF_B(params->l);
+	n = W_OF_B(params->l), no = O_OF_B(params->l);
+	ASSERT(W_OF_B(seed->li[0]) == n);
 	// создать состояние
 	state = blobCreate(
-		prngSTB_keep() + O_OF_W(offset) + O_OF_B(lt[i]) + 
-		O_OF_W(n) +	zmMontCreate_keep(no) +
+		prngSTB_keep() + O_OF_W(qw) +
+		O_OF_W(n) + zmMontCreate_keep(no) +
 		utilMax(6,
 			priNextPrimeW_deep(),
-			priExtendPrime_deep(params->l, n, (lt[0] + 3) / 4),
-			priIsSieved_deep((lt[0] + 3) / 4),
+			priExtendPrime_deep(params->l, W_OF_B(seed->li[1]),
+				(seed->li[0] + 3) / 4),
+			priIsSieved_deep((seed->li[0] + 3) / 4),
 			priIsSGPrime_deep(n),
 			zmMontCreate_deep(no), 
 			qrPower_deep(n, n, zmMontCreate_deep(no))));
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// раскладка состояния
+	ASSERT(n /* q0 */ + n /* g */ <= qw);
 	stb_state = (octet*)state;
 	qi = (word*)(stb_state + prngSTB_keep());
-	p = qi + offset + W_OF_B(lt[i]);
+	g = qi + n;
+	p = qi + qw;
 	qr = (qr_o*)(p + n);
 	stack = (octet*)qr + zmMontCreate_keep(no);
 	// запустить генератор
-	prngSTBStart(stb_state, seed->z);
+	prngSTBStart(stb_state, seed->zi);
 	// основной цикл
+	offset = qw - 1;
 	while (1)
 	{
 		// первое (минимальное) простое?
-		if (lt[i] <= 32)
+		if (seed->li[i] <= 32)
 		{
 			do
 			{
-				prngSTBStepR(qi + offset, O_OF_B(lt[i]), stb_state);
-				wwFrom(qi + offset, qi + offset, O_OF_B(lt[i]));
-				wwTrimHi(qi + offset, W_OF_B(lt[i]), lt[i] - 1);
-				wwSetBit(qi + offset, lt[i] - 1, 1);
+				prngSTBStepR(qi + offset, O_OF_B(seed->li[i]), stb_state);
+				wwFrom(qi + offset, qi + offset, O_OF_B(seed->li[i]));
+				wwTrimHi(qi + offset, W_OF_B(seed->li[i]), seed->li[i] - 1);
+				wwSetBit(qi + offset, seed->li[i] - 1, 1);
 			}
 			while (!priNextPrimeW(qi + offset, qi[offset], stack));
 			// к следующему простому
-			offset -= W_OF_B(lt[--i]);
+			offset -= W_OF_B(seed->li[--i]);
+			continue;
 		}
 		// обычное простое
-		else
+		trials = (i == 0) ? 4 * seed->li[i] * seed->li[i] : 4 * seed->li[i];
+		base_count = (seed->li[i] + 3) / 4;
+		// потенциальное отступление от Проекта, не влияющее на результат
+		if (base_count > priBaseSize())
+			base_count = priBaseSize();
+		// не удается построить новое простое?
+		if (!priExtendPrime(qi + offset, seed->li[i],
+				qi + offset + W_OF_B(seed->li[i]), W_OF_B(seed->li[i + 1]),
+				trials, base_count, prngSTBStepR, stb_state, stack))
 		{
-			size_t trials = (i == 0) ? 4 * lt[i] * lt[i] : 4 * lt[i];
-			size_t base_count = (lt[i] + 3) / 4;
-			// потенциальное отступление от Проекта, не влияющее на результат
-			if (base_count > priBaseSize())
-				base_count = priBaseSize();
-			// не удается построить новое простое?
-			if (!priExtendPrime(qi + offset, lt[i], 
-					qi + offset + W_OF_B(lt[i]), W_OF_B(lt[i + 1]), 
-					trials, base_count, prngSTBStepR, stb_state, stack))
-			{
-				// к предыдущему простому
-				offset += W_OF_B(lt[i++]);
-				continue;
-			}
-			// не последнее простое?
-			if (i > 0)
-			{
-				// к следующему простому
-				offset -= W_OF_B(lt[--i]);
-				continue;
-			}
-			// обработать нового кандидата
-			on_q ? on_q(qi, W_OF_B(lt[0]), ++num) : 0;
-			// p <- 2q_0 + 1
-			ASSERT(W_OF_B(lt[0]) == n);
+			// к предыдущему простому
+			offset += W_OF_B(seed->li[i++]);
+			continue;
+		}
+		// последнее простое?
+		if (i == 0)
+		{
+			// обработать новое q
+			on_q ? on_q(qi, W_OF_B(seed->li[0]), ++num) : 0;
+			// p <- 2 * q + 1
+			ASSERT(W_OF_B(seed->li[0]) == n);
 			wwCopy(p, qi, n);
 			wwShHi(p, n, 1);
 			p[0] |= 1;
@@ -580,22 +686,29 @@ err_t pfokGenParams(pfok_params* params, const pfok_seed* seed,
 				priIsSGPrime(qi, n, stack))
 				break;
 		}
+		// нет, к следующему простому
+		else
+			offset -= W_OF_B(seed->li[--i]);
 	}
 	// сохранить p
 	wwTo(params->p, no, p);
 	// построить кольцо Монтгомери
 	zmMontCreate(qr, params->p, no, params->l + 2, stack);
+	// g <- 1
+	params->g[0] = 1;
+	VERIFY(qrFrom(g, params->g, qr, stack));
 	// сгенерировать g
-	g = qi + W_OF_B(lt[0]);
-	do
+	while (1)
 	{
+		// g^(p - 1) != e && g^(p - 1) != g?
+		qrPower(p, g, qi, W_OF_B(seed->li[0]), qr, stack);
+		if (!qrIsUnity(p, qr) && qrCmp(p, g, qr) != 0)
+			break;
 		// g <- g + 1
-		for (i = 0; i < no && ++params->g[i] == 0;);
-		// p <- g^(q) [p == e или p == -e]
-		qrFrom(g, params->g, qr, stack);
-		qrPower(p, g, qi, W_OF_B(lt[0]), qr, stack);
+		zzAddWMod(g, g, 1, qr->mod, n);
 	}
-	while (qrIsUnity(p, qr) || qrIsUnity(g, qr) || qrCmp(p, g, qr) == 0);
+	// сохранить g
+	wwTo(params->g, no, g);
 	// все нормально
 	blobClose(state);
 	return ERR_OK;
@@ -603,10 +716,11 @@ err_t pfokGenParams(pfok_params* params, const pfok_seed* seed,
 
 err_t pfokValParams(const pfok_params* params)
 {
-	size_t no, n;
+	size_t n, no;
 	// состояние 
 	void* state;
 	word* p;
+	word* q;
 	word* g;
 	qr_o* qr;
 	void* stack;
@@ -620,7 +734,7 @@ err_t pfokValParams(const pfok_params* params)
 	no = O_OF_B(params->l), n = W_OF_B(params->l);
 	// создать состояние
 	state = blobCreate(
-		2 * O_OF_W(n) + zmMontCreate_keep(no) +  
+		O_OF_W(2 * n) + zmMontCreate_keep(no) +  
 		utilMax(3,
 			priIsPrime_deep(n),
 			zmMontCreate_deep(no),
@@ -640,8 +754,8 @@ err_t pfokValParams(const pfok_params* params)
 		return ERR_BAD_PARAMS;
 	}
 	// q -- простое?
-	wwShLo(p, n, 1);
-	if (!priIsPrime(p, n, stack))
+	wwShLo(q = p, n, 1);
+	if (!priIsPrime(q, n, stack))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;
@@ -649,9 +763,10 @@ err_t pfokValParams(const pfok_params* params)
 	// построить кольцо Монтгомери
 	zmMontCreate(qr, params->p, no, params->l + 2, stack);
 	// проверить g
-	qrFrom(g, params->g, qr, stack);
-	qrPower(p, g, p, W_OF_B(params->l - 1), qr, stack);
-	if (qrIsUnity(p, qr) || qrIsUnity(g, qr) || qrCmp(p, g, qr) == 0)
+	if (!qrFrom(g, params->g, qr, stack) ||
+		(qrPower(p, g, q, W_OF_B(params->l - 1), qr, stack), 0) ||
+		qrIsUnity(p, qr) || 
+		qrCmp(p, g, qr) == 0)
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;
@@ -670,8 +785,8 @@ err_t pfokValParams(const pfok_params* params)
 err_t pfokGenKeypair(octet privkey[], octet pubkey[], 
 	const pfok_params* params, gen_i rng, void* rng_state)
 {
-	size_t no, n;
-	size_t mo, m;
+	size_t n, no;
+	size_t m, mo;
 	// состояние
 	void* state;
 	word* x;				/* [m] личный ключ */
@@ -685,8 +800,8 @@ err_t pfokGenKeypair(octet privkey[], octet pubkey[],
 	if (!pfokIsOperableParams(params))
 		return ERR_BAD_PARAMS;
 	// размерности
-	no = O_OF_B(params->l), n = W_OF_B(params->l);
-	mo = O_OF_B(params->r), m = W_OF_B(params->r);
+	n = W_OF_B(params->l), no = O_OF_B(params->l);
+	m = W_OF_B(params->r), mo = O_OF_B(params->r);
 	// проверить остальные входные данные
 	if (!memIsValid(privkey, mo) || !memIsValid(pubkey, no) || rng == 0)
 		return ERR_BAD_INPUT;
@@ -744,8 +859,8 @@ err_t pfokValPubkey(const pfok_params* params, const octet pubkey[])
 err_t pfokCalcPubkey(octet pubkey[], const pfok_params* params, 
 	const octet privkey[])
 {
-	size_t no, n;
-	size_t mo, m;
+	size_t n, no;
+	size_t m, mo;
 	// состояние
 	void* state;
 	word* x;				/* [m] личный ключ */
@@ -759,8 +874,8 @@ err_t pfokCalcPubkey(octet pubkey[], const pfok_params* params,
 	if (!pfokIsOperableParams(params))
 		return ERR_BAD_PARAMS;
 	// размерности
-	no = O_OF_B(params->l), n = W_OF_B(params->l);
-	mo = O_OF_B(params->r), m = W_OF_B(params->r);
+	n = W_OF_B(params->l), no = O_OF_B(params->l);
+	m = W_OF_B(params->r), mo = O_OF_B(params->r);
 	// проверить остальные входные данные
 	if (!memIsValid(privkey, mo) || !memIsValid(pubkey, no))
 		return ERR_BAD_INPUT;
@@ -805,8 +920,8 @@ err_t pfokCalcPubkey(octet pubkey[], const pfok_params* params,
 err_t pfokDH(octet sharekey[], const pfok_params* params, 
 	const octet privkey[], const octet pubkey[])
 {
-	size_t no, n;
-	size_t mo, m;
+	size_t n, no;
+	size_t m, mo;
 	// состояние
 	void* state;
 	word* x;				/* [m] личный ключ */
@@ -820,8 +935,8 @@ err_t pfokDH(octet sharekey[], const pfok_params* params,
 	if (!pfokIsOperableParams(params))
 		return ERR_BAD_PARAMS;
 	// размерности
-	no = O_OF_B(params->l), n = W_OF_B(params->l);
-	mo = O_OF_B(params->r), m = W_OF_B(params->r);
+	n = W_OF_B(params->l), no = O_OF_B(params->l);
+	m = W_OF_B(params->r), mo = O_OF_B(params->r);
 	// проверить остальные входные данные
 	if (!memIsValid(privkey, mo) || 
 		!memIsValid(pubkey, no) ||
@@ -871,8 +986,8 @@ err_t pfokMTI(octet sharekey[], const pfok_params* params,
 	const octet privkey[], const octet privkey1[], 
 	const octet pubkey[], const octet pubkey1[])
 {
-	size_t no, n;
-	size_t mo, m;
+	size_t n, no;
+	size_t m, mo;
 	// состояние
 	void* state;
 	word* x;				/* [m] личный ключ */
@@ -888,8 +1003,8 @@ err_t pfokMTI(octet sharekey[], const pfok_params* params,
 	if (!pfokIsOperableParams(params))
 		return ERR_BAD_PARAMS;
 	// размерности
-	no = O_OF_B(params->l), n = W_OF_B(params->l);
-	mo = O_OF_B(params->r), m = W_OF_B(params->r);
+	n = W_OF_B(params->l), no = O_OF_B(params->l);
+	m = W_OF_B(params->r), mo = O_OF_B(params->r);
 	// проверить остальные входные данные
 	if (!memIsValid(privkey, mo) || 
 		!memIsValid(privkey1, mo) || 

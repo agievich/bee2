@@ -251,11 +251,13 @@ EXPORTS
 	pfokStdParams				@1301
 	pfokGenParams				@1302
 	pfokValParams				@1303
-	pfokGenKeypair				@1304
-	pfokValPubkey				@1305
-	pfokCalcPubkey				@1306
-	pfokDH						@1307
-	pfokMTI						@1308
+	pfokValSeed					@1304
+	pfokAdjSeed					@1305
+	pfokGenKeypair				@1306
+	pfokValPubkey				@1307
+	pfokCalcPubkey				@1308
+	pfokDH						@1309
+	pfokMTI						@1310
 
 	bpkiPrivkeyWrap				@1401
 	bpkiPrivkeyUnwrap			@1402
@@ -280,3 +282,9 @@ EXPORTS
 	bign96Sign					@1607
 	bign96Sign2					@1608
 	bign96Verify				@1609
+
+	stb99StdParams				@1701
+	stb99GenParams				@1702
+	stb99ValParams				@1703
+	stb99ValSeed				@1704
+	stb99AdjSeed				@1705

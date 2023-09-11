@@ -4,7 +4,7 @@
 \brief Tests for Draft of RD_RB (pfok)
 \project bee2/test
 \created 2014.07.08
-\version 2022.06.07
+\version 2023.09.11
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -49,15 +49,28 @@ static void _on_q_silent(const word q[], size_t n, size_t num)
 
 bool_t pfokTestTestParams()
 {
+	pfok_seed seed[1];
+	pfok_seed seed1[1];
 	pfok_params params[1];
 	pfok_params params1[1];
-	pfok_seed seed[1];
+	// загрузочные параметры
+	memSetZero(seed1, sizeof(pfok_seed));
+	if (pfokValSeed(seed1) == ERR_OK ||
+		pfokStdParams(params, seed, "test") != ERR_OK)
+		return FALSE;
+	seed1->l = seed->l;
+	memCopy(seed1->zi, seed->zi, sizeof(seed->zi));
+	if (pfokAdjSeed(seed1) != ERR_OK ||
+		!memEq(seed, seed1, sizeof(pfok_seed)))
+		return FALSE;
 	// тест PFOK.GENP.1
-	if (pfokStdParams(params, seed, "test") != ERR_OK ||
+	if (pfokStdParams(params, 0, "test") != ERR_OK ||
 		pfokGenParams(params1, seed, _on_q_silent) != ERR_OK ||
 		pfokValParams(params1) != ERR_OK ||
-		!memEq(params->p, params1->p, O_OF_B(params->l)) ||
-		params->l != params1->l || params->r != params1->r)
+		params1->l != params->l ||
+		params1->r != params->r ||
+		params1->n != params->n ||
+		!memEq(params1->p, params->p, sizeof(params->p)))
 		return FALSE;
 	// все нормально
 	return TRUE;
@@ -72,20 +85,23 @@ bool_t pfokTestStdParams()
 	if (pfokStdParams(params, seed, "1.2.112.0.2.0.1176.2.3.3.2") != ERR_OK ||
 		pfokValParams(params) != ERR_OK ||
 		pfokGenParams(params1, seed, _on_q) != ERR_OK ||
-		!memEq(params->p, params1->p, O_OF_B(params->l)) ||
-		params->l != params1->l || params->r != params1->r)
+		params1->l != params->l || params1->r != params->r ||
+		params1->n != params->n ||
+		!memEq(params1->p, params->p, sizeof(params->p)))
 		return FALSE;
 	// тест PFOK.GENP.3
 	if (pfokStdParams(params, seed, "1.2.112.0.2.0.1176.2.3.6.2") != ERR_OK ||
 		pfokGenParams(params1, seed, _on_q) != ERR_OK ||
-		!memEq(params->p, params1->p, O_OF_B(params->l)) ||
-		params->l != params1->l || params->r != params1->r)
+		params1->l != params->l || params1->r != params->r ||
+		params1->n != params->n ||
+		!memEq(params1->p, params->p, sizeof(params->p)))
 		return FALSE;
 	// тест PFOK.GENP.4
 	if (pfokStdParams(params, seed, "1.2.112.0.2.0.1176.2.3.10.2") != ERR_OK ||
 		pfokGenParams(params1, seed, _on_q) != ERR_OK ||
-		!memEq(params->p, params1->p, O_OF_B(params->l)) ||
-		params->l != params1->l || params->r != params1->r)
+		params1->l != params->l || params1->r != params->r ||
+		params1->n != params->n ||
+		!memEq(params1->p, params->p, sizeof(params->p)))
 		return FALSE;
 	// все нормально
 	return TRUE;

@@ -4,7 +4,7 @@
 \brief Primes
 \project bee2 [cryptographic library]
 \created 2012.08.13
-\version 2015.04.28
+\version 2023.09.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -253,17 +253,17 @@ size_t priNextPrime_deep(size_t n, size_t base_count);
 
 /*!	\brief Расширение простого
 
-	По базовому нечетному простому [n]q определяется расширенное 
-	простое [W_OF_B(l)]p битовой длины l, которое имеет вид 2 * q  * r + 1.
-	Число r выбирается с помощью генератора rng с состоянием rng_state.
+	По базовому нечетному простому [n]q строится расширенное 
+	простое [W_OF_B(l)]p битовой длины l, которое имеет вид 2 * q * r + 1.
+	Число r строится с помощью генератора rng с состоянием rng_state.
 	Простота построенного числа p проверяется в два этапа. Сначала
 	проверяется, что p не делится на base_count простых из факторной
 	базы. Затем проверяется условие теоремы Демитко. Если число p не подходит,
 	то оно увеличивается на 2 и проверка повторяется. Если при увеличении p
 	его битовая длина становится больше l, то генерируется новое r, 
 	затем p пересчитывается. Всего используется не более trials кандидатов p.
-	При trials == SIZE_MAX ограничений на число кандидатов нет.
 	\pre Буфер p не пересекается с буфером q.
+	\pre n > 0 && q[n - 1] != 0.
 	\pre q -- нечетное && q >= 3.
 	\pre wwBitSize(q, n) + 1 <= l && l <= 2 * wwBitSize(q, n).
 	\pre base_count <= priBaseSize().
@@ -289,6 +289,45 @@ bool_t priExtendPrime(
 );
 
 size_t priExtendPrime_deep(size_t l, size_t n, size_t base_count);
+
+/*!	\brief Расширение простого с условием делимости
+
+	По базовому нечетному простому [n]q и неотрицательному [m]a строится
+	расширенное простое [W_OF_B(l)]p битовой длины l, которое имеет вид
+	2 * q * a * r + 1. Число r строится с помощью генератора rng с состоянием
+	rng_state. Простота p проверяется так же, как в функции priExtendPrime().
+	Используется base_count простых из факторной базы, используется не более 
+	trials кандидатов p.
+	\pre Буфер p не пересекается с буфером q.
+	\pre n > 0 && q[n - 1] != 0 && m > 0 && a[m - 1] != 0.
+	\pre q -- нечетное && q >= 3.
+	\pre wwBitSize(q * a, n + m) + 1 <= l.
+	\pre l <= 2 * wwBitSize(q, n).
+	\pre base_count <= priBaseSize().
+	\expect q -- простое.
+	\return TRUE, если искомое простое найдено, и FALSE в противном случае.
+	\remark При trials == SIZE_MAX проверяются все возможные кандидаты.
+	\remark Для применения теоремы Демитко требуется выполнение условия 
+	2 * a * r < 4 * q + 1. Ограничение l <= 2 * wwBitSize(q, n) гарантирует
+	выполнение этого условия.
+	\deep{stack} priExtendPrime2_deep(l, n, m, base_count).
+*/
+
+bool_t priExtendPrime2(
+	word p[],			/*!< [out] расширенное простое число */
+	size_t l,			/*!< [in] длина p в битах */
+	const word q[],		/*!< [in] базовое простое число */
+	size_t n,			/*!< [in] длина q в машинных словах */
+	const word a[],		/*!< [in] делитель p - 1 */
+	size_t m,			/*!< [in] длина m в машинных словах */
+	size_t trials,		/*!< [in] число кандидатов */
+	size_t base_count,	/*!< [in] число элементов факторной базы */
+	gen_i rng,			/*!< [in] генератор случайных чисел */
+	void* rng_state,	/*!< [in] состояние rng */
+	void* stack			/*!< [in] вспомогательная память */
+);
+
+size_t priExtendPrime2_deep(size_t l, size_t n, size_t m, size_t base_count);
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -403,6 +403,7 @@
     <ClCompile Include="..\..\src\crypto\btok\btok_sm.c" />
     <ClCompile Include="..\..\src\crypto\g12s.c" />
     <ClCompile Include="..\..\src\crypto\pfok.c" />
+    <ClCompile Include="..\..\src\crypto\stb99.c" />
     <ClCompile Include="..\..\src\math\ec.c" />
     <ClCompile Include="..\..\src\math\ec2.c" />
     <ClCompile Include="..\..\src\math\ecp.c" />
@@ -461,6 +462,7 @@
     <ClInclude Include="..\..\include\bee2\crypto\dstu.h" />
     <ClInclude Include="..\..\include\bee2\crypto\g12s.h" />
     <ClInclude Include="..\..\include\bee2\crypto\pfok.h" />
+    <ClInclude Include="..\..\include\bee2\crypto\stb99.h" />
     <ClInclude Include="..\..\include\bee2\defs.h" />
     <ClInclude Include="..\..\include\bee2\info.h" />
     <ClInclude Include="..\..\include\bee2\math\ec.h" />
