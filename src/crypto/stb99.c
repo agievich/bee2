@@ -4,7 +4,7 @@
 \brief STB 1176.2-99: generation of parameters
 \project bee2 [cryptographic library]
 \created 2023.08.01
-\version 2023.09.08
+\version 2023.09.11
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -55,7 +55,7 @@ static size_t const _rs[] =
 
 /*
 *******************************************************************************
-Тестоые параметры: методика ИЛ НИИ ППМИ (уровень 1) 
+Тестовые параметры: методика ИЛ НИИ ППМИ (уровень 1) 
 *******************************************************************************
 */
 
@@ -465,7 +465,7 @@ err_t stb99StdParams(stb99_params* params, stb99_seed* seed, const char* name)
 
 /*
 *******************************************************************************
-Проверка затравочных параметров
+Проверка и настройка затравочных параметров
 *******************************************************************************
 */
 
@@ -487,10 +487,13 @@ static err_t stb99ValDi(const stb99_seed* seed, size_t r)
 		8 * seed->di[0] + r > 7 * seed->l)
 		return ERR_BAD_SEED;
 	// проверить цепочку di
-	for (i = 1; seed->di[i] > 32; ++i)
+	for (i = 1; seed->di[i] > 16; ++i)
 		if (seed->di[i - 1] > 2 * seed->di[i] ||
 			seed->di[i] >= SIZE_MAX / 5 ||
 			5 * seed->di[i] + 16 >= 4 * seed->di[i - 1])
+			return ERR_BAD_SEED;
+	for (; i < COUNT_OF(seed->di); ++i)
+		if (seed->di[i] != 0)
 			return ERR_BAD_SEED;
 	// все хорошо
 	return ERR_OK;
@@ -503,10 +506,13 @@ static err_t stb99ValRi(const stb99_seed* seed, size_t r)
 	if (seed->ri[0] != r)
 		return ERR_BAD_SEED;
 	// проверить цепочку ri
-	for (i = 1; seed->ri[i] > 32; ++i)
+	for (i = 1; seed->ri[i] > 16; ++i)
 		if (seed->ri[i - 1] > 2 * seed->ri[i] ||
 			seed->ri[i] >= SIZE_MAX / 5 ||
 			5 * seed->ri[i] + 16 >= 4 * seed->ri[i - 1])
+			return ERR_BAD_SEED;
+	for (; i < COUNT_OF(seed->ri); ++i)
+		if (seed->ri[i] != 0)
 			return ERR_BAD_SEED;
 	// все хорошо
 	return ERR_OK;
@@ -541,7 +547,7 @@ err_t stb99ValSeed(const stb99_seed* seed)
 	return ERR_OK;
 }
 
-err_t stb99FillSeed(stb99_seed* seed)
+err_t stb99AdjSeed(stb99_seed* seed)
 {
 	size_t i;
 	size_t r;
@@ -571,6 +577,7 @@ err_t stb99FillSeed(stb99_seed* seed)
 			return ERR_BAD_SEED;
 		seed->di[0] = seed->l / 2 + 1;
 		for (i = 1; (seed->di[i] = seed->di[i - 1] / 2 + 1) > 32; ++i);
+		ASSERT(seed->di[i] > 16);
 	}
 	// проверить цепочку ri
 	if (stb99ValRi(seed, r) != ERR_OK)
@@ -579,6 +586,7 @@ err_t stb99FillSeed(stb99_seed* seed)
 			return ERR_BAD_SEED;
 		seed->ri[0] = r;
 		for (i = 1; (seed->ri[i] = seed->ri[i - 1] / 2 + 1) > 32; ++i);
+		ASSERT(seed->ri[i] > 16);
 	}
 	return ERR_OK;
 }
@@ -856,14 +864,16 @@ err_t stb99ValParams(const stb99_params* params)
 	stack = (octet*)qr + zmMontCreate_keep(no);
 	// p -- l-битовое простое?
 	wwFrom(p, params->p, no);
-	if (wwBitSize(p, n) != params->l || !priIsPrime(p, n, stack))
+	if (!memIsZero(params->p + no, sizeof(params->p) - no) ||
+		wwBitSize(p, n) != params->l || !priIsPrime(p, n, stack))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;
 	}
 	// q -- r-битовое простое?
 	wwFrom(q, params->q, mo);
-	if (wwBitSize(q, m) != params->r || !priIsPrime(q, m, stack))
+	if (!memIsZero(params->q + mo, sizeof(params->q) - mo) ||
+		wwBitSize(q, m) != params->r || !priIsPrime(q, m, stack))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;
@@ -880,21 +890,23 @@ err_t stb99ValParams(const stb99_params* params)
 	// построить кольцо Монтгомери
 	zmMontCreate(qr, params->p, no, params->l + 2, stack);
 	// загрузить d
-	if (!qrFrom(d, params->d, qr, stack))
+	if (!memIsZero(params->d + no, sizeof(params->d) - no) ||
+		!qrFrom(d, params->d, qr, stack))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;
 	}
-	// a <- d^((p - 1)/q) \neq e?
-	qrPower(a, d, t, n - m + 1, qr, stack);
-	if (qrIsUnity(a, qr))
+	// d <- d^((p - 1)/q) \neq e?
+	qrPower(d, d, t, n - m + 1, qr, stack);
+	if (qrIsUnity(d, qr))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;
 	}
 	// a == params->a?
-	wwFrom(d, params->a, no);
-	if (!wwEq(a, p, n))
+	wwFrom(a, params->a, no);
+	if (!memIsZero(params->a + no, sizeof(params->a) - no) ||
+		!wwEq(a, d, n))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;
