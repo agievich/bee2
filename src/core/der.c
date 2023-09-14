@@ -4,7 +4,7 @@
 \brief Distinguished Encoding Rules
 \project bee2 [cryptographic library]
 \created 2014.04.21
-\version 2023.03.29
+\version 2023.09.14
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -361,43 +361,6 @@ bool_t derStartsWith(const octet der[], size_t count, u32 tag)
 *******************************************************************************
 Декодирование
 *******************************************************************************
-*/
-
-/*
-size_t derDec(u32* tag, const octet** val, size_t* len, const octet der[],
-	size_t count)
-{
-	size_t t_count;
-	size_t l_count;
-	size_t l;
-	ASSERT(memIsValid(der, count));
-	// обработать T
-	ASSERT(tag == 0 || memIsDisjoint2(tag, 4, der, count));
-	t_count = derTDec(tag, der, count);
-	if (t_count == SIZE_MAX)
-		return SIZE_MAX;
-	// обработать L
-	ASSERT(count >= t_count);
-	l_count = derLDec(&l, der + t_count, count - t_count);
-	if (l_count == SIZE_MAX || t_count + l_count + l > count)
-		return SIZE_MAX;
-	if (len)
-	{
-		ASSERT(memIsDisjoint2(len, O_PER_S, der, count));
-		ASSERT(tag == 0 || memIsDisjoint2(len, O_PER_S, tag, 4));
-		ASSERT(val == 0 || memIsDisjoint2(len, O_PER_S, val, sizeof(octet*)));
-		*len = l;
-	}
-	// обработать V
-	if (val)
-	{
-		ASSERT(memIsDisjoint2(val, sizeof(octet*), der, count));
-		ASSERT(tag == 0 || memIsDisjoint2(val, sizeof(octet*), tag, 4));
-		*val = der + t_count + l_count;
-	}
-	// все нормально
-	return t_count + l_count + l;
-}
 */
 
 size_t derDec(u32* tag, const octet** val, size_t* len, const octet der[],
