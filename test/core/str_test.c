@@ -4,7 +4,7 @@
 \brief Tests for strings
 \project bee2/test
 \created 2017.01.12
-\version 2022.07.14
+\version 2023.09.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -51,6 +51,15 @@ bool_t strTest()
 	// rev
 	strRev(str);
 	if (!strEq(str, "654321"))
+		return FALSE;
+	strCopy(str, "1"), strRev(str);
+	if (!strEq(str, "1"))
+		return FALSE;
+	strCopy(str, "12"), strRev(str);
+	if (!strEq(str, "21"))
+		return FALSE;
+	strCopy(str, "123"), strRev(str);
+	if (!strEq(str, "321"))
 		return FALSE;
 	// все нормально
 	return TRUE;

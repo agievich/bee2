@@ -4,7 +4,7 @@
 \brief Distinguished Encoding Rules
 \project bee2 [cryptographic library]
 \created 2014.04.21
-\version 2023.03.29
+\version 2023.09.15
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -447,7 +447,7 @@ size_t derTBITDec(
 	битов длины len и, если это так, определяется закодированное
 	значение [(len? + 7)/8]val.
 	\remark Указатель val может быть нулевым.
-	\pre Если val != 0, то соответствующий буфер может пересекается с der.
+	\remark Если val != 0, то соответствующий буфер может пересекаться с der.
 	\return Точная длина DER-кода или SIZE_MAX в случае ошибки.
 */
 size_t derTBITDec2(
@@ -500,7 +500,7 @@ size_t derTOCTDec(
 	октетов	длины len и, если это так, определяется закодированное
 	значение [len]val.
 	\remark Указатель val может быть нулевым.
-	\pre Если val != 0, то соответствующий буфер может пересекается с der.
+	\remark Если val != 0, то соответствующий буфер может пересекаться с der.
 	\return Точная длина DER-кода или SIZE_MAX в случае ошибки.
 */
 size_t derTOCTDec2(

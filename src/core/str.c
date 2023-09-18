@@ -4,7 +4,7 @@
 \brief Strings
 \project bee2 [cryptographic library]
 \created 2013.02.04
-\version 2022.07.14
+\version 2023.09.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -139,7 +139,7 @@ void strRev(char* str)
 {
 	size_t i, j;
 	ASSERT(strIsValid(str));
-	for (i = 0, j = strLen(str); i < j;)
+	for (i = 0, j = strLen(str); i + 1 < j;)
 	{
 		str[i] ^= str[--j];
 		str[j] ^= str[i];
