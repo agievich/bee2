@@ -679,15 +679,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\src\crypto\bign.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\src\crypto\bign96.c"
-					>
-				</File>
-				<File
-					RelativePath="..\..\src\crypto\bign_lcl.h"
 					>
 				</File>
 				<File
@@ -831,6 +823,38 @@
 					</File>
 					<File
 						RelativePath="..\..\src\crypto\btok\btok_sm.c"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="bign"
+					>
+					<File
+						RelativePath="..\..\src\crypto\bign\bign_ibs.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\bign\bign_keyt.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\bign\bign_lcl.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\bign\bign_lcl.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\bign\bign_misc.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\bign\bign_params.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\bign\bign_sign.c"
 						>
 					</File>
 				</Filter>

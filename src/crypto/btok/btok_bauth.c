@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): BAUTH protocol
 \project bee2 [cryptographic library]
 \created 2022.02.22
-\version 2022.11.10
+\version 2023.09.19
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -18,11 +18,11 @@
 #include "bee2/crypto/bake.h"
 #include "bee2/crypto/belt.h"
 #include "bee2/crypto/btok.h"
-#include "crypto/bign_lcl.h"
 #include "bee2/math/gfp.h"
 #include "bee2/math/ecp.h"
 #include "bee2/math/ww.h"
 #include "bee2/math/zz.h"
+#include "crypto/bign/bign_lcl.h"
 
 /*
 *******************************************************************************

@@ -1,10 +1,10 @@
 /*
 *******************************************************************************
 \file bign_lcl.h
-\brief STB 34.101.45 (bign): local definitions
+\brief STB 34.101.45 (bign): local declarations
 \project bee2 [cryptographic library]
 \created 2014.04.03
-\version 2016.07.05
+\version 2023.09.19
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
