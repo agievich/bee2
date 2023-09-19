@@ -11,6 +11,7 @@
 */
 
 #include "bee2/core/blob.h"
+#include "bee2/core/der.h"
 #include "bee2/core/err.h"
 #include "bee2/core/mem.h"
 #include "bee2/core/str.h"
@@ -344,3 +345,97 @@ err_t bignValParams(const bign_params* params)
 	return code;
 }
 
+/*
+*******************************************************************************
+DER-кодирование
+*******************************************************************************
+*/
+
+static const char oid_bign_primefield[] = "1.2.112.0.2.0.34.101.45.4.1";
+
+#define derEncStep(step, ptr, count)\
+do {\
+	size_t t = step;\
+	ASSERT(t != SIZE_MAX);\
+	ptr = ptr ? ptr + t : 0;\
+	count += t;\
+} while(0)\
+
+#define derDecStep(step, ptr, count)\
+do {\
+	size_t t = step;\
+	if (t == SIZE_MAX)\
+		return SIZE_MAX;\
+	ptr += t, count -= t;\
+} while(0)\
+
+size_t bignEncParams(octet body[], const bign_params* params)
+{
+	der_anchor_t ParamSeq[1];
+	der_anchor_t FieldSeq[1];
+	der_anchor_t CurveSeq[1];
+	size_t count = 0;
+	// начать кодирование...
+	derEncStep(derSEQEncStart(ParamSeq, body, count), body, count);
+	 // ...version...
+	 derEncStep(derSIZEEnc(body, 1), body, count);
+	 // ...FieldID...
+	 derEncStep(derSEQEncStart(FieldSeq, body, count), body, count);
+	  derEncStep(derOIDEnc(body, oid_bign_primefield), body, count);
+	  derEncStep(derUINTEnc(body, params->p, params->l / 4), body, count);
+	 derEncStep(derSEQEncStop(body, count, FieldSeq), body, count);
+	 // ...Curve...
+	 derEncStep(derSEQEncStart(CurveSeq, body, count), body, count);
+	  derEncStep(derOCTEnc(body, params->a, params->l / 4), body, count);
+	  derEncStep(derOCTEnc(body, params->b, params->l / 4), body, count);
+	  derEncStep(derBITEnc(body, params->seed, 64), body, count);
+	 derEncStep(derSEQEncStop(body, count, CurveSeq), body, count);
+	 // ...base...
+	 derEncStep(derOCTEnc(body, params->yG, params->l / 4), body, count);
+	 // ...order...
+	 derEncStep(derUINTEnc(body, params->q, params->l / 4), body, count);
+	 // ...завершить кодирование
+	derEncStep(derSEQEncStop(body, count, ParamSeq), body, count);
+	// возвратить длину DER-кода
+	return count;
+}
+
+size_t bignParamsDec(bign_params* params, const octet body[], size_t count)
+{
+	der_anchor_t ParamSeq[1];
+	der_anchor_t FieldSeq[1];
+	der_anchor_t CurveSeq[1];
+	const octet* ptr = body;
+	size_t len = 32;
+	// pre
+	ASSERT(memIsValid(params, sizeof(bign_params)));
+	ASSERT(memIsValid(body, count));
+	// начать декодирование...
+	memSetZero(params, sizeof(bign_params));
+	derDecStep(derSEQDecStart(ParamSeq, ptr, count), ptr, count);
+	 // ...version...
+	 derDecStep(derSIZEDec2(ptr, count, 1), ptr, count);
+	 // ...FieldID...
+	 derDecStep(derSEQDecStart(FieldSeq, ptr, count), ptr, count);
+	  derDecStep(derOIDDec2(ptr, count, oid_bign_primefield), ptr, count);
+	  if (derUINTDec(0, &len, ptr, count) == SIZE_MAX ||
+		len != 32 && len != 48 && len != 64)
+		return SIZE_MAX;
+	  params->l = len * 4;
+	  derDecStep(derUINTDec(params->p, &len, ptr, count), ptr, count);
+	 derDecStep(derSEQDecStop(ptr, FieldSeq), ptr, count);
+	 // ...Curve...
+	 derDecStep(derSEQDecStart(CurveSeq, ptr, count), ptr, count);
+	  derDecStep(derOCTDec2(params->a, ptr, count,  len), ptr, count);
+	  derDecStep(derOCTDec2(params->b, ptr, count,  len), ptr, count);
+	  derDecStep(derBITDec(params->seed, 0, ptr, 64), ptr, count);
+	 derDecStep(derSEQDecStop(ptr, CurveSeq), ptr, count);
+	 // ...base...
+	 derDecStep(derOCTDec2(params->yG, ptr, count, len), ptr, count);
+	 // ...order...
+	 derDecStep(derUINTDec2(params->q, ptr, count, len), ptr, count);
+	// ...завершить декодирование
+	derDecStep(derSEQDecStop(ptr, ParamSeq), ptr, count);
+	// возвратить точную длину DER-кода
+	return ptr - body;
+}

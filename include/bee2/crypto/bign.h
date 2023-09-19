@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): digital signature and key transport algorithms
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2023.02.02
+\version 2023.09.19
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -64,7 +64,7 @@ extern "C" {
 /*!	\brief Долговременные параметры bign */
 typedef struct
 {
-	u32 l;			/*!< уровень стойкости (128, 192 или 256) */
+	size_t l;		/*!< уровень стойкости (128, 192 или 256) */
 	octet p[64];	/*!< модуль p */
 	octet a[64];	/*!< коэффициент a */
 	octet b[64];	/*!< коэффициент b */
