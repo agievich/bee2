@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): digital signature and key transport algorithms
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2023.09.19
+\version 2023.09.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -53,8 +53,8 @@ extern "C" {
 
 В структуре bign_params уровень стойкости l определяет используемое число
 октетов в массивах p, a, b, q, yG. При l == 128 используются первые 32 октета,
-при l == 192 -- первые 48. Остальные октеты игнорируются и могут быть заданы
-произвольным образом. При l == 256 используются все 64 октета.
+при l == 192 -- первые 48. Неиспользуемые октеты должны быть нулевыми.
+При l == 256 используются все 64 октета.
 
 Уровень стойкости l фигурирует в описаниях функций и определяет длины ключей,
 хэш-значений, подписей.
@@ -98,6 +98,30 @@ err_t bignStdParams(
 */
 err_t bignValParams(
 	const bign_params* params	/*!< [in] долговременные параметры */
+);
+
+/*!	\brief Кодирование параметров
+
+	Долговременные параметры params представляются DER-кодом [?count]der.
+	\return ERR_OK в случае успеха и код ошибки	в противном случае.
+	\remark Формат кода определяется типом ECParameters, установленным в Д.11.
+*/
+err_t bignEncParams(
+	octet* der,					/*!< [out] DER-код */
+	size_t* count,				/*!< [out] длина der в октетах */
+	const bign_params* params	/*!< [in] долговременные параметры */
+);
+
+/*!	\brief Декодирование параметров
+
+	По DER-коду [count]der определяются долговременные параметры params.
+	\return ERR_OK в случае успеха и код ошибки	в противном случае.
+	\remark Формат кода определяется типом ECParameters, установленным в Д.11.
+*/
+err_t bignDecParams(
+	bign_params* params,		/*!< [out] долговременные параметры */
+	const octet* der,			/*!< [in] DER-код */
+	size_t count				/*!< [in] длина der в октетах */
 );
 
 /*!

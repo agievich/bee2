@@ -76,7 +76,7 @@ err_t bignGenKeypair(octet privkey[], octet pubkey[],
 	// проверить params
 	if (!memIsValid(params, sizeof(bign_params)))
 		return ERR_BAD_INPUT;
-	if (params->l != 128 && params->l != 192 && params->l != 256)
+	if (!bignIsOperable(params))
 		return ERR_BAD_PARAMS;
 	// проверить rng
 	if (rng == 0)
@@ -150,7 +150,7 @@ err_t bignValKeypair(const bign_params* params, const octet privkey[],
 	// проверить params
 	if (!memIsValid(params, sizeof(bign_params)))
 		return ERR_BAD_INPUT;
-	if (params->l != 128 && params->l != 192 && params->l != 256)
+	if (!bignIsOperable(params))
 		return ERR_BAD_PARAMS;
 	// создать состояние
 	state = blobCreate(bignStart_keep(params->l, bignValKeypair_deep));
@@ -216,7 +216,7 @@ err_t bignValPubkey(const bign_params* params, const octet pubkey[])
 	// проверить params
 	if (!memIsValid(params, sizeof(bign_params)))
 		return ERR_BAD_INPUT;
-	if (params->l != 128 && params->l != 192 && params->l != 256)
+	if (!bignIsOperable(params))
 		return ERR_BAD_PARAMS;
 	// создать состояние
 	state = blobCreate(bignStart_keep(params->l, bignValPubkey_deep));
@@ -279,7 +279,7 @@ err_t bignCalcPubkey(octet pubkey[], const bign_params* params,
 	// проверить params
 	if (!memIsValid(params, sizeof(bign_params)))
 		return ERR_BAD_INPUT;
-	if (params->l != 128 && params->l != 192 && params->l != 256)
+	if (!bignIsOperable(params))
 		return ERR_BAD_PARAMS;
 	// создать состояние
 	state = blobCreate(bignStart_keep(params->l, bignCalcPubkey_deep));
@@ -352,7 +352,7 @@ err_t bignDH(octet key[], const bign_params* params, const octet privkey[],
 	// проверить params
 	if (!memIsValid(params, sizeof(bign_params)))
 		return ERR_BAD_INPUT;
-	if (params->l != 128 && params->l != 192 && params->l != 256)
+	if (!bignIsOperable(params))
 		return ERR_BAD_PARAMS;
 	// создать состояние
 	state = blobCreate(bignStart_keep(params->l, bignDH_deep));

@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): BAUTH protocol
 \project bee2 [cryptographic library]
 \created 2022.02.22
-\version 2023.09.19
+\version 2023.09.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -147,7 +147,7 @@ err_t btokBAuthTStart(void* state, const bign_params* params,
 		!memIsNullOrValid(settings->helloa, settings->helloa_len) ||
 		!memIsNullOrValid(settings->hellob, settings->hellob_len))
 		return ERR_BAD_INPUT;
-	if (params->l != 128 && params->l != 192 && params->l != 256)
+	if (!bignIsOperable(params))
 		return ERR_BAD_PARAMS;
 	if (settings->rng == 0)
 		return ERR_BAD_RNG;
@@ -218,7 +218,7 @@ err_t btokBAuthCTStart(void* state, const bign_params* params,
 		!memIsNullOrValid(settings->helloa, settings->helloa_len) ||
 		!memIsNullOrValid(settings->hellob, settings->hellob_len))
 		return ERR_BAD_INPUT;
-	if (params->l != 128 && params->l != 192 && params->l != 256)
+	if (!bignIsOperable(params))
 		return ERR_BAD_PARAMS;
 	if (settings->rng == 0)
 		return ERR_BAD_RNG;

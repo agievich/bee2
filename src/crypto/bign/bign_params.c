@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): public parameters
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2023.09.19
+\version 2023.09.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -197,6 +197,7 @@ err_t bignStdParams(bign_params* params, const char* name)
 {
 	if (!memIsValid(params, sizeof(bign_params)))
 		return ERR_BAD_INPUT;
+	memSetZero(params, sizeof(bign_params));
 	if (strEq(name, _curve128v1_name))
 	{
 		params->l = 128;
@@ -281,7 +282,7 @@ err_t bignValParams(const bign_params* params)
 	// проверить params
 	if (!memIsValid(params, sizeof(bign_params)))
 		return ERR_BAD_INPUT;
-	if (params->l != 128 && params->l != 192 && params->l != 256)
+	if (!bignIsOperable(params))
 		return ERR_BAD_PARAMS;
 	// создать состояние
 	state = blobCreate(bignStart_keep(params->l, bignValParams_deep));
@@ -369,47 +370,48 @@ do {\
 	ptr += t, count -= t;\
 } while(0)\
 
-size_t bignEncParams(octet body[], const bign_params* params)
+size_t bignEncParams_internal(octet der[], const bign_params* params)
 {
 	der_anchor_t ParamSeq[1];
 	der_anchor_t FieldSeq[1];
 	der_anchor_t CurveSeq[1];
 	size_t count = 0;
 	// начать кодирование...
-	derEncStep(derSEQEncStart(ParamSeq, body, count), body, count);
+	derEncStep(derSEQEncStart(ParamSeq, der, count), der, count);
 	 // ...version...
-	 derEncStep(derSIZEEnc(body, 1), body, count);
+	 derEncStep(derSIZEEnc(der, 1), der, count);
 	 // ...FieldID...
-	 derEncStep(derSEQEncStart(FieldSeq, body, count), body, count);
-	  derEncStep(derOIDEnc(body, oid_bign_primefield), body, count);
-	  derEncStep(derUINTEnc(body, params->p, params->l / 4), body, count);
-	 derEncStep(derSEQEncStop(body, count, FieldSeq), body, count);
+	 derEncStep(derSEQEncStart(FieldSeq, der, count), der, count);
+	  derEncStep(derOIDEnc(der, oid_bign_primefield), der, count);
+	  derEncStep(derUINTEnc(der, params->p, params->l / 4), der, count);
+	 derEncStep(derSEQEncStop(der, count, FieldSeq), der, count);
 	 // ...Curve...
-	 derEncStep(derSEQEncStart(CurveSeq, body, count), body, count);
-	  derEncStep(derOCTEnc(body, params->a, params->l / 4), body, count);
-	  derEncStep(derOCTEnc(body, params->b, params->l / 4), body, count);
-	  derEncStep(derBITEnc(body, params->seed, 64), body, count);
-	 derEncStep(derSEQEncStop(body, count, CurveSeq), body, count);
+	 derEncStep(derSEQEncStart(CurveSeq, der, count), der, count);
+	  derEncStep(derOCTEnc(der, params->a, params->l / 4), der, count);
+	  derEncStep(derOCTEnc(der, params->b, params->l / 4), der, count);
+	  derEncStep(derBITEnc(der, params->seed, 64), der, count);
+	 derEncStep(derSEQEncStop(der, count, CurveSeq), der, count);
 	 // ...base...
-	 derEncStep(derOCTEnc(body, params->yG, params->l / 4), body, count);
+	 derEncStep(derOCTEnc(der, params->yG, params->l / 4), der, count);
 	 // ...order...
-	 derEncStep(derUINTEnc(body, params->q, params->l / 4), body, count);
+	 derEncStep(derUINTEnc(der, params->q, params->l / 4), der, count);
 	 // ...завершить кодирование
-	derEncStep(derSEQEncStop(body, count, ParamSeq), body, count);
+	derEncStep(derSEQEncStop(der, count, ParamSeq), der, count);
 	// возвратить длину DER-кода
 	return count;
 }
 
-size_t bignParamsDec(bign_params* params, const octet body[], size_t count)
+size_t bignDecParams_internal(bign_params* params, const octet der[],
+	size_t count)
 {
 	der_anchor_t ParamSeq[1];
 	der_anchor_t FieldSeq[1];
 	der_anchor_t CurveSeq[1];
-	const octet* ptr = body;
+	const octet* ptr = der;
 	size_t len = 32;
 	// pre
 	ASSERT(memIsValid(params, sizeof(bign_params)));
-	ASSERT(memIsValid(body, count));
+	ASSERT(memIsValid(der, count));
 	// начать декодирование...
 	memSetZero(params, sizeof(bign_params));
 	derDecStep(derSEQDecStart(ParamSeq, ptr, count), ptr, count);
@@ -437,5 +439,16 @@ size_t bignParamsDec(bign_params* params, const octet body[], size_t count)
 	// ...завершить декодирование
 	derDecStep(derSEQDecStop(ptr, ParamSeq), ptr, count);
 	// возвратить точную длину DER-кода
-	return ptr - body;
+	return ptr - der;
+}
+
+err_t bignEncParams(octet* der, size_t* count, const bign_params* params)
+{
+	return ERR_NOT_IMPLEMENTED;
+}
+
+err_t bignDecParams(bign_params* params, const octet* der, size_t count)
+{
+	return ERR_NOT_IMPLEMENTED;
+
 }

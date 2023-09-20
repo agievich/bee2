@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): key transport
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2023.09.19
+\version 2023.09.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -53,7 +53,7 @@ err_t bignKeyWrap(octet token[], const bign_params* params, const octet key[],
 	// проверить params
 	if (!memIsValid(params, sizeof(bign_params)))
 		return ERR_BAD_INPUT;
-	if (params->l != 128 && params->l != 192 && params->l != 256)
+	if (!bignIsOperable(params))
 		return ERR_BAD_PARAMS;
 	// проверить rng
 	if (rng == 0)
@@ -165,7 +165,7 @@ err_t bignKeyUnwrap(octet key[], const bign_params* params, const octet token[],
 	// проверить params
 	if (!memIsValid(params, sizeof(bign_params)))
 		return ERR_BAD_INPUT;
-	if (params->l != 128 && params->l != 192 && params->l != 256)
+	if (!bignIsOperable(params))
 		return ERR_BAD_PARAMS;
 	// проверить token и header
 	if (!memIsValid(token, len) ||

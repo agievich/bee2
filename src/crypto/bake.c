@@ -120,7 +120,7 @@ err_t bakeSWU(octet pt[], const bign_params* params, const octet msg[])
 	// проверить входные данные
 	if (!memIsValid(params, sizeof(bign_params)))
 		return ERR_BAD_INPUT;
-	if (params->l != 128 && params->l != 192 && params->l != 256)
+	if (!bignIsOperable(params))
 		return ERR_BAD_PARAMS;
 	if (!memIsValid(msg, params->l / 4) ||
 		!memIsValid(pt, params->l / 2))
@@ -197,7 +197,7 @@ err_t bakeBMQVStart(void* state, const bign_params* params,
 		!memIsNullOrValid(settings->helloa, settings->helloa_len) ||
 		!memIsNullOrValid(settings->hellob, settings->hellob_len))
 		return ERR_BAD_INPUT;
-	if (params->l != 128 && params->l != 192 && params->l != 256)
+	if (!bignIsOperable(params))
 		return ERR_BAD_PARAMS;
 	if (settings->rng == 0)
 		return ERR_BAD_RNG;
@@ -766,7 +766,7 @@ err_t bakeBSTSStart(void* state, const bign_params* params,
 		!memIsNullOrValid(settings->helloa, settings->helloa_len) ||
 		!memIsNullOrValid(settings->hellob, settings->hellob_len))
 		return ERR_BAD_INPUT;
-	if (params->l != 128 && params->l != 192 && params->l != 256)
+	if (!bignIsOperable(params))
 		return ERR_BAD_PARAMS;
 	if (settings->rng == 0)
 		return ERR_BAD_RNG;
@@ -1445,7 +1445,7 @@ err_t bakeBPACEStart(void* state, const bign_params* params,
 		!memIsNullOrValid(settings->hellob, settings->hellob_len) ||
 		!memIsValid(pwd, pwd_len))
 		return ERR_BAD_INPUT;
-	if (params->l != 128 && params->l != 192 && params->l != 256)
+	if (!bignIsOperable(params))
 		return ERR_BAD_PARAMS;
 	if (settings->rng == 0)
 		return ERR_BAD_RNG;

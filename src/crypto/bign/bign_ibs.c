@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): identity-based signature
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2023.09.19
+\version 2023.09.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -55,7 +55,7 @@ err_t bignIdExtract(octet id_privkey[], octet id_pubkey[],
 	// проверить params
 	if (!memIsValid(params, sizeof(bign_params)))
 		return ERR_BAD_INPUT;
-	if (params->l != 128 && params->l != 192 && params->l != 256)
+	if (!bignIsOperable(params))
 		return ERR_BAD_PARAMS;
 	// проверить oid_der
 	if (oid_len == SIZE_MAX || oidFromDER(0, oid_der, oid_len)  == SIZE_MAX)
@@ -173,7 +173,7 @@ err_t bignIdSign(octet id_sig[], const bign_params* params,
 	// проверить params
 	if (!memIsValid(params, sizeof(bign_params)))
 		return ERR_BAD_INPUT;
-	if (params->l != 128 && params->l != 192 && params->l != 256)
+	if (!bignIsOperable(params))
 		return ERR_BAD_PARAMS;
 	// проверить oid_der
 	if (oid_len == SIZE_MAX || oidFromDER(0, oid_der, oid_len)  == SIZE_MAX)
@@ -284,7 +284,7 @@ err_t bignIdSign2(octet id_sig[], const bign_params* params,
 	// проверить params
 	if (!memIsValid(params, sizeof(bign_params)))
 		return ERR_BAD_INPUT;
-	if (params->l != 128 && params->l != 192 && params->l != 256)
+	if (!bignIsOperable(params))
 		return ERR_BAD_PARAMS;
 	// проверить oid_der
 	if (oid_len == SIZE_MAX || oidFromDER(0, oid_der, oid_len)  == SIZE_MAX)
@@ -420,7 +420,7 @@ err_t bignIdVerify(const bign_params* params, const octet oid_der[],
 	// проверить params
 	if (!memIsValid(params, sizeof(bign_params)))
 		return ERR_BAD_INPUT;
-	if (params->l != 128 && params->l != 192 && params->l != 256)
+	if (!bignIsOperable(params))
 		return ERR_BAD_PARAMS;
 	// проверить oid_der
 	if (oid_len == SIZE_MAX || oidFromDER(0, oid_der, oid_len)  == SIZE_MAX)
