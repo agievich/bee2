@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): miscellaneous (OIDs, keys, DH)
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2023.09.19
+\version 2023.09.21
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -28,24 +28,24 @@
 *******************************************************************************
 */
 
-err_t bignOidToDER(octet oid_der[], size_t* oid_len, const char* oid)
+err_t bignOidToDER(octet der[], size_t* count, const char* oid)
 {
 	size_t len;
 	if (!strIsValid(oid) || 
-		!memIsValid(oid_len, sizeof(size_t)) ||
-		!memIsNullOrValid(oid_der, *oid_len))
+		!memIsValid(count, O_PER_S) ||
+		!memIsNullOrValid(der, *count))
 		return ERR_BAD_INPUT;
 	len = oidToDER(0, oid);
 	if (len == SIZE_MAX)
 		return ERR_BAD_OID;
-	if (oid_der)
+	if (der)
 	{
-		if (*oid_len < len)
+		if (*count < len)
 			return ERR_OUTOFMEMORY;
-		len = oidToDER(oid_der, oid);
+		len = oidToDER(der, oid);
 		ASSERT(len != SIZE_MAX);
 	}
-	*oid_len = len;
+	*count = len;
 	return ERR_OK;
 }
 

@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): digital signature and key transport algorithms
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2023.09.20
+\version 2023.09.21
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -107,8 +107,8 @@ err_t bignValParams(
 	\remark Формат кода определяется типом ECParameters, установленным в Д.11.
 */
 err_t bignEncParams(
-	octet* der,					/*!< [out] DER-код */
-	size_t* count,				/*!< [out] длина der в октетах */
+	octet der[],				/*!< [out] DER-код */
+	size_t* count,				/*!< [in,out] длина der / длина DER-кода */
 	const bign_params* params	/*!< [in] долговременные параметры */
 );
 
@@ -120,7 +120,7 @@ err_t bignEncParams(
 */
 err_t bignDecParams(
 	bign_params* params,		/*!< [out] долговременные параметры */
-	const octet* der,			/*!< [in] DER-код */
+	const octet der[],			/*!< [in] DER-код */
 	size_t count				/*!< [in] длина der в октетах */
 );
 
@@ -151,13 +151,13 @@ err_t bignDecParams(
 /*!	\brief Кодирование идентификатора объекта
 
 	По строковому представлению oid идентификатора объекта строится его
-	DER-код [?oid_len]oid_der.
+	DER-код [?count]der.
 	\return ERR_OK, если кодирование успешно выполнено или длина DER-кода 
 	успешно рассчитана, и код ошибки в противном случае.
 */
 err_t bignOidToDER(
-	octet oid_der[],	/*!< [out] DER-код идентификатора */
-	size_t* oid_len,	/*!< [in,out] длина буфера oid_der / длина DER-кода */
+	octet der[],		/*!< [out] DER-код идентификатора */
+	size_t* count,		/*!< [in,out] длина буфера der / длина DER-кода */
 	const char* oid		/*!< [in] строковое представление идентификатора */
 );
 

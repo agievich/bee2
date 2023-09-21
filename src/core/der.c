@@ -4,7 +4,7 @@
 \brief Distinguished Encoding Rules
 \project bee2 [cryptographic library]
 \created 2014.04.21
-\version 2023.09.19
+\version 2023.09.21
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -529,7 +529,8 @@ size_t derTUINTEnc(octet der[], u32 tag, const octet* val, size_t len)
 	ASSERT(len > 0);
 	ASSERT(memIsValid(val, len));
 	// исключить незначащие нули V
-	while (len > 1 && val[--len] == 0);
+	while (len > 1 && val[len - 1] == 0)
+		--len;
 	// установлен старший бит V => дополнительный нулевой октет
 	ex = (val[len - 1] & 128) ? 1 : 0;
 	// кодировать T и L

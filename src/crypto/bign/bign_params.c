@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): public parameters
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2023.09.20
+\version 2023.09.21
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -349,6 +349,20 @@ err_t bignValParams(const bign_params* params)
 /*
 *******************************************************************************
 DER-кодирование
+
+  SEQ ECParameters
+	SIZE(1) -- version
+	SEQ FieldID
+	  OID(bign-primefield)
+	  UINT -- parameters (p)
+	SEQ Curve
+	  OCT(SIZE(32|48|64)) -- a
+	  OCT(SIZE(32|48|64)) -- b
+	  BIT(SIZE(64)) -- seed
+	OCT(SIZE(32|48|64)) -- base (yG)
+	UINT -- order (q)
+	UINT(1) OPTIONAL -- cofactor
+
 *******************************************************************************
 */
 
@@ -370,7 +384,7 @@ do {\
 	ptr += t, count -= t;\
 } while(0)\
 
-size_t bignEncParams_internal(octet der[], const bign_params* params)
+static size_t bignEncParams_internal(octet der[], const bign_params* params)
 {
 	der_anchor_t ParamSeq[1];
 	der_anchor_t FieldSeq[1];
@@ -401,7 +415,7 @@ size_t bignEncParams_internal(octet der[], const bign_params* params)
 	return count;
 }
 
-size_t bignDecParams_internal(bign_params* params, const octet der[],
+static size_t bignDecParams_internal(bign_params* params, const octet der[],
 	size_t count)
 {
 	der_anchor_t ParamSeq[1];
@@ -430,7 +444,7 @@ size_t bignDecParams_internal(bign_params* params, const octet der[],
 	 derDecStep(derSEQDecStart(CurveSeq, ptr, count), ptr, count);
 	  derDecStep(derOCTDec2(params->a, ptr, count,  len), ptr, count);
 	  derDecStep(derOCTDec2(params->b, ptr, count,  len), ptr, count);
-	  derDecStep(derBITDec(params->seed, 0, ptr, 64), ptr, count);
+	  derDecStep(derBITDec2(params->seed, ptr, count, 64), ptr, count);
 	 derDecStep(derSEQDecStop(ptr, CurveSeq), ptr, count);
 	 // ...base...
 	 derDecStep(derOCTDec2(params->yG, ptr, count, len), ptr, count);
@@ -442,13 +456,37 @@ size_t bignDecParams_internal(bign_params* params, const octet der[],
 	return ptr - der;
 }
 
-err_t bignEncParams(octet* der, size_t* count, const bign_params* params)
+err_t bignEncParams(octet der[], size_t* count, const bign_params* params)
 {
-	return ERR_NOT_IMPLEMENTED;
+	size_t len;
+	if (!memIsValid(params, sizeof(params)) ||
+		!memIsValid(count, O_PER_S) ||
+		!memIsNullOrValid(der, *count))
+		return ERR_BAD_INPUT;
+	if (!bignIsOperable(params))
+		return ERR_BAD_PARAMS;
+	len = bignEncParams_internal(0, params);
+	if (len == SIZE_MAX)
+		return ERR_BAD_PARAMS;
+	if (der)
+	{
+		if (*count < len)
+			return ERR_OUTOFMEMORY;
+		len = bignEncParams_internal(der, params);
+		ASSERT(len != SIZE_MAX);
+	}
+	*count = len;
+	return ERR_OK;
 }
 
-err_t bignDecParams(bign_params* params, const octet* der, size_t count)
+err_t bignDecParams(bign_params* params, const octet der[], size_t count)
 {
-	return ERR_NOT_IMPLEMENTED;
-
+	size_t len;
+	if (!memIsValid(params, sizeof(params)) ||
+		!memIsValid(der, count))
+		return ERR_BAD_INPUT;
+	len = bignDecParams_internal(params, der, count);
+	if (len == SIZE_MAX)
+		return ERR_BAD_PARAMS;
+	return ERR_OK;
 }
