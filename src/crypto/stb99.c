@@ -4,7 +4,7 @@
 \brief STB 1176.2-99: generation of parameters
 \project bee2 [cryptographic library]
 \created 2023.08.01
-\version 2023.09.11
+\version 2023.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -382,7 +382,7 @@ static const size_t _bds_params10_ri[] = {
 *******************************************************************************
 */
 
-err_t stb99StdParams(stb99_params* params, stb99_seed* seed, const char* name)
+err_t stb99ParamsStd(stb99_params* params, stb99_seed* seed, const char* name)
 {
 	if (!memIsValid(params, sizeof(stb99_params)) ||
 		!memIsNullOrValid(seed, sizeof(stb99_seed)))
@@ -518,7 +518,7 @@ static err_t stb99ValRi(const stb99_seed* seed, size_t r)
 	return ERR_OK;
 }
 
-err_t stb99ValSeed(const stb99_seed* seed)
+err_t stb99SeedVal(const stb99_seed* seed)
 {
 	err_t code;
 	size_t i;
@@ -547,7 +547,7 @@ err_t stb99ValSeed(const stb99_seed* seed)
 	return ERR_OK;
 }
 
-err_t stb99AdjSeed(stb99_seed* seed)
+err_t stb99SeedAdj(stb99_seed* seed)
 {
 	size_t i;
 	size_t r;
@@ -608,7 +608,7 @@ err_t stb99AdjSeed(stb99_seed* seed)
 *******************************************************************************
 */
 
-err_t stb99GenParams(stb99_params* params, const stb99_seed* seed)
+err_t stb99ParamsGen(stb99_params* params, const stb99_seed* seed)
 {
 	err_t code;
 	size_t i;
@@ -631,7 +631,7 @@ err_t stb99GenParams(stb99_params* params, const stb99_seed* seed)
 	qr_o* qr;
 	void* stack;
 	// проверить seed
-	code = stb99ValSeed(seed);
+	code = stb99SeedVal(seed);
 	ERR_CALL_CHECK(code);
 	// подготовить params
 	if (!memIsValid(params, sizeof(stb99_params)))
@@ -820,7 +820,7 @@ err_t stb99GenParams(stb99_params* params, const stb99_seed* seed)
 *******************************************************************************
 */
 
-err_t stb99ValParams(const stb99_params* params)
+err_t stb99ParamsVal(const stb99_params* params)
 {
 	size_t n, no;
 	size_t m, mo;

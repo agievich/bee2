@@ -4,7 +4,7 @@
 \brief Draft of RD_RB: key establishment protocols in finite fields
 \project bee2 [cryptographic library]
 \created 2014.07.01
-\version 2023.09.11
+\version 2023.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -340,7 +340,7 @@ static const size_t _bdh_params10_li[] = {
 *******************************************************************************
 */
 
-err_t pfokStdParams(pfok_params* params, pfok_seed* seed, const char* name)
+err_t pfokParamsStd(pfok_params* params, pfok_seed* seed, const char* name)
 {
 	if (!memIsValid(params, sizeof(pfok_params)) ||
 		!memIsNullOrValid(seed, sizeof(pfok_seed)))
@@ -419,7 +419,7 @@ err_t pfokStdParams(pfok_params* params, pfok_seed* seed, const char* name)
 *******************************************************************************
 */
 
-static err_t pfokValZi(const pfok_seed* seed)
+static err_t pfokZiVal(const pfok_seed* seed)
 {
 	size_t i;
 	for (i = 0; i < 31; ++i)
@@ -428,7 +428,7 @@ static err_t pfokValZi(const pfok_seed* seed)
 	return ERR_OK;
 }
 
-static err_t pfokValLi(const pfok_seed* seed)
+static err_t pfokLiVal(const pfok_seed* seed)
 {
 	size_t i;
 	// проверить li[0]
@@ -447,7 +447,7 @@ static err_t pfokValLi(const pfok_seed* seed)
 	return ERR_OK;
 }
 
-err_t pfokValSeed(const pfok_seed* seed)
+err_t pfokSeedVal(const pfok_seed* seed)
 {
 	err_t code;
 	size_t i;
@@ -461,16 +461,16 @@ err_t pfokValSeed(const pfok_seed* seed)
 	if (i == COUNT_OF(_ls))
 		return ERR_BAD_SEED;
 	// проверить числа zi
-	code = pfokValZi(seed);
+	code = pfokZiVal(seed);
 	ERR_CALL_CHECK(code);
 	// проверить цепочку li
-	code = pfokValLi(seed);
+	code = pfokLiVal(seed);
 	ERR_CALL_CHECK(code);
 	// все хорошо
 	return ERR_OK;
 }
 
-err_t pfokAdjSeed(pfok_seed* seed)
+err_t pfokSeedAdj(pfok_seed* seed)
 {
 	size_t i;
 	// проверить указатели
@@ -483,7 +483,7 @@ err_t pfokAdjSeed(pfok_seed* seed)
 	if (i == COUNT_OF(_ls))
 		return ERR_BAD_SEED;
 	// проверить zi
-	if (pfokValZi(seed) != ERR_OK)
+	if (pfokZiVal(seed) != ERR_OK)
 	{
 		if (!memIsZero(seed->zi, sizeof(seed->zi)))
 			return ERR_BAD_SEED;
@@ -491,7 +491,7 @@ err_t pfokAdjSeed(pfok_seed* seed)
 			seed->zi[i] = (u16)(i + 1);
 	}
 	// проверить цепочку li
-	if (pfokValLi(seed) != ERR_OK)
+	if (pfokLiVal(seed) != ERR_OK)
 	{
 		if (!memIsZero(seed->li, sizeof(seed->li)))
 			return ERR_BAD_SEED;
@@ -514,7 +514,7 @@ err_t pfokAdjSeed(pfok_seed* seed)
 *******************************************************************************
 */
 
-static bool_t pfokIsOperableParams(const pfok_params* params)
+static bool_t pfokParamsIsOperable(const pfok_params* params)
 {
 	size_t i;
 	size_t no;
@@ -572,7 +572,7 @@ Proof:
 *******************************************************************************
 */
 
-err_t pfokGenParams(pfok_params* params, const pfok_seed* seed, 
+err_t pfokParamsGen(pfok_params* params, const pfok_seed* seed, 
 	pfok_on_q_i on_q)
 {
 	err_t code;
@@ -592,7 +592,7 @@ err_t pfokGenParams(pfok_params* params, const pfok_seed* seed,
 	qr_o* qr;
 	void* stack;
 	// проверить seed
-	code = pfokValSeed(seed);
+	code = pfokSeedVal(seed);
 	ERR_CALL_CHECK(code);
 	// подготовить params
 	if (!memIsValid(params, sizeof(pfok_params)))
@@ -714,7 +714,7 @@ err_t pfokGenParams(pfok_params* params, const pfok_seed* seed,
 	return ERR_OK;
 }
 
-err_t pfokValParams(const pfok_params* params)
+err_t pfokParamsVal(const pfok_params* params)
 {
 	size_t n, no;
 	// состояние 
@@ -728,7 +728,7 @@ err_t pfokValParams(const pfok_params* params)
 	if (!memIsValid(params, sizeof(pfok_params)))
 		return ERR_BAD_INPUT;
 	// работоспособные параметры?
-	if (!pfokIsOperableParams(params))
+	if (!pfokParamsIsOperable(params))
 		return ERR_BAD_PARAMS;
 	// размерности
 	no = O_OF_B(params->l), n = W_OF_B(params->l);
@@ -782,7 +782,7 @@ err_t pfokValParams(const pfok_params* params)
 *******************************************************************************
 */
 
-err_t pfokGenKeypair(octet privkey[], octet pubkey[], 
+err_t pfokKeypairGen(octet privkey[], octet pubkey[], 
 	const pfok_params* params, gen_i rng, void* rng_state)
 {
 	size_t n, no;
@@ -797,7 +797,7 @@ err_t pfokGenKeypair(octet privkey[], octet pubkey[],
 	if (!memIsValid(params, sizeof(pfok_params)))
 		return ERR_BAD_INPUT;
 	// работоспособные параметры?
-	if (!pfokIsOperableParams(params))
+	if (!pfokParamsIsOperable(params))
 		return ERR_BAD_PARAMS;
 	// размерности
 	n = W_OF_B(params->l), no = O_OF_B(params->l);
@@ -835,14 +835,14 @@ err_t pfokGenKeypair(octet privkey[], octet pubkey[],
 	return ERR_OK;
 }
 
-err_t pfokValPubkey(const pfok_params* params, const octet pubkey[])
+err_t pfokPubkeyVal(const pfok_params* params, const octet pubkey[])
 {
 	size_t no;
 	// проверить params
 	if (!memIsValid(params, sizeof(pfok_params)))
 		return ERR_BAD_INPUT;
 	// работоспособные параметры?
-	if (!pfokIsOperableParams(params))
+	if (!pfokParamsIsOperable(params))
 		return ERR_BAD_PARAMS;
 	// размерности
 	no = O_OF_B(params->l);
@@ -856,7 +856,7 @@ err_t pfokValPubkey(const pfok_params* params, const octet pubkey[])
 	return ERR_OK;
 }
 
-err_t pfokCalcPubkey(octet pubkey[], const pfok_params* params, 
+err_t pfokPubkeyCalc(octet pubkey[], const pfok_params* params, 
 	const octet privkey[])
 {
 	size_t n, no;
@@ -871,7 +871,7 @@ err_t pfokCalcPubkey(octet pubkey[], const pfok_params* params,
 	if (!memIsValid(params, sizeof(pfok_params)))
 		return ERR_BAD_INPUT;
 	// работоспособные параметры?
-	if (!pfokIsOperableParams(params))
+	if (!pfokParamsIsOperable(params))
 		return ERR_BAD_PARAMS;
 	// размерности
 	n = W_OF_B(params->l), no = O_OF_B(params->l);
@@ -932,7 +932,7 @@ err_t pfokDH(octet sharekey[], const pfok_params* params,
 	if (!memIsValid(params, sizeof(pfok_params)))
 		return ERR_BAD_INPUT;
 	// работоспособные параметры?
-	if (!pfokIsOperableParams(params))
+	if (!pfokParamsIsOperable(params))
 		return ERR_BAD_PARAMS;
 	// размерности
 	n = W_OF_B(params->l), no = O_OF_B(params->l);
@@ -1000,7 +1000,7 @@ err_t pfokMTI(octet sharekey[], const pfok_params* params,
 	if (!memIsValid(params, sizeof(pfok_params)))
 		return ERR_BAD_INPUT;
 	// работоспособные параметры?
-	if (!pfokIsOperableParams(params))
+	if (!pfokParamsIsOperable(params))
 		return ERR_BAD_PARAMS;
 	// размерности
 	n = W_OF_B(params->l), no = O_OF_B(params->l);

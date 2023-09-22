@@ -4,7 +4,7 @@
 \brief STB 1176.2-99: generation of parameters
 \project bee2 [cryptographic library]
 \created 2023.08.01
-\version 2023.09.11
+\version 2023.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -76,7 +76,7 @@ extern "C" {
 долговременные параметры или проверяется результат генерации. Затравочные
 параметры описаны в пункте 7.2.1.
 
-Ограничения на затравочные параметры указаны в описании функции stb99ValSeed().
+Ограничения на затравочные параметры указаны в описании функции stb99SeedVal().
 
 Размерности массива stb99_seed::di соответствуют следующей цепочке максимальной
 длины: 
@@ -133,7 +133,7 @@ typedef struct
 	.
 	\return ERR_OK, если параметры корректны, и код ошибки в противном случае.
 */
-err_t stb99ValSeed(
+err_t stb99SeedVal(
 	const stb99_seed* seed	/*!< [in] затравочные параметры */
 );
 
@@ -151,7 +151,7 @@ err_t stb99ValSeed(
 	\return ERR_OK, если итоговые параметры корректны, и код ошибки
 	в противном случае.
 */
-err_t stb99AdjSeed(
+err_t stb99SeedAdj(
 	stb99_seed* seed		/*!< [in/out] затравочные параметры */
 );
 
@@ -171,7 +171,7 @@ err_t stb99AdjSeed(
 	\return ERR_OK, если параметры успешно загружены, и код ошибки в
 	противном случае.
 */
-err_t stb99StdParams(
+err_t stb99ParamsStd(
 	stb99_params* params,	/*!< [out] стандартные параметры */
 	stb99_seed* seed,		/*!< [out] затравочные параметры */
 	const char* name		/*!< [in] имя параметров */
@@ -187,7 +187,7 @@ err_t stb99StdParams(
 	seed->d, а затем последовательные инкременты d до тех пор, пока среди них
 	не встретится подходящий. Окончательное значение d возвращается в seed->d.
 */
-err_t stb99GenParams(
+err_t stb99ParamsGen(
 	stb99_params* params,		/*!< [out] долговременные параметры */
 	const stb99_seed* seed		/*!< [in] затравочные параметры */
 );
@@ -207,7 +207,7 @@ err_t stb99GenParams(
 	\return ERR_OK, если параметры корректны, и код ошибки в противном случае.
 	\warning Не проверяется, что p и q построены по алгоритму 7.2.
 */
-err_t stb99ValParams(
+err_t stb99ParamsVal(
 	const stb99_params* params	/*!< [in] долговременные параметры */
 );
 

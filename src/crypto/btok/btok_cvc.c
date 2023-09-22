@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): CV certificates
 \project bee2 [cryptographic library]
 \created 2022.07.04
-\version 2023.06.19
+\version 2023.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -47,13 +47,13 @@ static err_t btokStdParams(bign_params* params, size_t privkey_len)
 	switch (privkey_len)
 	{
 	case 24:
-		return bign96StdParams(params, "1.2.112.0.2.0.34.101.45.3.0");
+		return bign96ParamsStd(params, "1.2.112.0.2.0.34.101.45.3.0");
 	case 32:
-		return bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1");
+		return bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.1");
 	case 48:
-		return bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.2");
+		return bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.2");
 	case 64:
-		return bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.3");
+		return bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.3");
 	}
 	return ERR_BAD_INPUT;
 }
@@ -67,8 +67,8 @@ static err_t btokPubkeyCalc(octet pubkey[], const octet privkey[],
 	code = btokStdParams(params, privkey_len);
 	ERR_CALL_CHECK(code);
 	// вычислить ключ
-	return privkey_len == 24 ? bign96CalcPubkey(pubkey, params, privkey) :
-		bignCalcPubkey(pubkey, params, privkey);
+	return privkey_len == 24 ? bign96PubkeyCalc(pubkey, params, privkey) :
+		bignPubkeyCalc(pubkey, params, privkey);
 }
 
 static err_t btokPubkeyVal(const octet pubkey[], size_t pubkey_len)
@@ -82,8 +82,8 @@ static err_t btokPubkeyVal(const octet pubkey[], size_t pubkey_len)
 	code = btokStdParams(params, pubkey_len / 2);
 	ERR_CALL_CHECK(code);
 	// проверить ключ
-	return pubkey_len == 48 ? bign96ValPubkey(params, pubkey) :
-		bignValPubkey(params, pubkey);
+	return pubkey_len == 48 ? bign96PubkeyVal(params, pubkey) :
+		bignPubkeyVal(params, pubkey);
 }
 
 static err_t btokKeypairVal(const octet privkey[], size_t privkey_len,
@@ -98,8 +98,8 @@ static err_t btokKeypairVal(const octet privkey[], size_t privkey_len,
 	code = btokStdParams(params, privkey_len);
 	ERR_CALL_CHECK(code);
 	// проверить пару ключей
-	return privkey_len == 24 ? bign96ValKeypair(params, privkey, pubkey) :
-		bignValKeypair(params, privkey, pubkey);
+	return privkey_len == 24 ? bign96KeypairVal(params, privkey, pubkey) :
+		bignKeypairVal(params, privkey, pubkey);
 }
 
 static err_t btokSign(octet sig[], const void* buf, size_t count,
@@ -206,9 +206,9 @@ static err_t btokVerify(const void* buf, size_t count, const octet sig[],
 	}
 	// проверить открытый ключ
 	if (pubkey_len == 48)
-		code = bign96ValPubkey(params, pubkey);
+		code = bign96PubkeyVal(params, pubkey);
 	else
-		code = bignValPubkey(params, pubkey);
+		code = bignPubkeyVal(params, pubkey);
 	ERR_CALL_HANDLE(code, blobClose(stack));
 	// проверить подпись
 	if (pubkey_len == 48)

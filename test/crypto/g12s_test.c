@@ -4,7 +4,7 @@
 \brief Tests for GOST R 34.10-2012 (Russia)
 \project bee2/test
 \created 2014.04.07
-\version 2023.03.29
+\version 2023.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -39,15 +39,15 @@ bool_t g12sTest()
 		sizeof(echo) < prngCOMBO_keep())
 		return FALSE;
 	// тест A.1 [загрузка параметров]
-	if (g12sStdParams(params, "1.2.643.2.2.35.0") != ERR_OK ||
-		g12sValParams(params) != ERR_OK)
+	if (g12sParamsStd(params, "1.2.643.2.2.35.0") != ERR_OK ||
+		g12sParamsVal(params) != ERR_OK)
 		return FALSE;
 	// тест A.1 [генерация ключей]
 	hexToRev(buf, 
 		"7A929ADE789BB9BE10ED359DD39A72C1"
 		"1B60961F49397EEE1D19CE9891EC3B28");
 	prngEchoStart(echo, buf, 32);
-	if (g12sGenKeypair(privkey, pubkey, params, prngEchoStepR, echo) 
+	if (g12sKeypairGen(privkey, pubkey, params, prngEchoStepR, echo) 
 		!= ERR_OK ||
 		!hexEqRev(privkey, 
 			"7A929ADE789BB9BE10ED359DD39A72C1"
@@ -77,8 +77,8 @@ bool_t g12sTest()
 		(sig[0] ^= 1, g12sVerify(params, hash, sig, pubkey) == ERR_OK))
 		return FALSE;
 	// тест A.2 [загрузка параметров]
-	if (g12sStdParams(params, "1.2.643.7.1.2.1.2.0") != ERR_OK ||
-		g12sValParams(params) != ERR_OK)
+	if (g12sParamsStd(params, "1.2.643.7.1.2.1.2.0") != ERR_OK ||
+		g12sParamsVal(params) != ERR_OK)
 		return FALSE;
 	// тест A.2 [генерация ключей]
 	hexToRev(buf, 
@@ -87,7 +87,7 @@ bool_t g12sTest()
 		"72E8123B2200A0563322DAD2827E2714"
 		"A2636B7BFD18AADFC62967821FA18DD4");
 	prngEchoStart(echo, buf, 64);
-	if (g12sGenKeypair(privkey, pubkey, params, prngEchoStepR, echo) 
+	if (g12sKeypairGen(privkey, pubkey, params, prngEchoStepR, echo) 
 		!= ERR_OK ||
 		!hexEqRev(privkey, 
 			"0BA6048AADAE241BA40936D47756D7C9"
@@ -132,28 +132,28 @@ bool_t g12sTest()
 		(sig[0] ^= 1, g12sVerify(params, hash, sig, pubkey) == ERR_OK))
 		return FALSE;
 	// проверить кривую cryptoproA
-	if (g12sStdParams(params, "1.2.643.2.2.35.1") != ERR_OK ||
-		g12sValParams(params) != ERR_OK)
+	if (g12sParamsStd(params, "1.2.643.2.2.35.1") != ERR_OK ||
+		g12sParamsVal(params) != ERR_OK)
 		return FALSE;
 	// проверить кривую cryptoproB
-	if (g12sStdParams(params, "1.2.643.2.2.35.2") != ERR_OK ||
-		g12sValParams(params) != ERR_OK)
+	if (g12sParamsStd(params, "1.2.643.2.2.35.2") != ERR_OK ||
+		g12sParamsVal(params) != ERR_OK)
 		return FALSE;
 	// проверить кривую cryptoproC
-	if (g12sStdParams(params, "1.2.643.2.2.35.3") != ERR_OK ||
-		g12sValParams(params) != ERR_OK)
+	if (g12sParamsStd(params, "1.2.643.2.2.35.3") != ERR_OK ||
+		g12sParamsVal(params) != ERR_OK)
 		return FALSE;
 	// проверить кривую cryptocom
-	if (g12sStdParams(params, "1.2.643.2.9.1.8.1") != ERR_OK ||
-		g12sValParams(params) != ERR_OK)
+	if (g12sParamsStd(params, "1.2.643.2.9.1.8.1") != ERR_OK ||
+		g12sParamsVal(params) != ERR_OK)
 		return FALSE;
 	// проверить кривую paramsetA512
-	if (g12sStdParams(params, "1.2.643.7.1.2.1.2.1") != ERR_OK ||
-		g12sValParams(params) != ERR_OK)
+	if (g12sParamsStd(params, "1.2.643.7.1.2.1.2.1") != ERR_OK ||
+		g12sParamsVal(params) != ERR_OK)
 		return FALSE;
 	// проверить кривую paramsetB512
-	if (g12sStdParams(params, "1.2.643.7.1.2.1.2.2") != ERR_OK ||
-		g12sValParams(params) != ERR_OK)
+	if (g12sParamsStd(params, "1.2.643.7.1.2.1.2.2") != ERR_OK ||
+		g12sParamsVal(params) != ERR_OK)
 		return FALSE;
 	// все нормально
 	return TRUE;

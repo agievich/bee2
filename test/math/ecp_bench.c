@@ -4,7 +4,7 @@
 \brief Benchmarks for elliptic curves over prime fields
 \project bee2/test
 \created 2013.10.17
-\version 2023.09.19
+\version 2023.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -48,7 +48,7 @@ bool_t ecpBench()
 	if (sizeof(state) < bignStart_keep(128, _ecpBench_deep))
 		return FALSE;
 	// загрузить параметры и создать описание кривой
-	if (bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK ||
+	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK ||
 		bignStart(state, params) != ERR_OK)
 		return FALSE;
 	// раскладка состояния

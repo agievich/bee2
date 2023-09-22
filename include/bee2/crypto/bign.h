@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): digital signature and key transport algorithms
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2023.09.21
+\version 2023.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -84,7 +84,7 @@ typedef struct
 	\return ERR_OK, если параметры успешно загружены, и код ошибки в
 	противном случае.
 */
-err_t bignStdParams(
+err_t bignParamsStd(
 	bign_params* params,	/*!< [out] стандартные параметры */
 	const char* name		/*!< [in] имя параметров */
 );
@@ -92,12 +92,68 @@ err_t bignStdParams(
 /*!	\brief Проверка долговременных параметров
 
 	Проверяется корректность долговременных параметров params.
-	\return ERR_OK, если параметры корректны, и код ошибки
-	в противном случае.
+	\return ERR_OK, если параметры корректны, и код ошибки в противном случае.
 	\remark Реализован алгоритм 6.1.4.
 */
-err_t bignValParams(
+err_t bignParamsVal(
 	const bign_params* params	/*!< [in] долговременные параметры */
+);
+
+/*!	\brief Вычисление порядка группы точек эллиптической кривой
+
+	Определяется порядок params->q группы точек эллиптической кривой, заданной
+	параметрами params->p, params->a и params->b. При вычислениях используется
+	состояние state.
+	\return ERR_OK, если порядок успешно вычислен, и код ошибки в противном
+	случае.
+	\remark Функция может возвращать ошибку, если порядок заведомо не
+	удовлетворяет требованиям СТБ 34.101.45, например, является составным.
+*/
+typedef err_t(*bign_pgen_calc_q)(
+	bign_params* params,		/*!< [in, out] долговременные параметры */
+	void* state					/*!< [in, out] состояние */
+);
+
+/*!	\brief Обработка нового затравочного значения
+	
+	Выполняется обработка нового затравочного значения params->seed
+	в процессе генерации долговременных параметров. При вычислениях
+	используется состояние state.
+	\return ERR_OK, если затравочное значение успешно обработано,
+	и код ошибки в противном случае.
+	\remark В момент обработки действительны параметры params->l,
+	params->p, params->a и params->b. Описываемая этими параметрами
+	эллиптическая кривая не обязательно является корректной.
+*/
+typedef err_t(*bign_pgen_on_seed)(
+	void* state,				/*!< [in, out] состояние */
+	const bign_params* params	/*!< [in] долговременные параметры */
+);
+
+/*!	\brief Генерация долговременных параметров
+
+	По параметрам params->l, params->p, params->a и params->seed вычисляются
+	и сохраняются в полях params остальные долговременные параметры. Если
+	построенные params не удовлетворяют требованиям СТБ 34.101.45, то параметр
+	params->seed увеличивается на 1 (как число little-endian), вычисление
+	и проверка параметров продолжаются. Параметр params->q вычисляется
+	с помощью функции calc_q(). Функция on_seed() получает управление всякий
+	раз после инкремента params->seed. Функции calc_q() и on_seed() используют
+	в своей работе состояние state. Указатель on_seed может быть нулевым, т.е.
+	функция on_seed() может не использоваться.
+	\expect{ERR_BAD_INPUT} calc_q != 0.
+	\expect Функция calc_q() корректна. Если on_seed != 0, то функция on_seed()
+	также корректна.
+	\expect Состояние state предварительно настроено.
+	\return ERR_OK, если параметры успешно сгенерированы, и код ошибки
+	в противном случае.
+	\remark Реализован алгоритм 6.1.3.
+*/
+err_t bignParamsGen(
+	bign_params* params,			/*!< [in, out] долговременные параметры */
+	bign_pgen_calc_q calc_q,		/*!< [in] функция вычисления порядка q */
+	bign_pgen_on_seed on_seed,		/*!< [in] функция обработки нового seed */
+	void* state						/*!< [in, out] состояние функций */
 );
 
 /*!	\brief Кодирование параметров
@@ -106,7 +162,7 @@ err_t bignValParams(
 	\return ERR_OK в случае успеха и код ошибки	в противном случае.
 	\remark Формат кода определяется типом ECParameters, установленным в Д.11.
 */
-err_t bignEncParams(
+err_t bignParamsEnc(
 	octet der[],				/*!< [out] DER-код */
 	size_t* count,				/*!< [in,out] длина der / длина DER-кода */
 	const bign_params* params	/*!< [in] долговременные параметры */
@@ -117,8 +173,10 @@ err_t bignEncParams(
 	По DER-коду [count]der определяются долговременные параметры params.
 	\return ERR_OK в случае успеха и код ошибки	в противном случае.
 	\remark Формат кода определяется типом ECParameters, установленным в Д.11.
+	\remark Длина der должна в точности равняться count. Противное считается
+	ошибкой формата.
 */
-err_t bignDecParams(
+err_t bignParamsDec(
 	bign_params* params,		/*!< [out] долговременные параметры */
 	const octet der[],			/*!< [in] DER-код */
 	size_t count				/*!< [in] длина der в октетах */
@@ -179,7 +237,7 @@ err_t bignOidToDER(
 	в противном случае.
 	\remark Реализован алгоритм 6.2.2.
 */
-err_t bignGenKeypair(
+err_t bignKeypairGen(
 	octet privkey[],			/*!< [out] личный ключ */
 	octet pubkey[],				/*!< [out] открытый ключ */
 	const bign_params* params,	/*!< [in] долговременные параметры */
@@ -195,7 +253,7 @@ err_t bignGenKeypair(
 	\expect{ERR_BAD_PARAMS} Параметры params корректны.
 	\return ERR_OK, если пара корректна, и код ошибки в противном случае.
 */
-err_t bignValKeypair(
+err_t bignKeypairVal(
 	const bign_params* params,	/*!< [in] долговременные параметры */
 	const octet privkey[],		/*!< [in] личный ключ */
 	const octet pubkey[]		/*!< [in] открытый ключ */
@@ -209,27 +267,27 @@ err_t bignValKeypair(
 	\return ERR_OK, если ключ корректен, и код ошибки в противном случае.
 	\remark Реализован алгоритм 6.2.3.
 */
-err_t bignValPubkey(
+err_t bignPubkeyVal(
 	const bign_params* params,	/*!< [in] долговременные параметры */
 	const octet pubkey[]		/*!< [in] проверяемый ключ */
 );
 
 /*!	\brief Построение открытого ключа по личному
 
-	При долговременных параметрах params по личному ключу [l / 4]privkey 
+	При долговременных параметрах params по личному ключу [l / 4]privkey
 	строится открытый ключ [l / 2]pubkey.
 	\expect{ERR_BAD_PARAMS} Параметры params корректны.
 	\expect{ERR_BAD_PRIVKEY} Личный ключ privkey корректен.
 	\return ERR_OK, если открытый ключ успешно построен, и код ошибки
 	в противном случае.
 */
-err_t bignCalcPubkey(
+err_t bignPubkeyCalc(
 	octet pubkey[],				/*!< [out] открытый ключ */
 	const bign_params* params,	/*!< [in] долговременные параметры */
 	const octet privkey[]		/*!< [in] личный ключ */
 );
 
-/*!	\brief Построение общего ключа протокола Диффи -- Хеллмана 
+/*!	\brief Построение общего ключа Диффи -- Хеллмана
 
 	При долговременных параметрах params по личному ключу [l / 4]privkey 
 	и открытому ключу [l / 2]pubkey противоположной стороны строится 

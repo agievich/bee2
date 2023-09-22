@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.79 (btok)
 \project bee2/test
 \created 2022.07.07
-\version 2023.06.17
+\version 2023.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -136,8 +136,8 @@ static bool_t btokCVCTest()
 	cvc0->pubkey_len = 128;
 	if (btokCVCCheck(cvc0) == ERR_OK)
 		return FALSE;
-	if (bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.3") != ERR_OK ||
-		bignGenKeypair(privkey0, cvc0->pubkey, params, prngEchoStepR,
+	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.3") != ERR_OK ||
+		bignKeypairGen(privkey0, cvc0->pubkey, params, prngEchoStepR,
 			echo) != ERR_OK ||
 		btokCVCCheck(cvc0) != ERR_OK)
 		return FALSE;
@@ -176,8 +176,8 @@ static bool_t btokCVCTest()
 	memSet(cvc1->hat_eid, 0xDD, sizeof(cvc1->hat_eid));
 	memSet(cvc1->hat_esign, 0x33, sizeof(cvc1->hat_esign));
 	cvc1->pubkey_len = 96;
-	if (bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.2") != ERR_OK ||
-		bignGenKeypair(privkey1, cvc1->pubkey, params, prngEchoStepR,
+	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.2") != ERR_OK ||
+		bignKeypairGen(privkey1, cvc1->pubkey, params, prngEchoStepR,
 			echo) != ERR_OK ||
 		btokCVCCheck(cvc1) != ERR_OK)
 		return FALSE;
@@ -213,8 +213,8 @@ static bool_t btokCVCTest()
 	memSet(cvc2->hat_eid, 0x88, sizeof(cvc2->hat_eid));
 	memSet(cvc2->hat_esign, 0x11, sizeof(cvc2->hat_esign));
 	cvc2->pubkey_len = 64;
-	if (bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK ||
-		bignGenKeypair(privkey2, cvc2->pubkey, params, prngEchoStepR,
+	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK ||
+		bignKeypairGen(privkey2, cvc2->pubkey, params, prngEchoStepR,
 			echo) != ERR_OK ||
 		btokCVCCheck(cvc2) != ERR_OK)
 		return FALSE;
@@ -237,8 +237,8 @@ static bool_t btokCVCTest()
 	hexTo(cvc3->from, "020200070102");
 	hexTo(cvc3->until, "020901020301");
 	cvc3->pubkey_len = 48;
-	if (bign96StdParams(params, "1.2.112.0.2.0.34.101.45.3.0") != ERR_OK ||
-		bign96GenKeypair(privkey3, cvc3->pubkey, params, prngEchoStepR,
+	if (bign96ParamsStd(params, "1.2.112.0.2.0.34.101.45.3.0") != ERR_OK ||
+		bign96KeypairGen(privkey3, cvc3->pubkey, params, prngEchoStepR,
 			echo) != ERR_OK ||
 		btokCVCCheck(cvc3) != ERR_OK)
 		return FALSE;
@@ -467,7 +467,7 @@ bool_t btokBAUTHTest()
 	octet stateb[20000];
 	octet buf[1000];
 	// загрузить долговременные параметры
-	if (bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK)
+	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK)
 		return FALSE;
 	// подготовить память
 	if (sizeof(echoa) < prngEcho_keep() ||

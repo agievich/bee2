@@ -4,7 +4,7 @@
 \brief GOST R 34.10-94 (Russia): digital signature algorithms
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2023.02.02
+\version 2023.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -117,7 +117,7 @@ typedef struct g12s_params
 	\return ERR_OK, если параметры успешно загружены, и код ошибки
 	в противном случае.
 */
-err_t g12sStdParams(
+err_t g12sParamsStd(
 	g12s_params* params,		/*!< [out] стандартные параметры */
 	const char* name			/*!< [in] имя параметров */
 );
@@ -128,7 +128,7 @@ err_t g12sStdParams(
 	\return ERR_OK, если параметры корректны, и код ошибки в противном
 	случае.
 */
-err_t g12sValParams(
+err_t g12sParamsVal(
 	const g12s_params* params	/*!< [in] параметры */
 );
 
@@ -161,7 +161,7 @@ little-endian. Первая половинка pubkey кодирует x-коо�
 	\return ERR_OK, если ключи сгенерированы, и код ошибки в противном
 	случае.
 */
-err_t g12sGenKeypair(
+err_t g12sKeypairGen(
 	octet privkey[],			/*!< [out] личный ключ */
 	octet pubkey[],				/*!< [out] открытый ключ */
 	const g12s_params* params,	/*!< [in] долговременные параметры */

@@ -4,7 +4,7 @@
 \brief Draft of RD_RB: key establishment protocols based on finite fields
 \project bee2 [cryptographic library]
 \created 2014.06.30
-\version 2023.09.11
+\version 2023.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -79,7 +79,7 @@ extern "C" {
 Структура pfok_seed описывает затравочные параметры, по которым генерируются 
 долговременные параметры или проверяется результат генерации.
 
-Ограничения на затравочные параметры указаны в описании функции pfokValSeed().
+Ограничения на затравочные параметры указаны в описании функции pfokSeedVal().
 
 
 Ограничения на затравочные параметры:
@@ -147,7 +147,7 @@ typedef void (*pfok_on_q_i) (
 	.
 	\return ERR_OK, если параметры корректны, и код ошибки в противном случае.
 */
-err_t pfokValSeed(
+err_t pfokSeedVal(
 	const pfok_seed* seed	/*!< [in] затравочные параметры */
 );
 
@@ -163,7 +163,7 @@ err_t pfokValSeed(
 	\return ERR_OK, если итоговые параметры корректны, и код ошибки
 	в противном случае.
 */
-err_t pfokAdjSeed(
+err_t pfokSeedAdj(
 	pfok_seed* seed		/*!< [in/out] затравочные параметры */
 );
 
@@ -182,7 +182,7 @@ err_t pfokAdjSeed(
 	\return ERR_OK, если параметры успешно загружены, и код ошибки в
 	противном случае.
 */
-err_t pfokStdParams(
+err_t pfokParamsStd(
 	pfok_params* params,	/*!< [out] стандартные параметры */
 	pfok_seed* seed,		/*!< [out] затравочные параметры */
 	const char* name		/*!< [in] имя параметров */
@@ -200,7 +200,7 @@ err_t pfokStdParams(
 	\remark Реализованы алгоритмы 5.2, 5.3. В качестве params->g выбираются 
 	последовательные числа 1, 2,... до тех пор, пока не встретится подходящее.
 */
-err_t pfokGenParams(
+err_t pfokParamsGen(
 	pfok_params* params,	/*!< [out] долговременные параметры */
 	const pfok_seed* seed,	/*!< [in] затравочные параметры */
 	pfok_on_q_i on_q		/*!< [in] обработчик */
@@ -221,7 +221,7 @@ err_t pfokGenParams(
 	\return ERR_OK, если параметры корректны, и код ошибки в противном случае.
 	\warning Не проверяется, что p построен по алгоритму 5.2.
 */
-err_t pfokValParams(
+err_t pfokParamsVal(
 	const pfok_params* params	/*!< [in] долговременные параметры */
 );
 
@@ -243,7 +243,7 @@ err_t pfokValParams(
 	в противном случае.
 	\remark pubkey = g^(privkey).
 */
-err_t pfokGenKeypair(
+err_t pfokKeypairGen(
 	octet privkey[],			/*!< [out] личный ключ */
 	octet pubkey[],				/*!< [out] открытый ключ */
 	const pfok_params* params,	/*!< [in] долговременные параметры */
@@ -258,7 +258,7 @@ err_t pfokGenKeypair(
 	\expect{ERR_BAD_PARAMS} Параметры params корректны.
 	\return ERR_OK, если ключ корректен, и код ошибки в противном случае.
 */
-err_t pfokValPubkey(
+err_t pfokPubkeyVal(
 	const pfok_params* params,	/*!< [in] долговременные параметры */
 	const octet pubkey[]		/*!< [in] проверяемый ключ */
 );
@@ -273,7 +273,7 @@ err_t pfokValPubkey(
 	в противном случае.
 	\remark pubkey = g^(privkey).
 */
-err_t pfokCalcPubkey(
+err_t pfokPubkeyCalc(
 	octet pubkey[],				/*!< [out] открытый ключ */
 	const pfok_params* params,	/*!< [in] долговременные параметры */
 	const octet privkey[]		/*!< [in] личный ключ */

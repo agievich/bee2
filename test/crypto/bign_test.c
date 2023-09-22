@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.45 (bign)
 \project bee2/test
 \created 2012.08.27
-\version 2023.09.21
+\version 2023.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -92,7 +92,7 @@ bool_t bignTest()
 {
 	bign_params params[1];
 	bign_params params1[1];
-	octet der[256];
+	octet der[512];
 	size_t count;
 	octet privkey[64];
 	octet pubkey[128];
@@ -119,19 +119,23 @@ bool_t bignTest()
 		sizeof(zz_stack) < zzMulMod_deep(W_OF_O(32)))
 		return FALSE;
 	// проверить таблицы Б.1, Б.2, Б.3
-	if (bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.3") != ERR_OK ||
-		bignValParams(params) != ERR_OK)
-		return FALSE;
-	if (bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.2") != ERR_OK ||
-		bignValParams(params) != ERR_OK)
-		return FALSE;
-	if (bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK ||
-		bignValParams(params) != ERR_OK)
-		return FALSE;
-	// кодирование параметров
 	count = sizeof(der);
-	if (bignEncParams(der, &count, params) != ERR_OK ||
-		bignDecParams(params1, der, count) != ERR_OK ||
+	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.3") != ERR_OK ||
+		bignParamsVal(params) != ERR_OK ||
+		bignParamsEnc(der, &count, params) != ERR_OK ||
+		bignParamsDec(params1, der, count) != ERR_OK ||
+		!memEq(params, params1, sizeof(bign_params)))
+		return FALSE;
+	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.2") != ERR_OK ||
+		bignParamsVal(params) != ERR_OK ||
+		bignParamsEnc(der, &count, params) != ERR_OK ||
+		bignParamsDec(params1, der, count) != ERR_OK ||
+		!memEq(params, params1, sizeof(bign_params)))
+		return FALSE;
+	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK ||
+		bignParamsVal(params) != ERR_OK ||
+		bignParamsEnc(der, &count, params) != ERR_OK ||
+		bignParamsDec(params1, der, count) != ERR_OK ||
 		!memEq(params, params1, sizeof(bign_params)))
 		return FALSE;
 	// идентификатор объекта
@@ -143,7 +147,7 @@ bool_t bignTest()
 	brngCTRXStart(beltH() + 128, beltH() + 128 + 64,
 		beltH(), 8 * 32, brng_state);
 	// тест Г.1
-	if (bignGenKeypair(privkey, pubkey, params, brngCTRXStepR, brng_state) != 
+	if (bignKeypairGen(privkey, pubkey, params, brngCTRXStepR, brng_state) != 
 		ERR_OK)
 		return FALSE;
 	if (!hexEq(privkey,
@@ -155,11 +159,11 @@ bool_t bignTest()
 		"7AC6A60361E8C8173491686D461B2826"
 		"190C2EDA5909054A9AB84D2AB9D99A90"))
 		return FALSE;
-	if (bignValKeypair(params, privkey, pubkey) != ERR_OK)
+	if (bignKeypairVal(params, privkey, pubkey) != ERR_OK)
 		return FALSE;
-	if (bignValPubkey(params, pubkey) != ERR_OK)
+	if (bignPubkeyVal(params, pubkey) != ERR_OK)
 		return FALSE;
-	if (bignCalcPubkey(pubkey, params, privkey) != ERR_OK)
+	if (bignPubkeyCalc(pubkey, params, privkey) != ERR_OK)
 		return FALSE;
 	if (!hexEq(pubkey,
 		"BD1A5650179D79E03FCEE49D4C2BD5DD"

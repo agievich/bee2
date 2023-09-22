@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): miscellaneous (OIDs, keys, DH)
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2023.09.21
+\version 2023.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -55,14 +55,14 @@ err_t bignOidToDER(octet der[], size_t* count, const char* oid)
 *******************************************************************************
 */
 
-static size_t bignGenKeypair_deep(size_t n, size_t f_deep, size_t ec_d,
+static size_t bignKeypairGen_deep(size_t n, size_t f_deep, size_t ec_d,
 	size_t ec_deep)
 {
 	return O_OF_W(n + 2 * n) +
 		ecMulA_deep(n, ec_d, ec_deep, n);
 }
 
-err_t bignGenKeypair(octet privkey[], octet pubkey[],
+err_t bignKeypairGen(octet privkey[], octet pubkey[],
 	const bign_params* params, gen_i rng, void* rng_state)
 {
 	err_t code;
@@ -82,7 +82,7 @@ err_t bignGenKeypair(octet privkey[], octet pubkey[],
 	if (rng == 0)
 		return ERR_BAD_RNG;
 	// создать состояние
-	state = blobCreate(bignStart_keep(params->l, bignGenKeypair_deep));
+	state = blobCreate(bignStart_keep(params->l, bignKeypairGen_deep));
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// старт
@@ -129,14 +129,14 @@ err_t bignGenKeypair(octet privkey[], octet pubkey[],
 *******************************************************************************
 */
 
-static size_t bignValKeypair_deep(size_t n, size_t f_deep, size_t ec_d,
+static size_t bignKeypairVal_deep(size_t n, size_t f_deep, size_t ec_d,
 	size_t ec_deep)
 {
 	return O_OF_W(n + 2 * n) +
 		ecMulA_deep(n, ec_d, ec_deep, n);
 }
 
-err_t bignValKeypair(const bign_params* params, const octet privkey[],
+err_t bignKeypairVal(const bign_params* params, const octet privkey[],
 	const octet pubkey[])
 {
 	err_t code;
@@ -153,7 +153,7 @@ err_t bignValKeypair(const bign_params* params, const octet privkey[],
 	if (!bignIsOperable(params))
 		return ERR_BAD_PARAMS;
 	// создать состояние
-	state = blobCreate(bignStart_keep(params->l, bignValKeypair_deep));
+	state = blobCreate(bignStart_keep(params->l, bignKeypairVal_deep));
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// старт
@@ -197,14 +197,14 @@ err_t bignValKeypair(const bign_params* params, const octet privkey[],
 	return code;
 }
 
-static size_t bignValPubkey_deep(size_t n, size_t f_deep, size_t ec_d,
+static size_t bignPubkeyVal_deep(size_t n, size_t f_deep, size_t ec_d,
 	size_t ec_deep)
 {
 	return O_OF_W(2 * n) +
 		ecpIsOnA_deep(n, f_deep);
 }
 
-err_t bignValPubkey(const bign_params* params, const octet pubkey[])
+err_t bignPubkeyVal(const bign_params* params, const octet pubkey[])
 {
 	err_t code;
 	size_t no, n;
@@ -219,7 +219,7 @@ err_t bignValPubkey(const bign_params* params, const octet pubkey[])
 	if (!bignIsOperable(params))
 		return ERR_BAD_PARAMS;
 	// создать состояние
-	state = blobCreate(bignStart_keep(params->l, bignValPubkey_deep));
+	state = blobCreate(bignStart_keep(params->l, bignPubkeyVal_deep));
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// старт
@@ -258,14 +258,14 @@ err_t bignValPubkey(const bign_params* params, const octet pubkey[])
 *******************************************************************************
 */
 
-static size_t bignCalcPubkey_deep(size_t n, size_t f_deep, size_t ec_d,
+static size_t bignPubkeyCalc_deep(size_t n, size_t f_deep, size_t ec_d,
 	size_t ec_deep)
 {
 	return O_OF_W(n + 2 * n) +
 		ecMulA_deep(n, ec_d, ec_deep, n);
 }
 
-err_t bignCalcPubkey(octet pubkey[], const bign_params* params,
+err_t bignPubkeyCalc(octet pubkey[], const bign_params* params,
 	const octet privkey[])
 {
 	err_t code;
@@ -282,7 +282,7 @@ err_t bignCalcPubkey(octet pubkey[], const bign_params* params,
 	if (!bignIsOperable(params))
 		return ERR_BAD_PARAMS;
 	// создать состояние
-	state = blobCreate(bignStart_keep(params->l, bignCalcPubkey_deep));
+	state = blobCreate(bignStart_keep(params->l, bignPubkeyCalc_deep));
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// старт

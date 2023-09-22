@@ -4,7 +4,7 @@
 \brief DSTU 4145-2002 (Ukraine): digital signature algorithms
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2023.04.13
+\version 2023.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -26,12 +26,12 @@
 Глубина стека
 
 Высокоуровневые функции сообщают о потребностях в стековой памяти через 
-функции интерфейса _dstu_deep_i. Потребности не должны учитывать память для 
+функции интерфейса dstu_deep_i. Потребности не должны учитывать память для 
 размещения описаний базового поля и эллиптической кривой.
 *******************************************************************************
 */
 
-typedef size_t (*_dstu_deep_i)(
+typedef size_t (*dstu_deep_i)(
 	size_t n,					/* размерность (в машинных словах) */
 	size_t f_deep,				/* глубина стека базового поля */
 	size_t ec_d,				/* число проективных координат */
@@ -348,7 +348,7 @@ static octet _curve431pb_c = 2;
 	(params)->c = _##name##_c;\
 
 
-err_t dstuStdParams(dstu_params* params, const char* name)
+err_t dstuParamsStd(dstu_params* params, const char* name)
 {
 	if (!memIsValid(params, sizeof(dstu_params)))
 		return ERR_BAD_INPUT;
@@ -424,10 +424,10 @@ err_t dstuStdParams(dstu_params* params, const char* name)
 *******************************************************************************
 */
 
-static err_t _dstuCreateEc(
+static err_t dstuEcCreate(
 	ec_o** pec,						/* [out] описание эллиптической кривой */
 	const dstu_params* params,		/* [in] долговременные параметры */
-	_dstu_deep_i deep				/* [in] потребности в стековой памяти */
+	dstu_deep_i deep				/* [in] потребности в стековой памяти */
 )
 {
 	// размерности
@@ -508,7 +508,7 @@ static err_t _dstuCreateEc(
 *******************************************************************************
 */
 
-void _dstuCloseEc(ec_o* ec)
+void dstuEcClose(ec_o* ec)
 {
 	blobClose(ec);
 }
@@ -524,7 +524,7 @@ void _dstuCloseEc(ec_o* ec)
 4) order >= 4(\floor{\sqrt{2^m}} + 1),
 5) кривая является безопасной с MOV-порогом 32.
 
-Условие 1) проверяется в функции _dstuCreateEc().
+Условие 1) проверяется в функции dstuEcCreate().
 Условие 2) проверяется в функции ec2IsValid().
 Условие 3) проверяется непосредственно.
 Условие 4) следует из границы Хассе
@@ -537,7 +537,7 @@ void _dstuCloseEc(ec_o* ec)
 *******************************************************************************
 */
 
-static size_t _dstuValParams_deep(size_t n, size_t f_deep, size_t ec_d, 
+static size_t dstuParamsVal_deep(size_t n, size_t f_deep, size_t ec_d, 
 	size_t ec_deep)
 {
 	return utilMax(4,
@@ -547,14 +547,14 @@ static size_t _dstuValParams_deep(size_t n, size_t f_deep, size_t ec_d,
 			ecHasOrderA_deep(n, ec_d, ec_deep, n));
 }
 
-err_t dstuValParams(const dstu_params* params)
+err_t dstuParamsVal(const dstu_params* params)
 {
 	err_t code;
 	// состояние
 	ec_o* ec = 0;
 	void* stack;
 	// старт
-	code = _dstuCreateEc(&ec, params, _dstuValParams_deep);
+	code = dstuEcCreate(&ec, params, dstuParamsVal_deep);
 	ERR_CALL_CHECK(code);
 	stack = objEnd(ec, void);
 	// проверить кривую и базовую точку
@@ -565,7 +565,7 @@ err_t dstuValParams(const dstu_params* params)
 		!ecHasOrderA(ec->base, ec, ec->order, ec->f->n, stack))
 		code = ERR_BAD_PARAMS;
 	// завершение
-	_dstuCloseEc(ec);
+	dstuEcClose(ec);
 	return code;
 }
 
@@ -575,7 +575,7 @@ err_t dstuValParams(const dstu_params* params)
 *******************************************************************************
 */
 
-static size_t _dstuGenPoint_deep(size_t n, size_t f_deep, size_t ec_d, 
+static size_t dstuPointGen_deep(size_t n, size_t f_deep, size_t ec_d, 
 	size_t ec_deep)
 {
 	return O_OF_W(3 * n) + 
@@ -584,7 +584,7 @@ static size_t _dstuGenPoint_deep(size_t n, size_t f_deep, size_t ec_d,
 			ecHasOrderA_deep(n, ec_d, ec_deep, n));
 }
 
-err_t dstuGenPoint(octet point[], const dstu_params* params, gen_i rng, 
+err_t dstuPointGen(octet point[], const dstu_params* params, gen_i rng, 
 	void* rng_state)
 {
 	err_t code;
@@ -598,12 +598,12 @@ err_t dstuGenPoint(octet point[], const dstu_params* params, gen_i rng,
 	if (rng == 0)
 		return ERR_BAD_RNG;
 	// старт
-	code = _dstuCreateEc(&ec, params, _dstuGenPoint_deep);
+	code = dstuEcCreate(&ec, params, dstuPointGen_deep);
 	ERR_CALL_CHECK(code);
 	// проверить входные указатели
 	if (!memIsValid(point, 2 * ec->f->no))
 	{
-		_dstuCloseEc(ec);
+		dstuEcClose(ec);
 		return ERR_BAD_INPUT;
 	}
 	// раскладка состояния
@@ -636,11 +636,11 @@ err_t dstuGenPoint(octet point[], const dstu_params* params, gen_i rng,
 	qrTo(point, x, ec->f, stack);
 	qrTo(point + ec->f->no, y, ec->f, stack);
 	// завершение
-	_dstuCloseEc(ec);
+	dstuEcClose(ec);
 	return ERR_OK;
 }
 
-static size_t _dstuValPoint_deep(size_t n, size_t f_deep, size_t ec_d, 
+static size_t dstuPointVal_deep(size_t n, size_t f_deep, size_t ec_d, 
 	size_t ec_deep)
 {
 	return O_OF_W(2 * n) + 
@@ -649,7 +649,7 @@ static size_t _dstuValPoint_deep(size_t n, size_t f_deep, size_t ec_d,
 			ecHasOrderA_deep(n, ec_d, ec_deep, n));
 }
 
-err_t dstuValPoint(const dstu_params* params, const octet point[])
+err_t dstuPointVal(const dstu_params* params, const octet point[])
 {
 	err_t code;
 	// состояние
@@ -658,12 +658,12 @@ err_t dstuValPoint(const dstu_params* params, const octet point[])
 	word* y;
 	void* stack;
 	// старт
-	code = _dstuCreateEc(&ec, params, _dstuValPoint_deep);
+	code = dstuEcCreate(&ec, params, dstuPointVal_deep);
 	ERR_CALL_CHECK(code);
 	// проверить входные указатели
 	if (!memIsValid(point, 2 * ec->f->no))
 	{
-		_dstuCloseEc(ec);
+		dstuEcClose(ec);
 		return ERR_BAD_INPUT;
 	}
 	// раскладка состояния
@@ -677,17 +677,17 @@ err_t dstuValPoint(const dstu_params* params, const octet point[])
 		!ecHasOrderA(x, ec, ec->order, ec->f->n, stack))
 		code = ERR_BAD_POINT;
 	// завершение
-	_dstuCloseEc(ec);
+	dstuEcClose(ec);
 	return code;
 }
 
-static size_t _dstuCompressPoint_deep(size_t n, size_t f_deep, size_t ec_d, 
+static size_t dstuPointCompress_deep(size_t n, size_t f_deep, size_t ec_d, 
 	size_t ec_deep)
 {
 	return O_OF_W(2 * n) + gf2Tr_deep(n, f_deep);
 }
 
-err_t dstuCompressPoint(octet xpoint[], const dstu_params* params, 
+err_t dstuPointCompress(octet xpoint[], const dstu_params* params, 
 	const octet point[])
 {
 	err_t code;
@@ -697,13 +697,13 @@ err_t dstuCompressPoint(octet xpoint[], const dstu_params* params,
 	word* y;
 	void* stack;
 	// старт
-	code = _dstuCreateEc(&ec, params, _dstuCompressPoint_deep);
+	code = dstuEcCreate(&ec, params, dstuPointCompress_deep);
 	ERR_CALL_CHECK(code);
 	// проверить входные указатели
 	if (!memIsValid(point, 2 * ec->f->no) || 
 		!memIsValid(xpoint, ec->f->no))
 	{
-		_dstuCloseEc(ec);
+		dstuEcClose(ec);
 		return ERR_BAD_INPUT;
 	}
 	// раскладка состояния
@@ -714,13 +714,13 @@ err_t dstuCompressPoint(octet xpoint[], const dstu_params* params,
 	if (!qrFrom(x, point, ec->f, stack) ||
 		!qrFrom(y, point + ec->f->no, ec->f, stack))
 	{
-		_dstuCloseEc(ec);
+		dstuEcClose(ec);
 		return ERR_BAD_POINT;
 	}
 	// x == 0?
 	if (wwIsZero(x, ec->f->n))
 	{
-		_dstuCloseEc(ec);
+		dstuEcClose(ec);
 		return ERR_OK;
 	}
 	// y <- y / x
@@ -730,11 +730,11 @@ err_t dstuCompressPoint(octet xpoint[], const dstu_params* params,
 	xpoint[0] &= 0xFE;
 	xpoint[0] |= gf2Tr(y, ec->f, stack);
 	// завершение
-	_dstuCloseEc(ec);
+	dstuEcClose(ec);
 	return ERR_OK;
 }
 
-static size_t _dstuRecoverPoint_deep(size_t n, size_t f_deep, size_t ec_d, 
+static size_t dstuPointRecover_deep(size_t n, size_t f_deep, size_t ec_d, 
 	size_t ec_deep)
 {
 	return O_OF_W(2 * n) + 
@@ -743,7 +743,7 @@ static size_t _dstuRecoverPoint_deep(size_t n, size_t f_deep, size_t ec_d,
 			gf2Tr_deep(n, f_deep));
 }
 
-err_t dstuRecoverPoint(octet point[], const dstu_params* params, 
+err_t dstuPointRecover(octet point[], const dstu_params* params, 
 	const octet xpoint[])
 {
 	err_t code;
@@ -754,13 +754,13 @@ err_t dstuRecoverPoint(octet point[], const dstu_params* params,
 	word* y;
 	void* stack;
 	// старт
-	code = _dstuCreateEc(&ec, params, _dstuRecoverPoint_deep);
+	code = dstuEcCreate(&ec, params, dstuPointRecover_deep);
 	ERR_CALL_CHECK(code);
 	// проверить входные указатели
 	if (!memIsValid(xpoint, ec->f->no) || 
 		!memIsValid(point, 2 * ec->f->no))
 	{
-		_dstuCloseEc(ec);
+		dstuEcClose(ec);
 		return ERR_BAD_INPUT;
 	}
 	// раскладка состояния
@@ -770,7 +770,7 @@ err_t dstuRecoverPoint(octet point[], const dstu_params* params,
 	// загрузить сжатое представление точки
 	if (!qrFrom(x, xpoint, ec->f, stack))
 	{
-		_dstuCloseEc(ec);
+		dstuEcClose(ec);
 		return ERR_BAD_POINT;
 	}
 	// x == 0?
@@ -783,7 +783,7 @@ err_t dstuRecoverPoint(octet point[], const dstu_params* params,
 		// выгрузить y-координату
 		qrTo(point + ec->f->n, ec->B, ec->f, stack);
 		// все нормально
-		_dstuCloseEc(ec);
+		dstuEcClose(ec);
 		return ERR_OK;
 	}
 	// восстановить первый разряд x
@@ -801,7 +801,7 @@ err_t dstuRecoverPoint(octet point[], const dstu_params* params,
 	if (!gf2QSolve(y, ec->f->unity, y, ec->f, stack))
 	{
 		trace = 0;
-		_dstuCloseEc(ec);
+		dstuEcClose(ec);
 		return ERR_BAD_PARAMS;
 	}
 	// tr(y) == trace?
@@ -817,7 +817,7 @@ err_t dstuRecoverPoint(octet point[], const dstu_params* params,
 	qrTo(point + ec->f->no, y, ec->f, stack);
 	// все нормально
 	trace = 0;
-	_dstuCloseEc(ec);
+	dstuEcClose(ec);
 	return code;
 }
 
@@ -827,14 +827,14 @@ err_t dstuRecoverPoint(octet point[], const dstu_params* params,
 *******************************************************************************
 */
 
-static size_t _dstuGenKeypair_deep(size_t n, size_t f_deep, size_t ec_d, 
+static size_t dstuKeypairGen_deep(size_t n, size_t f_deep, size_t ec_d, 
 	size_t ec_deep)
 {
 	return O_OF_W(3 * n) + 
 		ecMulA_deep(n, ec_d, ec_deep, n);
 }
 
-err_t dstuGenKeypair(octet privkey[], octet pubkey[], 
+err_t dstuKeypairGen(octet privkey[], octet pubkey[], 
 	const dstu_params* params, gen_i rng, void* rng_state)
 {
 	err_t code;
@@ -849,7 +849,7 @@ err_t dstuGenKeypair(octet privkey[], octet pubkey[],
 	if (rng == 0)
 		return ERR_BAD_RNG;
 	// старт
-	code = _dstuCreateEc(&ec, params, _dstuGenKeypair_deep);
+	code = dstuEcCreate(&ec, params, dstuKeypairGen_deep);
 	ERR_CALL_CHECK(code);
 	// размерности order
 	order_nb = wwBitSize(ec->order, ec->f->n);
@@ -859,7 +859,7 @@ err_t dstuGenKeypair(octet privkey[], octet pubkey[],
 	if (!memIsValid(privkey, order_no) || 
 		!memIsValid(pubkey, 2 * ec->f->no))
 	{
-		_dstuCloseEc(ec);
+		dstuEcClose(ec);
 		return ERR_BAD_INPUT;
 	}
 	// раскладка состояния
@@ -884,7 +884,7 @@ err_t dstuGenKeypair(octet privkey[], octet pubkey[],
 	if (!ecMulA(x, ec->base, ec, d, order_n, stack))
 	{
 		// если params корректны, то этого быть не должно
-		_dstuCloseEc(ec);
+		dstuEcClose(ec);
 		return ERR_BAD_PARAMS;
 	}
 	// Q <- -Q
@@ -894,7 +894,7 @@ err_t dstuGenKeypair(octet privkey[], octet pubkey[],
 	qrTo(pubkey, x, ec->f, stack);
 	qrTo(pubkey + ec->f->no, y, ec->f, stack);
 	// все нормально
-	_dstuCloseEc(ec);
+	dstuEcClose(ec);
 	return code;
 }
 
@@ -904,7 +904,7 @@ err_t dstuGenKeypair(octet privkey[], octet pubkey[],
 *******************************************************************************
 */
 
-static size_t _dstuSign_deep(size_t n, size_t f_deep, size_t ec_d, 
+static size_t dstuSign_deep(size_t n, size_t f_deep, size_t ec_d, 
 	size_t ec_deep)
 {
 	return O_OF_W(6 * n) + 
@@ -932,7 +932,7 @@ err_t dstuSign(octet sig[], const dstu_params* params, size_t ld,
 	if (rng == 0)
 		return ERR_BAD_RNG;
 	// старт
-	code = _dstuCreateEc(&ec, params, _dstuSign_deep);
+	code = dstuEcCreate(&ec, params, dstuSign_deep);
 	ERR_CALL_CHECK(code);
 	// размерности order
 	order_nb = wwBitSize(ec->order, ec->f->n);
@@ -946,7 +946,7 @@ err_t dstuSign(octet sig[], const dstu_params* params, size_t ld,
 		!memIsValid(hash, hash_len) ||
 		!memIsValid(sig, O_OF_B(ld)))
 	{
-		_dstuCloseEc(ec);
+		dstuEcClose(ec);
 		return ERR_BAD_INPUT;
 	}
 	// раскладка состояния
@@ -991,7 +991,7 @@ step8:
 	if (!ecMulA(x, ec->base, ec, e, order_n, stack))
 	{
 		// если params корректны, то этого быть не должно
-		_dstuCloseEc(ec);
+		dstuEcClose(ec);
 		return ERR_BAD_PARAMS;
 	}
 	// шаг 8: если x == 0, то повторить генерацию
@@ -1020,11 +1020,11 @@ step8:
 	wwTo(sig, order_no, r);
 	wwTo(sig + ld / 16, order_no, s);
 	// все нормально
-	_dstuCloseEc(ec);
+	dstuEcClose(ec);
 	return code;
 }
 
-static size_t _dstuVerify_deep(size_t n, size_t f_deep, size_t ec_d, 
+static size_t dstuVerify_deep(size_t n, size_t f_deep, size_t ec_d, 
 	size_t ec_deep)
 {
 	return O_OF_W(5 * n) + 
@@ -1045,7 +1045,7 @@ err_t dstuVerify(const dstu_params* params, size_t ld, const octet hash[],
 	word* s;		/* вторая часть ЭЦП */
 	void* stack;
 	// старт
-	code = _dstuCreateEc(&ec, params, _dstuVerify_deep);
+	code = dstuEcCreate(&ec, params, dstuVerify_deep);
 	ERR_CALL_CHECK(code);
 	// размерности order
 	order_nb = wwBitSize(ec->order, ec->f->n);
@@ -1058,7 +1058,7 @@ err_t dstuVerify(const dstu_params* params, size_t ld, const octet hash[],
 		ld % 16 != 0 || ld < 16 * order_no ||
 		!memIsValid(hash, hash_len))
 	{
-		_dstuCloseEc(ec);
+		dstuEcClose(ec);
 		return ERR_BAD_INPUT;
 	}
 	// раскладка состояния
@@ -1074,7 +1074,7 @@ err_t dstuVerify(const dstu_params* params, size_t ld, const octet hash[],
 	if (!qrFrom(x, pubkey, ec->f, stack) || 
 		!qrFrom(y, pubkey + ec->f->no, ec->f, stack))
 	{
-		_dstuCloseEc(ec);
+		dstuEcClose(ec);
 		return ERR_BAD_PUBKEY;
 	}
 	// шаги 6, 7: хэширование
@@ -1101,7 +1101,7 @@ err_t dstuVerify(const dstu_params* params, size_t ld, const octet hash[],
 	for (i = order_no; i < ld / 16; ++i)
 		if (sig[i] || sig[i + ld / 16])
 		{
-			_dstuCloseEc(ec);
+			dstuEcClose(ec);
 			return ERR_BAD_SIG;
 		}
 	// шаги 10, 11: проверить r и s
@@ -1110,13 +1110,13 @@ err_t dstuVerify(const dstu_params* params, size_t ld, const octet hash[],
 		wwCmp(r, ec->order, order_n) >= 0 ||
 		wwCmp(s, ec->order, order_n) >= 0)
 	{
-		_dstuCloseEc(ec);
+		dstuEcClose(ec);
 		return ERR_BAD_SIG;
 	}
 	// шаг 12: R <- sP + rQ
 	if (!ecAddMulA(x, ec, stack, 2, ec->base, s, order_n, x, r, order_n))
 	{
-		_dstuCloseEc(ec);
+		dstuEcClose(ec);
 		return ERR_BAD_SIG;
 	}
 	// шаг 13: y <- h * x
@@ -1130,6 +1130,6 @@ err_t dstuVerify(const dstu_params* params, size_t ld, const octet hash[],
 	if (!wwEq(r, s, order_n))
 		code = ERR_BAD_SIG;
 	// все нормально
-	_dstuCloseEc(ec);
+	dstuEcClose(ec);
 	return code;
 }

@@ -113,23 +113,26 @@ EXPORTS
 	beltHMAC					@208
 	beltPBKDF2					@209
 	
-	bignStdParams				@301
-	bignValParams				@302
-	bignOidToDER				@303
-	bignGenKeypair				@304
-	bignValKeypair				@305
-	bignValPubkey				@306
-	bignCalcPubkey				@307
-	bignDH						@308
-	bignSign					@309
-	bignSign2					@310
-	bignVerify					@311
-	bignKeyWrap					@312
-	bignKeyUnwrap				@313
-	bignIdExtract				@314
-	bignIdSign					@315
-	bignIdSign2					@316
-	bignIdVerify				@317
+	bignParamsStd				@301
+	bignParamsVal				@302
+	bignParamsGen				@303
+	bignParamsEnc				@304
+	bignParamsDec				@305
+	bignOidToDER				@306
+	bignKeypairGen				@307
+	bignKeypairVal				@308
+	bignPubkeyVal				@309
+	bignPubkeyCalc				@310
+	bignDH						@311
+	bignSign					@312
+	bignSign2					@313
+	bignVerify					@314
+	bignKeyWrap					@315
+	bignKeyUnwrap				@316
+	bignIdExtract				@317
+	bignIdSign					@318
+	bignIdSign2					@319
+	bignIdVerify				@320
 
 	brngCTR_keep				@401
 	brngCTRStart				@402
@@ -232,30 +235,30 @@ EXPORTS
 	botpOCRARand				@823
 	botpOCRAVerify				@824
 	
-	dstuStdParams				@1101
-	dstuValParams				@1102
-	dstuGenPoint				@1103
-	dstuValPoint				@1104
-	dstuCompressPoint			@1105	
-	dstuRecoverPoint			@1106
-	dstuGenKeypair				@1107
+	dstuParamsStd				@1101
+	dstuParamsVal				@1102
+	dstuPointGen				@1103
+	dstuPointVal				@1104
+	dstuPointCompress			@1105	
+	dstuPointRecover			@1106
+	dstuKeypairGen				@1107
 	dstuSign					@1108
 	dstuVerify					@1109
 	
-	g12sStdParams				@1201
-	g12sValParams				@1202
-	g12sGenKeypair				@1203
+	g12sParamsStd				@1201
+	g12sParamsVal				@1202
+	g12sKeypairGen				@1203
 	g12sSign					@1204
 	g12sVerify					@1205
 	
-	pfokStdParams				@1301
-	pfokGenParams				@1302
-	pfokValParams				@1303
-	pfokValSeed					@1304
-	pfokAdjSeed					@1305
-	pfokGenKeypair				@1306
-	pfokValPubkey				@1307
-	pfokCalcPubkey				@1308
+	pfokParamsStd				@1301
+	pfokParamsGen				@1302
+	pfokParamsVal				@1303
+	pfokSeedVal					@1304
+	pfokSeedAdj					@1305
+	pfokKeypairGen				@1306
+	pfokPubkeyVal				@1307
+	pfokPubkeyCalc				@1308
 	pfokDH						@1309
 	pfokMTI						@1310
 
@@ -273,18 +276,18 @@ EXPORTS
 	btokCVCVal					@1507
 	btokCVCVal2					@1508
 
-	bign96StdParams				@1601
-	bign96ValParams				@1602
-	bign96GenKeypair			@1603
-	bign96ValKeypair			@1604
-	bign96ValPubkey				@1605
-	bign96CalcPubkey			@1606
+	bign96ParamsStd				@1601
+	bign96ParamsVal				@1602
+	bign96KeypairGen			@1603
+	bign96KeypairVal			@1604
+	bign96PubkeyVal				@1605
+	bign96PubkeyCalc			@1606
 	bign96Sign					@1607
 	bign96Sign2					@1608
 	bign96Verify				@1609
 
-	stb99StdParams				@1701
-	stb99GenParams				@1702
-	stb99ValParams				@1703
-	stb99ValSeed				@1704
-	stb99AdjSeed				@1705
+	stb99ParamsStd				@1701
+	stb99ParamsGen				@1702
+	stb99ParamsVal				@1703
+	stb99SeedVal				@1704
+	stb99SeedAdj				@1705

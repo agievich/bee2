@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): public parameters
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2023.09.21
+\version 2023.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -193,7 +193,7 @@ static const octet _curve256v1_yG[64] =
 *******************************************************************************
 */
 
-err_t bignStdParams(bign_params* params, const char* name)
+err_t bignParamsStd(bign_params* params, const char* name)
 {
 	if (!memIsValid(params, sizeof(bign_params)))
 		return ERR_BAD_INPUT;
@@ -255,7 +255,7 @@ err_t bignStdParams(bign_params* params, const char* name)
 *******************************************************************************
 */
 
-static size_t bignValParams_deep(size_t n, size_t f_deep, size_t ec_d,
+static size_t bignParamsVal_deep(size_t n, size_t f_deep, size_t ec_d,
 	size_t ec_deep)
 {
 	return beltHash_keep() + O_OF_B(512) +
@@ -268,7 +268,7 @@ static size_t bignValParams_deep(size_t n, size_t f_deep, size_t ec_d,
 			ecHasOrderA_deep(n, ec_d, ec_deep, n));
 }
 
-err_t bignValParams(const bign_params* params)
+err_t bignParamsVal(const bign_params* params)
 {
 	err_t code;
 	size_t no, n;
@@ -285,7 +285,7 @@ err_t bignValParams(const bign_params* params)
 	if (!bignIsOperable(params))
 		return ERR_BAD_PARAMS;
 	// создать состояние
-	state = blobCreate(bignStart_keep(params->l, bignValParams_deep));
+	state = blobCreate(bignStart_keep(params->l, bignParamsVal_deep));
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// старт
@@ -348,6 +348,43 @@ err_t bignValParams(const bign_params* params)
 
 /*
 *******************************************************************************
+Генерация параметров
+*******************************************************************************
+*/
+
+static void bignSeedInc(octet seed[8])
+{
+	register word carry;
+	size_t pos;
+	ASSERT(memIsValid(seed, 8));
+	for (carry = 1, pos = 0; pos < 8; ++pos)
+		carry += seed[pos], seed[pos] = (octet)carry, carry >>= 8;
+	seed[0] += (octet)carry;
+	carry = 0;
+}
+
+static size_t bignParamsGen_deep(size_t l, size_t n, size_t f_deep,
+	size_t ec_d, size_t ec_deep)
+{
+	return beltHash_keep() + O_OF_B(512) +
+		utilMax(6,
+			beltHash_keep(),
+			ecpIsValid_deep(n, f_deep),
+			ecpIsSafeGroup_deep(n),
+			ecpIsOnA_deep(n, f_deep),
+			qrPower_deep(n, n, f_deep),
+			ecHasOrderA_deep(n, ec_d, ec_deep, n)
+		);
+}
+
+err_t bignParamsGen(bign_params* params, bign_pgen_calc_q calc_q,
+	bign_pgen_on_seed on_seed, void* state)
+{
+	return ERR_NOT_IMPLEMENTED;
+}
+
+/*
+*******************************************************************************
 DER-кодирование
 
   SEQ ECParameters
@@ -384,7 +421,14 @@ do {\
 	ptr += t, count -= t;\
 } while(0)\
 
-static size_t bignEncParams_internal(octet der[], const bign_params* params)
+#define derDecStep2(step, ptr, count)\
+do {\
+	size_t t = step;\
+	if (t != SIZE_MAX)\
+		ptr += t, count -= t;\
+} while(0)\
+
+static size_t bignParamsEnc_internal(octet der[], const bign_params* params)
 {
 	der_anchor_t ParamSeq[1];
 	der_anchor_t FieldSeq[1];
@@ -415,7 +459,7 @@ static size_t bignEncParams_internal(octet der[], const bign_params* params)
 	return count;
 }
 
-static size_t bignDecParams_internal(bign_params* params, const octet der[],
+static size_t bignParamsDec_internal(bign_params* params, const octet der[],
 	size_t count)
 {
 	der_anchor_t ParamSeq[1];
@@ -450,13 +494,15 @@ static size_t bignDecParams_internal(bign_params* params, const octet der[],
 	 derDecStep(derOCTDec2(params->yG, ptr, count, len), ptr, count);
 	 // ...order...
 	 derDecStep(derUINTDec2(params->q, ptr, count, len), ptr, count);
-	// ...завершить декодирование
+	 // ...cofactor(optional)...
+	 derDecStep2(derSIZEDec2(ptr, count, 1), ptr, count);
+	 // ...завершить декодирование
 	derDecStep(derSEQDecStop(ptr, ParamSeq), ptr, count);
 	// возвратить точную длину DER-кода
 	return ptr - der;
 }
 
-err_t bignEncParams(octet der[], size_t* count, const bign_params* params)
+err_t bignParamsEnc(octet der[], size_t* count, const bign_params* params)
 {
 	size_t len;
 	if (!memIsValid(params, sizeof(params)) ||
@@ -465,28 +511,28 @@ err_t bignEncParams(octet der[], size_t* count, const bign_params* params)
 		return ERR_BAD_INPUT;
 	if (!bignIsOperable(params))
 		return ERR_BAD_PARAMS;
-	len = bignEncParams_internal(0, params);
+	len = bignParamsEnc_internal(0, params);
 	if (len == SIZE_MAX)
 		return ERR_BAD_PARAMS;
 	if (der)
 	{
 		if (*count < len)
 			return ERR_OUTOFMEMORY;
-		len = bignEncParams_internal(der, params);
+		len = bignParamsEnc_internal(der, params);
 		ASSERT(len != SIZE_MAX);
 	}
 	*count = len;
 	return ERR_OK;
 }
 
-err_t bignDecParams(bign_params* params, const octet der[], size_t count)
+err_t bignParamsDec(bign_params* params, const octet der[], size_t count)
 {
 	size_t len;
 	if (!memIsValid(params, sizeof(params)) ||
 		!memIsValid(der, count))
 		return ERR_BAD_INPUT;
-	len = bignDecParams_internal(params, der, count);
-	if (len == SIZE_MAX)
-		return ERR_BAD_PARAMS;
+	len = bignParamsDec_internal(params, der, count);
+	if (len == SIZE_MAX || len != count)
+		return ERR_BAD_FORMAT;
 	return ERR_OK;
 }

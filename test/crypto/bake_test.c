@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.66 (bake)
 \project bee2/test
 \created 2014.04.23
-\version 2023.03.29
+\version 2023.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -221,7 +221,7 @@ bool_t bakeTest()
 	if (sizeof(echoa) < prngEcho_keep())
 		return FALSE;
 	// загрузить долговременные параметры
-	if (bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK)
+	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK)
 		return FALSE;
 	// задать настройки
 	memSetZero(settingsa, sizeof(bake_settings));
