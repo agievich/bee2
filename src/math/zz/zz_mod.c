@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: modular arithmetic
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2019.06.30
+\version 2022.09.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -211,6 +211,24 @@ size_t zzMulMod_deep(size_t n)
 		utilMax(2, 
 			zzMul_deep(n, n), 
 			zzMod_deep(2 * n, n));
+}
+
+void zzMulWMod(word b[], const word a[], register word w, const word mod[],
+	size_t n, void* stack)
+{
+	word* prod = (word*)stack;
+	stack = prod + n + 1;
+	ASSERT(wwCmp(a, mod, n) < 0);
+	ASSERT(wwIsValid(b, n));
+	ASSERT(n > 0 && mod[n - 1] != 0);
+	prod[n] = zzMulW(prod, a, n, w);
+	zzMod(b, prod, n + 1, mod, n, stack);
+}
+
+size_t zzMulWMod_deep(size_t n)
+{
+	return O_OF_W(n + 1) + 
+		zzMod_deep(n + 1, n);
 }
 
 void zzSqrMod(word b[], const word a[], const word mod[], size_t n,

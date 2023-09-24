@@ -4,7 +4,7 @@
 \brief Errors
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2023.09.08
+\version 2023.09.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -43,6 +43,7 @@ static const err_msg _messages[] = {
 	{ERR_NOT_READY, "Device is not ready"},
 	{ERR_BUSY, "Device is busy"},
 	{ERR_TIMEOUT, "Timeout"},
+	{ERR_NO_RESULT, "No result found"},
 	{ERR_NOT_IMPLEMENTED, "Function is not implemented"},
 	{ERR_AFTER, "Aftereffect of prevoius errors"},
 	// file

@@ -4,7 +4,7 @@
 \brief Errors
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2023.09.08
+\version 2023.09.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -84,10 +84,12 @@ Sys
 #define ERR_BUSY					_ERR_REG(115)
 /* таймаут */
 #define ERR_TIMEOUT					_ERR_REG(116)
+/* без результата */
+#define ERR_NO_RESULT				_ERR_REG(117)
 /* не реализовано */
-#define ERR_NOT_IMPLEMENTED			_ERR_REG(117)
+#define ERR_NOT_IMPLEMENTED			_ERR_REG(118)
 /* последствия предыдущих ошибок */
-#define ERR_AFTER					_ERR_REG(118)
+#define ERR_AFTER					_ERR_REG(119)
 
 /*
 *******************************************************************************

@@ -33,6 +33,7 @@ bool_t bignIsOperable(const bign_params* params)
 	// корректный уровень стойкости?
 	// p mod 4 == 3? q mod 2 == 1?
 	// p и q -- 2l-битовые?
+	// a != 0? b != 0?
 	// неиспользуемые октеты обнулены?
 	return
 		(params->l == 128 || params->l == 192 || params->l == 256) &&
@@ -40,6 +41,8 @@ bool_t bignIsOperable(const bign_params* params)
 		params->p[0] % 4 == 3 && params->q[0] % 2 == 1 &&
 		params->p[no - 1] >= 128 && params->q[no - 1] >= 128 &&
 		memIsZero(params->p + no, sizeof(params->p) - no) &&
+		!memIsZero(params->a, no) &&
+		!memIsZero(params->b, no) &&
 		memIsZero(params->a + no, sizeof(params->a) - no) &&
 		memIsZero(params->b + no, sizeof(params->b) - no) &&
 		memIsZero(params->q + no, sizeof(params->q) - no) &&

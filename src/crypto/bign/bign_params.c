@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): public parameters
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2023.09.22
+\version 2023.09.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -238,15 +238,16 @@ err_t bignParamsStd(bign_params* params, const char* name)
 *******************************************************************************
 Проверка параметров
 
--#	l \in {128, 192, 256} (bignValParams)
--#	2^{l - 1} < p, q < 2^l (bignStart)
+-#	l \in {128, 192, 256} (bignIsOperable)
+-#	2^{l - 1} < p, q < 2^l (bignIsOperable)
+-#	p \equiv 3 \mod 4 (bignIsOperable)
+-#	0 < a (bignIsOperable)
+-#	0 < b (bignIsOperable, zzJacobi)
 -#	p -- простое (ecpIsValid)
 -#	q -- простое (ecpIsSafeGroup)
--#	p \equiv 3 \mod 4 (bignStart)
 -#	q != p (ecpIsSafeGroup)
 -#	p^m \not\equiv 1 (mod q), m = 1, 2,..., 50 (ecpIsSafeGroup)
 -#	a, b < p (ecpCreateJ in bignStart)
--#	0 != b (bignValParams)
 -#	b \equiv B (mod p) (bignValParams)
 -#	4a^3 + 27b^2 \not\equiv 0 (\mod p) (ecpIsValid)
 -#	(b / p) = 1 (zzJacobi)
@@ -254,6 +255,17 @@ err_t bignParamsStd(bign_params* params, const char* name)
 -#	qG = O (ecpHasOrder)
 *******************************************************************************
 */
+
+static void bignSeedInc(octet seed[8])
+{
+	register word carry;
+	size_t pos;
+	ASSERT(memIsValid(seed, 8));
+	for (carry = 1, pos = 0; pos < 8; ++pos)
+		carry += seed[pos], seed[pos] = (octet)carry, carry >>= 8;
+	seed[0] += (octet)carry;
+	carry = 0;
+}
 
 static size_t bignParamsVal_deep(size_t n, size_t f_deep, size_t ec_d,
 	size_t ec_deep)
@@ -276,9 +288,9 @@ err_t bignParamsVal(const bign_params* params)
 	void* state;
 	ec_o* ec;				/* описание эллиптической кривой */
 	octet* hash_state;		/* [beltHash_keep] состояние хэширования */
-	octet* hash_data;		/* [8] данные хэширования */
+	octet* seed;			/* [8] копия seed */
 	word* B;				/* [W_OF_B(512)] переменная B */
-	octet* stack;
+	void* stack;
 	// проверить params
 	if (!memIsValid(params, sizeof(bign_params)))
 		return ERR_BAD_INPUT;
@@ -297,9 +309,9 @@ err_t bignParamsVal(const bign_params* params)
 	n = ec->f->n;
 	// раскладка состояния
 	hash_state = objEnd(ec, octet);
-	hash_data = hash_state + beltHash_keep();
-	B = (word*)hash_data;
-	stack = hash_data + O_OF_B(512);
+	seed = hash_state + beltHash_keep();
+	B = (word*)seed;
+	stack = B + W_OF_B(512);
 	// belt-hash(p..)
 	beltHashStart(hash_state);
 	beltHashStepH(params->p, no, hash_state);
@@ -307,17 +319,15 @@ err_t bignParamsVal(const bign_params* params)
 	beltHashStepH(params->a, no, hash_state);
 	memCopy(stack, hash_state, beltHash_keep());
 	// belt-hash(..seed)
-	memCopy(hash_data, params->seed, 8);
-	beltHashStepH(hash_data, 8, hash_state);
+	beltHashStepH(params->seed, 8, hash_state);
 	// belt-hash(..seed + 1)
-	wwFrom(B, hash_data, 8);
-	zzAddW2(B, W_OF_O(8), 1);
-	wwTo(hash_data, 8, B);
-	beltHashStepH(hash_data, 8, stack);
+	memCopy(seed, params->seed, 8);
+	bignSeedInc(seed);
+	beltHashStepH(seed, 8, stack);
 	// B <- belt-hash(p || a || seed) || belt-hash(p || a || seed + 1)
-	beltHashStepG(hash_data, hash_state);
-	beltHashStepG(hash_data + 32, stack);
-	wwFrom(B, hash_data, 64);
+	beltHashStepG((octet*)B, hash_state);
+	beltHashStepG((octet*)B + 32, stack);
+	wwFrom(B, B, 64);
 	// B <- B \mod p
 	zzMod(B, B, W_OF_O(64), ec->f->mod, n, stack);
 	wwTo(B, 64, B);
@@ -352,35 +362,206 @@ err_t bignParamsVal(const bign_params* params)
 *******************************************************************************
 */
 
-static void bignSeedInc(octet seed[8])
+bool_t ecpDetIsZero(const word a[], const word b[], const word p[], size_t n, 
+	void* stack)
 {
-	register word carry;
-	size_t pos;
-	ASSERT(memIsValid(seed, 8));
-	for (carry = 1, pos = 0; pos < 8; ++pos)
-		carry += seed[pos], seed[pos] = (octet)carry, carry >>= 8;
-	seed[0] += (octet)carry;
-	carry = 0;
+	// переменные в stack
+	word* t1 = (word*)stack;
+	word* t2 = t1 + n;
+	stack = t2 + n;
+	// t1 <- 4 A^3
+	zzSqrMod(t1, a, p, n, stack);
+	zzMulMod(t1, t1, a, p, n, stack);
+	zzMulWMod(t1, t1, 4, p, n, stack);
+	// t2 <- 27 B^2
+	zzSqrMod(t2, b, p, n, stack);
+	zzMulWMod(t2, t2, 27, p, n, stack);
+	// t1 <- t1 + t2 [4 A^3 + 27 B^2 -- дискриминант]
+	zzAddMod(t1, t1, t2, p, n);
+	// t1 == 0?
+	return wwIsZero(t1, n);
 }
 
-static size_t bignParamsGen_deep(size_t l, size_t n, size_t f_deep,
-	size_t ec_d, size_t ec_deep)
+size_t ecpDetIsZero_deep(size_t n)
 {
-	return beltHash_keep() + O_OF_B(512) +
-		utilMax(6,
+	return O_OF_W(2 * n) +
+		utilMax(3,
+			zzSqrMod_deep(n),
+			zzMulMod_deep(n),
+			zzMulWMod_deep(n)
+		);
+	
+}
+
+bool_t ecpMOVIsMet(const word q[], const word p[], size_t n, 
+	size_t threshold, void* stack)
+{
+	// переменные в stack
+	word* t1 = (word*)stack;
+	word* t2 = t1 + n;
+	stack = t2 + n;
+	// t1, t2 <- p mod q
+	ASSERT(threshold > 0);
+	zzMod(t1, p, n, q, n, stack);
+	wwCopy(t2, t1, n);
+	// p mod q == 1?
+	if (wwCmpW(t2, n, 1) == 0)
+		return FALSE;
+	while (--threshold)
+	{
+		// p^i mod q == 1?
+		zzMulMod(t2, t2, t1, q, n, stack);
+		if (wwCmpW(t2, n, 1) == 0)
+			return FALSE;
+	}
+	return TRUE;
+}
+
+size_t ecpMOVIsMet_deep(size_t n)
+{
+	return O_OF_W(2 * n) +
+		utilMax(2,
+			zzMod_deep(n, n),
+			zzMulMod_deep(n)
+		);
+}
+
+static size_t bignParamsGen_deep(size_t n)
+{
+	return O_OF_W(4 * n) + 8 + beltHash_keep() + 
+		utilMax(5,
 			beltHash_keep(),
-			ecpIsValid_deep(n, f_deep),
-			ecpIsSafeGroup_deep(n),
-			ecpIsOnA_deep(n, f_deep),
-			qrPower_deep(n, n, f_deep),
-			ecHasOrderA_deep(n, ec_d, ec_deep, n)
+			priIsPrime_deep(n),
+			ecpDetIsZero_deep(n),
+			ecpMOVIsMet_deep(n),
+			zzPowerMod_deep(n, n)
 		);
 }
 
 err_t bignParamsGen(bign_params* params, bign_pgen_calc_q calc_q,
 	bign_pgen_on_seed on_seed, void* state)
 {
-	return ERR_NOT_IMPLEMENTED;
+	err_t code;
+	size_t no, n;
+	// состояние (буферы могут пересекаться)
+	void* st;
+	word* p;				/* [n] */
+	word* a;				/* [n] */
+	word* b;				/* [W_OF_B(512)] B / [n] b */
+	word* q;				/* [n] */
+	word* yG;				/* [n] */
+	octet* seed;			/* [8] */
+	octet* hash_state;		/* [beltHash_keep] */
+	void* stack;
+	// проверить входные данные
+	if (!memIsValid(params, sizeof(bign_params)) || 
+		!calc_q)
+		return ERR_BAD_INPUT;
+	// проверить уровень стойкости
+	if (params->l != 128 && params->l != 192 && params->l != 256)
+		return ERR_BAD_PARAMS;
+	// размерности
+	no = O_OF_B(2 * params->l);
+	n = W_OF_B(2 * params->l);
+	// проверить params:
+	// - p -- 2l-битовое число?
+	// - p mod 4 == 3?
+	// - 0 < a < p?
+	// - неиспользуемые октеты p и a обнулены?
+	if (params->p[0] % 4 != 3 || params->p[no - 1] < 128 ||
+		memIsZero(params->a, no) ||
+		memCmpRev(params->a, params->p, no) >= 0 ||
+		!memIsZero(params->p + no, sizeof(params->p) - no) ||
+		!memIsZero(params->a + no, sizeof(params->a) - no))
+		return ERR_BAD_PARAMS;
+	// создать состояние
+	st = blobCreate(bignParamsGen_deep(n));
+	if (st == 0)
+		return ERR_OUTOFMEMORY;
+	// раскладка состояния
+	p = (word*)st;
+	a = p + n;
+	b = a + n;
+	q = yG = b + n;
+	seed = (octet*)(q + n);
+	hash_state = seed + 8;
+	stack = hash_state + beltHash_keep();
+	ASSERT((octet*)b + 64 <= seed);
+	// загрузить и проверить p
+	wwFrom(p, params->p, no);
+	ASSERT(wwBitSize(p, n) == params->l * 2);
+	ASSERT(wwGetBits(p, 0, 2) == 3);
+	if (!priIsPrime(p, n, stack))
+	{
+		blobClose(st);
+		return ERR_BAD_PARAMS;
+	}
+	// загрузить a
+	wwFrom(a, params->a, no);
+	ASSERT(!wwIsZero(a, n));
+	ASSERT(wwCmp(a, p, n) < 0);
+	// загрузить seed
+	memCopy(seed, params->seed, 8);
+	// цикл генерации
+	while (1)
+	{
+		// обработать seed
+		memCopy(params->seed, seed, 8);
+		if (on_seed)
+		{
+			code = on_seed(params, state);
+			ERR_CALL_HANDLE(code, blobClose(st));
+		}
+		// belt-hash(p || a ||..)
+		beltHashStart(hash_state);
+		beltHashStepH(params->p, no, hash_state);
+		beltHashStepH(params->a, no, hash_state);
+		memCopy(stack, hash_state, beltHash_keep());
+		// belt-hash(..seed)
+		beltHashStepH(params->seed, 8, hash_state);
+		// belt-hash(..seed + 1)
+		bignSeedInc(seed);
+		beltHashStepH(seed, 8, stack);
+		// B <- belt-hash(p || a || seed) || belt-hash(p || a || seed + 1)
+		beltHashStepG((octet*)b, hash_state);
+		beltHashStepG((octet*)b + 32, stack);
+		// b <- B \mod p
+		wwFrom(b, b, 64);
+		zzMod(b, b, W_OF_O(64), p, n, stack);
+		// проверить b
+		if (ecpDetIsZero(a, b, p, n, stack) ||
+			zzJacobi(b, n, p, n, stack) != 1)
+			continue;
+		// сохранить b
+		wwTo(params->b, no, b);
+		memSetZero(params->b + no, sizeof(params->b) - no);
+		// вычиcлить q
+		code = calc_q(params, state);
+		if (code == ERR_NO_RESULT)
+			continue;
+		ERR_CALL_HANDLE(code, blobClose(st));
+		// загрузить и проверить q
+		wwFrom(q, params->q, no);
+		if (wwBitSize(q, n) == params->l * 2 &&
+			!wwEq(q, p, n) &&
+			priIsPrime(q, n, stack) &&
+			ecpMOVIsMet(q, p, n, 50, stack))
+			break;
+	}
+	// сохранить q
+	memSetZero(params->q + no, sizeof(params->q) - no);
+	// вычислить yG = b^{(p + 1) / 4} mod p
+	wwCopy(a, p, n);
+	zzAddW2(a, n, 1);
+	ASSERT(!wwIsZero(a, n));
+	wwShLo(a, n, 2);
+	zzPowerMod(yG, b, n, a, n, p, stack);
+	// сохранить yG
+	wwTo(params->yG, no, yG);
+	memSetZero(params->yG + no, sizeof(params->yG) - no);
+	// завершение
+	blobClose(st);
+	return code;
 }
 
 /*

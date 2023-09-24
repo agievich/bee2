@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): local declarations
 \project bee2 [cryptographic library]
 \created 2014.04.03
-\version 2023.09.20
+\version 2023.09.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -36,6 +36,7 @@ extern "C" {
 	- l == 128 || l == 192 || l == 256;
 	- p и q -- 2l-битовые нечетные числа;
 	- p[0] % 4 == 3;
+	- a != 0 и b != 0;
 	- неиспользуемые октеты p, a, b, yG обнулены.
 	\return ERR_OK в случае успеха и код ошибки в противном	случае.
 */

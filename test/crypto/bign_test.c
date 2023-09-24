@@ -4,12 +4,13 @@
 \brief Tests for STB 34.101.45 (bign)
 \project bee2/test
 \created 2012.08.27
-\version 2023.09.22
+\version 2023.09.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
+#include <bee2/core/err.h>
 #include <bee2/core/mem.h>
 #include <bee2/core/hex.h>
 #include <bee2/core/str.h>
@@ -80,6 +81,27 @@ static void brngCTRXStepR(void* buf, size_t count, void* stack)
 
 /*
 *******************************************************************************
+Функция интерфейса bign_pgen_calc_q
+*******************************************************************************
+*/
+
+static err_t _calc_q(bign_params* params, void* state)
+{
+	err_t code;
+	bign_params par[1];
+	code = bignParamsStd(par, "1.2.112.0.2.0.34.101.45.3.1");
+	ERR_CALL_CHECK(code);
+	if (params->l != par->l ||
+		!memEq(params->p, par->p, sizeof(params->p)) ||
+		!memEq(params->a, par->a, sizeof(params->a)) ||
+		!memEq(params->seed, par->seed, sizeof(params->seed)))
+		return ERR_NO_RESULT;
+	memCopy(params->q, par->q, sizeof(par->q));
+	return ERR_OK;
+}
+
+/*
+*******************************************************************************
 Самотестирование
 
 -#	Выполняются тесты из приложения  к СТБ 34.101.45.
@@ -136,6 +158,16 @@ bool_t bignTest()
 		bignParamsVal(params) != ERR_OK ||
 		bignParamsEnc(der, &count, params) != ERR_OK ||
 		bignParamsDec(params1, der, count) != ERR_OK ||
+		!memEq(params, params1, sizeof(bign_params)))
+		return FALSE;
+	// генерация таблицы Б.1
+	if (bignParamsStd(params1, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK)
+		return FALSE;
+	params1->seed[0] = 0;
+	memSetZero(params1->b, sizeof(params1->b));
+	memSetZero(params1->q, sizeof(params1->q));
+	memSetZero(params1->yG, sizeof(params1->yG));
+	if (bignParamsGen(params1, _calc_q, 0, 0) != ERR_OK ||
 		!memEq(params, params1, sizeof(bign_params)))
 		return FALSE;
 	// идентификатор объекта
