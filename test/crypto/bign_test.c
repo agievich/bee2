@@ -4,12 +4,13 @@
 \brief Tests for STB 34.101.45 (bign)
 \project bee2/test
 \created 2012.08.27
-\version 2023.03.29
+\version 2023.09.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
+#include <bee2/core/err.h>
 #include <bee2/core/mem.h>
 #include <bee2/core/hex.h>
 #include <bee2/core/str.h>
@@ -80,6 +81,27 @@ static void brngCTRXStepR(void* buf, size_t count, void* stack)
 
 /*
 *******************************************************************************
+Функция интерфейса bign_pgen_calc_q
+*******************************************************************************
+*/
+
+static err_t _calc_q(bign_params* params, void* state)
+{
+	err_t code;
+	bign_params par[1];
+	code = bignParamsStd(par, "1.2.112.0.2.0.34.101.45.3.1");
+	ERR_CALL_CHECK(code);
+	if (params->l != par->l ||
+		!memEq(params->p, par->p, sizeof(params->p)) ||
+		!memEq(params->a, par->a, sizeof(params->a)) ||
+		!memEq(params->seed, par->seed, sizeof(params->seed)))
+		return ERR_NO_RESULT;
+	memCopy(params->q, par->q, sizeof(par->q));
+	return ERR_OK;
+}
+
+/*
+*******************************************************************************
 Самотестирование
 
 -#	Выполняются тесты из приложения  к СТБ 34.101.45.
@@ -91,8 +113,9 @@ static void brngCTRXStepR(void* buf, size_t count, void* stack)
 bool_t bignTest()
 {
 	bign_params params[1];
-	octet oid_der[128];
-	size_t oid_len;
+	bign_params params1[1];
+	octet der[512];
+	size_t count;
 	octet privkey[64];
 	octet pubkey[128];
 	octet id_privkey[64];
@@ -118,25 +141,45 @@ bool_t bignTest()
 		sizeof(zz_stack) < zzMulMod_deep(W_OF_O(32)))
 		return FALSE;
 	// проверить таблицы Б.1, Б.2, Б.3
-	if (bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.3") != ERR_OK ||
-		bignValParams(params) != ERR_OK)
+	count = sizeof(der);
+	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.3") != ERR_OK ||
+		bignParamsVal(params) != ERR_OK ||
+		bignParamsEnc(der, &count, params) != ERR_OK ||
+		bignParamsDec(params1, der, count) != ERR_OK ||
+		!memEq(params, params1, sizeof(bign_params)))
 		return FALSE;
-	if (bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.2") != ERR_OK ||
-		bignValParams(params) != ERR_OK)
+	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.2") != ERR_OK ||
+		bignParamsVal(params) != ERR_OK ||
+		bignParamsEnc(der, &count, params) != ERR_OK ||
+		bignParamsDec(params1, der, count) != ERR_OK ||
+		!memEq(params, params1, sizeof(bign_params)))
 		return FALSE;
-	if (bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK ||
-		bignValParams(params) != ERR_OK)
+	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK ||
+		bignParamsVal(params) != ERR_OK ||
+		bignParamsEnc(der, &count, params) != ERR_OK ||
+		bignParamsDec(params1, der, count) != ERR_OK ||
+		!memEq(params, params1, sizeof(bign_params)))
+		return FALSE;
+	// генерация таблицы Б.1
+	if (bignParamsStd(params1, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK)
+		return FALSE;
+	params1->seed[0] = 0;
+	memSetZero(params1->b, sizeof(params1->b));
+	memSetZero(params1->q, sizeof(params1->q));
+	memSetZero(params1->yG, sizeof(params1->yG));
+	if (bignParamsGen(params1, _calc_q, 0, 0) != ERR_OK ||
+		!memEq(params, params1, sizeof(bign_params)))
 		return FALSE;
 	// идентификатор объекта
-	oid_len = sizeof(oid_der);
-	if (bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.31.81") 
-		!= ERR_OK || oid_len != 11)
+	count = sizeof(der);
+	if (bignOidToDER(der, &count, "1.2.112.0.2.0.34.101.31.81") 
+		!= ERR_OK || count != 11)
 		return FALSE;
 	// инициализировать ГПСЧ
 	brngCTRXStart(beltH() + 128, beltH() + 128 + 64,
 		beltH(), 8 * 32, brng_state);
 	// тест Г.1
-	if (bignGenKeypair(privkey, pubkey, params, brngCTRXStepR, brng_state) != 
+	if (bignKeypairGen(privkey, pubkey, params, brngCTRXStepR, brng_state) != 
 		ERR_OK)
 		return FALSE;
 	if (!hexEq(privkey,
@@ -148,11 +191,11 @@ bool_t bignTest()
 		"7AC6A60361E8C8173491686D461B2826"
 		"190C2EDA5909054A9AB84D2AB9D99A90"))
 		return FALSE;
-	if (bignValKeypair(params, privkey, pubkey) != ERR_OK)
+	if (bignKeypairVal(params, privkey, pubkey) != ERR_OK)
 		return FALSE;
-	if (bignValPubkey(params, pubkey) != ERR_OK)
+	if (bignPubkeyVal(params, pubkey) != ERR_OK)
 		return FALSE;
-	if (bignCalcPubkey(pubkey, params, privkey) != ERR_OK)
+	if (bignPubkeyCalc(pubkey, params, privkey) != ERR_OK)
 		return FALSE;
 	if (!hexEq(pubkey,
 		"BD1A5650179D79E03FCEE49D4C2BD5DD"
@@ -173,7 +216,7 @@ bool_t bignTest()
 	// тест Г.2
 	if (beltHash(hash, beltH(), 13) != ERR_OK)
 		return FALSE;
-	if (bignSign(sig, params, oid_der, oid_len, hash, privkey, brngCTRXStepR, 
+	if (bignSign(sig, params, der, count, hash, privkey, brngCTRXStepR, 
 		brng_state) != ERR_OK)
 		return FALSE;
 	if (!hexEq(sig, 
@@ -181,18 +224,18 @@ bool_t bignTest()
 		"CE72F1530B71F2B5FD3A8C584FE2E1AE"
 		"D20082E30C8AF65011F4FB54649DFD3D"))
 		return FALSE;
-	if (bignVerify(params, oid_der, oid_len, hash, sig, pubkey) != ERR_OK)
+	if (bignVerify(params, der, count, hash, sig, pubkey) != ERR_OK)
 		return FALSE;
 	sig[0] ^= 1;
-	if (bignVerify(params, oid_der, oid_len, hash, sig, pubkey) == ERR_OK)
+	if (bignVerify(params, der, count, hash, sig, pubkey) == ERR_OK)
 		return FALSE;
 	sig[0] ^= 1, pubkey[0] ^= 1;
-	if (bignVerify(params, oid_der, oid_len, hash, sig, pubkey) == ERR_OK)
+	if (bignVerify(params, der, count, hash, sig, pubkey) == ERR_OK)
 		return FALSE;
 	pubkey[0] ^= 1;
 	// тест Г.8
 	memCopy(id_hash, hash, 32);
-	if (bignIdExtract(id_privkey, id_pubkey, params, oid_der, oid_len, 
+	if (bignIdExtract(id_privkey, id_pubkey, params, der, count, 
 		id_hash, sig, pubkey) != ERR_OK)
 		return FALSE;
 	if (!hexEq(id_pubkey,
@@ -223,7 +266,7 @@ bool_t bignTest()
 	// тест Г.3
 	if (beltHash(hash, beltH(), 48) != ERR_OK)
 		return FALSE;
-	if (bignSign(sig, params, oid_der, oid_len, hash, privkey, brngCTRXStepR, 
+	if (bignSign(sig, params, der, count, hash, privkey, brngCTRXStepR, 
 		brng_state) != ERR_OK)
 		return FALSE;
 	if (!hexEq(sig, 
@@ -231,7 +274,7 @@ bool_t bignTest()
 		"290F3210E163EEC8DB4E921E8479D413"
 		"8F112CC23E6DCE65EC5FF21DF4231C28"))
 		return FALSE;
-	if (bignVerify(params, oid_der, oid_len, hash, sig, pubkey) != ERR_OK)
+	if (bignVerify(params, der, count, hash, sig, pubkey) != ERR_OK)
 		return FALSE;
 	// тест Г.5
 	bignKeyWrap(token, params, beltH(), 32, beltH() + 64,
@@ -250,7 +293,7 @@ bool_t bignTest()
 	// тест Г.6
 	if (beltHash(hash, beltH(), 13) != ERR_OK)
 		return FALSE;
-	if (bignSign2(sig, params, oid_der, oid_len, hash, privkey, 0, 0) 
+	if (bignSign2(sig, params, der, count, hash, privkey, 0, 0) 
 		!= ERR_OK)
 		return FALSE;
 	wwFrom(q, params->q, 32);
@@ -271,7 +314,7 @@ bool_t bignTest()
 	// тест Г.7
 	if (beltHash(hash, beltH(), 48) != ERR_OK)
 		return FALSE;
-	if (bignSign2(sig, params, oid_der, oid_len, hash, privkey, 
+	if (bignSign2(sig, params, der, count, hash, privkey, 
 		beltH() + 128 + 64, 23) != ERR_OK)
 		return FALSE;
 	wwFrom(q, params->q, 32);
@@ -292,7 +335,7 @@ bool_t bignTest()
 	// тест Г.9
 	if (beltHash(hash, beltH() + 32, 16) != ERR_OK)
 		return FALSE;
-	if (bignIdSign(id_sig, params, oid_der, oid_len, id_hash, hash, id_privkey,
+	if (bignIdSign(id_sig, params, der, count, id_hash, hash, id_privkey,
 		brngCTRXStepR, brng_state) != ERR_OK)
 		return FALSE;
 	if (!hexEq(id_sig,
@@ -300,22 +343,22 @@ bool_t bignTest()
 		"8D342FDC47BC8AAEB6226448956E22D6"
 		"CC73B62CB21B66E5C8DE0A3E234FB0C6"))
 		return FALSE;
-	if (bignIdVerify(params, oid_der, oid_len, id_hash, hash, id_sig, 
+	if (bignIdVerify(params, der, count, id_hash, hash, id_sig, 
 		id_pubkey, pubkey) != ERR_OK)
 		return FALSE;
 	id_sig[0] ^= 1;
-	if (bignIdVerify(params, oid_der, oid_len, id_hash, hash, id_sig, 
+	if (bignIdVerify(params, der, count, id_hash, hash, id_sig, 
 		id_pubkey, pubkey) == ERR_OK)
 		return FALSE;
 	id_sig[0] ^= 1, id_pubkey[0] ^= 1;
-	if (bignIdVerify(params, oid_der, oid_len, id_hash, hash, id_sig, 
+	if (bignIdVerify(params, der, count, id_hash, hash, id_sig, 
 		id_pubkey, pubkey) == ERR_OK)
 		return FALSE;
 	id_pubkey[0] ^= 1;
 	// тест Г.10
 	if (beltHash(hash, beltH() + 32, 23) != ERR_OK)
 		return FALSE;
-	if (bignIdSign(id_sig, params, oid_der, oid_len, id_hash, hash, id_privkey,
+	if (bignIdSign(id_sig, params, der, count, id_hash, hash, id_privkey,
 		brngCTRXStepR, brng_state) != ERR_OK)
 		return FALSE;
 	if (!hexEq(id_sig,
@@ -323,30 +366,30 @@ bool_t bignTest()
 		"B270BD0A79D534B3B120791400C8BB18"
 		"50AD6D3C78047FCB46F18608AC7006AA"))
 		return FALSE;
-	if (bignIdVerify(params, oid_der, oid_len, id_hash, hash, id_sig, 
+	if (bignIdVerify(params, der, count, id_hash, hash, id_sig, 
 		id_pubkey, pubkey) != ERR_OK)
 		return FALSE;
 	id_sig[0] ^= 1;
-	if (bignIdVerify(params, oid_der, oid_len, id_hash, hash, id_sig, 
+	if (bignIdVerify(params, der, count, id_hash, hash, id_sig, 
 		id_pubkey, pubkey) == ERR_OK)
 		return FALSE;
 	id_sig[0] ^= 1, id_pubkey[0] ^= 1;
-	if (bignIdVerify(params, oid_der, oid_len, id_hash, hash, id_sig, 
+	if (bignIdVerify(params, der, count, id_hash, hash, id_sig, 
 		id_pubkey, pubkey) == ERR_OK)
 		return FALSE;
 	id_pubkey[0] ^= 1;
 	// дополнительный тест для проверки bignIdSign2
-	if (bignIdSign2(id_sig, params, oid_der, oid_len, id_hash, hash, 
+	if (bignIdSign2(id_sig, params, der, count, id_hash, hash, 
 		id_privkey, 0, 0) != ERR_OK ||
-		bignIdVerify(params, oid_der, oid_len, id_hash, hash, id_sig, 
+		bignIdVerify(params, der, count, id_hash, hash, id_sig, 
 		id_pubkey, pubkey) != ERR_OK)
 		return FALSE;
 	id_sig[0] ^= 1;
-	if (bignIdVerify(params, oid_der, oid_len, id_hash, hash, id_sig, 
+	if (bignIdVerify(params, der, count, id_hash, hash, id_sig, 
 		id_pubkey, pubkey) == ERR_OK)
 		return FALSE;
 	id_sig[0] ^= 1, id_pubkey[0] ^= 1;
-	if (bignIdVerify(params, oid_der, oid_len, id_hash, hash, id_sig, 
+	if (bignIdVerify(params, der, count, id_hash, hash, id_sig, 
 		id_pubkey, pubkey) == ERR_OK)
 		return FALSE;
 	id_pubkey[0] ^= 1;

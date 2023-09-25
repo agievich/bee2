@@ -4,7 +4,7 @@
 \brief STB 34.101.66 (bake): authenticated key establishment (AKE) protocols
 \project bee2 [cryptographic library]
 \created 2014.04.14
-\version 2023.02.02
+\version 2023.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -40,12 +40,12 @@ extern "C" {
 Долговременные параметры bake повторяют долговременные параметры bign 
 и задаются структурой типа bign_params, описанной в заголовочном файле bign.h. 
 Стандартные долговременные параметры можно получить с помощью функции 
-bignStdParams(), проверить --- с помощью функции bignValParams().
+bignParamsStd(), проверить --- с помощью функции bignValParams().
 
 На личные и открытые ключи распространяются соглашения bign. Генерацию 
-пары ключей можно выполнить с помощью функции bignGenKeypair(),
-проверку открытого ключа --- с помощью функции bignValPubkey(),
-построение открытого ключа по личному --- с помощью bignCalcPubkey().
+пары ключей можно выполнить с помощью функции bignKeypairGen(),
+проверку открытого ключа --- с помощью функции bignPubkeyVal(),
+построение открытого ключа по личному --- с помощью bignPubkeyCalc().
 
 Настройки протоколов описываются структурой типа bake_settings. В этих 
 настройках задаются:

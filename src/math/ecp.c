@@ -4,7 +4,7 @@
 \brief Elliptic curves over prime fields
 \project bee2 [cryptographic library]
 \created 2012.06.26
-\version 2021.06.30
+\version 2023.09.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -916,13 +916,14 @@ bool_t ecpIsValid(const ec_o* ec, void* stack)
 	qrMul(t1, t1, ec->A, ec->f, stack);
 	gfpDouble(t1, t1, ec->f);
 	gfpDouble(t1, t1, ec->f);
-	// t3 <- 3 B^2
+	// t2 <- 27 B^2
 	qrSqr(t2, ec->B, ec->f, stack);
 	gfpDouble(t3, t2, ec->f);
-	zmAdd(t3, t3, t2, ec->f);
-	// t2 <- 3 t3 [27 B^2]
-	gfpDouble(t2, t3, ec->f);
-	zmAdd(t2, t3, t2, ec->f);
+	zmAdd(t2, t2, t3, ec->f);
+	gfpDouble(t3, t2, ec->f);
+	zmAdd(t2, t2, t3, ec->f);
+	gfpDouble(t3, t2, ec->f);
+	zmAdd(t2, t2, t3, ec->f);
 	// t1 <- t1 + t2 [4 A^3 + 27 B^2 -- дискриминант]
 	zmAdd(t1, t1, t2, ec->f);
 	// t1 == 0 => сингулярная кривая

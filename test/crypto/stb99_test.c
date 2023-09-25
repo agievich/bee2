@@ -48,15 +48,15 @@ bool_t stb99TestTestParams()
 	stb99_params params1[1];
 	// загрузочные параметры
 	memSetZero(seed1, sizeof(stb99_seed));
-	if (stb99ValSeed(seed1) == ERR_OK ||
-		stb99StdParams(params, seed, "test") != ERR_OK ||
-		(seed1->l = params->l, stb99AdjSeed(seed1)) != ERR_OK ||
+	if (stb99SeedVal(seed1) == ERR_OK ||
+		stb99ParamsStd(params, seed, "test") != ERR_OK ||
+		(seed1->l = params->l, stb99SeedAdj(seed1)) != ERR_OK ||
 		!memEq(seed, seed1, sizeof(stb99_seed)))
 		return FALSE;
 	// тест GPQA.L01
-	if (stb99StdParams(params, 0, "test") != ERR_OK ||
-		stb99GenParams(params1, seed1) != ERR_OK ||
-		stb99ValParams(params1) != ERR_OK ||
+	if (stb99ParamsStd(params, 0, "test") != ERR_OK ||
+		stb99ParamsGen(params1, seed1) != ERR_OK ||
+		stb99ParamsVal(params1) != ERR_OK ||
 		!memEq(params, params1, sizeof(stb99_params)))
 		return FALSE;
 	// все нормально
@@ -69,21 +69,21 @@ bool_t stb99TestStdParams()
 	stb99_params params1[1];
 	stb99_seed seed[1];
 	// тест GPQA.L03
-	if (stb99StdParams(params, seed, "1.2.112.0.2.0.1176.2.3.3.1") != ERR_OK ||
-		stb99GenParams(params1, seed) != ERR_OK ||
-		stb99ValParams(params1) != ERR_OK ||
+	if (stb99ParamsStd(params, seed, "1.2.112.0.2.0.1176.2.3.3.1") != ERR_OK ||
+		stb99ParamsGen(params1, seed) != ERR_OK ||
+		stb99ParamsVal(params1) != ERR_OK ||
 		!memEq(params, params1, sizeof(stb99_params)))
 		return FALSE;
 	// тест GPQA.L06
-	if (stb99StdParams(params, seed, "1.2.112.0.2.0.1176.2.3.6.1") != ERR_OK ||
-		stb99GenParams(params1, seed) != ERR_OK ||
-		stb99ValParams(params1) != ERR_OK ||
+	if (stb99ParamsStd(params, seed, "1.2.112.0.2.0.1176.2.3.6.1") != ERR_OK ||
+		stb99ParamsGen(params1, seed) != ERR_OK ||
+		stb99ParamsVal(params1) != ERR_OK ||
 		!memEq(params, params1, sizeof(stb99_params)))
 		return FALSE;
 	// тест GPQA.L10
-	if (stb99StdParams(params, seed, "1.2.112.0.2.0.1176.2.3.10.1") != ERR_OK ||
-		stb99GenParams(params1, seed) != ERR_OK ||
-		stb99ValParams(params1) != ERR_OK ||
+	if (stb99ParamsStd(params, seed, "1.2.112.0.2.0.1176.2.3.10.1") != ERR_OK ||
+		stb99ParamsGen(params1, seed) != ERR_OK ||
+		stb99ParamsVal(params1) != ERR_OK ||
 		!memEq(params, params1, sizeof(stb99_params)))
 		return FALSE;
 	// все нормально

@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2023.02.10
+\version 2023.09.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -787,6 +787,27 @@ void zzMulMod(
 );
 
 size_t zzMulMod_deep(size_t n);
+
+/*!	\brief Умножение числа на слово по модулю
+
+	Определяется произведение [n]b числа [n]a на слово w по модулю [n]mod:
+	\code
+		b <- a * w \mod mod.
+	\endcode
+	\pre n > 0 && mod[n - 1] != 0.
+	\pre a < mod.
+	\deep{stack} zzMulWMod_deep(n).
+*/
+void zzMulWMod(
+	word b[],			/*!< [out] произведение */
+	const word a[],		/*!< [in] первый множитель */
+	register word w,	/*!< [in] второй множитель */
+	const word mod[],	/*!< [in] модуль */
+	size_t n,			/*!< [in] длина чисел в машинных словах */
+	void* stack			/*!< [in] вспомогательная память */
+);
+
+size_t zzMulWMod_deep(size_t n);
 
 /*!	\brief Возведение чисел в квадрат по модулю
 

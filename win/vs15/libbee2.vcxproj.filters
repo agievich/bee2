@@ -43,6 +43,9 @@
     <Filter Include="Source Files\crypto\btok">
       <UniqueIdentifier>{9f284c79-794b-4a32-80a9-777cace4f97e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\crypto\bign">
+      <UniqueIdentifier>{f61e0e6a-2928-412c-872d-fda7b672d9b9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\math\ecp.c">
@@ -55,9 +58,6 @@
       <Filter>Source Files\math</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\crypto\bels.c">
-      <Filter>Source Files\crypto</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\crypto\bign.c">
       <Filter>Source Files\crypto</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\crypto\brng.c">
@@ -267,11 +267,26 @@
     <ClCompile Include="..\..\src\crypto\stb99.c">
       <Filter>Source Files\crypto</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\crypto\bign\bign_ibs.c">
+      <Filter>Source Files\crypto\bign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\bign\bign_keyt.c">
+      <Filter>Source Files\crypto\bign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\bign\bign_lcl.c">
+      <Filter>Source Files\crypto\bign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\bign\bign_misc.c">
+      <Filter>Source Files\crypto\bign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\bign\bign_params.c">
+      <Filter>Source Files\crypto\bign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\bign\bign_sign.c">
+      <Filter>Source Files\crypto\bign</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\crypto\bign_lcl.h">
-      <Filter>Source Files\crypto</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\bee2\crypto\bake.h">
       <Filter>Header Files\crypto</Filter>
     </ClInclude>
@@ -424,6 +439,9 @@
     </ClInclude>
     <ClInclude Include="..\..\include\bee2\crypto\stb99.h">
       <Filter>Header Files\crypto</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\crypto\bign\bign_lcl.h">
+      <Filter>Source Files\crypto\bign</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

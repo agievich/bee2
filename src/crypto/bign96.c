@@ -4,7 +4,7 @@
 \brief Experimental Bign level 96 signatures
 \project bee2 [cryptographic library]
 \created 2021.01.20
-\version 2023.06.18
+\version 2023.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -105,7 +105,7 @@ static void belt32BlockEncr(octet block[24], const u32 key[8], u32* round)
 *******************************************************************************
 */
 
-err_t bign96StdParams(bign_params* params, const char* name)
+err_t bign96ParamsStd(bign_params* params, const char* name)
 {
 	if (!memIsValid(params, sizeof(bign_params)))
 		return ERR_BAD_INPUT;
@@ -195,7 +195,7 @@ err_t bign96Start(void* state, const bign_params* params)
 *******************************************************************************
 Проверка параметров
 
--#	l = 96 (bign96ValParams)
+-#	l = 96 (bign96ParamsVal)
 -#	2^{l - 1} < p, q < 2^l (bign96Start)
 -#	p -- простое (ecpIsValid)
 -#	q -- простое (ecpIsSafeGroup)
@@ -203,16 +203,16 @@ err_t bign96Start(void* state, const bign_params* params)
 -#	q != p (ecpIsSafeGroup)
 -#	p^m \not\equiv 1 (mod q), m = 1, 2,..., 50 (ecpIsSafeGroup)
 -#	a, b < p (ecpCreateJ in bign96Start)
--#	0 != b (bign96ValParams)
--#	b \equiv B (mod p) (bign96ValParams)
+-#	0 != b (bign96ParamsVal)
+-#	b \equiv B (mod p) (bign96ParamsVal)
 -#	4a^3 + 27b^2 \not\equiv 0 (\mod p) (ecpIsValid)
 -#	(b / p) = 1 (zzJacobi)
--#	G = (0, b^{(p + 1) /4}) (bign96ValParams)
+-#	G = (0, b^{(p + 1) /4}) (bign96ParamsVal)
 -#	qG = O (ecpHasOrder)
 *******************************************************************************
 */
 
-static size_t bign96ValParams_deep(size_t n, size_t f_deep, size_t ec_d,
+static size_t bign96ParamsVal_deep(size_t n, size_t f_deep, size_t ec_d,
 	size_t ec_deep)
 {
 	return beltHash_keep() + O_OF_B(512) +
@@ -225,7 +225,7 @@ static size_t bign96ValParams_deep(size_t n, size_t f_deep, size_t ec_d,
 			ecHasOrderA_deep(n, ec_d, ec_deep, n));
 }
 
-err_t bign96ValParams(const bign_params* params)
+err_t bign96ParamsVal(const bign_params* params)
 {
 	err_t code;
 	size_t n;
@@ -242,7 +242,7 @@ err_t bign96ValParams(const bign_params* params)
 	if (params->l != 96)
 		return ERR_BAD_PARAMS;
 	// создать состояние
-	state = blobCreate(bign96Start_keep(bign96ValParams_deep));
+	state = blobCreate(bign96Start_keep(bign96ParamsVal_deep));
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// старт
@@ -308,14 +308,14 @@ err_t bign96ValParams(const bign_params* params)
 *******************************************************************************
 */
 
-static size_t bign96GenKeypair_deep(size_t n, size_t f_deep, size_t ec_d,
+static size_t bign96KeypairGen_deep(size_t n, size_t f_deep, size_t ec_d,
 	size_t ec_deep)
 {
 	return O_OF_W(n + 2 * n) +
 		ecMulA_deep(n, ec_d, ec_deep, n);
 }
 
-err_t bign96GenKeypair(octet privkey[24], octet pubkey[48],
+err_t bign96KeypairGen(octet privkey[24], octet pubkey[48],
 	const bign_params* params, gen_i rng, void* rng_state)
 {
 	err_t code;
@@ -335,7 +335,7 @@ err_t bign96GenKeypair(octet privkey[24], octet pubkey[48],
 	if (rng == 0)
 		return ERR_BAD_RNG;
 	// создать состояние
-	state = blobCreate(bign96Start_keep(bign96GenKeypair_deep));
+	state = blobCreate(bign96Start_keep(bign96KeypairGen_deep));
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// старт
@@ -375,14 +375,14 @@ err_t bign96GenKeypair(octet privkey[24], octet pubkey[48],
 	return code;
 }
 
-static size_t bign96ValKeypair_deep(size_t n, size_t f_deep, size_t ec_d,
+static size_t bign96KeypairVal_deep(size_t n, size_t f_deep, size_t ec_d,
 	size_t ec_deep)
 {
 	return O_OF_W(n + 2 * n) +
 		ecMulA_deep(n, ec_d, ec_deep, n);
 }
 
-err_t bign96ValKeypair(const bign_params* params, const octet privkey[24],
+err_t bign96KeypairVal(const bign_params* params, const octet privkey[24],
 	const octet pubkey[48])
 {
 	err_t code;
@@ -399,7 +399,7 @@ err_t bign96ValKeypair(const bign_params* params, const octet privkey[24],
 	if (params->l != 96)
 		return ERR_BAD_PARAMS;
 	// создать состояние
-	state = blobCreate(bign96Start_keep(bign96ValKeypair_deep));
+	state = blobCreate(bign96Start_keep(bign96KeypairVal_deep));
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// старт
@@ -442,14 +442,14 @@ err_t bign96ValKeypair(const bign_params* params, const octet privkey[24],
 	return code;
 }
 
-static size_t bign96ValPubkey_deep(size_t n, size_t f_deep, size_t ec_d,
+static size_t bign96PubkeyVal_deep(size_t n, size_t f_deep, size_t ec_d,
 	size_t ec_deep)
 {
 	return O_OF_W(2 * n) +
 		ecpIsOnA_deep(n, f_deep);
 }
 
-err_t bign96ValPubkey(const bign_params* params, const octet pubkey[48])
+err_t bign96PubkeyVal(const bign_params* params, const octet pubkey[48])
 {
 	err_t code;
 	size_t n;
@@ -464,7 +464,7 @@ err_t bign96ValPubkey(const bign_params* params, const octet pubkey[48])
 	if (params->l != 96)
 		return ERR_BAD_PARAMS;
 	// создать состояние
-	state = blobCreate(bign96Start_keep(bign96ValPubkey_deep));
+	state = blobCreate(bign96Start_keep(bign96PubkeyVal_deep));
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// старт
@@ -496,14 +496,14 @@ err_t bign96ValPubkey(const bign_params* params, const octet pubkey[48])
 	return code;
 }
 
-static size_t bign96CalcPubkey_deep(size_t n, size_t f_deep, size_t ec_d,
+static size_t bign96PubkeyCalc_deep(size_t n, size_t f_deep, size_t ec_d,
 	size_t ec_deep)
 {
 	return O_OF_W(n + 2 * n) +
 		ecMulA_deep(n, ec_d, ec_deep, n);
 }
 
-err_t bign96CalcPubkey(octet pubkey[48], const bign_params* params,
+err_t bign96PubkeyCalc(octet pubkey[48], const bign_params* params,
 	const octet privkey[24])
 {
 	err_t code;
@@ -520,7 +520,7 @@ err_t bign96CalcPubkey(octet pubkey[48], const bign_params* params,
 	if (params->l != 96)
 		return ERR_BAD_PARAMS;
 	// создать состояние
-	state = blobCreate(bign96Start_keep(bign96CalcPubkey_deep));
+	state = blobCreate(bign96Start_keep(bign96PubkeyCalc_deep));
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// старт

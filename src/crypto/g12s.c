@@ -4,7 +4,7 @@
 \brief GOST R 34.10-94 (Russia): digital signature algorithms
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2023.04.13
+\version 2023.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -515,7 +515,7 @@ static const octet _paramsetB512_yP[] = {
 	memCopy((params)->xP, _##name##_xP, sizeof(_##name##_xP));\
 	memCopy((params)->yP, _##name##_yP, sizeof(_##name##_yP))\
 
-err_t g12sStdParams(g12s_params* params, const char* name)
+err_t g12sParamsStd(g12s_params* params, const char* name)
 {
 	if (!memIsValid(params, sizeof(g12s_params)))
 		return ERR_BAD_INPUT;
@@ -591,7 +591,7 @@ err_t g12sStdParams(g12s_params* params, const char* name)
 *******************************************************************************
 */
 
-static err_t g12sCreateEc(
+static err_t g12sEcCreate(
 	ec_o** pec,						/* [out] описание эллиптической кривой */
 	const g12s_params* params,		/* [in] долговременные параметры */
 	g12s_deep_i deep				/* [in] потребности в стековой памяти */
@@ -680,7 +680,7 @@ static err_t g12sCreateEc(
 *******************************************************************************
 */
 
-void g12sCloseEc(ec_o* ec)
+void g12sEcClose(ec_o* ec)
 {
 	blobClose(ec);
 }
@@ -696,7 +696,7 @@ void g12sCloseEc(ec_o* ec)
 -#	q != p (ecpIsSafeGroup)
 -#	p^m \not\equiv 1 (mod q), m = 1, 2,..., 31 или 131 (ecpIsSafeGroup)
 -#	a, b < p (ecpCreateJ in g12sCreateEc)
--#	J(E) \notin {0, 1728} <=> a, b != 0 (g12sValParams)
+-#	J(E) \notin {0, 1728} <=> a, b != 0 (g12sParamsVal)
 -#	4a^3 + 27b^2 \not\equiv 0 (\mod p) (ecpIsValid)
 -#	P \in E (ecpSeemsValidGroup)
 -#	|n * q - (p + 1)| \leq 2\sqrt{p} (ecpSeemsValidGroup)
@@ -705,7 +705,7 @@ void g12sCloseEc(ec_o* ec)
 *******************************************************************************
 */
 
-static size_t g12sValParams_deep(size_t n, size_t f_deep, size_t ec_d, 
+static size_t g12sParamsVal_deep(size_t n, size_t f_deep, size_t ec_d, 
 	size_t ec_deep)
 {
 	return utilMax(4,
@@ -715,14 +715,14 @@ static size_t g12sValParams_deep(size_t n, size_t f_deep, size_t ec_d,
 			ecHasOrderA_deep(n, ec_d, ec_deep, n));
 }
 
-err_t g12sValParams(const g12s_params* params)
+err_t g12sParamsVal(const g12s_params* params)
 {
 	err_t code;
 	// состояние
 	ec_o* ec = 0;
 	void* stack;
 	// старт
-	code = g12sCreateEc(&ec, params, g12sValParams_deep);
+	code = g12sEcCreate(&ec, params, g12sParamsVal_deep);
 	ERR_CALL_CHECK(code);
 	stack = objEnd(ec, void);
 	// проверить кривую, проверить J(E)
@@ -734,7 +734,7 @@ err_t g12sValParams(const g12s_params* params)
 		qrIsZero(ec->B, ec->f))
 		code = ERR_BAD_PARAMS;
 	// завершение
-	g12sCloseEc(ec);
+	g12sEcClose(ec);
 	return code;
 }
 
@@ -744,7 +744,7 @@ err_t g12sValParams(const g12s_params* params)
 *******************************************************************************
 */
 
-static size_t g12sGenKeypair_deep(size_t n, size_t f_deep, size_t ec_d, 
+static size_t g12sKeypairGen_deep(size_t n, size_t f_deep, size_t ec_d, 
 	size_t ec_deep)
 {
 	const size_t m = n;
@@ -752,7 +752,7 @@ static size_t g12sGenKeypair_deep(size_t n, size_t f_deep, size_t ec_d,
 		ecMulA_deep(n, ec_d, ec_deep, n);
 }
 
-err_t g12sGenKeypair(octet privkey[], octet pubkey[],
+err_t g12sKeypairGen(octet privkey[], octet pubkey[],
 	const g12s_params* params, gen_i rng, void* rng_stack)
 {
 	err_t code;
@@ -766,7 +766,7 @@ err_t g12sGenKeypair(octet privkey[], octet pubkey[],
 	if (rng == 0)
 		return ERR_BAD_RNG;
 	// старт
-	code = g12sCreateEc(&ec, params, g12sGenKeypair_deep);
+	code = g12sEcCreate(&ec, params, g12sKeypairGen_deep);
 	ERR_CALL_CHECK(code);
 	// размерности order
 	m = W_OF_B(params->l);
@@ -775,7 +775,7 @@ err_t g12sGenKeypair(octet privkey[], octet pubkey[],
 	if (!memIsValid(privkey, mo) || 
 		!memIsValid(pubkey, 2 * ec->f->no))
 	{
-		g12sCloseEc(ec);
+		g12sEcClose(ec);
 		return ERR_BAD_INPUT;
 	}
 	// раскладка состояния
@@ -785,13 +785,13 @@ err_t g12sGenKeypair(octet privkey[], octet pubkey[],
 	// d <-R {1,2,..., q - 1}
 	if (!zzRandNZMod(d, ec->order, m, rng, rng_stack))
 	{
-		g12sCloseEc(ec);
+		g12sEcClose(ec);
 		return ERR_BAD_RNG;
 	}
 	// Q <- d P
 	if (!ecMulA(Q, ec->base, ec, d, m, stack))
 	{
-		g12sCloseEc(ec);
+		g12sEcClose(ec);
 		return ERR_BAD_PARAMS;
 	}
 	// выгрузить ключи
@@ -799,7 +799,7 @@ err_t g12sGenKeypair(octet privkey[], octet pubkey[],
 	qrTo(pubkey, ecX(Q), ec->f, stack);
 	qrTo(pubkey + ec->f->no, ecY(Q, ec->f->n), ec->f, stack);
 	// все нормально
-	g12sCloseEc(ec);
+	g12sEcClose(ec);
 	return ERR_OK;
 }
 
@@ -838,7 +838,7 @@ err_t g12sSign(octet sig[], const g12s_params* params, const octet hash[],
 	if (rng == 0)
 		return ERR_BAD_RNG;
 	// старт
-	code = g12sCreateEc(&ec, params, g12sSign_deep);
+	code = g12sEcCreate(&ec, params, g12sSign_deep);
 	ERR_CALL_CHECK(code);
 	// размерности order
 	m = W_OF_B(params->l);
@@ -848,7 +848,7 @@ err_t g12sSign(octet sig[], const g12s_params* params, const octet hash[],
 		!memIsValid(privkey, mo) ||
 		!memIsValid(sig, 2 * mo))
 	{
-		g12sCloseEc(ec);
+		g12sEcClose(ec);
 		return ERR_BAD_INPUT;
 	}
 	// раскладка состояния
@@ -864,7 +864,7 @@ err_t g12sSign(octet sig[], const g12s_params* params, const octet hash[],
 	if (wwIsZero(d, m) || 
 		wwCmp(d, ec->order, m) >= 0)
 	{
-		g12sCloseEc(ec);
+		g12sEcClose(ec);
 		return ERR_BAD_PRIVKEY;
 	}
 	// e <- hash \mod q
@@ -879,14 +879,14 @@ err_t g12sSign(octet sig[], const g12s_params* params, const octet hash[],
 gen_k:
 	if (!zzRandNZMod(k, ec->order, m, rng, rng_stack))
 	{
-		g12sCloseEc(ec);
+		g12sEcClose(ec);
 		return ERR_BAD_RNG;
 	}
 	// C <- k P
 	if (!ecMulA(C, ec->base, ec, k, m, stack))
 	{
 		// если params корректны, то этого быть не должно
-		g12sCloseEc(ec);
+		g12sEcClose(ec);
 		return ERR_BAD_INPUT;
 	}
 	// r <- x_C \mod q
@@ -905,7 +905,7 @@ gen_k:
 	wwTo(sig + mo, mo, r);
 	memRev(sig, 2 * mo);
 	// все нормально
-	g12sCloseEc(ec);
+	g12sEcClose(ec);
 	return ERR_OK;
 }
 
@@ -940,7 +940,7 @@ err_t g12sVerify(const g12s_params* params, const octet hash[],
 	word* e;		/* [m] обработанное хэш-значение, v */
 	void* stack;
 	// старт
-	code = g12sCreateEc(&ec, params, g12sVerify_deep);
+	code = g12sEcCreate(&ec, params, g12sVerify_deep);
 	ERR_CALL_CHECK(code);
 	// размерности order
 	m = W_OF_B(params->l);
@@ -950,7 +950,7 @@ err_t g12sVerify(const g12s_params* params, const octet hash[],
 		!memIsValid(sig, 2 * mo) ||
 		!memIsValid(pubkey, 2 * ec->f->no))
 	{
-		g12sCloseEc(ec);
+		g12sEcClose(ec);
 		return ERR_BAD_INPUT;
 	}
 	// раскладка состояния
@@ -963,7 +963,7 @@ err_t g12sVerify(const g12s_params* params, const octet hash[],
 	if (!qrFrom(ecX(Q), pubkey, ec->f, stack) ||
 		!qrFrom(ecY(Q, ec->f->n), pubkey + ec->f->no, ec->f, stack))
 	{
-		g12sCloseEc(ec);
+		g12sEcClose(ec);
 		return ERR_BAD_PUBKEY;
 	}
 	// загрузить r и s
@@ -978,7 +978,7 @@ err_t g12sVerify(const g12s_params* params, const octet hash[],
 		wwCmp(s, ec->order, m) >= 0 ||
 		wwCmp(r, ec->order, m) >= 0)
 	{
-		g12sCloseEc(ec);
+		g12sEcClose(ec);
 		return ERR_BAD_SIG;
 	}
 	// e <- hash \mod q
@@ -999,7 +999,7 @@ err_t g12sVerify(const g12s_params* params, const octet hash[],
 	// Q <- s P + e Q [z1 P + z2 Q = R]
 	if (!ecAddMulA(Q, ec, stack, 2, ec->base, s, m, Q, e, m))
 	{
-		g12sCloseEc(ec);
+		g12sEcClose(ec);
 		return ERR_BAD_PARAMS;
 	}
 	// s <- x_Q \mod q [x_R \mod q]
@@ -1009,6 +1009,6 @@ err_t g12sVerify(const g12s_params* params, const octet hash[],
 	// s == r?
 	code = wwEq(r, s, m) ? ERR_OK : ERR_BAD_SIG;
 	// завершение
-	g12sCloseEc(ec);
+	g12sEcClose(ec);
 	return code;
 }

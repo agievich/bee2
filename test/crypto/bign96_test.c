@@ -4,7 +4,7 @@
 \brief Tests for bign96 signatures
 \project bee2/test
 \created 2021.01.20
-\version 2023.06.18
+\version 2023.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -94,8 +94,8 @@ bool_t bign96Test()
 	// создать стек
 	ASSERT(sizeof(brng_state) >= brngCTRX_keep());
 	// проверить параметры
-	if (bign96StdParams(params, "1.2.112.0.2.0.34.101.45.3.0") != ERR_OK ||
-		bign96ValParams(params) != ERR_OK)
+	if (bign96ParamsStd(params, "1.2.112.0.2.0.34.101.45.3.0") != ERR_OK ||
+		bign96ParamsVal(params) != ERR_OK)
 		return FALSE;
 	// идентификатор объекта
 	oid_len = sizeof(oid_der);
@@ -106,7 +106,7 @@ bool_t bign96Test()
 	brngCTRXStart(beltH() + 128, beltH() + 128 + 64,
 		beltH(), 8 * 32, brng_state);	
 	// управление ключами
-	if (bign96GenKeypair(privkey, pubkey, params, brngCTRXStepR, brng_state) != 
+	if (bign96KeypairGen(privkey, pubkey, params, brngCTRXStepR, brng_state) != 
 		ERR_OK)
 		return FALSE;
 	if (!hexEq(privkey,
@@ -117,11 +117,11 @@ bool_t bign96Test()
 		"C6F2CE13B710F1172D2C962F53D13115"
 		"DE14E56D9EB2628C9A884F668059EEA5"))
 		return FALSE;
-	if (bign96ValKeypair(params, privkey, pubkey) != ERR_OK)
+	if (bign96KeypairVal(params, privkey, pubkey) != ERR_OK)
 		return FALSE;
-	if (bign96ValPubkey(params, pubkey) != ERR_OK)
+	if (bign96PubkeyVal(params, pubkey) != ERR_OK)
 		return FALSE;
-	if (bign96CalcPubkey(pubkey, params, privkey) != ERR_OK)
+	if (bign96PubkeyCalc(pubkey, params, privkey) != ERR_OK)
 		return FALSE;
 	if (!hexEq(pubkey,
 		"4CED8FBBA1842BE58B4C0444F359CB14"

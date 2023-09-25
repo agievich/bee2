@@ -55,18 +55,18 @@ bool_t pfokTestTestParams()
 	pfok_params params1[1];
 	// загрузочные параметры
 	memSetZero(seed1, sizeof(pfok_seed));
-	if (pfokValSeed(seed1) == ERR_OK ||
-		pfokStdParams(params, seed, "test") != ERR_OK)
+	if (pfokSeedVal(seed1) == ERR_OK ||
+		pfokParamsStd(params, seed, "test") != ERR_OK)
 		return FALSE;
 	seed1->l = seed->l;
 	memCopy(seed1->zi, seed->zi, sizeof(seed->zi));
-	if (pfokAdjSeed(seed1) != ERR_OK ||
+	if (pfokSeedAdj(seed1) != ERR_OK ||
 		!memEq(seed, seed1, sizeof(pfok_seed)))
 		return FALSE;
 	// тест PFOK.GENP.1
-	if (pfokStdParams(params, 0, "test") != ERR_OK ||
-		pfokGenParams(params1, seed, _on_q_silent) != ERR_OK ||
-		pfokValParams(params1) != ERR_OK ||
+	if (pfokParamsStd(params, 0, "test") != ERR_OK ||
+		pfokParamsGen(params1, seed, _on_q_silent) != ERR_OK ||
+		pfokParamsVal(params1) != ERR_OK ||
 		params1->l != params->l ||
 		params1->r != params->r ||
 		params1->n != params->n ||
@@ -82,23 +82,23 @@ bool_t pfokTestStdParams()
 	pfok_params params1[1];
 	pfok_seed seed[1];
 	// тест PFOK.GENP.2
-	if (pfokStdParams(params, seed, "1.2.112.0.2.0.1176.2.3.3.2") != ERR_OK ||
-		pfokValParams(params) != ERR_OK ||
-		pfokGenParams(params1, seed, _on_q) != ERR_OK ||
+	if (pfokParamsStd(params, seed, "1.2.112.0.2.0.1176.2.3.3.2") != ERR_OK ||
+		pfokParamsVal(params) != ERR_OK ||
+		pfokParamsGen(params1, seed, _on_q) != ERR_OK ||
 		params1->l != params->l || params1->r != params->r ||
 		params1->n != params->n ||
 		!memEq(params1->p, params->p, sizeof(params->p)))
 		return FALSE;
 	// тест PFOK.GENP.3
-	if (pfokStdParams(params, seed, "1.2.112.0.2.0.1176.2.3.6.2") != ERR_OK ||
-		pfokGenParams(params1, seed, _on_q) != ERR_OK ||
+	if (pfokParamsStd(params, seed, "1.2.112.0.2.0.1176.2.3.6.2") != ERR_OK ||
+		pfokParamsGen(params1, seed, _on_q) != ERR_OK ||
 		params1->l != params->l || params1->r != params->r ||
 		params1->n != params->n ||
 		!memEq(params1->p, params->p, sizeof(params->p)))
 		return FALSE;
 	// тест PFOK.GENP.4
-	if (pfokStdParams(params, seed, "1.2.112.0.2.0.1176.2.3.10.2") != ERR_OK ||
-		pfokGenParams(params1, seed, _on_q) != ERR_OK ||
+	if (pfokParamsStd(params, seed, "1.2.112.0.2.0.1176.2.3.10.2") != ERR_OK ||
+		pfokParamsGen(params1, seed, _on_q) != ERR_OK ||
 		params1->l != params->l || params1->r != params->r ||
 		params1->n != params->n ||
 		!memEq(params1->p, params->p, sizeof(params->p)))
@@ -123,37 +123,37 @@ bool_t pfokTest()
 	if (!pfokTestTestParams())
 		return FALSE;
 	// тест PFOK.GENG.1
-	if (pfokStdParams(params, 0, "test") != ERR_OK ||
-		pfokValParams(params) != ERR_OK ||
+	if (pfokParamsStd(params, 0, "test") != ERR_OK ||
+		pfokParamsVal(params) != ERR_OK ||
 		(params->g[0] += 2) == 0 ||
-		pfokValParams(params) == ERR_OK)
+		pfokParamsVal(params) == ERR_OK)
 		return FALSE;
 	// тест PFOK.GENG.2
-	if (pfokStdParams(params, 0, "1.2.112.0.2.0.1176.2.3.3.2") != ERR_OK ||
-		pfokValParams(params) != ERR_OK ||
+	if (pfokParamsStd(params, 0, "1.2.112.0.2.0.1176.2.3.3.2") != ERR_OK ||
+		pfokParamsVal(params) != ERR_OK ||
 		(params->g[0] += 3) == 0 ||
-		pfokValParams(params) == ERR_OK)
+		pfokParamsVal(params) == ERR_OK)
 		return FALSE;
 	// тест PFOK.GENG.3
-	if (pfokStdParams(params, 0, "1.2.112.0.2.0.1176.2.3.6.2") != ERR_OK ||
-		pfokValParams(params) != ERR_OK ||
+	if (pfokParamsStd(params, 0, "1.2.112.0.2.0.1176.2.3.6.2") != ERR_OK ||
+		pfokParamsVal(params) != ERR_OK ||
 		(params->g[0] += 1) == 0 ||
-		pfokValParams(params) == ERR_OK)
+		pfokParamsVal(params) == ERR_OK)
 		return FALSE;
 	// тест PFOK.GENG.4
-	if (pfokStdParams(params, 0, "1.2.112.0.2.0.1176.2.3.10.2") != ERR_OK ||
-		pfokValParams(params) != ERR_OK ||
+	if (pfokParamsStd(params, 0, "1.2.112.0.2.0.1176.2.3.10.2") != ERR_OK ||
+		pfokParamsVal(params) != ERR_OK ||
 		(params->g[0] += 1) == 0 ||
-		pfokValParams(params) == ERR_OK)
+		pfokParamsVal(params) == ERR_OK)
 		return FALSE;
 	// загрузить параметры "test"
-	if (pfokStdParams(params, 0, "test") != ERR_OK)
+	if (pfokParamsStd(params, 0, "test") != ERR_OK)
 		return FALSE;
 	// сгенерировать ключи
 	prngCOMBOStart(combo_state, utilNonce32());
-	if (pfokGenKeypair(ua, vb, params, prngCOMBOStepR, combo_state) != ERR_OK ||
-		pfokValPubkey(params, vb) != ERR_OK ||
-		pfokCalcPubkey(yb, params, ua) != ERR_OK ||
+	if (pfokKeypairGen(ua, vb, params, prngCOMBOStepR, combo_state) != ERR_OK ||
+		pfokPubkeyVal(params, vb) != ERR_OK ||
+		pfokPubkeyCalc(yb, params, ua) != ERR_OK ||
 		!memEq(vb, yb, O_OF_B(params->l)))
 		return FALSE;
 	// тест PFOK.ANON.1
@@ -166,7 +166,7 @@ bool_t pfokTest()
 		"8DF27F738F64E99E262E337792E5DD84"
 		"7CF2A83362C6EC3C024E47313AA49A1E"
 		"0A2E637AD35E31EB5F034D889B666701");
-	if (pfokValPubkey(params, vb) != ERR_OK ||
+	if (pfokPubkeyVal(params, vb) != ERR_OK ||
 		pfokDH(key, params, ua, vb) != ERR_OK ||
 		!hexEqRev(key, 
 			"777BB35E950D3080C1E896BE4172DBD0" 
@@ -182,7 +182,7 @@ bool_t pfokTest()
 		"DF3F2B3ECDF28BE4BEA9363B07A8A8A3"
 		"BFDDE074DCF36D669A56931D083FC3BE"
 		"46D02CC8EF719EF66AE47F57BEAE8E02");
-	if (pfokValPubkey(params, vb) != ERR_OK ||
+	if (pfokPubkeyVal(params, vb) != ERR_OK ||
 		pfokDH(key, params, ua, vb) != ERR_OK ||
 		!hexEqRev(key, 
 			"46FA834B28D5E5D4183E28646AFFE806"
@@ -207,8 +207,8 @@ bool_t pfokTest()
 		"22949C07131D84F8B5A73A60ED61BC6E"
 		"158E9B83F38C1EE6AD97F2BF771AA4FF"
 		"B10A38298498D943995697FD0F65284C");
-	if (pfokValPubkey(params, yb) != ERR_OK ||
-		pfokValPubkey(params, vb) != ERR_OK ||
+	if (pfokPubkeyVal(params, yb) != ERR_OK ||
+		pfokPubkeyVal(params, vb) != ERR_OK ||
 		pfokMTI(key, params, xa, ua, yb, vb) != ERR_OK ||
 		!hexEqRev(key, 
 			"EA92D5BCEC18BB44514E096748DB3E21"
@@ -233,8 +233,8 @@ bool_t pfokTest()
 		"56E566AF50661CE2F46662FC66DC429A"
 		"CCF65D95E4F90BDCD08A11957C898EE2"
 		"C2B77231929ACE9649B2C184CC9D8104");
-	if (pfokValPubkey(params, yb) != ERR_OK ||
-		pfokValPubkey(params, vb) != ERR_OK ||
+	if (pfokPubkeyVal(params, yb) != ERR_OK ||
+		pfokPubkeyVal(params, vb) != ERR_OK ||
 		pfokMTI(key, params, xa, ua, yb, vb) != ERR_OK ||
 		!hexEqRev(key, 
 			"5A4C323604206C8898BF6C234F75A537"

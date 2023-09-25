@@ -4,7 +4,7 @@
 \brief DSTU 4145-2002 (Ukraine): digital signature algorithms
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2023.02.02
+\version 2023.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -113,9 +113,9 @@ typedef struct
 	http://www.crypto.org.ua/Media/Default/patches/dstu101e.patch 
 	(patch для OpenSSL).
 	\remark ДСТУ не определяет стандартные базовые точки. Их надо генерировать
-	дополнительно, например, с помощью функции dstuGenPoint().
+	дополнительно, например, с помощью функции dstuPointGen().
 */
-err_t dstuStdParams(
+err_t dstuParamsStd(
 	dstu_params* params,		/*!< [out] стандартные параметры */
 	const char* name			/*!< [in] имя параметров */
 );
@@ -127,7 +127,7 @@ err_t dstuStdParams(
 	случае.
 	\remark Проверяется корректность в том числе и базовой точки P.
 */
-err_t dstuValParams(
+err_t dstuParamsVal(
 	const dstu_params* params	/*!< [in] параметры */
 );
 
@@ -149,7 +149,7 @@ err_t dstuValParams(
 	\remark Указатели point и params->P могут совпадать.
 	\remark Реализован алгоритм из раздела 6.8 ДСТУ.
 */
-err_t dstuGenPoint(
+err_t dstuPointGen(
 	octet point[],					/*!< [out] точка */
 	const dstu_params* params,		/*!< [in] долговременные параметры */
 	gen_i rng,						/*!< [in] генератор случайных чисел */
@@ -165,7 +165,7 @@ err_t dstuGenPoint(
 	случае.
 	\remark Реализован алгоритм из раздела 10.1 ДСТУ.
 */
-err_t dstuValPoint(
+err_t dstuPointVal(
 	const dstu_params* params,		/*!< [in] долговременные параметры */
 	const octet point[]				/*!< [in] проверяемая точка */
 );
@@ -179,7 +179,7 @@ err_t dstuValPoint(
 	\remark Реализован алгоритм из раздела 6.9 ДСТУ.
 	\remark Буферы point и xpoint могут пересекаться.
 */
-err_t dstuCompressPoint(
+err_t dstuPointCompress(
 	octet xpoint[],					/*!< [out] сжатая точка */
 	const dstu_params* params,		/*!< [in] параметры */
 	const octet point[]				/*!< [in] сжимаемая точка */
@@ -195,7 +195,7 @@ err_t dstuCompressPoint(
 	\remark Реализован алгоритм из раздела 6.10 ДСТУ.
 	\remark Буферы point и xpoint могут пересекаться.
 */
-err_t dstuRecoverPoint(
+err_t dstuPointRecover(
 	octet point[],					/*!< [out] восстановленная точка */
 	const dstu_params* params,		/*!< [in] параметры */
 	const octet xpoint[]			/*!< [in] сжатая точка */
@@ -219,7 +219,7 @@ err_t dstuRecoverPoint(
 	в противном случае.
 	\remark Реализован алгоритм из раздела 9 ДСТУ.
 */
-err_t dstuGenKeypair(
+err_t dstuKeypairGen(
 	octet privkey[],				/*!< [out] личный ключ */
 	octet pubkey[],					/*!< [out] открытый ключ */
 	const dstu_params* params,		/*!< [in] долговременные параметры */

@@ -4,7 +4,7 @@
 \brief Distinguished Encoding Rules
 \project bee2 [cryptographic library]
 \created 2014.04.21
-\version 2023.09.14
+\version 2023.09.21
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -422,7 +422,7 @@ size_t derDec4(const octet der[], size_t count, u32 tag, const void* val,
 
 /*
 *******************************************************************************
-Тип SIZE (беззнаковый INTEGER):
+Тип SIZE (беззнаковый INTEGER, который укладывается в size_t):
 	V = o1 o2 ... on,
 где o1 -- старший октет числа, on -- младший.
 
@@ -508,6 +508,111 @@ size_t derTSIZEDec2(const octet der[], size_t count, u32 tag, size_t val)
 	if (v != val)
 		count = SIZE_MAX;
 	v = 0;
+	return count;
+}
+
+/*
+*******************************************************************************
+Тип UINT (беззнаковый INTEGER):
+	V = o1 o2 ... on,
+где o1 -- старший октет числа, on -- младший.
+
+\remark В o1 должен быть снят старший бит (признак отрицательности).
+*******************************************************************************
+*/
+
+size_t derTUINTEnc(octet der[], u32 tag, const octet* val, size_t len)
+{
+	size_t ex;
+	size_t tl_count;
+	// pre
+	ASSERT(len > 0);
+	ASSERT(memIsValid(val, len));
+	// исключить незначащие нули V
+	while (len > 1 && val[len - 1] == 0)
+		--len;
+	// установлен старший бит V => дополнительный нулевой октет
+	ex = (val[len - 1] & 128) ? 1 : 0;
+	// кодировать T и L
+	tl_count = derTLEnc(der, tag, len + ex);
+	if (tl_count == SIZE_MAX)
+		return SIZE_MAX;
+	// кодировать V
+	if (der)
+	{
+		ASSERT(memIsValid(der, tl_count + len + ex));
+		der += tl_count;
+		memCopy(der, val, len);
+		if (ex)
+			der[len] = 0;
+		memRev(der, len + ex);
+	}
+	return tl_count + len + ex;
+}
+
+size_t derTUINTDec(octet* val, size_t* len, const octet der[], size_t count,
+	u32 tag)
+{
+	const octet* v;
+	size_t l;
+	size_t ex;
+	// декодировать
+	count = derDec2(&v, &l, der, count, tag);
+	if (count == SIZE_MAX)
+		return SIZE_MAX;
+	// в значении менее одного октета?
+	// установлен старший бит в первом (старшем) октете?
+	// незначащий нулевой октет?
+	if (l < 1 || (v[0] & 128) ||
+		v[0] == 0 && l > 1 && !(v[1] & 128))
+		return SIZE_MAX;
+	// дополнительный нулевой октет?
+	ex = (v[0] == 0 && l > 1 && (v[1] & 128)) ? 1 : 0;
+	// возвратить значение
+	if (val)
+	{
+		ASSERT(memIsValid(val, l - ex));
+		ASSERT(len == 0 || memIsDisjoint2(len, O_PER_S, val, l - ex));
+		memMove(val, v + ex, l - ex);
+		memRev(val, l - ex);
+	}
+	// возвратить длину
+	if (len)
+	{
+		ASSERT(memIsValid(len, O_PER_S));
+		*len = l - ex;
+	}
+	return count;
+}
+
+size_t derTUINTDec2(octet* val, const octet der[], size_t count, u32 tag,
+	size_t len)
+{
+	const octet* v;
+	size_t l;
+	size_t ex;
+	// декодировать
+	count = derDec2(&v, &l, der, count, tag);
+	if (count == SIZE_MAX)
+		return SIZE_MAX;
+	// в значении менее одного октета?
+	// установлен старший бит в первом (старшем) октете?
+	// незначащий нулевой октет?
+	if (l < 1 || (v[0] & 128) ||
+		v[0] == 0 && l > 1 && !(v[1] & 128))
+		return SIZE_MAX;
+	// дополнительный нулевой октет?
+	ex = (v[0] == 0 && l > 1 && (v[1] & 128)) ? 1 : 0;
+	// длина не соответствует ожидаемой?
+	if (l - ex != len)
+		return SIZE_MAX;
+	// возвратить значение
+	if (val)
+	{
+		ASSERT(memIsValid(val, len));
+		memMove(val, v + ex, len);
+		memRev(val, len);
+	}
 	return count;
 }
 

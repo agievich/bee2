@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: signing files
 \project bee2/cmd
 \created 2022.08.20
-\version 2023.06.23
+\version 2023.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -339,13 +339,13 @@ static err_t cmdSigStdParams(bign_params* params, size_t privkey_len)
 	switch (privkey_len)
 	{
 	case 24:
-		return bign96StdParams(params, "1.2.112.0.2.0.34.101.45.3.0");
+		return bign96ParamsStd(params, "1.2.112.0.2.0.34.101.45.3.0");
 	case 32:
-		return bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.1");
+		return bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.1");
 	case 48:
-		return bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.2");
+		return bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.2");
 	case 64:
-		return bignStdParams(params, "1.2.112.0.2.0.34.101.45.3.3");
+		return bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.3");
 	}
 	return ERR_BAD_INPUT;
 }
@@ -547,9 +547,9 @@ err_t cmdSigVerify(const char* file, const char* sig_file,
 	}
 	// проверить открытый ключ
 	if (pubkey_len == 48)
-		code = bign96ValPubkey(params, pubkey);
+		code = bign96PubkeyVal(params, pubkey);
 	else
-		code = bignValPubkey(params, pubkey);
+		code = bignPubkeyVal(params, pubkey);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// проверить подпись
 	if (pubkey_len == 48)
@@ -632,9 +632,9 @@ err_t cmdSigVerify2(const char* file, const char* sig_file,
 	}
 	// проверить открытый ключ
 	if (cvc->pubkey_len == 48)
-		code = bign96ValPubkey(params, cvc->pubkey);
+		code = bign96PubkeyVal(params, cvc->pubkey);
 	else
-		code = bignValPubkey(params, cvc->pubkey);
+		code = bignPubkeyVal(params, cvc->pubkey);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// проверить подпись
 	if (cvc->pubkey_len == 48)

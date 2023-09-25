@@ -4,7 +4,7 @@
 \brief Experimental Bign level 96 signatures
 \project bee2 [cryptographic library]
 \created 2021.01.20
-\version 2023.06.16
+\version 2023.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -60,7 +60,7 @@ extern "C" {
 	\return ERR_OK, если параметры успешно загружены, и код ошибки в
 	противном случае.
 */
-err_t bign96StdParams(
+err_t bign96ParamsStd(
 	bign_params* params,	/*!< [out] стандартные параметры */
 	const char* name		/*!< [in] имя параметров */
 );
@@ -71,7 +71,7 @@ err_t bign96StdParams(
 	\return ERR_OK, если параметры корректны, и код ошибки
 	в противном случае.
 */
-err_t bign96ValParams(
+err_t bign96ParamsVal(
 	const bign_params* params	/*!< [in] долговременные параметры */
 );
 
@@ -92,7 +92,7 @@ err_t bign96ValParams(
 	\return ERR_OK, если ключи успешно сгенерированы, и код ошибки
 	в противном случае.
 */
-err_t bign96GenKeypair(
+err_t bign96KeypairGen(
 	octet privkey[24],			/*!< [out] личный ключ */
 	octet pubkey[48],			/*!< [out] открытый ключ */
 	const bign_params* params,	/*!< [in] долговременные параметры */
@@ -107,7 +107,7 @@ err_t bign96GenKeypair(
 	\expect{ERR_BAD_PARAMS} Параметры params корректны.
 	\return ERR_OK, если пара корректна, и код ошибки в противном случае.
 */
-err_t bign96ValKeypair(
+err_t bign96KeypairVal(
 	const bign_params* params,	/*!< [in] долговременные параметры */
 	const octet privkey[24],	/*!< [in] личный ключ */
 	const octet pubkey[48]		/*!< [in] открытый ключ */
@@ -120,7 +120,7 @@ err_t bign96ValKeypair(
 	\expect{ERR_BAD_PARAMS} Параметры params корректны.
 	\return ERR_OK, если ключ корректен, и код ошибки в противном случае.
 */
-err_t bign96ValPubkey(
+err_t bign96PubkeyVal(
 	const bign_params* params,	/*!< [in] долговременные параметры */
 	const octet pubkey[48]		/*!< [in] проверяемый ключ */
 );
@@ -134,7 +134,7 @@ err_t bign96ValPubkey(
 	\return ERR_OK, если открытый ключ успешно построен, и код ошибки
 	в противном случае.
 */
-err_t bign96CalcPubkey(
+err_t bign96PubkeyCalc(
 	octet pubkey[48],			/*!< [out] открытый ключ */
 	const bign_params* params,	/*!< [in] долговременные параметры */
 	const octet privkey[24]		/*!< [in] личный ключ */
