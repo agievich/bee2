@@ -390,7 +390,6 @@ size_t ecpDetIsZero_deep(size_t n)
 			zzMulMod_deep(n),
 			zzMulWMod_deep(n)
 		);
-	
 }
 
 bool_t ecpMOVIsMet(const word q[], const word p[], size_t n, 
