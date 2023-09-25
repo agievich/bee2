@@ -685,7 +685,7 @@ static size_t bignParamsDec_internal(bign_params* params, const octet der[],
 err_t bignParamsEnc(octet der[], size_t* count, const bign_params* params)
 {
 	size_t len;
-	if (!memIsValid(params, sizeof(params)) ||
+	if (!memIsValid(params, sizeof(bign_params)) ||
 		!memIsValid(count, O_PER_S) ||
 		!memIsNullOrValid(der, *count))
 		return ERR_BAD_INPUT;
@@ -708,7 +708,7 @@ err_t bignParamsEnc(octet der[], size_t* count, const bign_params* params)
 err_t bignParamsDec(bign_params* params, const octet der[], size_t count)
 {
 	size_t len;
-	if (!memIsValid(params, sizeof(params)) ||
+	if (!memIsValid(params, sizeof(bign_params)) ||
 		!memIsValid(der, count))
 		return ERR_BAD_INPUT;
 	len = bignParamsDec_internal(params, der, count);
