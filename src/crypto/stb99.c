@@ -4,7 +4,7 @@
 \brief STB 1176.2-99: generation of parameters
 \project bee2 [cryptographic library]
 \created 2023.08.01
-\version 2023.09.22
+\version 2023.10.04
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -469,7 +469,7 @@ err_t stb99ParamsStd(stb99_params* params, stb99_seed* seed, const char* name)
 *******************************************************************************
 */
 
-static err_t stb99ValZi(const stb99_seed* seed)
+static err_t stb99ZiVal(const stb99_seed* seed)
 {
 	size_t i;
 	for (i = 0; i < 31; ++i)
@@ -478,7 +478,7 @@ static err_t stb99ValZi(const stb99_seed* seed)
 	return ERR_OK;
 }
 
-static err_t stb99ValDi(const stb99_seed* seed, size_t r)
+static err_t stb99DiVal(const stb99_seed* seed, size_t r)
 {
 	size_t i;
 	// проверить di[0]
@@ -499,7 +499,7 @@ static err_t stb99ValDi(const stb99_seed* seed, size_t r)
 	return ERR_OK;
 }
 
-static err_t stb99ValRi(const stb99_seed* seed, size_t r)
+static err_t stb99RiVal(const stb99_seed* seed, size_t r)
 {
 	size_t i;
 	// проверить ri[0]
@@ -535,13 +535,13 @@ err_t stb99SeedVal(const stb99_seed* seed)
 	// определить r = r(l)
 	r = _rs[i];
 	// проверить числа zi
-	code = stb99ValZi(seed);
+	code = stb99ZiVal(seed);
 	ERR_CALL_CHECK(code);
 	// проверить цепочку di
-	code = stb99ValDi(seed, r);
+	code = stb99DiVal(seed, r);
 	ERR_CALL_CHECK(code);
 	// проверить цепочку ri
-	code = stb99ValRi(seed, r);
+	code = stb99RiVal(seed, r);
 	ERR_CALL_CHECK(code);
 	// все хорошо
 	return ERR_OK;
@@ -563,7 +563,7 @@ err_t stb99SeedAdj(stb99_seed* seed)
 	// определить r = r(l)
 	r = _rs[i];
 	// проверить zi
-	if (stb99ValZi(seed) != ERR_OK)
+	if (stb99ZiVal(seed) != ERR_OK)
 	{
 		if (!memIsZero(seed->zi, sizeof(seed->zi)))
 			return ERR_BAD_SEED;
@@ -571,7 +571,7 @@ err_t stb99SeedAdj(stb99_seed* seed)
 			seed->zi[i] = (u16)(i + 1);
 	}
 	// проверить цепочку di
-	if (stb99ValDi(seed, r) != ERR_OK)
+	if (stb99DiVal(seed, r) != ERR_OK)
 	{
 		if (!memIsZero(seed->di, sizeof(seed->di)))
 			return ERR_BAD_SEED;
@@ -580,7 +580,7 @@ err_t stb99SeedAdj(stb99_seed* seed)
 		ASSERT(seed->di[i] > 16);
 	}
 	// проверить цепочку ri
-	if (stb99ValRi(seed, r) != ERR_OK)
+	if (stb99RiVal(seed, r) != ERR_OK)
 	{
 		if (!memIsZero(seed->ri, sizeof(seed->ri)))
 			return ERR_BAD_SEED;
