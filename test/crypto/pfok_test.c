@@ -4,7 +4,7 @@
 \brief Tests for Draft of RD_RB (pfok)
 \project bee2/test
 \created 2014.07.08
-\version 2023.09.11
+\version 2023.10.06
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -29,7 +29,10 @@
 
 static void _on_q(const word q[], size_t n, size_t num)
 {
-	printf("\rq%u", (unsigned)num);
+	if (num)
+		printf("\rq%u", (unsigned)num);
+	else
+		printf("\n");
 }
 
 static void _on_q_silent(const word q[], size_t n, size_t num)

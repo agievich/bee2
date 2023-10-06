@@ -4,7 +4,7 @@
 \brief Draft of RD_RB: key establishment protocols in finite fields
 \project bee2 [cryptographic library]
 \created 2014.07.01
-\version 2023.09.22
+\version 2023.10.06
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -690,6 +690,8 @@ err_t pfokParamsGen(pfok_params* params, const pfok_seed* seed,
 		else
 			offset -= W_OF_B(seed->li[--i]);
 	}
+	// информировать о завершении
+	on_q ? on_q(qi, W_OF_B(seed->li[0]), 0) : 0;
 	// сохранить p
 	wwTo(params->p, no, p);
 	// построить кольцо Монтгомери
