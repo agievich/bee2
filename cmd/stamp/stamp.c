@@ -4,7 +4,7 @@
 \brief Integrity control of Windows PE Executables
 \project bee2/cmd
 \created 2011.10.18
-\version 2023.06.08
+\version 2023.10.09
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -49,12 +49,12 @@ static int stampUsage()
 	printf(
 		"bee2cmd/%s: %s\n"
 		"Usage:\n"
-		"  stamp -s filename\n"
-		"    set a stamp on filename\n"
-		"  stamp -c filename\n"
-		"    check a stamp of filename\n"
-		"\\pre  filename is a PE-module (exe or dll)\n"
-		"\\pre resource file of the target module must contains the string\n"
+		"  stamp -s <file>\n"
+		"    set a stamp on <file>\n"
+		"  stamp -c <file>\n"
+		"    check a stamp of <file>\n"
+		"\\pre  <file> is a PE-module (exe or dll)\n"
+		"\\pre <file> contains the user-defined resource\n"
 		"  %d %d {\"0123456789ABCDEF0123456789ABCDEF\"}\n"
 		,
 		_name, _descr,
@@ -68,28 +68,6 @@ static int stampUsage()
 Вспомогательные функции
 *******************************************************************************
 */
-
-
-//! Разбор командной строки
-/*! Разбирается командная строка:
-		stamp -{s|с} name
-	\return 
-	- 0 -- set;
-	- 1 -- create;
-	- -1 -- ошибка синтаксиса. 
-*/
-static int stampParse(int argc, const char* argv[])
-{
-	// проверяем число аргументов
-	if (argc != 3)
-		return stampUsage(argv[0]);
-	// проверяем режим
-	if (strEq(argv[1], "-s"))
-		return 0;
-	if (strEq(argv[1], "-c"))
-		return 1;
-	return -1;
-}
 
 void stampPrint(const octet* stamp, const char* stamp_name)
 {
@@ -284,15 +262,15 @@ static int stampCheck(const char* name)
 
 int stampMain(int argc, char* argv[])
 {
-	int d;
-	// разобрать командную строку
-	d = stampParse(argc, argv);
-	// set?
-	if (d == 0)
-		return stampSet(argv[2]);
-	// create?
-	else if (d == 1)
-		return stampCheck(argv[2]);
+	// справка
+    if (argc != 3)
+        return stampUsage();
+	// разбор команды
+    --argc, ++argv;
+	if (strEq(argv[0], "-s"))
+		return stampSet(argv[1]);
+	if (strEq(argv[0], "-c"))
+		return stampCheck(argv[1]);
 	return -1;
 }
 
