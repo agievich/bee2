@@ -26,7 +26,8 @@ add_executable(bee2cmd
 	cmd_main.c
 )
 
-if(WIN32)
+# CMake does not set MINGW in MSys2[MinGW] environment
+if(WIN32 OR MINGW OR ${CMAKE_C_PLATFORM_ID} STREQUAL MinGW)
   target_sources(bee2cmd
     PRIVATE stamp/stamp.c
   )
