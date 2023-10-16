@@ -4,7 +4,7 @@
 \brief Version and build information
 \project bee2/cmd 
 \created 2022.06.22
-\version 2023.06.08
+\version 2023.10.16
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -48,6 +48,47 @@ static int verUsage()
 *******************************************************************************
 */
 
+static const char* verEndianness()
+{
+#if defined(LITTLE_ENDIAN)
+	return "LE";
+#else
+	return "BE";
+#endif
+}
+
+static const char* verOS()
+{
+#if defined(OS_WIN)
+	return "Windows";
+#elif defined(OS_UNIX)
+	#if defined(OS_LINUX)	
+		return "Linux";
+	#elif defined(OS_APPLE)
+		return "Apple";
+	#else
+		return "UNIX";
+	#endif
+#else 
+	return "unknown";
+#endif
+}
+
+static const char* verIsSafe()
+{
+#ifdef SAFE_FAST
+	return "OFF";
+#else
+	return "ON";
+#endif
+}
+
+/*
+*******************************************************************************
+Печать информации
+*******************************************************************************
+*/
+
 extern const char bash_platform[];
 
 static void verPrint()
@@ -55,15 +96,19 @@ static void verPrint()
 	printf(
 		"Bee2: a cryptographic library\n"
 		"  version: %s [%s]\n"
+		"  platform\n"
+		"    os: %s\n"
+		"    B_PER_S: %u\n"
+		"    B_PER_W: %u\n"
+		"    endianness: %s\n"
 		"  build options\n"
 		"    safe (constant-time): %s\n"
 		"    bash_platform: %s\n",
 		utilVersion(), __DATE__,
-#ifdef SAFE_SAFE
-		"ON",
-#else
-		"OFF",
-#endif
+		verOS(),
+		(unsigned)B_PER_S, (unsigned)B_PER_W, 
+		verEndianness(),
+		verIsSafe(),
 		bash_platform
 	);
 }
