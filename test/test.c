@@ -4,7 +4,7 @@
 \brief Bee2 testing
 \project bee2/test
 \created 2014.04.02
-\version 2023.09.07
+\version 2023.11.09
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -72,6 +72,7 @@ int testCore()
 extern bool_t wordTest();
 extern bool_t wwTest();
 extern bool_t zzTest();
+extern bool_t ppTest();
 extern bool_t priTest();
 extern bool_t ecpTest();
 extern bool_t ecpBench();
@@ -83,6 +84,7 @@ int testMath()
 	printf("wordTest: %s\n", (code = wordTest()) ? "OK" : "Err"), ret |= !code;
 	printf("wwTest: %s\n", (code = wwTest()) ? "OK" : "Err"), ret |= !code;
 	printf("zzTest: %s\n", (code = zzTest()) ? "OK" : "Err"), ret |= !code;
+	printf("ppTest: %s\n", (code = ppTest()) ? "OK" : "Err"), ret |= !code;
 	printf("priTest: %s\n", (code = priTest()) ? "OK" : "Err"), ret |= !code;
 	printf("ecpTest: %s\n", (code = ecpTest()) ? "OK" : "Err"), ret |= !code;
 	code = ecpBench(), ret |= !code;

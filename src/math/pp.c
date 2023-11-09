@@ -4,7 +4,7 @@
 \brief Binary polynomials
 \project bee2 [cryptographic library]
 \created 2012.03.01
-\version 2021.04.27
+\version 2023.11.09
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -1251,8 +1251,8 @@ void ppDiv(word q[], word r[], const word a[], size_t n, const word b[],
 	ASSERT(m > 0 && b[m - 1] > 0);
 	ASSERT(wwIsDisjoint2(q, n + 1 - m, r, m));
 	ASSERT(a == r || wwIsDisjoint2(a, n, r, m));
-	// a < b?
-	if (wwCmp2(a, n, b, m) < 0)
+	// deg(a) < deg(b)?
+	if (wwBitSize(a, n) < wwBitSize(b, m))
 	{
 		// q <- 0, r <- a
 		wwSetZero(q, n - m + 1);
@@ -1327,8 +1327,8 @@ void ppMod(word r[], const word a[], size_t n, const word b[], size_t m,
 	ASSERT(wwIsValid(a, n) && wwIsValid(b, m));
 	ASSERT(m > 0 && b[m - 1] > 0);
 	ASSERT(a == r || wwIsDisjoint2(a, n, r, m));
-	// a < b?
-	if (wwCmp2(a, n, b, m) < 0)
+	// deg(a) < deg(b)?
+	if (wwBitSize(a, n) < wwBitSize(b, m))
 	{
 		// r <- a
 		if (n < m)

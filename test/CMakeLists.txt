@@ -35,6 +35,7 @@ add_executable(testbee2
 	crypto/stb99_test.c
 	math/ecp_test.c
 	math/ecp_bench.c
+	math/pp_test.c
 	math/pri_test.c
 	math/word_test.c
 	math/ww_test.c

@@ -391,6 +391,7 @@
     <ClCompile Include="..\..\test\crypto\stb99_test.c" />
     <ClCompile Include="..\..\test\math\ecp_bench.c" />
     <ClCompile Include="..\..\test\math\ecp_test.c" />
+    <ClCompile Include="..\..\test\math\pp_test.c" />
     <ClCompile Include="..\..\test\math\pri_test.c" />
     <ClCompile Include="..\..\test\math\word_test.c" />
     <ClCompile Include="..\..\test\math\ww_test.c" />

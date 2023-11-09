@@ -4,7 +4,7 @@
 \brief GOST R 34.10-94 (Russia): digital signature algorithms
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2023.09.22
+\version 2023.11.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -689,13 +689,13 @@ void g12sEcClose(ec_o* ec)
 *******************************************************************************
 Проверка параметров
 
--#	l \in {256, 512} (g12sCreateEc)
--#	2^254 < q < 2^256 или 2^508 < q < 2^512 (bignCreateEc)
+-#	l \in {256, 512} (g12sEcCreate)
+-#	2^254 < q < 2^256 или 2^508 < q < 2^512 (g12sEcCreate)
 -#	p -- простое (ecpIsValid)
 -#	q -- простое (ecpIsSafeGroup)
 -#	q != p (ecpIsSafeGroup)
 -#	p^m \not\equiv 1 (mod q), m = 1, 2,..., 31 или 131 (ecpIsSafeGroup)
--#	a, b < p (ecpCreateJ in g12sCreateEc)
+-#	a, b < p (ecpCreateJ in g12sEcCreate)
 -#	J(E) \notin {0, 1728} <=> a, b != 0 (g12sParamsVal)
 -#	4a^3 + 27b^2 \not\equiv 0 (\mod p) (ecpIsValid)
 -#	P \in E (ecpSeemsValidGroup)
