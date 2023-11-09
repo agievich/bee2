@@ -611,10 +611,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\src\math\pp.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\src\math\pri.c"
 					>
 				</File>
@@ -646,7 +642,7 @@
 						>
 					</File>
 					<File
-						RelativePath="..\..\src\math\zz\zz_int.h"
+						RelativePath="..\..\src\math\zz\zz_lcl.h"
 						>
 					</File>
 					<File
@@ -663,6 +659,30 @@
 					</File>
 					<File
 						RelativePath="..\..\src\math\zz\zz_red.c"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="pp"
+					>
+					<File
+						RelativePath="..\..\src\math\pp\pp_etc.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\math\pp\pp_gcd.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\math\pp\pp_mod.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\math\pp\pp_mul.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\math\pp\pp_red.c"
 						>
 					</File>
 				</Filter>

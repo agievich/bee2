@@ -66,7 +66,11 @@ set(src
   math/ecp.c
   math/gf2.c
   math/gfp.c
-  math/pp.c
+  math/pp/pp_etc.c
+  math/pp/pp_gcd.c
+  math/pp/pp_mod.c
+  math/pp/pp_mul.c
+  math/pp/pp_red.c
   math/pri.c
   math/qr.c
   math/ww.c

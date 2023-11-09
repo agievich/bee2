@@ -415,7 +415,11 @@
     <ClCompile Include="..\..\src\math\ecp.c" />
     <ClCompile Include="..\..\src\math\gf2.c" />
     <ClCompile Include="..\..\src\math\gfp.c" />
-    <ClCompile Include="..\..\src\math\pp.c" />
+    <ClCompile Include="..\..\src\math\pp\pp_etc.c" />
+    <ClCompile Include="..\..\src\math\pp\pp_gcd.c" />
+    <ClCompile Include="..\..\src\math\pp\pp_mod.c" />
+    <ClCompile Include="..\..\src\math\pp\pp_mul.c" />
+    <ClCompile Include="..\..\src\math\pp\pp_red.c" />
     <ClCompile Include="..\..\src\math\pri.c" />
     <ClCompile Include="..\..\src\math\qr.c" />
     <ClCompile Include="..\..\src\math\ww.c" />
@@ -483,7 +487,7 @@
     <ClInclude Include="..\..\include\bee2\math\zz.h" />
     <ClInclude Include="..\..\src\crypto\belt\belt_lcl.h" />
     <ClInclude Include="..\..\src\crypto\bign\bign_lcl.h" />
-    <ClInclude Include="..\..\src\math\zz\zz_int.h" />
+    <ClInclude Include="..\..\src\math\zz\zz_lcl.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

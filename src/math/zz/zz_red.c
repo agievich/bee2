@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-\file zz_mod.c
+\file zz_red.c
 \brief Multiple-precision unsigned integers: modular reductions
 \project bee2 [cryptographic library]
 \created 2012.04.22

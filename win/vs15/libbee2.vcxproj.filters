@@ -46,6 +46,9 @@
     <Filter Include="Source Files\crypto\bign">
       <UniqueIdentifier>{f61e0e6a-2928-412c-872d-fda7b672d9b9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\math\pp">
+      <UniqueIdentifier>{669eff52-7fc5-4c8a-94df-a1881f5218d5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\math\ecp.c">
@@ -125,9 +128,6 @@
     </ClCompile>
     <ClCompile Include="..\..\src\core\tm.c">
       <Filter>Source Files\core</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\math\pp.c">
-      <Filter>Source Files\math</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\math\ww.c">
       <Filter>Source Files\math</Filter>
@@ -285,6 +285,21 @@
     <ClCompile Include="..\..\src\crypto\bign\bign_sign.c">
       <Filter>Source Files\crypto\bign</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\math\pp\pp_etc.c">
+      <Filter>Source Files\math\pp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\math\pp\pp_gcd.c">
+      <Filter>Source Files\math\pp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\math\pp\pp_mod.c">
+      <Filter>Source Files\math\pp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\math\pp\pp_mul.c">
+      <Filter>Source Files\math\pp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\math\pp\pp_red.c">
+      <Filter>Source Files\math\pp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\bee2\crypto\bake.h">
@@ -392,9 +407,6 @@
     <ClInclude Include="..\..\include\bee2\info.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\math\zz\zz_int.h">
-      <Filter>Source Files\math\zz</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\bee2\crypto\bash.h">
       <Filter>Header Files\crypto</Filter>
     </ClInclude>
@@ -442,6 +454,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\crypto\bign\bign_lcl.h">
       <Filter>Source Files\crypto\bign</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\math\zz\zz_lcl.h">
+      <Filter>Source Files\math\zz</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
