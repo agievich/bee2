@@ -4,13 +4,14 @@
 \brief Tests for the arithmetic of binary polynomials
 \project bee2/test
 \created 2023.11.09
-\version 2023.11.09
+\version 2023.11.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
 #include <bee2/core/mem.h>
+#include <bee2/core/prng.h>
 #include <bee2/core/util.h>
 #include <bee2/math/pp.h>
 #include <bee2/core/u16.h>
@@ -38,8 +39,7 @@ static u16 exps16Mul(u16 a, u16 b, u16 poly)
 	u16 c;
 	for (c = 0, i = 0; i < 16; ++i)
 	{
-		if (a & 1)
-			c ^= b;
+		c ^= (a & 1) ? b : 0;
 		a >>= 1;
 		b = (b << 1) ^ ((b & 0x8000) ? poly : 0);
 	}
@@ -49,7 +49,9 @@ static u16 exps16Mul(u16 a, u16 b, u16 poly)
 static void exps16Create(u16 s[65536], u16 poly, u16 alpha)
 {
 	size_t pos;
-	for (s[0] = 0, s[1] = alpha, pos = 2; pos < 65536; ++pos)
+	ASSERT(memIsValid(s, 65536 * 2));
+	s[0] = 0, s[1] = alpha;
+	for (pos = 2; pos < 65536; ++pos)
 		s[pos] = exps16Mul(s[pos - 1], alpha, poly);
 }
 
@@ -68,9 +70,9 @@ Pacific J. Math., 12, pp. 1099-1106, 1962].
 
 static bool_t ppTestExps16()
 {
+	enum {n = W_OF_B(17)};
 	const u16 poly = 0x002B;
 	const u16 alpha = 0x0003;
-	#define n W_OF_B(16)
 	word mod[n];
 	word a[n];
 	word t[n];
@@ -114,11 +116,113 @@ static bool_t ppTestExps16()
 
 /*
 *******************************************************************************
+Тест редукций
+
+В тестах используются неприводимые триномы и пентаномы, которые задают поля
+характеристики 2 в стандартных кривых NIST (SP 800-186). Список кривых
+и многочленов:
+- K/B-233: x^233 + x^74 + 1;
+- K/B-283: x^283 + x^12 + x^7 + x^5 + 1;
+- K/B-409: x^409 + x^87 + 1
+- K/B-571: x^571 + x^10 + x^5 + x^2 + 1
+*******************************************************************************
+*/
+
+static bool_t ppTestRed()
+{
+	enum { n = W_OF_B(571) };
+	const pp_trinom_st kb233 = { 233, 74 };
+	const pp_pentanom_st kb283 = { 283, 12, 7, 5 };
+	const pp_trinom_st kb409 = { 409, 87 };
+	const pp_pentanom_st kb571 = { 571, 10, 5, 2 };
+	size_t reps = 500;
+	word a[2 * n];
+	word t[2 * n];
+	word t1[2 * n];
+	word mod[n];
+	octet combo_state[32];
+	octet stack[2048];
+	// подготовить память
+	if (sizeof(combo_state) < prngCOMBO_keep() ||
+		sizeof(stack) < utilMax(1,
+			ppRed_deep(n)))
+		return FALSE;
+	// инициализировать генератор COMBO
+	prngCOMBOStart(combo_state, utilNonce32());
+	// редукция
+	while (reps--)
+	{
+		size_t m;
+		// генерация
+		prngCOMBOStepR(a, 2 * O_OF_W(n), combo_state);
+		// ppRed / ppRedTrinomial[kb233]
+		ASSERT(W_OF_B(233) == W_OF_B(234));
+		m = W_OF_B(233);
+		wwCopy(t, a, 2 * m);
+		wwCopy(t1, a, 2 * m);
+		wwSetZero(mod, m);
+		wwSetBit(mod, kb233.m, TRUE);
+		wwSetBit(mod, kb233.k, TRUE);
+		wwSetBit(mod, 0, TRUE);
+		ppRed(t, mod, m, stack);
+		ppRedTrinomial(t1, &kb233);
+		if (!wwEq(t, t1, m))
+			return FALSE;
+		// ppRed / ppRedPentanomial[kb283]
+		ASSERT(W_OF_B(283) == W_OF_B(284));
+		m = W_OF_B(283);
+		wwCopy(t, a, 2 * m);
+		wwCopy(t1, a, 2 * m);
+		wwSetZero(mod, m);
+		wwSetBit(mod, kb283.m, TRUE);
+		wwSetBit(mod, kb283.k, TRUE);
+		wwSetBit(mod, kb283.l, TRUE);
+		wwSetBit(mod, kb283.l1, TRUE);
+		wwSetBit(mod, 0, TRUE);
+		ppRed(t, mod, m, stack);
+		ppRedPentanomial(t1, &kb283);
+		if (!wwEq(t, t1, m))
+			return FALSE;
+		// ppRed / ppRedTrinomial[kb409]
+		ASSERT(W_OF_B(409) == W_OF_B(410));
+		m = W_OF_B(409);
+		wwCopy(t, a, 2 * m);
+		wwCopy(t1, a, 2 * m);
+		wwSetZero(mod, m);
+		wwSetBit(mod, kb409.m, TRUE);
+		wwSetBit(mod, kb409.k, TRUE);
+		wwSetBit(mod, 0, TRUE);
+		ppRed(t, mod, m, stack);
+		ppRedTrinomial(t1, &kb409);
+		if (!wwEq(t, t1, m))
+			return FALSE;
+		// ppRed / ppRedPentanomial[kb571]
+		ASSERT(W_OF_B(571) == W_OF_B(572));
+		m = W_OF_B(571);
+		wwCopy(t, a, 2 * m);
+		wwCopy(t1, a, 2 * m);
+		wwSetZero(mod, m);
+		wwSetBit(mod, kb571.m, TRUE);
+		wwSetBit(mod, kb571.k, TRUE);
+		wwSetBit(mod, kb571.l, TRUE);
+		wwSetBit(mod, kb571.l1, TRUE);
+		wwSetBit(mod, 0, TRUE);
+		ppRed(t, mod, m, stack);
+		ppRedPentanomial(t1, &kb571);
+		if (!wwEq(t, t1, m))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+/*
+*******************************************************************************
 Интеграция тестов
 *******************************************************************************
 */
 
 bool_t ppTest()
 {
-	return ppTestExps16();
+	return ppTestExps16() &&
+		ppTestRed();
 }

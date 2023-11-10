@@ -4,7 +4,7 @@
 \brief Binary polynomials: modular reductions
 \project bee2 [cryptographic library]
 \created 2012.03.01
-\version 2023.11.09
+\version 2023.11.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -19,7 +19,7 @@
 *******************************************************************************
 Редукции
 
-Обоснование корректности ppRedTrinomial() (w == BITSPEWORD):
+Обоснование корректности ppRedTrinomial() (w == B_PER_W):
 p(x)x^{w * i} \equiv
 	p(x) x^{w * (i - mw) - mb}(x^k + 1) \equiv
 	p(x) x^{w * (i - mw) - mb} + f(x)x^{w * (i - kw) - kb}

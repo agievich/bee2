@@ -4,7 +4,7 @@
 \brief Tests for multiple-precision unsigned integers
 \project bee2/test
 \created 2014.07.15
-\version 2023.09.23
+\version 2023.11.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -25,25 +25,20 @@
 
 static bool_t zzTestAdd()
 {
-	const size_t n = 8;
-	size_t reps;
-	word a[8];
-	word b[8];
-	word c[8];
-	word c1[8];
+	enum { n = 8 };
+	size_t reps = 500;
+	word a[n];
+	word b[n];
+	word c[n];
+	word c1[n];
 	octet combo_state[32];
-	// pre
-	ASSERT(COUNT_OF(a) >= n);
-	ASSERT(COUNT_OF(b) >= n);
-	ASSERT(COUNT_OF(c) >= n);
-	ASSERT(COUNT_OF(c1) >= n);
 	// подготовить память
 	if (sizeof(combo_state) < prngCOMBO_keep())
 		return FALSE;
 	// инициализировать генератор COMBO
 	prngCOMBOStart(combo_state, utilNonce32());
 	// сложение / вычитание
-	for (reps = 0; reps < 500; ++reps)
+	while (reps--)
 	{
 		word carry;
 		prngCOMBOStepR(a, O_OF_W(n), combo_state);
@@ -107,25 +102,17 @@ static bool_t zzTestAdd()
 
 static bool_t zzTestMul()
 {
-	const size_t n = 8;
-	size_t reps;
-	word a[8];
-	word b[8];
-	word r[8];
-	word c[16];
-	word c1[16];
-	word b1[8 + 1];
-	word r1[8];
+	enum { n = 8 };
+	size_t reps = 500;
+	word a[n];
+	word b[n];
+	word r[n];
+	word c[2 * n];
+	word c1[2 * n];
+	word b1[n + 1];
+	word r1[n];
 	octet combo_state[32];
 	octet stack[2048];
-	// pre
-	ASSERT(COUNT_OF(a) >= n);
-	ASSERT(COUNT_OF(b) >= n);
-	ASSERT(COUNT_OF(r) >= n);
-	ASSERT(COUNT_OF(c) >= 2 * n);
-	ASSERT(COUNT_OF(c1) >= 2 * n);
-	ASSERT(COUNT_OF(b1) >= n + 1);
-	ASSERT(COUNT_OF(r1) >= n);
 	// подготовить память
 	if (sizeof(combo_state) < prngCOMBO_keep() ||
 		sizeof(stack) < utilMax(4,
@@ -137,7 +124,7 @@ static bool_t zzTestMul()
 	// инициализировать генератор COMBO
 	prngCOMBOStart(combo_state, utilNonce32());
 	// умножение / деление
-	for (reps = 0; reps < 500; ++reps)
+	while (reps--)
 	{
 		size_t na, nb;
 		word w;
@@ -207,21 +194,15 @@ static bool_t zzTestMul()
 
 static bool_t zzTestMod()
 {
-	const size_t n = 8;
-	size_t reps;
-	word a[8];
-	word b[8];
-	word t[8];
-	word t1[8];
-	word mod[8];
+	enum { n = 8 };
+	size_t reps = 500;
+	word a[n];
+	word b[n];
+	word t[n];
+	word t1[n];
+	word mod[n];
 	octet combo_state[32];
 	octet stack[2048];
-	// pre
-	ASSERT(COUNT_OF(a) >= n);
-	ASSERT(COUNT_OF(b) >= n);
-	ASSERT(COUNT_OF(t) >= n);
-	ASSERT(COUNT_OF(t1) >= n);
-	ASSERT(COUNT_OF(mod) >= n);
 	// подготовить память
 	if (sizeof(combo_state) < prngCOMBO_keep() ||
 		sizeof(stack) < utilMax(10,
@@ -251,7 +232,7 @@ static bool_t zzTestMod()
 	if (wwCmp(t, t1, n) != 0)
 		return FALSE;
 	// сложение / вычитание
-	for (reps = 0; reps < 500; ++reps)
+	while (reps--)
 	{
 		size_t k;
 		// генерация
@@ -357,23 +338,16 @@ static bool_t zzTestMod()
 
 static bool_t zzTestGCD()
 {
-	const size_t n = 8;
-	size_t reps;
-	word a[8];
-	word b[8];
-	word t[8];
-	word t1[16];
-	word p[16];
-	word p1[24];
+	enum { n = 8 };
+	size_t reps = 100;
+	word a[n];
+	word b[n];
+	word t[n];
+	word t1[2 * n];
+	word p[2 * n];
+	word p1[3 * n];
 	octet combo_state[32];
 	octet stack[2048];
-	// pre
-	ASSERT(COUNT_OF(a) >= n);
-	ASSERT(COUNT_OF(b) >= n);
-	ASSERT(COUNT_OF(t) >= n);
-	ASSERT(COUNT_OF(t1) >= 2 * n);
-	ASSERT(COUNT_OF(p) >= 2 * n);
-	ASSERT(COUNT_OF(p1) >= 3 * n);
 	// подготовить память
 	if (sizeof(combo_state) < prngCOMBO_keep() ||
 		sizeof(stack) < utilMax(4,
@@ -385,7 +359,7 @@ static bool_t zzTestGCD()
 	// инициализировать генератор COMBO
 	prngCOMBOStart(combo_state, utilNonce32());
 	// эксперименты
-	for (reps = 0; reps < 100; ++reps)
+	while (reps--)
 	{
 		size_t na, nb;
 		// генерация
@@ -418,20 +392,15 @@ static bool_t zzTestGCD()
 
 static bool_t zzTestRed()
 {
-	const size_t n = 8;
-	size_t reps;
-	word a[16];
-	word t[16];
-	word t1[16];
-	word barr_param[10];
-	word mod[8];
+	enum { n = 8 };
+	size_t reps = 500;
+	word a[2 * n];
+	word t[2 * n];
+	word t1[2 * n];
+	word barr_param[n + 2];
+	word mod[n];
 	octet combo_state[32];
 	octet stack[2048];
-	// pre
-	ASSERT(COUNT_OF(a) >= 2 * n);
-	ASSERT(COUNT_OF(t) >= 2 * n);
-	ASSERT(COUNT_OF(t1) >= 2 * n);
-	ASSERT(COUNT_OF(mod) >= n);
 	// подготовить память
 	if (sizeof(combo_state) < prngCOMBO_keep() ||
 		sizeof(stack) < utilMax(6,
@@ -445,7 +414,7 @@ static bool_t zzTestRed()
 	// инициализировать генератор COMBO
 	prngCOMBOStart(combo_state, utilNonce32());
 	// редукция
-	for (reps = 0; reps < 500; ++reps)
+	while (reps--)
 	{
 		// генерация
 		prngCOMBOStepR(mod, O_OF_W(n), combo_state);
@@ -516,17 +485,14 @@ static bool_t zzTestRed()
 
 static bool_t zzTestEtc()
 {
-	const size_t n = 8;
-	size_t reps;
-	word a[8];
-	word b[16];
-	word t[8];
+	enum { n = 8 };
+	size_t reps1 = 500;
+	size_t reps2 = 500;
+	word a[n];
+	word b[2 * n];
+	word t[(2 * n + 1) / 2];
 	octet combo_state[32];
 	octet stack[2048];
-	// pre
-	ASSERT(COUNT_OF(a) >= n);
-	ASSERT(COUNT_OF(b) >= 2 * n);
-	ASSERT(COUNT_OF(t) >= (2 * n + 1) / 2);
 	// подготовить память
 	if (sizeof(combo_state) < prngCOMBO_keep() ||
 		sizeof(stack) < utilMax(3,
@@ -537,7 +503,7 @@ static bool_t zzTestEtc()
 	// инициализировать генератор COMBO
 	prngCOMBOStart(combo_state, utilNonce32());
 	// символ Якоби
-	for (reps = 0; reps < 500; ++reps)
+	while (reps1--)
 	{
 		prngCOMBOStepR(a, O_OF_W(n), combo_state);
 		zzSqr(b, a, n, stack);
@@ -548,7 +514,7 @@ static bool_t zzTestEtc()
 			return FALSE;
 	}
 	// квадратные корни
-	for (reps = 0; reps < 500; ++reps)
+	while (reps2--)
 	{
 		prngCOMBOStepR(a, O_OF_W(n), combo_state);
 		// sqrt(a^2) == a?
