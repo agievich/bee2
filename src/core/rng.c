@@ -398,7 +398,9 @@ static err_t rngTimerRead(void* buf, size_t* read, size_t count)
 - функция CryptGenRandom() поверх стандартного провайдера PROV_RSA_FULL;
 - функция RtlGenRandom(). 
 
-Системный источник Unix -- это файл dev/urandom. 
+Системные источники Unix:
+- файл dev/urandom;
+- функция RAND_bytes() библиотеки OpenSSL/libcrypto.
 
 Обсуждение (и критика) источников:
 [1]	http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.124.6557
@@ -433,6 +435,7 @@ static err_t rngSysRead(void* buf, size_t* read, size_t count)
 	// pre
 	ASSERT(memIsValid(read, O_PER_S));
 	ASSERT(memIsValid(buf, count));
+	ASSERT((size_t)(DWORD)count == count);
 	// открыть провайдер
 	if (!CryptAcquireContextW(&hprov, 0, 0, PROV_RSA_FULL,
 		CRYPT_VERIFYCONTEXT | CRYPT_SILENT))
@@ -455,6 +458,7 @@ static err_t rngSys2Read(void* buf, size_t* read, size_t count)
 	// pre
 	ASSERT(memIsValid(read, O_PER_S));
 	ASSERT(memIsValid(buf, count));
+	ASSERT((size_t)(ULONG)count == count);
 	// получить случайные данные
 	*read = 0;
 	if (!RtlGenRandom((octet*)buf, (ULONG)count))
@@ -466,6 +470,8 @@ static err_t rngSys2Read(void* buf, size_t* read, size_t count)
 
 #elif defined OS_UNIX
 
+#include <stdio.h>
+#include <dlfcn.h>
 #include <stdio.h>
 
 static err_t rngSysRead(void* buf, size_t* read, size_t count)
@@ -483,9 +489,34 @@ static err_t rngSysRead(void* buf, size_t* read, size_t count)
 
 static err_t rngSys2Read(void* buf, size_t* read, size_t count)
 {
+	void* lib;
+	int (*rand_bytes)(octet*, int) = 0;
+	// pre
 	ASSERT(memIsValid(read, sizeof(size_t)));
 	ASSERT(memIsValid(buf, count));
-	return ERR_FILE_NOT_FOUND;
+	ASSERT((size_t)(int)count == count);
+	// открыть библиотеку
+	lib = dlopen("libcrypto.so", RTLD_NOW | RTLD_GLOBAL);
+	if (!lib)
+		return ERR_FILE_NOT_FOUND;
+	// получить адрес функции генерации
+	rand_bytes = dlsym(lib, "RAND_bytes");
+	if (!rand_bytes)
+	{
+		dlclose(lib);
+		return ERR_FILE_OPEN;
+	}
+	// прочитать случайные данные
+	*read = 0;
+	if (rand_bytes((octet*)buf, (int)count) != 1)
+	{
+		dlclose(lib);
+		return ERR_BAD_ENTROPY;
+	}
+	// завершение
+	dlclose(lib);
+	*read = count;
+	return ERR_OK;
 }
 
 #else
