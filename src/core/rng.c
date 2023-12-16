@@ -4,7 +4,7 @@
 \brief Entropy sources and random number generators
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2023.03.23
+\version 2023.12.16
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -394,9 +394,11 @@ static err_t rngTimerRead(void* buf, size_t* read, size_t count)
 *******************************************************************************
 Системный источник
 
-Системный источник Windows -- это функция CryptGenRandom() поверх
-стандартного криптопровайдера PROV_RSA_FULL. Системный источник Unix -- 
-это файл dev/urandom. 
+Системные источники Windows:
+- функция CryptGenRandom() поверх стандартного провайдера PROV_RSA_FULL;
+- функция RtlGenRandom(). 
+
+Системный источник Unix -- это файл dev/urandom. 
 
 Обсуждение (и критика) источников:
 [1]	http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.124.6557
@@ -409,8 +411,8 @@ static err_t rngTimerRead(void* buf, size_t* read, size_t count)
 Именно этот источник рекомендуется использовать в криптографических 
 приложениях. Однако в наших экспериментах чтение из файла dev/random иногда 
 выполнялось экстремально долго (возможно это связано с тем, что программы 
-запускались под виртуальной машиной). Поэтому было решено использовать файл 
-dev/urandom. Это неблокирующий источник, который всегда выдает данные.
+запускались под виртуальной машиной). Поэтому было решено использовать чтение
+из dev/urandom. Это неблокирующий источник, который всегда выдает данные.
 
 \remark Установка флагов CRYPT_VERIFYCONTEXT и CRYPT_SILENT при вызове
 CryptAcquireContextW() снижает риск ошибочного завершения функции.
@@ -423,29 +425,41 @@ CryptAcquireContextW() снижает риск ошибочного заверш
 
 #include <windows.h>
 #include <wincrypt.h>
+#include <ntsecapi.h>
 
 static err_t rngSysRead(void* buf, size_t* read, size_t count)
 {
 	HCRYPTPROV hprov = 0;
 	// pre
-	ASSERT(memIsValid(read, sizeof(size_t)));
+	ASSERT(memIsValid(read, O_PER_S));
 	ASSERT(memIsValid(buf, count));
 	// открыть провайдер
 	if (!CryptAcquireContextW(&hprov, 0, 0, PROV_RSA_FULL,
 		CRYPT_VERIFYCONTEXT | CRYPT_SILENT))
-	{
-		*read = 0;
 		return ERR_FILE_NOT_FOUND;
-	}
-	// получить данные (count == 0 считается ошибкой)
-	if (count && !CryptGenRandom(hprov, (DWORD)count, (octet*)buf))
+	// получить данные
+	*read = 0;
+	if (!CryptGenRandom(hprov, (DWORD)count, (octet*)buf))
 	{
-		*read = 0;
 		CryptReleaseContext(hprov, 0);
 		return ERR_BAD_ENTROPY;
 	}
 	// завершение
 	CryptReleaseContext(hprov, 0);
+	*read = count;
+	return ERR_OK;
+}
+
+static err_t rngSys2Read(void* buf, size_t* read, size_t count)
+{
+	// pre
+	ASSERT(memIsValid(read, O_PER_S));
+	ASSERT(memIsValid(buf, count));
+	// получить случайные данные
+	*read = 0;
+	if (!RtlGenRandom((octet*)buf, (ULONG)count))
+		return ERR_BAD_ENTROPY;
+	// завершение
 	*read = count;
 	return ERR_OK;
 }
@@ -467,9 +481,23 @@ static err_t rngSysRead(void* buf, size_t* read, size_t count)
 	return ERR_OK;
 }
 
+static err_t rngSys2Read(void* buf, size_t* read, size_t count)
+{
+	ASSERT(memIsValid(read, sizeof(size_t)));
+	ASSERT(memIsValid(buf, count));
+	return ERR_FILE_NOT_FOUND;
+}
+
 #else
 
 static err_t rngSysRead(void* buf, size_t* read, size_t count)
+{
+	ASSERT(memIsValid(read, sizeof(size_t)));
+	ASSERT(memIsValid(buf, count));
+	return ERR_FILE_NOT_FOUND;
+}
+
+static err_t rngSys2Read(void* buf, size_t* read, size_t count)
 {
 	ASSERT(memIsValid(read, sizeof(size_t)));
 	ASSERT(memIsValid(buf, count));
@@ -494,6 +522,8 @@ err_t rngESRead(size_t* read, void* buf, size_t count, const char* source)
 		return rngTimerRead(buf, read, count);
 	else if (strEq(source, "sys"))
 		return rngSysRead(buf, read, count);
+	else if (strEq(source, "sys2"))
+		return rngSys2Read(buf, read, count);
 	return ERR_FILE_NOT_FOUND;
 }
 
@@ -530,7 +560,7 @@ err_t rngESHealth2()
 
 err_t rngESHealth()
 {
-	const char* sources[] = { "timer", "sys" };
+	const char* sources[] = { "timer", "sys", "sys2" };
 	size_t valid_sources = 0;
 	size_t pos;
 	// есть физический источник?
@@ -712,7 +742,7 @@ void rngStepR2(void* buf, size_t count, void* state)
 
 void rngStepR(void* buf, size_t count, void* state)
 {
-	const char* sources[] = {"trng", "trng2", "sys", "timer"};
+	const char* sources[] = {"trng", "trng2", "sys", "sys2", "timer"};
 	octet* buf1;
 	size_t read, r, pos;
 	ASSERT(rngIsValid());
