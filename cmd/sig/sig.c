@@ -4,7 +4,7 @@
 \brief Sign files and verify signatures
 \project bee2/cmd
 \created 2022.08.01
-\version 2023.09.22
+\version 2023.12.17
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -92,7 +92,7 @@ static int sigUsage()
 		"  options:\n"
 		"    -certs <certs> -- certificate chain (optional)\n"
 		"    -date <YYMMDD> -- date of signing (optional)\n"
-		"    -pass <scheme> -- password description\n"
+		"    -pass <schema> -- password description\n"
 		"  field:\n"
         "    {-certc|-date|-sig}\n"
 		"      -certc -- the number of attached certificates\n"
@@ -163,7 +163,7 @@ static err_t sigSelfTest()
 *******************************************************************************
 Выработка подписи
 
-sig sign [-certs <certs>] [-date <YYMMDD>] -pass <scheme> <file> <sig>
+sig sign [-certs <certs>] [-date <YYMMDD>] -pass <schema> <file> <sig>
 *******************************************************************************
 */
 

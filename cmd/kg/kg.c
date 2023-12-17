@@ -4,7 +4,7 @@
 \brief Generate and manage private keys
 \project bee2/cmd 
 \created 2022.06.08
-\version 2023.09.22
+\version 2023.12.17
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -56,21 +56,21 @@ static int kgUsage()
 	printf(
 		"bee2cmd/%s: %s\n"
 		"Usage:\n"
-		"  kg gen [-l<nnn>] -pass <scheme> <privkey>\n"
+		"  kg gen [-l<nnn>] -pass <schema> <privkey>\n"
 		"    generate a private key and store it in <privkey>\n"
-		"  kg chp -passin <scheme> -passout <scheme> <privkey>\n"
+		"  kg chp -passin <schema> -passout <schema> <privkey>\n"
 		"    change the password used to protect <privkey>\n"
-		"  kg val -pass <scheme> <privkey>\n"
+		"  kg val -pass <schema> <privkey>\n"
 		"    validate <privkey>\n"
-		"  kg extr -pass <scheme> <privkey> <pubkey>\n"
+		"  kg extr -pass <schema> <privkey> <pubkey>\n"
 		"    calculate and extract <pubkey> from <privkey>\n"
-		"  kg print -pass <scheme> <privkey>\n"
+		"  kg print -pass <schema> <privkey>\n"
 		"    validate <privkey> and print the corresponding public key\n"
 		"  options:\n"
 		"    -l<nnn> -- security level: 96, 128 (by default), 192 or 256\n"
-		"    -pass <scheme> -- password description\n"
-		"    -passin <scheme> -- input password description\n"
-		"    -passout <scheme> -- output password description\n"
+		"    -pass <schema> -- password description\n"
+		"    -passin <schema> -- input password description\n"
+		"    -passout <schema> -- output password description\n"
 		,
 		_name, _descr
 	);
@@ -180,7 +180,7 @@ static err_t kgSelfTest()
 *******************************************************************************
 Генерация ключа
 
-gen [-lnnn] -pass <scheme> <privkey>
+gen [-lnnn] -pass <schema> <privkey>
 *******************************************************************************
 */
 
@@ -277,7 +277,7 @@ static err_t kgGen(int argc, char* argv[])
 *******************************************************************************
 Смена пароля защиты
 
-chp -passin <scheme> -passout <scheme> <privkey>
+chp -passin <schema> -passout <schema> <privkey>
 *******************************************************************************
 */
 
@@ -368,7 +368,7 @@ static err_t kgChp(int argc, char* argv[])
 *******************************************************************************
 Проверка ключа
 
-val -pass <scheme> <privkey>
+val -pass <schema> <privkey>
 *******************************************************************************
 */
 
@@ -432,7 +432,7 @@ static err_t kgVal(int argc, char* argv[])
 *******************************************************************************
 Извлечение открытого ключа
 
-extr -pass <scheme> <privkey> <pubkey>
+extr -pass <schema> <privkey> <pubkey>
 *******************************************************************************
 */
 
@@ -514,7 +514,7 @@ static err_t kgExtr(int argc, char* argv[])
 *******************************************************************************
 Печать
 
-print -pass <scheme> <privkey>
+print -pass <schema> <privkey>
 *******************************************************************************
 */
 

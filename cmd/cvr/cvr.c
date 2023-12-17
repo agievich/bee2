@@ -4,7 +4,7 @@
 \brief Manage CV-certificate rings
 \project bee2/cmd 
 \created 2023.06.08
-\version 2023.09.22
+\version 2023.12.17
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -65,11 +65,11 @@ static int cvrUsage()
 	printf(
 		"bee2cmd/%s: %s\n"
 		"Usage:\n"
-		"  cvr init -pass <scheme> <privkeya> <certa> <ring>\n"
+		"  cvr init -pass <schema> <privkeya> <certa> <ring>\n"
 		"    init <ring> on behalf of the holder of <privkeya>/<certa>\n"
-		"  cvr add -pass <scheme> <privkeya> <certa> <cert> <ring>\n"
+		"  cvr add -pass <schema> <privkeya> <certa> <cert> <ring>\n"
 		"    add <cert> to <ring>\n"
-		"  cvr del -pass <scheme> <privkeya> <certa> <cert> <ring>\n"
+		"  cvr del -pass <schema> <privkeya> <certa> <cert> <ring>\n"
 		"    remove <cert> from <ring>\n"
 		"  cvr val <certa> <ring>\n"
 		"    validate <ring> using <certa> as an anchor\n"
@@ -158,7 +158,7 @@ static err_t cvrSelfTest()
 *******************************************************************************
 Создание кольца
 
-cvr init -pass <scheme> <privkeya> <certa> <ring>
+cvr init -pass <schema> <privkeya> <certa> <ring>
 *******************************************************************************
 */
 
@@ -211,7 +211,7 @@ static err_t cvrCreate(int argc, char* argv[])
 *******************************************************************************
 Добавление сертификата
 
-cvr add -pass <scheme> <privkeya> <certa> <cert> <ring>
+cvr add -pass <schema> <privkeya> <certa> <cert> <ring>
 *******************************************************************************
 */
 
@@ -335,7 +335,7 @@ static err_t cvrAdd(int argc, char* argv[])
 *******************************************************************************
 Удаление сертификата 
 
-cvr del -pass <scheme> <privkeya> <certa> <cert> <req>
+cvr del -pass <schema> <privkeya> <certa> <cert> <req>
 *******************************************************************************
 */
 

@@ -4,7 +4,7 @@
 \brief Generate and manage passwords
 \project bee2/cmd 
 \created 2022.06.23
-\version 2023.06.16
+\version 2023.12.17
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -56,20 +56,20 @@ static int pwdUsage()
 	printf(
 		"bee2cmd/%s: %s\n"
 		"Usage:\n"
-		"  pwd gen <scheme>\n"
-		"    generate a password according to <scheme>\n"
-		"  pwd val <scheme>\n"
-		"    validate a password built by <scheme>\n"
-		"  pwd print <scheme>\n"
-		"    print a password built by <scheme>\n"
-		"  schemes:\n"
+		"  pwd gen <schema>\n"
+		"    generate a password according to <schema>\n"
+		"  pwd val <schema>\n"
+		"    validate a password built by <schema>\n"
+		"  pwd print <schema>\n"
+		"    print a password built by <schema>\n"
+		"  schemas:\n"
 		"    pass:<pwd> -- direct password\n"
 		"    share:\"[options] <share1> <share2> ...\" -- shared password\n"
 		"      options:\n"
 		"        -t<nn> --- threshold (2 <= <nn> <= 16, 2 by default)\n"
 		"        -l<mmm> --- password bitlen: 128, 192 or 256 (by default)\n"
 		"        -crc --- the password contains 64-bit crc (<mmm> != 128)\n"
-		"        -pass <scheme> --- password to protect shares\n"
+		"        -pass <schema> --- password to protect shares\n"
 		,
 		_name, _descr
 	);
@@ -139,7 +139,7 @@ static err_t pwdSelfTest()
 *******************************************************************************
 Генерация пароля
 
-pwd gen <scheme>
+pwd gen <schema>
 *******************************************************************************
 */
 
@@ -166,7 +166,7 @@ static err_t pwdGen(int argc, char* argv[])
 *******************************************************************************
 Проверка пароля
 
-pwd val <scheme>
+pwd val <schema>
 *******************************************************************************
 */
 
@@ -190,7 +190,7 @@ static err_t pwdVal(int argc, char* argv[])
 *******************************************************************************
 Печать пароля
 
-pwd print <scheme>
+pwd print <schema>
 *******************************************************************************
 */
 
