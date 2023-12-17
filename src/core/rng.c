@@ -4,7 +4,7 @@
 \brief Entropy sources and random number generators
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2023.12.16
+\version 2023.12.17
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -420,6 +420,8 @@ static err_t rngTimerRead(void* buf, size_t* read, size_t count)
 CryptAcquireContextW() снижает риск ошибочного завершения функции.
 
 \todo http://www.2uo.de/myths-about-urandom/
+
+\todo Более тонкий поиск libcrypto.so.
 *******************************************************************************
 */
 
@@ -472,7 +474,6 @@ static err_t rngSys2Read(void* buf, size_t* read, size_t count)
 
 #include <stdio.h>
 #include <dlfcn.h>
-#include <stdio.h>
 
 static err_t rngSysRead(void* buf, size_t* read, size_t count)
 {
@@ -489,15 +490,21 @@ static err_t rngSysRead(void* buf, size_t* read, size_t count)
 
 static err_t rngSys2Read(void* buf, size_t* read, size_t count)
 {
-	void* lib;
+	const char* names[] = { 
+		"libcrypto.so", "libcrypto.so.3", "libcrypto.so.1.1", 
+		"libcrypto.so.1.1.1"};
+	size_t pos;
+	void* lib; 
 	int (*rand_bytes)(octet*, int) = 0;
 	// pre
 	ASSERT(memIsValid(read, sizeof(size_t)));
 	ASSERT(memIsValid(buf, count));
 	ASSERT((size_t)(int)count == count);
-	// открыть библиотеку
-	lib = dlopen("libcrypto.so", RTLD_NOW | RTLD_GLOBAL);
-	if (!lib)
+	// пробежать имена
+	for (pos = 0; pos < COUNT_OF(names); ++pos)
+		if (lib = dlopen(names[pos], RTLD_NOW | RTLD_GLOBAL))
+			break;
+	if (pos == COUNT_OF(names))
 		return ERR_FILE_NOT_FOUND;
 	// получить адрес функции генерации
 	rand_bytes = dlsym(lib, "RAND_bytes");
@@ -591,7 +598,7 @@ err_t rngESHealth2()
 
 err_t rngESHealth()
 {
-	const char* sources[] = { "timer", "sys", "sys2" };
+	const char* sources[] = { "sys", "sys2", "timer" };
 	size_t valid_sources = 0;
 	size_t pos;
 	// есть физический источник?
@@ -604,13 +611,13 @@ err_t rngESHealth()
 			continue;
 		valid_sources++;
 	}
-	// два разных источника?
-	if (valid_sources == 2)
+	// не менее двух работоспосбных источников?
+	if (valid_sources >= 2)
 		return ERR_OK;
-	// только один источник?
+	// только один?
 	if (valid_sources == 1)
 		return ERR_NOT_ENOUGH_ENTROPY;
-	// ни одного источника
+	// ни одного
 	return ERR_BAD_ENTROPY;
 }
 
