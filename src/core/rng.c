@@ -766,8 +766,13 @@ err_t rngCreate(read_i source, void* source_state)
 
 bool_t rngIsValid()
 {
-	return _inited && mtMtxIsValid(_mtx) &&
-		_ctr && blobIsValid(_state);
+	bool_t b;
+	if (!_inited)
+		return FALSE;
+	mtMtxLock(_mtx);
+	b = _ctr && blobIsValid(_state);
+	mtMtxUnlock(_mtx);
+	return b;
 }
 
 void rngClose()
