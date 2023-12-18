@@ -4,7 +4,7 @@
 \brief Dealing with entropy sources
 \project bee2/cmd 
 \created 2021.04.20
-\version 2023.06.08
+\version 2023.12.16
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -51,7 +51,7 @@ static int esUsage()
 		"    list available entropy sources and determine their health\n"
 		"  es read <source> <count> <file>\n"
 		"    read <count> Kbytes from <source> and store them in <file>\n"
-		"  <source> in {trng, trng2, sys, timer, timerNN}\n"
+		"  <source> in {trng, trng2, sys, sys2, timer, timerNN}\n"
 		"    timerNNN -- use NNN sleep delays to produce one output bit\n"
 		,
 		_name, _descr
@@ -69,7 +69,7 @@ print
 
 static err_t esPrint(int argc, char* argv[])
 {
-	const char* sources[] = { "trng", "trng2", "sys", "timer" };
+	const char* sources[] = { "trng", "trng2", "sys", "sys2", "timer" };
 	size_t pos;
 	size_t count;
 	size_t read;

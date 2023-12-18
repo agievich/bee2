@@ -4,7 +4,7 @@
 \brief Manage CV-certificates
 \project bee2/cmd 
 \created 2022.07.12
-\version 2023.09.22
+\version 2023.12.17
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -100,7 +100,7 @@ static int cvcUsage()
 		"    -until <YYMMDD> -- expiration date   root req [iss] cut\n"
 		"    -eid <10*hex> -- eId access mask     [root] [req] [iss]\n"
 		"    -esign <4*hex> -- eSign access mask  [root] [req] [iss]\n"
-		"    -pass <scheme> -- password           root req iss shorten match\n"
+		"    -pass <schema> -- password           root req iss shorten match\n"
 		"    -date <YYMMDD> -- validation date    [val]\n"
 		"  field:\n"
 		"    {-authority|-holder|-from|-until|-eid|-esign|-pubkey|-sig}\n"

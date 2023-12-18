@@ -4,7 +4,7 @@
 \brief Entropy sources and random number generators
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2023.03.23
+\version 2023.12.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -320,6 +320,189 @@ static err_t rngTRNG2Read(void* buf, size_t* read, size_t count)
 
 /*
 *******************************************************************************
+Системный источник
+
+Системные источники Windows:
+- функция CryptGenRandom() поверх стандартного провайдера PROV_RSA_FULL;
+- функция RtlGenRandom(). 
+
+Системный источник Unix:
+- файл dev/urandom.
+
+Дополнительный системный источник Linix:
+- функция RAND_bytes() библиотеки OpenSSL/libcrypto.
+
+Анализ источников:
+* https://eprint.iacr.org/2005/029;
+* https://eprint.iacr.org/2006/086;
+* https://eprint.iacr.org/2007/419;
+* https://eprint.iacr.org/2012/251;
+* https://eprint.iacr.org/2014/167;
+* https://eprint.iacr.org/2016/367;
+* https://eprint.iacr.org/2022/558;
+* https://www.bsi.bund.de/SharedDocs/Downloads/EN/BSI/Publications/Studies/
+  LinuxRNG/LinuxRNG_EN_V5_7.pdf;
+* https://wiki.openssl.org/index.php/Random_Numbers;
+* https://blog.cr.yp.to/20170723-random.html;
+* https://www.2uo.de/myths-about-urandom;
+* https://git.kernel.org/pub/scm/linux/kernel/git/crng/random.git/commit/?
+  id=186873c549df11b63e17062f863654e1501e1524.
+
+\remark Файл dev/random -- это, так называемый, блокирующий источник,
+который не выдает данные, пока не будет накоплено достаточно энтропии.
+Именно этот источник рекомендуется использовать в криптографических 
+приложениях. Однако в наших экспериментах чтение из файла dev/random иногда 
+выполнялось экстремально долго (возможно это связано с тем, что программы 
+запускались под виртуальной машиной). Поэтому было решено использовать чтение
+из dev/urandom. Это неблокирующий источник, который всегда выдает данные.
+
+\remark Установка флагов CRYPT_VERIFYCONTEXT и CRYPT_SILENT при вызове
+CryptAcquireContextW() снижает риск ошибочного завершения функции.
+
+\remark На платформе OS_UNIX функция rngSys2Read() реализуется по-разному
+в зависимости от использования инструмента MemSan (Memory Sanitizer).
+Дело в том, что MemSan обнаруживает неинициализированные переменные в 
+библиотеке OpenSSL/libcrypto, которая используется в rngSys2Read().
+
+\todo Более тонкий поиск libcrypto.so.
+*******************************************************************************
+*/
+
+#if defined OS_WIN
+
+#include <windows.h>
+#include <wincrypt.h>
+#include <ntsecapi.h>
+
+static err_t rngSysRead(void* buf, size_t* read, size_t count)
+{
+	HCRYPTPROV hprov = 0;
+	// pre
+	ASSERT(memIsValid(read, O_PER_S));
+	ASSERT(memIsValid(buf, count));
+	ASSERT((size_t)(DWORD)count == count);
+	// открыть провайдер
+	if (!CryptAcquireContextW(&hprov, 0, 0, PROV_RSA_FULL,
+		CRYPT_VERIFYCONTEXT | CRYPT_SILENT))
+		return ERR_FILE_NOT_FOUND;
+	// получить данные
+	*read = 0;
+	if (!CryptGenRandom(hprov, (DWORD)count, (octet*)buf))
+	{
+		CryptReleaseContext(hprov, 0);
+		return ERR_BAD_ENTROPY;
+	}
+	// завершение
+	CryptReleaseContext(hprov, 0);
+	*read = count;
+	return ERR_OK;
+}
+
+static err_t rngSys2Read(void* buf, size_t* read, size_t count)
+{
+	// pre
+	ASSERT(memIsValid(read, O_PER_S));
+	ASSERT(memIsValid(buf, count));
+	ASSERT((size_t)(ULONG)count == count);
+	// получить случайные данные
+	*read = 0;
+	if (!RtlGenRandom((octet*)buf, (ULONG)count))
+		return ERR_BAD_ENTROPY;
+	// завершение
+	*read = count;
+	return ERR_OK;
+}
+
+#elif defined OS_UNIX
+
+#include <stdio.h>
+#include <dlfcn.h>
+
+static err_t rngSysRead(void* buf, size_t* read, size_t count)
+{
+	FILE* fp;
+	ASSERT(memIsValid(read, sizeof(size_t)));
+	ASSERT(memIsValid(buf, count));
+	fp = fopen("/dev/urandom", "r");
+	if (!fp)
+		return ERR_FILE_OPEN;
+	*read = fread(buf, 1, count, fp);
+	fclose(fp);
+	return ERR_OK;
+}
+
+// http://clang.llvm.org/docs/MemorySanitizer.html#has-feature-memory-sanitizer
+#if defined(__has_feature) 
+#if __has_feature(memory_sanitizer)
+#define MEMORY_SANITIZER
+#endif
+#endif
+
+#if defined(OS_LINUX) && !defined(MEMORY_SANITIZER) 
+
+static err_t rngSys2Read(void* buf, size_t* read, size_t count)
+{
+	const char* names[] = {
+		"libcrypto.so", "libcrypto.so.3", "libcrypto.so.1.1",
+		"libcrypto.so.1.1.1" };
+	size_t pos;
+	void* lib;
+	int(*rand_bytes)(octet*, int) = 0;
+	// pre
+	ASSERT(memIsValid(read, sizeof(size_t)));
+	ASSERT(memIsValid(buf, count));
+	ASSERT((size_t)(int)count == count);
+	// пробежать имена
+	for (pos = 0; pos < COUNT_OF(names); ++pos)
+		if (lib = dlopen(names[pos], RTLD_NOW))
+			break;
+	if (pos == COUNT_OF(names))
+		return ERR_FILE_NOT_FOUND;
+	// прочитать случайные данные
+	*read = 0;
+	rand_bytes = dlsym(lib, "RAND_bytes");
+	if (!rand_bytes || rand_bytes(buf, (int)count) != 1)
+	{
+		dlclose(lib);
+		return ERR_NOT_FOUND;
+	}
+	// завершение
+	dlclose(lib);
+	*read = count;
+	return ERR_OK;
+}
+
+#else
+
+static err_t rngSys2Read(void* buf, size_t* read, size_t count)
+{
+	ASSERT(memIsValid(read, sizeof(size_t)));
+	ASSERT(memIsValid(buf, count));
+	return ERR_FILE_NOT_FOUND;
+}
+
+#endif
+
+#else
+
+static err_t rngSysRead(void* buf, size_t* read, size_t count)
+{
+	ASSERT(memIsValid(read, sizeof(size_t)));
+	ASSERT(memIsValid(buf, count));
+	return ERR_FILE_NOT_FOUND;
+}
+
+static err_t rngSys2Read(void* buf, size_t* read, size_t count)
+{
+	ASSERT(memIsValid(read, sizeof(size_t)));
+	ASSERT(memIsValid(buf, count));
+	return ERR_FILE_NOT_FOUND;
+}
+
+#endif
+
+/*
+*******************************************************************************
 Источник-таймер
 
 Реализовано предложение [Jessie Walker, Seeding Random Number Generator]:
@@ -333,17 +516,17 @@ static err_t rngTRNG2Read(void* buf, size_t* read, size_t count)
 Реализация:
 -	таймер может быть источником случайности, если он обновляется не реже
 	10^9 раз в секунду (1 ГГц);
--	для формирования одного выходного бита используется сумма битов четности 
+-	для формирования одного выходного бита используется сумма битов четности
 	8-ми разностей между показаниями таймера.
 
-\warning Качество источника зависит от организации ядра. Эксперименты 
+\warning Качество источника зависит от организации ядра. Эксперименты
 показывают, что в Linux качество выше, чем в Windows. Указанное выше число
-8 выбрано экспериментальным путем -- проводилась оценка энтропии на выборках 
-объема 1 Мб. Эксперименты показывают, что для некоторых версий Windows 
-статистическое качество выборок катастрофически плохое. К источнику следует 
+8 выбрано экспериментальным путем -- проводилась оценка энтропии на выборках
+объема 1 Мб. Эксперименты показывают, что для некоторых версий Windows
+статистическое качество выборок катастрофически плохое. К источнику следует
 относиться с большой осторожностью, использовать его как вспомогательный.
 
-\warning [Jessie Walker]: наблюдения зависимы, модель AR(1). 
+\warning [Jessie Walker]: наблюдения зависимы, модель AR(1).
 
 \todo Остановка на Windows, если параллельно запущено несколько ресурсоемких
 процессов.
@@ -392,94 +575,6 @@ static err_t rngTimerRead(void* buf, size_t* read, size_t count)
 
 /*
 *******************************************************************************
-Системный источник
-
-Системный источник Windows -- это функция CryptGenRandom() поверх
-стандартного криптопровайдера PROV_RSA_FULL. Системный источник Unix -- 
-это файл dev/urandom. 
-
-Обсуждение (и критика) источников:
-[1]	http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.124.6557
-	&rep=rep1&type=pdf
-[2]	http://www.wisdom.weizmann.ac.il/~naor/COURSE/PRIVACY/
-	pinkas_prg_insecurity.ppt
-
-\remark Файл dev/random -- это, так называемый, блокирующий источник,
-который не выдает данные, пока не будет накоплено достаточно энтропии.
-Именно этот источник рекомендуется использовать в криптографических 
-приложениях. Однако в наших экспериментах чтение из файла dev/random иногда 
-выполнялось экстремально долго (возможно это связано с тем, что программы 
-запускались под виртуальной машиной). Поэтому было решено использовать файл 
-dev/urandom. Это неблокирующий источник, который всегда выдает данные.
-
-\remark Установка флагов CRYPT_VERIFYCONTEXT и CRYPT_SILENT при вызове
-CryptAcquireContextW() снижает риск ошибочного завершения функции.
-
-\todo http://www.2uo.de/myths-about-urandom/
-*******************************************************************************
-*/
-
-#if defined OS_WIN
-
-#include <windows.h>
-#include <wincrypt.h>
-
-static err_t rngSysRead(void* buf, size_t* read, size_t count)
-{
-	HCRYPTPROV hprov = 0;
-	// pre
-	ASSERT(memIsValid(read, sizeof(size_t)));
-	ASSERT(memIsValid(buf, count));
-	// открыть провайдер
-	if (!CryptAcquireContextW(&hprov, 0, 0, PROV_RSA_FULL,
-		CRYPT_VERIFYCONTEXT | CRYPT_SILENT))
-	{
-		*read = 0;
-		return ERR_FILE_NOT_FOUND;
-	}
-	// получить данные (count == 0 считается ошибкой)
-	if (count && !CryptGenRandom(hprov, (DWORD)count, (octet*)buf))
-	{
-		*read = 0;
-		CryptReleaseContext(hprov, 0);
-		return ERR_BAD_ENTROPY;
-	}
-	// завершение
-	CryptReleaseContext(hprov, 0);
-	*read = count;
-	return ERR_OK;
-}
-
-#elif defined OS_UNIX
-
-#include <stdio.h>
-
-static err_t rngSysRead(void* buf, size_t* read, size_t count)
-{
-	FILE* fp;
-	ASSERT(memIsValid(read, sizeof(size_t)));
-	ASSERT(memIsValid(buf, count));
-	fp = fopen("/dev/urandom", "r");
-	if (!fp)
-		return ERR_FILE_OPEN;
-	*read = fread(buf, 1, count, fp);
-	fclose(fp);
-	return ERR_OK;
-}
-
-#else
-
-static err_t rngSysRead(void* buf, size_t* read, size_t count)
-{
-	ASSERT(memIsValid(read, sizeof(size_t)));
-	ASSERT(memIsValid(buf, count));
-	return ERR_FILE_NOT_FOUND;
-}
-
-#endif
-
-/*
-*******************************************************************************
 Источники случайности (энтропии)
 *******************************************************************************
 */
@@ -494,6 +589,8 @@ err_t rngESRead(size_t* read, void* buf, size_t count, const char* source)
 		return rngTimerRead(buf, read, count);
 	else if (strEq(source, "sys"))
 		return rngSysRead(buf, read, count);
+	else if (strEq(source, "sys2"))
+		return rngSys2Read(buf, read, count);
 	return ERR_FILE_NOT_FOUND;
 }
 
@@ -530,7 +627,7 @@ err_t rngESHealth2()
 
 err_t rngESHealth()
 {
-	const char* sources[] = { "timer", "sys" };
+	const char* sources[] = { "sys", "sys2", "timer" };
 	size_t valid_sources = 0;
 	size_t pos;
 	// есть физический источник?
@@ -543,13 +640,13 @@ err_t rngESHealth()
 			continue;
 		valid_sources++;
 	}
-	// два разных источника?
-	if (valid_sources == 2)
+	// не менее двух работоспосбных источников?
+	if (valid_sources >= 2)
 		return ERR_OK;
-	// только один источник?
+	// только один?
 	if (valid_sources == 1)
 		return ERR_NOT_ENOUGH_ENTROPY;
-	// ни одного источника
+	// ни одного
 	return ERR_BAD_ENTROPY;
 }
 
@@ -712,7 +809,7 @@ void rngStepR2(void* buf, size_t count, void* state)
 
 void rngStepR(void* buf, size_t count, void* state)
 {
-	const char* sources[] = {"trng", "trng2", "sys", "timer"};
+	const char* sources[] = {"trng", "trng2", "sys", "sys2", "timer"};
 	octet* buf1;
 	size_t read, r, pos;
 	ASSERT(rngIsValid());
