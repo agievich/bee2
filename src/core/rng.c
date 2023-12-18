@@ -777,15 +777,11 @@ bool_t rngIsValid()
 
 void rngClose()
 {
-	if (mtAtomicCmpSwap(&_ctr, 1, 0) > 0)
-	{
-		mtMtxLock(_mtx);
-		if (_ctr)
-			--_ctr;
-		else
-			blobClose(_state), _state = 0;
-		mtMtxUnlock(_mtx);
-	}
+	ASSERT(rngIsValid());
+	mtMtxLock(_mtx);
+	if (_ctr && !--_ctr)
+		blobClose(_state), _state = 0;
+	mtMtxUnlock(_mtx);
 }
 
 /*
