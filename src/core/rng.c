@@ -4,7 +4,7 @@
 \brief Entropy sources and random number generators
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2023.12.17
+\version 2023.12.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -320,93 +320,33 @@ static err_t rngTRNG2Read(void* buf, size_t* read, size_t count)
 
 /*
 *******************************************************************************
-Источник-таймер
-
-Реализовано предложение [Jessie Walker, Seeding Random Number Generator]:
-наблюдением является разность между показаниями высокоточного таймера
-(регистра RDTSC) при приостановке потока на 0 мс, т.е. при передаче
-управления ядру.
-
-Оценка энтропии при использовании RDTSC [Jessie Walker]:
-4.9 битов / наблюдение.
-
-Реализация:
--	таймер может быть источником случайности, если он обновляется не реже
-	10^9 раз в секунду (1 ГГц);
--	для формирования одного выходного бита используется сумма битов четности 
-	8-ми разностей между показаниями таймера.
-
-\warning Качество источника зависит от организации ядра. Эксперименты 
-показывают, что в Linux качество выше, чем в Windows. Указанное выше число
-8 выбрано экспериментальным путем -- проводилась оценка энтропии на выборках 
-объема 1 Мб. Эксперименты показывают, что для некоторых версий Windows 
-статистическое качество выборок катастрофически плохое. К источнику следует 
-относиться с большой осторожностью, использовать его как вспомогательный.
-
-\warning [Jessie Walker]: наблюдения зависимы, модель AR(1). 
-
-\todo Остановка на Windows, если параллельно запущено несколько ресурсоемких
-процессов.
-*******************************************************************************
-*/
-
-static bool_t rngTimerIsAvail()
-{
-	return tmFreq() >= 1000000000u;
-}
-
-static err_t rngTimerRead(void* buf, size_t* read, size_t count)
-{
-	register tm_ticks_t ticks;
-	register tm_ticks_t t;
-	register word w;
-	size_t i, j, reps;
-	// pre
-	ASSERT(memIsValid(read, sizeof(size_t)));
-	ASSERT(memIsValid(buf, count));
-	// есть источник?
-	if (!rngTimerIsAvail())
-		return ERR_FILE_NOT_FOUND;
-	// генерация
-	for (i = 0; i < count; ++i)
-	{
-		((octet*)buf)[i] = 0;
-		ticks = tmTicks();
-		for (j = 0; j < 8; ++j)
-		{
-			w = 0;
-			for (reps = 0; reps < 8; ++reps)
-			{
-				mtSleep(0);
-				t = tmTicks();
-				w ^= (word)(t - ticks);
-				ticks = t;
-			}
-			((octet*)buf)[i] ^= wordParity(w) << j;
-		}
-	}
-	ticks = t = 0, w = 0;
-	*read = count;
-	return ERR_OK;
-}
-
-/*
-*******************************************************************************
 Системный источник
 
 Системные источники Windows:
 - функция CryptGenRandom() поверх стандартного провайдера PROV_RSA_FULL;
 - функция RtlGenRandom(). 
 
-Системные источники Unix:
-- файл dev/urandom;
+Системный источник Unix:
+- файл dev/urandom.
+
+Дополнительный системный источник Linix:
 - функция RAND_bytes() библиотеки OpenSSL/libcrypto.
 
-Обсуждение (и критика) источников:
-[1]	http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.124.6557
-	&rep=rep1&type=pdf
-[2]	http://www.wisdom.weizmann.ac.il/~naor/COURSE/PRIVACY/
-	pinkas_prg_insecurity.ppt
+Анализ источников:
+* https://eprint.iacr.org/2005/029;
+* https://eprint.iacr.org/2006/086;
+* https://eprint.iacr.org/2007/419;
+* https://eprint.iacr.org/2012/251;
+* https://eprint.iacr.org/2014/167;
+* https://eprint.iacr.org/2016/367;
+* https://eprint.iacr.org/2022/558;
+* https://www.bsi.bund.de/SharedDocs/Downloads/EN/BSI/Publications/Studies/
+  LinuxRNG/LinuxRNG_EN_V5_7.pdf;
+* https://wiki.openssl.org/index.php/Random_Numbers;
+* https://blog.cr.yp.to/20170723-random.html;
+* https://www.2uo.de/myths-about-urandom;
+* https://git.kernel.org/pub/scm/linux/kernel/git/crng/random.git/commit/?
+  id=186873c549df11b63e17062f863654e1501e1524.
 
 \remark Файл dev/random -- это, так называемый, блокирующий источник,
 который не выдает данные, пока не будет накоплено достаточно энтропии.
@@ -419,7 +359,10 @@ static err_t rngTimerRead(void* buf, size_t* read, size_t count)
 \remark Установка флагов CRYPT_VERIFYCONTEXT и CRYPT_SILENT при вызове
 CryptAcquireContextW() снижает риск ошибочного завершения функции.
 
-\todo http://www.2uo.de/myths-about-urandom/
+\remark На платформе OS_UNIX функция rngSys2Read() реализуется по-разному
+в зависимости от использования инструмента MemSan (Memory Sanitizer).
+Дело в том, что MemSan обнаруживает неинициализированные переменные в 
+библиотеке OpenSSL/libcrypto, которая используется в rngSys2Read().
 
 \todo Более тонкий поиск libcrypto.so.
 *******************************************************************************
@@ -488,43 +431,57 @@ static err_t rngSysRead(void* buf, size_t* read, size_t count)
 	return ERR_OK;
 }
 
+// http://clang.llvm.org/docs/MemorySanitizer.html#has-feature-memory-sanitizer
+#if defined(__has_feature) 
+#if __has_feature(memory_sanitizer)
+#define MEMORY_SANITIZER
+#endif
+#endif
+
+#if defined(OS_LINUX) && !defined(MEMORY_SANITIZER) 
+
 static err_t rngSys2Read(void* buf, size_t* read, size_t count)
 {
-	const char* names[] = { 
-		"libcrypto.so", "libcrypto.so.3", "libcrypto.so.1.1", 
-		"libcrypto.so.1.1.1"};
+	const char* names[] = {
+		"libcrypto.so", "libcrypto.so.3", "libcrypto.so.1.1",
+		"libcrypto.so.1.1.1" };
 	size_t pos;
-	void* lib; 
-	int (*rand_bytes)(octet*, int) = 0;
+	void* lib;
+	int(*rand_bytes)(octet*, int) = 0;
 	// pre
 	ASSERT(memIsValid(read, sizeof(size_t)));
 	ASSERT(memIsValid(buf, count));
 	ASSERT((size_t)(int)count == count);
 	// пробежать имена
 	for (pos = 0; pos < COUNT_OF(names); ++pos)
-		if (lib = dlopen(names[pos], RTLD_NOW | RTLD_GLOBAL))
+		if (lib = dlopen(names[pos], RTLD_NOW))
 			break;
 	if (pos == COUNT_OF(names))
 		return ERR_FILE_NOT_FOUND;
-	// получить адрес функции генерации
-	rand_bytes = dlsym(lib, "RAND_bytes");
-	if (!rand_bytes)
-	{
-		dlclose(lib);
-		return ERR_FILE_OPEN;
-	}
 	// прочитать случайные данные
 	*read = 0;
-	if (rand_bytes((octet*)buf, (int)count) != 1)
+	rand_bytes = dlsym(lib, "RAND_bytes");
+	if (!rand_bytes || rand_bytes(buf, (int)count) != 1)
 	{
 		dlclose(lib);
-		return ERR_BAD_ENTROPY;
+		return ERR_NOT_FOUND;
 	}
 	// завершение
 	dlclose(lib);
 	*read = count;
 	return ERR_OK;
 }
+
+#else
+
+static err_t rngSys2Read(void* buf, size_t* read, size_t count)
+{
+	ASSERT(memIsValid(read, sizeof(size_t)));
+	ASSERT(memIsValid(buf, count));
+	return ERR_FILE_NOT_FOUND;
+}
+
+#endif
 
 #else
 
@@ -543,6 +500,78 @@ static err_t rngSys2Read(void* buf, size_t* read, size_t count)
 }
 
 #endif
+
+/*
+*******************************************************************************
+Источник-таймер
+
+Реализовано предложение [Jessie Walker, Seeding Random Number Generator]:
+наблюдением является разность между показаниями высокоточного таймера
+(регистра RDTSC) при приостановке потока на 0 мс, т.е. при передаче
+управления ядру.
+
+Оценка энтропии при использовании RDTSC [Jessie Walker]:
+4.9 битов / наблюдение.
+
+Реализация:
+-	таймер может быть источником случайности, если он обновляется не реже
+	10^9 раз в секунду (1 ГГц);
+-	для формирования одного выходного бита используется сумма битов четности
+	8-ми разностей между показаниями таймера.
+
+\warning Качество источника зависит от организации ядра. Эксперименты
+показывают, что в Linux качество выше, чем в Windows. Указанное выше число
+8 выбрано экспериментальным путем -- проводилась оценка энтропии на выборках
+объема 1 Мб. Эксперименты показывают, что для некоторых версий Windows
+статистическое качество выборок катастрофически плохое. К источнику следует
+относиться с большой осторожностью, использовать его как вспомогательный.
+
+\warning [Jessie Walker]: наблюдения зависимы, модель AR(1).
+
+\todo Остановка на Windows, если параллельно запущено несколько ресурсоемких
+процессов.
+*******************************************************************************
+*/
+
+static bool_t rngTimerIsAvail()
+{
+	return tmFreq() >= 1000000000u;
+}
+
+static err_t rngTimerRead(void* buf, size_t* read, size_t count)
+{
+	register tm_ticks_t ticks;
+	register tm_ticks_t t;
+	register word w;
+	size_t i, j, reps;
+	// pre
+	ASSERT(memIsValid(read, sizeof(size_t)));
+	ASSERT(memIsValid(buf, count));
+	// есть источник?
+	if (!rngTimerIsAvail())
+		return ERR_FILE_NOT_FOUND;
+	// генерация
+	for (i = 0; i < count; ++i)
+	{
+		((octet*)buf)[i] = 0;
+		ticks = tmTicks();
+		for (j = 0; j < 8; ++j)
+		{
+			w = 0;
+			for (reps = 0; reps < 8; ++reps)
+			{
+				mtSleep(0);
+				t = tmTicks();
+				w ^= (word)(t - ticks);
+				ticks = t;
+			}
+			((octet*)buf)[i] ^= wordParity(w) << j;
+		}
+	}
+	ticks = t = 0, w = 0;
+	*read = count;
+	return ERR_OK;
+}
 
 /*
 *******************************************************************************
