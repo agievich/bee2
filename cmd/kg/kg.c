@@ -495,18 +495,18 @@ static err_t kgExtr(int argc, char* argv[])
 	pubkey = privkey + len;
 	// определить личный ключ
 	code = cmdPrivkeyRead(privkey, &len, argv[0], pwd);
-	ERR_CALL_HANDLE(code, (cmdBlobClose(stack), cmdPwdClose(pwd)));
+	cmdPwdClose(pwd);
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// определить открытый ключ
 	code = kgParamsStd(params, len);
-	ERR_CALL_HANDLE(code, (cmdBlobClose(stack), cmdPwdClose(pwd)));
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	code = len == 24 ? bign96PubkeyCalc(pubkey, params, privkey) : 
 		bignPubkeyCalc(pubkey, params, privkey);
-	ERR_CALL_HANDLE(code, (cmdBlobClose(stack), cmdPwdClose(pwd)));
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// записать открытый ключ
 	code = cmdFileWrite(argv[1], pubkey, len * 2);
 	// завершить
 	cmdBlobClose(stack);
-	cmdPwdClose(pwd);
 	return code;
 }
 
@@ -576,19 +576,19 @@ static err_t kgPrint(int argc, char* argv[])
 	hex = (char*)(pubkey + 2 * len);
 	// определить личный ключ
 	code = cmdPrivkeyRead(privkey, &len, argv[0], pwd);
-	ERR_CALL_HANDLE(code, (cmdBlobClose(stack), cmdPwdClose(pwd)));
+	cmdPwdClose(pwd);
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// определить открытый ключ
 	code = kgParamsStd(params, len);
-	ERR_CALL_HANDLE(code, (cmdBlobClose(stack), cmdPwdClose(pwd)));
-	code = len == 24 ? bign96PubkeyCalc(pubkey, params, privkey) : 
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	code = len == 24 ? bign96PubkeyCalc(pubkey, params, privkey) :
 		bignPubkeyCalc(pubkey, params, privkey);
-	ERR_CALL_HANDLE(code, (cmdBlobClose(stack), cmdPwdClose(pwd)));
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// печатать открытый ключ
 	hexFrom(hex, pubkey, len * 2);
 	printf("%s\n", hex);
 	// завершить
 	cmdBlobClose(stack);
-	cmdPwdClose(pwd);
 	return code;
 }
 

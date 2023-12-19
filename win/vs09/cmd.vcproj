@@ -476,6 +476,14 @@
 					>
 				</File>
 			</Filter>
+			<Filter
+				Name="csr"
+				>
+				<File
+					RelativePath="..\..\cmd\csr\csr.c"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"

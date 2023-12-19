@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: main
 \project bee2/cmd
 \created 2022.06.07
-\version 2023.06.08
+\version 2023.12.19
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -116,6 +116,7 @@ extern err_t kgInit();
 extern err_t cvcInit();
 extern err_t cvrInit();
 extern err_t sigInit();
+extern err_t csrInit();
 extern err_t esInit();
 #ifdef OS_WIN
 extern err_t stampInit();
@@ -139,7 +140,9 @@ err_t cmdInit()
 	ERR_CALL_CHECK(code);
 	code = sigInit();
 	ERR_CALL_CHECK(code);
-    code = esInit();
+	code = csrInit();
+	ERR_CALL_CHECK(code);
+	code = esInit();
 	ERR_CALL_CHECK(code);
 #ifdef OS_WIN
 	code = stampInit();

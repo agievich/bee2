@@ -4,6 +4,7 @@ if(MSVC)
 endif()
 
 add_executable(bee2cmd
+	bsum/bsum.c
 	core/cmd_arg.c
 	core/cmd_cvc.c
 	core/cmd_date.c
@@ -15,7 +16,7 @@ add_executable(bee2cmd
 	core/cmd_sig.c
 	core/cmd_term.c
 	core/whereami.c
-	bsum/bsum.c
+	csr/csr.c
 	cvc/cvc.c
 	cvr/cvr.c
 	es/es.c
