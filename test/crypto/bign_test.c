@@ -176,8 +176,8 @@ bool_t bignTest()
 		!= ERR_OK || count != 11)
 		return FALSE;
 	// инициализировать ГПСЧ
-	brngCTRXStart(beltH() + 128, beltH() + 128 + 64,
-		beltH(), 8 * 32, brng_state);
+	brngCTRXStart(beltH() + 128, beltH() + 128 + 64, beltH(), 8 * 32,
+		brng_state);
 	// тест Г.1
 	if (bignKeypairGen(privkey, pubkey, params, brngCTRXStepR, brng_state) != 
 		ERR_OK)

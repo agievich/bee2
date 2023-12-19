@@ -4,7 +4,7 @@
 \brief Tests for STB 1176.2-99[generation of parameters]
 \project bee2/test
 \created 2023.08.05
-\version 2023.09.11
+\version 2023.12.19
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -29,18 +29,18 @@
 В тесте GPQ.LNN проверяется генерация параметров p, q уровня NN,
 в тесте GA.LNN -- генерация параметра a.
 
-В функции stb99TestTestParams() реализован тест GPQA.L01.
+В функции stb99TestParamsTest() реализован тест GPQA.L01.
 
-В функции stb99TestStdParams() реализованы тесты GPQA.L03, GPQA.L06, GPQA.L10.
+В функции stb99TestParamsStd() реализованы тесты GPQA.L03, GPQA.L06, GPQA.L10.
 В этих тестах проверяется корректность генерации стандартных параметров,
 определенных в СТБ 34.101.50.
 
-\remark Тесты GPQA.L{03,06,10}, реализованные в функции stb99TestStdParams(),
+\remark Тесты GPQA.L{03,06,10}, реализованные в функции stb99TestParamsStd(),
 выполняются достаточно долго и поэтому заблокированы.
 *******************************************************************************
 */
 
-bool_t stb99TestTestParams()
+bool_t stb99TestParamsTest()
 {
 	stb99_seed seed[1];
 	stb99_seed seed1[1];
@@ -63,7 +63,7 @@ bool_t stb99TestTestParams()
 	return TRUE;
 }
 
-bool_t stb99TestStdParams()
+bool_t stb99TestParamsStd()
 {
 	stb99_params params[1];
 	stb99_params params1[1];
@@ -92,5 +92,5 @@ bool_t stb99TestStdParams()
 
 bool_t stb99Test()
 {
-	return stb99TestTestParams();
+	return stb99TestParamsTest();
 }

@@ -4,7 +4,7 @@
 \brief Generate and manage private keys
 \project bee2/cmd 
 \created 2022.06.08
-\version 2023.12.17
+\version 2023.12.19
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -83,7 +83,7 @@ static int kgUsage()
 *******************************************************************************
 */
 
-static err_t kgStdParams(bign_params* params, size_t privkey_len)
+static err_t kgParamsStd(bign_params* params, size_t privkey_len)
 {
 	switch (privkey_len)
 	{
@@ -250,7 +250,7 @@ static err_t kgGen(int argc, char* argv[])
 	// загрузить параметры
 	if (len == 0)
 		len = 32;
-	code = kgStdParams(params, len);
+	code = kgParamsStd(params, len);
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	// запустить ГСЧ
 	code = cmdRngStart(TRUE);
@@ -497,7 +497,7 @@ static err_t kgExtr(int argc, char* argv[])
 	code = cmdPrivkeyRead(privkey, &len, argv[0], pwd);
 	ERR_CALL_HANDLE(code, (cmdBlobClose(stack), cmdPwdClose(pwd)));
 	// определить открытый ключ
-	code = kgStdParams(params, len);
+	code = kgParamsStd(params, len);
 	ERR_CALL_HANDLE(code, (cmdBlobClose(stack), cmdPwdClose(pwd)));
 	code = len == 24 ? bign96PubkeyCalc(pubkey, params, privkey) : 
 		bignPubkeyCalc(pubkey, params, privkey);
@@ -578,7 +578,7 @@ static err_t kgPrint(int argc, char* argv[])
 	code = cmdPrivkeyRead(privkey, &len, argv[0], pwd);
 	ERR_CALL_HANDLE(code, (cmdBlobClose(stack), cmdPwdClose(pwd)));
 	// определить открытый ключ
-	code = kgStdParams(params, len);
+	code = kgParamsStd(params, len);
 	ERR_CALL_HANDLE(code, (cmdBlobClose(stack), cmdPwdClose(pwd)));
 	code = len == 24 ? bign96PubkeyCalc(pubkey, params, privkey) : 
 		bignPubkeyCalc(pubkey, params, privkey);

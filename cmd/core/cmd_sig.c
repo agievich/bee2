@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: signing files
 \project bee2/cmd
 \created 2022.08.20
-\version 2023.09.22
+\version 2023.12.19
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -334,7 +334,7 @@ static err_t cmdSigHash(octet hash[], size_t hash_len, const char* file,
 *******************************************************************************
 */
 
-static err_t cmdSigStdParams(bign_params* params, size_t privkey_len)
+static err_t cmdSigParamsStd(bign_params* params, size_t privkey_len)
 {
 	switch (privkey_len)
 	{
@@ -415,7 +415,7 @@ err_t cmdSigSign(const char* sig_file, const char* file, const char* certs,
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	}
 	// загрузить долговременные параметры
-	code = cmdSigStdParams(params, privkey_len);
+	code = cmdSigParamsStd(params, privkey_len);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// хэшировать
 	code = cmdSigHash(hash, privkey_len, file, 0, sig->certs, sig->certs_len, 
@@ -526,7 +526,7 @@ err_t cmdSigVerify(const char* file, const char* sig_file,
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	}
 	// загрузить долговременные параметры
-	code = cmdSigStdParams(params, pubkey_len / 2);
+	code = cmdSigParamsStd(params, pubkey_len / 2);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// хэшировать
 	code = cmdSigHash(hash, pubkey_len / 2, file, drop, sig->certs, 
@@ -611,7 +611,7 @@ err_t cmdSigVerify2(const char* file, const char* sig_file,
 	code = btokCVCUnwrap(cvc, sig->certs + offset, cert_len, 0, 0);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// загрузить долговременные параметры
-	code = cmdSigStdParams(params, cvc->pubkey_len / 2);
+	code = cmdSigParamsStd(params, cvc->pubkey_len / 2);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// хэшировать
 	code = cmdSigHash(hash, cvc->pubkey_len / 2, file, drop, sig->certs, 

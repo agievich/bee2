@@ -4,7 +4,7 @@
 \brief Bee2 testing
 \project bee2/test
 \created 2014.04.02
-\version 2023.11.09
+\version 2023.12.19
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -113,7 +113,7 @@ extern bool_t btokTest();
 extern bool_t dstuTest();
 extern bool_t g12sTest();
 extern bool_t pfokTest();
-extern bool_t pfokTestStdParams();
+extern bool_t pfokTestParamsStd();
 extern bool_t stb99Test();
 
 int testCrypto()

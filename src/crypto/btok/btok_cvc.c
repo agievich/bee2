@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): CV certificates
 \project bee2 [cryptographic library]
 \created 2022.07.04
-\version 2023.09.22
+\version 2023.12.19
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -42,7 +42,7 @@ static const char oid_esign_auth_ext[] = "1.2.112.0.2.0.34.101.79.8.1";
 *******************************************************************************
 */
 
-static err_t btokStdParams(bign_params* params, size_t privkey_len)
+static err_t btokParamsStd(bign_params* params, size_t privkey_len)
 {
 	switch (privkey_len)
 	{
@@ -64,7 +64,7 @@ static err_t btokPubkeyCalc(octet pubkey[], const octet privkey[],
 	err_t code;
 	bign_params params[1];
 	// загрузить параметры
-	code = btokStdParams(params, privkey_len);
+	code = btokParamsStd(params, privkey_len);
 	ERR_CALL_CHECK(code);
 	// вычислить ключ
 	return privkey_len == 24 ? bign96PubkeyCalc(pubkey, params, privkey) :
@@ -79,7 +79,7 @@ static err_t btokPubkeyVal(const octet pubkey[], size_t pubkey_len)
 	if (pubkey_len % 2)
 		return ERR_BAD_INPUT;
 	// загрузить параметры
-	code = btokStdParams(params, pubkey_len / 2);
+	code = btokParamsStd(params, pubkey_len / 2);
 	ERR_CALL_CHECK(code);
 	// проверить ключ
 	return pubkey_len == 48 ? bign96PubkeyVal(params, pubkey) :
@@ -95,7 +95,7 @@ static err_t btokKeypairVal(const octet privkey[], size_t privkey_len,
 	if (pubkey_len != 2 * privkey_len)
 		return ERR_BAD_KEYPAIR;
 	// загрузить параметры
-	code = btokStdParams(params, privkey_len);
+	code = btokParamsStd(params, privkey_len);
 	ERR_CALL_CHECK(code);
 	// проверить пару ключей
 	return privkey_len == 24 ? bign96KeypairVal(params, privkey, pubkey) :
@@ -115,7 +115,7 @@ static err_t btokSign(octet sig[], const void* buf, size_t count,
 	size_t t_len;
 	void* state;
 	// загрузить параметры
-	code = btokStdParams(params, privkey_len);
+	code = btokParamsStd(params, privkey_len);
 	ERR_CALL_CHECK(code);
 	// создать и разметить стек
 	stack = blobCreate(2 * privkey_len + 
@@ -176,7 +176,7 @@ static err_t btokVerify(const void* buf, size_t count, const octet sig[],
 	if (pubkey_len % 2)
 		return ERR_BAD_INPUT;
 	// загрузить параметры
-	code = btokStdParams(params, pubkey_len / 2);
+	code = btokParamsStd(params, pubkey_len / 2);
 	// создать и разметить стек
 	stack = blobCreate(pubkey_len / 2 +
 		(pubkey_len <= 64 ? beltHash_keep() : bashHash_keep()));

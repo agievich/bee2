@@ -4,7 +4,7 @@
 \brief STB 34.101.78 (bpki): PKI helpers
 \project bee2 [cryptographic library]
 \created 2021.04.03
-\version 2023.06.17
+\version 2023.12.19
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -14,8 +14,10 @@
 #include "bee2/core/err.h"
 #include "bee2/core/der.h"
 #include "bee2/core/mem.h"
+#include "bee2/core/rng.h"
 #include "bee2/core/util.h"
 #include "bee2/crypto/belt.h"
+#include "bee2/crypto/bign.h"
 #include "bee2/crypto/bpki.h"
 
 /*
@@ -46,11 +48,13 @@ do {\
 *******************************************************************************
 */
 
+static const char oid_belt_hash[] = "1.2.112.0.2.0.34.101.31.81";
 static const char oid_bign_pubkey[] = "1.2.112.0.2.0.34.101.45.2.1";
 static const char oid_bign_curve192v1[] = "1.2.112.0.2.0.34.101.45.3.0";
 static const char oid_bign_curve256v1[] = "1.2.112.0.2.0.34.101.45.3.1";
 static const char oid_bign_curve384v1[] = "1.2.112.0.2.0.34.101.45.3.2";
 static const char oid_bign_curve512v1[] = "1.2.112.0.2.0.34.101.45.3.3";
+static const char oid_bign_with_hbelt[] = "1.2.112.0.2.0.34.101.45.12";
 static const char oid_bels_share[] = "1.2.112.0.2.0.34.101.60.11";
 static const char oid_bels_m0128v1[] = "1.2.112.0.2.0.34.101.60.2.1";
 static const char oid_bels_m0192v1[] = "1.2.112.0.2.0.34.101.60.2.2";
@@ -532,4 +536,163 @@ err_t bpkiShareUnwrap(octet share[], size_t* share_len,
 	// завершить
 	blobClose(state);
 	return code;
+}
+
+/*
+*******************************************************************************
+Запрос на выпуск сертификата
+
+SEQ CertificationRequest
+  SEQ CertificationRequestInfo
+	SIZE(0) -- version
+	SEQ Name
+	SEQ SubjectPublicKeyInfo
+	  SEQ AlgorithmIdentifier
+	    OID(bign-pubkey)
+	    OID(bign-curve256v1)
+      BIT(SIZE(512)) -- pubkey
+    SETOF[0] Attributes
+  SEQ AlgorithmIdentifier
+    OID(bign-with-hbelt)
+	NULL
+  BIT(SIZE(384)) -- signature
+*******************************************************************************
+*/
+
+typedef struct
+{
+	size_t body_offset;		/* смещение подписываемой части запроса */
+	size_t body_len;		/* длина подписываемой части */
+	size_t pubkey_offset;	/* смещение открытого ключа (64 октета) */
+	size_t sig_offset;		/* смещение подписи (48 октетов) */
+}
+bpki_csr_info_t;
+
+static size_t bpkiCSRDec(bpki_csr_info_t* ci, const octet csr[], size_t count)
+{
+	der_anchor_t CertReq[1];
+	der_anchor_t CertReqInfo[1];
+	der_anchor_t SPKI[1];
+	der_anchor_t AlgId[1];
+	const octet* ptr = csr;
+	// pre
+	ASSERT(memIsValid(ci, sizeof(bpki_csr_info_t)));
+	ASSERT(memIsValid(csr, count));
+	// декодировать
+	derDecStep(derSEQDecStart(CertReq, ptr, count), ptr, count);
+	 ci->body_offset = ptr - csr;
+	 derDecStep(derSEQDecStart(CertReqInfo, ptr, count), ptr, count);
+	  derDecStep(derSIZEDec2(ptr, count, 0), ptr, count);
+	  derDecStep(derDec2(0, 0, ptr, count, 0x30), ptr, count);
+	  derDecStep(derSEQDecStart(SPKI, ptr, count), ptr, count);
+	   derDecStep(derSEQDecStart(AlgId, ptr, count), ptr, count);
+	    derDecStep(derOIDDec2(ptr, count, oid_bign_pubkey), ptr, count);
+	    derDecStep(derOIDDec2(ptr, count, oid_bign_curve256v1), ptr, count);
+	   derDecStep(derSEQDecStop(ptr, AlgId), ptr, count);
+	   derDecStep(derBITDec2(0, ptr, count, 512), ptr, count);
+	   ci->pubkey_offset = ptr - csr - 64;
+	  derDecStep(derSEQDecStop(ptr, SPKI), ptr, count);
+	  derDecStep(derDec2(0, 0, ptr, count, 0xA0), ptr, count);
+	 derDecStep(derSEQDecStop(ptr, CertReqInfo), ptr, count);
+	 ci->body_len = ptr - csr - ci->body_offset;
+	 derDecStep(derSEQDecStart(AlgId, ptr, count), ptr, count);
+	  derDecStep(derOIDDec2(ptr, count, oid_bign_with_hbelt), ptr, count);
+	  derDecStep(derNULLDec(ptr, count), ptr, count);
+     derDecStep(derSEQDecStop(ptr, AlgId), ptr, count);
+	 derDecStep(derBITDec2(0, ptr, count, 384), ptr, count);
+	 ci->sig_offset = ptr - csr - 48;
+	derDecStep(derSEQDecStop(ptr, CertReq), ptr, count);
+	// возвратить точную длину DER-кода
+	return ptr - csr;
+}
+
+err_t bpkiCSRWrap(octet csr[], size_t csr_len, const octet privkey[],
+	size_t privkey_len)
+{
+	err_t code;
+	size_t count;
+	bpki_csr_info_t ci[1];
+	bign_params params[1];
+	octet oid_der[16];
+	size_t oid_len = sizeof(oid_der);
+	octet* hash;
+	// входной контроль
+	if (privkey_len != 32)
+		return ERR_NOT_IMPLEMENTED;
+	if (!memIsValid(csr, csr_len) || !memIsValid(privkey, 32))
+		return ERR_BAD_INPUT;
+	// разобрать запрос
+	count = bpkiCSRDec(ci, csr, csr_len);
+	if (count == SIZE_MAX || count != csr_len)
+		return ERR_BAD_FORMAT;
+	// загрузить стандартные параметры
+	code = bignParamsStd(params, oid_bign_curve256v1);
+	ERR_CALL_CHECK(code);
+	// сгенерировать открытый ключ
+	code = bignPubkeyCalc(csr + ci->pubkey_offset, params, privkey);
+	ERR_CALL_CHECK(code);
+	// получить случайные числа
+	if (rngIsValid())
+		rngStepR(csr + ci->sig_offset, 48, 0);
+	// кодировать идентификатор алгоритма хэширования
+	code = bignOidToDER(oid_der, &oid_len, oid_belt_hash);
+	ERR_CALL_CHECK(code);
+	// хэшировать
+	if (!(hash = blobCreate(32)))
+		return ERR_OUTOFMEMORY;
+	code = beltHash(hash, csr + ci->body_offset, ci->body_len);
+	ERR_CALL_HANDLE(code, blobClose(hash));
+	// подписать
+	code = bignSign2(csr + ci->sig_offset, params, oid_der, oid_len,
+		hash, privkey, csr + ci->sig_offset, 48);
+	// завершить
+	blobClose(hash);
+	return code;
+}
+
+err_t bpkiCSRUnwrap(octet pubkey[], size_t* pubkey_len, const octet csr[],
+	size_t csr_len)
+{
+	err_t code;
+	size_t count;
+	bpki_csr_info_t ci[1];
+	bign_params params[1];
+	octet oid_der[16];
+	size_t oid_len = sizeof(oid_der);
+	octet* hash;
+	// входной контроль
+	if (!memIsValid(csr, csr_len))
+		return ERR_BAD_INPUT;
+	// разобрать запрос
+	count = bpkiCSRDec(ci, csr, csr_len);
+	if (count == SIZE_MAX || count != csr_len)
+		return ERR_BAD_FORMAT;
+	// загрузить стандартные параметры
+	code = bignParamsStd(params, oid_bign_curve256v1);
+	ERR_CALL_CHECK(code);
+	// кодировать идентификатор алгоритма хэширования
+	code = bignOidToDER(oid_der, &oid_len, oid_belt_hash);
+	ERR_CALL_CHECK(code);
+	// хэшировать
+	if (!(hash = blobCreate(32)))
+		return ERR_OUTOFMEMORY;
+	code = beltHash(hash, csr + ci->body_offset, ci->body_len);
+	ERR_CALL_HANDLE(code, blobClose(hash));
+	// проверить подпись
+	code = bignVerify(params, oid_der, oid_len, hash, csr + ci->sig_offset,
+		csr + ci->pubkey_offset);
+	blobClose(hash);
+	ERR_CALL_CHECK(code);
+	// завершить
+	if (pubkey_len)
+	{
+		ASSERT(memIsValid(pubkey_len, O_PER_S));
+		*pubkey_len = 64;
+	}
+	if (pubkey)
+	{
+		ASSERT(memIsValid(pubkey, 64));
+		memMove(pubkey, csr + ci->pubkey_offset, 64);
+	}
+	return ERR_OK;
 }
