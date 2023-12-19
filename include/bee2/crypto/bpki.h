@@ -183,7 +183,7 @@ err_t bpkiShareUnwrap(
 	\return ERR_OK, если запрос успешно перевыпущен, и код ошибки в противном
 	случае.
 */
-err_t bpkiCSRWrap(
+err_t bpkiCSRRewrap(
 	octet csr[],			/*!< [in/out] запрос на выпуск сертификата */
 	size_t csr_len,			/*!< [in] длина csr */
 	const octet privkey[],	/*!< [in] личный ключ */

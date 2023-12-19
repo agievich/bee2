@@ -199,7 +199,7 @@ static bool_t bpkiCSRTest()
 		"1F66B5B84B7339674533F0329C74F218"
 		"34281FED0732429E0C79235FC273E269");
 	// перевыпустить запрос
-	if (bpkiCSRWrap(csr, sizeof(csr), privkey, 32) != ERR_OK)
+	if (bpkiCSRRewrap(csr, sizeof(csr), privkey, 32) != ERR_OK)
 		return FALSE;
 	// повторно разобрать запрос
 	if (bpkiCSRUnwrap(pubkey, 0, csr, sizeof(csr)) != ERR_OK ||

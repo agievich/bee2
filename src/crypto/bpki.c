@@ -606,7 +606,7 @@ static size_t bpkiCSRDec(bpki_csr_info_t* ci, const octet csr[], size_t count)
 	return ptr - csr;
 }
 
-err_t bpkiCSRWrap(octet csr[], size_t csr_len, const octet privkey[],
+err_t bpkiCSRRewrap(octet csr[], size_t csr_len, const octet privkey[],
 	size_t privkey_len)
 {
 	err_t code;
