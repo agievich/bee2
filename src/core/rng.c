@@ -4,7 +4,7 @@
 \brief Entropy sources and random number generators
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2023.12.18
+\version 2023.12.19
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -764,22 +764,28 @@ err_t rngCreate(read_i source, void* source_state)
 	return ERR_OK;
 }
 
+static bool_t rngIsValid_internal()
+{
+	return _ctr && _state && blobIsValid(_state);
+}
+
 bool_t rngIsValid()
 {
 	bool_t b;
 	if (!_inited)
 		return FALSE;
 	mtMtxLock(_mtx);
-	b = _ctr && blobIsValid(_state);
+	b = rngIsValid_internal();
 	mtMtxUnlock(_mtx);
 	return b;
 }
 
 void rngClose()
 {
-	ASSERT(rngIsValid());
+	ASSERT(_inited);
 	mtMtxLock(_mtx);
-	if (_ctr && !--_ctr)
+	ASSERT(rngIsValid_internal());
+	if (--_ctr == 0)
 		blobClose(_state), _state = 0;
 	mtMtxUnlock(_mtx);
 }
@@ -802,8 +808,9 @@ mtSleep(0).
 
 void rngStepR2(void* buf, size_t count, void* state)
 {
-	ASSERT(rngIsValid());
+	ASSERT(_inited);
 	mtMtxLock(_mtx);
+	ASSERT(rngIsValid_internal());
 	brngCTRStepR(buf, count, _state->alg_state);
 	mtMtxUnlock(_mtx);
 }
@@ -811,32 +818,34 @@ void rngStepR2(void* buf, size_t count, void* state)
 void rngStepR(void* buf, size_t count, void* state)
 {
 	const char* sources[] = {"trng", "trng2", "sys", "sys2", "timer"};
-	octet* buf1;
 	size_t read, r, pos;
-	ASSERT(rngIsValid());
-	// блокировать генератор
+	// блокировать мьютекс
+	ASSERT(_inited);
 	mtMtxLock(_mtx);
 	// опросить источники
-	buf1 = (octet*)buf, read = pos = 0;
+	read = pos = 0;
 	while (read < count && pos < COUNT_OF(sources))
 	{
-		if (rngESRead(&r, buf1, count - read, sources[pos]) != ERR_OK)
+		if (rngESRead(&r, (octet*)buf + read, count - read,
+				sources[pos]) != ERR_OK)
 			r = 0;
-		buf1 += r, ++pos, read += r;
+		read += r, ++pos;
 	}
+	read = r = pos = 0;
 	// генерация
+	ASSERT(rngIsValid_internal());
 	brngCTRStepR(buf, count, _state->alg_state);
-	read = r = pos = 0, buf1 = 0;
 	// снять блокировку
 	mtMtxUnlock(_mtx);
 }
 
 void rngRekey()
 {
-	ASSERT(rngIsValid());
-	// заблокировать мьютекс
+	// блокировать мьютекс
+	ASSERT(_inited);
 	mtMtxLock(_mtx);
 	// сгенерировать новый ключ
+	ASSERT(rngIsValid_internal());
 	brngCTRStepR(_state->block, 32, _state->alg_state);
 	// пересоздать brngCTR
 	brngCTRStart(_state->alg_state, _state->block, 0);

@@ -65,7 +65,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				AdditionalLibraryDirectories=""
-				IgnoreAllDefaultLibraries="true"
+				IgnoreAllDefaultLibraries="false"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -196,7 +196,7 @@
 				Name="VCLibrarianTool"
 				AdditionalOptions="/ignore:4006"
 				AdditionalLibraryDirectories=""
-				IgnoreAllDefaultLibraries="true"
+				IgnoreAllDefaultLibraries="false"
 			/>
 			<Tool
 				Name="VCALinkTool"
