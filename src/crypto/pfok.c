@@ -4,7 +4,7 @@
 \brief Draft of RD_RB: key establishment protocols in finite fields
 \project bee2 [cryptographic library]
 \created 2014.07.01
-\version 2024.01.09
+\version 2024.01.11
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -700,7 +700,7 @@ err_t pfokParamsGen(pfok_params* params, const pfok_seed* seed,
 	// сгенерировать g
 	while (1)
 	{
-		// g^(p - 1) != e && g^(p - 1) != g?
+		// g^(q) != e && g^(q) != g?
 		qrPower(p, g, qi, W_OF_B(seed->li[0]), qr, stack);
 		if (!qrIsUnity(p, qr) && qrCmp(p, g, qr) != 0)
 			break;
