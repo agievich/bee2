@@ -3,7 +3,7 @@ rem ===========================================================================
 rem \brief Testing command-line interface
 rem \project bee2evp/cmd
 rem \created 2022.06.24
-rem \version 2023.06.22
+rem \version 2024.01.19
 rem ===========================================================================
 
 rem ===========================================================================
@@ -26,7 +26,7 @@ rem ===========================================================================
 
 echo ****** Testing bee2cmd/bsum...
 
-del /q check32 check256 2> nul
+del /q check32 check256 -c 2> nul
 
 bee2cmd bsum -bash31 bee2cmd.exe
 if %ERRORLEVEL% equ 0 goto Error
@@ -45,6 +45,18 @@ if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd bsum -c check32
 if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd bsum -bash-prg-hash2561 bee2cmd.exe test.cmd > -c
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd bsum -bash-prg-hash2561 -c
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd bsum -bash-prg-hash2561 -- -c
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd bsum -bash-prg-hash2561 -c -- -c
+if %ERRORLEVEL% neq 0 goto Error
 
 echo ****** OK
 
