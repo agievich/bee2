@@ -4,7 +4,7 @@
 \brief Hash files using belt-hash / bash-hash
 \project bee2/cmd 
 \created 2014.10.28
-\version 2024.01.19
+\version 2024.01.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -367,19 +367,19 @@ int bsumMain(int argc, char* argv[])
 			break;
 		}
 	}
-	// belt-hash по умолчанию
-	if (hid == SIZE_MAX)
-		hid = 0;
-	// дополнительные проверки
-	ASSERT(bsumHidIsValid(hid));
-	if (argc < 1 || check && argc != 1)
+	// дополнительные проверки и обработка ошибок
+	if (code == ERR_OK && (argc < 1 || check && argc != 1))
 		code = ERR_CMD_PARAMS;
 	if (code != ERR_OK)
 	{
 		fprintf(stderr, "bee2cmd/%s: %s\n", _name, errMsg(code));
 		return -1;
 	}
+	// belt-hash по умолчанию
+	if (hid == SIZE_MAX)
+		hid = 0;
 	// вычисление/проверка хэш-значениий
+	ASSERT(bsumHidIsValid(hid));
 	return check ? bsumCheck(hid, argv[0]) : bsumPrint(hid, argc, argv);
 }
 
