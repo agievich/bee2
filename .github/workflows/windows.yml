@@ -21,10 +21,9 @@ jobs:
     steps:
     - name: Get source
       uses: actions/checkout@v3
-    - name: Set up MinGW
-      uses: egor-tensin/setup-mingw@v2
-      with:
-        platform: x64
+    - name: Add path to MinGW
+      run: |
+        $env:PATH = "C:\msys64\usr\bin;$env:PATH"
     - name: Get CMake
       uses: symbitic/install-cmake@master
     - name: Configure CMake

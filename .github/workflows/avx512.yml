@@ -13,8 +13,8 @@ jobs:
     name: Build and test
     runs-on: ubuntu-latest
     env:
-      SDE_URL: https://downloadmirror.intel.com/732268
-      SDE_NAME: sde-external-9.7.0-2022-05-09-lin
+      SDE_URL: https://downloadmirror.intel.com/813591
+      SDE_NAME: sde-external-9.33.0-2024-01-07-lin
     steps:
     - name: Get source
       uses: actions/checkout@v3
