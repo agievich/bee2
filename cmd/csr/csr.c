@@ -229,7 +229,7 @@ static err_t csrVal(int argc, char* argv[])
 	csr = stack;
 	// прочитать запрос
 	code = cmdFileReadAll(csr, &csr_len, argv[0]);
-	ERR_CALL_CHECK(code);
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// проверить запрос
 	code = bpkiCSRUnwrap(0, 0, csr, csr_len);
 	// завершить
