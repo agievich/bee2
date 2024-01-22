@@ -4,7 +4,7 @@
 \brief Manage certificate signing requests
 \project bee2/cmd 
 \created 2023.12.19
-\version 2023.12.19
+\version 2024.01.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -31,7 +31,7 @@
 - проверка запроса на выпуск сертификата.
 
 Пример:
-  bee2cmd csr rewrap -pass pass:"1?23&aaA..." privkey req
+  bee2cmd csr rewrap -pass pass:"1?23&aaA..." privkey req req
   bee2cmd csr val req
 *******************************************************************************
 */
@@ -44,12 +44,13 @@ static int csrUsage()
 	printf(
 		"bee2cmd/%s: %s\n"
 		"Usage:\n"
-		"  csr rewrap -pass <schema> <privkey> <csr>\n"
-		"    rewrap existing <csr> using <privkey>\n"
+		"  csr rewrap -pass <schema> <privkey> <csr> <csr1>\n"
+		"    rewrap <csr> using <privkey> and store the result in <csr1>\n"
 		"  csr val <csr>\n"
 		"    validate <csr>\n"
 		"  options:\n"
 		"    -pass <schema> -- password description\n"
+		"\\warning implemented only with bign-curve256v1\n"
 		,
 		_name, _descr
 	);
@@ -115,7 +116,7 @@ static err_t csrSelfTest()
 *******************************************************************************
 Перевыпуск запроса на выпуск сертификата
 
-rewrap -pass <schema> <privkey> <csr>
+rewrap -pass <schema> <privkey> <csr> <csr1>
 *******************************************************************************
 */
 
@@ -159,14 +160,14 @@ static err_t csrRewrap(int argc, char* argv[])
 			break;
 		}
 	}
-	if (code == ERR_OK && (!pwd || argc != 2))
+	if (code == ERR_OK && (!pwd || argc != 3))
 		code = ERR_CMD_PARAMS;
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	// проверить входные файлы
 	code = cmdFileValExist(2, argv);
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	// проверить выходной файл
-	code = cmdFileValNotExist(1, argv + 1);
+	code = cmdFileValNotExist(1, argv + 2);
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	// определить длину личного ключа
 	code = cmdPrivkeyRead(0, &privkey_len, argv[0], pwd);
@@ -190,7 +191,7 @@ static err_t csrRewrap(int argc, char* argv[])
 	code = bpkiCSRRewrap(csr, csr_len, privkey, privkey_len);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// сохранить запрос
-	code = cmdFileWrite(argv[1], csr, csr_len);
+	code = cmdFileWrite(argv[2], csr, csr_len);
 	// завершить
 	cmdBlobClose(stack);
 	return code;

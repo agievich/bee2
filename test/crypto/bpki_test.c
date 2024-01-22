@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.78 (bpki) helpers
 \project bee2/test
 \created 2021.04.13
-\version 2023.12.19
+\version 2024.01.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -152,6 +152,25 @@ static bool_t bpkiContTest()
 /*
 *******************************************************************************
 Запрос на выпуск сертификата
+
+\remark Запрос сгенерирован в OpenSSL[bee2evp] при следующих настройках:
+\code
+	[req]
+	prompt = no
+	distinguished_name = dn
+	attributes = attrs
+	[attrs]
+	challengePassword = /INFO:erip234123
+	[dn]
+	CN = ROBERT SMITH
+	surname = SMITH
+	givenName = ROBERT
+	serialNumber = PASGB-533324428
+	countryName = GB
+	[reqexts]
+	certificatePolicies = bpki-role-fnp
+	subjectAltName = email:robert.smith@example.uk
+\endcode
 *******************************************************************************
 */
 
