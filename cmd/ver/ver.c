@@ -4,7 +4,7 @@
 \brief Version and build information
 \project bee2/cmd 
 \created 2022.06.22
-\version 2024.01.20
+\version 2024.01.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -103,13 +103,13 @@ static const char* verCompiler()
 #elif defined(_MSC_VER)
 	sprintf(str, "Visual Studio (%d)", _MSC_FULL_VER);
 #elif defined(__MINGW64__)
-	sprintf(str, "gcc (%d.%d.%d) in MinGW64 (%d.%d)",
-		__GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__,
-		__MINGW64_VERSION_MAJOR, __MINGW64_VERSION_MINOR);
+	sprintf(str, "MinGW64 (%d.%d) with gcc (%d.%d.%d)",
+		__MINGW64_VERSION_MAJOR, __MINGW64_VERSION_MINOR,
+		__GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
 #elif defined(__MINGW32__)
-	sprintf(str, "gcc (%d.%d.%d) in MinGW32 (%d.%d)",
-		__GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__,
-		__MINGW32_MAJOR_VERSION, __MINGW32_MINOR_VERSION);
+	sprintf(str, "MinGW32 (%d.%d) with gcc (%d.%d.%d)",
+		__MINGW32_MAJOR_VERSION, __MINGW32_MINOR_VERSION,
+		__GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
 #elif defined(__GNUC__)
 	sprintf(str, "gcc (%d.%d.%d)",
 		__GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
