@@ -4,6 +4,7 @@
 # \project bee2evp/cmd
 # \created 2022.06.24
 # \version 2024.01.22
+# \pre The working directory contains zed.csr.
 # =============================================================================
 
 bee2cmd="${BEE2CMD:-./bee2cmd}"
@@ -434,6 +435,22 @@ test_cvr(){
   return 0
 }
 
+test_csr(){
+  rm -rf zed.sk1 zed.csr1 \
+    || return 2
+
+  $bee2cmd csr val zed.csr \
+    || return 1
+  $bee2cmd kg gen -pass pass:zed1 zed.sk1 \
+    || return 1
+  $bee2cmd csr rewrap -pass pass:zed1 zed.sk1 zed.csr zed.csr1 \
+    || return 1
+  $bee2cmd csr val zed.csr1 \
+    || return 1
+
+  return 0
+}
+
 test_es() {
   rm -rf dd\
     || return 2
@@ -460,4 +477,4 @@ run_test() {
 } 
 
 run_test ver && run_test bsum && run_test pwd && run_test kg && run_test cvc \
-  && run_test sig && run_test cvr && run_test es
+  && run_test sig && run_test cvr && run_test csr && run_test es

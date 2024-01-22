@@ -4,6 +4,7 @@ rem \brief Testing command-line interface
 rem \project bee2evp/cmd
 rem \created 2022.06.24
 rem \version 2024.01.22
+rem \pre The working directory contains zed.csr.
 rem ===========================================================================
 
 rem ===========================================================================
@@ -573,6 +574,28 @@ if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd cvr del -pass pass:alice privkey2 cert2 cert0 ring2
 if %ERRORLEVEL% equ 0 goto Error
+
+echo ****** OK
+
+rem ===========================================================================
+rem  bee2cmd/csr
+rem ===========================================================================
+
+echo ****** Testing bee2cmd/csr...
+
+del /q zed.sk1 zed.csr1 2> nul
+
+bee2cmd csr val zed.csr
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd kg gen -pass pass:zed1 zed.sk1
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd csr rewrap -pass pass:zed1 zed.sk1 zed.csr zed.csr1
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd csr val zed.csr1
+if %ERRORLEVEL% neq 0 goto Error
 
 echo ****** OK
 
