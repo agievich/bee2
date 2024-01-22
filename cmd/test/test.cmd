@@ -3,7 +3,7 @@ rem ===========================================================================
 rem \brief Testing command-line interface
 rem \project bee2evp/cmd
 rem \created 2022.06.24
-rem \version 2024.01.19
+rem \version 2024.01.22
 rem ===========================================================================
 
 rem ===========================================================================
@@ -57,6 +57,21 @@ if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd bsum -bash-prg-hash2561 -c -- -c
 if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd bsum -bash-prg-hash2562 -c -- -c
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd bsum -c -bash-prg-hash2561 -- -c
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd bsum -c -bash-prg-hash2561 -c -- -c
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd bsum -c -belt-hash -bash-prg-hash2561 -- -c
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd bsum -b -c -- -c
+if %ERRORLEVEL% equ 0 goto Error
 
 echo ****** OK
 
