@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: parsing arguments
 \project bee2/cmd 
 \created 2022.06.08
-\version 2022.10.25
+\version 2024.01.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -35,7 +35,7 @@ err_t cmdArgCreate(int* argc, char*** argv, const char* args)
 	int pos;
 	// входной контроль
 	ASSERT(strIsValid(args));
-	ASSERT(memIsDisjoint2(argv, sizeof(char**), argc, sizeof(int)));
+	ASSERT(memIsDisjoint2(argc, sizeof(int), argv, sizeof(char**)));
 	// разбить args на строки широких символов
 	switch (wordexp(args, we, 0))
 	{
@@ -86,7 +86,7 @@ err_t cmdArgCreate(int* argc, char*** argv, const char* args)
 	int pos;
 	// pre
 	ASSERT(strIsValid(args));
-	ASSERT(memIsDisjoint2(argv, sizeof(char**), argc, O_PER_S));
+	ASSERT(memIsDisjoint2(argc, sizeof(int), argv, sizeof(char**)));
 	// разбить args на строки широких символов
 	if (!(argsw = memAlloc((strLen(args) + 1) * sizeof(wchar_t))))
 		return ERR_OUTOFMEMORY;

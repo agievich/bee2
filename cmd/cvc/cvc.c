@@ -4,7 +4,7 @@
 \brief Manage CV-certificates
 \project bee2/cmd 
 \created 2022.07.12
-\version 2023.12.17
+\version 2024.01.19
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -392,8 +392,8 @@ static err_t cvcParseOptions(btok_cvc_t* cvc, bool_t* eid, bool_t* esign,
 		}
 	}
 	// проверить, что запрошенные данные определены
-	// \\remark корректность cvc будет проверена позже
-	// \\remark параметр date не является обязательным
+	// \remark корректность cvc будет проверена позже
+	// \remark параметр date не является обязательным
 	if (code == ERR_OK && pwd && !*pwd)
 		code = ERR_CMD_PARAMS;
 	// завершить
