@@ -28,7 +28,7 @@ jobs:
       run: |
         lcov -c -i -d src -d cmd -o coverage_base.info
         test/testbee2
-        cp ../cmd/test/test.sh cmd && cd cmd && ./test.sh
+        cd cmd && cp ../../cmd/test/* . && ./test.sh
     - name: Upload coverage reports to Codecov
       working-directory: ${{github.workspace}}/build
       run: |

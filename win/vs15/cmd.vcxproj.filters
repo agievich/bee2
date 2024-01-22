@@ -42,6 +42,9 @@
     <Filter Include="Source Files\cvr">
       <UniqueIdentifier>{5a9b2cdc-aada-4113-9765-ddce84daef05}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\csr">
+      <UniqueIdentifier>{c6c1a5dd-dffb-40dc-ad09-60909062f096}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\cmd\bsum\bsum.c">
@@ -106,6 +109,9 @@
     </ClCompile>
     <ClCompile Include="..\..\cmd\cvr\cvr.c">
       <Filter>Source Files\cvr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\csr\csr.c">
+      <Filter>Source Files\csr</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

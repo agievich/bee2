@@ -4,7 +4,7 @@
 \brief Entropy sources and random number generators
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2023.02.02
+\version 2023.12.19
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -265,8 +265,8 @@ bool_t rngIsValid();
 	В буфер [count]buf записываются случайные октеты, построенные с помощью 
 	генератора случайных чисел. При формировании выходных октетов используются 
 	данные от источников случайности. 
-	\expect rngСreate() < rngStepR()*.
 	\pre Генератор корректен.
+	\expect rngСreate() < rngStepR()*.
 	\remark Поддержан интерфейс gen_i (defs.h).
 	\remark Состояние state не используется. Оно передается в функцию только 
 	для того, чтобы поддержать интерфейс gen_i.
@@ -284,8 +284,8 @@ void rngStepR(
 	В буфер [count]buf записываются случайные октеты, построенные с помощью 
 	генератора случайных чисел. При формировании выходных октетов данные от 
 	источников энтропии не используются.
-	\expect rngСreate() < rngStepR2()*.
 	\pre Генератор корректен.
+	\expect rngСreate() < rngStepR2()*.
 	\remark Поддержан интерфейс gen_i (defs.h).
 	\remark Состояние state не используется. Оно передается в функцию только 
 	для того, чтобы поддержать интерфейс gen_i.
@@ -301,8 +301,8 @@ void rngStepR2(
 	Ключ генератора обновляется: в его качестве выступают генеририруемые
 	случайные числа. При обновлении ключа данные от источников энтропии
 	не используются.
-	\expect rngСreate() < rngRekey()*.
 	\pre Генератор корректен.
+	\expect rngСreate() < rngRekey()*.
 */
 void rngRekey();
 

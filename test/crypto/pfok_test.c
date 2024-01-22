@@ -4,7 +4,7 @@
 \brief Tests for Draft of RD_RB (pfok)
 \project bee2/test
 \created 2014.07.08
-\version 2023.10.06
+\version 2023.12.19
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -45,12 +45,12 @@ static void _on_q_silent(const word q[], size_t n, size_t num)
 
 Реализованы тесты из Методики НИИ ППМИ.
 
-\remark Тесты PFOK.GENP.2-4, реализованные в функции pfokTestStdParams(),
+\remark Тесты PFOK.GENP.2-4, реализованные в функции pfokTestParamsStd(),
 выполняются очень долго и поэтому заблокированы.
 *******************************************************************************
 */
 
-bool_t pfokTestTestParams()
+bool_t pfokTestParamsTest()
 {
 	pfok_seed seed[1];
 	pfok_seed seed1[1];
@@ -79,7 +79,7 @@ bool_t pfokTestTestParams()
 	return TRUE;
 }
 
-bool_t pfokTestStdParams()
+bool_t pfokTestParamsStd()
 {
 	pfok_params params[1];
 	pfok_params params1[1];
@@ -123,7 +123,7 @@ bool_t pfokTest()
 	if (sizeof(combo_state) < prngCOMBO_keep())
 		return FALSE;
 	// тест PFOK.GENP.1
-	if (!pfokTestTestParams())
+	if (!pfokTestParamsTest())
 		return FALSE;
 	// тест PFOK.GENG.1
 	if (pfokParamsStd(params, 0, "test") != ERR_OK ||

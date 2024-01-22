@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.31 (belt)
 \project bee2/test
 \created 2012.06.20
-\version 2023.03.29
+\version 2023.12.19
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -43,7 +43,7 @@ The multiplication is performed in the ring of such polynomials modulo
 *******************************************************************************
 */
 
-void beltGenH(octet H[256])
+static void beltGenH(octet H[256])
 {
 	size_t x, i;
 	H[10] = 0, H[11] = 0x8E;

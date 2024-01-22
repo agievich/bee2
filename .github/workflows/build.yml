@@ -52,5 +52,5 @@ jobs:
       run: ctest --verbose
     - name: Test bee2cmd
       working-directory: ${{github.workspace}}/build/cmd
-      run: ../../cmd/test/test.sh
+      run: cp ../../cmd/test/* . && ./test.sh
       shell: bash

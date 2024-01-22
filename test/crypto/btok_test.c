@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.79 (btok)
 \project bee2/test
 \created 2022.07.07
-\version 2023.09.22
+\version 2023.12.19
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -448,7 +448,7 @@ static err_t bakeTestCertVal(octet* pubkey, const bign_params* params,
 	return ERR_OK;
 }
 
-bool_t btokBAUTHTest() 
+static bool_t btokBAUTHTest() 
 {
 	bign_params params[1];
 	octet echoa[64];
@@ -550,6 +550,12 @@ bool_t btokBAUTHTest()
 	// все нормально
 	return TRUE;
 }
+
+/*
+*******************************************************************************
+Общий тест
+*******************************************************************************
+*/
 
 bool_t btokTest()
 {
