@@ -1,10 +1,10 @@
 /*
 *******************************************************************************
 \file pfok.h
-\brief Draft of RD_RB: key establishment protocols based on finite fields
+\brief Draft of RD_RB: key establishment protocols in finite fields
 \project bee2 [cryptographic library]
 \created 2014.06.30
-\version 2023.10.06
+\version 2024.01.11
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -219,7 +219,7 @@ err_t pfokParamsGen(
 	-	p -- l-битовое простое число;
 	-	q = (p - 1) / 2 -- простое;
 	-	g < p;
-	-	g имеет порядок q в группе Монтгомери mod p.
+	-	g имеет порядок p - 1 в группе Монтгомери mod p.
 	.
 	\return ERR_OK, если параметры корректны, и код ошибки в противном случае.
 	\warning Не проверяется, что p построен по алгоритму 5.2.

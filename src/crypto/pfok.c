@@ -4,7 +4,7 @@
 \brief Draft of RD_RB: key establishment protocols in finite fields
 \project bee2 [cryptographic library]
 \created 2014.07.01
-\version 2023.10.06
+\version 2024.01.11
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -615,8 +615,7 @@ err_t pfokParamsGen(pfok_params* params, const pfok_seed* seed,
 	ASSERT(W_OF_B(seed->li[0]) == n);
 	// создать состояние
 	state = blobCreate(
-		prngSTB_keep() + O_OF_W(qw) +
-		O_OF_W(n) + zmMontCreate_keep(no) +
+		prngSTB_keep() + O_OF_W(qw + 2 * n) + zmMontCreate_keep(no) +
 		utilMax(6,
 			priNextPrimeW_deep(),
 			priExtendPrime_deep(params->l, W_OF_B(seed->li[1]),
@@ -628,12 +627,11 @@ err_t pfokParamsGen(pfok_params* params, const pfok_seed* seed,
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// раскладка состояния
-	ASSERT(n /* q0 */ + n /* g */ <= qw);
 	stb_state = (octet*)state;
 	qi = (word*)(stb_state + prngSTB_keep());
-	g = qi + n;
 	p = qi + qw;
-	qr = (qr_o*)(p + n);
+	g = p + n;
+	qr = (qr_o*)(g + n);
 	stack = (octet*)qr + zmMontCreate_keep(no);
 	// запустить генератор
 	prngSTBStart(stb_state, seed->zi);
@@ -702,7 +700,7 @@ err_t pfokParamsGen(pfok_params* params, const pfok_seed* seed,
 	// сгенерировать g
 	while (1)
 	{
-		// g^(p - 1) != e && g^(p - 1) != g?
+		// g^(q) != e && g^(q) != g?
 		qrPower(p, g, qi, W_OF_B(seed->li[0]), qr, stack);
 		if (!qrIsUnity(p, qr) && qrCmp(p, g, qr) != 0)
 			break;

@@ -3,7 +3,7 @@
 # \brief Testing command-line interface
 # \project bee2evp/cmd
 # \created 2022.06.24
-# \version 2023.06.19
+# \version 2024.01.22
 # =============================================================================
 
 bee2cmd="${BEE2CMD:-./bee2cmd}"
@@ -31,7 +31,7 @@ test_ver() {
 }
 
 test_bsum() {
-  rm -rf check32 check256 \
+  rm -rf -- check32 check256 -c \
     || return 2
   $bee2cmd bsum -bash31 $bee2cmd \
     && return 1
@@ -44,6 +44,24 @@ test_bsum() {
   $bee2cmd bsum -belt-hash -c check256 \
     || return 1
   $bee2cmd bsum -c check32 \
+    && return 1
+  $bee2cmd bsum -bash-prg-hash2561 $bee2cmd $this > -c \
+    || return 1
+  $bee2cmd bsum -bash-prg-hash2561 -c \
+    && return 1
+  $bee2cmd bsum -bash-prg-hash2561 -- -c \
+    || return 1
+  $bee2cmd bsum -bash-prg-hash2561 -c -- -c \
+    || return 1
+  $bee2cmd bsum -bash-prg-hash2562 -c -- -c \
+    && return 1
+  $bee2cmd bsum -c -bash-prg-hash2561 -- -c \
+    || return 1
+  $bee2cmd bsum -c -bash-prg-hash2561 -c -- -c \
+    && return 1
+  $bee2cmd bsum -c -belt-hash -bash-prg-hash2561 -- -c \
+    && return 1
+  $bee2cmd bsum -b -c -- -c \
     && return 1
   return 0
 }
