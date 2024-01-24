@@ -4,7 +4,7 @@
 \brief Version and build information
 \project bee2/cmd 
 \created 2022.06.22
-\version 2024.01.22
+\version 2024.01.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -68,15 +68,6 @@ static int verUsage()
 *******************************************************************************
 */
 
-static const char* verEndianness()
-{
-#if defined(LITTLE_ENDIAN)
-	return "LE";
-#else
-	return "BE";
-#endif
-}
-
 static const char* verOS()
 {
 #if defined(OS_WIN)
@@ -94,24 +85,54 @@ static const char* verOS()
 #endif
 }
 
+static const char* verEndianness()
+{
+#if defined(LITTLE_ENDIAN)
+	return "LE";
+#else
+	return "BE";
+#endif
+}
+
 static const char* verCompiler()
 {
 	static char str[128];
 #if defined(__clang__)
-	sprintf(str, "clang (%d.%d.%d)",
-		__clang_major__, __clang_minor__, __clang_patchlevel__);
+	#if defined(_MSC_VER)
+		sprintf(str,
+			"clang (%d.%d.%d)\n"
+			"      compatibility: Visual Studio (%d)",
+			__clang_major__, __clang_minor__, __clang_patchlevel__,
+			_MSC_FULL_VER);
+	#elif defined(__GNUC__)
+		sprintf(str,
+			"clang (%d.%d.%d)\n"
+			"      compatibility: gcc (%d.%d.%d)",
+			__clang_major__, __clang_minor__, __clang_patchlevel__,
+			__GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
+	#else
+		sprintf(str,
+			"clang (%d.%d.%d)\n",
+			__clang_major__, __clang_minor__, __clang_patchlevel__);
+	#endif
 #elif defined(_MSC_VER)
-	sprintf(str, "Visual Studio (%d)", _MSC_FULL_VER);
+	sprintf(str,
+		"Visual Studio (%d)", _MSC_FULL_VER);
 #elif defined(__MINGW64__)
-	sprintf(str, "MinGW64 (%d.%d) with gcc (%d.%d.%d)",
+	sprintf(str,
+		"MinGW64 (%d.%d)\n"
+		"      use: gcc (%d.%d.%d)",
 		__MINGW64_VERSION_MAJOR, __MINGW64_VERSION_MINOR,
 		__GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
 #elif defined(__MINGW32__)
-	sprintf(str, "MinGW32 (%d.%d) with gcc (%d.%d.%d)",
-		__MINGW32_MAJOR_VERSION, __MINGW32_MINOR_VERSION,
+	sprintf(str,
+		"MinGW32 (%d.%d)\n"
+		"      use: gcc (%d.%d.%d)",
+		__MINGW64_VERSION_MAJOR, __MINGW64_VERSION_MINOR,
 		__GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
 #elif defined(__GNUC__)
-	sprintf(str, "gcc (%d.%d.%d)",
+	sprintf(str,
+		"gcc (%d.%d.%d)",
 		__GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
 #else 
 	return "unknown";
@@ -153,7 +174,8 @@ static void verPrint()
 		"    bash_platform: %s\n",
 		utilVersion(), __DATE__,
 		verOS(),
-		(unsigned)B_PER_S, (unsigned)B_PER_W, 
+		(unsigned)B_PER_S,
+		(unsigned)B_PER_W,
 		verEndianness(),
 		verCompiler(),
 		verIsSafe(),
