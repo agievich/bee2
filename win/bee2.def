@@ -251,11 +251,11 @@ EXPORTS
 	g12sSign					@1204
 	g12sVerify					@1205
 	
-	pfokParamsStd				@1301
-	pfokParamsGen				@1302
-	pfokParamsVal				@1303
-	pfokSeedVal					@1304
-	pfokSeedAdj					@1305
+	pfokSeedVal					@1301
+	pfokSeedAdj					@1302
+	pfokParamsStd				@1303
+	pfokParamsGen				@1304
+	pfokParamsVal				@1305
 	pfokKeypairGen				@1306
 	pfokPubkeyVal				@1307
 	pfokPubkeyCalc				@1308
@@ -266,6 +266,8 @@ EXPORTS
 	bpkiPrivkeyUnwrap			@1402
 	bpkiShareWrap				@1403
 	bpkiShareUnwrap				@1404
+	bpkiCSRRewrap				@1405
+	bpkiCSRUnwrap				@1406
 
 	btokCVCCheck				@1501
 	btokCVCCheck2				@1502
@@ -286,8 +288,8 @@ EXPORTS
 	bign96Sign2					@1608
 	bign96Verify				@1609
 
-	stb99ParamsStd				@1701
-	stb99ParamsGen				@1702
-	stb99ParamsVal				@1703
-	stb99SeedVal				@1704
-	stb99SeedAdj				@1705
+	stb99SeedVal				@1701
+	stb99SeedAdj				@1702
+	stb99ParamsStd				@1703
+	stb99ParamsGen				@1704
+	stb99ParamsVal				@1705
