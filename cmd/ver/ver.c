@@ -4,7 +4,7 @@
 \brief Version and build information
 \project bee2/cmd 
 \created 2022.06.22
-\version 2024.01.24
+\version 2024.01.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -20,9 +20,9 @@
 
 Функционал:
 - печать версии Bee2 и даты сборки;
-- печать опций сборки:
-  - SAFE_FAST vs SAFE_SAFE;
-  - bash_platform.
+- печать информации о платформе;
+- печать информации об инструментах сборки;
+- печать опций сборки.
 *******************************************************************************
 */
 
@@ -121,13 +121,13 @@ static const char* verCompiler()
 #elif defined(__MINGW64__)
 	sprintf(str,
 		"MinGW64 (%d.%d)\n"
-		"      use: gcc (%d.%d.%d)",
+		"      using: gcc (%d.%d.%d)",
 		__MINGW64_VERSION_MAJOR, __MINGW64_VERSION_MINOR,
 		__GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
 #elif defined(__MINGW32__)
 	sprintf(str,
 		"MinGW32 (%d.%d)\n"
-		"      use: gcc (%d.%d.%d)",
+		"      using: gcc (%d.%d.%d)",
 		__MINGW64_VERSION_MAJOR, __MINGW64_VERSION_MINOR,
 		__GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
 #elif defined(__GNUC__)
@@ -140,7 +140,16 @@ static const char* verCompiler()
 	return str;
 }
 
-static const char* verIsSafe()
+static const char* verNDebug()
+{
+#ifdef NDEBUG
+	return "ON";
+#else
+	return "OFF";
+#endif
+}
+
+static const char* verSafe()
 {
 #ifdef SAFE_FAST
 	return "OFF";
@@ -170,6 +179,7 @@ static void verPrint()
 		"  build tools:\n"
 		"    compiler: %s\n"
 		"  build options:\n"
+		"    NDEBUG: %s\n"
 		"    safe (constant-time): %s\n"
 		"    bash_platform: %s\n",
 		utilVersion(), __DATE__,
@@ -178,7 +188,8 @@ static void verPrint()
 		(unsigned)B_PER_W,
 		verEndianness(),
 		verCompiler(),
-		verIsSafe(),
+		verNDebug(),
+		verSafe(),
 		bash_platform
 	);
 }
