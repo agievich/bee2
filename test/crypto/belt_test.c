@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.31 (belt)
 \project bee2/test
 \created 2012.06.20
-\version 2023.12.19
+\version 2024.01.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -43,7 +43,7 @@ The multiplication is performed in the ring of such polynomials modulo
 *******************************************************************************
 */
 
-static void beltGenH(octet H[256])
+static void beltHGen(octet H[256])
 {
 	size_t x, i;
 	H[10] = 0, H[11] = 0x8E;
@@ -86,7 +86,7 @@ static const u32 _zerosum[128] = {
 
 static const u32 _key[8];
 
-static bool_t beltZerosumTest()
+static bool_t beltTestZerosum()
 {
 	u32 block[4];
 	u32 sum[4];
@@ -154,7 +154,7 @@ bool_t beltTest()
 		beltHMAC_keep()))
 		return FALSE;
 	// belt-H
-	beltGenH(state);
+	beltHGen(state);
 	if (!memEq(state, beltH(), 256))
 		return FALSE;
 	// belt-block: тест A.1-1
@@ -799,7 +799,7 @@ bool_t beltTest()
 	if (!memEq(hash, hash1, 32))
 		return FALSE;
 	// zerosum
-	if (!beltZerosumTest())
+	if (!beltTestZerosum())
 		return FALSE;
 	// все нормально
 	return TRUE;
