@@ -4,7 +4,7 @@
 \brief Tests for bign96 signatures
 \project bee2/test
 \created 2021.01.20
-\version 2023.09.22
+\version 2024.01.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -91,8 +91,9 @@ bool_t bign96Test()
 	octet hash[32];
 	octet sig[34];
 	octet brng_state[1024];
-	// создать стек
-	ASSERT(sizeof(brng_state) >= brngCTRX_keep());
+	// подготовить память
+	if (sizeof(brng_state) < brngCTRX_keep())
+		return FALSE;
 	// проверить параметры
 	if (bign96ParamsStd(params, "1.2.112.0.2.0.34.101.45.3.0") != ERR_OK ||
 		bign96ParamsVal(params) != ERR_OK)

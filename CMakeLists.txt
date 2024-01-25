@@ -72,7 +72,8 @@ set(CMAKE_C_WARNINGS "-Wall -Wextra -W -Wdeclaration-after-statement \
   -Wno-xor-used-as-pow")
 
 if(CMAKE_COMPILER_IS_GNUCC)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_WARNINGS} -Wlogical-op")
+  set(CMAKE_C_WARNINGS "${CMAKE_C_WARNINGS} -Wlogical-op")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_WARNINGS}")
   if(BASH_SSE2)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse2")
   elseif(BASH_AVX2)
@@ -83,14 +84,16 @@ if(CMAKE_COMPILER_IS_GNUCC)
   elseif(BASH_NEON)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
   endif()
-  set(CMAKE_C_FLAGS_RELEASE    "-O2 -fno-strict-aliasing")
-  set(CMAKE_C_FLAGS_DEBUG      "-O0 -g3")
-  set(CMAKE_C_FLAGS_COVERAGE   "-O0 -g3 -coverage")
-  set(CMAKE_C_FLAGS_ASAN       "-fsanitize=address -fno-common \
-    -O3 -fno-strict-aliasing")
-  set(CMAKE_C_FLAGS_ASANDBG    "-fsanitize=address -fno-common -O1 -g3 \
-    -fno-omit-frame-pointer -fno-optimize-sibling-calls")
-  set(CMAKE_C_FLAGS_CHECK      "-Werror -O1 -Wcast-qual -fanalyzer")
+  set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O2 \
+    -fno-strict-aliasing")
+  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -g3")
+  set(CMAKE_C_FLAGS_COVERAGE "${CMAKE_C_FLAGS_COVERAGE} -O0 -g3 -coverage")
+  set(CMAKE_C_FLAGS_ASAN "${CMAKE_C_FLAGS_ASAN} -fsanitize=address \
+    -fno-common -O3 -fno-strict-aliasing")
+  set(CMAKE_C_FLAGS_ASANDBG "${CMAKE_C_FLAGS_ASANDBG} -fsanitize=address \
+    -fno-common -O1 -g3 -fno-omit-frame-pointer -fno-optimize-sibling-calls")
+  set(CMAKE_C_FLAGS_CHECK      "${CMAKE_C_FLAGS_CHECK} -Werror -O1 \
+	-Wcast-qual -fanalyzer")
 endif(CMAKE_COMPILER_IS_GNUCC)
 
 if(CMAKE_COMPILER_IS_CLANG)
@@ -107,19 +110,22 @@ if(CMAKE_COMPILER_IS_CLANG)
   elseif(BASH_NEON)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
   endif()
-  set(CMAKE_C_FLAGS_RELEASE    "-O3 -fno-strict-aliasing")
-  set(CMAKE_C_FLAGS_DEBUG      "-O0 -g3")
-  set(CMAKE_C_FLAGS_COVERAGE   "-O0 -g3 -coverage")
-  set(CMAKE_C_FLAGS_ASAN       "-fsanitize=address -fno-common \
-    -fsanitize=undefined -fno-sanitize-recover -O3 -fno-strict-aliasing")
-  set(CMAKE_C_FLAGS_ASANDBG    "-fsanitize=address -fno-common \
-    -fsanitize=undefined -fno-sanitize-recover -O1 -g3 \
+  set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 \
+    -fno-strict-aliasing")
+  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -g3")
+  set(CMAKE_C_FLAGS_COVERAGE "${CMAKE_C_FLAGS_COVERAGE} -O0 -g3 -coverage")
+  set(CMAKE_C_FLAGS_ASAN "${CMAKE_C_FLAGS_ASAN} -fsanitize=address \
+    -fno-common -fsanitize=undefined -fno-sanitize-recover -O3 \
+    -fno-strict-aliasing")
+  set(CMAKE_C_FLAGS_ASANDBG "${CMAKE_C_FLAGS_ASANDBG} -fsanitize=address \
+    -fno-common -fsanitize=undefined -fno-sanitize-recover -O1 -g3 \
     -fno-omit-frame-pointer -fno-optimize-sibling-calls")
-  set(CMAKE_C_FLAGS_MEMSAN     "-fsanitize=memory -O3 -fno-strict-aliasing")
-  set(CMAKE_C_FLAGS_MEMSANDBG  "-fsanitize=memory -O1 -g3 \
-    -fno-omit-frame-pointer -fno-optimize-sibling-calls \
+  set(CMAKE_C_FLAGS_MEMSAN "${CMAKE_C_FLAGS_MEMSAN} -fsanitize=memory -O3 \
+    -fno-strict-aliasing")
+  set(CMAKE_C_FLAGS_MEMSANDBG "${CMAKE_C_FLAGS_MEMSANDBG} -fsanitize=memory \
+    -O1 -g3 -fno-omit-frame-pointer -fno-optimize-sibling-calls \
     -fsanitize-memory-track-origins=2")
-  set(CMAKE_C_FLAGS_CHECK      "-Werror -O1 -Wcast-qual")
+  set(CMAKE_C_FLAGS_CHECK "${CMAKE_C_FLAGS_CHECK} -Werror -O1 -Wcast-qual")
 endif(CMAKE_COMPILER_IS_CLANG)
 
 if(CMAKE_COMPILER_IS_MSVC)
