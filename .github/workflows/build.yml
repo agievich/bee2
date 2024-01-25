@@ -17,7 +17,7 @@ jobs:
         include:
         - BUILD_TYPE: Release
           BUILD_FAST: OFF
-          BASH_PLATFORM: BASH_64
+          BASH_PLATFORM: BASH_AVX2
           CC: gcc
         - BUILD_TYPE: Check
           BUILD_FAST: OFF
@@ -29,7 +29,7 @@ jobs:
           CC: gcc
         - BUILD_TYPE: MemSan
           BUILD_FAST: ON
-          BASH_PLATFORM: BASH_AVX2
+          BASH_PLATFORM: BASH_64
           CC: clang
         - BUILD_TYPE: Debug
           BUILD_FAST: ON
