@@ -48,6 +48,8 @@ Contributors*
   - cmd/sig, cmd/rng, cmd/test
 - Vladimir Komisarenko
   - fuzzing
+- Victor Shulhat
+  - benchmarks (belt, bign, bash)
 
 ---
 *in chronological order of the first contribution
