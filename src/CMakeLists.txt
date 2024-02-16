@@ -87,7 +87,7 @@ set(src
 add_library(bee2_static STATIC ${src})
 set_target_properties(bee2_static PROPERTIES OUTPUT_NAME bee2_static)
 
-if(LINUX)
+if(UNIX AND NOT APPLE)
   target_link_libraries(bee2_static ${CMAKE_DL_LIBS})
 else()
   target_link_libraries(bee2_static)
@@ -114,7 +114,7 @@ if(BUILD_SHARED_LIBS)
 
   add_library(bee2 SHARED ${src})
 
-  if(LINUX)
+  if(UNIX AND NOT APPLE)
     target_link_libraries(bee2 ${CMAKE_DL_LIBS})
   else()
     target_link_libraries(bee2)
