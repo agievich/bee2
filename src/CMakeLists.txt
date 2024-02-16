@@ -86,33 +86,39 @@ set(src
 
 add_library(bee2_static STATIC ${src})
 set_target_properties(bee2_static PROPERTIES OUTPUT_NAME bee2_static)
-target_link_libraries(bee2_static ${libs})
+
+if(LINUX)
+  target_link_libraries(bee2_static ${CMAKE_DL_LIBS})
+else()
+  target_link_libraries(bee2_static)
+endif()
+
 # enable -fPIC even for static lib if it's linked into a shared lib
-set_property(TARGET bee2_static PROPERTY POSITION_INDEPENDENT_CODE ${BUILD_PIC})
+set_property(TARGET bee2_static PROPERTY POSITION_INDEPENDENT_CODE 
+  ${BUILD_PIC})
 
 install(TARGETS bee2_static
   DESTINATION ${LIB_INSTALL_DIR}
-  PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+  PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE 
+    WORLD_READ WORLD_EXECUTE)
 
 if(BUILD_SHARED_LIBS)
-  if(NOT WIN32)
-    add_library(bee2 SHARED ${src})
-  else()
-    if(MSVC)
-      # disable security warnings for sprintf() in bee2.c
-      add_definitions(/D _CRT_SECURE_NO_WARNINGS)
-      add_library(bee2 SHARED ${src} 
-        ../win/bee2.def
-        ../img/bee2.bmp
-        ../win/bee2.rc
-        ../win/bee2.c
-      )
-    else()
-      add_library(bee2 SHARED ${src})
-    endif()
+  if (WIN32)
+    set (src ${src} 
+      ../win/bee2.def
+      ../img/bee2.bmp
+      ../win/bee2.rc
+      ../win/bee2.c
+    )
   endif()
 
-  target_link_libraries(bee2 ${libs})
+  add_library(bee2 SHARED ${src})
+
+  if(LINUX)
+    target_link_libraries(bee2 ${CMAKE_DL_LIBS})
+  else()
+    target_link_libraries(bee2)
+  endif()
 
   set_target_properties(bee2 PROPERTIES 
     VERSION ${BEE2_VERSION_MAJOR}.${BEE2_VERSION_MINOR}.${BEE2_VERSION_PATCH}
@@ -120,5 +126,6 @@ if(BUILD_SHARED_LIBS)
 
   install(TARGETS bee2
     DESTINATION ${LIB_INSTALL_DIR}
-    PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+    PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE 
+      WORLD_READ WORLD_EXECUTE)
 endif()
