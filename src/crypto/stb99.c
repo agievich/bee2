@@ -4,7 +4,7 @@
 \brief STB 1176.2-99: generation of parameters
 \project bee2 [cryptographic library]
 \created 2023.08.01
-\version 2023.10.04
+\version 2024.02.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -26,7 +26,7 @@
 *******************************************************************************
 При генерации параметров stb99 требуется находить простые числа, битовая длина 
 которых лежит в интервале (16, 32]. Для этого используется функция 
-priNextPrimeVal(), которая находит гарантированно простое число из одного 
+priNextPrimeW(), которая находит гарантированно простое число из одного 
 машинного слова. Функция не подходит, если длина машинного слова равняется 16.
 
 \todo Поддержать B_PER_W == 16.
@@ -798,7 +798,7 @@ err_t stb99ParamsGen(stb99_params* params, const stb99_seed* seed)
 	// сгенерировать a
 	while (1)
 	{
-		// a <- d^((p - 1)/2)
+		// a <- d^((p - 1)/q)
 		qrPower(a, d, p, n - m + 1, qr, stack);
 		// a != e?
 		if (!qrIsUnity(a, qr))

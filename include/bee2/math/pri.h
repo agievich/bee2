@@ -4,7 +4,7 @@
 \brief Primes
 \project bee2 [cryptographic library]
 \created 2012.08.13
-\version 2023.09.05
+\version 2024.02.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -115,7 +115,7 @@ size_t priIsSieved_deep(size_t base_count);
 	\return Признак успеха.
 	\remark Число a не считается , если совпадает с элементом 
 	факторной базы. Число a = 1 считается просеянным. 
-	\deep{stack} priIsSieved_deep(n).
+	\deep{stack} priIsSmooth_deep(n).
 */
 bool_t priIsSmooth(
 	const word a[],		/*!< [in] проверяемое число */
