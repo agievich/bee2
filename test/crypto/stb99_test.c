@@ -4,7 +4,7 @@
 \brief Tests for STB 1176.2-99[generation of parameters]
 \project bee2/test
 \created 2023.08.05
-\version 2023.12.19
+\version 2024.02.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -46,11 +46,28 @@ bool_t stb99TestParamsTest()
 	stb99_seed seed1[1];
 	stb99_params params[1];
 	stb99_params params1[1];
-	// загрузочные параметры
+	// проверка затравочных параметров
 	memSetZero(seed1, sizeof(stb99_seed));
 	if (stb99SeedVal(seed1) == ERR_OK ||
 		stb99ParamsStd(params, seed, "test") != ERR_OK ||
 		(seed1->l = params->l, stb99SeedAdj(seed1)) != ERR_OK ||
+		!memEq(seed, seed1, sizeof(stb99_seed)))
+		return FALSE;
+	// доопределение затравочных параметров
+	memCopy(seed1->zi, seed->zi, sizeof(seed->zi));
+	if (stb99SeedAdj(seed1) != ERR_OK ||
+		!memEq(seed, seed1, sizeof(stb99_seed)) ||
+		(seed1->di[4] = 0, stb99SeedVal(seed1)) == ERR_OK)
+		return FALSE;
+	memSetZero(seed1->di, sizeof(seed1->di));
+	if (stb99SeedAdj(seed1) != ERR_OK ||
+		stb99SeedVal(seed1) != ERR_OK ||
+		!memEq(seed, seed1, sizeof(stb99_seed)) ||
+		(seed1->ri[3] = 0, stb99SeedVal(seed1)) == ERR_OK)
+		return FALSE;
+	memSetZero(seed1->ri, sizeof(seed1->ri));
+	if (stb99SeedAdj(seed1) != ERR_OK ||
+		stb99SeedVal(seed1) != ERR_OK ||
 		!memEq(seed, seed1, sizeof(stb99_seed)))
 		return FALSE;
 	// тест GPQA.L01

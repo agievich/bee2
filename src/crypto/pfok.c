@@ -435,11 +435,13 @@ static err_t pfokLiVal(const pfok_seed* seed)
 	if (seed->li[0] != seed->l - 1)
 		return ERR_BAD_SEED;
 	// проверить цепочку li
-	for (i = 1; seed->li[i] > 16; ++i)
+	for (i = 1; i < COUNT_OF(seed->li) && seed->li[i] > 16; ++i)
 		if (seed->li[i - 1] > 2 * seed->li[i] ||
 			seed->li[i] >= SIZE_MAX / 5 ||
 			5 * seed->li[i] + 16 >= 4 * seed->li[i - 1])
 			return ERR_BAD_SEED;
+	if (seed->li[i - 1] > 32)
+		return ERR_BAD_SEED;
 	for (; i < COUNT_OF(seed->li); ++i)
 		if (seed->li[i] != 0)
 			return ERR_BAD_SEED;

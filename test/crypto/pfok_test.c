@@ -4,7 +4,7 @@
 \brief Tests for Draft of RD_RB (pfok)
 \project bee2/test
 \created 2014.07.08
-\version 2023.12.19
+\version 2024.02.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -56,14 +56,22 @@ bool_t pfokTestParamsTest()
 	pfok_seed seed1[1];
 	pfok_params params[1];
 	pfok_params params1[1];
-	// загрузочные параметры
+	// проверка затравочных параметров
 	memSetZero(seed1, sizeof(pfok_seed));
 	if (pfokSeedVal(seed1) == ERR_OK ||
-		pfokParamsStd(params, seed, "test") != ERR_OK)
+		pfokParamsStd(params, seed, "test") != ERR_OK ||
+		pfokSeedVal(seed) != ERR_OK)
 		return FALSE;
 	seed1->l = seed->l;
+	// доопределение затравочных параметров
 	memCopy(seed1->zi, seed->zi, sizeof(seed->zi));
 	if (pfokSeedAdj(seed1) != ERR_OK ||
+		!memEq(seed, seed1, sizeof(pfok_seed)) ||
+		(seed1->li[5] = 0, pfokSeedVal(seed1)) == ERR_OK)
+		return FALSE;
+	memSetZero(seed1->li, sizeof(seed1->li));
+	if (pfokSeedAdj(seed1) != ERR_OK ||
+		pfokSeedVal(seed1) != ERR_OK ||
 		!memEq(seed, seed1, sizeof(pfok_seed)))
 		return FALSE;
 	// тест PFOK.GENP.1
@@ -113,6 +121,7 @@ bool_t pfokTestParamsStd()
 bool_t pfokTest()
 {
 	pfok_params params[1];
+	pfok_seed seed[1];
 	octet combo_state[128];
 	octet ua[O_OF_B(130)];
 	octet xa[O_OF_B(130)];
@@ -150,7 +159,7 @@ bool_t pfokTest()
 		pfokParamsVal(params) == ERR_OK)
 		return FALSE;
 	// загрузить параметры "test"
-	if (pfokParamsStd(params, 0, "test") != ERR_OK)
+	if (pfokParamsStd(params, seed, "test") != ERR_OK)
 		return FALSE;
 	// сгенерировать ключи
 	prngCOMBOStart(combo_state, utilNonce32());

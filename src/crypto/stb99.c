@@ -487,11 +487,13 @@ static err_t stb99DiVal(const stb99_seed* seed, size_t r)
 		8 * seed->di[0] + r > 7 * seed->l)
 		return ERR_BAD_SEED;
 	// проверить цепочку di
-	for (i = 1; seed->di[i] > 16; ++i)
+	for (i = 1; i < COUNT_OF(seed->di) && seed->di[i] > 16; ++i)
 		if (seed->di[i - 1] > 2 * seed->di[i] ||
 			seed->di[i] >= SIZE_MAX / 5 ||
 			5 * seed->di[i] + 16 >= 4 * seed->di[i - 1])
 			return ERR_BAD_SEED;
+	if (seed->di[i - 1] > 32)
+		return ERR_BAD_SEED;
 	for (; i < COUNT_OF(seed->di); ++i)
 		if (seed->di[i] != 0)
 			return ERR_BAD_SEED;
@@ -506,11 +508,13 @@ static err_t stb99RiVal(const stb99_seed* seed, size_t r)
 	if (seed->ri[0] != r)
 		return ERR_BAD_SEED;
 	// проверить цепочку ri
-	for (i = 1; seed->ri[i] > 16; ++i)
+	for (i = 1; i < COUNT_OF(seed->ri) && seed->ri[i] > 16; ++i)
 		if (seed->ri[i - 1] > 2 * seed->ri[i] ||
 			seed->ri[i] >= SIZE_MAX / 5 ||
 			5 * seed->ri[i] + 16 >= 4 * seed->ri[i - 1])
 			return ERR_BAD_SEED;
+	if (seed->ri[i - 1] > 32)
+		return ERR_BAD_SEED;
 	for (; i < COUNT_OF(seed->ri); ++i)
 		if (seed->ri[i] != 0)
 			return ERR_BAD_SEED;
