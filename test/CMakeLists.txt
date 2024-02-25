@@ -13,6 +13,7 @@ add_executable(testbee2
 	core/rng_test.c
 	core/str_test.c
 	core/tm_test.c
+	core/toml_test.c
 	core/u16_test.c
 	core/u32_test.c
 	core/u64_test.c

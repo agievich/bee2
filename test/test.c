@@ -4,7 +4,7 @@
 \brief Bee2 testing
 \project bee2/test
 \created 2014.04.02
-\version 2023.12.19
+\version 2024.02.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -33,6 +33,7 @@ extern bool_t prngTest();
 extern bool_t rngTest();
 extern bool_t strTest();
 extern bool_t tmTest();
+extern bool_t tomlTest();
 extern bool_t u16Test();
 extern bool_t u32Test();
 extern bool_t u64Test();
@@ -56,6 +57,7 @@ int testCore()
 	printf("rngTest: %s\n", (code = rngTest()) ? "OK" : "Err"), ret |= !code;
 	printf("strTest: %s\n", (code = strTest()) ? "OK" : "Err"), ret |= !code;
 	printf("tmTest: %s\n", (code = tmTest()) ? "OK" : "Err"), ret |= !code;
+	printf("tomlTest: %s\n", (code = tomlTest()) ? "OK" : "Err"), ret |= !code;
 	printf("u16Test: %s\n", (code = u16Test()) ? "OK" : "Err"), ret |= !code;
 	printf("u32Test: %s\n", (code = u32Test()) ? "OK" : "Err"), ret |= !code;
 	printf("u64Test: %s\n", (code = u64Test()) ? "OK" : "Err"), ret |= !code;

@@ -14,6 +14,7 @@ set(src
   core/rng.c
   core/str.c
   core/tm.c
+  core/toml.c
   core/u16.c
   core/u32.c
   core/u64.c
