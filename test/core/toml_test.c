@@ -55,6 +55,10 @@ bool_t tomlTestEnc()
 		tomlOctsDec(octs, 0, " 0x1234") != 7 ||
 		tomlOctsDec(octs, 0, "0x1234 ,") != 7 ||
 		tomlOctsDec(0, &count, " 0x1234 ") != 8 || count != 2 ||
+		tomlOctsDec(0, &count, " 0x12\\") != 6 || count != 1 ||
+		tomlOctsDec(0, &count, " 0x12\\\n  \n") != 10 || count != 1 ||
+		tomlOctsDec(0, &count, " 0x12\\\n  34") != 11 || count != 2 ||
+		tomlOctsDec(0, &count, "0x12\\ #hex \n  34") != 16 || count != 2 ||
 		tomlOctsEnc(0, octs, count) != 6 ||
 		tomlOctsEnc(str, octs, count) != 6 ||
 		!strEq(str, "0x1234"))

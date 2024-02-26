@@ -83,16 +83,16 @@ static size_t tomlLFDec(const char* str)
 		// пропустить комментарий
 		c = tomlDelimDec(str, '#');
 		if (c != SIZE_MAX)
-			for (count += c; str[count] && str[count] != '\n'; ++count);
+			for (count += c, str += c; str[0] && str[0] != '\n'; ++count, ++str);
 		// пропустить пробелы
 		else
-			count += tomlSpaceDec(str);
+			c = tomlSpaceDec(str), count += c, str += c;
 		// конец строки?
-		if (str[count] == 0)
+		if (str[0] == 0)
 			return count;
 		// LF?
-		if (str[count] == '\n')
-			lf = TRUE, ++count;
+		if (str[0] == '\n')
+			lf = TRUE, ++count, ++str;
 		else
 			break;
 	}
@@ -416,7 +416,6 @@ size_t tomlOctsEnc(char* str, const octet* val, size_t count)
 size_t tomlOctsDec(octet* val, size_t* count, const char* str)
 {
 	char s[3];
-	size_t len;
 	size_t c;
 	size_t co;
 	// пропустить предваряющие пробелы
@@ -424,17 +423,29 @@ size_t tomlOctsDec(octet* val, size_t* count, const char* str)
 	// префикс 0x?
 	if (!strStartsWith(str, "0x"))
 		return SIZE_MAX;
-	c += 2, str += 2;
+	c += 2, str += 2, co = 0;
 	// декодировать шестнадцатеричные символы
 	s[2] = 0;
-	for (len = strLen(str), co = 0; len >= 2; len -= 2, str += 2)
+	while (1)
 	{
+		// LF?
+		if (str[0] == '\\')
+		{
+			size_t c1 = tomlLFDec(++str);
+			if (c1 == SIZE_MAX)
+				return SIZE_MAX;
+			c = c + 1 + c1, str += c1;
+		}
+		// закончились пары шестнадцатеричных символов?
+		if (str[0] == 0 || str[1] == 0)
+			break;
 		s[0] = str[0], s[1] = str[1];
 		if (!hexIsValid(s))
 			break;
+		// преобразовать пару символов в октет
 		if (val)
 			hexTo(val++, s);
-		++co;
+		c += 2, str += 2, ++co;
 	}
 	s[0] = s[1] = 0;
 	// возвратить число октетов
@@ -444,7 +455,7 @@ size_t tomlOctsDec(octet* val, size_t* count, const char* str)
 		*count = co;
 	}
 	// учесть завершающие пробелы
-	return c + 2 * co + tomlSpaceDec(str);
+	return c + tomlSpaceDec(str);
 }
 
 /*
