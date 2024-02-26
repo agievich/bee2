@@ -502,6 +502,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\test\core\toml_test.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\test\core\u16_test.c"
 					>
 				</File>

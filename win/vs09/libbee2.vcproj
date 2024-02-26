@@ -369,6 +369,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\include\bee2\core\toml.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\include\bee2\core\u16.h"
 					>
 				</File>
@@ -564,6 +568,10 @@
 				</File>
 				<File
 					RelativePath="..\..\src\core\tm.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\core\toml.c"
 					>
 				</File>
 				<File

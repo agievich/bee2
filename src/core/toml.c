@@ -16,13 +16,15 @@
 #include "bee2/core/toml.h"
 #include "bee2/core/util.h"
 
+#include <ctype.h>
+
 #define TOML_BUF_SIZE 1000
 
 /*
 *******************************************************************************
 Специальные символы
 
-\remark Функция tomlDecSpaces() отличается от других функций кодирования /
+\remark Функция tomlSpaceDec() отличается от других функций кодирования /
 декодирования -- она никогда не возвращает значение SIZE_MAX, указывающее
 на ошибку.
 *******************************************************************************
@@ -30,7 +32,7 @@
 
 static bool_t strIsSpace(char ch)
 {
-	return (bool_t)isspace(ch);
+	return ch != '\n' && isspace(ch);
 }
 
 static bool_t strIsAlnum(char ch) 
@@ -38,7 +40,7 @@ static bool_t strIsAlnum(char ch)
 	return (bool_t)isalnum(ch);
 }
 
-static size_t tomlSpacesDec(const char* str)
+static size_t tomlSpaceDec(const char* str)
 {
 	size_t count;
 	ASSERT(strIsValid(str));
@@ -50,14 +52,14 @@ static size_t tomlDelimDec(const char* str, char delim)
 {
 	size_t count;
 	// пропустить пробелы
-	count = tomlSpacesDec(str);
+	count = tomlSpaceDec(str);
 	str += count;
 	// разделитель?
 	if (*str != delim)
 		return SIZE_MAX;
 	++count, ++str;
 	// пропустить пробелы
-	return count + tomlSpacesDec(str);
+	return count + tomlSpaceDec(str);
 }
 
 static size_t tomlDelimEnc(char* str, char delim)
@@ -69,6 +71,35 @@ static size_t tomlDelimEnc(char* str, char delim)
 	}
 	return 1;
 }
+
+static size_t tomlLFDec(const char* str)
+{
+	size_t count = 0;
+	bool_t lf = FALSE;
+	ASSERT(strIsValid(str));
+	while (1)
+	{
+		size_t c;
+		// пропустить комментарий
+		c = tomlDelimDec(str, '#');
+		if (c != SIZE_MAX)
+			for (count += c; str[count] && str[count] != '\n'; ++count);
+		// пропустить пробелы
+		else
+			count += tomlSpaceDec(str);
+		// конец строки?
+		if (str[count] == 0)
+			return count;
+		// LF?
+		if (str[count] == '\n')
+			lf = TRUE, ++count;
+		else
+			break;
+	}
+	return lf ? count : SIZE_MAX;
+}
+
+#define tomlLFEnc(str) tomlDelimEnc(str, '\n')
 
 /*
 *******************************************************************************
@@ -135,7 +166,7 @@ static size_t tomlNameDec(char* name, const char* str)
 	size_t count;
 	size_t c;
 	// пропустить пробелы
-	count = tomlSpacesDec(str);
+	count = tomlSpaceDec(str);
 	str += count;
 	// декодировать первую часть имени
 	if ((c = tomlNameBareDec(name, str)) == SIZE_MAX &&
@@ -178,7 +209,7 @@ static size_t tomlNameDec2(const char* str, const char* name)
 	ASSERT(strIsValid(str));
 	ASSERT(tomlNameIsValid(name));
 	// пропустить пробелы
-	count = tomlSpacesDec(str);
+	count = tomlSpaceDec(str);
 	str += count;
 	// декодировать первую часть имени
 	VERIFY((c = tomlNameBareDec(0, name)) != SIZE_MAX ||
@@ -389,7 +420,7 @@ size_t tomlOctsDec(octet* val, size_t* count, const char* str)
 	size_t c;
 	size_t co;
 	// пропустить предваряющие пробелы
-	str += (c = tomlSpacesDec(str));
+	str += (c = tomlSpaceDec(str));
 	// префикс 0x?
 	if (!strStartsWith(str, "0x"))
 		return SIZE_MAX;
@@ -413,7 +444,7 @@ size_t tomlOctsDec(octet* val, size_t* count, const char* str)
 		*count = co;
 	}
 	// учесть завершающие пробелы
-	return c + 2 * co + tomlSpacesDec(str);
+	return c + 2 * co + tomlSpaceDec(str);
 }
 
 /*
@@ -453,7 +484,7 @@ size_t tomlSizeDec(size_t* val, const char* str)
 	size_t count;
 	size_t c;
 	// пропустить предваряющие пробелы
-	str += (count = tomlSpacesDec(str));
+	str += (count = tomlSpaceDec(str));
 	// незначащий нуль?
 	ASSERT(strIsValid(str));
 	if (str[0] == '0' && '0' <= str[1] && str[1] <= '9' )
@@ -478,7 +509,7 @@ size_t tomlSizeDec(size_t* val, const char* str)
 	}
 	v = 0;
 	// учесть завершающие пробелы
-	return count + tomlSpacesDec(str);
+	return count + tomlSpaceDec(str);
 }
 
 /*

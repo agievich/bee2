@@ -368,6 +368,7 @@
     <ClCompile Include="..\..\test\core\rng_test.c" />
     <ClCompile Include="..\..\test\core\str_test.c" />
     <ClCompile Include="..\..\test\core\tm_test.c" />
+    <ClCompile Include="..\..\test\core\toml_test.c" />
     <ClCompile Include="..\..\test\core\u16_test.c" />
     <ClCompile Include="..\..\test\core\u32_test.c" />
     <ClCompile Include="..\..\test\core\u64_test.c" />

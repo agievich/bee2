@@ -145,5 +145,8 @@
     <ClCompile Include="..\..\test\math\pp_test.c">
       <Filter>Source Files\math</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\test\core\toml_test.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
