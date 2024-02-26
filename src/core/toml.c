@@ -4,7 +4,7 @@
 \brief TOML files processing
 \project bee2 [cryptographic library]
 \created 2023.07.12
-\version 2024.02.25
+\version 2024.02.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -12,7 +12,7 @@
 
 #include "bee2/core/hex.h"
 #include "bee2/core/mem.h"
-#include "bee2/core/str.h"
+#include "bee2/core/toml.h"
 #include "bee2/core/toml.h"
 #include "bee2/core/util.h"
 
@@ -40,66 +40,70 @@ static bool_t strIsAlnum(char ch)
 	return (bool_t)isalnum(ch);
 }
 
-static size_t tomlSpaceDec(const char* str)
+static size_t tomlSpaceDec(const char* toml)
 {
 	size_t count;
-	ASSERT(strIsValid(str));
-	for (count = 0; strIsSpace(str[count]); ++count);
+	ASSERT(strIsValid(toml));
+	for (count = 0; strIsSpace(toml[count]); ++count);
 	return count;
 }
 
-static size_t tomlDelimDec(const char* str, char delim)
+static size_t tomlDelimDec(const char* toml, char delim)
 {
 	size_t count;
 	// пропустить пробелы
-	count = tomlSpaceDec(str);
-	str += count;
+	count = tomlSpaceDec(toml);
+	toml += count;
 	// разделитель?
-	if (*str != delim)
+	if (*toml != delim)
 		return SIZE_MAX;
-	++count, ++str;
+	++count, ++toml;
 	// пропустить пробелы
-	return count + tomlSpaceDec(str);
+	return count + tomlSpaceDec(toml);
 }
 
-static size_t tomlDelimEnc(char* str, char delim)
+static size_t tomlDelimEnc(char* toml, char delim)
 {
-	if (str)
+	if (toml)
 	{
-		ASSERT(memIsValid(str, 2));
-		str[0] = delim, str[1] = 0;
+		ASSERT(memIsValid(toml, 2));
+		toml[0] = delim, toml[1] = 0;
 	}
 	return 1;
 }
 
-static size_t tomlLFDec(const char* str)
+static size_t tomlLFDec(const char* toml)
 {
 	size_t count = 0;
 	bool_t lf = FALSE;
-	ASSERT(strIsValid(str));
+	ASSERT(strIsValid(toml));
 	while (1)
 	{
 		size_t c;
 		// пропустить комментарий
-		c = tomlDelimDec(str, '#');
+		c = tomlDelimDec(toml, '#');
 		if (c != SIZE_MAX)
-			for (count += c, str += c; str[0] && str[0] != '\n'; ++count, ++str);
+		{
+			count += c, toml += c;
+			while (toml[0] && toml[0] != '\n')
+				++count, ++toml;
+		}
 		// пропустить пробелы
 		else
-			c = tomlSpaceDec(str), count += c, str += c;
+			c = tomlSpaceDec(toml), count += c, toml += c;
 		// конец строки?
-		if (str[0] == 0)
+		if (toml[0] == 0)
 			return count;
 		// LF?
-		if (str[0] == '\n')
-			lf = TRUE, ++count, ++str;
+		if (toml[0] == '\n')
+			lf = TRUE, ++count, ++toml;
 		else
 			break;
 	}
 	return lf ? count : SIZE_MAX;
 }
 
-#define tomlLFEnc(str) tomlDelimEnc(str, '\n')
+#define tomlLFEnc(toml) tomlDelimEnc(toml, '\n')
 
 /*
 *******************************************************************************
@@ -117,14 +121,14 @@ static size_t tomlLFDec(const char* str)
 *******************************************************************************
 */
 
-static size_t tomlNameBareDec(char* name, const char* str)
+static size_t tomlNameBareDec(char* name, const char* toml)
 {
 	size_t count;
 	// pre
-	ASSERT(strIsValid(str));
+	ASSERT(strIsValid(toml));
 	// выделить имя
-	for (count = 0; strIsAlnum(str[count]) ||
-		str[count] == '_' || str[count] == '-';
+	for (count = 0; strIsAlnum(toml[count]) ||
+		toml[count] == '_' || toml[count] == '-';
 		++count);
 	if (!count)
 		return SIZE_MAX;
@@ -132,60 +136,60 @@ static size_t tomlNameBareDec(char* name, const char* str)
 	if (name)
 	{
 		ASSERT(memIsValid(name, count + 1));
-		memCopy(name, str, count);
+		memCopy(name, toml, count);
 		name[count] = 0;
 	}
 	return count;
 }
 
-static size_t tomlNameQuotedDec(char* name, const char* str)
+static size_t tomlNameQuotedDec(char* name, const char* toml)
 {
 	size_t count;
 	// pre
-	ASSERT(strIsValid(str));
+	ASSERT(strIsValid(toml));
 	// начинается с кавычки?
-	if (str[0] != '\'' && str[0] != '"')
+	if (toml[0] != '\'' && toml[0] != '"')
 		return SIZE_MAX;
 	// искать закрывающую кавычку
-	for (count = 1; str[count] != str[0]; ++count)
-		if (str[count] == 0)
+	for (count = 1; toml[count] != toml[0]; ++count)
+		if (toml[count] == 0)
 			return SIZE_MAX;
 	++count;
 	// сохранить имя
 	if (name)
 	{
 		ASSERT(memIsValid(name, count + 1));
-		memCopy(name, str, count);
+		memCopy(name, toml, count);
 		name[count] = 0;
 	}
 	return count;
 }
 
-static size_t tomlNameDec(char* name, const char* str)
+static size_t tomlNameDec(char* name, const char* toml)
 {
 	size_t count;
 	size_t c;
 	// пропустить пробелы
-	count = tomlSpaceDec(str);
-	str += count;
+	count = tomlSpaceDec(toml);
+	toml += count;
 	// декодировать первую часть имени
-	if ((c = tomlNameBareDec(name, str)) == SIZE_MAX &&
-		(c = tomlNameQuotedDec(name, str)) == SIZE_MAX)
+	if ((c = tomlNameBareDec(name, toml)) == SIZE_MAX &&
+		(c = tomlNameQuotedDec(name, toml)) == SIZE_MAX)
 		return SIZE_MAX;
-	count += c, str += c, name = name ? name + strLen(name) : 0;
+	count += c, toml += c, name = name ? name + strLen(name) : 0;
 	// декодировать последующие части
-	while ((c = tomlDelimDec(str, '.')) != SIZE_MAX)
+	while ((c = tomlDelimDec(toml, '.')) != SIZE_MAX)
 	{
-		count += c, str += c;
+		count += c, toml += c;
 		if (name)
 		{
 			ASSERT(memIsValid(name, 2));
 			name[0] = '.', name[1] = 0, ++name;
 		}
-		if ((c = tomlNameBareDec(name, str)) == SIZE_MAX &&
-			(c = tomlNameQuotedDec(name, str)) == SIZE_MAX)
+		if ((c = tomlNameBareDec(name, toml)) == SIZE_MAX &&
+			(c = tomlNameQuotedDec(name, toml)) == SIZE_MAX)
 			return SIZE_MAX;
-		count += c, str += c, name = name ? name + strLen(name) : 0;
+		count += c, toml += c, name = name ? name + strLen(name) : 0;
 	}
 	return count;
 }
@@ -201,60 +205,60 @@ bool_t tomlNameIsValid(const char* name)
 	return name[count] == 0;
 }
 
-static size_t tomlNameDec2(const char* str, const char* name)
+static size_t tomlNameDec2(const char* toml, const char* name)
 {
 	size_t count;
 	size_t c;
 	// pre
-	ASSERT(strIsValid(str));
+	ASSERT(strIsValid(toml));
 	ASSERT(tomlNameIsValid(name));
 	// пропустить пробелы
-	count = tomlSpaceDec(str);
-	str += count;
+	count = tomlSpaceDec(toml);
+	toml += count;
 	// декодировать первую часть имени
 	VERIFY((c = tomlNameBareDec(0, name)) != SIZE_MAX ||
 		(c = tomlNameQuotedDec(0, name)) != SIZE_MAX);
-	if (strLen(str) < c || !memEq(str, name, c))
+	if (strLen(toml) < c || !memEq(toml, name, c))
 		return SIZE_MAX;
-	count += c, str += c, name += c;
+	count += c, toml += c, name += c;
 	// декодировать последующие части
 	while ((c = tomlDelimDec(name, '.')) != SIZE_MAX)
 	{
 		name += c;
-		if ((c = tomlDelimDec(str, '.')) == SIZE_MAX)
+		if ((c = tomlDelimDec(toml, '.')) == SIZE_MAX)
 			return SIZE_MAX;
-		count += c, str += c;
+		count += c, toml += c;
 		VERIFY((c = tomlNameBareDec(0, name)) != SIZE_MAX ||
 			(c = tomlNameQuotedDec(0, name)) != SIZE_MAX);
-		if (strLen(str) < c || !memEq(str, name, c))
+		if (strLen(toml) < c || !memEq(toml, name, c))
 			return SIZE_MAX;
-		count += c, str += c, name += c;
+		count += c, toml += c, name += c;
 	}
 	return count;
 }
 
-static size_t tomlNameEnc(char* str, const char* name)
+static size_t tomlNameEnc(char* toml, const char* name)
 {
 	size_t count;
 	size_t c;
 	// pre
 	ASSERT(tomlNameIsValid(name));
 	// кодировать первую часть имени
-	VERIFY((c = tomlNameBareDec(str, name)) != SIZE_MAX ||
-		(c = tomlNameQuotedDec(str, name)) != SIZE_MAX);
-	count = c, name += c, str = str ? str + strLen(str) : 0;
+	VERIFY((c = tomlNameBareDec(toml, name)) != SIZE_MAX ||
+		(c = tomlNameQuotedDec(toml, name)) != SIZE_MAX);
+	count = c, name += c, toml = toml ? toml + strLen(toml) : 0;
 	// кодировать последующие части
 	while ((c = tomlDelimDec(name, '.')) != SIZE_MAX)
 	{
 		++count, name += c;
-		if (str)
+		if (toml)
 		{
-			ASSERT(memIsValid(str, 2));
-			str[0] = '.', str[1] = 0, ++str;
+			ASSERT(memIsValid(toml, 2));
+			toml[0] = '.', toml[1] = 0, ++toml;
 		}
-		VERIFY((c = tomlNameBareDec(str, name)) != SIZE_MAX ||
-			(c = tomlNameQuotedDec(str, name)) != SIZE_MAX);
-		count += c, name += c, str = str ? str + strLen(str) : 0;
+		VERIFY((c = tomlNameBareDec(toml, name)) != SIZE_MAX ||
+			(c = tomlNameQuotedDec(toml, name)) != SIZE_MAX);
+		count += c, name += c, toml = toml ? toml + strLen(toml) : 0;
 	}
 	return count;
 }
@@ -265,64 +269,64 @@ static size_t tomlNameEnc(char* str, const char* name)
 *******************************************************************************
 */
 
-static size_t tomlSectionDec(char* section, const char* str)
+static size_t tomlSectionDec(char* section, const char* toml)
 {
 	size_t count;
 	size_t c;
 	// декодировать [
-	count = tomlDelimDec(str, '[');
+	count = tomlDelimDec(toml, '[');
 	if (count == SIZE_MAX)
 		return SIZE_MAX;
-	str += count;
+	toml += count;
 	// декодировать имя
-	c = tomlNameDec(section, str);
+	c = tomlNameDec(section, toml);
 	if (c == SIZE_MAX)
 		return SIZE_MAX;
-	count += c, str += c;
+	count += c, toml += c;
 	// декодировать ]
-	c = tomlDelimDec(str, ']');
+	c = tomlDelimDec(toml, ']');
 	if (c == SIZE_MAX)
 		return SIZE_MAX;
 	return count + c;
 }
 
-static size_t tomlSectionDec2(const char* str, const char* section)
+static size_t tomlSectionDec2(const char* toml, const char* section)
 {
 	size_t count;
 	size_t c;
 	// декодировать [
-	count = tomlDelimDec(str, '[');
+	count = tomlDelimDec(toml, '[');
 	if (count == SIZE_MAX)
 		return SIZE_MAX;
-	str += count;
+	toml += count;
 	// декодировать имя
-	c = tomlNameDec2(str, section);
+	c = tomlNameDec2(toml, section);
 	if (c == SIZE_MAX)
 		return SIZE_MAX;
-	count += c, str += c;
+	count += c, toml += c;
 	// декодировать ]
-	c = tomlDelimDec(str, ']');
+	c = tomlDelimDec(toml, ']');
 	if (c == SIZE_MAX)
 		return SIZE_MAX;
 	return count + c;
 }
 
-static size_t tomlSectionEnc(char* str, const char* section)
+static size_t tomlSectionEnc(char* toml, const char* section)
 {
 	size_t count;
 	size_t c;
 	// кодировать [
-	count = tomlDelimEnc(str, '[');
+	count = tomlDelimEnc(toml, '[');
 	if (count == SIZE_MAX)
 		return SIZE_MAX;
-	str += count;
+	toml += count;
 	// кодировать имя
-	c = tomlNameEnc(str, section);
+	c = tomlNameEnc(toml, section);
 	if (c == SIZE_MAX)
 		return SIZE_MAX;
-	count += c, str += c;
+	count += c, toml += c;
 	// кодировать ]
-	c = tomlDelimEnc(str, ']');
+	c = tomlDelimEnc(toml, ']');
 	if (c == SIZE_MAX)
 		return SIZE_MAX;
 	return count + c;
@@ -334,17 +338,17 @@ static size_t tomlSectionEnc(char* str, const char* section)
 
 \remark Следующая функция не потребовалась:
 \code
-	static size_t tomlKeyDec(char* key, const char* str)
+	static size_t tomlKeyDec(char* key, const char* toml)
 	{
 		size_t count;
 		size_t c;
 		// декодировать имя
-		count = tomlNameDec(key, str);
+		count = tomlNameDec(key, toml);
 		if (count == SIZE_MAX)
 			return SIZE_MAX;
-		str += count;
+		toml += count;
 		// декодировать =
-		c = tomlDelimDec(str, '=');
+		c = tomlDelimDec(toml, '=');
 		if (c == SIZE_MAX)
 			return SIZE_MAX;
 		return count + c;
@@ -353,43 +357,43 @@ static size_t tomlSectionEnc(char* str, const char* section)
 *******************************************************************************
 */
 
-static size_t tomlKeyDec2(const char* str, const char* key)
+static size_t tomlKeyDec2(const char* toml, const char* key)
 {
 	size_t count;
 	size_t c;
 	// декодировать имя
-	count = tomlNameDec2(str, key);
+	count = tomlNameDec2(toml, key);
 	if (count == SIZE_MAX)
 		return SIZE_MAX;
-	str += count;
+	toml += count;
 	// декодировать =
-	c = tomlDelimDec(str, '=');
+	c = tomlDelimDec(toml, '=');
 	if (c == SIZE_MAX)
 		return SIZE_MAX;
 	return count + c;
 }
 
-static size_t tomlKeyEnc(char* str, const char* key)
+static size_t tomlKeyEnc(char* toml, const char* key)
 {
 	size_t count;
 	size_t c;
 	// кодировать имя
-	count = tomlNameEnc(str, key);
+	count = tomlNameEnc(toml, key);
 	if (count == SIZE_MAX)
 		return SIZE_MAX;
-	str += count;
-	c = tomlDelimEnc(str, ' ');
+	toml += count;
+	c = tomlDelimEnc(toml, ' ');
 	if (c == SIZE_MAX)
 		return SIZE_MAX;
-	str += c;
+	toml += c;
     count += c;
 	// кодировать =
-	c = tomlDelimEnc(str, '=');
+	c = tomlDelimEnc(toml, '=');
 	if (c == SIZE_MAX)
 		return SIZE_MAX;
-	str += c;
+	toml += c;
     count += c;
-	c = tomlDelimEnc(str, ' ');
+	c = tomlDelimEnc(toml, ' ');
 	if (c == SIZE_MAX)
 		return SIZE_MAX;
 	return count + c;
@@ -401,51 +405,51 @@ static size_t tomlKeyEnc(char* str, const char* key)
 *******************************************************************************
 */
 
-size_t tomlOctsEnc(char* str, const octet* val, size_t count)
+size_t tomlOctsEnc(char* toml, const octet* val, size_t count)
 {
 	ASSERT(memIsValid(val, count));
-	if (str)
+	if (toml)
 	{
-		ASSERT(memIsValid(str, 2 + 2 * count + 1));
-		str[0] = '0', str[1] = 'x';
-		hexFrom(str + 2, val, count);
+		ASSERT(memIsValid(toml, 2 + 2 * count + 1));
+		toml[0] = '0', toml[1] = 'x';
+		hexFrom(toml + 2, val, count);
 	}
 	return 2 + 2 * count;
 }
 
-size_t tomlOctsDec(octet* val, size_t* count, const char* str)
+size_t tomlOctsDec(octet* val, size_t* count, const char* toml)
 {
 	char s[3];
 	size_t c;
 	size_t co;
 	// пропустить предваряющие пробелы
-	str += (c = tomlSpaceDec(str));
+	toml += (c = tomlSpaceDec(toml));
 	// префикс 0x?
-	if (!strStartsWith(str, "0x"))
+	if (!strStartsWith(toml, "0x"))
 		return SIZE_MAX;
-	c += 2, str += 2, co = 0;
+	c += 2, toml += 2, co = 0;
 	// декодировать шестнадцатеричные символы
 	s[2] = 0;
 	while (1)
 	{
 		// LF?
-		if (str[0] == '\\')
+		if (toml[0] == '\\')
 		{
-			size_t c1 = tomlLFDec(++str);
+			size_t c1 = tomlLFDec(++toml);
 			if (c1 == SIZE_MAX)
 				return SIZE_MAX;
-			c = c + 1 + c1, str += c1;
+			c = c + 1 + c1, toml += c1;
 		}
 		// закончились пары шестнадцатеричных символов?
-		if (str[0] == 0 || str[1] == 0)
+		if (toml[0] == 0 || toml[1] == 0)
 			break;
-		s[0] = str[0], s[1] = str[1];
+		s[0] = toml[0], s[1] = toml[1];
 		if (!hexIsValid(s))
 			break;
 		// преобразовать пару символов в октет
 		if (val)
 			hexTo(val++, s);
-		c += 2, str += 2, ++co;
+		c += 2, toml += 2, ++co;
 	}
 	s[0] = s[1] = 0;
 	// возвратить число октетов
@@ -455,7 +459,7 @@ size_t tomlOctsDec(octet* val, size_t* count, const char* str)
 		*count = co;
 	}
 	// учесть завершающие пробелы
-	return c + tomlSpaceDec(str);
+	return c + tomlSpaceDec(toml);
 }
 
 /*
@@ -468,46 +472,46 @@ size_t tomlOctsDec(octet* val, size_t* count, const char* str)
 *******************************************************************************
 */
 
-size_t tomlSizeEnc(char* str, size_t val)
+size_t tomlSizeEnc(char* toml, size_t val)
 {
 	size_t count = 0;
 	do
 	{
-		if (str)
+		if (toml)
 		{
-			ASSERT(memIsValid(str + count, 1));
-			str[count] = '0' + (char)(val % 10);
+			ASSERT(memIsValid(toml + count, 1));
+			toml[count] = '0' + (char)(val % 10);
 		}
 		++count, val /= 10;
 	}
 	while (val);
-	if (str)
+	if (toml)
 	{
-		str[count] = 0;
-		strRev(str);
+		toml[count] = 0;
+		strRev(toml);
 	}
 	return count;
 }
 
-size_t tomlSizeDec(size_t* val, const char* str)
+size_t tomlSizeDec(size_t* val, const char* toml)
 {
 	register size_t v;
 	size_t count;
 	size_t c;
 	// пропустить предваряющие пробелы
-	str += (count = tomlSpaceDec(str));
+	toml += (count = tomlSpaceDec(toml));
 	// незначащий нуль?
-	ASSERT(strIsValid(str));
-	if (str[0] == '0' && '0' <= str[1] && str[1] <= '9' )
+	ASSERT(strIsValid(toml));
+	if (toml[0] == '0' && '0' <= toml[1] && toml[1] <= '9' )
 		return SIZE_MAX;
 	// декодировать
-	for (v = c = 0; '0' <= *str && *str <= '9';)
+	for (v = c = 0; '0' <= *toml && *toml <= '9';)
 	{
 		if (v > SIZE_MAX / 10 || 
-			v == SIZE_MAX / 10 && SIZE_MAX % 10 < (size_t)(*str - '0'))
+			v == SIZE_MAX / 10 && SIZE_MAX % 10 < (size_t)(*toml - '0'))
 			return SIZE_MAX;
-		v *= 10, v += (size_t)(*str - '0');
-		++c, ++str;
+		v *= 10, v += (size_t)(*toml - '0');
+		++c, ++toml;
 	}
 	if (!c)
 		return SIZE_MAX;
@@ -520,7 +524,7 @@ size_t tomlSizeDec(size_t* val, const char* str)
 	}
 	v = 0;
 	// учесть завершающие пробелы
-	return count + tomlSpaceDec(str);
+	return count + tomlSpaceDec(toml);
 }
 
 /*
@@ -529,76 +533,76 @@ size_t tomlSizeDec(size_t* val, const char* str)
 *******************************************************************************
 */
 
-size_t tomlSizesEnc(char* str, const size_t* val, size_t count)
+size_t tomlSizesEnc(char* toml, const size_t* val, size_t count)
 {
 	size_t c;
 	// pre
 	ASSERT(memIsValid(val, count * O_PER_S));
 	// [
-	if (str)
+	if (toml)
 	{
-		ASSERT(memIsValid(str, 2));
-		str[0] = '[', str[1] = 0;
-		++str;
+		ASSERT(memIsValid(toml, 2));
+		toml[0] = '[', toml[1] = 0;
+		++toml;
 	}
 	c = 1;
 	// кодировать целые
 	while (count--)
 	{
-		size_t cs = tomlSizeEnc(str, *val);
+		size_t cs = tomlSizeEnc(toml, *val);
 		if (cs == SIZE_MAX)
 			return SIZE_MAX;
-		c += cs, str = str ? str + cs : 0;
+		c += cs, toml = toml ? toml + cs : 0;
 		// ,
 		if (count)
 		{
-			if (str)
+			if (toml)
 			{
-				ASSERT(memIsValid(str, 2));
-				str[0] = ',', str[1] = ' ', str[2] = 0;
-				str += 2;
+				ASSERT(memIsValid(toml, 2));
+				toml[0] = ',', toml[1] = ' ', toml[2] = 0;
+				toml += 2;
 			}
 			c += 2;
 		}
 		val++;
 	}
 	// ]
-	if (str)
+	if (toml)
 	{
-		ASSERT(memIsValid(str, 2));
-		str[0] = ']', str[1] = 0;
-		++str;
+		ASSERT(memIsValid(toml, 2));
+		toml[0] = ']', toml[1] = 0;
+		++toml;
 	}
 	return ++c;
 }
 
-size_t tomlSizesDec(size_t* val, size_t* count, const char* str)
+size_t tomlSizesDec(size_t* val, size_t* count, const char* toml)
 {
 	size_t c;
 	size_t c1;
 	size_t cs;
 	// декодировать [
-	c = tomlDelimDec(str, '[');
+	c = tomlDelimDec(toml, '[');
 	if (c == SIZE_MAX)
 		return SIZE_MAX;
-	str += c;
+	toml += c;
 	// декодировать первое целое
 	cs = 0;
-	c1 = tomlSizeDec(val, str);
+	c1 = tomlSizeDec(val, toml);
 	// декодировать следующие целые
 	if (c1 != SIZE_MAX)
 	{
-		c += c1, str += c1, ++cs, val = val ? val + 1 : 0;
-		while ((c1 = tomlDelimDec(str, ',')) != SIZE_MAX)
+		c += c1, toml += c1, ++cs, val = val ? val + 1 : 0;
+		while ((c1 = tomlDelimDec(toml, ',')) != SIZE_MAX)
 		{
-			c += c1, str += c1;
-			if ((c1 = tomlSizeDec(val, str)) == SIZE_MAX)
+			c += c1, toml += c1;
+			if ((c1 = tomlSizeDec(val, toml)) == SIZE_MAX)
 				break;
-			c += c1, str += c1, ++cs, val = val ? val + 1 : 0;
+			c += c1, toml += c1, ++cs, val = val ? val + 1 : 0;
 		}
 	}
 	// декодировать ]
-	c1 = tomlDelimDec(str, ']');
+	c1 = tomlDelimDec(toml, ']');
 	if (c1 == SIZE_MAX)
 		return SIZE_MAX;
 	c += c1;

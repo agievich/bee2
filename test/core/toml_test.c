@@ -4,7 +4,7 @@
 \brief Tests for TOML
 \project bee2/test
 \created 2023.08.22
-\version 2024.02.25
+\version 2024.02.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -25,7 +25,7 @@
 
 bool_t tomlTestEnc()
 {
-	char str[1024];
+	char toml[1024];
 	size_t count;
 	octet octs[16];
 	size_t sizes[8];
@@ -60,8 +60,8 @@ bool_t tomlTestEnc()
 		tomlOctsDec(0, &count, " 0x12\\\n  34") != 11 || count != 2 ||
 		tomlOctsDec(0, &count, "0x12\\ #hex \n  34") != 16 || count != 2 ||
 		tomlOctsEnc(0, octs, count) != 6 ||
-		tomlOctsEnc(str, octs, count) != 6 ||
-		!strEq(str, "0x1234"))
+		tomlOctsEnc(toml, octs, count) != 6 ||
+		!strEq(toml, "0x1234"))
 		return FALSE;
 	// неотрицательное целое
 	if (tomlSizeDec(0, "]") != SIZE_MAX ||
@@ -72,11 +72,11 @@ bool_t tomlTestEnc()
 		tomlSizeDec(sizes, " 123") != 4 || sizes[0] != 123 ||
 		tomlSizeDec(sizes, "123 ") != 4 || sizes[0] != 123 ||
 		tomlSizeDec(sizes, " 123 ") != 5 || sizes[0] != 123 ||
-		tomlSizeEnc(str, 0) != 1 || !strEq(str, "0") ||
-		tomlSizeEnc(str, SIZE_MAX) == SIZE_MAX ||
-		tomlSizeDec(sizes, str) == SIZE_MAX ||
+		tomlSizeEnc(toml, 0) != 1 || !strEq(toml, "0") ||
+		tomlSizeEnc(toml, SIZE_MAX) == SIZE_MAX ||
+		tomlSizeDec(sizes, toml) == SIZE_MAX ||
 		sizes[0] != SIZE_MAX ||
-		(str[strLen(str) - 1]++, tomlSizeDec(sizes, str)) != SIZE_MAX)
+		(toml[strLen(toml) - 1]++, tomlSizeDec(sizes, toml)) != SIZE_MAX)
 		return FALSE;
 	// список неотрицательных целых
 	if (tomlSizesDec(0, 0, "[]") == SIZE_MAX ||
@@ -88,7 +88,7 @@ bool_t tomlTestEnc()
 		tomlSizesDec(0, 0, "[1,2,,]") != SIZE_MAX ||
 		tomlSizesDec(sizes, &count, " [1 , 2] ") != 9 ||
 			count != 2 || sizes[0] != 1 || sizes[1] != 2 ||
-		tomlSizesEnc(str, sizes, count) == SIZE_MAX ||
+		tomlSizesEnc(toml, sizes, count) == SIZE_MAX ||
 		tomlSizesDec(sizes, &count, " [1 , 2] ") != 9 ||
 			count != 2 || sizes[0] != 1 || sizes[1] != 2)
 		return FALSE;

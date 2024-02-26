@@ -4,7 +4,7 @@
 \brief TOML files processing
 \project bee2 [cryptographic library]
 \created 2023.07.12
-\version 2024.02.25
+\version 2024.02.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -98,12 +98,12 @@ bool_t tomlNameIsValid(
 
 /*!	\brief Запись значения ключа
 
-	В ключ key секции section контейнера toml записывается значение str.
+	В ключ key секции section контейнера toml записывается значение val.
 	При этом:
 	- если секция section отсутствует в контейнере toml, то она создается;
 	- если key == 0, то секция section удаляется из контейнера toml;
 	- если ключ key отсутствует в секции section, то он создается;
-	- если str == 0, то ключ key удаляется из секции section.
+	- если val == 0, то ключ key удаляется из секции section.
 	\expect{ERR_BAD_NAME} tomlNameIsValid(section).
 	\expect{ERR_BAD_NAME} key == 0 || tomlNameIsValid(key).
 	\return ERR_OK в случае успеха и код ошибки в противном случае.
@@ -115,12 +115,12 @@ err_t tomlValSet(
 	const char* toml,		/*< [in] контейнер */
 	const char* section,	/*< [in] секция */
 	const char* key,		/*< [in] ключ */
-	const char* str			/*< [in] значение */
+	const char* val			/*< [in] значение */
 );
 
 /*!	\brief Чтение значения ключа
 
-	Определяется значение [?count]str ключа key секции section контейнера 
+	Определяется значение [?count]val ключа key секции section контейнера 
 	toml.
 	\expect{ERR_BAD_NAME} tomlIsValidName(section) && tomlIsValidName(key).
 	\return ERR_OK в случае успеха и код ошибки в противном случае.
@@ -129,8 +129,8 @@ err_t tomlValSet(
 	ключа с именем key в первой секции с именем section.
 */
 err_t tomlValGet(
-	char* str,				/*< [out] значение */
-	size_t* count,			/*< [in,out] длина str */
+	char* val,				/*< [out] значение */
+	size_t* count,			/*< [in,out] длина val */
 	const char* toml,		/*< [in] контейнер */
 	const char* section,	/*< [in] секция */
 	const char* key			/*< [in] ключ */
@@ -145,13 +145,13 @@ err_t tomlValGet(
 /*!	\brief Кодирование строки октетов
 
 	Определяется число символов в TOML-коде строки октетов [count]val.
-	Если str != 0, то TOML-код размещается по этому адресу.
-	\pre Если str != 0, то по адресу str зарезервировано
+	Если toml != 0, то TOML-код размещается по этому адресу.
+	\pre Если toml != 0, то по адресу toml зарезервировано
 	tomlOctsEnc(0, val, count) + 1 символов.
 	\return Длина кода или SIZE_MAX в случае ошибки.
 */
 size_t tomlOctsEnc(
-	char* str,				/*< [out] код */
+	char* toml,				/*< [out] код */
 	const octet* val,		/*< [in] строка октетов */
 	size_t count			/*< [in] длина val */
 );
@@ -159,10 +159,10 @@ size_t tomlOctsEnc(
 /*!	\brief Декодирование строки октетов
 
 	Определяется строка октетов [count?]val, закодированная в префиксе
-	TOML-кода str.
+	TOML-кода toml.
 	\remark Любой из указателей val и count может быть нулевым.
 	\pre Буферы, на которые ссылаются ненулевые указатели val и count,
-	не пересекаются между собой, но могут пересекаться с буфером str.
+	не пересекаются между собой, но могут пересекаться с буфером toml.
 	\return Точная длина кода или SIZE_MAX в случае ошибки.
 	\remark При декодировании пропускаются предваряющие и завершающие 
 	пробелы. Их количество учитывается в возвращаемом значении.
@@ -171,45 +171,45 @@ size_t tomlOctsEnc(
 size_t tomlOctsDec(
 	octet* val,				/*< [out] строка октетов */
 	size_t* count,			/*< [out] длина val */
-	const char* str			/*< [in] код */
+	const char* toml		/*< [in] код */
 );
 
 /*!	\brief Кодирование неотрицательного целого
 
 	Определяется число символов в TOML-коде неотрицательного целого val.
-	Если str != 0, то TOML-код размещается по этому адресу.
-	\pre Если str != 0, то по адресу str зарезервировано
+	Если toml != 0, то TOML-код размещается по этому адресу.
+	\pre Если toml != 0, то по адресу toml зарезервировано
 	tomlSizeEnc(0, val) + 1 символов.
 	\return Число октетов в TOML-коде или SIZE_MAX в случае ошибки.
 */
 size_t tomlSizeEnc(
-	char* str,				/*< [out] код */
+	char* toml,				/*< [out] код */
 	size_t val				/*< [in] значение */
 );
 
 /*!	\brief Декодирование неотрицательного целого
 
 	Определяется неотрицательное целое val, закодированное в префиксе
-	TOML-кода str.
+	TOML-кода toml.
 	\return Точная длина кода или SIZE_MAX в случае оишбки.
 	\remark При декодировании пропускаются предваряющие и завершающие 
 	пробелы. Их количество учитывается в возвращаемом значении.
 */
 size_t tomlSizeDec(
 	size_t* val,			/*< [out] значение */
-	const char* str			/*< [in] код */
+	const char* toml		/*< [in] код */
 );
 
 /*!	\brief Кодирование списка неотрицательных целых
 
 	Определяется число символов в TOML-коде списка неотрицательных целых
-	[count]val. Если str != 0, то TOML-код размещается по этому адресу.
-	\pre Если str != 0, то по адресу str зарезервировано
+	[count]val. Если toml != 0, то TOML-код размещается по этому адресу.
+	\pre Если toml != 0, то по адресу toml зарезервировано
 	tomlSizesEnc(0, val, count) + 1 символов.
 	\return Длина кода или SIZE_MAX в случае ошибки.
 */
 size_t tomlSizesEnc(
-	char* str,				/*< [out] код */
+	char* toml,				/*< [out] код */
 	const size_t* val,		/*< [in] список */
 	size_t count			/*< [in] длина val */
 );
@@ -217,10 +217,10 @@ size_t tomlSizesEnc(
 /*!	\brief Декодирование списка неотрицательных целых
 
 	Определяется список неотрицательных целых [count?]val, закодированный
-	в префиксе TOML-кода str.
+	в префиксе TOML-кода toml.
 	\remark Любой из указателей val и count может быть нулевым.
 	\pre Буферы, на которые ссылаются ненулевые указатели val и count,
-	не пересекаются между собой, но могут пересекаться с буфером str.
+	не пересекаются между собой, но могут пересекаться с буфером toml.
 	\return Точная длина кода или SIZE_MAX в случае ошибки.
 	\remark При декодировании пропускаются предваряющие и завершающие 
 	пробелы. Их количество учитывается в возвращаемом значении.
@@ -228,7 +228,7 @@ size_t tomlSizesEnc(
 size_t tomlSizesDec(
 	size_t* val,			/*< [out] список */
 	size_t* count,			/*< [out] длина val */
-	const char* str			/*< [in] код */
+	const char* toml		/*< [in] код */
 );
 
 #ifdef __cplusplus
