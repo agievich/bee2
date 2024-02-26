@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): block encryption
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2024.01.25
+\version 2024.02.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -114,7 +114,7 @@ void beltKeyExpand2(u32 key_[8], const octet key[], size_t len)
 *******************************************************************************
 */
 
-#define HEx(x, r) ((u32)0x##x << r | (u32)0x##x >> (32 - r))
+#define HEx(a, r) ((u32)0x##a << r | (u32)0x##a >> (32 - r))
 #define HEx16(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p, r)\
 	HEx(a, r), HEx(b, r), HEx(c, r), HEx(d, r),\
 	HEx(e, r), HEx(f, r), HEx(g, r), HEx(h, r),\

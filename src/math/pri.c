@@ -4,7 +4,7 @@
 \brief Prime numbers
 \project bee2 [cryptographic library]
 \created 2012.08.13
-\version 2023.09.07
+\version 2024.02.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -457,7 +457,7 @@ bool_t priIsSmooth(const word a[], size_t n, size_t base_count, void* stack)
 	i = wwLoZeroBits(t, n);
 	wwShLo(t, n, i);
 	n = wwWordSize(t, n);
-	if (wwIsZero(t, n))
+	if (wwIsW(t, n, 1))
 	{
 		i = 0;
 		return TRUE;
@@ -472,7 +472,7 @@ bool_t priIsSmooth(const word a[], size_t n, size_t base_count, void* stack)
 		{
 			zzDivW(t, t, n, _base[i]);
 			n = wwWordSize(t, n);
-			if (wwIsZero(t, n))
+			if (wwIsW(t, n, 1))
 			{
 				i = 0, mod = 0;
 				return TRUE;

@@ -4,7 +4,7 @@
 \brief Tests for prime numbers
 \project bee2/test
 \created 2014.07.07
-\version 2023.03.30
+\version 2024.02.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -26,6 +26,7 @@
 bool_t priTest()
 {
 	size_t i;
+	size_t n;
 	word a[W_OF_B(521)];
 	word p[W_OF_B(289)];
 	word mods[1024];
@@ -46,6 +47,28 @@ bool_t priTest()
 			!priIsPrime(a, 1, stack))
 			return FALSE;
 	}
+	// найти произведение квадратов первых простых факторной базы
+	a[0] = 1, n = 1;
+	for (i = 0; i < priBaseSize() && n + 2 < COUNT_OF(a); ++i)
+	{
+		register word w;
+		w = zzMulW(a, a, n, priBasePrime(i));
+		if (w > 0)
+			a[n++] = w;
+		w = zzMulW(a, a, n, priBasePrime(i));
+		if (w > 0)
+			a[n++] = w;
+	}
+	// проверить гладкость и просеянность
+	if (sizeof(stack) < priIsSieved_deep(n) ||
+		sizeof(stack) < priIsSmooth_deep(n) ||
+		priIsSieved(a, n, i, stack) ||
+		!priIsSmooth(a, n, i, stack))
+		return FALSE;
+	VERIFY(zzAddW2(a, n, 2) == 0);
+	if (!priIsSieved(a, n, i, stack) ||
+		priIsSmooth(a, n, i, stack))
+		return FALSE;
 	// проверить простоту числа Ферма 2^{2^5} + 1
 	wwSetZero(a, W_OF_B(32));
 	wwSetBit(a, 32, 1);
