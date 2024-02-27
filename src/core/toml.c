@@ -13,7 +13,7 @@
 #include "bee2/core/hex.h"
 #include "bee2/core/mem.h"
 #include "bee2/core/toml.h"
-#include "bee2/core/toml.h"
+#include "bee2/core/str.h"
 #include "bee2/core/util.h"
 
 #include <ctype.h>
@@ -24,15 +24,31 @@
 *******************************************************************************
 Специальные символы
 
-\remark Функция tomlSpaceDec() отличается от других функций кодирования /
-декодирования -- она никогда не возвращает значение SIZE_MAX, указывающее
-на ошибку.
+Правиила TOML:
+* Whitespace means tab (0x09) or space (0x20).
+* Newline means LF (0x0A) or CRLF (0x0D 0x0A).
+* A hash symbol marks the rest of the line as a comment, except when inside
+  a string.
+* Control characters other than tab (U+0000 to U+0008, U+000A to U+001F,
+  U+007F) are not permitted in comments.
+
+\remark Функции tomlSpaceDec(), tomlCommentDec() и tomlVertDec()
+отличаются от других функций кодирования / декодирования -- они никогда не
+возвращают значение SIZE_MAX, указывающее на ошибку. Функции используются
+для пропуска:
+- tomlSpaceDec() -- незначащих пробелов;
+- tomlCommentDec() -- необязательных комментариев (вплоть до LF или конца
+  toml-строки);
+- tomlVertDec() -- комментариев и пустых строк.
+
+\remark В функции tomlLFDec() окончание всей декодируемой строки считается
+также окончанием линии (Line Feed).
 *******************************************************************************
 */
 
 static bool_t strIsSpace(char ch)
 {
-	return ch != '\n' && isspace(ch);
+	return ch == ' ' || ch == '\t';
 }
 
 static bool_t strIsAlnum(char ch) 
@@ -74,36 +90,66 @@ static size_t tomlDelimEnc(char* toml, char delim)
 
 static size_t tomlLFDec(const char* toml)
 {
+	size_t count;
+	// пропустить пробелы
+	count = tomlSpaceDec(toml);
+	toml += count;
+	// конец всей строки?
+	if (toml[0] == 0)
+		return count;
+	// LF?
+	if (toml[0] == '\n')
+		++count, ++toml;
+	else if (toml[0] == '\r' && toml[1] == '\n')
+		count += 2, toml += 2;
+	else
+		return SIZE_MAX;
+	// пропустить пробелы
+	return count + tomlSpaceDec(toml);
+}
+
+#define tomlLFEnc(toml) tomlDelimEnc(toml, '\n')
+
+static size_t tomlCommentDec(const char* toml)
+{
 	size_t count = 0;
-	bool_t lf = FALSE;
 	ASSERT(strIsValid(toml));
 	while (1)
 	{
 		size_t c;
-		// пропустить комментарий
+		// есть комментарий?
 		c = tomlDelimDec(toml, '#');
-		if (c != SIZE_MAX)
-		{
+		if (c == SIZE_MAX)
+			break;
+		// обработать комментарий
+		count += c, toml += c;
+		while (toml[0] && toml[0] != '\n')
+			++count, ++toml;
+		// комментарий не продолжается на следующей строке?
+		c = tomlLFDec(toml);
+		if (c == SIZE_MAX || tomlDelimDec(toml + c, '#') == SIZE_MAX)
+			break;
+		// к следующей строке
+		count += c, toml += c;
+	}
+	return count;
+}
+
+static size_t tomlVertDec(const char* toml)
+{
+	size_t count = 0;
+	while (*toml)
+	{
+		size_t c;
+		// комментарий или LF?
+		if ((c = tomlCommentDec(toml)) != SIZE_MAX ||
+			(c = tomlLFDec(toml)) != SIZE_MAX)
 			count += c, toml += c;
-			while (toml[0] && toml[0] != '\n')
-				++count, ++toml;
-		}
-		// пропустить пробелы
-		else
-			c = tomlSpaceDec(toml), count += c, toml += c;
-		// конец строки?
-		if (toml[0] == 0)
-			return count;
-		// LF?
-		if (toml[0] == '\n')
-			lf = TRUE, ++count, ++toml;
 		else
 			break;
 	}
-	return lf ? count : SIZE_MAX;
+	return count;
 }
-
-#define tomlLFEnc(toml) tomlDelimEnc(toml, '\n')
 
 /*
 *******************************************************************************
@@ -417,9 +463,22 @@ size_t tomlOctsEnc(char* toml, const octet* val, size_t count)
 	return 2 + 2 * count;
 }
 
+static size_t tomlOctDec(octet* val, const char* toml)
+{
+	char hex[3];
+	if (strLen(toml) < 2)
+		return SIZE_MAX;
+	hex[0] = toml[0], hex[1] = toml[1], hex[2] = 0;
+	if (!hexIsValid(hex))
+		return SIZE_MAX;
+	if (val)
+		hexTo(val, hex);
+	hex[0] = hex[1] = 0;
+	return 2;
+}
+
 size_t tomlOctsDec(octet* val, size_t* count, const char* toml)
 {
-	char s[3];
 	size_t c;
 	size_t co;
 	// пропустить предваряющие пробелы
@@ -429,29 +488,28 @@ size_t tomlOctsDec(octet* val, size_t* count, const char* toml)
 		return SIZE_MAX;
 	c += 2, toml += 2, co = 0;
 	// декодировать шестнадцатеричные символы
-	s[2] = 0;
 	while (1)
 	{
+		size_t c1;
 		// LF?
-		if (toml[0] == '\\')
+		while (toml[0] == '\\')
 		{
-			size_t c1 = tomlLFDec(++toml);
-			if (c1 == SIZE_MAX)
+			// пропустить '\\'
+			++c, ++toml;
+			// пропустить комментарии
+			if ((c1 = tomlCommentDec(toml)) != SIZE_MAX)
+				c += c1, toml += c1;
+			// к новой строке
+			if ((c1 = tomlLFDec(toml)) == SIZE_MAX)
 				return SIZE_MAX;
-			c = c + 1 + c1, toml += c1;
+			c += c1, toml += c1;
 		}
-		// закончились пары шестнадцатеричных символов?
-		if (toml[0] == 0 || toml[1] == 0)
+		// преобразовать пару шестнадцатеричных символов в октет
+		if ((c1 = tomlOctDec(val, toml)) == SIZE_MAX)
 			break;
-		s[0] = toml[0], s[1] = toml[1];
-		if (!hexIsValid(s))
-			break;
-		// преобразовать пару символов в октет
-		if (val)
-			hexTo(val++, s);
-		c += 2, toml += 2, ++co;
+		c += c1, toml += c1, ++co;
+		val = val ? val + 1 : val;
 	}
-	s[0] = s[1] = 0;
 	// возвратить число октетов
 	if (count)
 	{
