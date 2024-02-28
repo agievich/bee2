@@ -4,7 +4,7 @@
 \brief Prime numbers
 \project bee2 [cryptographic library]
 \created 2012.08.13
-\version 2024.02.26
+\version 2024.02.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -421,7 +421,7 @@ bool_t priIsSieved(const word a[], size_t n, size_t base_count, void* stack)
 		return FALSE;
 	// малое a?
 	if (n == 1)
-		// при необходимости скоррректировать факторную базу
+		// при необходимости скорректировать факторную базу
 		while (base_count > 0 && priBasePrime(base_count - 1) > a[0])
 			--base_count;
 	// раскладка stack
@@ -497,13 +497,18 @@ size_t priIsSmooth_deep(size_t n)
 
 Применяется тест Рабина -- Миллера со специально подобранными основаниями.
 Успешное завершение теста на всех основаниях из списка _base16 гарантирует
-простоту чисел вплоть до 1373653, из списка _base32 --- вплоть
-до 4759123141, из списка _base64 --- для всех 64-разрядных чисел.
+простоту чисел вплоть до 1373653 [1], из списка _base32 --- вплоть
+до 4759123141 [2], из списка _base64 --- для всех 64-разрядных чисел
+(Sinclair, unpublished, see [3] and [4]).
 
-Список оснований: http://miller-rabin.appspot.com (список обновляется).
-
-\todo Проверка на малые делители позволит уменьшить число оснований / 
-сократить время проверки?
+[1]	Pomerance C., Selfridge J., Wagstaff S. Jr. The pseudoprimes to 25 * 10^9.
+	Mathematics of Computation. 35(151): 1003–1026.
+[2]	Jaeschke G. On strong pseudoprimes to several bases. Mathematics
+	of Computation. 61(204): 915-925.
+[3]	Forisek M., Jancina, J. Fast Primality Testing for Integers That Fit into
+	a Machine Word. 2015. https://ceur-ws.org/Vol-1326/020-Forisek.pdf.
+[4]	 Izykowski, W.: The best known SPRP bases sets. 2024-02-28.
+	https://miller-rabin.appspot.com/.
 *******************************************************************************
 */
 
@@ -552,7 +557,7 @@ bool_t priIsPrimeW(register word a, void* stack)
 		if (base == 1 || base == a - 1)
 			continue;
 		// base^{2^i} \equiv - 1\mod a?
-		for (i = s - 1; i--;)
+		for (i = 1; i < s; ++i)
 		{
 			prod = base;
 			prod *= base, base = prod % a;
@@ -564,7 +569,7 @@ bool_t priIsPrimeW(register word a, void* stack)
 				return FALSE;
 			}
 		}
-		if (i == SIZE_MAX)
+		if (i == s)
 		{
 			r = base = 0, s = iter = i = 0, prod = 0;
 			return FALSE;
@@ -588,9 +593,9 @@ size_t priIsPrimeW_deep()
 а получаемые степени сравниваются не с \pm 1 \mod a, а с \pm R \mod a.
 
 В начале функции проверяется, что a >= 49. Поэтому основание base будет 
-совпадать с \pm R \mod a с вероятностью p < 2/(49 - 1) = 1/24 и число попыток 
+совпадать с \pm R \mod a с вероятностью p <= 2/(49 - 1) = 1/24 и число попыток 
 генерации можно ограничить величиной 
-B_PER_IMPOSSLIBLE / log_2(24) < B_PER_IMPOSSLIBLE / 4.5.
+B_PER_IMPOSSLIBLE / log_2(24) <= B_PER_IMPOSSLIBLE / 4.5.
 *******************************************************************************
 */
 
@@ -642,11 +647,10 @@ bool_t priRMTest(const word a[], size_t n, size_t iter, void* stack)
 		// base <- base^r \mod a
 		qrPower(base, base, r, m, qr, stack);
 		// base == \pm one => тест пройден
-		if (wwEq(base, qr->unity, n) ||
-			zzIsSumEq(a, base, qr->unity, n))
+		if (wwEq(base, qr->unity, n) || zzIsSumEq(a, base, qr->unity, n))
 			continue;
 		// base^{2^i} \equiv -1 \mod a?
-		for (i = s; i--;)
+		for (i = 1; i < s; ++i)
 		{
 			qrSqr(base, base, qr, stack);
 			if (wwEq(base, qr->unity, n))
@@ -657,7 +661,7 @@ bool_t priRMTest(const word a[], size_t n, size_t iter, void* stack)
 			if (zzIsSumEq(a, base, qr->unity, n))
 				break;
 		}
-		if (i == SIZE_MAX)
+		if (i == s)
 		{
 			s = m = i = 0;
 			return FALSE;
@@ -795,7 +799,7 @@ bool_t priNextPrime(word p[], const word a[], size_t n, size_t trials,
 	p[0] |= 1;
 	// малое p?
 	if (n == 1)
-		// при необходимости скоррректировать факторную базу
+		// при необходимости скорректировать факторную базу
 		while (base_count > 0 && priBasePrime(base_count - 1) >= p[0])
 			--base_count;
 	// рассчитать остатки от деления на малые простые

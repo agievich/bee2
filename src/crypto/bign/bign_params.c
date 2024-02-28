@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): public parameters
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2023.09.24
+\version 2024.02.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -263,7 +263,6 @@ static void bignSeedInc(octet seed[8])
 	ASSERT(memIsValid(seed, 8));
 	for (carry = 1, pos = 0; pos < 8; ++pos)
 		carry += seed[pos], seed[pos] = (octet)carry, carry >>= 8;
-	seed[0] += (octet)carry;
 	carry = 0;
 }
 
