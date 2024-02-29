@@ -4,7 +4,7 @@
 \brief Tests for DSTU 4145-2002 (Ukraine)
 \project bee2/test
 \created 2012.03.01
-\version 2023.09.22
+\version 2024.02.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -102,6 +102,7 @@ bool_t dstuTest()
 	combo_rng(hash, 32, state);
 	// проверить кривую dstu_163pb
 	if (dstuPointGen(params->P, params, prngCOMBOStepR, state) != ERR_OK ||
+		dstuPointVal(params, params->P) != ERR_OK ||
 		dstuPointCompress(pubkey, params, params->P) != ERR_OK ||
 		dstuPointRecover(pubkey, params, pubkey) != ERR_OK ||
 		!memEq(params->P, pubkey, 2 * O_OF_B(163)) || 
@@ -116,6 +117,7 @@ bool_t dstuTest()
 	if (dstuParamsStd(params, "1.2.804.2.1.1.1.1.3.1.1.1.2.1") != ERR_OK ||
 		dstuPointGen(params->P, params, prngCOMBOStepR, state) != ERR_OK ||
 		dstuParamsVal(params) != ERR_OK ||
+		dstuPointVal(params, params->P) != ERR_OK ||
 		dstuPointCompress(pubkey, params, params->P) != ERR_OK ||
 		dstuPointRecover(pubkey, params, pubkey) != ERR_OK ||
 		!memEq(params->P, pubkey, 2 * O_OF_B(167)) || 
@@ -130,6 +132,7 @@ bool_t dstuTest()
 	if (dstuParamsStd(params, "1.2.804.2.1.1.1.1.3.1.1.1.2.2") != ERR_OK ||
 		dstuPointGen(params->P, params, prngCOMBOStepR, state) != ERR_OK ||
 		dstuParamsVal(params) != ERR_OK ||
+		dstuPointVal(params, params->P) != ERR_OK ||
 		dstuPointCompress(pubkey, params, params->P) != ERR_OK ||
 		dstuPointRecover(pubkey, params, pubkey) != ERR_OK ||
 		!memEq(params->P, pubkey, 2 * O_OF_B(173)) || 
@@ -144,6 +147,7 @@ bool_t dstuTest()
 	if (dstuParamsStd(params, "1.2.804.2.1.1.1.1.3.1.1.1.2.3") != ERR_OK ||
 		dstuPointGen(params->P, params, prngCOMBOStepR, state) != ERR_OK ||
 		dstuParamsVal(params) != ERR_OK ||
+		dstuPointVal(params, params->P) != ERR_OK ||
 		dstuPointCompress(pubkey, params, params->P) != ERR_OK ||
 		dstuPointRecover(pubkey, params, pubkey) != ERR_OK ||
 		!memEq(params->P, pubkey, 2 * O_OF_B(179)) || 
@@ -158,6 +162,7 @@ bool_t dstuTest()
 	if (dstuParamsStd(params, "1.2.804.2.1.1.1.1.3.1.1.1.2.4") != ERR_OK ||
 		dstuPointGen(params->P, params, prngCOMBOStepR, state) != ERR_OK ||
 		dstuParamsVal(params) != ERR_OK ||
+		dstuPointVal(params, params->P) != ERR_OK ||
 		dstuPointCompress(pubkey, params, params->P) != ERR_OK ||
 		dstuPointRecover(pubkey, params, pubkey) != ERR_OK ||
 		!memEq(params->P, pubkey, 2 * O_OF_B(191)) || 
@@ -172,6 +177,7 @@ bool_t dstuTest()
 	if (dstuParamsStd(params, "1.2.804.2.1.1.1.1.3.1.1.1.2.5") != ERR_OK ||
 		dstuPointGen(params->P, params, prngCOMBOStepR, state) != ERR_OK ||
 		dstuParamsVal(params) != ERR_OK ||
+		dstuPointVal(params, params->P) != ERR_OK ||
 		dstuPointCompress(pubkey, params, params->P) != ERR_OK ||
 		dstuPointRecover(pubkey, params, pubkey) != ERR_OK ||
 		!memEq(params->P, pubkey, 2 * O_OF_B(233)) || 
@@ -186,9 +192,10 @@ bool_t dstuTest()
 	if (dstuParamsStd(params, "1.2.804.2.1.1.1.1.3.1.1.1.2.6") != ERR_OK ||
 		dstuPointGen(params->P, params, prngCOMBOStepR, state) != ERR_OK ||
 		dstuParamsVal(params) != ERR_OK ||
+		dstuPointVal(params, params->P) != ERR_OK ||
 		dstuPointCompress(pubkey, params, params->P) != ERR_OK ||
 		dstuPointRecover(pubkey, params, pubkey) != ERR_OK ||
-		!memEq(params->P, pubkey, 2 * O_OF_B(257)) || 
+		!memEq(params->P, pubkey, 2 * O_OF_B(257)) ||
 		dstuKeypairGen(privkey, pubkey, params, prngCOMBOStepR, 
 			state) != ERR_OK ||
 		dstuSign(sig, params, ld, hash, 32, privkey, prngCOMBOStepR, 
@@ -199,10 +206,12 @@ bool_t dstuTest()
 	// проверить кривую dstu_307pb
 	if (dstuParamsStd(params, "1.2.804.2.1.1.1.1.3.1.1.1.2.7") != ERR_OK ||
 		dstuPointGen(params->P, params, prngCOMBOStepR, state) != ERR_OK ||
+		dstuPointVal(params, params->P) != ERR_OK ||
 		dstuParamsVal(params) != ERR_OK ||
 		dstuPointCompress(pubkey, params, params->P) != ERR_OK ||
 		dstuPointRecover(pubkey, params, pubkey) != ERR_OK ||
-		!memEq(params->P, pubkey, 2 * O_OF_B(307)) || 
+		dstuPointVal(params, pubkey) != ERR_OK ||
+		!memEq(params->P, pubkey, 2 * O_OF_B(307)) ||
 		dstuKeypairGen(privkey, pubkey, params, prngCOMBOStepR, 
 			state) != ERR_OK ||
 		dstuSign(sig, params, ld, hash, 32, privkey, prngCOMBOStepR, 
@@ -213,10 +222,12 @@ bool_t dstuTest()
 	// проверить кривую dstu_367pb
 	if (dstuParamsStd(params, "1.2.804.2.1.1.1.1.3.1.1.1.2.8") != ERR_OK ||
 		dstuPointGen(params->P, params, prngCOMBOStepR, state) != ERR_OK ||
+		dstuPointVal(params, params->P) != ERR_OK ||
 		dstuParamsVal(params) != ERR_OK ||
 		dstuPointCompress(pubkey, params, params->P) != ERR_OK ||
 		dstuPointRecover(pubkey, params, pubkey) != ERR_OK ||
-		!memEq(params->P, pubkey, 2 * O_OF_B(367)) || 
+		dstuPointVal(params, pubkey) != ERR_OK ||
+		!memEq(params->P, pubkey, 2 * O_OF_B(367)) ||
 		dstuKeypairGen(privkey, pubkey, params, prngCOMBOStepR, 
 			state) != ERR_OK ||
 		dstuSign(sig, params, ld, hash, 32, privkey, prngCOMBOStepR, 
@@ -227,6 +238,7 @@ bool_t dstuTest()
 	// проверить кривую dstu_431pb
 	if (dstuParamsStd(params, "1.2.804.2.1.1.1.1.3.1.1.1.2.9") != ERR_OK ||
 		dstuPointGen(params->P, params, prngCOMBOStepR, state) != ERR_OK ||
+		dstuPointVal(params, params->P) != ERR_OK ||
 		dstuParamsVal(params) != ERR_OK ||
 		dstuPointCompress(pubkey, params, params->P) != ERR_OK ||
 		dstuPointRecover(pubkey, params, pubkey) != ERR_OK ||
