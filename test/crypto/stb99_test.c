@@ -4,7 +4,7 @@
 \brief Tests for STB 1176.2-99[generation of parameters]
 \project bee2/test
 \created 2023.08.05
-\version 2024.02.22
+\version 2024.02.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -57,13 +57,15 @@ bool_t stb99TestParamsTest()
 	memCopy(seed1->zi, seed->zi, sizeof(seed->zi));
 	if (stb99SeedAdj(seed1) != ERR_OK ||
 		!memEq(seed, seed1, sizeof(stb99_seed)) ||
-		(seed1->di[4] = 0, stb99SeedVal(seed1)) == ERR_OK)
+		(seed1->di[4] = 0, stb99SeedVal(seed1)) == ERR_OK ||
+		(seed1->di[4] = SIZE_MAX / 5 - 1, stb99SeedVal(seed1)) == ERR_OK)
 		return FALSE;
 	memSetZero(seed1->di, sizeof(seed1->di));
 	if (stb99SeedAdj(seed1) != ERR_OK ||
 		stb99SeedVal(seed1) != ERR_OK ||
 		!memEq(seed, seed1, sizeof(stb99_seed)) ||
-		(seed1->ri[3] = 0, stb99SeedVal(seed1)) == ERR_OK)
+		(seed1->ri[3] = 0, stb99SeedVal(seed1)) == ERR_OK ||
+		(seed1->ri[3] = SIZE_MAX / 5 - 1, stb99SeedVal(seed1)) == ERR_OK)
 		return FALSE;
 	memSetZero(seed1->ri, sizeof(seed1->ri));
 	if (stb99SeedAdj(seed1) != ERR_OK ||
@@ -75,6 +77,10 @@ bool_t stb99TestParamsTest()
 		stb99ParamsGen(params1, seed1) != ERR_OK ||
 		stb99ParamsVal(params1) != ERR_OK ||
 		!memEq(params, params1, sizeof(stb99_params)))
+		return FALSE;
+	// испортить параметры
+	params1->d[0] += 2;
+	if (stb99ParamsVal(params1) == ERR_OK)
 		return FALSE;
 	// все нормально
 	return TRUE;
@@ -88,20 +94,40 @@ bool_t stb99TestParamsStd()
 	// тест GPQA.L03
 	if (stb99ParamsStd(params, seed, "1.2.112.0.2.0.1176.2.3.3.1") != ERR_OK ||
 		stb99ParamsGen(params1, seed) != ERR_OK ||
-		stb99ParamsVal(params1) != ERR_OK ||
 		!memEq(params, params1, sizeof(stb99_params)))
 		return FALSE;
 	// тест GPQA.L06
 	if (stb99ParamsStd(params, seed, "1.2.112.0.2.0.1176.2.3.6.1") != ERR_OK ||
 		stb99ParamsGen(params1, seed) != ERR_OK ||
-		stb99ParamsVal(params1) != ERR_OK ||
 		!memEq(params, params1, sizeof(stb99_params)))
 		return FALSE;
 	// тест GPQA.L10
 	if (stb99ParamsStd(params, seed, "1.2.112.0.2.0.1176.2.3.10.1") != ERR_OK ||
 		stb99ParamsGen(params1, seed) != ERR_OK ||
-		stb99ParamsVal(params1) != ERR_OK ||
 		!memEq(params, params1, sizeof(stb99_params)))
+		return FALSE;
+	// все нормально
+	return TRUE;
+}
+
+bool_t stb99TestParamsStd2()
+{
+	stb99_params params[1];
+	stb99_seed seed[1];
+	// проверка параметров теста GPQA.L03
+	if (stb99ParamsStd(params, seed, "1.2.112.0.2.0.1176.2.3.3.1") != ERR_OK ||
+		stb99SeedVal(seed) != ERR_OK ||
+		stb99ParamsVal(params) != ERR_OK)
+		return FALSE;
+	// проверка параметров теста GPQA.L06
+	if (stb99ParamsStd(params, seed, "1.2.112.0.2.0.1176.2.3.6.1") != ERR_OK ||
+		stb99SeedVal(seed) != ERR_OK ||
+		stb99ParamsVal(params) != ERR_OK)
+		return FALSE;
+	// проверка параметров теста GPQA.L10
+	if (stb99ParamsStd(params, seed, "1.2.112.0.2.0.1176.2.3.10.1") != ERR_OK ||
+		stb99SeedVal(seed) != ERR_OK ||
+		stb99ParamsVal(params) != ERR_OK)
 		return FALSE;
 	// все нормально
 	return TRUE;
@@ -109,5 +135,5 @@ bool_t stb99TestParamsStd()
 
 bool_t stb99Test()
 {
-	return stb99TestParamsTest();
+	return stb99TestParamsTest() && stb99TestParamsStd2();
 }

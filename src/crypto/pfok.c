@@ -4,7 +4,7 @@
 \brief Draft of RD_RB: key establishment protocols in finite fields
 \project bee2 [cryptographic library]
 \created 2014.07.01
-\version 2024.02.22
+\version 2024.02.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -438,14 +438,14 @@ static err_t pfokLiVal(const pfok_seed* seed)
 	for (i = 1; i < COUNT_OF(seed->li) && seed->li[i] > 16; ++i)
 		if (seed->li[i - 1] > 2 * seed->li[i] ||
 			seed->li[i] >= SIZE_MAX / 5 ||
-			5 * seed->li[i] + 16 >= 4 * seed->li[i - 1])
+			5 * seed->li[i] >= 4 * seed->li[i - 1] - 16)
 			return ERR_BAD_SEED;
 	if (seed->li[i - 1] > 32)
 		return ERR_BAD_SEED;
 	for (; i < COUNT_OF(seed->li); ++i)
 		if (seed->li[i] != 0)
 			return ERR_BAD_SEED;
-	// все хорошо
+	// ok
 	return ERR_OK;
 }
 
