@@ -4,7 +4,7 @@
 \brief Tests for Draft of RD_RB (pfok)
 \project bee2/test
 \created 2014.07.08
-\version 2024.02.22
+\version 2024.02.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -67,7 +67,8 @@ bool_t pfokTestParamsTest()
 	memCopy(seed1->zi, seed->zi, sizeof(seed->zi));
 	if (pfokSeedAdj(seed1) != ERR_OK ||
 		!memEq(seed, seed1, sizeof(pfok_seed)) ||
-		(seed1->li[5] = 0, pfokSeedVal(seed1)) == ERR_OK)
+		(seed1->li[5] = 0, pfokSeedVal(seed1)) == ERR_OK ||
+		(seed1->li[5] = SIZE_MAX / 5 - 1, pfokSeedVal(seed1)) == ERR_OK)
 		return FALSE;
 	memSetZero(seed1->li, sizeof(seed1->li));
 	if (pfokSeedAdj(seed1) != ERR_OK ||
