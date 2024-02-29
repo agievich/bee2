@@ -4,7 +4,7 @@
 \brief Tests for TOML
 \project bee2/test
 \created 2023.08.22
-\version 2024.02.26
+\version 2024.02.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -57,7 +57,8 @@ bool_t tomlTestEnc()
 		tomlOctsDec(0, &count, " 0x1234 ") != 8 || count != 2 ||
 		tomlOctsDec(0, &count, " 0x12\\") != 6 || count != 1 ||
 		tomlOctsDec(0, &count, " 0x1\\2") != 3 || count != 0 ||
-		tomlOctsDec(0, &count, " 0x12\\\n\\# hex\n") != 14 || count != 1 ||
+		tomlOctsDec(0, &count, " 0x12\\ #\n34 #\n") != 12 || count != 2 ||
+		tomlOctsDec(0, &count, " 0x12\\\n\\\n34\n") != 7 || count != 1 ||
 		tomlOctsDec(0, &count, " 0x12\\\n  34") != 11 || count != 2 ||
 		tomlOctsDec(0, &count, "0x12\\ #hex \n  34") != 16 || count != 2 ||
 		tomlOctsEnc(0, octs, count) != 6 ||
