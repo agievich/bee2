@@ -4,7 +4,7 @@
 \brief TOML files processing
 \project bee2 [cryptographic library]
 \created 2023.07.12
-\version 2024.02.29
+\version 2024.03.01
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -466,7 +466,7 @@ static size_t tomlKeyEnc(char* toml, const char* key)
 
 Расширение реализации:
 
-1. Строка октетов может разрываться тройками ('\\', комментарий, LF). 
+1. Строка октетов может разрываться парами ('\\', LF). 
    Комментарий может отсутствовать или быть многострочным.
 2. Разрывов может быть несколько. Разрывы могут устанавливаться только после 
    четного числа шестнадцатеричных символов. Если между двумя соседними 
@@ -520,10 +520,6 @@ size_t tomlOctsDec(octet* val, size_t* count, const char* toml)
 		{
 			// пропустить '\\'
 			++c, ++toml;
-			// пропустить комментарии
-			if ((c1 = tomlCommentDec(toml)) == SIZE_MAX)
-				return SIZE_MAX;
-			c += c1, toml += c1;
 			// к новой строке
 			if ((c1 = tomlLFDec(toml)) == SIZE_MAX)
 				return SIZE_MAX;
@@ -532,8 +528,7 @@ size_t tomlOctsDec(octet* val, size_t* count, const char* toml)
 		// преобразовать пару шестнадцатеричных символов в октет
 		if ((c1 = tomlOctDec(val, toml)) == SIZE_MAX)
 			break;
-		c += c1, toml += c1, ++co;
-		val = val ? val + 1 : val;
+		c += c1, toml += c1, ++co, val = val ? val + 1 : val;
 	}
 	// возвратить число октетов
 	if (count)
@@ -585,7 +580,7 @@ size_t tomlSizeDec(size_t* val, const char* toml)
 	toml += (count = tomlSpaceDec(toml));
 	// незначащий нуль?
 	ASSERT(strIsValid(toml));
-	if (toml[0] == '0' && '0' <= toml[1] && toml[1] <= '9' )
+	if (toml[0] == '0' && '0' <= toml[1] && toml[1] <= '9')
 		return SIZE_MAX;
 	// декодировать
 	for (v = c = 0; '0' <= *toml && *toml <= '9';)
@@ -625,8 +620,7 @@ size_t tomlSizesEnc(char* toml, const size_t* val, size_t count)
 	if (toml)
 	{
 		ASSERT(memIsValid(toml, 2));
-		toml[0] = '[', toml[1] = 0;
-		++toml;
+		toml[0] = '[', ++toml;
 	}
 	c = 1;
 	// кодировать целые
@@ -642,8 +636,7 @@ size_t tomlSizesEnc(char* toml, const size_t* val, size_t count)
 			if (toml)
 			{
 				ASSERT(memIsValid(toml, 2));
-				toml[0] = ',', toml[1] = ' ', toml[2] = 0;
-				toml += 2;
+				toml[0] = ',', toml[1] = ' ', toml += 2;
 			}
 			c += 2;
 		}
@@ -653,8 +646,7 @@ size_t tomlSizesEnc(char* toml, const size_t* val, size_t count)
 	if (toml)
 	{
 		ASSERT(memIsValid(toml, 2));
-		toml[0] = ']', toml[1] = 0;
-		++toml;
+		toml[0] = ']', toml[1] = 0, ++toml;
 	}
 	return ++c;
 }
@@ -671,18 +663,19 @@ size_t tomlSizesDec(size_t* val, size_t* count, const char* toml)
 	toml += c;
 	// декодировать первое целое
 	cs = 0;
-	c1 = tomlSizeDec(val, toml);
-	// декодировать следующие целые
-	if (c1 != SIZE_MAX)
-	{
+	if ((c1 = tomlSizeDec(val, toml)) != SIZE_MAX)
 		c += c1, toml += c1, ++cs, val = val ? val + 1 : 0;
-		while ((c1 = tomlDelimDec(toml, ',')) != SIZE_MAX)
-		{
-			c += c1, toml += c1;
-			if ((c1 = tomlSizeDec(val, toml)) == SIZE_MAX)
-				break;
-			c += c1, toml += c1, ++cs, val = val ? val + 1 : 0;
-		}
+	// декодировать следующие целые
+	while (1)
+	{
+		// запятая
+		if ((c1 = tomlDelimDec(toml, ',')) == SIZE_MAX)
+			break;
+		c += c1, toml += c1;
+		// целое
+		if ((c1 = tomlSizeDec(val, toml)) == SIZE_MAX)
+			break;
+		c += c1, toml += c1, ++cs, val = val ? val + 1 : 0;
 	}
 	// декодировать ]
 	c1 = tomlDelimDec(toml, ']');
@@ -697,4 +690,3 @@ size_t tomlSizesDec(size_t* val, size_t* count, const char* toml)
 	}
 	return c;
 }
-

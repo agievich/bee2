@@ -4,7 +4,7 @@
 \brief Tests for TOML
 \project bee2/test
 \created 2023.08.22
-\version 2024.02.29
+\version 2024.03.01
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -57,13 +57,14 @@ bool_t tomlTestEnc()
 		tomlOctsDec(0, &count, " 0x1234 ") != 8 || count != 2 ||
 		tomlOctsDec(0, &count, " 0x12\\") != 6 || count != 1 ||
 		tomlOctsDec(0, &count, " 0x1\\2") != 3 || count != 0 ||
-		tomlOctsDec(0, &count, " 0x12\\ #\n34 #\n") != 12 || count != 2 ||
-		tomlOctsDec(0, &count, " 0x12\\\n\\\n34\n") != 7 || count != 1 ||
-		tomlOctsDec(0, &count, " 0x12\\\n  34") != 11 || count != 2 ||
-		tomlOctsDec(0, &count, "0x12\\ #hex \n  34") != 16 || count != 2 ||
-		tomlOctsEnc(0, octs, count) != 6 ||
-		tomlOctsEnc(toml, octs, count) != 6 ||
-		!strEq(toml, "0x1234"))
+		tomlOctsDec(0, &count, "0x12\\\r\n34\n") != 9 || count != 2 ||
+		tomlOctsDec(0, &count, "0x12 \\\r\n34\n") != 5 || count != 1 ||
+		tomlOctsDec(0, &count, "0x12\\\r34\n") != SIZE_MAX ||
+		tomlOctsDec(0, &count, "0x12\\\n\\\n34") != 6 || count != 1 ||
+		tomlOctsDec(octs, &count, "0x12\\\n34\\\n56") != 12 || count != 3 ||
+		tomlOctsEnc(0, octs, count) != 8 ||
+		tomlOctsEnc(toml, octs, count) != 8 ||
+		!strEq(toml, "0x123456"))
 		return FALSE;
 	// неотрицательное целое
 	if (tomlSizeDec(0, "]") != SIZE_MAX ||
@@ -82,7 +83,7 @@ bool_t tomlTestEnc()
 		return FALSE;
 	// список неотрицательных целых
 	if (tomlSizesDec(0, 0, "[]") == SIZE_MAX ||
-		tomlSizesDec(0, &count, "[]") == SIZE_MAX || count != 0 ||
+		tomlSizesDec(0, &count, "[,]") != 3 || count != 0 ||
 		tomlSizesDec(0, 0, "[01,2]") != SIZE_MAX ||
 		tomlSizesDec(0, 0, "[1 [ 2]") != SIZE_MAX ||
 		tomlSizesDec(0, 0, "[1,,2]") != SIZE_MAX ||
