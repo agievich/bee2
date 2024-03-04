@@ -4,7 +4,7 @@
 \brief Draft of RD_RB: key establishment protocols in finite fields
 \project bee2 [cryptographic library]
 \created 2014.07.01
-\version 2024.02.29
+\version 2024.03.04
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -434,10 +434,11 @@ static err_t pfokLiVal(const pfok_seed* seed)
 	// проверить li[0]
 	if (seed->li[0] != seed->l - 1)
 		return ERR_BAD_SEED;
+	ASSERT(seed->li[0] > 16);
 	// проверить цепочку li
 	for (i = 1; i < COUNT_OF(seed->li) && seed->li[i] > 16; ++i)
-		if (seed->li[i - 1] > 2 * seed->li[i] ||
-			seed->li[i] >= SIZE_MAX / 5 ||
+		if (seed->li[i] >= SIZE_MAX / 5 ||
+			seed->li[i - 1] > 2 * seed->li[i] ||
 			5 * seed->li[i] >= 4 * seed->li[i - 1] - 16)
 			return ERR_BAD_SEED;
 	if (seed->li[i - 1] > 32)
@@ -531,7 +532,7 @@ static bool_t pfokParamsIsOperable(const pfok_params* params)
 	ASSERT((params->l + 2) % 8 == 0);
 	no = O_OF_B(params->l);
 	if (params->p[0] % 4 != 3 || params->p[no - 1] / 32 != 1 ||
-		!memIsZero(params->g + no, sizeof(params->g) - no))
+		!memIsZero(params->p + no, sizeof(params->p) - no))
 		return FALSE;
 	// проверить g
 	return !memIsZero(params->g, no) &&
