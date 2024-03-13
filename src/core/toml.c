@@ -4,7 +4,7 @@
 \brief TOML files processing
 \project bee2 [cryptographic library]
 \created 2023.07.12
-\version 2024.03.01
+\version 2024.03.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -619,7 +619,7 @@ size_t tomlSizesEnc(char* toml, const size_t* val, size_t count)
 	// [
 	if (toml)
 	{
-		ASSERT(memIsValid(toml, 2));
+		ASSERT(memIsValid(toml, 1));
 		toml[0] = '[', ++toml;
 	}
 	c = 1;
