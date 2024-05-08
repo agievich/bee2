@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.78 (bpki) helpers
 \project bee2/test
 \created 2021.04.13
-\version 2024.01.22
+\version 2024.05.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -26,7 +26,7 @@
 static bool_t bpkiContTest()
 {
 	octet epki[1024];
-	octet key[65];
+	octet key[64];
 	octet pwd[] = { 'z', 'e', 'd' };
 	size_t epki_len, epki_len1;
 	size_t key_len;
