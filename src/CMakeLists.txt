@@ -103,7 +103,7 @@ install(TARGETS bee2_static
     WORLD_READ WORLD_EXECUTE)
 
 if(BUILD_SHARED_LIBS)
-  if (WIN32)
+  if (CMAKE_COMPILER_IS_MSVC)
     set (src ${src} 
       ../win/bee2.def
       ../img/bee2.bmp
