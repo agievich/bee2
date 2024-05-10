@@ -140,13 +140,6 @@ if(CMAKE_COMPILER_IS_MSVC)
   endif()
 endif(CMAKE_COMPILER_IS_MSVC)
 
-if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
-  if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_CLANG)
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} \
-      -fprofile-arcs -ftest-coverage")
-  endif()
-endif()
-
 if(BUILD_FAST)
   add_definitions(-DSAFE_FAST)
 endif()
