@@ -845,7 +845,8 @@ err_t cmdSigPrint(const char* sig_file, const char* scope)
 	else
 		code = ERR_CMD_PARAMS;
 	// завершить
-	ERR_CALL_CHECK(code);
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	printf("\n");
+	cmdBlobClose(stack);
 	return code;
 }
