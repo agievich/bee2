@@ -82,6 +82,10 @@ Bee2 is distributed under the Apache License version 2.0. See
 [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0) or 
 [LICENSE](LICENSE.txt) for details.
 
+## Third-party code
+
+* [whereami](https://github.com/gpakosz/whereami).
+
 ## Automated tools
 
 Platforms:
