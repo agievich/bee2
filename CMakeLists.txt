@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.5)
 project(BEE2 C)
 
 set(BEE2_VERSION_MAJOR "2")
