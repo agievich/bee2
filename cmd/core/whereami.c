@@ -68,7 +68,7 @@ extern "C" {
 #if defined(_MSC_VER)
 #pragma warning(pop)
 #endif
-#if (MSC_VER >= 1800)
+#if (_MSC_VER >= 1900)
 #include <stdbool.h>
 #else
 #define bool int
