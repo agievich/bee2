@@ -16,15 +16,14 @@ option(INSTALL_HEADERS "Install headers." ON)
 
 if(CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE}
-      CACHE STRING "Choose the type of build: \
-        Release Debug Coverage ASan ASanDbg MemSan MemSanDbg Check"
-      FORCE)
+    CACHE STRING "Choose the type of build: \
+      Release Debug Coverage ASan ASanDbg MemSan MemSanDbg Check"
+    FORCE)
 else()
   set(CMAKE_BUILD_TYPE Release
-      CACHE STRING 
-      "Choose the type of build: \
-        Release Debug Coverage ASan ASanDbg MemSan MemSanDbg Check"
-      FORCE)
+     CACHE STRING "Choose the type of build: \
+       Release Debug Coverage ASan ASanDbg MemSan MemSanDbg Check"
+     FORCE)
 endif()
 
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
