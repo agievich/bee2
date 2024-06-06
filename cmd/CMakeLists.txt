@@ -1,8 +1,3 @@
-if(MSVC)
-  # disable security warnings for fopen()
-  add_definitions(/D _CRT_SECURE_NO_WARNINGS)
-endif()
-
 add_executable(bee2cmd
   bsum/bsum.c
   core/cmd_arg.c

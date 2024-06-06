@@ -150,8 +150,8 @@ if(NOT BIN_INSTALL_DIR)
   set(BIN_INSTALL_DIR bin)
 endif()
 
-include_directories(include/)
-include_directories(src/)
+include_directories(include)
+include_directories(src)
 
 add_subdirectory(include)
 add_subdirectory(src)
