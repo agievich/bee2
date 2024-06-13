@@ -93,7 +93,6 @@ else()
   target_link_libraries(bee2_static)
 endif()
 
-# enable -fPIC even for static lib if it's linked into a shared lib
 set_property(TARGET bee2_static PROPERTY POSITION_INDEPENDENT_CODE 
   ${BUILD_PIC})
 

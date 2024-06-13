@@ -7,7 +7,11 @@ set(BEE2_VERSION_PATCH "5")
 set(BEE2_VERSION 
   "${BEE2_VERSION_MAJOR}.${BEE2_VERSION_MINOR}.${BEE2_VERSION_PATCH}")
 
+# \remark Set BUILD_PIC even for static libraries if they are linked 
+# into shared libraries
+
 option(BUILD_SHARED_LIBS "Build shared libraries." ON)
+option(BUILD_PIC "Build position independent code." ON)
 option(BUILD_FAST "Build with the SAFE_FAST directive." OFF)
 option(BUILD_CMD "Build bee2cmd." ON)
 option(BUILD_TESTS "Build tests." ON)
