@@ -4,7 +4,7 @@
 \brief Manage certificate signing requests
 \project bee2/cmd 
 \created 2023.12.19
-\version 2024.01.22
+\version 2024.06.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -145,7 +145,7 @@ static err_t csrRewrap(int argc, char* argv[])
 			++argv, --argc;
 			if (!argc)
 			{
-				code = ERR_BAD_PARAMS;
+				code = ERR_CMD_PARAMS;
 				break;
 			}
 			code = cmdPwdRead(&pwd, *argv);

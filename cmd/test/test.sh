@@ -3,7 +3,7 @@
 # \brief Testing command-line interface
 # \project bee2evp/cmd
 # \created 2022.06.24
-# \version 2024.01.22
+# \version 2024.06.14
 # \pre The working directory contains zed.csr.
 # =============================================================================
 
@@ -70,10 +70,31 @@ test_bsum() {
 test_pwd() {
   rm -rf s1 s2 s3 s4 s5 ss1 ss2 ss3 \
     || return 2
+  # pass
   $bee2cmd pwd gen pass:zed \
+    && return 1
+  $bee2cmd pwd val pass:zed \
     || return 1
-  $bee2cmd pwd gen pass:"zed" \
+  $bee2cmd pwd val pass:"zed" \
     || return 1
+  if [ $($bee2cmd pwd print pass:zed) != "zed" ]; then
+    return 1
+  fi
+  # env
+  $bee2cmd pwd gen env:BEE2_CMD_TEST \
+    && return 1
+  unset BEE2_CMD_TEST \
+    || return 2
+  $bee2cmd pwd val env:BEE2_CMD_TEST \
+    && return 1
+  export BEE2_CMD_TEST=zed \
+    || return 2
+  $bee2cmd pwd val env:BEE2_CMD_TEST \
+    || return 1
+  if [ $($bee2cmd pwd print env:BEE2_CMD_TEST) != "zed" ]; then
+    return 1
+  fi
+  # share
   $bee2cmd pwd gen share:"-t2 -t3 -pass pass:zed s1 s2" \
     && return 1
   $bee2cmd pwd gen share:"-t3 -pass pass:zed s1 s2" \
@@ -328,7 +349,7 @@ test_sig(){
     || return 1
   $bee2cmd sig extr -body ff body \
     || return 1
-  if [[ $(< body) != "test" ]]; then
+  if [ $(< body) != "test" ]; then
     return 1
   fi
   $bee2cmd sig extr -sig ff sig \

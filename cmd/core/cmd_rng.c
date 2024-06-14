@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: random number generation
 \project bee2/cmd 
 \created 2022.06.08
-\version 2023.12.16
+\version 2024.06.14
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -140,6 +140,10 @@ static err_t prngEchoRead(size_t* read, void* buf, size_t count, void* state)
 err_t cmdRngStart(bool_t verbose)
 {
 	err_t code;
+	// ГСЧ уже запущен?
+	if (rngIsValid())
+		return ERR_OK;
+	// печать информации об источниках
 	if (verbose)
 	{
 		const char* sources[] = { "trng", "trng2", "sys", "sys2", "timer" };
@@ -152,9 +156,11 @@ err_t cmdRngStart(bool_t verbose)
 				printf(count++ ? ", %s" : "%s", sources[pos]);
 		printf("]... ");
 	}
+	// энтропии достаточно?
 	code = rngESHealth();
 	if (code == ERR_OK)
 		code = rngCreate(0, 0);
+	// нет, подключить клавиатурный источник
 	else if (code == ERR_NOT_ENOUGH_ENTROPY)
 	{
 		void* stack;

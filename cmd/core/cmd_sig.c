@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: signing files
 \project bee2/cmd
 \created 2022.08.20
-\version 2024.05.22
+\version 2024.06.14
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -235,7 +235,8 @@ err_t cmdSigRead(cmd_sig_t* sig, size_t* sig_len, const char* sig_file)
 		ERR_OK : ERR_FILE_READ;
 	ERR_CALL_HANDLE(code, (cmdBlobClose(der), fclose(fp)));
 	code = fread(der, 1, count, fp) == count ? ERR_OK : ERR_FILE_READ;
-	fclose(fp);
+	ERR_CALL_HANDLE(code, (cmdBlobClose(der), fclose(fp)));
+	code = (fclose(fp) == 0) ? ERR_OK : ERR_BAD_FILE;
 	ERR_CALL_HANDLE(code, cmdBlobClose(der));
 	// декодировать
 	memRev(der, count);
@@ -309,7 +310,8 @@ static err_t cmdSigHash(octet hash[], size_t hash_len, const char* file,
 		else
 			bashHashStepH(stack, count, state);
 	}
-	fclose(fp);
+	code = (fclose(fp) == 0) ? ERR_OK : ERR_BAD_FILE;
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// хэшировать сертификаты и дату
 	if (hash_len <= 32)
 	{

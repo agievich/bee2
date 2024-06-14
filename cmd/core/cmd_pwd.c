@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: password management
 \project bee2/cmd 
 \created 2022.06.13
-\version 2023.06.05
+\version 2024.06.14
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -24,6 +24,7 @@
 #include <bee2/crypto/bpki.h>
 #include <bee2/crypto/brng.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 /*
 *******************************************************************************
@@ -115,16 +116,52 @@ err_t pwdSelfTest()
 
 static err_t cmdPwdGenPass(cmd_pwd_t* pwd, const char* cmdline)
 {
-	ASSERT(memIsValid(pwd, sizeof(blob_t*)));
+	return ERR_NOT_IMPLEMENTED;
+}
+
+static err_t cmdPwdReadPass(cmd_pwd_t* pwd, const char* cmdline)
+{
+	ASSERT(memIsValid(pwd, sizeof(cmd_pwd_t)));
 	ASSERT(strIsValid(cmdline));
 	// создать пароль
-	if (!(*pwd = blobCreate(strLen(cmdline) + 1)))
+	if (!(*pwd = cmdPwdCreate(strLen(cmdline))))
 		return ERR_OUTOFMEMORY;
 	strCopy(*pwd, cmdline);
 	return ERR_OK;
 }
 
-#define cmdPwdReadPass cmdPwdGenPass
+/*
+*******************************************************************************
+Управление паролями: схема env
+*******************************************************************************
+*/
+
+static const char* cmdEnvGet(const char* name)
+{
+	ASSERT(strIsValid(name));
+	return getenv(name);
+}
+
+static err_t cmdPwdGenEnv(cmd_pwd_t* pwd, const char* cmdline)
+{
+	return ERR_NOT_IMPLEMENTED;
+}
+
+static err_t cmdPwdReadEnv(cmd_pwd_t* pwd, const char* cmdline)
+{
+	const char* val;
+	// pre
+	ASSERT(memIsValid(pwd, sizeof(cmd_pwd_t)));
+	ASSERT(strIsValid(cmdline));
+	// читать пароль из переменной окружения
+	if (!(val = cmdEnvGet(cmdline)))
+		return ERR_BAD_ENV;
+	// возвратить пароль
+	if (!(*pwd = cmdPwdCreate(strLen(val))))
+		return ERR_OUTOFMEMORY;
+	strCopy(*pwd, val);
+	return ERR_OK;
+}
 
 /*
 *******************************************************************************
@@ -154,14 +191,14 @@ static err_t cmdPwdGenShare_internal(cmd_pwd_t* pwd, size_t scount,
 	ASSERT(!crc || len != 16);
 	// пароль пока не создан
 	*pwd = 0;
-	// входной контроль
-	if (!rngIsValid())
-		return ERR_BAD_RNG;
 	// определить длину пароля
 	if (len == 0)
 		len = 32;
 	// определить длину контейнера с частичным секретом
 	code = bpkiShareWrap(0, &epki_len, 0, len + 1, 0, 0, 0, iter);
+	ERR_CALL_CHECK(code);
+	// запустить ГСЧ
+	code = cmdRngStart(TRUE);
 	ERR_CALL_CHECK(code);
 	// выделить память и разметить ее
 	code = cmdBlobCreate(stack, len +
@@ -173,7 +210,7 @@ static err_t cmdPwdGenShare_internal(cmd_pwd_t* pwd, size_t scount,
 	state = share = pwd_bin + len;
 	salt = share + scount * (len + 1);
 	epki = salt + 8;
-	// сгенерировать пароль
+	// генерировать пароль
 	if (crc)
 	{
 		rngStepR(pwd_bin, len - 8, 0);
@@ -191,21 +228,13 @@ static err_t cmdPwdGenShare_internal(cmd_pwd_t* pwd, size_t scount,
 	// защитить частичные секреты
 	for (; scount--; share += (len + 1), ++shares)
 	{
-		FILE* fp;
 		// установить защиту
 		rngStepR(salt, 8, 0);
 		code = bpkiShareWrap(epki, 0, share, len + 1, (const octet*)spwd,
 			cmdPwdLen(spwd), salt, iter);
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		// открыть файл для записи
-		ASSERT(strIsValid(*shares));
-		fp = fopen(*shares, "wb");
-		code = fp ? ERR_OK : ERR_FILE_CREATE;
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		// записать
-		code = fwrite(epki, 1, epki_len, fp) == epki_len ?
-			ERR_OK : ERR_FILE_WRITE;
-		fclose(fp);
+		// записать в файл
+		code = cmdFileWrite(*shares, epki, epki_len);
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	}
 	// создать выходной (текстовый) пароль
@@ -274,17 +303,16 @@ static err_t cmdPwdReadShare_internal(cmd_pwd_t* pwd, size_t scount,
 	// прочитать частичные секреты
 	for (pos = 0; pos < scount; ++pos, ++shares)
 	{
-		FILE* fp;
 		size_t share_len;
-		// открыть файл для чтения
-		ASSERT(strIsValid(*shares));
-		code = (fp = fopen(*shares, "rb")) ? ERR_OK : ERR_FILE_OPEN;
+		// определить длину контейнера
+		code = cmdFileReadAll(0, &epki_len, *shares);
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-		// читать
-		epki_len = fread(epki, 1, epki_len_max + 1, fp);
-		fclose(fp);
+		// проверить длину
 		code = (epki_len_min <= epki_len && epki_len <= epki_len_max) ?
 			ERR_OK : ERR_BAD_FORMAT;
+		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		// читать
+		code = cmdFileReadAll(epki, &epki_len, *shares);
 		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 		// декодировать
 		code = bpkiShareUnwrap(share + pos * (len + 1), &share_len,
@@ -562,6 +590,8 @@ err_t cmdPwdGen(cmd_pwd_t* pwd, const char* cmdline)
 {
 	if (strStartsWith(cmdline, "pass:"))
 		return cmdPwdGenPass(pwd, cmdline + strLen("pass:"));
+	else if (strStartsWith(cmdline, "env:"))
+		return cmdPwdGenEnv(pwd, cmdline + strLen("env:"));
 	else if (strStartsWith(cmdline, "share:"))
 		return cmdPwdGenShare(pwd, cmdline + strLen("share:"));
 	return ERR_CMD_PARAMS;
@@ -571,6 +601,8 @@ err_t cmdPwdRead(cmd_pwd_t* pwd, const char* cmdline)
 {
 	if (strStartsWith(cmdline, "pass:"))
 		return cmdPwdReadPass(pwd, cmdline + strLen("pass:"));
+	else if (strStartsWith(cmdline, "env:"))
+		return cmdPwdReadEnv(pwd, cmdline + strLen("env:"));
 	else if (strStartsWith(cmdline, "share:"))
 		return cmdPwdReadShare(pwd, cmdline + strLen("share:"));
 	return ERR_CMD_PARAMS;

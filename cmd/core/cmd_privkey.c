@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: managing private keys
 \project bee2/cmd 
 \created 2022.06.20
-\version 2023.06.18
+\version 2024.06.14
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -38,16 +38,12 @@ err_t cmdPrivkeyWrite(const octet privkey[], size_t privkey_len,
 	octet* salt;
 	octet* epki;
 	size_t epki_len;
-	FILE* fp;
 	// pre
 	ASSERT(privkey_len == 24 || privkey_len == 32 || privkey_len == 48 || 
 		privkey_len == 64);
 	ASSERT(memIsValid(privkey, privkey_len));
 	ASSERT(strIsValid(file));
 	ASSERT(cmdPwdIsValid(pwd));
-	// входной контроль
-	if (!rngIsValid())
-		return ERR_BAD_RNG;
 	// определить длину контейнера
 	code = bpkiPrivkeyWrap(0, &epki_len, 0, privkey_len, 0, 0, 0, iter);
 	ERR_CALL_CHECK(code);
@@ -56,18 +52,16 @@ err_t cmdPrivkeyWrite(const octet privkey[], size_t privkey_len,
 	ERR_CALL_CHECK(code);
 	salt = (octet*)stack;
 	epki = salt + 8;
+	// запустить ГСЧ
+	code = cmdRngStart(TRUE);
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// установить защиту
 	rngStepR(salt, 8, 0);
 	code = bpkiPrivkeyWrap(epki, 0, privkey, privkey_len, (const octet*)pwd,
 		cmdPwdLen(pwd), salt, iter);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-	// открыть файл для записи
-	fp = fopen(file, "wb");
-	code = fp ? ERR_OK : ERR_FILE_CREATE;
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-	// записать
-	code = fwrite(epki, 1, epki_len, fp) == epki_len ? ERR_OK : ERR_FILE_WRITE;
-	fclose(fp);
+	// записать в файл
+	code = cmdFileWrite(file, epki, epki_len);
 	// завершить
 	cmdBlobClose(stack);
 	return code;
@@ -89,7 +83,6 @@ err_t cmdPrivkeyRead(octet privkey[], size_t* privkey_len, const char* file,
 	size_t epki_len_max;
 	void* stack;
 	octet* epki;
-	FILE* fp;
 	// pre
 	ASSERT(memIsNullOrValid(privkey_len, sizeof(size_t)));
 	ASSERT(!privkey_len || *privkey_len == 0 || *privkey_len == 24 ||
@@ -135,13 +128,15 @@ err_t cmdPrivkeyRead(octet privkey[], size_t* privkey_len, const char* file,
 	code = cmdBlobCreate(stack, epki_len_max + 1);
 	ERR_CALL_CHECK(code);
 	epki = (octet*)stack;
-	// прочитать контейнер
-	code = (fp = fopen(file, "rb")) ? ERR_OK : ERR_FILE_OPEN;
+	// определить длину контейнера
+	code = cmdFileReadAll(0, &epki_len, file);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
-	epki_len = fread(epki, 1, epki_len_max + 1, fp);
-	fclose(fp);
+	// проверить длину
 	code = (epki_len_min <= epki_len && epki_len <= epki_len_max) ?
 		ERR_OK : ERR_BAD_FORMAT;
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	// читать
+	code = cmdFileReadAll(epki, &epki_len, file);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// снять защиту
 	code = bpkiPrivkeyUnwrap(privkey, &epki_len_min, epki, epki_len,

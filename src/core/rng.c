@@ -4,7 +4,7 @@
 \brief Entropy sources and random number generators
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2023.12.19
+\version 2024.06.14
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -630,7 +630,7 @@ err_t rngESHealth()
 	const char* sources[] = { "sys", "sys2", "timer" };
 	size_t valid_sources = 0;
 	size_t pos;
-	// есть физический источник?
+	// есть работоспособный физический источник?
 	if (rngESHealth2() == ERR_OK)
 		return ERR_OK;
 	// проверить остальные источники
@@ -638,11 +638,10 @@ err_t rngESHealth()
 	{
 		if (rngESTest(sources[pos]) != ERR_OK)
 			continue;
-		valid_sources++;
+		// два работоспособных источника?
+		if (++valid_sources == 2)
+			return ERR_OK;
 	}
-	// не менее двух работоспосбных источников?
-	if (valid_sources >= 2)
-		return ERR_OK;
 	// только один?
 	if (valid_sources == 1)
 		return ERR_NOT_ENOUGH_ENTROPY;

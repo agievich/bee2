@@ -4,7 +4,7 @@
 \brief Dealing with entropy sources
 \project bee2/cmd 
 \created 2021.04.20
-\version 2023.12.16
+\version 2024.06.14
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -205,7 +205,8 @@ static err_t esRead(int argc, char *argv[])
 		count -= read;
 	}
 	// завершение
-	fclose(fp);
+	if (fclose(fp) != 0)
+		return ERR_BAD_FILE;
 	return ERR_OK;
 }
 

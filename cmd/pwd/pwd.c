@@ -4,7 +4,7 @@
 \brief Generate and manage passwords
 \project bee2/cmd 
 \created 2022.06.23
-\version 2023.12.17
+\version 2024.06.14
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -64,6 +64,7 @@ static int pwdUsage()
 		"    print a password built by <schema>\n"
 		"  schemas:\n"
 		"    pass:<pwd> -- direct password\n"
+		"    env:<name> -- password in environment variable <name>\n"
 		"    share:\"[options] <share1> <share2> ...\" -- shared password\n"
 		"      options:\n"
 		"        -t<nn> --- threshold (2 <= <nn> <= 16, 2 by default)\n"
@@ -149,12 +150,9 @@ static err_t pwdGen(int argc, char* argv[])
 	cmd_pwd_t pwd = 0;
 	// верное число параметров?
 	if (argc != 1)
-		return ERR_BAD_PARAMS;
+		return ERR_CMD_PARAMS;
 	// самотестирование
 	code = pwdSelfTest();
-	ERR_CALL_CHECK(code);
-	// запустить ГСЧ
-	code = cmdRngStart(TRUE);
 	ERR_CALL_CHECK(code);
 	// генерировать пароль
 	code = cmdPwdGen(&pwd, *argv);
@@ -176,7 +174,7 @@ static err_t pwdVal(int argc, char* argv[])
 	cmd_pwd_t pwd = 0;
 	// верное число параметров?
 	if (argc != 1)
-		return ERR_BAD_PARAMS;
+		return ERR_CMD_PARAMS;
 	// самотестирование
 	code = pwdSelfTest();
 	ERR_CALL_CHECK(code);
@@ -200,7 +198,7 @@ static err_t pwdPrint(int argc, char* argv[])
 	cmd_pwd_t pwd = 0;
 	// верное число параметров?
 	if (argc != 1)
-		return ERR_BAD_PARAMS;
+		return ERR_CMD_PARAMS;
 	// определить пароль
 	code = cmdPwdRead(&pwd, *argv);
 	ERR_CALL_CHECK(code);

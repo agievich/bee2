@@ -4,7 +4,7 @@
 \brief Hash files using belt-hash / bash-hash
 \project bee2/cmd 
 \created 2014.10.28
-\version 2024.01.22
+\version 2024.06.14
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -182,7 +182,14 @@ static int bsumHash(octet hash[], size_t hid, const char* filename)
 		printf("%s: FAILED [read]\n", filename);
 		return -1;
 	}
-	fclose(fp);
+	// закрыть файл
+	if (fclose(fp) != 0)
+	{
+		memWipe(buf, sizeof(buf));
+		memWipe(state, sizeof(state));
+		printf("%s: FAILED [close]\n", filename);
+		return -1;
+	}
 	// возвратить хэш-значение
 	if (hid == 0)
 		beltHashStepG(hash, state);
@@ -228,7 +235,7 @@ static int bsumCheck(size_t hid, const char* filename)
 	size_t bad_hashes = 0;
 	// длина хэш-значения в байтах
 	hash_len = bsumHidHashLen(hid);
-	// открыть checksum_file
+	// открыть файл контрольных сумм
 	fp = fopen(filename, "rb");
 	if (!fp)
 	{
@@ -266,7 +273,13 @@ static int bsumCheck(size_t hid, const char* filename)
 		}
 		printf("%s: OK\n", str + 2 * hash_len + 2);
 	}
-	fclose(fp);
+	// закрыть файл контрольных сумм
+	if (fclose(fp) != 0)
+	{
+		printf("%s: FAILED [close]\n", filename);
+		return -1;
+	}
+	// печать предупреждений
 	if (bad_lines)
 		fprintf(stderr, bad_lines == 1 ? 
 			"WARNING: %lu input line (out of %lu) is improperly formatted\n" :

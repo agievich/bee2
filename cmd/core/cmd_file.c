@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: file management
 \project bee2/cmd 
 \created 2022.06.08
-\version 2023.06.23
+\version 2024.06.14
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -38,8 +38,9 @@ size_t cmdFileSize(const char* file)
 		return SIZE_MAX;
 	}
 	size = ftell(fp);
-	fclose(fp);
-	return (size == -1L) ? SIZE_MAX : (size_t)size;
+	if (fclose(fp) != 0)
+		size = -1;
+	return (size < 0) ? SIZE_MAX : (size_t)size;
 }
 
 /*
@@ -50,39 +51,44 @@ size_t cmdFileSize(const char* file)
 
 err_t cmdFileWrite(const char* file, const void* buf, size_t count)
 {
-	err_t code;
 	FILE* fp;
 	// pre
 	ASSERT(strIsValid(file));
 	ASSERT(memIsValid(buf, count));
 	// записать
-	code = (fp = fopen(file, "wb")) ? ERR_OK : ERR_FILE_CREATE;
-	ERR_CALL_CHECK(code);
-	code = count == fwrite(buf, 1, count, fp) ? ERR_OK : ERR_FILE_WRITE;
-	fclose(fp);
-	// завершить
-	return code;
+	if (!(fp = fopen(file, "wb")))
+		return ERR_FILE_CREATE;
+	if (count != fwrite(buf, 1, count, fp))
+	{
+		fclose(fp);
+		return ERR_FILE_WRITE;
+	}
+	if (fclose(fp) != 0)
+		return ERR_BAD_FILE;
+	return ERR_OK;
 }
 
 err_t cmdFileAppend(const char* file, const void* buf, size_t count)
 {
-	err_t code;
 	FILE* fp;
 	// pre
 	ASSERT(strIsValid(file));
 	ASSERT(memIsValid(buf, count));
-	// записать
-	code = (fp = fopen(file, "ab")) ? ERR_OK : ERR_FILE_OPEN;
-	ERR_CALL_CHECK(code);
-	code = count == fwrite(buf, 1, count, fp) ? ERR_OK : ERR_FILE_WRITE;
-	fclose(fp);
-	// завершить
-	return code;
+	// дописать
+	if (!(fp = fopen(file, "ab")))
+		return ERR_FILE_OPEN;
+	if (count != fwrite(buf, 1, count, fp))
+	{
+		fclose(fp);
+		return ERR_FILE_WRITE;
+	}
+	if (fclose(fp) != 0)
+		return ERR_BAD_FILE;
+	return ERR_OK;
 }
 
 err_t cmdFileReadAll(void* buf, size_t* count, const char* file)
 {
-	err_t code;
 	// pre
 	ASSERT(memIsValid(count, O_PER_S));
 	ASSERT(strIsValid(file));
@@ -91,21 +97,25 @@ err_t cmdFileReadAll(void* buf, size_t* count, const char* file)
 	{
 		FILE* fp;
 		ASSERT(memIsValid(buf, *count));
-		code = (fp = fopen(file, "rb")) ? ERR_OK : ERR_FILE_OPEN;
-		ERR_CALL_CHECK(code);
+		if (!(fp = fopen(file, "rb")))
+			return ERR_FILE_OPEN;
 		if (fread(buf, 1, *count, fp) != *count || getc(fp) != EOF)
-			code = ERR_FILE_READ;
-		fclose(fp);
+		{
+			fclose(fp);
+			return ERR_FILE_READ;
+		}	
+		if (fclose(fp) != 0)
+			return ERR_BAD_FILE;
 	}
 	// определить длину файла
 	else
 	{
-		size_t size = cmdFileSize(file);
-		code = size != SIZE_MAX ? ERR_OK : ERR_FILE_READ;
-		ERR_CALL_CHECK(code);
+		size_t size;
+		if ((size = cmdFileSize(file)) == SIZE_MAX)
+			return ERR_FILE_READ;
 		*count = size;
 	}
-	return code;
+	return ERR_OK;
 }
 
 /*
@@ -160,17 +170,20 @@ err_t cmdFileDup(const char* ofile, const char* ifile, size_t skip,
 		}
 	// дублировать все
 	else
-		while (code == ERR_OK)
+		while (count && code == ERR_OK)
 		{
-			size_t c = fread(buf, 1, buf_size, ifp);
-			if (c != buf_size && !feof(ifp))
+			count = fread(buf, 1, buf_size, ifp);
+			if (count != buf_size && !feof(ifp))
 				code = ERR_FILE_READ;
-			else if (fwrite(buf, 1, c, ofp) != c)
+			else if (fwrite(buf, 1, count, ofp) != count)
 				code = ERR_FILE_WRITE;
 		}
 	// завершить
 	cmdBlobClose(buf);
-	fclose(ofp), fclose(ifp);
+	if (fclose(ofp) != 0)
+		code = (code != ERR_OK) ? code : ERR_BAD_FILE;
+	if (fclose(ifp) != 0)
+		code = (code != ERR_OK) ? code : ERR_BAD_FILE;
 	return code;
 }
 
@@ -189,8 +202,10 @@ err_t cmdFileValNotExist(int count, char* files[])
 		ASSERT(strIsValid(*files));
 		if (fp = fopen(*files, "rb"))
 		{
-			fclose(fp);
-			printf("Some files already exist. Overwrite [y/n]?");
+			if (fclose(fp) != 0)
+				return ERR_BAD_FILE;
+			if (printf("Some files already exist. Overwrite [y/n]?") < 0)
+				return ERR_FILE_EXISTS;
 			do
 				ch = cmdTermGetch();
 			while (ch != 'Y' && ch != 'y' && ch != 'N' && ch != 'n' && ch != '\n');
@@ -211,7 +226,8 @@ err_t cmdFileValExist(int count, char* files[])
 		ASSERT(strIsValid(*files));
 		if (!(fp = fopen(*files, "rb")))
 			return ERR_FILE_NOT_FOUND;
-		fclose(fp);
+		if (fclose(fp) != 0)
+			return ERR_BAD_FILE;
 	}
 	return ERR_OK;
 }

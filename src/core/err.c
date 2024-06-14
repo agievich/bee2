@@ -4,7 +4,7 @@
 \brief Errors
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2023.09.25
+\version 2024.06.14
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -31,6 +31,7 @@ static const err_msg _messages[] = {
 	{ERR_BAD_UNIT, "Invalid device"},
 	{ERR_BAD_FILE, "Invalid file"},
 	{ERR_BAD_TIMER, "Invalid timer"},
+	{ERR_BAD_ENV, "Invalid environment variable"},
 	{ERR_BAD_FUNCTION, "Invalid function"},
 	{ERR_BAD_COMMAND, "Invalid command"},
 	{ERR_BAD_LENGTH, "Invalid length"},
