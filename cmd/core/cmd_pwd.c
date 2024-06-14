@@ -138,8 +138,9 @@ static err_t cmdPwdReadPass(cmd_pwd_t* pwd, const char* cmdline)
 
 static const char* cmdEnvGet(const char* name)
 {
-	ASSERT(strIsValid(name));
-	return getenv(name);
+	const char* val;
+	val = getenv(name);
+	return strIsValid(val) ? val : 0;
 }
 
 static err_t cmdPwdGenEnv(cmd_pwd_t* pwd, const char* cmdline)
