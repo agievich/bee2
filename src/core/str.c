@@ -4,7 +4,7 @@
 \brief Strings
 \project bee2 [cryptographic library]
 \created 2013.02.04
-\version 2023.09.18
+\version 2024.06.14
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -19,6 +19,10 @@
 Характеристики / проверка
 
 \warning В strLen() нельзя вызывать strIsValid() -- будет рекурсия.
+
+\remark Комментарий перед функцией strIsValid() -- это декларация для 
+Coverity Scan о том, что функция является санитайзером строк
+(https://community.synopsys.com/s/article/From-Case-Clearing-TAINTED-STRING).
 *******************************************************************************
 */
 
@@ -33,6 +37,7 @@ size_t strLen2(const char* str, size_t count)
 	return str ? strnlen(str, count) : SIZE_0;
 }
 
+// coverity[ +tainted_string_sanitize_content : arg-0 ]
 bool_t strIsValid(const char* str)
 {
 	return memIsValid(str, strLen(str) + (str ? 1 : 0));
