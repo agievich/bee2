@@ -4,7 +4,7 @@
 \brief Prime numbers
 \project bee2 [cryptographic library]
 \created 2012.08.13
-\version 2024.02.28
+\version 2024.06.14
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -426,7 +426,6 @@ bool_t priIsSieved(const word a[], size_t n, size_t base_count, void* stack)
 			--base_count;
 	// раскладка stack
 	mods = (word*)stack;
-	stack = mods + base_count;
 	// найти остатки
 	priBaseMod(mods, a, n, base_count);
 	// есть нулевые остатки?
@@ -448,7 +447,6 @@ bool_t priIsSmooth(const word a[], size_t n, size_t base_count, void* stack)
 	register word mod;
 	// переменные в stack
 	word* t = (word*)stack;
-	stack = t + n;
 	// pre
 	ASSERT(base_count <= priBaseSize());
 	// t <- a 
