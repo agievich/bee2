@@ -4,7 +4,7 @@
 \brief Errors
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2023.09.25
+\version 2024.06.14
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -60,36 +60,38 @@ Sys
 #define ERR_BAD_FILE				_ERR_REG(103)
 /* некорректный таймер */
 #define ERR_BAD_TIMER				_ERR_REG(104)
+/* некорректная переменная окружения */
+#define ERR_BAD_ENV					_ERR_REG(105)
 /* некорректная функция */
-#define ERR_BAD_FUNCTION			_ERR_REG(105)
+#define ERR_BAD_FUNCTION			_ERR_REG(106)
 /* некорректная команда */
-#define ERR_BAD_COMMAND				_ERR_REG(106)
+#define ERR_BAD_COMMAND				_ERR_REG(107)
 /* некорректная длина */
-#define ERR_BAD_LENGTH				_ERR_REG(107)
+#define ERR_BAD_LENGTH				_ERR_REG(108)
 /* некорректные входные данные */
-#define ERR_BAD_INPUT				_ERR_REG(108)
+#define ERR_BAD_INPUT				_ERR_REG(109)
 /* не хватает памяти */
-#define ERR_OUTOFMEMORY				_ERR_REG(109)
+#define ERR_OUTOFMEMORY				_ERR_REG(110)
 /* переполнение */
-#define ERR_OVERFLOW				_ERR_REG(110)
+#define ERR_OVERFLOW				_ERR_REG(111)
 /* объект не найден */
-#define ERR_NOT_FOUND				_ERR_REG(111)
+#define ERR_NOT_FOUND				_ERR_REG(112)
 /* объект уже существует */
-#define ERR_ALREADY_EXISTS			_ERR_REG(112)
+#define ERR_ALREADY_EXISTS			_ERR_REG(113)
 /* доступ запрещен */
-#define ERR_ACCESS_DENIED			_ERR_REG(113)
+#define ERR_ACCESS_DENIED			_ERR_REG(114)
 /* устройство не готово */
-#define ERR_NOT_READY				_ERR_REG(114)
+#define ERR_NOT_READY				_ERR_REG(115)
 /* запрашиваемый ресурс занят */
-#define ERR_BUSY					_ERR_REG(115)
+#define ERR_BUSY					_ERR_REG(116)
 /* таймаут */
-#define ERR_TIMEOUT					_ERR_REG(116)
+#define ERR_TIMEOUT					_ERR_REG(117)
 /* без результата */
-#define ERR_NO_RESULT				_ERR_REG(117)
+#define ERR_NO_RESULT				_ERR_REG(118)
 /* не реализовано */
-#define ERR_NOT_IMPLEMENTED			_ERR_REG(118)
+#define ERR_NOT_IMPLEMENTED			_ERR_REG(119)
 /* последствия предыдущих ошибок */
-#define ERR_AFTER					_ERR_REG(119)
+#define ERR_AFTER					_ERR_REG(120)
 
 /*
 *******************************************************************************
@@ -99,7 +101,7 @@ File
 
 /* ошибка при создании файла */
 #define ERR_FILE_CREATE				_ERR_REG(201)
-/* ошибка при создании файла */
+/* файл не найден */
 #define ERR_FILE_NOT_FOUND			_ERR_REG(202)
 /* ошибка при открытии файла */
 #define ERR_FILE_OPEN				_ERR_REG(203)
@@ -227,7 +229,6 @@ Cmd
 #define ERR_CMD_PARAMS				_ERR_REG(603)
 /* повтор параметров команды */
 #define ERR_CMD_DUPLICATE			_ERR_REG(604)
-
 
 /*
 *******************************************************************************

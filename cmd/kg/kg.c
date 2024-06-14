@@ -4,7 +4,7 @@
 \brief Generate and manage private keys
 \project bee2/cmd 
 \created 2022.06.08
-\version 2023.12.19
+\version 2024.06.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -354,9 +354,6 @@ static err_t kgChp(int argc, char* argv[])
 	code = cmdPrivkeyRead(privkey, &len, argv[0], pwdin);
 	cmdPwdClose(pwdin);
 	ERR_CALL_HANDLE(code, (cmdBlobClose(privkey), cmdPwdClose(pwdout)));
-	// запустить ГСЧ
-	code = cmdRngStart(TRUE);
-	ERR_CALL_HANDLE(code, (cmdBlobClose(privkey), cmdPwdClose(pwdout)));
 	// сохранить личный ключ
 	code = cmdPrivkeyWrite(privkey, len, argv[0], pwdout);
 	cmdBlobClose(privkey);
@@ -461,7 +458,7 @@ static err_t kgExtr(int argc, char* argv[])
 			++argv, --argc;
 			if (!argc)
 			{
-				code = ERR_BAD_PARAMS;
+				code = ERR_CMD_PARAMS;
 				break;
 			}
 			code = cmdPwdRead(&pwd, *argv);
@@ -544,7 +541,7 @@ static err_t kgPrint(int argc, char* argv[])
 			++argv, --argc;
 			if (!argc)
 			{
-				code = ERR_BAD_PARAMS;
+				code = ERR_CMD_PARAMS;
 				break;
 			}
 			code = cmdPwdRead(&pwd, *argv);

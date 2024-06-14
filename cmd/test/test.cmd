@@ -3,7 +3,7 @@ rem ===========================================================================
 rem \brief Testing command-line interface
 rem \project bee2evp/cmd
 rem \created 2022.06.24
-rem \version 2024.01.22
+rem \version 2024.06.14
 rem \pre The working directory contains zed.csr.
 rem ===========================================================================
 
@@ -85,10 +85,34 @@ echo ****** Testing bee2cmd/pwd...
 del /q s1 s2 s3 s4 s5 2> nul
 
 bee2cmd pwd gen pass:zed
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd pwd val pass:zed
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd pwd gen pass:"zed"
+bee2cmd pwd val pass:"zed"
 if %ERRORLEVEL% neq 0 goto Error
+
+for /f %%i in ('bee2cmd pwd print pass:zed') do (
+  if "%%i" neq "zed" goto Error
+)
+
+bee2cmd pwd gen env:BEE2_CMD_TEST
+if %ERRORLEVEL% equ 0 goto Error
+
+set BEE2_CMD_TEST=
+
+bee2cmd pwd val env:BEE2_CMD_TEST
+if %ERRORLEVEL% equ 0 goto Error
+
+set BEE2_CMD_TEST=zed
+
+bee2cmd pwd val env:BEE2_CMD_TEST
+if %ERRORLEVEL% neq 0 goto Error
+
+for /f %%i in ('bee2cmd pwd print env:BEE2_CMD_TEST') do (
+  if "%%i" neq "zed" goto Error
+)
 
 bee2cmd pwd gen share:"-t2 -t3 -pass pass:zed s1 s2"
 if %ERRORLEVEL% equ 0 goto Error
