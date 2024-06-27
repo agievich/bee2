@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: signing files
 \project bee2/cmd
 \created 2022.08.20
-\version 2024.06.14
+\version 2024.06.27
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -274,12 +274,12 @@ static err_t cmdSigHash(octet hash[], size_t hash_len, const char* file,
 		hash_len == 64);
 	ASSERT(memIsValid(hash, hash_len));
 	ASSERT(strIsValid(file));
-	// выделить память
+	// выделить и разметить память
 	code = cmdBlobCreate(stack, buf_size +
 		(hash_len <= 32 ? beltHash_keep() : bashHash_keep()));
 	ERR_CALL_CHECK(code);
-	// запустить хэширование
 	state = stack + buf_size;
+	// запустить хэширование
 	if (hash_len <= 32)
 		beltHashStart(state);
 	else
@@ -379,7 +379,7 @@ err_t cmdSigSign(const char* sig_file, const char* file, const char* certs,
 		return ERR_BAD_INPUT;
 	if (!memIsZero(date, 6) && !tmDateIsValid2(date))
 		return ERR_BAD_DATE;
-	// создать и разметить стек
+	// выделить и разметить память
 	code = cmdBlobCreate(stack,
 		sizeof(cmd_sig_t) + sizeof(bign_params) + oid_len + 2 * privkey_len);
 	ERR_CALL_CHECK(code);
@@ -489,7 +489,7 @@ err_t cmdSigVerify(const char* file, const char* sig_file,
 			pubkey_len == 128) ||
 		!memIsValid(pubkey, pubkey_len))
 		return ERR_BAD_INPUT;
-	// создать и разметить стек
+	// выделить и разметить память
 	code = cmdBlobCreate(stack, sizeof(cmd_sig_t) + sizeof(btok_cvc_t) +
 		sizeof(bign_params) + oid_len + pubkey_len / 2);
 	ERR_CALL_CHECK(code);
@@ -581,7 +581,7 @@ err_t cmdSigVerify2(const char* file, const char* sig_file,
 	if (!strIsValid(file) || !strIsValid(sig_file) ||
 		!memIsValid(anchor, anchor_len))
 		return ERR_BAD_INPUT;
-	// создать и разметить стек
+	// выделить и разметить память
 	code = cmdBlobCreate(stack, sizeof(cmd_sig_t) + sizeof(btok_cvc_t) +
 		sizeof(bign_params) + oid_len + 64);
 	ERR_CALL_CHECK(code);
@@ -721,7 +721,7 @@ err_t cmdSigExtr(const char* obj_file, const char* sig_file, const char* scope)
 		!strEq(scope, "sig") &&
 		!strStartsWith(scope, "cert"))
 		return ERR_CMD_PARAMS;
-	// создать и разметить стек
+	// выделить и разметить память
 	code = cmdBlobCreate(stack, sizeof(cmd_sig_t));
 	ERR_CALL_CHECK(code);
 	sig = (cmd_sig_t*)stack;
@@ -814,7 +814,7 @@ err_t cmdSigPrint(const char* sig_file, const char* scope)
 	// входной контроль
 	if (!strIsValid(sig_file) || !strIsValid(scope))
 		return ERR_BAD_INPUT;
-	// создать и разметить стек
+	// выделить и разметить память
 	code = cmdBlobCreate(stack, sizeof(cmd_sig_t));
 	ERR_CALL_CHECK(code);
 	sig = (cmd_sig_t*)stack;
