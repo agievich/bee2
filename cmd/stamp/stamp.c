@@ -263,10 +263,10 @@ static int stampCheck(const char* name)
 int stampMain(int argc, char* argv[])
 {
 	// справка
-    if (argc != 3)
-        return stampUsage();
+	if (argc != 3)
+		return stampUsage();
 	// разбор команды
-    --argc, ++argv;
+	--argc, ++argv;
 	if (strEq(argv[0], "-s"))
 		return stampSet(argv[1]);
 	if (strEq(argv[0], "-c"))

@@ -98,18 +98,18 @@ tm_ticks_t tmFreq()
 
 tm_ticks_t tmTicks()
 {
-    return mach_absolute_time();
+	return mach_absolute_time();
 }
 
 tm_ticks_t tmFreq()
 {
-    mach_timebase_info_data_t tb_info;
-    tm_ticks_t freq = 1000000000u;
+	mach_timebase_info_data_t tb_info;
+	tm_ticks_t freq = 1000000000u;
 	// tb_info <- {numer, denom}: 1 tick = numer / denom * 1 ns
 	VERIFY(mach_timebase_info(&tb_info) == KERN_SUCCESS);
 	// 1 s = 10^9 * denom / numer ticks
 	freq *= tb_info.denom, freq /= tb_info.numer;
-    return freq;
+	return freq;
 }
 
 #elif defined(U64_SUPPORT)

@@ -78,7 +78,7 @@ static bool_t cmdSigSeemsValid(const cmd_sig_t* sig)
 
 static size_t cmdSigEnc(octet buf[], const cmd_sig_t* sig)
 {
-    der_anchor_t Signature[1];
+	der_anchor_t Signature[1];
 	size_t count = 0;
 	// pre
 	ASSERT(cmdSigSeemsValid(sig));
@@ -450,7 +450,7 @@ err_t cmdSigSign(const char* sig_file, const char* file, const char* certs,
 	}
 	else
 	{
-    	code = bignSign2(sig->sig, params, oid_der, oid_len, hash, privkey, 
+		code = bignSign2(sig->sig, params, oid_der, oid_len, hash, privkey, 
 			t, t_len);
 		sig->sig_len = privkey_len / 2 * 3;
 	}
@@ -662,44 +662,44 @@ err_t cmdSigVerify2(const char* file, const char* sig_file,
 
 err_t cmdSigSelfVerify(const octet pubkey[], size_t pubkey_len)
 {
-    err_t code;
-    int len;
-    char* buf;
+	err_t code;
+	int len;
+	char* buf;
 	// определить имя исполнимого файла
-    len = wai_getExecutablePath(0, 0, 0);
-    if (len < 0)
-        return ERR_SYS;
-    code = cmdBlobCreate(buf, (size_t)len + 1);
+	len = wai_getExecutablePath(0, 0, 0);
+	if (len < 0)
+		return ERR_SYS;
+	code = cmdBlobCreate(buf, (size_t)len + 1);
 	ERR_CALL_CHECK(code);
-    if (wai_getExecutablePath(buf, len, 0) != len)
+	if (wai_getExecutablePath(buf, len, 0) != len)
 		code = ERR_SYS;
 	ERR_CALL_HANDLE(code, cmdBlobClose(buf));
 	// проверить подпись
-    code = cmdSigVerify(buf, buf, pubkey, pubkey_len);
+	code = cmdSigVerify(buf, buf, pubkey, pubkey_len);
 	// завершить
-    cmdBlobClose(buf);
-    return code;
+	cmdBlobClose(buf);
+	return code;
 }
 
 err_t cmdSigSelfVerify2(const octet anchor[], size_t anchor_len)
 {
-    err_t code;
-    int len;
-    char* buf;
+	err_t code;
+	int len;
+	char* buf;
 	// определить имя исполнимого файла
-    len = wai_getExecutablePath(0, 0, 0);
-    if (len < 0)
-        return ERR_SYS;
-    code = cmdBlobCreate(buf, (size_t)len + 1);
+	len = wai_getExecutablePath(0, 0, 0);
+	if (len < 0)
+		return ERR_SYS;
+	code = cmdBlobCreate(buf, (size_t)len + 1);
 	ERR_CALL_CHECK(code);
-    if (wai_getExecutablePath(buf, len, 0) != len)
+	if (wai_getExecutablePath(buf, len, 0) != len)
 		code = ERR_SYS;
 	ERR_CALL_HANDLE(code, cmdBlobClose(buf));
 	// проверить подпись
-    code = cmdSigVerify2(buf, buf, anchor, anchor_len);
+	code = cmdSigVerify2(buf, buf, anchor, anchor_len);
 	// завершить
-    cmdBlobClose(buf);
-    return code;
+	cmdBlobClose(buf);
+	return code;
 }
 
 /*

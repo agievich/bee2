@@ -87,12 +87,12 @@ EncryptedPrivateKeyInfo будучи защищенными на обычных 
 */
 
 err_t bpkiPrivkeyWrap(
-    octet epki[],			/*!< [out] контейнер с личным ключом */
+	octet epki[],			/*!< [out] контейнер с личным ключом */
 	size_t* epki_len,		/*!< [out] длина epki */
 	const octet privkey[],	/*!< [in] личный ключ */
-    size_t privkey_len,		/*!< [in] длина privkey */
-    const octet pwd[],		/*!< [in] пароль */
-    size_t pwd_len,			/*!< [in] длина pwd */
+	size_t privkey_len,		/*!< [in] длина privkey */
+	const octet pwd[],		/*!< [in] пароль */
+	size_t pwd_len,			/*!< [in] длина pwd */
 	const octet salt[8],	/*!< [in] синхропосылка ("соль") PBKDF2 */
 	size_t iter				/*!< [in] количество итераций в PBKDF2 */
 );

@@ -64,7 +64,7 @@ extern "C" {
 
 Примеры:
 - tag = 0x30 = 00110000 =>
-    class = UNIVERSAL, is_primitive = FALSE, tag_num = 8;
+	class = UNIVERSAL, is_primitive = FALSE, tag_num = 8;
 - tag = 0x7F21 = 01111111 00100001 =>
 	class = APPLICATION, is_primitive = FALSE, tag_num = 33;
 - tag = 0x5F29 = 01011111 00101001 =>

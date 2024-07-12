@@ -408,7 +408,7 @@ err_t btokBAuthTStep3(octet out[], const octet in[], void* state)
 	beltKRPStepG(s->K0, 32, block0, stack);
 	if (s->settings->kcb)
 	{
-	    // K2 <- beltKRP(Y, 1^96, 2)
+		// K2 <- beltKRP(Y, 1^96, 2)
 		block0[0] = 2;
 		beltKRPStepG(s->K2, 32, block0, stack);
 	}
@@ -505,8 +505,8 @@ err_t btokBAuthCTStep4(octet out[], const octet in[], void* state)
 		return ERR_AUTH;
 	if (s->settings->kcb)
 	{
-	    // t <- <beltHash(<Vct>_2l || Rt)>_l
-	    beltHashStart(stack);
+		// t <- <beltHash(<Vct>_2l || Rt)>_l
+		beltHashStart(stack);
 		beltHashStepH(s->V, no, stack);
 		beltHashStepH(in + 8, 16, stack);
 		beltHashStepG2((octet*)t, no / 2, stack);

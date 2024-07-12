@@ -66,11 +66,11 @@ static const char _descr[] = "sign files and verify signatures";
 */
 static int sigUsage()
 {
-    printf(
-        "bee2cmd/%s: %s\n"
-        "Usage:\n"
-        "  sig sign [options] <privkey> <file> <sig>\n"
-        "    sign <file> using <privkey> and store the signature in <sig>\n"
+	printf(
+		"bee2cmd/%s: %s\n"
+		"Usage:\n"
+		"  sig sign [options] <privkey> <file> <sig>\n"
+		"    sign <file> using <privkey> and store the signature in <sig>\n"
 		"  sig val {-pubkey <pubkey>|-anchor <anchor>} <file> <sig>\n"
 		"    verify <sig> of <file> using either <pubkey> or <anchor>\n"
 		"  sig extr {-cert<n>|-body|-sig} <sig> <file>\n"
@@ -84,7 +84,7 @@ static int sigUsage()
 		"    print <sig> info: all fields or a specific field\n"
 		"  .\n"
 		"  <privkey>\n"
-        "    container with a private key\n"
+		"    container with a private key\n"
 		"  <pubkey>\n"
 		"    file with a public key\n"
 		"  <anchor>\n"
@@ -94,14 +94,14 @@ static int sigUsage()
 		"    -date <YYMMDD> -- date of signing (optional)\n"
 		"    -pass <schema> -- password description\n"
 		"  field:\n"
-        "    {-certc|-date|-sig}\n"
+		"    {-certc|-date|-sig}\n"
 		"      -certc -- the number of attached certificates\n"
 		"      -date -- date of signing\n"
 		"      -sig -- base signature\n"
 		,
 		_name, _descr
-    );
-    return -1;
+	);
+	return -1;
 }
 
 /*
@@ -370,21 +370,21 @@ static err_t sigPrint(int argc, char * argv[])
 
 static int sigMain(int argc, char* argv[])
 {
-    err_t code;
+	err_t code;
 	// справка
-    if (argc < 2)
-        return sigUsage();
+	if (argc < 2)
+		return sigUsage();
 	// разбор команды
-    --argc, ++argv;
-    if (strEq(argv[0], "sign"))
-        code = sigSign(argc - 1, argv + 1);
-    else if (strEq(argv[0], "val"))	
-        code = sigVal(argc - 1, argv + 1);
+	--argc, ++argv;
+	if (strEq(argv[0], "sign"))
+		code = sigSign(argc - 1, argv + 1);
+	else if (strEq(argv[0], "val"))	
+		code = sigVal(argc - 1, argv + 1);
 	else if (strEq(argv[0], "extr"))
 		code = sigExtr(argc - 1, argv + 1);
 	else if (strEq(argv[0], "print"))
-        code = sigPrint(argc - 1, argv + 1);
-    else
+		code = sigPrint(argc - 1, argv + 1);
+	else
 		code = ERR_CMD_NOT_FOUND;
 	// завершить
 	if (code != ERR_OK || strEq(argv[0], "val"))
@@ -394,5 +394,5 @@ static int sigMain(int argc, char* argv[])
 
 err_t sigInit()
 {
-    return cmdReg(_name, _descr, sigMain);
+	return cmdReg(_name, _descr, sigMain);
 }

@@ -284,7 +284,7 @@ typedef struct
 	octet from[6];			/*!< дата начала действия (YYMMDD) */
 	octet until[6];			/*!< дата окончания действия (YYMMDD) */
 	octet hat_eid[5];  		/*!< права доступа к eId (optional) */
-	octet hat_esign[2];     /*!< права доступа к eSign (optional) */
+	octet hat_esign[2];		/*!< права доступа к eSign (optional) */
 	octet sig[96];			/*!< подпись */
 	size_t sig_len;			/*!< длина подписи в октетах (48, 72 или 96) */
 } btok_cvc_t;
@@ -349,7 +349,7 @@ err_t btokCVCCheck2(
 	выступает в роли запроса на выпуск сертификата.
 */
 err_t btokCVCWrap(
-    octet cert[],				/*!< [out] сертификат */
+	octet cert[],				/*!< [out] сертификат */
 	size_t* cert_len,			/*!< [out] длина cert в октетах */
 	btok_cvc_t* cvc,			/*!< [in,out] содержание сертификата */
 	const octet privkey[],		/*!< [in] личный ключ */
