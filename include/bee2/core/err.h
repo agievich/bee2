@@ -4,7 +4,7 @@
 \brief Errors
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2024.06.14
+\version 2024.07.12
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -168,52 +168,54 @@ Crypto
 *******************************************************************************
 */
 
+/* некорректный алгоритм */
+#define ERR_BAD_ALG					_ERR_REG(501)
 /* некорректные долговременные параметры */
-#define ERR_BAD_PARAMS				_ERR_REG(501)
+#define ERR_BAD_PARAMS				_ERR_REG(502)
 /* некорректный секретный ключ */
-#define ERR_BAD_SECKEY				_ERR_REG(502)
+#define ERR_BAD_SECKEY				_ERR_REG(503)
 /* некорректный личный ключ */
-#define ERR_BAD_PRIVKEY				_ERR_REG(503)
+#define ERR_BAD_PRIVKEY				_ERR_REG(504)
 /* некорректный открытый ключ */
-#define ERR_BAD_PUBKEY				_ERR_REG(504)
+#define ERR_BAD_PUBKEY				_ERR_REG(505)
 /* некорректная пара открытый / личный ключ */
-#define ERR_BAD_KEYPAIR				_ERR_REG(505)
+#define ERR_BAD_KEYPAIR				_ERR_REG(506)
 /* некорректный общий ключ */
-#define ERR_BAD_SHAREDKEY			_ERR_REG(506)
+#define ERR_BAD_SHAREDKEY			_ERR_REG(507)
 /* некорректный частичный секрет */
-#define ERR_BAD_SHAREKEY			_ERR_REG(507)
+#define ERR_BAD_SHAREKEY			_ERR_REG(508)
 /* некорректное хэш-значение */
-#define ERR_BAD_HASH				_ERR_REG(508)
+#define ERR_BAD_HASH				_ERR_REG(509)
 /* некорректная ЭЦП */
-#define ERR_BAD_SIG					_ERR_REG(509)
+#define ERR_BAD_SIG					_ERR_REG(510)
 /* некорректная имитовставка */
-#define ERR_BAD_MAC					_ERR_REG(510)
+#define ERR_BAD_MAC					_ERR_REG(511)
 /* некорректная контрольная сумма */
-#define ERR_BAD_CRC					_ERR_REG(511)
+#define ERR_BAD_CRC					_ERR_REG(512)
 /* некорректный токен ключа */
-#define ERR_BAD_KEYTOKEN			_ERR_REG(512)
+#define ERR_BAD_KEYTOKEN			_ERR_REG(513)
 /* некорректный сертификат (открытого ключа) */
-#define ERR_BAD_CERT				_ERR_REG(513)
+#define ERR_BAD_CERT				_ERR_REG(514)
 /* некорректный якорь сертификатов */
-#define ERR_BAD_ANCHOR				_ERR_REG(514)
+#define ERR_BAD_ANCHOR				_ERR_REG(515)
 /* некорректное кольцо сертификатов */
-#define ERR_BAD_CERTRING			_ERR_REG(515)
+#define ERR_BAD_CERTRING			_ERR_REG(516)
 /* неверная логика (протокола) */
-#define ERR_BAD_LOGIC				_ERR_REG(516)
+#define ERR_BAD_LOGIC				_ERR_REG(517)
 /* неверный пароль */
-#define ERR_BAD_PWD					_ERR_REG(517)
+#define ERR_BAD_PWD					_ERR_REG(518)
 /* ключ не найден */
-#define ERR_KEY_NOT_FOUND			_ERR_REG(518)
+#define ERR_KEY_NOT_FOUND			_ERR_REG(519)
 /* отсутствует доверие */
-#define ERR_NO_TRUST				_ERR_REG(519)
+#define ERR_NO_TRUST				_ERR_REG(520)
 /* ошибка аутентификации */
-#define ERR_AUTH					_ERR_REG(520)
+#define ERR_AUTH					_ERR_REG(521)
 /* ошибка самотестирования */
-#define ERR_SELFTEST				_ERR_REG(521)
+#define ERR_SELFTEST				_ERR_REG(522)
 /* ошибка статистического тестирования */
-#define ERR_STATTEST				_ERR_REG(522)
+#define ERR_STATTEST				_ERR_REG(523)
 /* некорректные затравочные параметры */
-#define ERR_BAD_SEED				_ERR_REG(523)
+#define ERR_BAD_SEED				_ERR_REG(524)
 
 /*
 *******************************************************************************

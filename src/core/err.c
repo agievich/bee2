@@ -4,7 +4,7 @@
 \brief Errors
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2024.06.14
+\version 2024.07.12
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -75,6 +75,7 @@ static const err_msg _messages[] = {
 	{ERR_NOT_COPRIME, "The items are not coprime"},
 	{ERR_NOT_IRRED, "The polynomial is not irreducible"},
 	// crypto
+	{ERR_BAD_ALG, "Invalid algorithm"},
 	{ERR_BAD_PARAMS, "Invalid domain parameters"},
 	{ERR_BAD_SECKEY, "Invalid secret key"},
 	{ERR_BAD_PRIVKEY, "Invalid private key"},
