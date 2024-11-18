@@ -96,7 +96,7 @@ Platforms:
 Static analysis:
 
 * [Coverity Scan](https://scan.coverity.com/projects/agievich-bee2);
-* [PVS-Studio](https://pvs-studio.com/en/pvs-studio/?utm_source=github&utm_medium=organic&utm_campaign=open_source).
+* [PVS-Studio](https://pvs-studio.com/en/pvs-studio/?utm_source=website&utm_medium=github&utm_campaign=open_source).
 
 Code coverage:
 

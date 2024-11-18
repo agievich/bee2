@@ -14,7 +14,7 @@ add_custom_command(OUTPUT ${doxy_html_index_file}
   COMMENT "Generating HTML documentation"
 )
  
-add_custom_target(doc ALL DEPENDS ${doxy_html_index_file})
+add_custom_target(docbee2 ALL DEPENDS ${doxy_html_index_file})
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/html
   DESTINATION share/bee2/doc)
