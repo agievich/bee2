@@ -34,6 +34,15 @@ void u16Rev2(u16 buf[], size_t count)
 		buf[count] = u16Rev(buf[count]);
 }
 
+u16 u16Bitrev(register u16 w)
+{
+	w = ((w >> 1) & 0x5555) | ((w & 0x5555) << 1);
+	w = ((w >> 2) & 0x3333) | ((w & 0x3333) << 2);
+	w = ((w >> 4) & 0x0F0F) | ((w & 0x0F0F) << 4);
+	w = (w >> 8) | (w << 8);
+	return w;
+}
+
 size_t u16Weight(register u16 w)
 {
 	w -= ((w >> 1) & 0x5555);

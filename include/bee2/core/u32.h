@@ -4,7 +4,7 @@
 \brief 32-bit words
 \project bee2 [cryptographic library]
 \created 2015.10.28
-\version 2023.02.02
+\version 2024.11.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -72,6 +72,15 @@ u32 u32Rev(
 void u32Rev2(
 	u32 buf[],			/*!< [in,out] массив слов */
 	size_t count		/*!< [in] число элементов */
+);
+
+/*!	\brief Реверс битов
+
+	Выполняется реверс битов u32-слова w.
+	\return Слово с переставленными битами.
+*/
+u32 u32Bitrev(
+	register u32 w		/*!< [in] слово */
 );
 	
 /*!	\brief Вес

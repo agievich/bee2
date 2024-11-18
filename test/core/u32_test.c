@@ -4,7 +4,7 @@
 \brief Tests for operations on 32-bit words
 \project bee2/test
 \created 2017.01.11
-\version 2019.07.08
+\version 2024.11.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -36,6 +36,9 @@ bool_t u32Test()
 		return FALSE;
 	u32Rev2(a, 2), u32Rev2(a, 2);
 	if (a[0] != w || a[1] != u32Rev(w))
+		return FALSE;
+	// bit reverse
+	if (u32Bitrev(w) != 0x20C04080 || u32Bitrev(u32Bitrev(w)) != w)
 		return FALSE;
 	// weight / parity
 	if (u32Weight(0) != 0 || u32Parity(0) || !u32Parity(1) ||

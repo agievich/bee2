@@ -4,7 +4,7 @@
 \brief 16-bit words
 \project bee2 [cryptographic library]
 \created 2015.10.28
-\version 2023.02.02
+\version 2024.11.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -71,6 +71,15 @@ u16 u16Rev(
 void u16Rev2(
 	u16 buf[],			/*!< [in,out] приемник */
 	size_t count		/*!< [in] число элементов */
+);
+
+/*!	\brief Реверс битов
+
+	Выполняется реверс битов u16-слова w.
+	\return Слово с переставленными битами.
+*/
+u16 u16Bitrev(
+	register u16 w		/*!< [in] слово */
 );
 
 /*!	\brief Вес

@@ -4,7 +4,7 @@
 \brief Machine words
 \project bee2 [cryptographic library]
 \created 2014.07.18
-\version 2019.06.27
+\version 2024.11.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -50,6 +50,7 @@ extern "C" {
 	#define wordRotHi u16RotHi
 	#define wordRotLo u16RotLo
 	#define wordRev u16Rev
+	#define wordBitrev u16Bitrev
 	#define wordWeight u16Weight
 	#define wordParity u16Parity
 	#define wordCTZ u16CTZ
@@ -69,6 +70,7 @@ extern "C" {
 	#define wordRotHi u32RotHi
 	#define wordRotLo u32RotLo
 	#define wordRev u32Rev
+	#define wordBitrev u32Bitrev
 	#define wordWeight u32Weight
 	#define wordParity u32Parity
 	#define wordCTZ u32CTZ
@@ -88,6 +90,7 @@ extern "C" {
 	#define wordRotHi u64RotHi
 	#define wordRotLo u64RotLo
 	#define wordRev u64Rev
+	#define wordBitrev u64Bitrev
 	#define wordWeight u64Weight
 	#define wordParity u64Parity
 	#define wordCTZ u64CTZ

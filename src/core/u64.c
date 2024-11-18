@@ -4,7 +4,7 @@
 \brief 64-bit unsigned words
 \project bee2 [cryptographic library]
 \created 2015.10.28
-\version 2019.07.08
+\version 2024.11.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -34,6 +34,17 @@ void u64Rev2(u64 buf[], size_t count)
 	ASSERT(memIsValid(buf, count * 8));
 	while (count--)
 		buf[count] = u64Rev(buf[count]);
+}
+
+u64 u64Bitrev(register u64 w)
+{
+	w = ((w >> 1 ) & 0x5555555555555555) | ((w & 0x5555555555555555) << 1);
+	w = ((w >> 2 ) & 0x3333333333333333) | ((w & 0x3333333333333333) << 2);
+	w = ((w >> 4 ) & 0x0F0F0F0F0F0F0F0F) | ((w & 0x0F0F0F0F0F0F0F0F) << 4);
+	w = ((w >> 8 ) & 0x00FF00FF00FF00FF) | ((w & 0x00FF00FF00FF00FF) << 8);
+	w = ((w >> 16) & 0x0000FFFF0000FFFF) | ((w & 0x0000FFFF0000FFFF) << 16);
+	w = (w >> 32) | (w << 32);
+	return w;
 }
 
 size_t u64Weight(register u64 w)

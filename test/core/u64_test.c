@@ -4,7 +4,7 @@
 \brief Tests for operations on 64-bit words
 \project bee2/test
 \created 2017.01.11
-\version 2019.07.08
+\version 2024.11.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -37,6 +37,9 @@ bool_t u64Test()
 		return FALSE;
 	u64Rev2(a, 2), u64Rev2(a, 2);
 	if (a[0] != w || a[1] != u64Rev(w))
+		return FALSE;
+	// bit reverse
+	if (u64Bitrev(w) != 0x10E060A020C04080 || u64Bitrev(u64Bitrev(w)) != w)
 		return FALSE;
 	// weight / parity
 	if (u64Weight(0) != 0 || u64Parity(0) || !u64Parity(1) ||

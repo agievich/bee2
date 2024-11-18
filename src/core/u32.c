@@ -4,7 +4,7 @@
 \brief 32-bit unsigned words
 \project bee2 [cryptographic library]
 \created 2015.10.28
-\version 2022.07.05
+\version 2024.11.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -45,6 +45,27 @@ void u32Rev2(u32 buf[], size_t count)
 	ASSERT(memIsValid(buf, count * 4));
 	while (count--)
 		buf[count] = u32Rev(buf[count]);
+}
+
+/*
+*******************************************************************************
+Реверс битов
+
+Реализован алгоритм, представленнный в [2] (Reverse an N-bit quantity
+in parallel in 5 * lg(N) operations). Первоисточник:
+* Freed, Edwin E. 1983. "Binary Magic Numbers," Dr. Dobb's Journal
+  Vol. 78 (April), pp. 24-37.
+*******************************************************************************
+*/
+
+u32 u32Bitrev(register u32 w)
+{
+	w = ((w >> 1) & 0x55555555) | ((w & 0x55555555) << 1);
+	w = ((w >> 2) & 0x33333333) | ((w & 0x33333333) << 2);
+	w = ((w >> 4) & 0x0F0F0F0F) | ((w & 0x0F0F0F0F) << 4);
+	w = ((w >> 8) & 0x00FF00FF) | ((w & 0x00FF00FF) << 8);
+	w = (w >> 16) | (w << 16);
+	return w;
 }
 
 /*

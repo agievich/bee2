@@ -4,7 +4,7 @@
 \brief 64-bit words
 \project bee2 [cryptographic library]
 \created 2015.10.28
-\version 2023.02.02
+\version 2024.11.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -83,6 +83,15 @@ u64 u64Rev(
 void u64Rev2(
 	u64 buf[],			/*!< [in,out] массив слов */
 	size_t count		/*!< [in] число элементов */
+);
+
+/*!	\brief Реверс битов
+
+	Выполняется реверс битов u64-слова w.
+	\return Слово с переставленными битами.
+*/
+u64 u64Bitrev(
+	register u64 w		/*!< [in] слово */
 );
 
 /*!	\brief Вес
