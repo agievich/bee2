@@ -113,7 +113,7 @@ static size_t apduCmdRDFLenLen(const apdu_cmd_t* cmd)
     CDF* = [der(0x87, 0x02 Y)] [der(0x97, Le)] der(0x8E, T)
 	Le* = \perp, 0x00 или 0x0000
     Y = belt-cfb(CDF, key2, ctr)
-    T = belt-mac(CLA* INS P1 P2 [der(0x87, 0x02 Y)] [der(0x97, Le), key1]
+    T = belt-mac(ctr CLA* INS P1 P2 [der(0x87, 0x02 Y)] [der(0x97, Le)], key1)
 
 Правила формирования Le* и Lc*:
 1. Если len(RDF) == 0, то Le* = \perp, а Lc* определяется обычным образом:
@@ -268,6 +268,7 @@ err_t btokSMCmdWrap(octet apdu[], size_t* count, const apdu_cmd_t* cmd,
 	}
 	// вычислить имитовставку
 	beltMACStart(st->stack, st->key1, 32);
+	beltMACStepA(st->ctr, 16, st->stack);
 	beltMACStepA(apdu, 4, st->stack);
 	ASSERT(offset >= 4 + cdf_len_len);
 	beltMACStepA(apdu + 4 + cdf_len_len, offset - 4 - cdf_len_len, st->stack);
@@ -417,12 +418,13 @@ err_t btokSMCmdUnwrap(apdu_cmd_t* cmd, size_t* size, const octet apdu[],
 		}
 		return ERR_OK;
 	}
-	// инкрементировать счетчик
+	// проверить счетчик
 	st = (btok_sm_st*)state;
 	if (st->ctr[0] % 2 != 1)
 		return ERR_BAD_LOGIC;
 	// проверить имитовставку
 	beltMACStart(st->stack, st->key1, 32);
+	beltMACStepA(st->ctr, 16, st->stack);
 	beltMACStepA(apdu, 4, st->stack);
 	beltMACStepA(apdu + offset, c1 + c2, st->stack);
 	if (!beltMACStepV(mac, st->stack))
@@ -462,7 +464,7 @@ err_t btokSMCmdUnwrap(apdu_cmd_t* cmd, size_t* size, const octet apdu[],
   RDF SW1 SW2 -> RDF* SW1 SW2:
 	RDF* = [der(0x87, 0x02 Y)] der(0x8E, T)
 	  Y = belt-cfb(RDF, key2, ctr)
-	  T = belt-mac([der(0x87, 0x02 Y)] SW1 SW2, key1)
+	  T = belt-mac(ctr [der(0x87, 0x02 Y)] SW1 SW2, key1)
 
 \remark Минимальная длина защищенного ответа:
   10 (mac) + 2 (sw) = 12.
@@ -550,6 +552,7 @@ err_t btokSMRespWrap(octet apdu[], size_t* count, const apdu_resp_t* resp,
 	}
 	// вычислить имитовставку
 	beltMACStart(st->stack, st->key1, 32);
+	beltMACStepA(st->ctr, 16, st->stack);
 	beltMACStepA(apdu, offset, st->stack);
 	beltMACStepA(&resp->sw1, 1, st->stack);
 	beltMACStepA(&resp->sw2, 1, st->stack);
@@ -627,12 +630,13 @@ err_t btokSMRespUnwrap(apdu_resp_t* resp, size_t* size, const octet apdu[],
 		}
 		return ERR_OK;
 	}
-	// инкрементировать счетчик
+	// проверить счетчик
 	st = (btok_sm_st*)state;
 	if (st->ctr[0] % 2 != 0)
 		return ERR_BAD_LOGIC;
 	// проверить имитовставку
 	beltMACStart(st->stack, st->key1, 32);
+	beltMACStepA(st->ctr, 16, st->stack);
 	beltMACStepA(apdu, c1, st->stack);
 	beltMACStepA(apdu + count - 2, 2, st->stack);
 	if (!beltMACStepV(mac, st->stack))

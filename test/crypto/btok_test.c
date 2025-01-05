@@ -340,7 +340,7 @@ static bool_t btokSMTest()
 			"04A4040414"
 			"8705020C4C0BFB"
 			"970100"
-			"8E08FBD50AD6814F90A9"
+			"8E08AD7BCF00950EEBAF"
 			"00") ||
 		btokSMCmdUnwrap(0, &size, apdu, count, state_ct) != ERR_OK ||
 		size != sizeof(apdu_cmd_t) + 4 ||
@@ -356,7 +356,7 @@ static bool_t btokSMTest()
 		count != 35 ||
 		!hexEq(apdu,
 			"8715022A9042A60A85E50FAB446AC80B75F144B67EBD6D"
-			"8E082C4DE31DFAA17635"
+			"8E08A93DE7D49A1E7590"
 			"9000") ||
 		btokSMRespUnwrap(0, &size, apdu, count, state_t) != ERR_OK ||
 		size != sizeof(apdu_resp_t) + 20 ||
