@@ -111,22 +111,16 @@ static size_t apduCmdRDFLenLen(const apdu_cmd_t* cmd)
 	CLA* = CLA | 0x04
     Lc* = enc(len(CDF*))
     CDF* = [der(0x87, 0x02 Y)] [der(0x97, Le)] der(0x8E, T)
-	Le* = \perp, 0x00 или 0x0000
+	Le* = 0x00
     Y = belt-cfb(CDF, key2, ctr)
     T = belt-mac(ctr CLA* INS P1 P2 [der(0x87, 0x02 Y)] [der(0x97, Le)], key1)
 
 Правила формирования Le* и Lc*:
-1. Если len(RDF) == 0, то Le* = \perp, а Lc* определяется обычным образом:
-   len(Lc*) = 1, если len(CDF) < 256, и len(Lc*) = 3 в противном случае.
-2. Если len(CDF*) < 256 и len(RDF) <= 256, то Le* = 0x00, а len(Lc*) = 1.
-3. Если len(CDF*) >= 256 или len(RDF) > 256, то Le* = 0x0000, а len(Lc*) = 3.
-
-Обратим внимание, что в последнем случае len(Lc*) = 3, даже если 
-len(CDF*) < 256. Форма кодирования len(CDF*) повышается до расширенной,
-чтобы соответствовать форме кодирования len(RDF).
+Le* всегда устанавливается в 0x00, а Lc* определяется обычным образом:
+   len(Lc*) = 1, если len(CDF*) < 256, и len(Lc*) = 3 в противном случае.
 
 \remark Минимальная длина защищенной команды:
-  4 (hdr) + 1 (cdf_len_len) + 10 (mac) + 0 (rdf_len_len) = 15.
+  4 (hdr) + 1 (cdf_len_len) + 10 (mac) + 1 (Le*) = 16.
 *******************************************************************************
 */
 
@@ -137,7 +131,6 @@ err_t btokSMCmdWrap(octet apdu[], size_t* count, const apdu_cmd_t* cmd,
 {
 	size_t cdf_len;
 	size_t cdf_len_len;
-	size_t rdf_len_len;
 	size_t offset;
 	size_t c;
 	btok_sm_st* st;
@@ -179,15 +172,10 @@ err_t btokSMCmdWrap(octet apdu[], size_t* count, const apdu_cmd_t* cmd,
 	c = derEnc(0, 0x8E, 0, 8);
 	ASSERT(c != SIZE_MAX);
 	cdf_len += c;
-	// новые длины длин cdf и rdf
-	if (cmd->rdf_len == 0)
-		cdf_len_len = cdf_len < 256 ? 1 : 3, rdf_len_len = 0;
-	else if (cmd->rdf_len <= 256 && cdf_len < 256)
-		cdf_len_len = rdf_len_len = 1;
-	else
-		cdf_len_len = 3, rdf_len_len = 2;
+	// новая длина длины cdf
+	cdf_len_len = cdf_len < 256 ? 1 : 3;
 	// общая длина
-	offset = 4 + cdf_len_len + cdf_len + rdf_len_len;
+	offset = 4 + cdf_len_len + cdf_len + 1;
 	// не задан выходной буфер, т.е. нужно определить только его длину?
 	if (!apdu)
 	{
@@ -278,8 +266,8 @@ err_t btokSMCmdWrap(octet apdu[], size_t* count, const apdu_cmd_t* cmd,
 	beltMACStepG(apdu + offset, st->stack);
 	offset += 8;
 	// кодировать новую длину rdf
-	memSetZero(apdu + offset, rdf_len_len);
-	offset += rdf_len_len;
+	memSetZero(apdu + offset, 1);
+	offset += 1;
 	// возвратить длину
 	if (count)
 	{
@@ -308,10 +296,10 @@ err_t btokSMCmdUnwrap(apdu_cmd_t* cmd, size_t* size, const octet apdu[],
 	ASSERT(memIsValid(apdu, count));
 	ASSERT(memIsNullOrValid(state, btokSM_keep()));
 	ASSERT(memIsNullOrValid(cmd, sizeof(apdu_cmd_t)));
-	// слишком короткая командв?
+	// слишком короткая команда?
 	// нужно снять защиту с незащищенной команды?
 	// невозможно снять защиту?
-	if (count < 4 || state && count < 15 ||
+	if (count < 4 || state && count < 16 ||
 		state && (apdu[0] & 0x04) == 0 ||
 		!state && (apdu[0] & 0x04) != 0)
 		return ERR_BAD_APDU;
@@ -343,8 +331,9 @@ err_t btokSMCmdUnwrap(apdu_cmd_t* cmd, size_t* size, const octet apdu[],
 		cdf_len_len = 3;
 	}
 	offset = 4 + cdf_len_len;
-	// проверить длину кода
-	if (4 + cdf_len_len + len > count || 4 + cdf_len_len + len + 2 < count)
+	// проверить длину кода, а также его завершение (Le*)
+	if (4 + cdf_len_len + len + 1 != count ||
+		!memIsZero(apdu + 4 + cdf_len_len + len, 1))
 		return ERR_BAD_APDU;
 	// разобрать защищенное поле cdf: шифртекст
 	c1 = derDec2(&cdf, &cdf_len, apdu + offset, len, 0x87);
@@ -392,17 +381,6 @@ err_t btokSMCmdUnwrap(apdu_cmd_t* cmd, size_t* size, const octet apdu[],
 		}
 		else
 			c2 = rdf_len = 0;
-		// еще раз проверить длину кода, а также его завершение 
-		// (мы только сейчас узнали rdf_len)
-		if (rdf_len == 0)
-			rdf_len_len = 0;
-		else if (len < 256 && rdf_len <= 256)
-			rdf_len_len = 1;
-		else
-			rdf_len_len = 2;
-		if (count != 4 + cdf_len_len + len + rdf_len_len ||
-			!memIsZero(apdu + 4 + cdf_len_len + len, rdf_len_len))
-			return ERR_BAD_APDU;
 	}
 	// разобрать защищенное поле cdf: имитовставка
 	c3 = derDec3(&mac, apdu + offset + c1 + c2, len - c1 - c2, 0x8E, 8);
