@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): Secure Messaging
 \project bee2 [cryptographic library]
 \created 2022.10.31
-\version 2023.06.19
+\version 2025.01.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -116,8 +116,8 @@ static size_t apduCmdRDFLenLen(const apdu_cmd_t* cmd)
     T = belt-mac(ctr CLA* INS P1 P2 [der(0x87, 0x02 Y)] [der(0x97, Le)], key1)
 
 Правила формирования Le* и Lc*:
-Le* всегда устанавливается в 0x00, а Lc* определяется обычным образом:
-   len(Lc*) = 1, если len(CDF*) < 256, и len(Lc*) = 3 в противном случае.
+  Le* = 0x00, Lc* определяется обычным образом:
+    len(Lc*) = 1, если len(CDF*) < 256, и len(Lc*) = 3 в противном случае.
 
 \remark Минимальная длина защищенной команды:
   4 (hdr) + 1 (cdf_len_len) + 10 (mac) + 1 (Le*) = 16.
