@@ -4,7 +4,7 @@
 \brief Entropy sources and random number generators
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2024.06.14
+\version 2025.03.17
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -747,7 +747,7 @@ err_t rngCreate(read_i source, void* source_state)
 		beltHashStepH(_state->block, read, _state->alg_state);
 		count += read;
 	}
-	if (count < 64)
+	if (count < 32)
 	{
 		blobClose(_state), _state = 0;
 		mtMtxUnlock(_mtx);
@@ -755,6 +755,7 @@ err_t rngCreate(read_i source, void* source_state)
 	}
 	// создать brngCTR
 	beltHashStepG(_state->block, _state->alg_state);
+	memWipe(_state->alg_state, beltHash_keep());
 	brngCTRStart(_state->alg_state, _state->block, 0);
 	memWipe(_state->block, 32);
 	// завершить
