@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: local definitions
 \project bee2 [cryptographic library]
 \created 2016.07.01
-\version 2019.06.27
+\version 2025.03.19
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -65,33 +65,24 @@ word zzSubAndW(word b[], const word a[], size_t n, register word w);
 
 /*
 *******************************************************************************
-Макросы умножения слов
+Макросы умножения слов (1x1)
 
-_MUL:
+zzMul11:
 	dword c;
 	word a, b;
 	c <- a, c <- c * b;
 
-_MUL_LO:
+zzMul11Lo:
 	word a, b;
 	return (word)(a * b);
-
-\todo _MUL_HI.
 *******************************************************************************
 */
 
-#if defined(_MSC_VER) && (B_PER_W == 32) &&\
-	(defined(_M_IX86) || defined(_M_X64))
-	#include <intrin.h>
-	#define _MUL(c, a, b)\
-		(c) = __emulu((word)(a), (word)(b))
-#else
-	#define _MUL(c, a, b)\
-		(c) = (word)(a), (c) *= (word)(b)
-#endif 
+#define zzMul11(c, a, b)\
+	(c) = (word)(a), (c) *= (word)(b)
 
-#define _MUL_LO(c, a, b)\
-	(c) = (word)(a) * (word)(b);
+#define zzMul11Lo(c, a, b)\
+	(c) = (word)(a) * (word)(b)
 
 #ifdef __cplusplus
 } /* extern "C" */

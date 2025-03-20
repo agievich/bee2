@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: modular reductions
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2019.06.26
+\version 2025.03.19
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -58,7 +58,7 @@ void FAST(zzRedCrand)(word a[], const word mod[], size_t n, void* stack)
 	// iter1
 	carry = zzAddMulW(a, a + n, n, WORD_0 - mod[0]);
 	// iter2
-	_MUL(prod, carry, WORD_0 - mod[0]);
+	zzMul11(prod, carry, WORD_0 - mod[0]);
 	prod += a[0];
 	a[0] = (word)prod;
 	prod >>= B_PER_W;
@@ -82,7 +82,7 @@ void SAFE(zzRedCrand)(word a[], const word mod[], size_t n, void* stack)
 	// iter1
 	carry = zzAddMulW(a, a + n, n, WORD_0 - mod[0]);
 	// iter2
-	_MUL(prod, carry, WORD_0 - mod[0]);
+	zzMul11(prod, carry, WORD_0 - mod[0]);
 	prod += a[0];
 	a[0] = (word)prod;
 	prod >>= B_PER_W;
@@ -245,7 +245,7 @@ void FAST(zzRedMont)(word a[], const word mod[], size_t n,
 	// редукция в редакции Дуссе -- Калиски
 	for (i = 0; i < n; ++i)
 	{
-		_MUL_LO(w, a[i], mont_param);
+		zzMul11Lo(w, a[i], mont_param);
 		carry |= zzAddW2(a + i + n, n - i, zzAddMulW(a + i, mod, n, w));
 	}
 	ASSERT(wwIsZero(a, n));
@@ -273,7 +273,7 @@ void SAFE(zzRedMont)(word a[], const word mod[], size_t n,
 	// редукция в редакции Дуссе -- Калиски
 	for (i = 0; i < n; ++i)
 	{
-		_MUL_LO(w, a[i], mont_param);
+		zzMul11Lo(w, a[i], mont_param);
 		carry |= zzAddW2(a + i + n, n - i, zzAddMulW(a + i, mod, n, w));
 	}
 	ASSERT(wwIsZero(a, n));
@@ -330,8 +330,8 @@ void FAST(zzRedCrandMont)(word a[], const word mod[], size_t n,
 	// редукция
 	for (i = 0; i < n; ++i)
 	{
-		_MUL_LO(w, a[i], mont_param);
-		_MUL(prod, w, WORD_0 - mod[0]);
+		zzMul11Lo(w, a[i], mont_param);
+		zzMul11(prod, w, WORD_0 - mod[0]);
 		w += carry;
 		if (w >= carry)
 			a[i + n] += w, carry = a[i + n] < w;
@@ -369,8 +369,8 @@ void SAFE(zzRedCrandMont)(word a[], const word mod[], size_t n,
 	// редукция
 	for (i = 0; i < n; ++i)
 	{
-		_MUL_LO(w, a[i], mont_param);
-		_MUL(prod, w, WORD_0 - mod[0]);
+		zzMul11Lo(w, a[i], mont_param);
+		zzMul11(prod, w, WORD_0 - mod[0]);
 		w += carry;
 		carry = wordLess01(w, carry);
 		a[i + n] += w;

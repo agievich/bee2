@@ -4,7 +4,7 @@
 \brief Tests for multiple-precision unsigned integers
 \project bee2/test
 \created 2014.07.15
-\version 2023.11.10
+\version 2025.03.19
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -187,6 +187,24 @@ static bool_t zzTestMul()
 			if (zzModW2(c, na + 2, w) != r[1])
 				return FALSE;
 		}
+	}
+	// особенные случаи zzDiv()
+	{
+		ASSERT(n > 3);
+		// переполнение частного, уточнение пробного частного
+		b1[0] = b1[1] = WORD_MAX;
+		b[0] = WORD_MAX, b[1] = WORD_BIT_HI;
+		zzMul(a, b, 2, b1, 2, stack);
+		zzDiv(c1, r, a, 4, b, 2, stack);
+		if (!wwIsZero(r, 2) || !wwEq(c1, b1, 2) || c1[2] != 0)
+			return FALSE;
+		// корректирующее сложение
+		b1[0] = b1[1] = b1[2] = WORD_MAX;
+		b[0] = WORD_MAX, b[1] = 0, b[2] = WORD_BIT_HI;
+		zzMul(a, b, 3, b1, 3, stack);
+		zzDiv(c1, r, a, 6, b, 3, stack);
+		if (!wwIsZero(r, 2) || !wwEq(c1, b1, 3) || c1[3] != 0)
+			return FALSE;
 	}
 	// все нормально
 	return TRUE;

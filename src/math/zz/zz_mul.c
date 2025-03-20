@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: multiplicative operations
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2019.06.26
+\version 2025.03.19
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -34,7 +34,7 @@ word zzMulW(word b[], const word a[], size_t n, register word w)
 	ASSERT(wwIsSameOrDisjoint(a, b, n));
 	for (i = 0; i < n; ++i)
 	{
-		_MUL(prod, w, a[i]);
+		zzMul11(prod, w, a[i]);
 		prod += carry;
 		b[i] = (word)prod;
 		carry = (word)(prod >> B_PER_W);
@@ -51,7 +51,7 @@ word zzAddMulW(word b[], const word a[], size_t n, register word w)
 	ASSERT(wwIsSameOrDisjoint(a, b, n));
 	for (i = 0; i < n; ++i)
 	{
-		_MUL(prod, w, a[i]);
+		zzMul11(prod, w, a[i]);
 		prod += carry;
 		prod += b[i];
 		b[i] = (word)prod;
@@ -69,7 +69,7 @@ word zzSubMulW(word b[], const word a[], size_t n, register word w)
 	ASSERT(wwIsSameOrDisjoint(a, b, n));
 	for (i = 0; i < n; ++i)
 	{
-		_MUL(prod, w, a[i]);
+		zzMul11(prod, w, a[i]);
 		prod = (dword)0 - prod;
 		prod += b[i];
 		prod -= borrow;
@@ -93,7 +93,7 @@ void zzMul(word c[], const word a[], size_t n, const word b[], size_t m,
 	{
 		for (j = 0; j < m; ++j)
 		{
-			_MUL(prod, a[i], b[j]);
+			zzMul11(prod, a[i], b[j]);
 			prod += carry;
 			prod += c[i + j];
 			c[i + j] = (word)prod;
@@ -123,7 +123,7 @@ void zzSqr(word b[], const word a[], size_t n, void* stack)
 	{
 		for (j = i + 1; j < n; ++j)
 		{
-			_MUL(prod, a[i], a[j]);
+			zzMul11(prod, a[i], a[j]);
 			prod += carry;
 			prod += b[i + j];
 			b[i + j] = (word)prod;
@@ -142,7 +142,7 @@ void zzSqr(word b[], const word a[], size_t n, void* stack)
 	// b <- b + \sum_i a_i^2 B^{i + i}
 	for (i = 0; i < n; ++i)
 	{
-		_MUL(prod, a[i], a[i]);
+		zzMul11(prod, a[i], a[i]);
 		prod += carry;
 		prod += b[i + i];
 		b[i + i] = (word)prod;
@@ -269,8 +269,6 @@ word zzModW2(const word a[], size_t n, register word w)
 *******************************************************************************
 Общее деление
 
-\opt При делении слов определять остаток по частному: (/,*) вместо (/, %).
-
 \todo Убрать ограничение n >= m в zzDiv().
 
 \todo T. Jabelean. An Algorithm for exact division. J. of Symb. Computations, 
@@ -284,6 +282,11 @@ b = b[m - 1]...b[0] предварительно нормализуются:
 	b = b[m - 1]...b[0] <- b * 2^shift.
 Здесь shift --- минимальное натуральное т.ч. старший бит b[m - 1] * 2^shift
 равняется 1.
+
+\remark Обратим внимание, что у делимого появляется дополнительный разряд a[n].
+Этот разряд может быть нулевым. Например тогда, когда shift == 0.
+
+\opt Сокращать длину a при нулевом a[n]. Экономится одно деление 2by1.
 
 Деление выполняется по алгоритму 14.20 из [Menezes A., van Oorschot P.,
 Vanstone S. Handbook of Applied Cryptography]:
@@ -299,18 +302,7 @@ Vanstone S. Handbook of Applied Cryptography]:
 			a += b * B^{i - m}, q[i - m]--
 	return q = q[n - m]...q[0] --- частное и a --- остаток
 
-В реализации вместо (#):
-	d <- a[i]a[i - 1] div b[m - 1]
-	if d >= B
-		d <- B - 1
-	q[i - m] <- d
-
-\opt Если a[i] == b[m - 1] в (#), то цикл (##) можно не выполнять:
-	q[i - m] * b[m - 1]b[m - 2] <=
-		(B - 1) * (a[i] * B + (B - 1)) =
-		B^2 * a[i] + B^2 - 1 - a[i] * B < a[i]a[i - 1]a[i - 2]
-
-\opt Если известен остаток d = a[i]a[i - 1] mod b[m - 1], то (##) можно
+\opt Если известен остаток r = a[i]a[i - 1] mod b[m - 1], то (##) можно
 	заменить на
 		while (q[i - m] * b[m - 2] > d * B + a[i - 2])
 			q[i - m]--, d += b[m - 1]
@@ -320,9 +312,9 @@ Vanstone S. Handbook of Applied Cryptography]:
 void zzDiv(word q[], word r[], const word a[], size_t n, const word b[],
 	size_t m, void* stack)
 {
-	register dword dividentHi;
-	register word borrow;
+	register dword qhat;
 	register size_t shift;
+	register word t;
 	size_t i;
 	// переменные в stack
 	word* divident;		/*< нормализованное делимое (n + 1 слово) */
@@ -366,14 +358,16 @@ void zzDiv(word q[], word r[], const word a[], size_t n, const word b[],
 	for (i = n; i >= m; --i)
 	{
 		// вычислить пробное частное
-		dividentHi = divident[i];
-		dividentHi <<= B_PER_W;
-		dividentHi |= divident[i - 1];
-		dividentHi /= divisor[m - 1];
-		if (dividentHi > WORD_MAX)
+		if (divident[i] == divisor[m - 1])
 			q[i - m] = WORD_MAX;
 		else
-			q[i - m] = (word)dividentHi;
+		{
+			qhat = divident[i];
+			qhat <<= B_PER_W;
+			qhat |= divident[i - 1];
+			qhat /= divisor[m - 1];
+			q[i - m] = (word)qhat;
+		}
 		// уточнить пробное частное
 		wwCopy(mul, divisor + m - 2, 2);
 		mul[2] = zzMulW(mul, mul, 2, q[i - m]);
@@ -383,9 +377,9 @@ void zzDiv(word q[], word r[], const word a[], size_t n, const word b[],
 			mul[2] -= zzSub2(mul, divisor + m - 2, 2);
 		}
 		// учесть пробное частное
-		borrow = zzSubMulW(divident + i - m, divisor, m, q[i - m]);
-		divident[i] -= borrow;
-		if (divident[i] > (word)~borrow)
+		t = zzSubMulW(divident + i - m, divisor, m, q[i - m]);
+		divident[i] -= t;
+		if (divident[i] > (word)~t)
 		{
 			// окончательно подправить пробное частное
 			q[i - m]--;
@@ -398,9 +392,7 @@ void zzDiv(word q[], word r[], const word a[], size_t n, const word b[],
 	// сохранить остаток
 	wwCopy(r, divident, m);
 	// очистить регистровые переменные
-	shift = 0;
-	borrow = 0;
-	dividentHi = 0;
+	t = 0, shift = 0, qhat = 0;
 }
 
 size_t zzDiv_deep(size_t n, size_t m)
@@ -410,9 +402,9 @@ size_t zzDiv_deep(size_t n, size_t m)
 
 void zzMod(word r[], const word a[], size_t n, const word b[], size_t m, void* stack)
 {
-	register dword dividentHi;
-	register word temp;
+	register dword qhat;
 	register size_t shift;
+	register word t;
 	size_t i;
 	// переменные в stack
 	word* divident;		/*< нормализованное делимое (n + 1 слово) */
@@ -455,26 +447,28 @@ void zzMod(word r[], const word a[], size_t n, const word b[], size_t m, void* s
 	for (i = n; i >= m; --i)
 	{
 		// вычислить пробное частное
-		dividentHi = divident[i];
-		dividentHi <<= B_PER_W;
-		dividentHi |= divident[i - 1];
-		dividentHi /= divisor[m - 1];
-		if (dividentHi > WORD_MAX)
-			temp = WORD_MAX;
+		if (divident[i] == divisor[m - 1])
+			t = WORD_MAX;
 		else
-			temp = (word)dividentHi;
+		{
+			qhat = divident[i];
+			qhat <<= B_PER_W;
+			qhat |= divident[i - 1];
+			qhat /= divisor[m - 1];
+			t = (word)qhat;
+		}
 		// уточнить пробное частное
 		wwCopy(mul, divisor + m - 2, 2);
-		mul[2] = zzMulW(mul, mul, 2, temp);
+		mul[2] = zzMulW(mul, mul, 2, t);
 		while (wwCmp2(mul, 3, divident + i - 2, 3) > 0)
 		{
-			temp--;
+			t--;
 			mul[2] -= zzSub2(mul, divisor + m - 2, 2);
 		}
 		// учесть пробное частное
-		temp = zzSubMulW(divident + i - m, divisor, m, temp);
-		divident[i] -= temp;
-		if (divident[i] > (word)~temp)
+		t = zzSubMulW(divident + i - m, divisor, m, t);
+		divident[i] -= t;
+		if (divident[i] > (word)~t)
 			// корректирующее сложение
 			divident[i] += zzAdd2(divident + i - m, divisor, m);
 	}
@@ -483,9 +477,7 @@ void zzMod(word r[], const word a[], size_t n, const word b[], size_t m, void* s
 	// сохранить остаток
 	wwCopy(r, divident, m);
 	// очистить регистровые переменные
-	shift = 0;
-	temp = 0;
-	dividentHi = 0;
+	t = 0, shift = 0, qhat = 0;
 }
 
 size_t zzMod_deep(size_t n, size_t m)
