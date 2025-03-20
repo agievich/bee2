@@ -1,4 +1,5 @@
 # Measure code coverage using Codecov
+# \uses https://github.com/marketplace/actions/codecov
 
 name: coverage
 
@@ -29,9 +30,17 @@ jobs:
         lcov -c -i -d src -d cmd -o coverage_base.info
         test/testbee2
         cd cmd && cp ../../cmd/test/* . && ./test.sh
-    - name: Upload coverage reports to Codecov
+    - name: Generate coverage report
       working-directory: ${{github.workspace}}/build
       run: |
         lcov -c -d src -d cmd -o coverage_test.info
         lcov -a coverage_base.info -a coverage_test.info -o coverage.info
-        bash <(curl -s https://codecov.io/bash) -f coverage.info
+    - name: Upload coverage report to Codecov
+      working-directory: ${{github.workspace}}/build
+      uses: codecov/codecov-action@v5
+      with:
+        fail_if_ci_error: true
+        files: coverage.info
+        token: ${{ secrets.CODECOV_TOKEN }}
+        verbose: true
+
