@@ -35,11 +35,11 @@ jobs:
       run: |
         lcov -c -d src -d cmd -o coverage_test.info
         lcov -a coverage_base.info -a coverage_test.info -o coverage.info
-    - name: Upload coverage report to Codecov
+    - name: Upload report to Codecov
       uses: codecov/codecov-action@v5
       with:
         directory: ${{github.workspace}}/build
-        fail_if_ci_error: true
+        fail_ci_if_error: true
         files: coverage.info
         token: ${{ secrets.CODECOV_TOKEN }}
         verbose: true
