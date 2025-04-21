@@ -20,7 +20,7 @@ jobs:
       COVERITY_TOKEN: ${{secrets.COVERITY_TOKEN}}
     steps:
     - name: Get source
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Coverity download
       run: |
         mkdir ${{github.workspace}}/cov-analysis-linux64
