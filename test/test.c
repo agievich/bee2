@@ -4,7 +4,7 @@
 \brief Bee2 testing
 \project bee2/test
 \created 2014.04.02
-\version 2023.12.19
+\version 2025.04.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -24,6 +24,7 @@ extern bool_t b64Test();
 extern bool_t blobTest();
 extern bool_t decTest();
 extern bool_t derTest();
+extern bool_t fileTest();
 extern bool_t hexTest();
 extern bool_t memTest();
 extern bool_t mtTest();
@@ -47,6 +48,7 @@ int testCore()
 	printf("blobTest: %s\n", (code = blobTest()) ? "OK" : "Err"), ret |= !code;
 	printf("decTest: %s\n", (code = decTest()) ? "OK" : "Err"), ret |= !code;
 	printf("derTest: %s\n", (code = derTest()) ? "OK" : "Err"), ret |= !code;
+	printf("fileTest: %s\n", (code = fileTest()) ? "OK" : "Err"), ret |= !code;
 	printf("hexTest: %s\n", (code = hexTest()) ? "OK" : "Err"), ret |= !code;
 	printf("memTest: %s\n", (code = memTest()) ? "OK" : "Err"), ret |= !code;
 	printf("mtTest: %s\n", (code = mtTest()) ? "OK" : "Err"), ret |= !code;

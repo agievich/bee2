@@ -4,7 +4,7 @@
 \brief Entropy sources and random number generators
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2025.03.17
+\version 2025.04.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -12,6 +12,7 @@
 
 #include "bee2/core/blob.h"
 #include "bee2/core/err.h"
+#include "bee2/core/file.h"
 #include "bee2/core/mem.h"
 #include "bee2/core/mt.h"
 #include "bee2/core/obj.h"
@@ -420,14 +421,14 @@ static err_t rngSys2Read(void* buf, size_t* read, size_t count)
 
 static err_t rngSysRead(void* buf, size_t* read, size_t count)
 {
-	FILE* fp;
+	file_t file;
 	ASSERT(memIsValid(read, sizeof(size_t)));
 	ASSERT(memIsValid(buf, count));
-	fp = fopen("/dev/urandom", "r");
-	if (!fp)
+	file = fileOpen("/dev/urandom", "rb");
+	if (!file)
 		return ERR_FILE_OPEN;
-	*read = fread(buf, 1, count, fp);
-	fclose(fp);
+	*read = fileRead2(buf, count, file);
+	fclose(file);
 	return ERR_OK;
 }
 

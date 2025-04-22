@@ -1,257 +1,128 @@
 /*
 *******************************************************************************
 \file stamp.c
-\brief Integrity control of Windows PE Executables
+\brief Generate and validate file checksums
 \project bee2/cmd
-\created 2011.10.18
-\version 2023.10.09
+\created 2025.04.08
+\version 2025.04.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
-*/ 
+*/
 
 #include "../cmd.h"
-#include <bee2/core/blob.h>
 #include <bee2/core/err.h>
+#include <bee2/core/hex.h>
 #include <bee2/core/mem.h>
 #include <bee2/core/str.h>
 #include <bee2/core/util.h>
-#include <bee2/crypto/belt.h>
-#include <windows.h>
 #include <stdio.h>
-
-/*
-*******************************************************************************
-Работа с PE-файлом
-*******************************************************************************
-*/
-
-#include "stamp_pe.c"
 
 /*
 *******************************************************************************
 Утилита stamp
 
 Функционал:
-- добавление в исполнимый файл Windows контрольной суммы;
-- проверка контрольной суммы.
+- добавление контрольных сумм к файлам;
+- проверка файлов с контрольными суммами;
+- удаление контрольных сумм.
 
-Контрольная сумма представляет собой строку из STAMP_SIZE октетов, которая
-добавляется в исполнимый файл как строковый ресурс с идентификатором STAMP_ID.
+Штамп либо присоединяется к файлу, либо сохранится в отдельном файле.
+
+Пример:
+  bee2cmd stamp gen file
+  bee2cmd stamp val file
+  bee2cmd stamp gen file stamp
+  bee2cmd stamp val file stamp
 *******************************************************************************
 */
 
 static const char _name[] = "stamp";
-static const char _descr[] = "integrity control of Windows PE executables";
+static const char _descr[] = "file stamps";
+
+/*
+*******************************************************************************
+Справка по использованию
+*******************************************************************************
+*/
 
 static int stampUsage()
 {
 	printf(
 		"bee2cmd/%s: %s\n"
 		"Usage:\n"
-		"  stamp -s <file>\n"
-		"    set a stamp on <file>\n"
-		"  stamp -c <file>\n"
-		"    check a stamp of <file>\n"
-		"\\pre  <file> is a PE-module (exe or dll)\n"
-		"\\pre <file> contains the user-defined resource\n"
-		"  %d %d {\"0123456789ABCDEF0123456789ABCDEF\"}\n"
+		"  stamp gen <file>\n"
+		"    generate stamp of <file> and attach it\n"
+		"  stamp gen <file> <stamp>\n"
+		"    generate stamp of <file> and store it in <stamp>\n"
+		"  stamp val <file>\n"
+		"    validate stamp attached to <file>\n"
+		"  stamp val <file> <stamp>\n"
+		"    validate stamp of <file> stored in <stamp>\n"
 		,
-		_name, _descr,
-		STAMP_ID, STAMP_TYPE
+		_name, _descr
 	);
 	return -1;
 }
 
-/* 
+/*
 *******************************************************************************
-Вспомогательные функции
-*******************************************************************************
-*/
+Добавление
 
-void stampPrint(const octet* stamp, const char* stamp_name)
-{
-	size_t pos;
-	printf(stamp_name ? "[%s = " : "[", stamp_name);
-	for (pos = 0; pos < STAMP_SIZE; ++pos)
-		printf("%02X", stamp[pos]);
-	printf("]\n");
-}
-
-/* 
-*******************************************************************************
-Работа с контрольными характеристиками
+stamp gen <file>
+stamp gen <file> <stamp>
 *******************************************************************************
 */
 
-static int stampSet(const char* name)
+static err_t stampGen(int argc, char* argv[])
 {
-	HANDLE hFile;
-	DWORD size;
-	HANDLE hMapping;
-	octet* image;
-	DWORD offset;
-	void* hash_state;
-	// открыть файл
-	hFile = CreateFileA(name, GENERIC_READ | GENERIC_WRITE,
-		0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (hFile == INVALID_HANDLE_VALUE)
+	err_t code;
+	// входной контроль
+	if (argc < 1 || argc > 2)
+		return ERR_CMD_PARAMS;
+	if (argc == 2 && cmdFileAreSame(argv[0], argv[1]))
+		return ERR_FILE_SAME;
+	// проверить наличие/отсутствие файлов
+	code = cmdFileValExist(1, argv);
+	ERR_CALL_CHECK(code);
+	if (argc == 2)
 	{
-		printf("File \"%s\" was not found or could not be open.\n", name);
-		return -1;
+		code = cmdFileValNotExist(1, argv + 1);
+		ERR_CALL_CHECK(code);
 	}
-	// длина файла
-	size = SetFilePointer(hFile, 0, NULL, FILE_END);
-	if (size == INVALID_SET_FILE_POINTER)
-	{
-		CloseHandle(hFile);
-		printf("Error processing the file \"%s\".\n", name);
-		return -1;
-	}
-	// проецировать файл в память
-	hMapping = CreateFileMappingA(hFile, NULL, PAGE_READWRITE, 0, 0, NULL);
-	if (hMapping == NULL)
-	{
-		CloseHandle(hFile);
-		printf("Error processing the file \"%s\".\n", name);
-		return -1;
-	}
-	// отобразить файл в память
-	image = (octet*)MapViewOfFile(hMapping, FILE_MAP_WRITE, 0, 0, 0);
-	if (image == NULL)
-	{
-		CloseHandle(hMapping);
-		CloseHandle(hFile);
-		printf("Error processing the file \"%s\".\n", name);
-		return -1;
-	}
-	// найти смещение контрольной характеристики
-	offset = stampFindOffset(image, size);
-	if (offset == (DWORD)-1)
-	{
-		UnmapViewOfFile(image);
-		CloseHandle(hMapping);
-		CloseHandle(hFile);
-		printf("A stamp of \"%s\" was not found or corrupted.\n", name);
-		return -1;
-	}
-	// подготовить место для контрольной характеристики
-	CASSERT(STAMP_SIZE >= 32);
-	memSetZero(image + offset, STAMP_SIZE);
-	// стек хэширования
-	hash_state = blobCreate(beltHash_keep());
-	if (!hash_state)
-	{
-		UnmapViewOfFile(image);
-		CloseHandle(hMapping);
-		CloseHandle(hFile);
-		printf("Insufficient memory.\n");
-		return -1;
-	}
-	// хэшировать
-	beltHashStart(hash_state);
-	beltHashStepH(image, offset, hash_state);
-	beltHashStepH(image + offset + STAMP_SIZE,
-		size - offset - STAMP_SIZE, hash_state);
-	beltHashStepG(image + offset, hash_state);
-	blobClose(hash_state);
-	// печать
-	printf("A stamp successfully added to \"%s\"\n", name);
-	stampPrint(image + offset, "stamp");
-	// завершение
-	UnmapViewOfFile(image);
-	CloseHandle(hMapping);
-	CloseHandle(hFile);
-	return 0;
+	// самотестирование
+	code = cmdStDo(CMD_ST_BASH);
+	ERR_CALL_CHECK(code);
+	// сгенерировать штамп
+	code = cmdStampGen(argc == 1 ? argv[0] : argv[1], argv[0]);
+	return code;
 }
 
-// проверить характеристику
-static int stampCheck(const char* name)
+/*
+*******************************************************************************
+Проверка
+
+stamp val <file>
+stamp val <file> <stamp>
+*******************************************************************************
+*/
+
+static err_t stampVal(int argc, char* argv[])
 {
-	HANDLE hFile;
-	DWORD size;
-	HANDLE hMapping;
-	octet* image;
-	DWORD offset;
-	octet stamp[STAMP_SIZE];
-	void* hash_state;
-	bool_t success;
-	// открыть файл
-	hFile = CreateFileA(name, GENERIC_READ, 0, NULL, OPEN_EXISTING, 
-		FILE_ATTRIBUTE_NORMAL, NULL);
-	if (hFile == INVALID_HANDLE_VALUE)
-	{
-		printf("File \"%s\" was not found or could not be open.\n", name);
-		return -1;
-	}
-	// длина файла
-	size = SetFilePointer(hFile, 0, NULL, FILE_END);
-	if (size == INVALID_SET_FILE_POINTER)
-	{
-		CloseHandle(hFile);
-		printf("Error processing the file \"%s\".\n", name);
-		return -1;
-	}
-	// проецировать файл в память
-	hMapping = CreateFileMappingA(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
-	if (hMapping == NULL)
-	{
-		CloseHandle(hFile);
-		printf("Error processing the file \"%s\".\n", name);
-		return -1;
-	}
-	// отобразить файл в память
-	image = (octet*)MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, 0);
-	if (image == NULL)
-	{
-		CloseHandle(hMapping);
-		CloseHandle(hFile);
-		printf("Error processing the file \"%s\".\n", name);
-		return -1;
-	}
-	// найти смещение контрольной характеристики
-	offset = stampFindOffset(image, size);
-	if (offset == (DWORD)-1)
-	{
-		UnmapViewOfFile(image);
-		CloseHandle(hMapping);
-		CloseHandle(hFile);
-		printf("A stamp of \"%s\" was not found or corrupted.\n", name);
-		return -1;
-	}
-	// подготовить место для контрольной характеристики
-	CASSERT(STAMP_SIZE >= 32);
-	memSet(stamp, 0, STAMP_SIZE);
-	// состояние хэширования
-	hash_state = blobCreate(beltHash_keep());
-	if (!hash_state)
-	{
-		UnmapViewOfFile(image);
-		CloseHandle(hMapping);
-		CloseHandle(hFile);
-		printf("Insufficient memory.\n");
-		return -1;
-	}
-	// хэшировать
-	beltHashStart(hash_state);
-	beltHashStepH(image, offset, hash_state);
-	beltHashStepH(image + offset + STAMP_SIZE, 
-		size - offset - STAMP_SIZE, hash_state);
-	beltHashStepG(stamp, hash_state);
-	blobClose(hash_state);
-	// сравнить
-	success = memEq(image + offset, stamp, STAMP_SIZE);
-	printf("Validating \"%s\"... %s\n", name, success ? "OK" : "Failed");
-	if (success)
-		stampPrint(image + offset, "stamp");
-	else
-		stampPrint(image + offset, "read_stamp"),
-		stampPrint(stamp, "calc_stamp");
-	// завершение
-	UnmapViewOfFile(image);
-	CloseHandle(hMapping);
-	CloseHandle(hFile);
-	return 0;
+	err_t code;
+	// входной контроль
+	if (argc < 1 || argc > 2)
+		return ERR_CMD_PARAMS;
+	if (argc == 2 && cmdFileAreSame(argv[0], argv[1]))
+		return ERR_FILE_SAME;
+	// проверить наличие файлов
+	code = cmdFileValExist(argc, argv);
+	ERR_CALL_CHECK(code);
+	// самотестирование
+	code = cmdStDo(CMD_ST_BASH);
+	// проверить штамп
+	code = cmdStampVal(argv[0], argc == 1 ? argv[0] : argv[1]);
+	return code;
 }
 
 /*
@@ -262,16 +133,22 @@ static int stampCheck(const char* name)
 
 int stampMain(int argc, char* argv[])
 {
+	err_t code;
 	// справка
-	if (argc != 3)
+	if (argc < 2)
 		return stampUsage();
 	// разбор команды
-	--argc, ++argv;
-	if (strEq(argv[0], "-s"))
-		return stampSet(argv[1]);
-	if (strEq(argv[0], "-c"))
-		return stampCheck(argv[1]);
-	return -1;
+	++argv, --argc;
+	if (strEq(argv[0], "gen"))
+		code = stampGen(argc - 1, argv + 1);
+	else if (strEq(argv[0], "val"))
+		code = stampVal(argc - 1, argv + 1);
+	else
+		code = ERR_CMD_NOT_FOUND;
+	// завершить
+	if (code != ERR_OK || strEq(argv[0], "val"))
+		printf("bee2cmd/%s: %s\n", _name, errMsg(code));
+	return code != ERR_OK ? -1 : 0;
 }
 
 /*

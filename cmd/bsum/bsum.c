@@ -12,6 +12,7 @@
 
 #include "../cmd.h"
 #include <bee2/core/dec.h>
+#include <bee2/core/file.h>
 #include <bee2/core/hex.h>
 #include <bee2/core/mem.h>
 #include <bee2/core/str.h>
@@ -134,7 +135,7 @@ static int bsumHash(octet hash[], size_t hid, const char* filename)
 	octet state[4096];
 	size_t hash_len;
 	void (*step_hash)(const void*, size_t, void*);
-	FILE* fp;
+	file_t file;
 	size_t count;
 	// pre
 	ASSERT(beltHash_keep() <= sizeof(state));
@@ -160,8 +161,8 @@ static int bsumHash(octet hash[], size_t hid, const char* filename)
 	}
 	ASSERT(memIsValid(hash, hash_len));
 	// открыть файл
-	fp = fopen(filename, "rb");
-	if (!fp)
+	file = fileOpen(filename, "rb");
+	if (!file)
 	{
 		printf("%s: FAILED [open]\n", filename);
 		return -1;
@@ -169,21 +170,20 @@ static int bsumHash(octet hash[], size_t hid, const char* filename)
 	// читать и хэшировать файл
 	do
 	{
-		count = fread(buf, 1, sizeof(buf), fp);
+		count = fileRead2(buf, sizeof(buf), file);
+		if (count == SIZE_MAX)
+		{
+			fileClose(file);
+			memWipe(buf, sizeof(buf));
+			memWipe(state, sizeof(state));
+			printf("%s: FAILED [read]\n", filename);
+			return -1;
+		}
 		step_hash(buf, count, state);
 	}
 	while (count == sizeof(buf));
-	// ошибка чтения?
-	if (ferror(fp))
-	{
-		fclose(fp);
-		memWipe(buf, sizeof(buf));
-		memWipe(state, sizeof(state));
-		printf("%s: FAILED [read]\n", filename);
-		return -1;
-	}
 	// закрыть файл
-	if (fclose(fp) != 0)
+	if (!fileClose(file))
 	{
 		memWipe(buf, sizeof(buf));
 		memWipe(state, sizeof(state));
@@ -228,7 +228,7 @@ static int bsumCheck(size_t hid, const char* filename)
 	size_t hash_len;
 	char str[1024];
 	size_t str_len;
-	FILE* fp;
+	file_t file;
 	size_t all_lines = 0;
 	size_t bad_lines = 0;
 	size_t bad_files = 0;
@@ -236,13 +236,13 @@ static int bsumCheck(size_t hid, const char* filename)
 	// длина хэш-значения в байтах
 	hash_len = bsumHidHashLen(hid);
 	// открыть файл контрольных сумм
-	fp = fopen(filename, "rb");
-	if (!fp)
+	file = fileOpen(filename, "rb");
+	if (!file)
 	{
 		printf("%s: No such file\n", filename);
 		return -1;
 	}
-	for (; fgets(str, sizeof(str), fp); ++all_lines)
+	for (; fileGets(str, sizeof(str), file); ++all_lines)
 	{
 		// проверить строку
 		str_len = strLen(str);
@@ -274,7 +274,7 @@ static int bsumCheck(size_t hid, const char* filename)
 		printf("%s: OK\n", str + 2 * hash_len + 2);
 	}
 	// закрыть файл контрольных сумм
-	if (fclose(fp) != 0)
+	if (!fileClose(file))
 	{
 		printf("%s: FAILED [close]\n", filename);
 		return -1;

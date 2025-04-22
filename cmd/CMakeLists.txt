@@ -1,4 +1,5 @@
 add_executable(bee2cmd
+  affix/affix.c
   bsum/bsum.c
   core/cmd_arg.c
   core/cmd_cvc.c
@@ -9,6 +10,9 @@ add_executable(bee2cmd
   core/cmd_pwd.c
   core/cmd_rng.c
   core/cmd_sig.c
+  core/cmd_st.c
+  core/cmd_stamp.c
+  core/cmd_sys.c
   core/cmd_term.c
   core/whereami.c
   csr/csr.c
@@ -18,14 +22,11 @@ add_executable(bee2cmd
   kg/kg.c
   pwd/pwd.c
   sig/sig.c
+  stamp/stamp.c
+  st/st.c
   ver/ver.c
   cmd_main.c
 )
-
-# CMake does not set MINGW in MSys2[MinGW] environment
-if(WIN32 OR MINGW OR ${CMAKE_C_PLATFORM_ID} STREQUAL MinGW)
-  target_sources(bee2cmd PRIVATE stamp/stamp.c)
-endif()
 
 target_link_libraries(bee2cmd bee2_static)
 
@@ -34,3 +35,21 @@ install(TARGETS bee2cmd
   PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE 
     WORLD_READ WORLD_EXECUTE
 ) 
+
+# Post
+
+if(WIN32 OR MINGW OR CMAKE_C_PLATFORM_ID STREQUAL MinGW OR CYGWIN)
+  set(BEE2_CMD ${CMAKE_CURRENT_BINARY_DIR}/bee2cmd.exe 
+    CACHE INTERNAL "BEE2_CMD")
+else()
+  set(BEE2_CMD ${CMAKE_CURRENT_BINARY_DIR}/bee2cmd
+    CACHE INTERNAL "BEE2_CMD")
+endif()
+
+add_custom_command(TARGET bee2cmd
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy ${BEE2_CMD} ${BEE2_CMD}.bak
+  COMMAND ${BEE2_CMD} stamp gen ${BEE2_CMD}.bak
+  COMMAND ${CMAKE_COMMAND} -E copy ${BEE2_CMD}.bak ${BEE2_CMD}
+  VERBATIM
+)

@@ -5,6 +5,7 @@ set(src
   core/dec.c
   core/der.c
   core/err.c
+  core/file.c
   core/mem.c
   core/mt.c
   core/hex.c

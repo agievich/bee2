@@ -4,7 +4,7 @@
 \brief Decimal strings
 \project bee2 [cryptographic library]
 \created 2015.11.09
-\version 2015.12.08
+\version 2025.04.15
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -97,9 +97,9 @@ void decFromU32(
 	Десятичная строка dec преобразуется в число u32.
 	\return Искомое число \mod 2^32.
 	\warning Возможно переполнение. Проверка отсутствия переполнения:
-		strLen(dec) - decCLZ() < 10 ||
-			strLen(dec) - decCLZ() == 10 && 
-				strCmp(dec + decCLZ(), "4294967295") <= 0.
+		strLen(dec) - decCLZ(dec) < 10 ||
+			strLen(dec) - decCLZ(dec) == 10 && 
+				strCmp(dec + decCLZ(dec), "4294967295") <= 0.
 */
 u32 decToU32(
 	const char* dec		/*!< [in] десятичная строка */

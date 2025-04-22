@@ -4,7 +4,7 @@
 \brief Strings
 \project bee2 [cryptographic library]
 \created 2013.02.04
-\version 2024.06.14
+\version 2025.04.17
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -28,26 +28,21 @@ Coverity Scan о том, что функция является санитайз
 
 size_t strLen(const char* str)
 {
-	return str ? strlen(str) : SIZE_0;
-}
-
-size_t strLen2(const char* str, size_t count)
-{
-	ASSERT(strIsValid(str));
-	return str ? strnlen(str, count) : SIZE_0;
+	ASSERT(str != 0);
+	return strlen(str);
 }
 
 // coverity[ +tainted_string_sanitize_content : arg-0 ]
 bool_t strIsValid(const char* str)
 {
-	return memIsValid(str, strLen(str) + (str ? 1 : 0));
+	return str && memIsValid(str, strLen(str) + 1);
 }
 
 /*
 *******************************************************************************
 Стандартные функции
 
-\remark strLen() реализована через memcpy(), а не через strcpy(), 
+\remark strCopy() реализована через memcpy(), а не через strcpy(), 
 чтобы избежать предупреждений MSVC.
 *******************************************************************************
 */
@@ -110,6 +105,12 @@ bool_t strIsPrintable(const char* str)
 			strchr(" '()+,-./:=?", *str) == 0)
 			return FALSE;
 	return TRUE;
+}
+
+bool_t strContains(const char* str, char ch)
+{
+	ASSERT(strIsValid(str));
+	return strchr(str, (int)ch) != 0;
 }
 
 bool_t strStartsWith(const char* str, const char* prefix)

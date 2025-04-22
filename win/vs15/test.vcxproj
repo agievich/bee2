@@ -359,6 +359,7 @@
     <ClCompile Include="..\..\test\core\blob_test.c" />
     <ClCompile Include="..\..\test\core\dec_test.c" />
     <ClCompile Include="..\..\test\core\der_test.c" />
+    <ClCompile Include="..\..\test\core\file_test.c" />
     <ClCompile Include="..\..\test\core\hex_test.c" />
     <ClCompile Include="..\..\test\core\mem_test.c" />
     <ClCompile Include="..\..\test\core\mt_test.c" />

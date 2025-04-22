@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: main
 \project bee2/cmd
 \created 2022.06.07
-\version 2023.12.19
+\version 2025.04.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -81,7 +81,17 @@ int cmdUsage()
 
 /*
 *******************************************************************************
-Самопроверка подписи
+Проверка штампа / подписи
+
+При запуске bee2cmd проверяется штамп исполнимого модуля. Чтобы сохранить 
+возможность добавления штампов с помощью команды 
+  bee2cmd stamp gen path/to/bee2cmd,
+проверка штампа не выполняется в тех случаях, когда первая лексема команды --
+это "stamp".
+
+Штамп либо присоединяется к исполнимому модулю, либо размещается в файле 
+	path/to/bee2cmd.stamp
+(см. описание функции cmdStampSelfVal()).
 
 \remark Используется проверочный открытый ключ Q -- базовая точка G кривой
 bign-curve256v1: Q = G. Этому ключу соответствует личный ключ d = 1.
@@ -117,11 +127,10 @@ extern err_t cvcInit();
 extern err_t cvrInit();
 extern err_t sigInit();
 extern err_t csrInit();
-extern err_t esInit();
-#ifdef OS_WIN
 extern err_t stampInit();
-#endif
-
+extern err_t esInit();
+extern err_t stInit();
+extern err_t affixInit();
 
 err_t cmdInit()
 {
@@ -142,18 +151,62 @@ err_t cmdInit()
 	ERR_CALL_CHECK(code);
 	code = csrInit();
 	ERR_CALL_CHECK(code);
-	code = esInit();
-	ERR_CALL_CHECK(code);
-#ifdef OS_WIN
 	code = stampInit();
 	ERR_CALL_CHECK(code);
-#endif
+	code = esInit();
+	ERR_CALL_CHECK(code);
+	code = stInit();
+	ERR_CALL_CHECK(code);
+	code = affixInit();
+	ERR_CALL_CHECK(code);
 	return code;
 }
 
 /*
 *******************************************************************************
+Проверка штампа
+
+*******************************************************************************
+*/
+
+/*
+*******************************************************************************
 Главная функция
+
+При запуске bee2cmd проверяется штамп исполнимого модуля. Чтобы 
+сохранить возможность добавления штампов с помощью команды 
+  bee2cmd stamp gen path/to/bee2cmd,
+проверка штампа не выполняется в тех случаях, когда первая лексема команды --
+это "stamp".
+
+\remark Штамп либо присоединяется к исполнимому модулю, либо размещается в 
+файле  
+	path/to/bee2cmd.stamp
+(см. описание функции cmdStampSelfVal()).
+
+\remark Контрольной характеристикой может быть не штамп, а подпись 
+производителя. В следуеющем примере показано, как организовать самопроверку 
+подписи.
+
+\code
+static err_t cmdSelfCheck()
+{
+	static const octet pubkey[64] = {
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x93, 0x6A, 0x51, 0x04, 0x18, 0xCF, 0x29, 0x1E,
+		0x52, 0xF6, 0x08, 0xC4, 0x66, 0x39, 0x91, 0x78,
+		0x5D, 0x83, 0xD6, 0x51, 0xA3, 0xC9, 0xE4, 0x5C,
+		0x9F, 0xD6, 0x16, 0xFB, 0x3C, 0xFC, 0xF7, 0x6B,
+	};
+	return cmdSigSelfVerify(pubkey, sizeof(pubkey));
+}
+\endcode
+
+В примере открытый ключ Q -- это базовая точка G кривой bign-curve256v1: 
+Q = G. Этому открытому ключу соответствует личный ключ d = 1.
 *******************************************************************************
 */
 
@@ -161,6 +214,13 @@ int main(int argc, char* argv[])
 {
 	err_t code;
 	size_t pos;
+	// проверка штампа
+	if ((argc < 2 || !strEq(argv[1], "stamp")) &&
+		(code = cmdStDo(CMD_ST_BASH | CMD_ST_STAMP)) != ERR_OK)
+	{
+		printf("bee2cmd: %s\n", errMsg(code));
+		return -1;
+	}
 	// старт
 	code = cmdInit();
 	if (code != ERR_OK)
@@ -171,8 +231,6 @@ int main(int argc, char* argv[])
 	// справка
 	if (argc < 2)
 		return cmdUsage();
-	// демонстрационный контроль целостности (результат игнорируется!)
-	cmdSelfCheck();
 	// обработка команды
 	for (pos = 0; pos < _count; ++pos)
 		if (strEq(argv[1], _cmds[pos].name))

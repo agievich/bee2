@@ -3,7 +3,7 @@
 # \brief Testing command-line interface
 # \project bee2evp/cmd
 # \created 2022.06.24
-# \version 2024.06.14
+# \version 2025.04.18
 # \pre The working directory contains zed.csr.
 # =============================================================================
 
@@ -472,6 +472,37 @@ test_csr(){
   return 0
 }
 
+test_stamp() {
+  rm -rf body stamp \
+    || return 2
+
+  echo body> body
+
+  $bee2cmd stamp val body \
+    && return 1
+  $bee2cmd stamp gen body body \
+    && return 1
+  $bee2cmd stamp gen body \
+    || return 1
+  $bee2cmd stamp val body \
+    || return 1
+  $bee2cmd stamp val body body \
+    && return 1
+  $bee2cmd stamp gen body stamp \
+    || return 1
+  $bee2cmd stamp val body stamp \
+    || return 1
+
+  $bee2cmd affix append body stamp \
+    || return 1
+  $bee2cmd stamp val body \
+    || return 1
+  $bee2cmd stamp val body stamp \
+    && return 1
+  
+  return 0
+}
+
 test_es() {
   rm -rf dd\
     || return 2
@@ -487,6 +518,66 @@ test_es() {
   return 0
 }
 
+test_st(){
+  $bee2cmd st alg \
+    || return 1
+  $bee2cmd st rng \
+    || return 1
+  $bee2cmd st stamp \
+    || return 1
+
+  return 0
+}
+
+test_affix(){
+  rm -rf body body1 stamp p1 p10 s0 \
+    || return 2
+
+  echo body> body
+  echo body> body1
+
+  if [ "$($bee2cmd affix print -sc body)" != "0" ]; then 
+    return 1
+  fi
+  $bee2cmd stamp gen body stamp \
+    || return 1
+  $bee2cmd affix prepend body zed.cert \
+    || return 1
+  $bee2cmd affix prepend body zed.cert \
+    || return 1
+  $bee2cmd affix append body stamp \
+    || return 1
+  if [ "$($bee2cmd affix print -pc body)" != "2" ]; then 
+    return 1
+  fi
+
+  $bee2cmd affix extr -p1 body p1 \
+    || return 1
+  diff p1 zed.cert \
+    || return 1
+  $bee2cmd affix extr -p10 body p10 \
+    && return 1
+  $bee2cmd affix extr -s0 body s0 \
+    || return 1
+  diff s0 stamp \
+    || return 1
+
+  $bee2cmd affix behead body \
+    || return 1
+  $bee2cmd affix behead body \
+    || return 1
+  $bee2cmd affix behead body \
+    && return 1
+  $bee2cmd affix drop body \
+    || return 1
+  $bee2cmd affix drop body \
+    && return 1
+  diff body body1 \
+    || return 1
+
+  return 0
+}
+
 run_test() {
   echo -n "Testing $1... "
   (test_$1 > /dev/null 2>&1)
@@ -498,4 +589,6 @@ run_test() {
 } 
 
 run_test ver && run_test bsum && run_test pwd && run_test kg && run_test cvc \
-  && run_test sig && run_test cvr && run_test csr && run_test es
+  && run_test sig && run_test cvr && run_test csr && run_test stamp \
+  && run_test es && run_test st && run_test affix
+

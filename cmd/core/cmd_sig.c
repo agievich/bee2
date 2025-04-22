@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: signing files
 \project bee2/cmd
 \created 2022.08.20
-\version 2024.06.27
+\version 2025.04.21
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -653,26 +653,20 @@ err_t cmdSigVerify2(const char* file, const char* sig_file,
 /*
 *******************************************************************************
 Самопроверка
-
-\thanks Gregory Pakosz [https://github.com/gpakosz/whereami]
 *******************************************************************************
 */
-
-#include "whereami.h"
 
 err_t cmdSigSelfVerify(const octet pubkey[], size_t pubkey_len)
 {
 	err_t code;
-	int len;
+	size_t count;
 	char* buf;
-	// определить имя исполнимого файла
-	len = wai_getExecutablePath(0, 0, 0);
-	if (len < 0)
-		return ERR_SYS;
-	code = cmdBlobCreate(buf, (size_t)len + 1);
+	// определить имя исполняемого модуля
+	code = cmdSysExePath(0, &count);
 	ERR_CALL_CHECK(code);
-	if (wai_getExecutablePath(buf, len, 0) != len)
-		code = ERR_SYS;
+	code = cmdBlobCreate(buf, count);
+	ERR_CALL_CHECK(code);
+	code = cmdSysExePath(buf, &count);
 	ERR_CALL_HANDLE(code, cmdBlobClose(buf));
 	// проверить подпись
 	code = cmdSigVerify(buf, buf, pubkey, pubkey_len);
@@ -684,16 +678,14 @@ err_t cmdSigSelfVerify(const octet pubkey[], size_t pubkey_len)
 err_t cmdSigSelfVerify2(const octet anchor[], size_t anchor_len)
 {
 	err_t code;
-	int len;
+	size_t count;
 	char* buf;
-	// определить имя исполнимого файла
-	len = wai_getExecutablePath(0, 0, 0);
-	if (len < 0)
-		return ERR_SYS;
-	code = cmdBlobCreate(buf, (size_t)len + 1);
+	// определить имя исполняемого модуля
+	code = cmdSysExePath(0, &count);
 	ERR_CALL_CHECK(code);
-	if (wai_getExecutablePath(buf, len, 0) != len)
-		code = ERR_SYS;
+	code = cmdBlobCreate(buf, count);
+	ERR_CALL_CHECK(code);
+	code = cmdSysExePath(buf, &count);
 	ERR_CALL_HANDLE(code, cmdBlobClose(buf));
 	// проверить подпись
 	code = cmdSigVerify2(buf, buf, anchor, anchor_len);
@@ -812,7 +804,7 @@ err_t cmdSigPrint(const char* sig_file, const char* scope)
 	void* stack;
 	cmd_sig_t* sig;
 	// входной контроль
-	if (!strIsValid(sig_file) || !strIsValid(scope))
+	if (!strIsValid(sig_file) || !strIsNullOrValid(scope))
 		return ERR_BAD_INPUT;
 	// выделить и разметить память
 	code = cmdBlobCreate(stack, sizeof(cmd_sig_t));

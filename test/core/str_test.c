@@ -4,7 +4,7 @@
 \brief Tests for strings
 \project bee2/test
 \created 2017.01.12
-\version 2023.09.18
+\version 2025.04.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -23,10 +23,9 @@ bool_t strTest()
 	char str[] = "123456";
 	char buf[16];
 	// len
-	if (!strIsValid(str) ||
-		strLen(str) + 1 != sizeof(str) ||
-		strLen2(str, sizeof(str)) != strLen(str) ||
-		strLen2(str, sizeof(str) + 1) != strLen(str))
+	if (strIsValid(0) || !strIsNullOrValid(0) || 
+		!strIsValid(str) ||
+		strLen(str) + 1 != sizeof(str))
 		return FALSE;
 	// cmp
 	strCopy(buf, str);
@@ -42,6 +41,8 @@ bool_t strTest()
 		!strIsPrintable("12?=:") ||
 		strIsPrintable("12&=:") ||
 		strIsPrintable("1@2=:") ||
+		!strContains(str, '2') ||
+		strContains(str, '7') ||
 		!strStartsWith(str, "12") ||
 		strStartsWith(str, "13") ||
 		!strEndsWith(str, "56") ||

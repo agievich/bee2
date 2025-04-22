@@ -4,7 +4,7 @@
 \brief Distinguished Encoding Rules
 \project bee2 [cryptographic library]
 \created 2014.04.21
-\version 2023.09.21
+\version 2025.04.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -20,7 +20,7 @@
 *******************************************************************************
 Поле T (тег)
 
-Вот так можно определить класс тега:
+\remark Вот так можно определить класс тега:
 \code
 	static u32 derTClass(u32 tag)
 	{
@@ -29,13 +29,17 @@
 		return tag >>= 6;
 	}
 \endcode
+
+\remark Нулевой тег (UNIVERSAL 0) запрещен ("Reserved for use by the encoding 
+rules").
 *******************************************************************************
 */
 
 static bool_t derTIsValid(u32 tag)
 {
-	// короткий код (один октет)?
-	if (tag < 256)
+	if (tag == 0)
+		return FALSE;
+	else if (tag < 256)
 	{
 		// установлены 5 младших битов?
 		if ((tag & 31) == 31)
@@ -134,6 +138,9 @@ static size_t derTDec(u32* tag, const octet der[], size_t count)
 		if (t_count == count || t < 31)
 			return SIZE_MAX;
 	}
+	// нулевой тег?
+	else if (der[0] == 0)
+		return SIZE_MAX;
 	// возврат 
 	if (tag)
 	{
@@ -349,6 +356,48 @@ bool_t derIsValid2(const octet der[], size_t count, u32 tag)
 	// проверить V
 	return count == t_count + l_count + len &&
 		memIsValid(der + t_count + l_count, len);
+}
+
+static size_t derDecDeep(const octet der[], size_t count, size_t deep)
+{
+	u32 tag;
+	size_t len;
+	size_t c;
+	// превышена глубина вложенности?
+	if (deep > 16)
+		return SIZE_MAX;
+	// обработать TL
+	c = derTLDec(&tag, &len, der, count);
+	if (c == SIZE_MAX || c + len > count)
+		return SIZE_MAX;
+	// примитивный код?
+	if (derTIsPrimitive(tag))
+	{
+		if (tag == 0x03)
+			return derBITDec(0, &len, der, count);
+		if (tag == 0x05)
+			return derNULLDec(der, count);
+		if (tag == 0x06)
+			return derOIDDec(0, &len, der, count);
+		if (tag == 0x13)
+			return derPSTRDec(0, &len, der, count);
+		return c + len;
+	}
+	// конструктивный код
+	while (c < count)
+	{
+		size_t c1;
+		c1 = derDecDeep(der + c, count - c, deep + 1);
+		if (c1 == SIZE_MAX)
+			return SIZE_MAX;
+		c += c1;
+	}
+	return c;
+}
+
+bool_t derIsValid3(const octet der[], size_t count)
+{
+	return derDecDeep(der, count, 0) == count;
 }
 
 bool_t derStartsWith(const octet der[], size_t count, u32 tag)
@@ -1129,3 +1178,4 @@ size_t derTSEQDecStop(const octet der[], const der_anchor_t* anchor)
 	// сравнить длину вложенных данных с сохраненной длиной
 	return (der == val + anchor->len) ? 0 : SIZE_MAX;
 }
+

@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: password management
 \project bee2/cmd 
 \created 2022.06.13
-\version 2024.06.14
+\version 2025.04.09
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -39,7 +39,7 @@ cmd_pwd_t cmdPwdCreate(size_t size)
 
 bool_t cmdPwdIsValid(const cmd_pwd_t pwd)
 {
-	return pwd != 0 && blobIsValid(pwd) && strIsValid(pwd) &&
+	return strIsValid(pwd) && blobIsValid(pwd) &&
 		pwd[blobSize(pwd) - 1] == '\0';
 }
 
@@ -47,65 +47,6 @@ void cmdPwdClose(cmd_pwd_t pwd)
 {
 	ASSERT(pwd == 0 || cmdPwdIsValid(pwd));
 	blobClose(pwd);
-}
-
-/*
-*******************************************************************************
-Управление паролями: самотестирование
-*******************************************************************************
-*/
-
-err_t pwdSelfTest()
-{
-	const char pwd[] = "B194BAC80A08F53B";
-	octet stack[1024];
-	octet buf[5 * (32 + 1)];
-	octet buf1[32];
-	// bels-share: разделение и сборка
-	if (belsShare3(buf, 5, 3, 32, beltH()) != ERR_OK)
-		return ERR_SELFTEST;
-	if (belsRecover2(buf1, 1, 32, buf) != ERR_OK ||
-		memEq(buf1, beltH(), 32))
-		return ERR_SELFTEST;
-	if (belsRecover2(buf1, 2, 32, buf) != ERR_OK ||
-		memEq(buf1, beltH(), 32))
-		return ERR_SELFTEST;
-	if (belsRecover2(buf1, 3, 32, buf) != ERR_OK ||
-		!memEq(buf1, beltH(), 32))
-		return ERR_SELFTEST;
-	// brng-ctr: тест Б.2
-	ASSERT(sizeof(stack) >= brngCTR_keep());
-	memCopy(buf, beltH(), 96);
-	brngCTRStart(stack, beltH() + 128, beltH() + 128 + 64);
-	brngCTRStepR(buf, 96, stack);
-	if (!hexEq(buf,
-		"1F66B5B84B7339674533F0329C74F218"
-		"34281FED0732429E0C79235FC273E269"
-		"4C0E74B2CD5811AD21F23DE7E0FA742C"
-		"3ED6EC483C461CE15C33A77AA308B7D2"
-		"0F51D91347617C20BD4AB07AEF4F26A1"
-		"AD1362A8F9A3D42FBE1B8E6F1C88AAD5"))
-		return ERR_SELFTEST;
-	// pbkdf2 тест E.5
-	beltPBKDF2(buf, (const octet*)"B194BAC80A08F53B", strLen(pwd), 10000,
-		beltH() + 128 + 64, 8);
-	if (!hexEq(buf,
-		"3D331BBBB1FBBB40E4BF22F6CB9A689E"
-		"F13A77DC09ECF93291BFE42439A72E7D"))
-		return FALSE;
-	// belt-kwp: тест A.21
-	ASSERT(sizeof(stack) >= beltKWP_keep());
-	beltKWPStart(stack, beltH() + 128, 32);
-	memCopy(buf, beltH(), 32);
-	memCopy(buf + 32, beltH() + 32, 16);
-	beltKWPStepE(buf, 48, stack);
-	if (!hexEq(buf,
-		"49A38EE108D6C742E52B774F00A6EF98"
-		"B106CBD13EA4FB0680323051BC04DF76"
-		"E487B055C69BCF541176169F1DC9F6C8"))
-		return FALSE;
-	// все нормально
-	return ERR_OK;
 }
 
 /*

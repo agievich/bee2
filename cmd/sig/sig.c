@@ -4,7 +4,7 @@
 \brief Sign files and verify signatures
 \project bee2/cmd
 \created 2022.08.01
-\version 2023.12.17
+\version 2025.04.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -14,8 +14,8 @@
 #include <bee2/core/blob.h>
 #include <bee2/core/dec.h>
 #include <bee2/core/err.h>
-#include <bee2/core/mem.h>
 #include <bee2/core/hex.h>
+#include <bee2/core/mem.h>
 #include <bee2/core/prng.h>
 #include <bee2/core/str.h>
 #include <bee2/core/tm.h>
@@ -64,6 +64,7 @@ static const char _descr[] = "sign files and verify signatures";
 Справка по использованию
 *******************************************************************************
 */
+
 static int sigUsage()
 {
 	printf(
@@ -74,7 +75,7 @@ static int sigUsage()
 		"  sig val {-pubkey <pubkey>|-anchor <anchor>} <file> <sig>\n"
 		"    verify <sig> of <file> using either <pubkey> or <anchor>\n"
 		"  sig extr {-cert<n>|-body|-sig} <sig> <file>\n"
-		"    extract from <sig> an object and store it in <file>\n"
+		"    extract object from <sig> and store it in <file>\n"
 		"      -cert<n> -- the <n>th attached certificate\n"
 		"        \\remark certificates are numbered from zero\n"
 		"        \\remark the signing certificate comes last\n"
@@ -106,61 +107,6 @@ static int sigUsage()
 
 /*
 *******************************************************************************
-Самотестирование
-*******************************************************************************
-*/
-
-static err_t sigSelfTest()
-{
-	octet state[1024];
-	bign_params params[1];
-	octet privkey[32];
-	octet pubkey[64];
-	octet hash[32];
-	const octet oid[] = {
-		0x06, 0x09, 0x2A, 0x70, 0x00, 0x02, 0x00, 0x22, 0x65, 0x1F, 0x51,
-	};
-	octet sig[48];
-	// bign-genkeypair
-	hexTo(privkey,
-		"1F66B5B84B7339674533F0329C74F218"
-		"34281FED0732429E0C79235FC273E269");
-	ASSERT(sizeof(state) >= prngEcho_keep());
-	prngEchoStart(state, privkey, 32);
-	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK ||
-		bignKeypairGen(privkey, pubkey, params, prngEchoStepR,
-			state) != ERR_OK ||
-		!hexEq(pubkey,
-			"BD1A5650179D79E03FCEE49D4C2BD5DD"
-			"F54CE46D0CF11E4FF87BF7A890857FD0"
-			"7AC6A60361E8C8173491686D461B2826"
-			"190C2EDA5909054A9AB84D2AB9D99A90"))
-		return ERR_SELFTEST;
-	// bign-valpubkey
-	if (bignPubkeyVal(params, pubkey) != ERR_OK)
-		return ERR_SELFTEST;
-	// bign-sign
-	if (beltHash(hash, beltH(), 13) != ERR_OK)
-		return ERR_SELFTEST;
-	if (bignSign2(sig, params, oid, sizeof(oid), hash, privkey,
-		0, 0) != ERR_OK)
-		return ERR_SELFTEST;
-	if (!hexEq(sig,
-		"19D32B7E01E25BAE4A70EB6BCA42602C"
-		"CA6A13944451BCC5D4C54CFD8737619C"
-		"328B8A58FB9C68FD17D569F7D06495FB"))
-		return ERR_SELFTEST;
-	if (bignVerify(params, oid, sizeof(oid), hash, sig, pubkey) != ERR_OK)
-		return ERR_SELFTEST;
-	sig[0] ^= 1;
-	if (bignVerify(params, oid, sizeof(oid), hash, sig, pubkey) == ERR_OK)
-		return ERR_SELFTEST;
-	// все нормально
-	return ERR_OK;
-}
-
-/*
-*******************************************************************************
 Выработка подписи
 
 sig sign [-certs <certs>] [-date <YYMMDD>] -pass <schema> <file> <sig>
@@ -176,7 +122,7 @@ static err_t sigSign(int argc, char* argv[])
 	size_t privkey_len;
 	octet* privkey;
 	// самотестирование
-	code = sigSelfTest();
+	code = cmdStDo(CMD_ST_BIGN);
 	ERR_CALL_CHECK(code);
 	// без даты по умолчанию
 	memSetZero(date, 6);
@@ -277,7 +223,7 @@ static err_t sigVal(int argc, char* argv[])
 	size_t count;
 	octet* stack;
 	// самотестирование
-	code = sigSelfTest();
+	code = cmdStDo(CMD_ST_BIGN);
 	ERR_CALL_CHECK(code);
 	// проверить опции
 	if (argc != 4 ||

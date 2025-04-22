@@ -24,9 +24,9 @@ jobs:
           BASH_PLATFORM: BASH_64
     steps:
     - name: Get source
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Build and run
-      uses: uraimo/run-on-arch-action@v2
+      uses: uraimo/run-on-arch-action@v3
       with:
         arch: ${{matrix.arch}}
         distro: ${{matrix.distro}}

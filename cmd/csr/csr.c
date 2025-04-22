@@ -4,7 +4,7 @@
 \brief Manage certificate signing requests
 \project bee2/cmd 
 \created 2023.12.19
-\version 2024.06.13
+\version 2025.04.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -59,61 +59,6 @@ static int csrUsage()
 
 /*
 *******************************************************************************
-Самотестирование
-*******************************************************************************
-*/
-
-static err_t csrSelfTest()
-{
-	octet state[1024];
-	bign_params params[1];
-	octet privkey[32];
-	octet pubkey[64];
-	octet hash[32];
-	const octet oid[] = {
-		0x06, 0x09, 0x2A, 0x70, 0x00, 0x02, 0x00, 0x22, 0x65, 0x1F, 0x51,
-	};
-	octet sig[48];
-	// bign-genkeypair
-	hexTo(privkey,
-		"1F66B5B84B7339674533F0329C74F218"
-		"34281FED0732429E0C79235FC273E269");
-	ASSERT(sizeof(state) >= prngEcho_keep());
-	prngEchoStart(state, privkey, 32);
-	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK ||
-		bignKeypairGen(privkey, pubkey, params, prngEchoStepR,
-			state) != ERR_OK ||
-		!hexEq(pubkey,
-			"BD1A5650179D79E03FCEE49D4C2BD5DD"
-			"F54CE46D0CF11E4FF87BF7A890857FD0"
-			"7AC6A60361E8C8173491686D461B2826"
-			"190C2EDA5909054A9AB84D2AB9D99A90"))
-		return ERR_SELFTEST;
-	// bign-valpubkey
-	if (bignPubkeyVal(params, pubkey) != ERR_OK)
-		return ERR_SELFTEST;
-	// bign-sign
-	if (beltHash(hash, beltH(), 13) != ERR_OK)
-		return ERR_SELFTEST;
-	if (bignSign2(sig, params, oid, sizeof(oid), hash, privkey,
-		0, 0) != ERR_OK)
-		return ERR_SELFTEST;
-	if (!hexEq(sig,
-		"19D32B7E01E25BAE4A70EB6BCA42602C"
-		"CA6A13944451BCC5D4C54CFD8737619C"
-		"328B8A58FB9C68FD17D569F7D06495FB"))
-		return ERR_SELFTEST;
-	if (bignVerify(params, oid, sizeof(oid), hash, sig, pubkey) != ERR_OK)
-		return ERR_SELFTEST;
-	sig[0] ^= 1;
-	if (bignVerify(params, oid, sizeof(oid), hash, sig, pubkey) == ERR_OK)
-		return ERR_SELFTEST;
-	// все нормально
-	return ERR_OK;
-}
-
-/*
-*******************************************************************************
 Перевыпуск запроса на выпуск сертификата
 
 rewrap -pass <schema> <privkey> <csr> <csr1>
@@ -130,7 +75,7 @@ static err_t csrRewrap(int argc, char* argv[])
 	octet* privkey;
 	octet* csr;
 	// самотестирование
-	code = csrSelfTest();
+	code = cmdStDo(CMD_ST_BIGN);
 	ERR_CALL_CHECK(code);
 	// разбор опций
 	while (argc && strStartsWith(*argv, "-"))
@@ -212,7 +157,7 @@ static err_t csrVal(int argc, char* argv[])
 	void* stack;
 	octet* csr;
 	// самотестирование
-	code = csrSelfTest();
+	code = cmdStDo(CMD_ST_BIGN);
 	ERR_CALL_CHECK(code);
 	// разбор опций
 	if (argc != 1)

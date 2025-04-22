@@ -4,6 +4,7 @@ add_executable(testbee2
   core/blob_test.c
   core/dec_test.c
   core/der_test.c
+  core/file_test.c
   core/hex_test.c
   core/mem_test.c
   core/mt_test.c
