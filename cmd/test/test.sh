@@ -3,7 +3,7 @@
 # \brief Testing command-line interface
 # \project bee2evp/cmd
 # \created 2022.06.24
-# \version 2025.04.18
+# \version 2025.04.22
 # \pre The working directory contains zed.csr.
 # =============================================================================
 
@@ -307,11 +307,11 @@ test_sig(){
     && return 1
   $bee2cmd sig val -anchor cert2 ff ss \
     && return 1
-  $bee2cmd sig val -pubkey pubkey2 ff ff \
+  $bee2cmd sig val -pubkey pubkey2 ff \
     && return 1
-  $bee2cmd sig val -anchor cert0 ff ff \
+  $bee2cmd sig val -anchor cert0 ff \
     && return 1
-  $bee2cmd sig val -anchor cert2 ff ff \
+  $bee2cmd sig val -anchor cert2 ff \
     && return 1
 
   rm -rf ss
@@ -332,7 +332,7 @@ test_sig(){
 
   $bee2cmd sig val -anchor cert0 ff ss \
     && return 1
-  $bee2cmd sig sign -certs "cert0 cert1 cert2" -pass pass:alice privkey2 ff ff \
+  $bee2cmd sig sign -certs "cert0 cert1 cert2" -pass pass:alice privkey2 ff \
     || return 1
 
   $bee2cmd sig extr -cert0 ff cert01 \
@@ -355,13 +355,13 @@ test_sig(){
   $bee2cmd sig extr -sig ff sig \
     || return 1
 
-  $bee2cmd sig val -pubkey pubkey2 ff ff \
+  $bee2cmd sig val -pubkey pubkey2 ff \
     || return 1
-  $bee2cmd sig val -anchor cert2 ff ff \
+  $bee2cmd sig val -anchor cert2 ff \
     || return 1
-  $bee2cmd sig val -anchor cert1 ff ff \
+  $bee2cmd sig val -anchor cert1 ff \
     || return 1
-  $bee2cmd sig val -anchor cert0 ff ff \
+  $bee2cmd sig val -anchor cert0 ff \
     || return 1
 
   rm -rf ss body
@@ -380,10 +380,12 @@ test_sig(){
     && return 1
 
   $bee2cmd sig sign -pass pass:alice -date 230526 privkey2 ff ff \
+    && return 1
+  $bee2cmd sig sign -pass pass:alice -date 230526 privkey2 ff \
     || return 1
-  $bee2cmd sig val -pubkey pubkey2 ff ff \
+  $bee2cmd sig val -pubkey pubkey2 ff \
     || return 1
-  $bee2cmd sig val -anchor cert2 ff ff \
+  $bee2cmd sig val -anchor cert2 ff \
     && return 1
   $bee2cmd sig print ff \
     || return 1
@@ -396,14 +398,16 @@ test_sig(){
     return 1
   fi
 
-  $bee2cmd sig sign -pass pass:bob -certs "cert1 cert3" privkey3 ff ff \
+  $bee2cmd sig sign -pass pass:bob -certs "cert1 cert3" privkey3 ff \
     || return 1
-  $bee2cmd sig val -pubkey pubkey3 ff ff \
+  $bee2cmd sig val -pubkey pubkey3 ff \
     || return 1
-  $bee2cmd sig val -anchor cert1 ff ff \
+  $bee2cmd sig val -anchor cert1 ff \
+    || return 1
+  $bee2cmd sig val -anchor cert3 ff \
     || return 1
   $bee2cmd sig val -anchor cert3 ff ff \
-    || return 1
+    && return 1
 
   return 0
 }
@@ -420,7 +424,7 @@ test_cvr(){
     && return 1
   $bee2cmd cvr val cert2 ring2 \
     || return 1
-  $bee2cmd sig val -anchor cert2 ring2 ring2 \
+  $bee2cmd sig val -anchor cert2 ring2 \
     || return 1
   $bee2cmd cvr find ring2 cert3 \
     || return 1

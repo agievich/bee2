@@ -4,7 +4,7 @@
 \brief Managing file prefixes and suffixes
 \project bee2/cmd
 \created 2025.04.15
-\version 2025.04.18
+\version 2025.04.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -66,8 +66,8 @@ static int affixUsage()
 		"    delete suffix of <file>\n"
 		"  affix extr {-p<n>|-s<n>} <file> <affix>\n"
 		"    extract object from <file> and store it in <affix>\n"
-		"      -p<nnn> -- the <n>th prefix\n"
-		"      -s<nnn> -- the <n>th suffix\n"
+		"      -p<nnn> -- <n>th prefix\n"
+		"      -s<nnn> -- <n>th suffix\n"
 		"      \\remark p0 goes first, s0 goes last\n"
 		"  affix print [field] <file>\n"
 		"    print <file> info: full info or a specific field\n"
@@ -215,7 +215,7 @@ affix extr {-p<n>|-s<n>} <file> <affix>
 *******************************************************************************
 */
 
-static err_t cmdAffixExtr(const char* affix, const char* file,
+static err_t cmdAffixExtr(const char* affix_name, const char* name,
 	const char* scope)
 {
 	err_t code;
@@ -233,14 +233,14 @@ static err_t cmdAffixExtr(const char* affix, const char* file,
 	{
 		for (offset = count = 0; num != SIZE_MAX; --num)
 		{
-			code = cmdFilePrefixRead(0, &count, file, offset += count);
+			code = cmdFilePrefixRead(0, &count, name, offset += count);
 			ERR_CALL_CHECK(code);
 		}
 		code = cmdBlobCreate(buf, count);
 		ERR_CALL_CHECK(code);
-		code = cmdFilePrefixRead(buf, &count, file, offset);
+		code = cmdFilePrefixRead(buf, &count, name, offset);
 		ERR_CALL_HANDLE(code, cmdBlobClose(buf));
-		code = cmdFileWrite(affix, buf, count);
+		code = cmdFileWrite(affix_name, buf, count);
 		cmdBlobClose(buf);
 	}
 	// выделить суффикс
@@ -248,14 +248,14 @@ static err_t cmdAffixExtr(const char* affix, const char* file,
 	{
 		for (offset = count = 0; num != SIZE_MAX; --num)
 		{
-			code = cmdFileSuffixRead(0, &count, file, offset += count);
+			code = cmdFileSuffixRead(0, &count, name, offset += count);
 			ERR_CALL_CHECK(code);
 		}
 		code = cmdBlobCreate(buf, count);
 		ERR_CALL_CHECK(code);
-		code = cmdFileSuffixRead(buf, &count, file, offset);
+		code = cmdFileSuffixRead(buf, &count, name, offset);
 		ERR_CALL_HANDLE(code, cmdBlobClose(buf));
-		code = cmdFileWrite(affix, buf, count);
+		code = cmdFileWrite(affix_name, buf, count);
 		cmdBlobClose(buf);
 	}
 	return code;
@@ -291,7 +291,7 @@ affix print [field] <file>
 *******************************************************************************
 */
 
-static err_t cmdAffixPrint(const char* file, const char* scope)
+static err_t cmdAffixPrint(const char* name, const char* scope)
 {
 	size_t offset;
 	size_t count;
@@ -303,7 +303,7 @@ static err_t cmdAffixPrint(const char* file, const char* scope)
 		printf("prefixes\n");
 		for (offset = pc = 0; 1; offset += count, ++pc)
 		{
-			if (cmdFilePrefixRead(0, &count, file, offset) != ERR_OK)
+			if (cmdFilePrefixRead(0, &count, name, offset) != ERR_OK)
 				break;
 			printf(pc ? "+%u" : "  length: %u", (unsigned)count);
 		}
@@ -311,7 +311,7 @@ static err_t cmdAffixPrint(const char* file, const char* scope)
 		printf("suffixes\n");
 		for (offset = sc = 0; 1; offset += count, ++sc)
 		{
-			if (cmdFileSuffixRead(0, &count, file, offset) != ERR_OK)
+			if (cmdFileSuffixRead(0, &count, name, offset) != ERR_OK)
 				break;
 			printf(sc ? "+%u" : "  length: %u", (unsigned)count);
 		}
@@ -323,7 +323,7 @@ static err_t cmdAffixPrint(const char* file, const char* scope)
 	else if (strEq(scope, "pc"))
 	{
 		for (offset = pc = 0; 1; offset += count, ++pc)
-			if (cmdFilePrefixRead(0, &count, file, offset) != ERR_OK)
+			if (cmdFilePrefixRead(0, &count, name, offset) != ERR_OK)
 				break;
 		printf("%u\n", (unsigned)pc);
 	}
@@ -331,7 +331,7 @@ static err_t cmdAffixPrint(const char* file, const char* scope)
 	else if (strEq(scope, "sc"))
 	{
 		for (offset = sc = 0; 1; offset += count, ++sc)
-			if (cmdFileSuffixRead(0, &count, file, offset) != ERR_OK)
+			if (cmdFileSuffixRead(0, &count, name, offset) != ERR_OK)
 				break;
 		printf("%u\n", (unsigned)sc);
 	}

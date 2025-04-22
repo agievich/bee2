@@ -42,9 +42,9 @@
   bee2cmd sig print sig_file
   # встроенная подпись
   bee2cmd sig sign -certs "cert0 cert1 cert2" -date 230526 -pass pass:alice \
-    privkey2 sig_file sig_file
-  bee2cmd sig val -anchor cert0 sig_file sig_file
-  bee2cmd sig val -pubkey pubkey2 sig_file sig_file
+    privkey2 sig_file
+  bee2cmd sig val -anchor cert0 sig_file
+  bee2cmd sig val -pubkey pubkey2 sig_file
   bee2cmd sig print sig_file
   bee2cmd sig print -certc sig_file
   bee2cmd sig print -date sig_file
@@ -70,33 +70,37 @@ static int sigUsage()
 	printf(
 		"bee2cmd/%s: %s\n"
 		"Usage:\n"
+		"  sig sign [options] <privkey> <file>\n"
+		"    sign <file> using <privkey> and attach signature\n"
 		"  sig sign [options] <privkey> <file> <sig>\n"
-		"    sign <file> using <privkey> and store the signature in <sig>\n"
+		"    sign <file> using <privkey> and store signature in <sig>\n"
+		"  sig val {-pubkey <pubkey>|-anchor <anchor>} <file>\n"
+		"    verify signature attached to <file> using <pubkey> or <anchor>\n"
 		"  sig val {-pubkey <pubkey>|-anchor <anchor>} <file> <sig>\n"
-		"    verify <sig> of <file> using either <pubkey> or <anchor>\n"
-		"  sig extr {-cert<n>|-body|-sig} <sig> <file>\n"
-		"    extract object from <sig> and store it in <file>\n"
-		"      -cert<n> -- the <n>th attached certificate\n"
+		"    verify <sig> of <file> using <pubkey> or <anchor>\n"
+		"  sig extr {-cert<n>|-body|-sig} <sig> <obj_file>\n"
+		"    extract object from <sig> and store it in <obj_file>\n"
+		"      -cert<n> -- <n>th attached certificate\n"
 		"        \\remark certificates are numbered from zero\n"
-		"        \\remark the signing certificate comes last\n"
-		"      -body -- the signed body\n"
-		"      -sig -- the signature itself\n"
+		"        \\remark signing certificate comes last\n"
+		"      -body -- signed body\n"
+		"      -sig -- signature itself\n"
 		"  sig print [field] <sig>\n"
 		"    print <sig> info: all fields or a specific field\n"
 		"  .\n"
 		"  <privkey>\n"
-		"    container with a private key\n"
+		"    container with private key\n"
 		"  <pubkey>\n"
-		"    file with a public key\n"
+		"    file with public key\n"
 		"  <anchor>\n"
-		"    file with a trusted sertificate\n"
+		"    file with trusted certificate\n"
 		"  options:\n"
 		"    -certs <certs> -- certificate chain (optional)\n"
 		"    -date <YYMMDD> -- date of signing (optional)\n"
 		"    -pass <schema> -- password description\n"
 		"  field:\n"
 		"    {-certc|-date|-sig}\n"
-		"      -certc -- the number of attached certificates\n"
+		"      -certc -- number of attached certificates\n"
 		"      -date -- date of signing\n"
 		"      -sig -- base signature\n"
 		,
@@ -109,7 +113,11 @@ static int sigUsage()
 *******************************************************************************
 Выработка подписи
 
-sig sign [-certs <certs>] [-date <YYMMDD>] -pass <schema> <file> <sig>
+sig sign [options] <privkey> <file>
+sig sign [options] <privkey> <file> <sig>
+
+options:
+  [-certs <certs>] [-date <YYMMDD>] -pass <schema>
 *******************************************************************************
 */
 
@@ -181,14 +189,17 @@ static err_t sigSign(int argc, char* argv[])
 			break;
 		}
 	}
-	if (code == ERR_OK && (!pwd || argc != 3))
+	// входной контроль
+	if (code == ERR_OK && (!pwd || argc < 2 || argc > 3))
 		code = ERR_CMD_PARAMS;
+	else if (argc == 3 && cmdFileAreSame(argv[1], argv[2]))
+		code = ERR_FILE_SAME;
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	// проверить наличие <privkey> и <file>
 	code = cmdFileValExist(2, argv);
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	// получить разрешение на перезапись <sig>
-	if (!cmdFileAreSame(argv[1], argv[2]))
+	if (argc == 3)
 	{
 		code = cmdFileValNotExist(1, argv + 2);
 		ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
@@ -203,7 +214,8 @@ static err_t sigSign(int argc, char* argv[])
 	cmdPwdClose(pwd);
 	ERR_CALL_HANDLE(code, cmdBlobClose(privkey));
 	// подписать
-	code = cmdSigSign(argv[2], argv[1], certs, date, privkey, privkey_len);
+	code = cmdSigSign(argc == 3 ? argv[2] : argv[1], argv[1], certs, date,
+		privkey, privkey_len);
 	// завершить
 	cmdBlobClose(privkey);
 	return code;
@@ -213,6 +225,7 @@ static err_t sigSign(int argc, char* argv[])
 *******************************************************************************
 Проверка подписи
 
+sig val {-pubkey <pubkey> | -anchor <anchor>} <file>
 sig val {-pubkey <pubkey> | -anchor <anchor>} <file> <sig>
 *******************************************************************************
 */
@@ -221,31 +234,32 @@ static err_t sigVal(int argc, char* argv[])
 {
 	err_t code;
 	size_t count;
-	octet* stack;
+	octet* buf;
 	// самотестирование
 	code = cmdStDo(CMD_ST_BIGN);
 	ERR_CALL_CHECK(code);
-	// проверить опции
-	if (argc != 4 ||
+	// входной контроль
+	if (argc < 3 || argc > 4 ||
 		!strEq(argv[0], "-pubkey") && !strEq(argv[0], "-anchor"))
 		return ERR_CMD_PARAMS;
+	if (argc == 4 && cmdFileAreSame(argv[2], argv[3]))
+		return ERR_FILE_SAME;
 	// проверить наличие {<pubkey> | <anchor>} <file> <sig>
-	code = cmdFileValExist(3, argv + 1);
+	code = cmdFileValExist(argc - 1, argv + 1);
 	ERR_CALL_CHECK(code);
 	// прочитать pubkey / anchor
 	code = cmdFileReadAll(0, &count, argv[1]);
 	ERR_CALL_CHECK(code);
-	code = cmdBlobCreate(stack, count);
+	code = cmdBlobCreate(buf, count);
 	ERR_CALL_CHECK(code);
-	code = cmdFileReadAll(stack, &count, argv[1]);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	code = cmdFileReadAll(buf, &count, argv[1]);
+	ERR_CALL_HANDLE(code, cmdBlobClose(buf));
 	// проверить подпись
-	if (strEq(argv[0], "-pubkey"))
-		code = cmdSigVerify(argv[2], argv[3], stack, count);
-	else
-		code = cmdSigVerify2(argv[2], argv[3], stack, count);
+	code = strEq(argv[0], "-pubkey") ?
+		cmdSigVerify(argv[2], argc == 4 ? argv[3] : argv[2], buf, count) :
+		cmdSigVerify2(argv[2], argc == 4 ? argv[3] : argv[2], buf, count);
 	// завершить
-	cmdBlobClose(stack);
+	cmdBlobClose(buf);
 	return code;
 }
 
@@ -253,7 +267,7 @@ static err_t sigVal(int argc, char* argv[])
 *******************************************************************************
 Извлечение из подписи объекта
 
-sig extr {-cert<n>|-body|-sig} <sig> <file>
+sig extr {-cert<n>|-body|-sig} <sig> <obj_file>
 *******************************************************************************
 */
 

@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: file stamps
 \project bee2/cmd 
 \created 2025.04.21
-\version 2025.04.21
+\version 2025.04.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -76,7 +76,7 @@ static err_t cmdFileStamp(
 	code = cmdFileOpen(file, name, "rb");
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// определить размер файла
-	if ((count = fileSize(file)) == SIZE_MAX || !fileSeek(file, 0, SEEK_SET))
+	if ((count = fileSize(file)) == SIZE_MAX)
 		code = ERR_FILE_READ;
 	ERR_CALL_HANDLE(code, (cmdFileClose(file), cmdBlobClose(stack)));
 	// штамп в суффиксе?

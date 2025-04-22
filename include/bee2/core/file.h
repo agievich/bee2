@@ -4,7 +4,7 @@
 \brief File management
 \project bee2 [cryptographic library]
 \created 2025.04.11
-\version 2025.04.18
+\version 2025.04.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -243,7 +243,7 @@ char* fileGets(
 
 	Определяется размер файла file.
 	\return Размер или SIZE_MAX в случае ошибки.
-	\warning Изменяется положение файлового указателя.
+	\remark Положение файлового указателя не изменяется.
 */
 size_t fileSize(
 	file_t file			/*< [in,out] файл */ 

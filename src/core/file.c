@@ -4,7 +4,7 @@
 \brief File management
 \project bee2 [cryptographic library]
 \created 2025.04.11
-\version 2025.04.16
+\version 2025.04.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -157,8 +157,15 @@ char* fileGets(char* str, size_t count, file_t file)
 
 size_t fileSize(file_t file)
 {
+	size_t pos;
+	size_t size;
 	ASSERT(fileIsValid(file));
-	return fileSeek(file, 0, SEEK_END) ? fileTell(file) : SIZE_MAX;
+	if ((pos = fileTell(file)) == SIZE_MAX ||
+		!fileSeek(file, 0, SEEK_END) ||
+		(size = fileTell(file)) == SIZE_MAX ||
+		!fileSeek(file, pos, SEEK_SET))
+		return SIZE_MAX;
+	return size;
 }
 
 bool_t fileTrunc(file_t file, size_t size)

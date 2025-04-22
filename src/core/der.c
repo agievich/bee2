@@ -364,7 +364,7 @@ static size_t derDecDeep(const octet der[], size_t count, size_t deep)
 	size_t len;
 	size_t c;
 	// превышена глубина вложенности?
-	if (deep > 16)
+	if (deep > 32)
 		return SIZE_MAX;
 	// обработать TL
 	c = derTLDec(&tag, &len, der, count);
@@ -384,13 +384,13 @@ static size_t derDecDeep(const octet der[], size_t count, size_t deep)
 		return c + len;
 	}
 	// конструктивный код
-	while (c < count)
+	while (len)
 	{
 		size_t c1;
-		c1 = derDecDeep(der + c, count - c, deep + 1);
+		c1 = derDecDeep(der + c, len, deep + 1);
 		if (c1 == SIZE_MAX)
 			return SIZE_MAX;
-		c += c1;
+		c += c1, len -= c1;
 	}
 	return c;
 }

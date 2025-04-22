@@ -4,7 +4,7 @@
 \brief Hash files using belt-hash / bash-hash
 \project bee2/cmd 
 \created 2014.10.28
-\version 2024.06.14
+\version 2025.04.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -129,7 +129,7 @@ https://stackoverflow.com/questions/24057331/
 *******************************************************************************
 */
 
-static int bsumHash(octet hash[], size_t hid, const char* filename)
+static int bsumHash(octet hash[], size_t hid, const char* name)
 {
 	octet buf[32768];
 	octet state[4096];
@@ -161,10 +161,10 @@ static int bsumHash(octet hash[], size_t hid, const char* filename)
 	}
 	ASSERT(memIsValid(hash, hash_len));
 	// открыть файл
-	file = fileOpen(filename, "rb");
+	file = fileOpen(name, "rb");
 	if (!file)
 	{
-		printf("%s: FAILED [open]\n", filename);
+		printf("%s: FAILED [open]\n", name);
 		return -1;
 	}
 	// читать и хэшировать файл
@@ -176,7 +176,7 @@ static int bsumHash(octet hash[], size_t hid, const char* filename)
 			fileClose(file);
 			memWipe(buf, sizeof(buf));
 			memWipe(state, sizeof(state));
-			printf("%s: FAILED [read]\n", filename);
+			printf("%s: FAILED [read]\n", name);
 			return -1;
 		}
 		step_hash(buf, count, state);
@@ -187,7 +187,7 @@ static int bsumHash(octet hash[], size_t hid, const char* filename)
 	{
 		memWipe(buf, sizeof(buf));
 		memWipe(state, sizeof(state));
-		printf("%s: FAILED [close]\n", filename);
+		printf("%s: FAILED [close]\n", name);
 		return -1;
 	}
 	// возвратить хэш-значение
@@ -222,7 +222,7 @@ static int bsumPrint(size_t hid, int argc, char* argv[])
 	return ret;
 }
 
-static int bsumCheck(size_t hid, const char* filename)
+static int bsumCheck(size_t hid, const char* name)
 {
 	octet hash[64];
 	size_t hash_len;
@@ -236,10 +236,10 @@ static int bsumCheck(size_t hid, const char* filename)
 	// длина хэш-значения в байтах
 	hash_len = bsumHidHashLen(hid);
 	// открыть файл контрольных сумм
-	file = fileOpen(filename, "rb");
+	file = fileOpen(name, "rb");
 	if (!file)
 	{
-		printf("%s: No such file\n", filename);
+		printf("%s: No such file\n", name);
 		return -1;
 	}
 	for (; fileGets(str, sizeof(str), file); ++all_lines)
@@ -276,7 +276,7 @@ static int bsumCheck(size_t hid, const char* filename)
 	// закрыть файл контрольных сумм
 	if (!fileClose(file))
 	{
-		printf("%s: FAILED [close]\n", filename);
+		printf("%s: FAILED [close]\n", name);
 		return -1;
 	}
 	// печать предупреждений

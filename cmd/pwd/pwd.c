@@ -57,11 +57,11 @@ static int pwdUsage()
 		"bee2cmd/%s: %s\n"
 		"Usage:\n"
 		"  pwd gen <schema>\n"
-		"    generate a password according to <schema>\n"
+		"    generate password according to <schema>\n"
 		"  pwd val <schema>\n"
-		"    validate a password built by <schema>\n"
+		"    validate password built by <schema>\n"
 		"  pwd print <schema>\n"
-		"    print a password built by <schema>\n"
+		"    print password built by <schema>\n"
 		"  schemas:\n"
 		"    pass:<pwd> -- direct password\n"
 		"    env:<name> -- password in environment variable <name>\n"
@@ -69,7 +69,7 @@ static int pwdUsage()
 		"      options:\n"
 		"        -t<nn> --- threshold (2 <= <nn> <= 16, 2 by default)\n"
 		"        -l<mmm> --- password bitlen: 128, 192 or 256 (by default)\n"
-		"        -crc --- the password contains 64-bit crc (<mmm> != 128)\n"
+		"        -crc --- password contains 64-bit crc (<mmm> != 128)\n"
 		"        -pass <schema> --- password to protect shares\n"
 		,
 		_name, _descr

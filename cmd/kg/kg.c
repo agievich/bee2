@@ -57,7 +57,7 @@ static int kgUsage()
 		"bee2cmd/%s: %s\n"
 		"Usage:\n"
 		"  kg gen [-l<nnn>] -pass <schema> <privkey>\n"
-		"    generate a private key and store it in <privkey>\n"
+		"    generate private key and store it in <privkey>\n"
 		"  kg chp -passin <schema> -passout <schema> <privkey>\n"
 		"    change the password used to protect <privkey>\n"
 		"  kg val -pass <schema> <privkey>\n"

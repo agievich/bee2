@@ -75,14 +75,14 @@ static int cvrUsage()
 		"    validate <ring> using <certa> as an anchor\n"
 		"  cvr find <ring> <cert>\n"
 		"    find <cert> in <ring>\n"
-		"  cvr extr -cert<nnn> <ring> <file>\n"
-		"    extract from <ring> an object and store it in <file>\n"
-		"      -cert<nnn> -- the <nnn>th certificate\n"
+		"  cvr extr -cert<nnn> <ring> <obj_file>\n"
+		"    extract object from <ring> and store it in <obj_file>\n"
+		"      -cert<nnn> -- <nnn>th certificate\n"
 		"        \\remark certificates are numbered from zero\n"
 		"      -certa -- holder's certificate\n"
 		"  cvr print [-certc] <ring>\n"
 		"    print <ring> info: all fields or a specific field\n"
-		"      -certc -- the number of certificates\n"
+		"      -certc -- number of certificates\n"
 		"  .\n"
 		,
 		_name, _descr
@@ -506,7 +506,7 @@ static err_t cvrFind(int argc, char* argv[])
 *******************************************************************************
 Извлечение объекта
 
-cvr extr -cert<nnn> <ring> <file>
+cvr extr -cert<nnn> <ring> <obj_file>
 *******************************************************************************
 */
 
