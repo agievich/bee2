@@ -133,7 +133,7 @@ static err_t stCrc(int argc, char* argv[])
 {
 	err_t code;
 	octet crc[32];
-	octet str[65];
+	char str[65];
 	// контроль числа параметров
 	if (argc > 1)
 		return ERR_CMD_PARAMS;

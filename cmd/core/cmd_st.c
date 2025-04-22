@@ -323,7 +323,7 @@ err_t cmdStDo(u32 tests)
 *******************************************************************************
 */
 
-err_t cmdStCrc(octet hash[32], const char* prefix)
+err_t cmdStCrc(octet crc[32], const char* prefix)
 {
 	const size_t buf_size = 4096;
 	err_t code;
@@ -334,7 +334,7 @@ err_t cmdStCrc(octet hash[32], const char* prefix)
 	void* state;
 	file_t file;
 	// входной контроль
-	if (!memIsValid(hash, 32) || !strIsNullOrValid(prefix))
+	if (!memIsValid(crc, 32) || !strIsNullOrValid(prefix))
 		return ERR_BAD_INPUT;
 	// определить длину имени исполняемого модуля
 	code = cmdSysModulePath(0, &count);
@@ -367,7 +367,7 @@ err_t cmdStCrc(octet hash[32], const char* prefix)
 	code = cmdFileClose(file);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// завершить
-	beltHashStepG(hash, state);
+	beltHashStepG(crc, state);
 	cmdBlobClose(stack);
 	return code;
 }
