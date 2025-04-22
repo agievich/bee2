@@ -295,7 +295,7 @@ static err_t cmdStAlgs(u32 tests)
 
 err_t cmdStDo(u32 tests)
 {
-	err_t code;
+	err_t code = ERR_OK;
 	// algs?
 	if (tests & CMD_ST_ALGS)
 	{
