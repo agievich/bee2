@@ -39,7 +39,7 @@ jobs:
       uses: codecov/codecov-action@v5
       with:
         directory: ${{github.workspace}}/build
-        gcov_ignore: "test/*"
+        gcov_ignore: "test/**"
         fail_ci_if_error: true
         files: coverage.info
         token: ${{ secrets.CODECOV_TOKEN }}
