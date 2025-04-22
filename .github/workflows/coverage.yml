@@ -27,13 +27,13 @@ jobs:
     - name: Run tests
       working-directory: ${{github.workspace}}/build
       run: |
-        lcov -c -i -d src -d cmd --exclude test -o coverage_base.info
+        lcov -c -i -d src -d cmd -o coverage_base.info
         test/testbee2
         cd cmd && cp ../../cmd/test/* . && ./test.sh
     - name: Generate coverage report
       working-directory: ${{github.workspace}}/build
       run: |
-        lcov -c -d src -d cmd --exclude test -o coverage_test.info
+        lcov -c -d src -d cmd -o coverage_test.info
         lcov -a coverage_base.info -a coverage_test.info -o coverage.info
     - name: Upload report to Codecov
       uses: codecov/codecov-action@v5
