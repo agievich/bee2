@@ -3,7 +3,7 @@ rem ===========================================================================
 rem \brief Testing command-line interface
 rem \project bee2evp/cmd
 rem \created 2022.06.24
-rem \version 2025.04.22
+rem \version 2025.04.23
 rem \pre The working directory contains zed.csr.
 rem ===========================================================================
 
@@ -703,6 +703,12 @@ bee2cmd st rng
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd st stamp
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd st crc
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd st crc 123
 if %ERRORLEVEL% neq 0 goto Error
 
 echo ****** OK

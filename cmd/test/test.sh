@@ -3,7 +3,7 @@
 # \brief Testing command-line interface
 # \project bee2evp/cmd
 # \created 2022.06.24
-# \version 2025.04.22
+# \version 2025.04.23
 # \pre The working directory contains zed.csr.
 # =============================================================================
 
@@ -528,6 +528,10 @@ test_st(){
   $bee2cmd st rng \
     || return 1
   $bee2cmd st stamp \
+    || return 1
+  $bee2cmd st crc \
+    || return 1
+  $bee2cmd st crc 123 \
     || return 1
 
   return 0
