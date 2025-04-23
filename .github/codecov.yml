@@ -1,0 +1,25 @@
+# Settings for Codecov
+# \info https://docs.codecov.com/docs/codecov-yaml
+# \info https://docs.codecov.com/docs/codecovyml-reference
+# \info https://docs.codecov.com/docs/commit-status
+# \info https://docs.codecov.com/docs/ignoring-paths
+
+coverage:
+  status:
+    project:
+      default:
+        threshold: 1%
+    patch:
+      default:
+        threshold: 1%
+
+parsers:
+  gcov:
+    branch_detection:
+      conditional: no
+      loop: no
+      method: no
+      macro: no
+
+ignore:
+  - "test"
