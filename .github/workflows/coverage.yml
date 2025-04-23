@@ -14,8 +14,6 @@ jobs:
     name: Measure code coverage
     runs-on: ubuntu-latest
     steps:
-#    - name: Install lcov
-#      run: sudo apt install -y lcov
     - name: Get source
       uses: actions/checkout@v4
     - name: Configure CMake
@@ -27,21 +25,14 @@ jobs:
     - name: Run tests
       working-directory: ${{github.workspace}}/build
       run: |
-#        lcov -c -i -d src -d cmd -o coverage_base.info
         test/testbee2
         cd cmd && cp ../../cmd/test/* . && ./test.sh
-#    - name: Generate coverage report
-#      working-directory: ${{github.workspace}}/build
-#      run: |
-#        lcov -c -d src -d cmd -o coverage_test.info
-#        lcov -a coverage_base.info -a coverage_test.info -o coverage.info
     - name: Upload report to Codecov
       uses: codecov/codecov-action@v5
       with:
         directory: ${{github.workspace}}/build
         gcov_ignore: './test/**'
         fail_ci_if_error: true
-#        files: coverage.info
         token: ${{ secrets.CODECOV_TOKEN }}
         verbose: true
 
