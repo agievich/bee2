@@ -347,7 +347,7 @@ err_t cmdStCrc(octet crc[32], const char* prefix)
 	state = buf + MAX2(buf_size, count);
 	// определить имя исполняемого модуля
 	code = cmdSysModulePath(name, &count);
-	ERR_CALL_CHECK(code);
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// открыть исполнямый модуль
 	code = cmdFileOpen(file, name, "rb");
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));

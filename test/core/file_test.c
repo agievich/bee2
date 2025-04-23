@@ -4,7 +4,7 @@
 \brief Tests for file management functions
 \project bee2/test
 \created 2025.04.13
-\version 2025.04.15
+\version 2025.04.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -37,30 +37,29 @@ bool_t fileTest()
 	// запись
 	if (fileWrite( &len, beltH(), 12, file) != ERR_OK ||
 		len != 12 || fileTell(file) != 12 ||
-		!fileFlush(file))
-		return FALSE;
+		!fileFlush(file) ||
 	// перемещение указателя
-	if (!fileSeek(file, 20, SEEK_END) || fileTell(file) != 32 ||
+		!fileSeek(file, 20, SEEK_END) || fileTell(file) != 32 ||
 		!fileSeek(file, 7, SEEK_SET) || fileTell(file) != 7 || 
-		!fileSeek(file, 8, SEEK_CUR) || fileTell(file) != 15)
-		return FALSE;
+		!fileSeek(file, 8, SEEK_CUR) || fileTell(file) != 15 ||
 	// запись 2
-	if (fileWrite2(file, beltH() + 12, 20) != 20 ||	
-		fileTell(file) != 35)
-		return FALSE;
+		fileWrite2(file, beltH() + 12, 20) != 20 ||	
+		fileTell(file) != 35 ||
 	// чтение
-	if (!fileSeek(file, 0, SEEK_SET) || fileTell(file) != 0 ||
+		!fileSeek(file, 0, SEEK_SET) || fileTell(file) != 0 ||
 		fileRead(&len, buf, sizeof(buf), file) != ERR_MAX ||
 		len != 35 ||
 		!memEq(buf, beltH(), 12) || 
 		!memIsZero(buf + 12, 3) ||
-		!memEq(buf + 15, beltH() + 12, 20))
-		return FALSE;
+		!memEq(buf + 15, beltH() + 12, 20) ||
 	// чтение 2
-	if (!fileSeek(file, 0, SEEK_SET) || fileTell(file) != 0 ||
+		!fileSeek(file, 0, SEEK_SET) || fileTell(file) != 0 ||
 		fileRead2(buf1, sizeof(buf1), file) != 35 ||
 		!memEq(buf, buf1, 35))
+	{
+		fileClose(file);
 		return FALSE;
+	}
 	// запись / чтение строки
 	hexFrom(str, buf, 10);
 	if (!filePuts(file, str) || fileTell(file) != 35 + 20 ||
@@ -70,7 +69,10 @@ bool_t fileTest()
 		!fileSeek(file, 35, SEEK_SET) ||
 		!fileGets(str1, sizeof(str1), file) ||
 		!strEq(str, str1))
+	{
+		fileClose(file);
 		return FALSE;
+	}
 	// закрыть файл
 	if (!fileClose(file))
 		return FALSE;				
