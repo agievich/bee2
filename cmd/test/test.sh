@@ -3,7 +3,7 @@
 # \brief Testing command-line interface
 # \project bee2evp/cmd
 # \created 2022.06.24
-# \version 2024.06.14
+# \version 2025.04.22
 # \pre The working directory contains zed.csr.
 # =============================================================================
 
@@ -307,11 +307,11 @@ test_sig(){
     && return 1
   $bee2cmd sig val -anchor cert2 ff ss \
     && return 1
-  $bee2cmd sig val -pubkey pubkey2 ff ff \
+  $bee2cmd sig val -pubkey pubkey2 ff \
     && return 1
-  $bee2cmd sig val -anchor cert0 ff ff \
+  $bee2cmd sig val -anchor cert0 ff \
     && return 1
-  $bee2cmd sig val -anchor cert2 ff ff \
+  $bee2cmd sig val -anchor cert2 ff \
     && return 1
 
   rm -rf ss
@@ -332,7 +332,7 @@ test_sig(){
 
   $bee2cmd sig val -anchor cert0 ff ss \
     && return 1
-  $bee2cmd sig sign -certs "cert0 cert1 cert2" -pass pass:alice privkey2 ff ff \
+  $bee2cmd sig sign -certs "cert0 cert1 cert2" -pass pass:alice privkey2 ff \
     || return 1
 
   $bee2cmd sig extr -cert0 ff cert01 \
@@ -355,13 +355,13 @@ test_sig(){
   $bee2cmd sig extr -sig ff sig \
     || return 1
 
-  $bee2cmd sig val -pubkey pubkey2 ff ff \
+  $bee2cmd sig val -pubkey pubkey2 ff \
     || return 1
-  $bee2cmd sig val -anchor cert2 ff ff \
+  $bee2cmd sig val -anchor cert2 ff \
     || return 1
-  $bee2cmd sig val -anchor cert1 ff ff \
+  $bee2cmd sig val -anchor cert1 ff \
     || return 1
-  $bee2cmd sig val -anchor cert0 ff ff \
+  $bee2cmd sig val -anchor cert0 ff \
     || return 1
 
   rm -rf ss body
@@ -380,10 +380,12 @@ test_sig(){
     && return 1
 
   $bee2cmd sig sign -pass pass:alice -date 230526 privkey2 ff ff \
+    && return 1
+  $bee2cmd sig sign -pass pass:alice -date 230526 privkey2 ff \
     || return 1
-  $bee2cmd sig val -pubkey pubkey2 ff ff \
+  $bee2cmd sig val -pubkey pubkey2 ff \
     || return 1
-  $bee2cmd sig val -anchor cert2 ff ff \
+  $bee2cmd sig val -anchor cert2 ff \
     && return 1
   $bee2cmd sig print ff \
     || return 1
@@ -396,14 +398,16 @@ test_sig(){
     return 1
   fi
 
-  $bee2cmd sig sign -pass pass:bob -certs "cert1 cert3" privkey3 ff ff \
+  $bee2cmd sig sign -pass pass:bob -certs "cert1 cert3" privkey3 ff \
     || return 1
-  $bee2cmd sig val -pubkey pubkey3 ff ff \
+  $bee2cmd sig val -pubkey pubkey3 ff \
     || return 1
-  $bee2cmd sig val -anchor cert1 ff ff \
+  $bee2cmd sig val -anchor cert1 ff \
+    || return 1
+  $bee2cmd sig val -anchor cert3 ff \
     || return 1
   $bee2cmd sig val -anchor cert3 ff ff \
-    || return 1
+    && return 1
 
   return 0
 }
@@ -420,7 +424,7 @@ test_cvr(){
     && return 1
   $bee2cmd cvr val cert2 ring2 \
     || return 1
-  $bee2cmd sig val -anchor cert2 ring2 ring2 \
+  $bee2cmd sig val -anchor cert2 ring2 \
     || return 1
   $bee2cmd cvr find ring2 cert3 \
     || return 1
@@ -472,6 +476,37 @@ test_csr(){
   return 0
 }
 
+test_stamp() {
+  rm -rf body stamp \
+    || return 2
+
+  echo body> body
+
+  $bee2cmd stamp val body \
+    && return 1
+  $bee2cmd stamp gen body body \
+    && return 1
+  $bee2cmd stamp gen body \
+    || return 1
+  $bee2cmd stamp val body \
+    || return 1
+  $bee2cmd stamp val body body \
+    && return 1
+  $bee2cmd stamp gen body stamp \
+    || return 1
+  $bee2cmd stamp val body stamp \
+    || return 1
+
+  $bee2cmd affix append body stamp \
+    || return 1
+  $bee2cmd stamp val body \
+    || return 1
+  $bee2cmd stamp val body stamp \
+    && return 1
+  
+  return 0
+}
+
 test_es() {
   rm -rf dd\
     || return 2
@@ -487,6 +522,66 @@ test_es() {
   return 0
 }
 
+test_st(){
+  $bee2cmd st alg \
+    || return 1
+  $bee2cmd st rng \
+    || return 1
+  $bee2cmd st stamp \
+    || return 1
+
+  return 0
+}
+
+test_affix(){
+  rm -rf body body1 stamp p1 p10 s0 \
+    || return 2
+
+  echo body> body
+  echo body> body1
+
+  if [ "$($bee2cmd affix print -sc body)" != "0" ]; then 
+    return 1
+  fi
+  $bee2cmd stamp gen body stamp \
+    || return 1
+  $bee2cmd affix prepend body zed.cert \
+    || return 1
+  $bee2cmd affix prepend body zed.cert \
+    || return 1
+  $bee2cmd affix append body stamp \
+    || return 1
+  if [ "$($bee2cmd affix print -pc body)" != "2" ]; then 
+    return 1
+  fi
+
+  $bee2cmd affix extr -p1 body p1 \
+    || return 1
+  diff p1 zed.cert \
+    || return 1
+  $bee2cmd affix extr -p10 body p10 \
+    && return 1
+  $bee2cmd affix extr -s0 body s0 \
+    || return 1
+  diff s0 stamp \
+    || return 1
+
+  $bee2cmd affix behead body \
+    || return 1
+  $bee2cmd affix behead body \
+    || return 1
+  $bee2cmd affix behead body \
+    && return 1
+  $bee2cmd affix drop body \
+    || return 1
+  $bee2cmd affix drop body \
+    && return 1
+  diff body body1 \
+    || return 1
+
+  return 0
+}
+
 run_test() {
   echo -n "Testing $1... "
   (test_$1 > /dev/null 2>&1)
@@ -498,4 +593,6 @@ run_test() {
 } 
 
 run_test ver && run_test bsum && run_test pwd && run_test kg && run_test cvc \
-  && run_test sig && run_test cvr && run_test csr && run_test es
+  && run_test sig && run_test cvr && run_test csr && run_test stamp \
+  && run_test es && run_test st && run_test affix
+

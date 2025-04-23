@@ -4,7 +4,7 @@
 \brief Errors
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2024.07.12
+\version 2025.04.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -115,6 +115,12 @@ File
 #define ERR_FILE_READ				_ERR_REG(207)
 /* достигнут конец файла */
 #define ERR_FILE_EOF				_ERR_REG(208)
+/* некоректный размер файла */
+#define ERR_FILE_SIZE				_ERR_REG(209)
+/* некоректный штамп файла */
+#define ERR_FILE_STAMP				_ERR_REG(210)
+/* один и тот же файл используется разными способами */
+#define ERR_FILE_SAME				_ERR_REG(211)
 
 /*
 *******************************************************************************

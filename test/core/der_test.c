@@ -4,7 +4,7 @@
 \brief Tests for DER encoding rules
 \project bee2/test
 \created 2021.04.12
-\version 2022.11.01
+\version 2025.04.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -55,7 +55,8 @@ bool_t derTest()
 		char str[16];
 	} val;
 	// TL
-	if ((count = derTLEnc(0, 0x7F21, 1000000)) != 6 ||
+	if (derTLEnc(0, 0, 0) != SIZE_MAX ||
+		(count = derTLEnc(0, 0x7F21, 1000000)) != 6 ||
 		count > sizeof(buf) ||
 		derTLEnc(buf, 0x7F21, 1000000) != count ||
 		derTLDec(&tag, &len, buf, count) != 6 ||
@@ -223,6 +224,32 @@ bool_t derTest()
 		if (count != 0)
 			return FALSE;
 	}
+	// вложенность: SEQ(SEQ(NULL))
+	hexTo(buf, "300430020500");
+	if (!derIsValid(buf, 6) || !derIsValid3(buf, 6))
+		return FALSE;
+	// вложенность: SEQ(NULL,SEQ(NULL))
+	hexTo(buf, "3006050030020500");
+	if (!derIsValid(buf, 8) || !derIsValid3(buf, 8))
+		return FALSE;
+	// вложенность: SEQ^32(NULL)
+	hexTo(buf,
+		"3040303E303C303A3038303630343032"
+		"3030302E302C302A3028302630243022"
+		"3020301E301C301A3018301630143012"
+		"3010300E300C300A3008300630043002"
+		"0500");
+	if (!derIsValid(buf, 66) || !derIsValid3(buf, 66))
+		return FALSE;
+	// вложенность: SEQ^33(NULL)
+	hexTo(buf,
+		"30423040303E303C303A303830363034"
+		"30323030302E302C302A302830263024"
+		"30223020301E301C301A301830163014"
+		"30123010300E300C300A300830063004"
+		"30020500");
+	if (!derIsValid(buf, 68) || derIsValid3(buf, 68))
+		return FALSE;
 	// все нормально
 	return TRUE;
 }

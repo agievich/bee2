@@ -4,7 +4,7 @@
 \brief Generate and manage private keys
 \project bee2/cmd 
 \created 2022.06.08
-\version 2024.06.13
+\version 2025.04.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -57,7 +57,7 @@ static int kgUsage()
 		"bee2cmd/%s: %s\n"
 		"Usage:\n"
 		"  kg gen [-l<nnn>] -pass <schema> <privkey>\n"
-		"    generate a private key and store it in <privkey>\n"
+		"    generate private key and store it in <privkey>\n"
 		"  kg chp -passin <schema> -passout <schema> <privkey>\n"
 		"    change the password used to protect <privkey>\n"
 		"  kg val -pass <schema> <privkey>\n"
@@ -101,83 +101,6 @@ static err_t kgParamsStd(bign_params* params, size_t privkey_len)
 
 /*
 *******************************************************************************
-Самотестирование
-*******************************************************************************
-*/
-
-static err_t kgSelfTest()
-{
-	const char pwd[] = "B194BAC80A08F53B";
-	octet stack[1024];
-	bign_params params[1];
-	octet privkey[32];
-	octet pubkey[64];
-	octet buf[5 * (32 + 1)];
-	octet buf1[32];
-	// bign-genkeypair
-	hexTo(privkey,
-		"1F66B5B84B7339674533F0329C74F218"
-		"34281FED0732429E0C79235FC273E269");
-	ASSERT(sizeof(stack) >= prngEcho_keep());
-	prngEchoStart(stack, privkey, 32);
-	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK ||
-		bignKeypairGen(privkey, pubkey, params, prngEchoStepR,
-			stack) != ERR_OK ||
-		!hexEq(pubkey,
-		"BD1A5650179D79E03FCEE49D4C2BD5DD"
-		"F54CE46D0CF11E4FF87BF7A890857FD0"
-		"7AC6A60361E8C8173491686D461B2826"
-		"190C2EDA5909054A9AB84D2AB9D99A90"))
-		return ERR_SELFTEST;
-	// bels-share: разделение и сборка
-	if (belsShare3(buf, 5, 3, 32, beltH()) != ERR_OK)
-		return ERR_SELFTEST;
-	if (belsRecover2(buf1, 1, 32, buf) != ERR_OK ||
-		memEq(buf1, beltH(), 32))
-		return ERR_SELFTEST;
-	if (belsRecover2(buf1, 2, 32, buf) != ERR_OK ||
-		memEq(buf1, beltH(), 32))
-		return ERR_SELFTEST;
-	if (belsRecover2(buf1, 3, 32, buf) != ERR_OK ||
-		!memEq(buf1, beltH(), 32))
-		return ERR_SELFTEST;
-	// brng-ctr: тест Б.2
-	ASSERT(sizeof(stack) >= brngCTR_keep());
-	memCopy(buf, beltH(), 96);
-	brngCTRStart(stack, beltH() + 128, beltH() + 128 + 64);
-	brngCTRStepR(buf, 96, stack);
-	if (!hexEq(buf,
-		"1F66B5B84B7339674533F0329C74F218"
-		"34281FED0732429E0C79235FC273E269"
-		"4C0E74B2CD5811AD21F23DE7E0FA742C"
-		"3ED6EC483C461CE15C33A77AA308B7D2"
-		"0F51D91347617C20BD4AB07AEF4F26A1"
-		"AD1362A8F9A3D42FBE1B8E6F1C88AAD5"))
-		return ERR_SELFTEST;
-	// pbkdf2 тест E.5
-	beltPBKDF2(buf, (const octet*)"B194BAC80A08F53B", strLen(pwd), 10000,
-		beltH() + 128 + 64, 8);
-	if (!hexEq(buf,
-		"3D331BBBB1FBBB40E4BF22F6CB9A689E"
-		"F13A77DC09ECF93291BFE42439A72E7D"))
-		return FALSE;
-	// belt-kwp: тест A.21
-	ASSERT(sizeof(stack) >= beltKWP_keep());
-	beltKWPStart(stack, beltH() + 128, 32);
-	memCopy(buf, beltH(), 32);
-	memCopy(buf + 32, beltH() + 32, 16);
-	beltKWPStepE(buf, 48, stack);
-	if (!hexEq(buf,
-		"49A38EE108D6C742E52B774F00A6EF98"
-		"B106CBD13EA4FB0680323051BC04DF76"
-		"E487B055C69BCF541176169F1DC9F6C8"))
-		return FALSE;
-	// все нормально
-	return ERR_OK;
-}
-
-/*
-*******************************************************************************
 Генерация ключа
 
 gen [-lnnn] -pass <schema> <privkey>
@@ -194,7 +117,7 @@ static err_t kgGen(int argc, char* argv[])
 	octet* privkey;
 	octet* pubkey;
 	// самотестирование
-	code = kgSelfTest();
+	code = cmdStDo(CMD_ST_BELS | CMD_ST_BELT | CMD_ST_BIGN | CMD_ST_BRNG);
 	ERR_CALL_CHECK(code);
 	// разбор опций
 	while (argc && strStartsWith(*argv, "-"))
@@ -289,7 +212,7 @@ static err_t kgChp(int argc, char* argv[])
 	size_t len = 0;
 	octet* privkey;
 	// самотестирование
-	code = kgSelfTest();
+	code = cmdStDo(CMD_ST_BELS | CMD_ST_BELT);
 	ERR_CALL_CHECK(code);
 	// разбор опций
 	while (argc && strStartsWith(*argv, "-"))
@@ -376,7 +299,7 @@ static err_t kgVal(int argc, char* argv[])
 	size_t len = 0;
 	octet* privkey;
 	// самотестирование
-	code = kgSelfTest();
+	code = cmdStDo(CMD_ST_BELS | CMD_ST_BELT);
 	ERR_CALL_CHECK(code);
 	// разбор опций
 	while (argc && strStartsWith(*argv, "-"))
@@ -443,7 +366,7 @@ static err_t kgExtr(int argc, char* argv[])
 	octet* privkey;
 	octet* pubkey;
 	// самотестирование
-	code = kgSelfTest();
+	code = cmdStDo(CMD_ST_BELS | CMD_ST_BELT | CMD_ST_BIGN);
 	ERR_CALL_CHECK(code);
 	// разбор опций
 	while (argc && strStartsWith(*argv, "-"))
@@ -526,7 +449,7 @@ static err_t kgPrint(int argc, char* argv[])
 	octet* pubkey;
 	char* hex;
 	// самотестирование
-	code = kgSelfTest();
+	code = cmdStDo(CMD_ST_BELS | CMD_ST_BELT);
 	ERR_CALL_CHECK(code);
 	// разбор опций
 	while (argc && strStartsWith(*argv, "-"))

@@ -1,4 +1,6 @@
 # Build and run tests using the AVX-512 instruction set
+# \remark `BUILD_CMD` is `OFF` because we need to stamp `bee2cmd` when 
+# building, but the stamp is calculated using `bash64` in emulation mode.
 
 name: avx512
 
@@ -22,6 +24,7 @@ jobs:
       run: >
         CC=gcc cmake -B ${{github.workspace}}/build 
         -DCMAKE_BUILD_TYPE=Debug
+        -DBUILD_CMD=OFF
         -DBASH_PLATFORM=BASH_AVX512
     - name: Build
       run: cmake --build ${{github.workspace}}/build

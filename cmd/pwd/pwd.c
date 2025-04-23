@@ -4,7 +4,7 @@
 \brief Generate and manage passwords
 \project bee2/cmd 
 \created 2022.06.23
-\version 2024.06.14
+\version 2025.04.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -57,11 +57,11 @@ static int pwdUsage()
 		"bee2cmd/%s: %s\n"
 		"Usage:\n"
 		"  pwd gen <schema>\n"
-		"    generate a password according to <schema>\n"
+		"    generate password according to <schema>\n"
 		"  pwd val <schema>\n"
-		"    validate a password built by <schema>\n"
+		"    validate password built by <schema>\n"
 		"  pwd print <schema>\n"
-		"    print a password built by <schema>\n"
+		"    print password built by <schema>\n"
 		"  schemas:\n"
 		"    pass:<pwd> -- direct password\n"
 		"    env:<name> -- password in environment variable <name>\n"
@@ -69,71 +69,12 @@ static int pwdUsage()
 		"      options:\n"
 		"        -t<nn> --- threshold (2 <= <nn> <= 16, 2 by default)\n"
 		"        -l<mmm> --- password bitlen: 128, 192 or 256 (by default)\n"
-		"        -crc --- the password contains 64-bit crc (<mmm> != 128)\n"
+		"        -crc --- password contains 64-bit crc (<mmm> != 128)\n"
 		"        -pass <schema> --- password to protect shares\n"
 		,
 		_name, _descr
 	);
 	return -1;
-}
-
-/*
-*******************************************************************************
-Самотестирование
-*******************************************************************************
-*/
-
-static err_t pwdSelfTest()
-{
-	const char pwd[] = "B194BAC80A08F53B";
-	octet state[1024];
-	octet buf[5 * (32 + 1)];
-	octet buf1[32];
-	// bels-share: разделение и сборка
-	if (belsShare3(buf, 5, 3, 32, beltH()) != ERR_OK)
-		return ERR_SELFTEST;
-	if (belsRecover2(buf1, 1, 32, buf) != ERR_OK ||
-		memEq(buf1, beltH(), 32))
-		return ERR_SELFTEST;
-	if (belsRecover2(buf1, 2, 32, buf) != ERR_OK ||
-		memEq(buf1, beltH(), 32))
-		return ERR_SELFTEST;
-	if (belsRecover2(buf1, 3, 32, buf) != ERR_OK ||
-		!memEq(buf1, beltH(), 32))
-		return ERR_SELFTEST;
-	// brng-ctr: тест Б.2
-	ASSERT(sizeof(state) >= brngCTR_keep());
-	memCopy(buf, beltH(), 96);
-	brngCTRStart(state, beltH() + 128, beltH() + 128 + 64);
-	brngCTRStepR(buf, 96, state);
-	if (!hexEq(buf,
-		"1F66B5B84B7339674533F0329C74F218"
-		"34281FED0732429E0C79235FC273E269"
-		"4C0E74B2CD5811AD21F23DE7E0FA742C"
-		"3ED6EC483C461CE15C33A77AA308B7D2"
-		"0F51D91347617C20BD4AB07AEF4F26A1"
-		"AD1362A8F9A3D42FBE1B8E6F1C88AAD5"))
-		return ERR_SELFTEST;
-	// pbkdf2 тест E.5
-	beltPBKDF2(buf, (const octet*)"B194BAC80A08F53B", strLen(pwd), 10000,
-		beltH() + 128 + 64, 8);
-	if (!hexEq(buf,
-		"3D331BBBB1FBBB40E4BF22F6CB9A689E"
-		"F13A77DC09ECF93291BFE42439A72E7D"))
-		return FALSE;
-	// belt-kwp: тест A.21
-	ASSERT(sizeof(state) >= beltKWP_keep());
-	beltKWPStart(state, beltH() + 128, 32);
-	memCopy(buf, beltH(), 32);
-	memCopy(buf + 32, beltH() + 32, 16);
-	beltKWPStepE(buf, 48, state);
-	if (!hexEq(buf,
-		"49A38EE108D6C742E52B774F00A6EF98"
-		"B106CBD13EA4FB0680323051BC04DF76"
-		"E487B055C69BCF541176169F1DC9F6C8"))
-		return FALSE;
-	// все нормально
-	return ERR_OK;
 }
 
 /*
@@ -152,7 +93,7 @@ static err_t pwdGen(int argc, char* argv[])
 	if (argc != 1)
 		return ERR_CMD_PARAMS;
 	// самотестирование
-	code = pwdSelfTest();
+	code = cmdStDo(CMD_ST_BELS | CMD_ST_BELT | CMD_ST_BRNG);
 	ERR_CALL_CHECK(code);
 	// генерировать пароль
 	code = cmdPwdGen(&pwd, *argv);
@@ -176,7 +117,7 @@ static err_t pwdVal(int argc, char* argv[])
 	if (argc != 1)
 		return ERR_CMD_PARAMS;
 	// самотестирование
-	code = pwdSelfTest();
+	code = cmdStDo(CMD_ST_BELS | CMD_ST_BELT);
 	ERR_CALL_CHECK(code);
 	// определить пароль (с одновременной проверкой)
 	code = cmdPwdRead(&pwd, *argv);

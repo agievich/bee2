@@ -300,6 +300,9 @@
     <ClCompile Include="..\..\src\math\pp\pp_red.c">
       <Filter>Source Files\math\pp</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\core\file.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\bee2\crypto\bake.h">
@@ -457,6 +460,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\math\zz\zz_lcl.h">
       <Filter>Source Files\math\zz</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\bee2\core\file.h">
+      <Filter>Header Files\core</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -218,6 +218,12 @@
       <SubSystem>Console</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /b /y $(TargetPath) $(TargetPath).bak > nul &amp;&amp; $(TargetPath) stamp gen $(TargetPath).bak &amp;&amp; copy /b /y $(TargetPath).bak > nul $(TargetPath) &amp;&amp; del /q /f $(TargetPath).bak</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Set a stamp</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <PreBuildEvent>
@@ -248,6 +254,12 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /b /y $(TargetPath) $(TargetPath).bak > nul &amp;&amp; $(TargetPath) stamp gen $(TargetPath).bak &amp;&amp; copy /b /y $(TargetPath).bak > nul $(TargetPath) &amp;&amp; del /q /f $(TargetPath).bak</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Set a stamp</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <PreBuildEvent>
@@ -282,6 +294,12 @@
       <SubSystem>Console</SubSystem>
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /b /y $(TargetPath) $(TargetPath).bak > nul &amp;&amp; $(TargetPath) stamp gen $(TargetPath).bak &amp;&amp; copy /b /y $(TargetPath).bak > nul $(TargetPath) &amp;&amp; del /q /f $(TargetPath).bak</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Set a stamp</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <PreBuildEvent>
@@ -313,6 +331,12 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /b /y $(TargetPath) $(TargetPath).bak > nul &amp;&amp; $(TargetPath) stamp gen $(TargetPath).bak &amp;&amp; copy /b /y $(TargetPath).bak > nul $(TargetPath) &amp;&amp; del /q /f $(TargetPath).bak</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Set a stamp</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <PreBuildEvent>
@@ -350,7 +374,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
-      <Command>..\..\cmd\stamp\autostamp.cmd $(OutDir)</Command>
+      <Command>copy /b /y $(TargetPath) $(TargetPath).bak > nul &amp;&amp; $(TargetPath) stamp gen $(TargetPath).bak &amp;&amp; copy /b /y $(TargetPath).bak > nul $(TargetPath) &amp;&amp; del /q /f $(TargetPath).bak</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Set a stamp</Message>
@@ -392,7 +416,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
-      <Command>..\..\cmd\stamp\autostamp.cmd $(OutDir)</Command>
+      <Command>copy /b /y $(TargetPath) $(TargetPath).bak > nul &amp;&amp; $(TargetPath) stamp gen $(TargetPath).bak &amp;&amp; copy /b /y $(TargetPath).bak > nul $(TargetPath) &amp;&amp; del /q /f $(TargetPath).bak</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Set a stamp</Message>
@@ -437,7 +461,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
-      <Command>..\..\cmd\stamp\autostamp.cmd $(OutDir)</Command>
+      <Command>copy /b /y $(TargetPath) $(TargetPath).bak > nul &amp;&amp; $(TargetPath) stamp gen $(TargetPath).bak &amp;&amp; copy /b /y $(TargetPath).bak > nul $(TargetPath) &amp;&amp; del /q /f $(TargetPath).bak</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Set a stamp</Message>
@@ -480,13 +504,14 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
-      <Command>..\..\cmd\stamp\autostamp.cmd $(OutDir)</Command>
+      <Command>copy /b /y $(TargetPath) $(TargetPath).bak > nul &amp;&amp; $(TargetPath) stamp gen $(TargetPath).bak &amp;&amp; copy /b /y $(TargetPath).bak > nul $(TargetPath) &amp;&amp; del /q /f $(TargetPath).bak</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Set a stamp</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\cmd\affix\affix.c" />
     <ClCompile Include="..\..\cmd\bsum\bsum.c" />
     <ClCompile Include="..\..\cmd\cmd_main.c" />
     <ClCompile Include="..\..\cmd\core\cmd_arg.c" />
@@ -498,6 +523,9 @@
     <ClCompile Include="..\..\cmd\core\cmd_pwd.c" />
     <ClCompile Include="..\..\cmd\core\cmd_rng.c" />
     <ClCompile Include="..\..\cmd\core\cmd_sig.c" />
+    <ClCompile Include="..\..\cmd\core\cmd_st.c" />
+    <ClCompile Include="..\..\cmd\core\cmd_stamp.c" />
+    <ClCompile Include="..\..\cmd\core\cmd_sys.c" />
     <ClCompile Include="..\..\cmd\core\cmd_term.c" />
     <ClCompile Include="..\..\cmd\core\whereami.c" />
     <ClCompile Include="..\..\cmd\csr\csr.c" />
@@ -508,6 +536,7 @@
     <ClCompile Include="..\..\cmd\pwd\pwd.c" />
     <ClCompile Include="..\..\cmd\sig\sig.c" />
     <ClCompile Include="..\..\cmd\stamp\stamp.c" />
+    <ClCompile Include="..\..\cmd\st\st.c" />
     <ClCompile Include="..\..\cmd\ver\ver.c" />
   </ItemGroup>
   <ItemGroup>
@@ -517,9 +546,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\cmd\cmd.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="..\..\cmd\stamp\stamp.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: file management
 \project bee2/cmd 
 \created 2022.06.08
-\version 2024.06.14
+\version 2025.04.21
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -12,11 +12,12 @@
 
 #include "../cmd.h"
 #include <bee2/core/blob.h>
+#include <bee2/core/der.h>
 #include <bee2/core/err.h>
+#include <bee2/core/file.h>
 #include <bee2/core/mem.h>
 #include <bee2/core/str.h>
 #include <bee2/core/util.h>
-#include <stdio.h>
 #include <stdlib.h>
 
 /*
@@ -25,22 +26,19 @@
 *******************************************************************************
 */
 
-size_t cmdFileSize(const char* file)
+size_t cmdFileSize(const char* name)
 {
-	FILE* fp;
-	long size;
-	ASSERT(strIsValid(file));
-	if (!(fp = fopen(file, "rb")))
-		return SIZE_MAX;
-	if (fseek(fp, 0, SEEK_END))
-	{
-		fclose(fp);
-		return SIZE_MAX;
-	}
-	size = ftell(fp);
-	if (fclose(fp) != 0)
-		size = -1;
-	return (size < 0) ? SIZE_MAX : (size_t)size;
+	err_t code;
+	file_t file;
+	size_t size;
+	// pre
+	ASSERT(strIsValid(name));
+	// определить размер
+	code = cmdFileOpen(file, name, "rb");
+	ERR_CALL_CHECK(code);
+	size = fileSize(file);
+	code = cmdFileClose(file);
+	return (size == SIZE_MAX || code != ERR_OK) ? SIZE_MAX : size;
 }
 
 /*
@@ -49,73 +47,194 @@ size_t cmdFileSize(const char* file)
 *******************************************************************************
 */
 
-err_t cmdFileWrite(const char* file, const void* buf, size_t count)
+err_t cmdFileWrite(const char* name, const void* buf, size_t count)
 {
-	FILE* fp;
+	err_t code;
+	file_t file;
 	// pre
-	ASSERT(strIsValid(file));
+	ASSERT(strIsValid(name));
 	ASSERT(memIsValid(buf, count));
 	// записать
-	if (!(fp = fopen(file, "wb")))
-		return ERR_FILE_CREATE;
-	if (count != fwrite(buf, 1, count, fp))
-	{
-		fclose(fp);
-		return ERR_FILE_WRITE;
-	}
-	if (fclose(fp) != 0)
-		return ERR_BAD_FILE;
-	return ERR_OK;
+	code = cmdFileOpen(file, name, "wb");
+	ERR_CALL_CHECK(code);
+	code = fileWrite(&count, buf, count, file);
+	ERR_CALL_HANDLE(code, cmdFileClose(file));
+	return cmdFileClose(file);
 }
 
-err_t cmdFileAppend(const char* file, const void* buf, size_t count)
+err_t cmdFilePrepend(const char* name, const void* buf, size_t count)
 {
-	FILE* fp;
+	const size_t buf1_size = 4096;
+	err_t code;
+	file_t file;
+	size_t size;
+	size_t pos;
+	void* buf1;
 	// pre
-	ASSERT(strIsValid(file));
+	ASSERT(strIsValid(name));
 	ASSERT(memIsValid(buf, count));
-	// дописать
-	if (!(fp = fopen(file, "ab")))
-		return ERR_FILE_OPEN;
-	if (count != fwrite(buf, 1, count, fp))
+	// открыть файл
+	code = cmdFileOpen(file, name, "r+b");
+	if (code != ERR_OK)
 	{
-		fclose(fp);
-		return ERR_FILE_WRITE;
+		// не открывается, но существует?
+		code = cmdFileOpen(file, name, "rb");
+		if (code == ERR_OK)
+		{
+			cmdFileClose(file);
+			return ERR_FILE_OPEN;
+		}
+		// не существует => создать
+		return cmdFileWrite(name, buf, count);
 	}
-	if (fclose(fp) != 0)
-		return ERR_BAD_FILE;
-	return ERR_OK;
+	// определить размер файла
+	if ((size = fileSize(file)) == SIZE_MAX)
+	{
+		cmdFileClose(file);
+		return ERR_FILE_READ;
+	}
+	// сдвинуть содержимое файла вправо
+	code = cmdBlobCreate(buf1, buf1_size);
+	ERR_CALL_HANDLE(code, cmdFileClose(file));
+	for (pos = size; code == ERR_OK && pos;)
+	{
+		size_t c;
+		c = MIN2(buf1_size, pos), pos -= c;
+		if (!fileSeek(file, pos, SEEK_SET) ||
+			fileRead2(buf1, c, file) != c ||
+			!fileSeek(file, pos + count, SEEK_SET))
+			code = ERR_FILE_READ;
+		else
+			code = fileWrite(&c, buf1, c, file);
+	}
+	cmdBlobClose(buf1);
+	ERR_CALL_HANDLE(code, cmdFileClose(file));
+	// дописать в начало
+	if (!fileSeek(file, 0, SEEK_SET))
+		code = ERR_FILE_READ;
+	else
+		code = fileWrite(&count, buf, count, file);
+	ERR_CALL_HANDLE(code, cmdFileClose(file));
+	// завершить
+	return cmdFileClose(file);
 }
 
-err_t cmdFileReadAll(void* buf, size_t* count, const char* file)
+err_t cmdFileAppend(const char* name, const void* buf, size_t count)
 {
+	err_t code;
+	file_t file;
+	// pre
+	ASSERT(strIsValid(name));
+	ASSERT(memIsValid(buf, count));
+	// дописать в конец
+	code = cmdFileOpen(file, name, "ab");
+	ERR_CALL_CHECK(code);
+	code = fileWrite(&count, buf, count, file);
+	ERR_CALL_HANDLE(code, cmdFileClose(file));
+	return cmdFileClose(file);
+}
+
+err_t cmdFileReadAll(void* buf, size_t* count, const char* name)
+{
+	err_t code;
+	file_t file;
 	// pre
 	ASSERT(memIsValid(count, O_PER_S));
-	ASSERT(strIsValid(file));
-	// читать
-	if (buf)
-	{
-		FILE* fp;
-		ASSERT(memIsValid(buf, *count));
-		if (!(fp = fopen(file, "rb")))
-			return ERR_FILE_OPEN;
-		if (fread(buf, 1, *count, fp) != *count || getc(fp) != EOF)
-		{
-			fclose(fp);
-			return ERR_FILE_READ;
-		}	
-		if (fclose(fp) != 0)
-			return ERR_BAD_FILE;
-	}
+	ASSERT(strIsValid(name));
+	// открыть файл
+	code = cmdFileOpen(file, name, "rb");
+	ERR_CALL_CHECK(code);
 	// определить длину файла
+	if (!buf)
+	{
+		*count = cmdFileSize(name);
+		if (*count == SIZE_MAX)
+			code = ERR_FILE_READ;
+	}
+	// читать
 	else
 	{
-		size_t size;
-		if ((size = cmdFileSize(file)) == SIZE_MAX)
-			return ERR_FILE_READ;
-		*count = size;
+		ASSERT(memIsValid(buf, *count));
+		if (fileRead2(buf, *count, file) != *count)
+			code = ERR_FILE_READ;
+		else if (fileSize(file) != *count)
+			code = ERR_BAD_FILE;
 	}
-	return ERR_OK;
+	ERR_CALL_HANDLE(code, cmdFileClose(file));
+	return cmdFileClose(file);
+}
+
+/*
+*******************************************************************************
+Обрезка
+*******************************************************************************
+*/
+
+err_t cmdFileBehead(const char* name, size_t count)
+{
+	const size_t buf_size = 4096;
+	err_t code;
+	file_t file;
+	size_t size;
+	size_t pos;
+	void* buf;
+	// pre
+	ASSERT(strIsValid(name));
+	// открыть файл
+	code = cmdFileOpen(file, name, "r+b");
+	ERR_CALL_CHECK(code);
+	// определить размер файла
+	if ((size = fileSize(file)) == SIZE_MAX)
+		code = ERR_FILE_READ;
+	else if (size < count)
+		code = ERR_FILE_SIZE;
+	ERR_CALL_HANDLE(code, cmdFileClose(file));
+	// сдвинуть содержимое файла влево
+	code = cmdBlobCreate(buf, buf_size);
+	ERR_CALL_HANDLE(code, cmdFileClose(file));
+	for (pos = 0; code == ERR_OK && pos < size - count;)
+	{
+		size_t c = MIN2(buf_size, size - count - pos);
+		if (!fileSeek(file, pos + count, SEEK_SET) ||
+			fileRead2(buf, c, file) != c ||
+			!fileSeek(file, pos, SEEK_SET))
+			code = ERR_FILE_READ;
+		else
+			code = fileWrite(&c, buf, c, file);
+		pos += c;
+	}
+	cmdBlobClose(buf);
+	ERR_CALL_HANDLE(code, cmdFileClose(file));
+	// обрезать файл
+	if (!fileTrunc(file, size - count))
+		code = ERR_FILE_WRITE;
+	ERR_CALL_HANDLE(code, cmdFileClose(file));
+	// завершить
+	return cmdFileClose(file);
+}
+
+err_t cmdFileDrop(const char* name, size_t count)
+{
+	err_t code;
+	file_t file;
+	size_t size;
+	// pre
+	ASSERT(strIsValid(name));
+	// открыть файл
+	code = cmdFileOpen(file, name, "r+b");
+	ERR_CALL_CHECK(code);
+	// определить размер файла
+	if ((size = fileSize(file)) == SIZE_MAX)
+		code = ERR_FILE_READ;
+	else if (size < count)
+		code = ERR_FILE_SIZE;
+	ERR_CALL_HANDLE(code, cmdFileClose(file));
+	// обрезать файл
+	if (!fileTrunc(file, size - count))
+		code = ERR_FILE_WRITE;
+	ERR_CALL_HANDLE(code, cmdFileClose(file));
+	// завершить
+	return cmdFileClose(file);
 }
 
 /*
@@ -124,67 +243,58 @@ err_t cmdFileReadAll(void* buf, size_t* count, const char* file)
 *******************************************************************************
 */
 
-err_t cmdFileDup(const char* ofile, const char* ifile, size_t skip,
+err_t cmdFileDup(const char* oname, const char* iname, size_t skip,
 	size_t count)
 {
 	const size_t buf_size = 4096;
 	err_t code;
-	FILE* ifp;
-	FILE* ofp;
+	file_t ifile;
+	file_t ofile;
 	void* buf;
 	// pre
-	ASSERT(strIsValid(ifile) && strIsValid(ofile));
-	// переполнение?
-	if ((size_t)(long)skip != skip)
-		return ERR_OVERFLOW;
+	ASSERT(strIsValid(iname) && strIsValid(oname));
 	// открыть входной файл
-	ifp = fopen(ifile, "rb");
-	if (!ifp)
-		return ERR_FILE_OPEN;
+	code = cmdFileOpen(ifile, iname, "rb");
+	ERR_CALL_CHECK(code);
 	// пропустить skip октетов
-	if (fseek(ifp, (long)skip, SEEK_SET))
+	if (!fileSeek(ifile, skip, SEEK_SET))
 	{
-		fclose(ifp);
+		cmdFileClose(ifile);
 		return ERR_FILE_READ;
 	}
 	// открыть выходной файл
-	ofp = fopen(ofile, "wb");
-	if (!ofp)
-	{
-		fclose(ifp);
-		return ERR_FILE_CREATE;
-	}
+	code = cmdFileOpen(ofile, oname, "wb");
+	ERR_CALL_HANDLE(code, cmdFileClose(ifile));
 	// подготовить память
 	code = cmdBlobCreate(buf, buf_size);
-	ERR_CALL_HANDLE(code, (fclose(ofp), fclose(ifp)));
+	ERR_CALL_HANDLE(code, (cmdFileClose(ofile), cmdFileClose(ifile)));
 	// дублировать count октетов
 	if (count != SIZE_MAX)
 		while (count && code == ERR_OK)
 		{
 			size_t c = MIN2(buf_size, count);
-			if (fread(buf, 1, c, ifp) != c)
+			if (fileRead2(buf, c, ifile) != c)
 				code = ERR_FILE_READ;
-			else if (fwrite(buf, 1, c, ofp) != c)
-				code = ERR_FILE_WRITE;
+			else
+				code = fileWrite(&c, buf, c, ofile);
 			count -= c;
 		}
 	// дублировать все
 	else
 		while (count && code == ERR_OK)
 		{
-			count = fread(buf, 1, buf_size, ifp);
-			if (count != buf_size && !feof(ifp))
+			count = fileRead2(buf, buf_size, ifile);
+			if (count == SIZE_MAX)
 				code = ERR_FILE_READ;
-			else if (fwrite(buf, 1, count, ofp) != count)
-				code = ERR_FILE_WRITE;
+			else 
+				code = fileWrite(&count, buf, count, ofile);
 		}
 	// завершить
 	cmdBlobClose(buf);
-	if (fclose(ofp) != 0)
-		code = (code != ERR_OK) ? code : ERR_BAD_FILE;
-	if (fclose(ifp) != 0)
-		code = (code != ERR_OK) ? code : ERR_BAD_FILE;
-	return code;
+	ERR_CALL_HANDLE(code, (cmdFileClose(ofile), cmdFileClose(ifile)));
+	code = cmdFileClose(ofile);
+	ERR_CALL_HANDLE(code, cmdFileClose(ifile));
+	return cmdFileClose(ifile);
 }
 
 /*
@@ -193,17 +303,19 @@ err_t cmdFileDup(const char* ofile, const char* ifile, size_t skip,
 *******************************************************************************
 */
 
-err_t cmdFileValNotExist(int count, char* files[])
+err_t cmdFileValNotExist(int count, char* names[])
 {
-	FILE* fp;
+	err_t code;
+	file_t file;
 	int ch;
-	for (; count--; files++)
+	for (; count--; names++)
 	{
-		ASSERT(strIsValid(*files));
-		if (fp = fopen(*files, "rb"))
+		ASSERT(strIsValid(*names));
+		code = cmdFileOpen(file, *names, "rb");
+		if (code == ERR_OK)
 		{
-			if (fclose(fp) != 0)
-				return ERR_BAD_FILE;
+			code = cmdFileClose(file);
+			ERR_CALL_CHECK(code);
 			if (printf("Some files already exist. Overwrite [y/n]?") < 0)
 				return ERR_FILE_EXISTS;
 			do
@@ -218,16 +330,18 @@ err_t cmdFileValNotExist(int count, char* files[])
 	return ERR_OK;
 }
 
-err_t cmdFileValExist(int count, char* files[])
+err_t cmdFileValExist(int count, char* names[])
 {
-	FILE* fp;
-	for (; count--; files++)
+	err_t code;
+	file_t file;
+	for (; count--; names++)
 	{
-		ASSERT(strIsValid(*files));
-		if (!(fp = fopen(*files, "rb")))
+		ASSERT(strIsValid(*names));
+		code = cmdFileOpen(file, *names, "rb");
+		if (code != ERR_OK)
 			return ERR_FILE_NOT_FOUND;
-		if (fclose(fp) != 0)
-			return ERR_BAD_FILE;
+		code = cmdFileClose(file);
+		ERR_CALL_CHECK(code);
 	}
 	return ERR_OK;
 }
@@ -250,3 +364,150 @@ bool_t cmdFileAreSame(const char* file1, const char* file2)
 #endif
 	return ret;
 }
+
+/*
+*******************************************************************************
+Аффиксы
+*******************************************************************************
+*/
+
+err_t cmdFilePrefixRead(octet* prefix, size_t* count, const char* name,
+	size_t offset)
+{
+	const size_t buf_size = 16;
+	err_t code;
+	file_t file;
+	size_t size;
+	void* buf;
+	size_t c;
+	u32 tag;
+	size_t len;
+	// pre
+	ASSERT(strIsValid(name));
+	ASSERT(memIsValid(count, O_PER_S));
+	// открыть файл
+	code = cmdFileOpen(file, name, "rb");
+	ERR_CALL_CHECK(code);
+	// определить размер файла
+	if ((size = fileSize(file)) == SIZE_MAX)
+		code = ERR_FILE_READ;
+	else if (offset >= size)
+		code = ERR_FILE_SIZE;
+	ERR_CALL_HANDLE(code, cmdFileClose(file));
+	// подготовить память
+	code = cmdBlobCreate(buf, buf_size);
+	ERR_CALL_HANDLE(code, cmdFileClose(file));
+	// прочитать заголовок префикса
+	c = MIN2(buf_size, size - offset);
+	if (!fileSeek(file, offset, SEEK_SET) ||
+		fileRead2(buf, c, file) != c)
+		code = ERR_FILE_READ;
+	ERR_CALL_HANDLE(code, (cmdBlobClose(buf), cmdFileClose(file)));
+	// определить длину префикса
+	c = derTLDec(&tag, &len, buf, c);
+	if (c == SIZE_MAX || offset + c + len > size)
+		code = ERR_BAD_FORMAT;
+	ERR_CALL_HANDLE(code, (cmdBlobClose(buf), cmdFileClose(file)));
+	c += len;
+	// прочитать префикс
+	cmdBlobClose(buf);
+	code = cmdBlobCreate(buf, c);
+	ERR_CALL_HANDLE(code, cmdFileClose(file));
+	if (!fileSeek(file, offset, SEEK_SET) ||
+		fileRead2(buf, c, file) != c)
+		code = ERR_FILE_READ;
+	ERR_CALL_HANDLE(code, (cmdBlobClose(buf), cmdFileClose(file)));
+	// закрыть файл
+	code = cmdFileClose(file);
+	ERR_CALL_HANDLE(code, cmdBlobClose(buf));
+	// проверить префикс
+	if (!derIsValid3(buf, c))
+		code = ERR_BAD_FORMAT;
+	ERR_CALL_HANDLE(code, cmdBlobClose(buf));
+	// возвратить префикс и его длину
+	if (prefix)
+	{
+		ASSERT(memIsValid(prefix, *count));
+		if (*count < c)
+			code = ERR_OUTOFMEMORY;
+		else
+			memCopy(prefix, buf, c);
+	}
+	*count = c;
+	// завершить
+	cmdBlobClose(buf);
+	return code;
+}
+
+err_t cmdFileSuffixRead(octet* suffix, size_t* count, const char* name,
+	size_t offset)
+{
+	const size_t buf_size = 16;
+	err_t code;
+	file_t file;
+	size_t size;
+	void* buf;
+	size_t c;
+	u32 tag;
+	size_t len;
+	// pre
+	ASSERT(strIsValid(name));
+	ASSERT(memIsValid(count, O_PER_S));
+	// открыть файл
+	code = cmdFileOpen(file, name, "rb");
+	ERR_CALL_CHECK(code);
+	// определить размер файла
+	if ((size = fileSize(file)) == SIZE_MAX)
+		code = ERR_FILE_READ;
+	else if (offset >= size)
+		code = ERR_FILE_SIZE;
+	ERR_CALL_HANDLE(code, cmdFileClose(file));
+	// подготовить память
+	code = cmdBlobCreate(buf, buf_size);
+	ERR_CALL_HANDLE(code, cmdFileClose(file));
+	// прочитать заголовок суффикса
+	c = MIN2(buf_size, size - offset);
+	if (!fileSeek(file, size - offset - c, SEEK_SET) ||
+		fileRead2(buf, c, file) != c)
+		code = ERR_FILE_READ;
+	ERR_CALL_HANDLE(code, (cmdBlobClose(buf), cmdFileClose(file)));
+	// развернуть суффикс
+	memRev(buf, c);
+	// определить длину суффикса
+	c = derTLDec(&tag, &len, buf, c);
+	if (c == SIZE_MAX || offset + c + len > size)
+		code = ERR_BAD_FORMAT;
+	ERR_CALL_HANDLE(code, (cmdBlobClose(buf), cmdFileClose(file)));
+	c += len;
+	// прочитать суффикс
+	cmdBlobClose(buf);
+	code = cmdBlobCreate(buf, c);
+	ERR_CALL_HANDLE(code, cmdFileClose(file));
+	if (!fileSeek(file, size - offset - c, SEEK_SET) ||
+		fileRead2(buf, c, file) != c)
+		code = ERR_FILE_READ;
+	ERR_CALL_HANDLE(code, (cmdBlobClose(buf), cmdFileClose(file)));
+	// закрыть файл
+	code = cmdFileClose(file);
+	ERR_CALL_HANDLE(code, cmdBlobClose(buf));
+	// проверить суффикс
+	memRev(buf, c);
+	if (!derIsValid3(buf, c))
+		code = ERR_BAD_FORMAT;
+	ERR_CALL_HANDLE(code, cmdBlobClose(buf));
+	memRev(buf, c);
+	// возвратить суффикс и его длину
+	if (suffix)
+	{
+		ASSERT(memIsValid(suffix, *count));
+		if (*count < c)
+			code = ERR_OUTOFMEMORY;
+		else
+			memCopy(suffix, buf, c);
+	}
+	*count = c;
+	// завершить
+	cmdBlobClose(buf);
+	return code;
+}
+

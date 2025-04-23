@@ -4,15 +4,16 @@
 \brief Dealing with entropy sources
 \project bee2/cmd 
 \created 2021.04.20
-\version 2024.06.14
+\version 2025.04.12
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
 #include "../cmd.h"
-#include <bee2/core/err.h>
 #include <bee2/core/dec.h>
+#include <bee2/core/err.h>
+#include <bee2/core/file.h>
 #include <bee2/core/mem.h>
 #include <bee2/core/rng.h>
 #include <bee2/core/str.h>
@@ -40,7 +41,7 @@
 */
 
 static const char _name[] = "es";
-static const char _descr[] = "dealing with entropy sources";
+static const char _descr[] = "monitor entropy sources";
 
 static int esUsage()
 {
@@ -150,7 +151,7 @@ static err_t esRead(int argc, char *argv[])
 	char source[6];
 	size_t par = 0;
 	size_t count;
-	FILE* fp;
+	file_t file;
 	octet buf[2048];
 	// разбор командной строки: число параметров
 	if (argc != 3)
@@ -186,9 +187,8 @@ static err_t esRead(int argc, char *argv[])
 	// разбор командной строки: имя выходного файла
 	code = cmdFileValNotExist(1, argv + 2);
 	ERR_CALL_CHECK(code);
-	fp = fopen(argv[2], "wb");
-	if (!fp)
-		return ERR_FILE_OPEN;
+	code = cmdFileOpen(file, argv[2], "wb");
+	ERR_CALL_CHECK(code);
 	// выгрузка данных
 	while (count)
 	{
@@ -196,18 +196,18 @@ static err_t esRead(int argc, char *argv[])
 		// читать
 		code = rngReadSourceEx(&read, buf,
 			MIN2(sizeof(buf), count), source, par);
-		ERR_CALL_HANDLE(code, fclose(fp));
-		code = read == MIN2(sizeof(buf), count) ? ERR_OK : ERR_FILE_READ;
-		ERR_CALL_HANDLE(code, fclose(fp));
+		ERR_CALL_HANDLE(code, cmdFileClose(file));
+		if (read != MIN2(sizeof(buf), count))
+			code = ERR_FILE_READ;
+		ERR_CALL_HANDLE(code, cmdFileClose(file));
 		// писать
-		code = fwrite(buf, 1, read, fp) == read ? ERR_OK : ERR_FILE_WRITE;
-		ERR_CALL_HANDLE(code, fclose(fp));
+		if (fileWrite2(file, buf, read) != read)
+			code = ERR_FILE_WRITE;
+		ERR_CALL_HANDLE(code, cmdFileClose(file));
 		count -= read;
 	}
 	// завершение
-	if (fclose(fp) != 0)
-		return ERR_BAD_FILE;
-	return ERR_OK;
+	return cmdFileClose(file);
 }
 
 /*

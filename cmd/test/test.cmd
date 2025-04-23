@@ -3,7 +3,7 @@ rem ===========================================================================
 rem \brief Testing command-line interface
 rem \project bee2evp/cmd
 rem \created 2022.06.24
-rem \version 2024.06.14
+rem \version 2025.04.22
 rem \pre The working directory contains zed.csr.
 rem ===========================================================================
 
@@ -403,10 +403,10 @@ if %ERRORLEVEL% equ 0 goto Error
 bee2cmd sig val -pubkey pubkey2 ff ss
 if %ERRORLEVEL% equ 0 goto Error
 
-bee2cmd sig val -anchor cert0 ff ff
+bee2cmd sig val -anchor cert0 ff
 if %ERRORLEVEL% equ 0 goto Error
 
-bee2cmd sig val -anchor cert2 ff ff
+bee2cmd sig val -anchor cert2 ff
 if %ERRORLEVEL% equ 0 goto Error
 
 del /q ss 1> nul
@@ -431,19 +431,19 @@ if %ERRORLEVEL% neq 0 goto Error
 bee2cmd sig val -anchor cert0 ff ss
 if %ERRORLEVEL% equ 0 goto Error
 
-bee2cmd sig sign -certs "cert0 cert1 cert2" -pass pass:alice privkey2 ff ff
+bee2cmd sig sign -certs "cert0 cert1 cert2" -pass pass:alice privkey2 ff
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd sig val -pubkey pubkey2 ff ff
+bee2cmd sig val -pubkey pubkey2 ff
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd sig val -anchor cert2 ff ff
+bee2cmd sig val -anchor cert2 ff
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd sig val -anchor cert1 ff ff
+bee2cmd sig val -anchor cert1 ff
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd sig val -anchor cert0 ff ff
+bee2cmd sig val -anchor cert0 ff
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd sig extr -cert0 ff cert01
@@ -493,12 +493,15 @@ bee2cmd sig extr -body ss body
 if %ERRORLEVEL% equ 0 goto Error
 
 bee2cmd sig sign -pass pass:alice -date 230526 privkey2 ff ff
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd sig sign -pass pass:alice -date 230526 privkey2 ff
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd sig val -pubkey pubkey2 ff ff
+bee2cmd sig val -pubkey pubkey2 ff
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd sig val -anchor cert2 ff ff
+bee2cmd sig val -anchor cert2 ff
 if %ERRORLEVEL% equ 0 goto Error
 
 bee2cmd sig print ss
@@ -515,17 +518,20 @@ for /f "tokens=* USEBACKQ" %%F in (`bee2cmd sig print -certc ss`) do (
 )
 if "%certc%" neq "1" goto Error
 
-bee2cmd sig sign -pass pass:bob -certs "cert1 cert3" privkey3 ff ff
+bee2cmd sig sign -pass pass:bob -certs "cert1 cert3" privkey3 ff
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd sig val -pubkey pubkey3 ff ff
+bee2cmd sig val -pubkey pubkey3 ff
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd sig val -anchor cert1 ff ff
+bee2cmd sig val -anchor cert1 ff
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd sig val -anchor cert3 ff
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd sig val -anchor cert3 ff ff
-if %ERRORLEVEL% neq 0 goto Error
+if %ERRORLEVEL% equ 0 goto Error
 
 echo ****** OK
 
@@ -549,7 +555,7 @@ if %ERRORLEVEL% equ 0 goto Error
 bee2cmd cvr val cert2 ring2
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd sig val -anchor cert2 ring2 ring2
+bee2cmd sig val -anchor cert2 ring2
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd cvr find ring2 cert3
@@ -624,8 +630,52 @@ if %ERRORLEVEL% neq 0 goto Error
 echo ****** OK
 
 rem ===========================================================================
+rem  bee2cmd/stamp
+rem ===========================================================================
+
+echo ****** Testing bee2cmd/stamp...
+
+del /q body stamp 2> nul
+
+echo body> body
+
+bee2cmd stamp val body
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd stamp gen body body
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd stamp gen body
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd stamp val body
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd stamp val body body
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd stamp gen body stamp
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd stamp val body stamp
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd affix append body stamp
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd stamp val body
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd stamp val body stamp
+if %ERRORLEVEL% equ 0 goto Error
+
+echo ****** OK
+
+rem ===========================================================================
 rem  bee2cmd/es
 rem ===========================================================================
+
+echo ****** Testing bee2cmd/es...
 
 del /q dd 2> nul
 
@@ -637,6 +687,93 @@ if %ERRORLEVEL% neq 0 goto Error
 
 for %%A in (dd) do set dd_len=%%~zA
 if %dd_len% neq 1024 goto Error
+
+echo ****** OK
+
+rem ===========================================================================
+rem  bee2cmd/st
+rem ===========================================================================
+
+echo ****** Testing bee2cmd/st...
+
+bee2cmd st alg
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd st rng
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd st stamp
+if %ERRORLEVEL% neq 0 goto Error
+
+echo ****** OK
+
+rem ===========================================================================
+rem  bee2cmd/affix
+rem ===========================================================================
+
+echo ****** Testing bee2cmd/affix...
+
+del /q body body1 stamp p1 p10 s0 2> nul
+
+echo body> body
+echo body> body1
+
+for /f "tokens=* USEBACKQ" %%F in (`bee2cmd affix print -sc body`) do (
+  set sc=%%F
+)
+if "%sc%" neq "0" goto Error
+
+bee2cmd stamp gen body stamp
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd affix prepend body zed.cert
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd affix prepend body zed.cert
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd affix append body stamp
+if %ERRORLEVEL% neq 0 goto Error
+
+for /f "tokens=* USEBACKQ" %%F in (`bee2cmd affix print -pc body`) do (
+  set pc=%%F
+)
+if "%pc%" neq "2" goto Error
+
+bee2cmd affix extr -p1 body p1
+if %ERRORLEVEL% neq 0 goto Error
+
+fc /b p1 zed.cert 1> nul
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd affix extr -p10 body p10
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd affix extr -s0 body s0
+if %ERRORLEVEL% neq 0 goto Error
+
+fc /b s0 stamp 1> nul
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd affix behead body
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd affix behead body
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd affix behead body
+if %ERRORLEVEL% equ 0 goto Error
+
+bee2cmd affix drop body
+if %ERRORLEVEL% neq 0 goto Error
+
+bee2cmd affix drop body
+if %ERRORLEVEL% equ 0 goto Error
+
+echo body> body1
+
+fc /b body body1 1> nul
+if %ERRORLEVEL% neq 0 goto Error
 
 echo ****** OK
 

@@ -4,7 +4,7 @@
 \brief Errors
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2024.07.12
+\version 2025.04.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -56,6 +56,9 @@ static const err_msg _messages[] = {
 	{ERR_FILE_WRITE, "Cannot write to the file"},
 	{ERR_FILE_READ, "Cannot read from the file"},
 	{ERR_FILE_EOF, "Reached the end of the file"},
+	{ERR_FILE_SIZE, "Incorrect file size"},
+	{ERR_FILE_STAMP, "Invalid file stamp"},
+	{ERR_FILE_SAME, "The same file is used in different ways"},
 	// core
 	{ERR_BAD_OID, "Incorrect object identifier"},
 	{ERR_BAD_ENTROPY, "Error while collecting entropy"},

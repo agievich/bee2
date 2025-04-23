@@ -45,6 +45,12 @@
     <Filter Include="Source Files\csr">
       <UniqueIdentifier>{c6c1a5dd-dffb-40dc-ad09-60909062f096}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\st">
+      <UniqueIdentifier>{efaa8d54-3d8c-48a1-aa7b-b9934938688b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\affix">
+      <UniqueIdentifier>{8ead9d74-e892-4ce5-9ff2-75f219e0168f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\cmd\bsum\bsum.c">
@@ -113,15 +119,25 @@
     <ClCompile Include="..\..\cmd\csr\csr.c">
       <Filter>Source Files\csr</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\cmd\core\cmd_st.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\st\st.c">
+      <Filter>Source Files\st</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\affix\affix.c">
+      <Filter>Source Files\affix</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\core\cmd_stamp.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\core\cmd_sys.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\cmd\cmd.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="..\..\cmd\stamp\stamp.rc">
-      <Filter>Resource Files</Filter>
-    </ResourceCompile>
   </ItemGroup>
 </Project>
