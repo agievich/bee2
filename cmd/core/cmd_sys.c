@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: system environment
 \project bee2/cmd 
 \created 2025.04.20
-\version 2025.04.21
+\version 2025.04.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -31,7 +31,7 @@ err_t cmdSysExePath(char* path, size_t* count)
 	// определить длину пути
 	if (!path)
 	{
-		len = wai_getExecutablePath(path, 0, 0);
+		len = wai_getExecutablePath(0, 0, 0);
 		if (len < 0)
 			return ERR_SYS;
 		if (++len <= 0 || (int)(size_t)len != len)
@@ -60,7 +60,7 @@ err_t cmdSysModulePath(char* path, size_t* count)
 	// определить длину пути
 	if (!path)
 	{
-		len = wai_getModulePath(path, 0, 0);
+		len = wai_getModulePath(0, 0, 0);
 		if (len < 0)
 			return ERR_SYS;
 		if (++len <= 0 || (int)(size_t)len != len)
