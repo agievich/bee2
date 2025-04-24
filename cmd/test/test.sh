@@ -3,7 +3,7 @@
 # \brief Testing command-line interface
 # \project bee2evp/cmd
 # \created 2022.06.24
-# \version 2025.04.23
+# \version 2025.04.24
 # \pre The working directory contains zed.csr.
 # =============================================================================
 
@@ -24,6 +24,8 @@ function pause() {
 }
 
 test_ver() {
+  $bee2cmd \
+    && return 1
   $bee2cmd ver \
     || return 1
   $bee2cmd ver ver \
@@ -34,6 +36,8 @@ test_ver() {
 test_bsum() {
   rm -rf -- check32 check256 -c \
     || return 2
+  $bee2cmd bsum \
+    && return 1
   $bee2cmd bsum -bash31 $bee2cmd \
     && return 1
   $bee2cmd bsum -bash32 $bee2cmd $this > check32 \
@@ -70,6 +74,9 @@ test_bsum() {
 test_pwd() {
   rm -rf s1 s2 s3 s4 s5 ss1 ss2 ss3 \
     || return 2
+  # logo
+  $bee2cmd pwd \
+    && return 1
   # pass
   $bee2cmd pwd gen pass:zed \
     && return 1
@@ -158,6 +165,9 @@ test_kg() {
   rm -rf privkey0 privkey1 privkey2 privkey3 pubkey1 pubkey2 pubkey3 \
     || return 2
 
+  $bee2cmd kg \
+    && return 1
+
   $bee2cmd kg gen -l256 -pass share:"-pass pass:zed s2 s3 s4" \
     && return 1
   $bee2cmd kg gen -l256 -pass share:"-pass pass:zed s2 s3 s4" -pass pass:zed \
@@ -201,6 +211,9 @@ test_kg() {
 test_cvc() {
   rm -rf cert0 req1 cert1 pubkey1 req2 req21 cert2 req3 cert3 \
     || return 2
+
+  $bee2cmd cvc \
+    && return 1
 
   $bee2cmd cvc root -authority BYCA0000 -from 220707 -until 990707 \
     -pass pass:root -eid EEEEEEEEEE -esign 7777 privkey0 cert0 \
@@ -300,6 +313,9 @@ test_sig(){
 
   echo test> ff
   echo sig> ss
+
+  $bee2cmd sig \
+    && return 1
 
   $bee2cmd sig val -pubkey pubkey2 ff ss \
     && return 1
@@ -416,6 +432,9 @@ test_cvr(){
   rm -rf ring2 cert21 cert31 \
     || return 2
 
+  $bee2cmd cvr \
+    && return 1
+
   $bee2cmd cvr init -pass pass:alice privkey2 cert2 ring2 \
     || return 1
   $bee2cmd cvr add -pass pass:alice privkey2 cert2 cert3 ring2 \
@@ -464,6 +483,9 @@ test_csr(){
   rm -rf zed.sk1 zed.csr1 \
     || return 2
 
+  $bee2cmd csr \
+    && return 1
+
   $bee2cmd csr val zed.csr \
     || return 1
   $bee2cmd kg gen -pass pass:zed1 zed.sk1 \
@@ -481,6 +503,9 @@ test_stamp() {
     || return 2
 
   echo body> body
+
+  $bee2cmd stamp \
+    && return 1
 
   $bee2cmd stamp val body \
     && return 1
@@ -511,6 +536,9 @@ test_es() {
   rm -rf dd\
     || return 2
 
+  $bee2cmd es \
+    && return 1
+
   $bee2cmd es print \
     || return 1
   $bee2cmd es read sys 1 dd \
@@ -523,6 +551,9 @@ test_es() {
 }
 
 test_st(){
+  $bee2cmd st \
+    && return 1
+
   $bee2cmd st alg \
     || return 1
   $bee2cmd st rng \
@@ -543,6 +574,9 @@ test_affix(){
 
   echo body> body
   echo body> body1
+
+  $bee2cmd affix \
+    && return 1
 
   if [ "$($bee2cmd affix print -sc body)" != "0" ]; then 
     return 1

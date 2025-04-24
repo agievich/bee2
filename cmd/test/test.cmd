@@ -3,7 +3,7 @@ rem ===========================================================================
 rem \brief Testing command-line interface
 rem \project bee2evp/cmd
 rem \created 2022.06.24
-rem \version 2025.04.23
+rem \version 2025.04.24
 rem \pre The working directory contains zed.csr.
 rem ===========================================================================
 
@@ -12,6 +12,9 @@ rem  bee2cmd/ver
 rem ===========================================================================
 
 echo ****** Testing bee2cmd/ver...
+
+bee2cmd
+if %ERRORLEVEL% equ 0 goto Error
 
 bee2cmd ver
 if %ERRORLEVEL% neq 0 goto Error
@@ -28,6 +31,9 @@ rem ===========================================================================
 echo ****** Testing bee2cmd/bsum...
 
 del /q check32 check256 -c 2> nul
+
+bee2cmd bsum
+if %ERRORLEVEL% equ 0 goto Error
 
 bee2cmd bsum -bash31 bee2cmd.exe
 if %ERRORLEVEL% equ 0 goto Error
@@ -83,6 +89,9 @@ rem ===========================================================================
 echo ****** Testing bee2cmd/pwd...
 
 del /q s1 s2 s3 s4 s5 2> nul
+
+bee2cmd pwd
+if %ERRORLEVEL% equ 0 goto Error
 
 bee2cmd pwd gen pass:zed
 if %ERRORLEVEL% equ 0 goto Error
@@ -204,6 +213,9 @@ echo ****** Testing bee2cmd/kg...
 
 del /q privkey0 privkey1 privkey2 privkey3 pubkey0 pubkey2 pubkey3 2> nul
 
+bee2cmd kg
+if %ERRORLEVEL% equ 0 goto Error
+
 bee2cmd kg gen -l256 -pass share:"-pass pass:zed s2 s3 s4"
 if %ERRORLEVEL% equ 0 goto Error
 
@@ -256,6 +268,9 @@ rem ===========================================================================
 echo ****** Testing bee2cmd/cvc...
 
 del /q cert0 req1 cert1 pubkey1 req2 req21 cert2 req3 cert3 2> nul
+
+bee2cmd cvc
+if %ERRORLEVEL% equ 0 goto Error
 
 bee2cmd cvc root -authority BYCA0000 -from 220707 -until 990707 ^
   -pass pass:root -eid EEEEEEEEEE -esign 7777 privkey0 cert0
@@ -390,6 +405,9 @@ del /q ff ss cert01 cert11 cert21 body sig 2> nul
 
 echo test> ff
 echo sig> ss
+
+bee2cmd sig
+if %ERRORLEVEL% equ 0 goto Error
 
 bee2cmd sig val -pubkey pubkey2 ff ss
 if %ERRORLEVEL% equ 0 goto Error
@@ -543,6 +561,9 @@ echo ****** Testing bee2cmd/cvr...
 
 del /q ring2 cert21 cert31 2> nul
 
+bee2cmd cvr
+if %ERRORLEVEL% equ 0 goto Error
+
 bee2cmd cvr init -pass pass:alice privkey2 cert2 ring2
 if %ERRORLEVEL% neq 0 goto Error
 
@@ -615,6 +636,9 @@ echo ****** Testing bee2cmd/csr...
 
 del /q zed.sk1 zed.csr1 2> nul
 
+bee2cmd csr
+if %ERRORLEVEL% equ 0 goto Error
+
 bee2cmd csr val zed.csr
 if %ERRORLEVEL% neq 0 goto Error
 
@@ -638,6 +662,9 @@ echo ****** Testing bee2cmd/stamp...
 del /q body stamp 2> nul
 
 echo body> body
+
+bee2cmd stamp
+if %ERRORLEVEL% equ 0 goto Error
 
 bee2cmd stamp val body
 if %ERRORLEVEL% equ 0 goto Error
@@ -679,6 +706,9 @@ echo ****** Testing bee2cmd/es...
 
 del /q dd 2> nul
 
+bee2cmd es
+if %ERRORLEVEL% equ 0 goto Error
+
 bee2cmd es print
 if %ERRORLEVEL% neq 0 goto Error
 
@@ -695,6 +725,9 @@ rem  bee2cmd/st
 rem ===========================================================================
 
 echo ****** Testing bee2cmd/st...
+
+bee2cmd st
+if %ERRORLEVEL% equ 0 goto Error
 
 bee2cmd st alg
 if %ERRORLEVEL% neq 0 goto Error
@@ -723,6 +756,9 @@ del /q body body1 stamp p1 p10 s0 2> nul
 
 echo body> body
 echo body> body1
+
+bee2cmd affix
+if %ERRORLEVEL% equ 0 goto Error
 
 for /f "tokens=* USEBACKQ" %%F in (`bee2cmd affix print -sc body`) do (
   set sc=%%F
