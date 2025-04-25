@@ -277,8 +277,12 @@ static err_t bakeTestMsgVal(size_t count, ...)
 		// ...сравнить с эталонными
 		char* msg = va_arg(msgs, char*);
 		if (_msgs[i].len != strLen(msg) / 2 || !hexEq(_msgs[i].buf, msg))
+		{
+			va_end(msgs);
 			return FALSE;
+		}
 	}
+	va_end(msgs);
 	return TRUE;
 }
 
