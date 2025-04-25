@@ -1,15 +1,16 @@
 /*
 *******************************************************************************
-\file bake_demo.c
+\file bake_test.c
 \brief Tests for STB 34.101.66 (bake)
 \project bee2/test
 \created 2014.04.23
-\version 2023.09.22
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
+#include <stdarg.h>
 #include <bee2/core/err.h>
 #include <bee2/core/mem.h>
 #include <bee2/core/hex.h>
@@ -23,7 +24,8 @@
 Проверочный канал связи как набор буферов памяти
 
 Сообщение протокола описывается структурой типа msg_t. Сообщения хранятся
-в массиве _msgs и обрабатываются с помощью функций _msgWrite(), _msgRead().
+в массиве _msgs и обрабатываются с помощью функций fileMsgWrite(),
+fileMmsgRead().
 *******************************************************************************
 */
 
@@ -165,6 +167,78 @@ static const char _bpace_randb[] =
 
 /*
 *******************************************************************************
+Тестирование: сообщения сторон
+*******************************************************************************
+*/
+
+static const char _bmqv_m1[] =
+	"9B4EA669DABDF100A7D4B6E6EB76EE52"		// Vb
+	"51912531F426750AAC8A9DBB51C54D8D"
+	"6AB7DBF15FCBD768EE68A173F7B236EF"
+	"C15A01E2AA6CD1FE98B947DA7B38A2A0";
+
+static const char _bmqv_m2[] =
+	"1D5A382B962D4ED06193258CA6DE535D"		// Va
+	"8FD7FACB853171E932EF93B5EE800120"
+	"03DBB7B5BD07036380BAFA47FCA7E6CA"
+	"3F179EDDD1AE5086647909183628EDDC"
+	"413B7E181BAFB337";						// Ta
+
+static const char _bmqv_m3[] =
+	"B800A2033AC7591B";						// Tb
+
+static const char _bsts_m1[] =
+	"9B4EA669DABDF100A7D4B6E6EB76EE52"		// Vb
+	"51912531F426750AAC8A9DBB51C54D8D"
+	"6AB7DBF15FCBD768EE68A173F7B236EF"
+	"C15A01E2AA6CD1FE98B947DA7B38A2A0";
+
+static const char _bsts_m2[] =
+	"1D5A382B962D4ED06193258CA6DE535D"		// Va
+	"8FD7FACB853171E932EF93B5EE800120"
+	"03DBB7B5BD07036380BAFA47FCA7E6CA"
+	"3F179EDDD1AE5086647909183628EDDC"
+	"A994115F297D2FAD342A0AF54FCDA66E"		// Ya
+	"1E6A30FE966662C43C2A73AFA3CADF69"
+	"47344287CB200795616458678B76BA61"
+	"924AD05D80BB81F53F8D5C4E0EF55EBD"
+	"AFA674D7ECD74CB0609DE12BC0463670"
+	"64059F011607DD18624074901F1C5A40"
+	"94C006559F"
+	"1306D68200087987";						// Ta
+
+static const char _bsts_m3[] =
+	"6D45B2E76AF24422ADC6D5D7A3CFA37F"		// Yb
+	"DCB52F7E440222F1AACECB98BDED357B"
+	"BD459DF0A3EE7A3EAFE0199CA5C4C072"
+	"7C33909E4C322216F6F53E383A3727D8"
+	"34B5D4F5C977FC3B7EBA6DCA55C0F1A5"
+	"69BE3CD3464B13C388D0DAC3E6A82F9D"
+	"2EF3D6"
+	"CA7A5BAC4EB2910E";						// Tb
+
+static const char _bpace_m1[] =
+	"991E81690B4C687C86BFD11CEBDA2421";		// Yb
+
+static const char _bpace_m2[] =
+	"CE41B54DC13A28BDF74CEBD190881802"		// Ya
+	"6B13ACBB086FB87618BCC2EF20A3FA89"		// Va
+	"475654CB367E670A2441730B24B8AB31"
+	"8209C81C9640C47A77B28E90AB9211A1"
+	"DF21DE878191C314061E347C5125244F";
+
+static const char _bpace_m3[] =
+	"CD3D6487DC4EEB23456978186A069C71"		// Vb
+	"375D75C2DF198BAD1E61EEA0DBBFF737"
+	"3D1D9ED17A7AD460AA420FB11952D580"
+	"78BC1CC9F408F2E258FDE97F22A44C6F"
+	"28FD4859D78BA971";						// Tb
+
+static const char _bpace_m4[] =
+	"5D93FD9A7CB863AA";						// Ta
+
+/*
+*******************************************************************************
 Проверка сертификата
 *******************************************************************************
 */
@@ -176,12 +250,36 @@ static err_t bakeTestCertVal(octet* pubkey, const bign_params* params,
 		(params->l != 128 && params->l != 192 && params->l != 256) ||
 		!memIsNullOrValid(pubkey, params->l / 2))
 		return ERR_BAD_INPUT;
-	if (!memIsValid(data, len) ||
-		len < params->l / 2)
+	if (!memIsValid(data, len) || len < params->l / 2)
 		return ERR_BAD_CERT;
 	if (pubkey)
 		memCopy(pubkey, data + (len - params->l / 2), params->l / 2);
 	return ERR_OK;
+}
+
+/*
+*******************************************************************************
+Проверка сообщений (после выполнения протокола)
+
+\remark В функцию передается count эталонных сообщений в виде
+шестнадцатеричных строк.
+*******************************************************************************
+*/
+
+static err_t bakeTestMsgVal(size_t count, ...)
+{
+	va_list msgs;
+	size_t i;
+	// просмотреть сообщения... 
+	va_start(msgs, count);
+	for (i = 0; i < count; ++i)
+	{
+		// ...сравнить с эталонными
+		char* msg = va_arg(msgs, char*);
+		if (_msgs[i].len != strLen(msg) / 2 || !hexEq(_msgs[i].buf, msg))
+			return FALSE;
+	}
+	return TRUE;
 }
 
 /*
@@ -242,7 +340,7 @@ bool_t bakeTest()
 	certb->data = certdatab;
 	certb->len = strLen(_certb) / 2;
 	certa->val = certb->val = bakeTestCertVal;
-	// тест Б.2
+	// тест Б.2: сеанс протокола
 	hexTo(randa, _bmqv_randa);
 	hexTo(randb, _bmqv_randb);
 	fileMsgFlash();
@@ -262,12 +360,16 @@ bool_t bakeTest()
 			return FALSE;
 	}
 	while (codea == ERR_FILE_NOT_FOUND || codeb == ERR_FILE_NOT_FOUND);
+	// тест Б.2: общие ключи
 	if (!memEq(keya, keyb, 32) ||
 		!hexEq(keya,
 			"C6F86D0E468D5EF1A9955B2EE0CF0581"
 			"050C81D1B47727092408E863C7EEB48C"))
 		return FALSE;
-	// тест Б.3
+	// тест Б.2: сообщения
+	if (!bakeTestMsgVal(3, _bmqv_m1, _bmqv_m2, _bmqv_m3))
+		return FALSE;
+	// тест Б.3: сеанс протокола
 	hexTo(randa, _bsts_randa);
 	hexTo(randb, _bsts_randb);
 	fileMsgFlash();
@@ -287,12 +389,16 @@ bool_t bakeTest()
 			return FALSE;
 	}
 	while (codea == ERR_FILE_NOT_FOUND || codeb == ERR_FILE_NOT_FOUND);
+	// тест Б.3: общие ключи
 	if (!memEq(keya, keyb, 32) ||
 		!hexEq(keya,
 			"78EF2C56BD6DA2116BB5BEE80CEE5C05"
 			"394E7609183CF7F76DF0C2DCFB25C4AD"))
 		return FALSE;
-	// тест Б.4
+	// тест Б.3: сообщения
+	if (!bakeTestMsgVal(3, _bsts_m1, _bsts_m2, _bsts_m3))
+		return FALSE;
+	// тест Б.4: сеанс протокола
 	hexTo(randa, _bpace_randa);
 	hexTo(randb, _bpace_randb);
 	fileMsgFlash();
@@ -316,6 +422,9 @@ bool_t bakeTest()
 		!hexEq(keya,
 			"DAC4D8F411F9C523D28BBAAB32A5270E"
 			"4DFA1F0F757EF8E0F30AF08FBDE1E7F4"))
+		return FALSE;
+	// тест Б.4: сеанс протокола
+	if (!bakeTestMsgVal(4, _bpace_m1, _bpace_m2, _bpace_m3, _bpace_m4))
 		return FALSE;
 	// тест bakeKDF (по данным из теста Б.4)
 	hexTo(secret, 

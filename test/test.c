@@ -4,7 +4,7 @@
 \brief Bee2 testing
 \project bee2/test
 \created 2014.04.02
-\version 2025.04.13
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -106,7 +106,6 @@ extern bool_t bign96Test();
 extern bool_t brngTest();
 extern bool_t belsTest();
 extern bool_t bakeTest();
-extern bool_t bakeDemo();
 extern bool_t bashTest();
 extern bool_t bashBench();
 extern bool_t botpTest();

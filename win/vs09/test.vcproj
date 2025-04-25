@@ -189,10 +189,6 @@
 				Name="crypto"
 				>
 				<File
-					RelativePath="..\..\test\crypto\bake_demo.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\test\crypto\bake_test.c"
 					>
 				</File>
