@@ -230,7 +230,7 @@ err_t cmdStampSelfVal()
 	// в файле нет штампа?
 	if (code == ERR_MAX)
 	{
-		size_t count = 10;
+		count = 10;
 		// прочитать отсоединенный штамп
 		strCopy(name + strLen(name), ext);
 		code = cmdFileReadAll(stamp1, &count, name);
