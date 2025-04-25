@@ -4,7 +4,7 @@
 \brief Tests for compound objects
 \project bee2/test
 \created 2013.04.16
-\version 2023.03.30
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -12,7 +12,6 @@
 
 #include <bee2/core/mem.h>
 #include <bee2/core/obj.h>
-#include <bee2/core/util.h>
 
 /*
 *******************************************************************************

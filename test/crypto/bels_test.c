@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.60 (bels)
 \project bee2/test
 \created 2013.06.27
-\version 2023.03.29
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -17,7 +17,6 @@
 #include <bee2/core/util.h>
 #include <bee2/crypto/bels.h>
 #include <bee2/crypto/belt.h>
-#include <bee2/crypto/brng.h>
 
 /*
 *******************************************************************************

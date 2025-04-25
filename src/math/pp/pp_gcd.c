@@ -4,7 +4,7 @@
 \brief Binary polynomials: Euclidian gcd algorithms
 \project bee2 [cryptographic library]
 \created 2012.03.01
-\version 2023.11.09
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -12,7 +12,6 @@
 
 #include "bee2/core/mem.h"
 #include "bee2/core/util.h"
-#include "bee2/math/pp.h"
 #include "bee2/math/ww.h"
 
 /*

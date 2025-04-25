@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): key transport
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2023.09.20
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -19,6 +19,7 @@
 #include "bee2/math/gfp.h"
 #include "bee2/math/ecp.h"
 #include "bee2/math/ww.h"
+#include "bee2/math/zm.h"
 #include "bee2/math/zz.h"
 #include "bign_lcl.h"
 

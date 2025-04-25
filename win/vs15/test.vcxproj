@@ -373,7 +373,6 @@
     <ClCompile Include="..\..\test\core\u32_test.c" />
     <ClCompile Include="..\..\test\core\u64_test.c" />
     <ClCompile Include="..\..\test\core\util_test.c" />
-    <ClCompile Include="..\..\test\crypto\bake_demo.c" />
     <ClCompile Include="..\..\test\crypto\bake_test.c" />
     <ClCompile Include="..\..\test\crypto\bash_bench.c" />
     <ClCompile Include="..\..\test\crypto\bash_test.c" />

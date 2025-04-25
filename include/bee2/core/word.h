@@ -4,7 +4,7 @@
 \brief Machine words
 \project bee2 [cryptographic library]
 \created 2014.07.18
-\version 2024.11.18
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -21,7 +21,6 @@
 #define __BEE2_WORD_H
 
 #include "bee2/defs.h"
-#include "bee2/core/safe.h"
 
 #ifdef __cplusplus
 extern "C" {

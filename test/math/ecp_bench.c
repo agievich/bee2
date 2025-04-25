@@ -4,21 +4,18 @@
 \brief Benchmarks for elliptic curves over prime fields
 \project bee2/test
 \created 2013.10.17
-\version 2023.09.22
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
 #include <stdio.h>
-#include <bee2/core/mem.h>
 #include <bee2/core/prng.h>
-#include <bee2/core/stack.h>
 #include <bee2/core/tm.h>
 #include <bee2/core/util.h>
+#include <bee2/math/ec.h>
 #include <crypto/bign/bign_lcl.h>
-#include <bee2/math/ecp.h>
-#include <bee2/math/gfp.h>
 
 /*
 *******************************************************************************

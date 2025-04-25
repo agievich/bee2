@@ -13,9 +13,7 @@
 #include "bee2/core/blob.h"
 #include "bee2/core/err.h"
 #include "bee2/core/mem.h"
-#include "bee2/core/util.h"
 #include "bee2/crypto/belt.h"
-#include "belt_lcl.h"
 
 /*
 *******************************************************************************

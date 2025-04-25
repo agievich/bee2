@@ -4,7 +4,7 @@
 \brief Tests for prime numbers
 \project bee2/test
 \created 2014.07.07
-\version 2024.02.26
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -16,6 +16,7 @@
 #include <bee2/core/word.h>
 #include <bee2/math/pri.h>
 #include <bee2/math/ww.h>
+#include <bee2/math/zz.h>
 
 /*
 *******************************************************************************

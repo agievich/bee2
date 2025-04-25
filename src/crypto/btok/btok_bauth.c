@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): BAUTH protocol
 \project bee2 [cryptographic library]
 \created 2022.02.22
-\version 2023.09.20
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -17,7 +17,6 @@
 #include "bee2/core/util.h"
 #include "bee2/crypto/bake.h"
 #include "bee2/crypto/belt.h"
-#include "bee2/crypto/btok.h"
 #include "bee2/math/gfp.h"
 #include "bee2/math/ecp.h"
 #include "bee2/math/ww.h"
@@ -360,9 +359,9 @@ err_t btokBAuthTStep3(octet out[], const octet in[], void* state)
 		return ERR_BAD_INPUT;
 	n = s->ec->f->n, no = s->ec->f->no;
 	if (!memIsValid(in, 2 * no + no / 2 + 16) ||
-		!memIsValid(out, 8u + s->settings->kcb ? no / 2 : 0))
+		!memIsValid(out, (8u + s->settings->kcb) ? no / 2 : 0))
 		return ERR_BAD_INPUT;
-	ASSERT(memIsDisjoint2(out, 8u + s->settings->kcb ?
+	ASSERT(memIsDisjoint2(out, (8u + s->settings->kcb) ?
 		no / 2 : 0, s, objKeep(s)));
 	// раскладка стека [Y || block0 || block1 должны умещаться в 3 * n слов]
 	K = objEnd(s, word);
@@ -459,7 +458,7 @@ err_t btokBAuthCTStep4(octet out[], const octet in[], void* state)
 	if (!objIsOperable(s))
 		return ERR_BAD_INPUT;
 	n = s->ec->f->n, no = s->ec->f->no;
-	if (!memIsValid(in, 8u + s->settings->kcb ? no / 2 : 0) ||
+	if (!memIsValid(in, (8u + s->settings->kcb) ? no / 2 : 0) ||
 		!memIsValid(out, s->settings->kcb ? (8u + no + s->cert->len) : 0))
 		return ERR_BAD_INPUT;
 	ASSERT(memIsDisjoint2(out, s->settings->kcb ?

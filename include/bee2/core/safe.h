@@ -4,7 +4,7 @@
 \brief Safe (regular) calculations
 \project bee2 [cryptographic library]
 \created 2013.10.07
-\version 2019.06.13
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -19,8 +19,6 @@
 
 #ifndef __BEE2_SAFE_H
 #define __BEE2_SAFE_H
-
-#include "bee2/defs.h"
 
 #ifdef __cplusplus
 extern "C" {

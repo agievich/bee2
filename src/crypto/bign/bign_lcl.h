@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): local declarations
 \project bee2 [cryptographic library]
 \created 2014.04.03
-\version 2023.09.25
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -14,7 +14,6 @@
 #define __BEE2_BIGN_LCL_H
 
 #include "bee2/crypto/bign.h"
-#include "bee2/math/ec.h"
 
 #ifdef __cplusplus
 extern "C" {

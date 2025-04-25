@@ -20,7 +20,6 @@
 #ifndef __BEE2_STR_H
 #define __BEE2_STR_H
 
-#include <string.h>
 #include "bee2/defs.h"
 
 #ifdef __cplusplus

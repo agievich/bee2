@@ -4,22 +4,20 @@
 \brief Command-line interface to Bee2: random number generation
 \project bee2/cmd 
 \created 2022.06.08
-\version 2024.06.14
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
-#include "../cmd.h"
-#include <bee2/core/blob.h>
+#include <stdio.h>
 #include <bee2/core/err.h>
 #include <bee2/core/mem.h>
 #include <bee2/core/prng.h>
 #include <bee2/core/rng.h>
-#include <bee2/core/str.h>
 #include <bee2/core/util.h>
 #include <bee2/crypto/belt.h>
-#include <stdio.h>
+#include "../cmd.h"
 
 /*
 *******************************************************************************

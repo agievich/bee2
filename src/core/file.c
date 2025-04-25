@@ -4,17 +4,11 @@
 \brief File management
 \project bee2 [cryptographic library]
 \created 2025.04.11
-\version 2025.04.22
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
-
-#include "bee2/core/err.h"
-#include "bee2/core/file.h"
-#include "bee2/core/mem.h"
-#include "bee2/core/str.h"
-#include "bee2/core/util.h"
 
 #ifdef _MSC_VER
 	#include <io.h>
@@ -22,6 +16,12 @@
 	#include <unistd.h>
 	#include <sys/types.h>
 #endif
+
+#include "bee2/core/err.h"
+#include "bee2/core/file.h"
+#include "bee2/core/mem.h"
+#include "bee2/core/str.h"
+#include "bee2/core/util.h"
 
 /*
 *******************************************************************************

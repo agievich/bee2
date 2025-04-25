@@ -4,7 +4,7 @@
 \brief Experimental Bign level 96 signatures
 \project bee2 [cryptographic library]
 \created 2021.01.20
-\version 2023.09.22
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -12,7 +12,6 @@
 
 #include "bee2/core/blob.h"
 #include "bee2/core/err.h"
-#include "bee2/core/der.h"
 #include "bee2/core/mem.h"
 #include "bee2/core/oid.h"
 #include "bee2/core/str.h"
@@ -23,7 +22,6 @@
 #include "bee2/crypto/bign96.h"
 #include "bee2/math/gfp.h"
 #include "bee2/math/ecp.h"
-#include "bee2/math/pri.h"
 #include "bee2/math/ww.h"
 #include "bee2/math/zz.h"
 

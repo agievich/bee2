@@ -4,7 +4,7 @@
 \brief Distinguished Encoding Rules
 \project bee2 [cryptographic library]
 \created 2014.04.21
-\version 2025.04.20
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -1064,7 +1064,7 @@ size_t derTPSTRDec(char* val, size_t* len, const octet der[], size_t count,
 		if ((ch < '0' || ch > '9') &&
 			(ch < 'A' || ch > 'Z') &&
 			(ch < 'a' || ch > 'z') &&
-			strchr(" '()+,-./:=?", ch) == 0)
+			!strContains(" '()+,-./:=?", ch))
 		{
 			ch = 0;
 			return SIZE_MAX;

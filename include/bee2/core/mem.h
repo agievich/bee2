@@ -4,7 +4,7 @@
 \brief Memory management
 \project bee2 [cryptographic library]
 \created 2012.07.16
-\version 2023.02.02
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -20,8 +20,6 @@
 #ifndef __BEE2_MEM_H
 #define __BEE2_MEM_H
 
-#include <memory.h>
-#include <string.h>
 #include "bee2/defs.h"
 #include "bee2/core/safe.h"
 

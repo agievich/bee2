@@ -4,21 +4,18 @@
 \brief Bee2 DLL entry points
 \project bee2 [cryptographic library]
 \created 2013.02.25
-\version 2025.04.21
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
-#include <string.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <windows.h>
 #include <bee2/info.h>
 #include <bee2/core/blob.h>
 #include <bee2/core/err.h>
-#include <bee2/core/mem.h>
-#include <bee2/core/util.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <windows.h>
 
 /* 
 *******************************************************************************

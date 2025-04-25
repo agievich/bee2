@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.78 (bpki) helpers
 \project bee2/test
 \created 2021.04.13
-\version 2024.05.08
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -12,8 +12,6 @@
 
 #include <bee2/core/mem.h>
 #include <bee2/core/hex.h>
-#include <bee2/core/str.h>
-#include <bee2/core/util.h>
 #include <bee2/crypto/belt.h>
 #include <bee2/crypto/bpki.h>
 

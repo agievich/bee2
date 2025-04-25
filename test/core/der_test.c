@@ -4,7 +4,7 @@
 \brief Tests for DER encoding rules
 \project bee2/test
 \created 2021.04.12
-\version 2025.04.22
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -14,7 +14,6 @@
 #include <bee2/core/hex.h>
 #include <bee2/core/mem.h>
 #include <bee2/core/str.h>
-#include <bee2/core/util.h>
 
 /*
 *******************************************************************************

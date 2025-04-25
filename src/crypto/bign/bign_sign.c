@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): digital signature
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2023.09.20
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -14,7 +14,6 @@
 #include "bee2/core/err.h"
 #include "bee2/core/mem.h"
 #include "bee2/core/oid.h"
-#include "bee2/core/str.h"
 #include "bee2/core/util.h"
 #include "bee2/crypto/belt.h"
 #include "bee2/crypto/bign.h"

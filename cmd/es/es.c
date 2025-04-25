@@ -4,13 +4,13 @@
 \brief Dealing with entropy sources
 \project bee2/cmd 
 \created 2021.04.20
-\version 2025.04.12
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
-#include "../cmd.h"
+#include <stdio.h>
 #include <bee2/core/dec.h>
 #include <bee2/core/err.h>
 #include <bee2/core/file.h>
@@ -21,8 +21,7 @@
 #include <bee2/core/tm.h>
 #include <bee2/core/util.h>
 #include <bee2/core/word.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "../cmd.h"
 
 /*
 *******************************************************************************

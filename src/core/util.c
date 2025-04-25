@@ -4,19 +4,17 @@
 \brief Utilities
 \project bee2 [cryptographic library]
 \created 2012.05.10
-\version 2021.05.18
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
-#include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "bee2/info.h"
 #include "bee2/core/blob.h"
-#include "bee2/core/mem.h"
 #include "bee2/core/mt.h"
 #include "bee2/core/tm.h"
 #include "bee2/core/util.h"

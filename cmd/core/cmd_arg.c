@@ -4,19 +4,18 @@
 \brief Command-line interface to Bee2: parsing arguments
 \project bee2/cmd 
 \created 2022.06.08
-\version 2024.01.20
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
-#include "../cmd.h"
 #include <bee2/core/blob.h>
 #include <bee2/core/err.h>
 #include <bee2/core/mem.h>
 #include <bee2/core/str.h>
 #include <bee2/core/util.h>
-#include <stdio.h>
+#include "../cmd.h"
 
 /*
 *******************************************************************************

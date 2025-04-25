@@ -76,9 +76,6 @@
     <ClCompile Include="..\..\test\math\word_test.c">
       <Filter>Source Files\math</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\test\crypto\bake_demo.c">
-      <Filter>Source Files\crypto</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\test\crypto\bake_test.c">
       <Filter>Source Files\crypto</Filter>
     </ClCompile>

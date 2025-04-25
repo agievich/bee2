@@ -4,20 +4,18 @@
 \brief STB 34.101.79 (btok): Secure Messaging
 \project bee2 [cryptographic library]
 \created 2022.10.31
-\version 2025.01.08
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
 #include "bee2/core/apdu.h"
-#include "bee2/core/blob.h"
 #include "bee2/core/der.h"
 #include "bee2/core/err.h"
 #include "bee2/core/mem.h"
 #include "bee2/core/util.h"
 #include "bee2/crypto/belt.h"
-#include "bee2/crypto/btok.h"
 
 /*
 *******************************************************************************

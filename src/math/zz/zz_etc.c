@@ -15,7 +15,6 @@
 #include "bee2/core/word.h"
 #include "bee2/math/ww.h"
 #include "bee2/math/zz.h"
-#include "zz_lcl.h"
 
 /*
 *******************************************************************************

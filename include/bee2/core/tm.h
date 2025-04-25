@@ -4,7 +4,7 @@
 \brief Time and timers
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2022.07.18
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************

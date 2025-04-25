@@ -4,14 +4,15 @@
 \brief Memory management
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2019.07.09
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
+#include <memory.h>
+#include <string.h>
 #include "bee2/core/mem.h"
-#include "bee2/core/str.h"
 #include "bee2/core/util.h"
 #include "bee2/core/word.h"
 
@@ -41,7 +42,6 @@ bool_t memIsAligned(const void* buf, size_t size)
 {
 	return (size_t)buf % size == 0;
 }
-
 
 /*
 *******************************************************************************

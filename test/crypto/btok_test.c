@@ -15,7 +15,6 @@
 #include <bee2/core/mem.h>
 #include <bee2/core/prng.h>
 #include <bee2/core/str.h>
-#include <bee2/core/util.h>
 #include <bee2/crypto/belt.h>
 #include <bee2/crypto/bign.h>
 #include <bee2/crypto/bign96.h>

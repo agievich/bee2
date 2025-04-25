@@ -4,7 +4,7 @@
 \brief Demo for STB 34.101.66 (bake)
 \project bee2/test
 \created 2014.05.03
-\version 2023.09.22
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -42,7 +42,7 @@ typedef struct
 	size_t frame_offset;	/* смещение в текущем пакете */
 } file_st;
 
-static err_t fileCreate(void* file, void* data, size_t data_len)
+static err_t demoFileCreate(void* file, void* data, size_t data_len)
 {
 	file_st* f = (file_st*)file;
 	u16 len;
@@ -74,7 +74,7 @@ static err_t fileCreate(void* file, void* data, size_t data_len)
 	return ERR_OK;
 }
 
-static err_t fileWrite(size_t* written, const void* buf, size_t count,
+static err_t demoFileWrite(size_t* written, const void* buf, size_t count,
 	void* file)
 {
 	file_st* f = (file_st*)file;
@@ -114,7 +114,7 @@ static err_t fileWrite(size_t* written, const void* buf, size_t count,
 	return ERR_OK;
 }
 
-static err_t fileRead(size_t* read, void* buf, size_t count, void* file)
+static err_t demoFileRead(size_t* read, void* buf, size_t count, void* file)
 {
 	file_st* f = (file_st*)file;
 	u16 len;
@@ -374,15 +374,15 @@ bool_t bakeDemo()
 	hexTo(randa, _bmqv_randa);
 	hexTo(randb, _bmqv_randb);
 	hexTo(file_data, _bmqv_data);
-	if (fileCreate(filea, file_data, strlen(_bmqv_data) / 2) != ERR_OK ||
-		fileCreate(fileb, file_data, strlen(_bmqv_data) / 2) != ERR_OK)
+	if (demoFileCreate(filea, file_data, strLen(_bmqv_data) / 2) != ERR_OK ||
+		demoFileCreate(fileb, file_data, strLen(_bmqv_data) / 2) != ERR_OK)
 		return FALSE;
 	prngEchoStart(echoa, randa, strLen(_bmqv_randb) / 2);
 	prngEchoStart(echob, randb, strLen(_bmqv_randb) / 2);
 	if (bakeBMQVRunB(keyb, params, settingsb, db, certb, certa,
-			fileRead, fileWrite, fileb) != ERR_OK ||
+			demoFileRead, demoFileWrite, fileb) != ERR_OK ||
 		bakeBMQVRunA(keya, params, settingsa, da, certa, certb,
-			fileRead, fileWrite, filea))
+			demoFileRead, demoFileWrite, filea))
 			return FALSE;
 	if (!memEq(keya, keyb, 32) ||
 		!hexEq(keya,
@@ -393,15 +393,15 @@ bool_t bakeDemo()
 	hexTo(randa, _bsts_randa);
 	hexTo(randb, _bsts_randb);
 	hexTo(file_data, _bsts_data);
-	if (fileCreate(filea, file_data, strlen(_bsts_data) / 2) != ERR_OK ||
-		fileCreate(fileb, file_data, strlen(_bsts_data) / 2) != ERR_OK)
+	if (demoFileCreate(filea, file_data, strLen(_bsts_data) / 2) != ERR_OK ||
+		demoFileCreate(fileb, file_data, strLen(_bsts_data) / 2) != ERR_OK)
 		return FALSE;
 	prngEchoStart(echoa, randa, strLen(_bsts_randb) / 2);
 	prngEchoStart(echob, randb, strLen(_bsts_randb) / 2);
 	if (bakeBSTSRunB(keyb, params, settingsb, db, certb, certVal,
-			fileRead, fileWrite, fileb) != ERR_OK ||
+			demoFileRead, demoFileWrite, fileb) != ERR_OK ||
 		bakeBSTSRunA(keya, params, settingsa, da, certa, certVal,
-			fileRead, fileWrite, filea))
+			demoFileRead, demoFileWrite, filea))
 			return FALSE;
 	if (!memEq(keya, keyb, 32) ||
 		!hexEq(keya,
@@ -412,15 +412,15 @@ bool_t bakeDemo()
 	hexTo(randa, _bpace_randa);
 	hexTo(randb, _bpace_randb);
 	hexTo(file_data, _bpace_data);
-	if (fileCreate(filea, file_data, strlen(_bpace_data) / 2) != ERR_OK ||
-		fileCreate(fileb, file_data, strlen(_bpace_data) / 2) != ERR_OK)
+	if (demoFileCreate(filea, file_data, strLen(_bpace_data) / 2) != ERR_OK ||
+		demoFileCreate(fileb, file_data, strLen(_bpace_data) / 2) != ERR_OK)
 		return FALSE;
 	prngEchoStart(echoa, randa, strLen(_bpace_randb) / 2);
 	prngEchoStart(echob, randb, strLen(_bpace_randb) / 2);
 	if (bakeBPACERunB(keyb, params, settingsb, (octet*)pwd, strLen(pwd),
-			fileRead, fileWrite, fileb) != ERR_OK ||
+			demoFileRead, demoFileWrite, fileb) != ERR_OK ||
 		bakeBPACERunA(keya, params, settingsa, (octet*)pwd, strLen(pwd),
-			fileRead, fileWrite, filea))
+			demoFileRead, demoFileWrite, filea))
 			return FALSE;
 	if (!memEq(keya, keyb, 32) ||
 		!hexEq(keya,

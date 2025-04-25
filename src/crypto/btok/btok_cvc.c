@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): CV certificates
 \project bee2 [cryptographic library]
 \created 2022.07.04
-\version 2023.12.19
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -14,7 +14,6 @@
 #include "bee2/core/err.h"
 #include "bee2/core/der.h"
 #include "bee2/core/mem.h"
-#include "bee2/core/hex.h"
 #include "bee2/core/rng.h"
 #include "bee2/core/str.h"
 #include "bee2/core/tm.h"

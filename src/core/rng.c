@@ -4,7 +4,7 @@
 \brief Entropy sources and random number generators
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2025.04.13
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -15,7 +15,6 @@
 #include "bee2/core/file.h"
 #include "bee2/core/mem.h"
 #include "bee2/core/mt.h"
-#include "bee2/core/obj.h"
 #include "bee2/core/str.h"
 #include "bee2/core/tm.h"
 #include "bee2/core/rng.h"
@@ -24,7 +23,6 @@
 #include "bee2/core/word.h"
 #include "bee2/crypto/belt.h"
 #include "bee2/crypto/brng.h"
-#include "bee2/math/ww.h"
 
 /*
 *******************************************************************************

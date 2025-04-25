@@ -4,21 +4,20 @@
 \brief Command-line interface to Bee2: file management
 \project bee2/cmd 
 \created 2022.06.08
-\version 2025.04.21
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
-#include "../cmd.h"
-#include <bee2/core/blob.h>
+#include <stdlib.h>
 #include <bee2/core/der.h>
 #include <bee2/core/err.h>
 #include <bee2/core/file.h>
 #include <bee2/core/mem.h>
 #include <bee2/core/str.h>
 #include <bee2/core/util.h>
-#include <stdlib.h>
+#include "../cmd.h"
 
 /*
 *******************************************************************************

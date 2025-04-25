@@ -4,7 +4,7 @@
 \brief Prime numbers
 \project bee2 [cryptographic library]
 \created 2012.08.13
-\version 2024.06.14
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -17,6 +17,7 @@
 #include "bee2/math/pri.h"
 #include "bee2/math/ww.h"
 #include "bee2/math/zm.h"
+#include "bee2/math/zz.h"
 
 /*
 *******************************************************************************

@@ -4,25 +4,21 @@
 \brief Manage CV-certificate rings
 \project bee2/cmd 
 \created 2023.06.08
-\version 2025.04.22
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
-#include "../cmd.h"
+#include <stdio.h>
 #include <bee2/core/blob.h>
 #include <bee2/core/err.h>
 #include <bee2/core/dec.h>
-#include <bee2/core/hex.h>
 #include <bee2/core/mem.h>
-#include <bee2/core/prng.h>
 #include <bee2/core/str.h>
 #include <bee2/core/tm.h>
 #include <bee2/core/util.h>
-#include <bee2/crypto/belt.h>
-#include <bee2/crypto/bign.h>
-#include <stdio.h>
+#include "../cmd.h"
 
 /*
 *******************************************************************************

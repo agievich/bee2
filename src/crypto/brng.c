@@ -14,7 +14,6 @@
 #include "bee2/core/err.h"
 #include "bee2/core/mem.h"
 #include "bee2/core/util.h"
-#include "bee2/core/word.h"
 #include "bee2/crypto/belt.h"
 #include "bee2/crypto/brng.h"
 

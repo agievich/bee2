@@ -4,7 +4,7 @@
 \brief Primes
 \project bee2 [cryptographic library]
 \created 2012.08.13
-\version 2024.02.22
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -20,7 +20,7 @@
 #ifndef __BEE2_PRI_H
 #define __BEE2_PRI_H
 
-#include "bee2/math/zz.h"
+#include "bee2/defs.h"
 
 #ifdef __cplusplus
 extern "C" {

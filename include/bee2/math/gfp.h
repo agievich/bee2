@@ -20,7 +20,7 @@
 #ifndef __BEE2_GFP_H
 #define __BEE2_GFP_H
 
-#include "bee2/math/zm.h"
+#include "bee2/math/qr.h"
 
 #ifdef __cplusplus
 extern "C" {

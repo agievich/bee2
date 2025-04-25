@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2014.03.04
-\version 2015.11.09
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -12,12 +12,10 @@
 
 #include <stdarg.h>
 #include "bee2/core/mem.h"
-#include "bee2/core/stack.h"
 #include "bee2/core/util.h"
 #include "bee2/core/word.h"
 #include "bee2/math/ec.h"
 #include "bee2/math/ww.h"
-#include "bee2/math/zz.h"
 
 /*
 *******************************************************************************

@@ -4,15 +4,15 @@
 \brief Command-line interface to Bee2: system environment
 \project bee2/cmd 
 \created 2025.04.20
-\version 2025.04.23
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
-#include "../cmd.h"
 #include <bee2/core/mem.h>
 #include <bee2/core/util.h>
+#include "../cmd.h"
 #include "whereami.h"
 
 /*

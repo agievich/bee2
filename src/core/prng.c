@@ -4,7 +4,7 @@
 \brief Pseudorandom number generators
 \project bee2 [cryptographic library]
 \created 2014.05.02
-\version 2016.07.15
+\version 2025.04.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -12,7 +12,6 @@
 
 #include "bee2/core/mem.h"
 #include "bee2/core/prng.h"
-#include "bee2/core/u32.h"
 #include "bee2/core/util.h"
 
 /*
