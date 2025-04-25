@@ -432,7 +432,6 @@ static err_t cvrVal(int argc, char* argv[])
 	code = cmdFileReadAll(0, &ring_len, argv[1]);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	code = cmdBlobCreate(ring, ring_len);
-	code = ring ? ERR_OK : ERR_OUTOFMEMORY;
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	code = cmdFileReadAll(ring, &ring_len, argv[1]);
 	ERR_CALL_HANDLE(code, (cmdBlobClose(ring), cmdBlobClose(stack)));

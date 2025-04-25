@@ -312,6 +312,7 @@ err_t cmdCVCsPrint(const octet* certs, size_t certs_len)
 	ASSERT(memIsValid(certs, certs_len));
 	// выделить и разметить память
 	code = cmdBlobCreate(stack, sizeof(btok_cvc_t));
+	ERR_CALL_CHECK(code);
 	cvc = (btok_cvc_t*)stack;
 	// цикл по сертификатам
 	while (certs_len)
