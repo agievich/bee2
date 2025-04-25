@@ -653,24 +653,24 @@ err_t pfokParamsGen(pfok_params* params, const pfok_seed* seed,
 				wwSetBit(qi + offset, seed->li[i] - 1, 1);
 			}
 			while (!priNextPrimeW(qi + offset, qi[offset], stack));
-			// к следующему простому
-			offset -= W_OF_B(seed->li[--i]);
-			continue;
 		}
 		// обычное простое
-		trials = (i == 0) ? 4 * seed->li[i] * seed->li[i] : 4 * seed->li[i];
-		base_count = (seed->li[i] + 3) / 4;
-		// потенциальное отступление от Проекта, не влияющее на результат
-		if (base_count > priBaseSize())
-			base_count = priBaseSize();
-		// не удается построить новое простое?
-		if (!priExtendPrime(qi + offset, seed->li[i],
+		else
+		{
+			trials = (i == 0) ? 4 * seed->li[i] * seed->li[i] : 4 * seed->li[i];
+			base_count = (seed->li[i] + 3) / 4;
+			// потенциальное отступление от Проекта, не влияющее на результат
+			if (base_count > priBaseSize())
+				base_count = priBaseSize();
+			// не удается построить новое простое?
+			if (!priExtendPrime(qi + offset, seed->li[i],
 				qi + offset + W_OF_B(seed->li[i]), W_OF_B(seed->li[i + 1]),
 				trials, base_count, prngSTBStepR, stb_state, stack))
-		{
-			// к предыдущему простому
-			offset += W_OF_B(seed->li[i++]);
-			continue;
+			{
+				// к предыдущему простому
+				offset += W_OF_B(seed->li[i++]);
+				continue;
+			}
 		}
 		// последнее простое?
 		if (i == 0)
