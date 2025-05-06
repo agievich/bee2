@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: signing files
 \project bee2/cmd
 \created 2022.08.20
-\version 2025.04.25
+\version 2025.05.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -187,68 +187,6 @@ static err_t cmdSigAppend(const char* sig_name, const cmd_sig_t* sig)
 	cmdBlobClose(der);
 	return code;
 }
-
-/*
-err_t cmdSigRead(cmd_sig_t* sig, size_t* sig_len, const char* sig_name)
-{
-	err_t code;
-	size_t file_size;
-	octet suffix[16];
-	octet* der;
-	size_t count;
-	size_t len;
-	FILE* fp;
-	u32 tag;
-	// pre
-	ASSERT(memIsValid(sig, sizeof(cmd_sig_t)));
-	ASSERT(memIsNullOrValid(sig_len, O_PER_S));
-	ASSERT(strIsValid(sig_name));
-	// определить длину суффикса файла
-	file_size = cmdFileSize(sig_name);
-	code = file_size == SIZE_MAX ? ERR_FILE_READ : ERR_OK;
-	ERR_CALL_CHECK(code);
-	count = MIN2(file_size, sizeof(suffix));
-	// открыть файл для чтения
-	fp = fopen(sig_name, "rb");
-	code = fp ? ERR_OK : ERR_FILE_OPEN;
-	ERR_CALL_CHECK(code);
-	// читать суффикс
-	code = fseek(fp, -(long)count, SEEK_END) == 0 ? ERR_OK : ERR_FILE_READ;
-	ERR_CALL_HANDLE(code, fclose(fp));
-	code = fread(suffix, 1, count, fp) == count ? ERR_OK : ERR_FILE_READ;
-	ERR_CALL_HANDLE(code, fclose(fp));
-	// развернуть октеты суффикса
-	memRev(suffix, count);
-	// определить длину TL-префикса DER-кода
-	count = derTLDec(&tag, &len, suffix, count);
-	code = (count != SIZE_MAX && tag == 0x30) ? ERR_OK : ERR_BAD_SIG;
-	ERR_CALL_HANDLE(code, fclose(fp));
-	// определить длину DER-кода
-	count += len;
-	code = count <= file_size ? ERR_OK : ERR_BAD_SIG;
-	ERR_CALL_HANDLE(code, fclose(fp));
-	// подготовить память
-	code = cmdBlobCreate(der, count);
-	ERR_CALL_HANDLE(code, fclose(fp));
-	// читать DER-код и закрыть файл
-	code = fseek(fp, (long)(file_size - count), SEEK_SET) == 0 ?
-		ERR_OK : ERR_FILE_READ;
-	ERR_CALL_HANDLE(code, (cmdBlobClose(der), fclose(fp)));
-	code = fread(der, 1, count, fp) == count ? ERR_OK : ERR_FILE_READ;
-	ERR_CALL_HANDLE(code, (cmdBlobClose(der), fclose(fp)));
-	code = (fclose(fp) == 0) ? ERR_OK : ERR_BAD_FILE;
-	ERR_CALL_HANDLE(code, cmdBlobClose(der));
-	// декодировать
-	memRev(der, count);
-	code = cmdSigDec(sig, der, count) == count ? ERR_OK : ERR_BAD_SIG;
-	// возвратить длину DER-кода
-	if (sig_len)
-		*sig_len = count;
-	// завершить
-	cmdBlobClose(der);
-	return code;
-}
-*/
 
 err_t cmdSigRead(cmd_sig_t* sig, size_t* sig_len, const char* sig_name)
 {
