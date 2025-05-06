@@ -784,6 +784,9 @@ for /f "tokens=* USEBACKQ" %%F in (`bee2cmd affix print -pc body`) do (
 )
 if "%pc%" neq "2" goto Error
 
+bee2cmd affix print body
+if %ERRORLEVEL% neq 0 goto Error
+
 bee2cmd affix extr -p1 body p1
 if %ERRORLEVEL% neq 0 goto Error
 

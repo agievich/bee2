@@ -592,6 +592,8 @@ test_affix(){
   if [ "$($bee2cmd affix print -pc body)" != "2" ]; then 
     return 1
   fi
+  $bee2cmd affix print body \
+    || return 1
 
   $bee2cmd affix extr -p1 body p1 \
     || return 1
