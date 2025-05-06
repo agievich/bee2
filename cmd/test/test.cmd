@@ -3,9 +3,11 @@ rem ===========================================================================
 rem \brief Testing command-line interface
 rem \project bee2evp/cmd
 rem \created 2022.06.24
-rem \version 2025.04.24
-rem \pre The working directory contains zed.csr.
+rem \version 2025.05.05
+rem \pre The working directory contains zed.cert, zed.csr, zed,sk
 rem ===========================================================================
+
+for /F "tokens=*" %%a in ('where /R . bee2cmd') do set bee2cmd=%%a
 
 rem ===========================================================================
 rem  bee2cmd/ver
@@ -35,16 +37,16 @@ del /q check32 check256 -c 2> nul
 bee2cmd bsum
 if %ERRORLEVEL% equ 0 goto Error
 
-bee2cmd bsum -bash31 bee2cmd.exe
+bee2cmd bsum -bash31 %bee2cmd%
 if %ERRORLEVEL% equ 0 goto Error
 
-bee2cmd bsum -bash32 bee2cmd.exe test.cmd > check32
+bee2cmd bsum -bash32 %bee2cmd% test.cmd > check32
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd bsum -bash32 -c check32
 if %ERRORLEVEL% neq 0 goto Error
 
-bee2cmd bsum bee2cmd.exe test.cmd > check256
+bee2cmd bsum %bee2cmd% test.cmd > check256
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd bsum -belt-hash -c check256
@@ -53,7 +55,7 @@ if %ERRORLEVEL% neq 0 goto Error
 bee2cmd bsum -c check32
 if %ERRORLEVEL% equ 0 goto Error
 
-bee2cmd bsum -bash-prg-hash2561 bee2cmd.exe test.cmd > -c
+bee2cmd bsum -bash-prg-hash2561 %bee2cmd% test.cmd > -c
 if %ERRORLEVEL% neq 0 goto Error
 
 bee2cmd bsum -bash-prg-hash2561 -c

@@ -3,16 +3,16 @@
 # \brief Testing command-line interface
 # \project bee2evp/cmd
 # \created 2022.06.24
-# \version 2025.04.24
-# \pre The working directory contains zed.csr.
+# \version 2025.05.05
+# \pre The working directory contains zed.cert, zed.csr, zed,sk
 # =============================================================================
 
 bee2cmd="${BEE2CMD:-./bee2cmd}"
 if [ ! -f "${bee2cmd}" ]; then
   bee2cmd=$(command -v bee2cmd)
   if [ ! -f "${bee2cmd}" ]; then
-    echo "Set path to bee2cmd executable file to BEE2CMD environment \
-      variable or run this script from containing folder."
+    echo "Set path to bee2cmd executable in BEE2CMD environment variable \
+      or run this script from the folder containing it."
     exit 1
   fi
 fi
