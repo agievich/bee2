@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: parsing arguments
 \project bee2/cmd 
 \created 2022.06.08
-\version 2025.04.25
+\version 2025.05.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -138,7 +138,10 @@ err_t cmdArgCreate(int* argc, char*** argv, const char* args)
 
 #else
 
-#error "Not implemented"
+err_t cmdArgCreate(int* argc, char*** argv, const char* args)
+{
+	return ERR_NOT_IMPLEMENTED;
+}
 
 #endif
 

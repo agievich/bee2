@@ -11,6 +11,7 @@
 */
 
 #include <stdlib.h>
+#include <errno.h>
 #include <bee2/core/der.h>
 #include <bee2/core/err.h>
 #include <bee2/core/file.h>
@@ -510,3 +511,47 @@ err_t cmdFileSuffixRead(octet* suffix, size_t* count, const char* name,
 	return code;
 }
 
+/*
+*******************************************************************************
+Удаление
+*******************************************************************************
+*/
+
+#ifdef OS_UNIX
+
+#include <unistd.h>
+#define cmdFileUnlink unlink
+
+#elif defined OS_WIN
+
+#include <io.h>
+#include <stdio.h>
+#define cmdFileUnlink _unlink
+
+#else
+
+static int cmdFileUnlink(const char* name)
+{
+	errno = ENOSYS;
+	return -1;
+}
+
+#endif
+
+err_t cmdFileDel(const char* name)
+{
+	ASSERT(strIsValid(name));
+	if (cmdFileUnlink(name) == 0)
+		return ERR_OK;
+	switch (errno)
+	{
+	case EACCES:
+		return ERR_FILE_READ;
+	case ENOENT:
+		return ERR_FILE_NOT_FOUND;
+	case ENOSYS:
+		return ERR_NOT_IMPLEMENTED;
+	default:
+		return ERR_BAD_FILE;
+	}
+}
