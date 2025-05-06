@@ -4,7 +4,7 @@
 \brief Distinguished Encoding Rules
 \project bee2 [cryptographic library]
 \created 2014.04.21
-\version 2025.04.25
+\version 2025.05.06
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -125,7 +125,7 @@ static size_t derTDec(u32* tag, const octet der[], size_t count)
 	{
 		// короткий код? лишний октет с нулем?
 		if (count < 2 || (der[1] & 127) == 0)
-			return FALSE;
+			return SIZE_MAX;
 		for (t = 0; t_count < count;)
 		{
 			t <<= 8, t |= der[t_count] & 127;

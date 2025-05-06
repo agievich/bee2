@@ -4,7 +4,7 @@
 \brief STB 34.101.47/botp: OTP algorithms
 \project bee2 [cryptographic library]
 \created 2015.11.02
-\version 2025.04.25
+\version 2025.05.06
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -95,7 +95,7 @@ void botpCtrNext(octet ctr[8])
 	carry = ((ctr[3] += carry) < carry);
 	carry = ((ctr[2] += carry) < carry);
 	carry = ((ctr[1] += carry) < carry);
-	carry = ((ctr[0] += carry) < carry);
+	ctr[0] += carry;
 	carry = 0;
 }
 
