@@ -4,7 +4,7 @@
 \brief Hexadecimal strings
 \project bee2 [cryptographic library]
 \created 2015.10.29
-\version 2023.02.02
+\version 2025.05.06
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -22,6 +22,7 @@
 
 #include "bee2/defs.h"
 #include "bee2/core/safe.h"
+#include "bee2/core/str.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,16 +45,24 @@ extern "C" {
 *******************************************************************************
 */
 
-/*!	\brief Корректная шестнадцатеричная строка?
+/*!	\def hexIsValid
+	\brief Корректная шестнадцатеричная строка?
 
-	Проверяется корректность шестнадцатеричной строки hex. Строка считается
-	корректной, если она состоит из четного числа символов алфавита
-	{'0',..,'9','A',...,'F','a',...,'f'}.
+	Проверяется корректность шестнадцатеричной строки hex.
+*/
+#define hexIsValid(hex)	hexIsValid2(hex, strLen(hex))
+
+/*!	\brief Корректный префикс шестнадцатеричной строки?
+
+	Проверяется корректность префикса [len]hex шестнадцатеричной строки hex. 
+	Префикс считается корректным, если он состоит из четного числа символов
+	алфавита {'0',..,'9','A',...,'F','a',...,'f'}.
 	\return Признак корректности.
 	\safe Функция нерегулярна.
 */
-bool_t hexIsValid(
-	const char* hex		/*!< [in] шестнадцатеричная строка */
+bool_t hexIsValid2(
+	const char* hex,	/*!< [in] шестнадцатеричная строка */
+	size_t len			/*!< [in] длина префикса */
 );
 
 /*!	\brief К верхнему регистру
@@ -72,59 +81,77 @@ void hexLower(
 	char* hex			/*!< [in,out] шестнадцатеричная строка */
 );
 
-/*!	\brief Совпадает с шестнадцатеричной строкой?
+/*!	\def hexEq
+	\brief Совпадает с шестнадцатеричной строкой?
 
-	Буфер [strLen(hex) / 2]buf сравнивается с буфером, заданым 
-	шестнадцатеричной строкой hex. Первая пара символов hex преобразуется 
-	в октет, который сравнивается с первым октетом buf, вторая пара 
-	сравнивается со вторым октетом buf и т. д.
-	\pre hexIsValid(hex) == TRUE.
+	Буфер [strLen(hex) / 2]buf сравнивается с буфером, заданным
+	шестнадцатеричной строкой hex.
+*/
+#define hexEq(buf, hex)	hexEq2(buf, hex, strLen(hex))
+
+/*!	\brief Совпадает с префиксом шестнадцатеричной строки?
+
+	Буфер [len / 2]buf сравнивается с буфером, заданым префиксом [len]hex
+	шестнадцатеричной строки hex. Первая пара символов [len]hex
+	преобразуется в октет, который сравнивается с первым октетом buf, вторая
+	пара сравнивается со вторым октетом buf и т. д.
+	\pre hexIsValid2(hex, len) == TRUE.
 	\return Признак совпадения.
 	\remark Сравнение задается следующим псевдокодом:
 	\code
-		octet tmp[strLen(hex) / 2];
-		hexTo(tmp, hex);
-		return memEq(buf, tmp, strLen(hex) / 2);
+		octet tmp[len / 2];
+		hexTo2(tmp, hex, len);
+		return memEq(buf, tmp, len/ 2);
 	\endcode
 	\safe Имеется ускоренная нерегулярная редакция.
 */
-bool_t hexEq(
+bool_t hexEq2(
 	const void* buf,	/*!< [in] буфер */
-	const char* hex		/*!< [in] шестнадцатеричная строка */
+	const char* hex,	/*!< [in] шестнадцатеричная строка */
+	size_t len			/*!< [in] длина префикса */
 );
 
-bool_t SAFE(hexEq)(const void* buf, const char* hex);
-bool_t FAST(hexEq)(const void* buf, const char* hex);
+bool_t SAFE(hexEq2)(const void* buf, const char* hex, size_t len);
+bool_t FAST(hexEq2)(const void* buf, const char* hex, size_t len);
 
-/*!	\brief Совпадает с обратной шестнадцатеричной строкой?
+/*!	\def hexEqRev
+	\brief Реверсивно совпадает с шестнадцатеричной строкой?
 
-	Буфер [strLen(hex) / 2]buf сравнивается с буфером, заданым 
-	шестнадцатеричной строкой hex. Первая пара символов hex преобразуется 
-	в октет, который сравнивается с последним октетом buf, вторая пара 
-	сравнивается с предпоследним октетом buf и т.д.
-	\pre hexIsValid(hex) == TRUE.
+	Буфер [strLen(hex) / 2]buf после разворота октетов сравнивается с буфером,
+	заданым шестнадцатеричной строкой hex.
+*/
+#define hexEqRev(buf, hex)	hexEqRev2(buf, hex, strLen(hex))
+
+/*!	\brief Реверсивно совпадает с префиксом шестнадцатеричной строки?
+
+	Буфер [len / 2]buf сравнивается с буфером, заданым префиксом [len]hex
+	шестнадцатеричной строки hex. Первая пара символов [len]hex
+	преобразуется в октет, который сравнивается с последним октетом buf,
+	вторая пара сравнивается с предпоследним октетом buf и т.д.
+	\pre hexIsValid2(hex, len) == TRUE.
 	\return Признак совпадения.
 	\remark Сравнение задается следующим псевдокодом:
 	\code
-		octet tmp[strLen(hex) / 2];
-		hexTo(tmp, hex);
-		memRev(tmp, strLen(hex) / 2);
-		return memEq(buf, tmp, strLen(hex) / 2);
+		octet tmp[len / 2];
+		hexTo2(tmp, hex, len);
+		memRev(tmp, len / 2);
+		return memEq(buf, tmp, len / 2);
 	\endcode
 	\safe Имеется ускоренная нерегулярная редакция.
 */
-bool_t hexEqRev(
+bool_t hexEqRev2(
 	const void* buf,	/*!< [in] буфер */
-	const char* hex		/*!< [in] шестнадцатеричная строка */
+	const char* hex,	/*!< [in] шестнадцатеричная строка */
+	size_t				/*!< [in] длина префикса */
 );
 
-bool_t SAFE(hexEqRev)(const void* buf, const char* hex);
-bool_t FAST(hexEqRev)(const void* buf, const char* hex);
+bool_t SAFE(hexEqRev2)(const void* buf, const char* hex, size_t len);
+bool_t FAST(hexEqRev2)(const void* buf, const char* hex, size_t len);
 
-/*!	\brief Кодирование буфера памяти
+/*!	\brief Кодирование шестнадцатеричной строкой
 
 	Буфер [count]src кодируется шестнадцатеричной строкой
-	{2 * count + 1}dest. Первому октету src соответствует первая пара 
+	[2 * count + 1]dest. Первому октету src соответствует первая пара 
 	символов dest, второму октету -- вторая пара и т.д.
 	\pre Буферы dest и src не пересекаются.
 */
@@ -134,7 +161,7 @@ void hexFrom(
 	size_t count		/*!< [in] число октетов */
 );
 
-/*!	\brief Обратное кодирование буфера памяти
+/*!	\brief Реверсивное кодирование шестнадцатеричной строкой
 
 	Буфер [count]src кодируется шестнадцатеричной строкой 
 	[2 * count + 1]dest. Первому октету src соответствует последняя пара 
@@ -147,28 +174,45 @@ void hexFromRev(
 	size_t count		/*!< [in] число октетов */
 );
 
-/*!	\brief Декодирование буфера памяти
+/*!	\def hexTo
+	\brief Декодирование по шестнадцатеричной строке
 
-	Шестнадцатеричная строка src преобразуется в строку октетов 
-	[strLen(src) / 2]dest. По первой паре символов src определяется первый 
-	октет dest, по второй паре -- второй октет и т.д.
-	\pre hexIsValid(hex) == TRUE.
+	Буфер [strLen(src) / 2]dest декодируется по шестнадцатеричной строке src.
 */
-void hexTo(
+#define hexTo(dest, src) hexTo2(dest, src, strLen(src))
+
+/*!	\brief Декодирование по префиксу шестнадцатеричной строки
+
+	Префикс [len]src шестнадцатеричной строки src преобразуется в буфер
+	[len / 2]dest. По первой паре символов src определяется первый октет
+	dest, по второй паре -- второй октет и т.д.
+	\pre hexIsValid2(hex, len) == TRUE.
+*/
+void hexTo2(
 	void* dest,			/*!< [out] память-приемник */
-	const char* src		/*!< [in] строка-источник */
+	const char* src,	/*!< [in] строка-источник */
+	size_t len			/*!< [in] длина префикса */
 );
 
-/*!	\brief Обратное декодирование буфера памяти
+/*!	\def hexToRev
+	\brief Реверсивное декодирование по шестнадцатеричной строке
 
-	Шестнадцатеричная строка src преобразуется в строку октетов 
-	[strLen(src) / 2]dest. По последней паре символов src определяется первый 
-	октет dest, по предпоследней паре -- второй октет и т. д.
-	\pre hexIsValid(hex) == TRUE.
+	Буфер [strLen(src) / 2]dest декодируется с разворотом откетов по
+	шестнадцатеричной строке src. 
 */
-void hexToRev(
+#define hexToRev(dest, src) hexToRev2(dest, src, strLen(src))
+
+/*!	\brief Реверсивное декодирование по префиксу шестнадцатеричной строки
+
+	Префикс [len]src шестнадцатеричной строки src преобразуется в буфер
+	[len / 2]dest. По последней паре символов src определяется первый 
+	октет dest, по предпоследней паре -- второй октет и т. д.
+	\pre hexIsValid2(hex, len) == TRUE.
+*/
+void hexToRev2(
 	void* dest,			/*!< [out] память-приемник */
-	const char* src		/*!< [in] строка-источник */
+	const char* src,	/*!< [in] строка-источник */
+	size_t len			/*!< [in] длина префикса */
 );
 
 #ifdef __cplusplus

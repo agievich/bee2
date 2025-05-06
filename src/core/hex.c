@@ -4,7 +4,7 @@
 \brief Hexadecimal strings
 \project bee2 [cryptographic library]
 \created 2015.10.29
-\version 2016.06.19
+\version 2025.05.06
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -83,11 +83,11 @@ static void hexFromOLower(char* hex, register octet o)
 *******************************************************************************
 */
 
-bool_t hexIsValid(const char* hex)
+bool_t hexIsValid2(const char* hex, size_t len)
 {
-	if (!strIsValid(hex) || strLen(hex) % 2)
+	if (!memIsValid(hex, len + 1) || len % 2)
 		return FALSE;
-	for (; *hex; ++hex)
+	for (; len--; ++hex)
 		if (hex_dec_table[(octet)*hex] == 0xFF)
 			return FALSE;
 	return TRUE;
@@ -119,51 +119,43 @@ void hexLower(char* hex)
 *******************************************************************************
 */
 
-bool_t SAFE(hexEq)(const void* buf, const char* hex)
+bool_t SAFE(hexEq2)(const void* buf, const char* hex, size_t len)
 {
 	register word diff = 0;
-	size_t count;
-	ASSERT(hexIsValid(hex));
-	ASSERT(memIsValid(buf, strLen(hex) / 2));
-	count = strLen(hex);
-	for (; count; count -= 2, hex += 2, buf = (const octet*)buf + 1)
+	ASSERT(hexIsValid2(hex, len));
+	ASSERT(memIsValid(buf, len / 2));
+	for (; len; len -= 2, hex += 2, buf = (const octet*)buf + 1)
 		diff |= *(const octet*)buf ^ hexToO(hex);
 	return wordEq(diff, 0);
 }
 
-bool_t FAST(hexEq)(const void* buf, const char* hex)
+bool_t FAST(hexEq2)(const void* buf, const char* hex, size_t len)
 {
-	size_t count;
-	ASSERT(hexIsValid(hex));
-	ASSERT(memIsValid(buf, strLen(hex) / 2));
-	count = strLen(hex);
-	for (; count; count -= 2, hex += 2, buf = (const octet*)buf + 1)
+	ASSERT(hexIsValid2(hex, len));
+	ASSERT(memIsValid(buf, len / 2));
+	for (; len; len -= 2, hex += 2, buf = (const octet*)buf + 1)
 		if (*(const octet*)buf != hexToO(hex))
 			return FALSE;
 	return TRUE;
 }
 
-bool_t SAFE(hexEqRev)(const void* buf, const char* hex)
+bool_t SAFE(hexEqRev2)(const void* buf, const char* hex, size_t len)
 {
 	register word diff = 0;
-	size_t count;
 	ASSERT(hexIsValid(hex));
-	ASSERT(memIsValid(buf, strLen(hex) / 2));
-	count = strLen(hex);
-	hex = hex + count;
-	for (; count; count -= 2, buf = (const octet*)buf + 1)
+	ASSERT(memIsValid(buf, len / 2));
+	hex = hex + len;
+	for (; len; len -= 2, buf = (const octet*)buf + 1)
 		diff |= *(const octet*)buf ^ hexToO(hex -= 2);
 	return wordEq(diff, 0);
 }
 
-bool_t FAST(hexEqRev)(const void* buf, const char* hex)
+bool_t FAST(hexEqRev2)(const void* buf, const char* hex, size_t len)
 {
-	size_t count;
 	ASSERT(hexIsValid(hex));
-	ASSERT(memIsValid(buf, strLen(hex) / 2));
-	count = strLen(hex);
-	hex = hex + count;
-	for (; count; count -= 2, buf = (const octet*)buf + 1)
+	ASSERT(memIsValid(buf, len / 2));
+	hex = hex + len;
+	for (; len; len -= 2, buf = (const octet*)buf + 1)
 		if (*(const octet*)buf != hexToO(hex -= 2))
 			return FALSE;
 	return TRUE;
@@ -192,23 +184,19 @@ void hexFromRev(char* dest, const void* src, size_t count)
 		hexFromOUpper(dest -= 2, *(const octet*)src);
 }
 
-void hexTo(void* dest, const char* src)
+void hexTo2(void* dest, const char* src, size_t len)
 {
-	size_t count;
-	ASSERT(hexIsValid(src));
-	ASSERT(memIsDisjoint2(src, strLen(src) + 1, dest, strLen(src) / 2));
-	count = strLen(src);
-	for (; count; count -= 2, src += 2, dest = (octet*)dest + 1)
+	ASSERT(hexIsValid2(src, len));
+	ASSERT(memIsDisjoint2(src, len + 1, dest, len / 2));
+	for (; len; len -= 2, src += 2, dest = (octet*)dest + 1)
 		*(octet*)dest = hexToO(src);
 }
 
-void hexToRev(void* dest, const char* src)
+void hexToRev2(void* dest, const char* src, size_t len)
 {
-	size_t count;
-	ASSERT(hexIsValid(src));
-	ASSERT(memIsDisjoint2(src, strLen(src) + 1, dest, strLen(src) / 2));
-	count = strLen(src);
-	src = src + count;
-	for (; count; count -= 2, dest = (octet*)dest + 1)
+	ASSERT(hexIsValid2(src, len));
+	ASSERT(memIsDisjoint2(src, len + 1, dest, len / 2));
+	src = src + len;
+	for (; len; len -= 2, dest = (octet*)dest + 1)
 		*(octet*)dest = hexToO(src -= 2);
 }
