@@ -38,18 +38,12 @@ install(TARGETS bee2cmd
 
 # Post
 
-if(WIN32 OR MINGW OR CMAKE_C_PLATFORM_ID STREQUAL MinGW OR CYGWIN)
-  set(BEE2_CMD ${CMAKE_CURRENT_BINARY_DIR}/bee2cmd.exe 
-    CACHE INTERNAL "BEE2_CMD")
-else()
-  set(BEE2_CMD ${CMAKE_CURRENT_BINARY_DIR}/bee2cmd
-    CACHE INTERNAL "BEE2_CMD")
-endif()
-
 add_custom_command(TARGET bee2cmd
   POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy ${BEE2_CMD} ${BEE2_CMD}.bak
-  COMMAND ${BEE2_CMD} stamp gen ${BEE2_CMD}.bak
-  COMMAND ${CMAKE_COMMAND} -E copy ${BEE2_CMD}.bak ${BEE2_CMD}
+  COMMAND ${CMAKE_COMMAND} -E 
+    copy $<TARGET_FILE:bee2cmd> $<TARGET_FILE:bee2cmd>.bak
+  COMMAND $<TARGET_FILE:bee2cmd> stamp gen $<TARGET_FILE:bee2cmd>.bak
+  COMMAND ${CMAKE_COMMAND} -E 
+    copy $<TARGET_FILE:bee2cmd>.bak $<TARGET_FILE:bee2cmd>
   VERBATIM
 )
