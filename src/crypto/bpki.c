@@ -4,7 +4,7 @@
 \brief STB 34.101.78 (bpki): PKI helpers
 \project bee2 [cryptographic library]
 \created 2021.04.03
-\version 2023.12.19
+\version 2025.05.06
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -28,18 +28,18 @@
 
 #define derEncStep(step, ptr, count)\
 do {\
-	size_t t = step;\
-	ASSERT(t != SIZE_MAX);\
-	ptr = ptr ? ptr + t : 0;\
-	count += t;\
+	size_t _t = step;\
+	ASSERT(_t != SIZE_MAX);\
+	ptr = ptr ? ptr + _t : 0;\
+	count += _t;\
 } while(0)\
 
 #define derDecStep(step, ptr, count)\
 do {\
-	size_t t = step;\
-	if (t == SIZE_MAX)\
+	size_t _t = step;\
+	if (_t == SIZE_MAX)\
 		return SIZE_MAX;\
-	ptr += t, count -= t;\
+	ptr += _t, count -= _t;\
 } while(0)\
 
 /*

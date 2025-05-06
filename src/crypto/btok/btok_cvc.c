@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): CV certificates
 \project bee2 [cryptographic library]
 \created 2022.07.04
-\version 2025.04.25
+\version 2025.05.06
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -307,18 +307,18 @@ err_t btokCVCCheck2(const btok_cvc_t* cvc, const btok_cvc_t* cvca)
 
 #define derEncStep(step, ptr, count)\
 do {\
-	size_t t = step;\
-	ASSERT(t != SIZE_MAX);\
-	ptr = ptr ? ptr + t : 0;\
-	count += t;\
+	size_t _t = step;\
+	ASSERT(_t != SIZE_MAX);\
+	ptr = ptr ? ptr + _t : 0;\
+	count += _t;\
 } while(0)\
 
 #define derDecStep(step, ptr, count)\
 do {\
-	size_t t = step;\
-	if (t == SIZE_MAX)\
+	size_t _t = step;\
+	if (_t == SIZE_MAX)\
 		return SIZE_MAX;\
-	ptr += t, count -= t;\
+	ptr += _t, count -= _t;\
 } while(0)\
 
 static size_t btokCVCBodyEnc(octet body[], const btok_cvc_t* cvc)

@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): public parameters
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.04.25
+\version 2025.05.06
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -587,18 +587,18 @@ static const char oid_bign_primefield[] = "1.2.112.0.2.0.34.101.45.4.1";
 
 #define derEncStep(step, ptr, count)\
 do {\
-	size_t t = step;\
-	ASSERT(t != SIZE_MAX);\
-	ptr = ptr ? ptr + t : 0;\
-	count += t;\
+	size_t _t = step;\
+	ASSERT(_t != SIZE_MAX);\
+	ptr = ptr ? ptr + _t : 0;\
+	count += _t;\
 } while(0)\
 
 #define derDecStep(step, ptr, count)\
 do {\
-	size_t t = step;\
-	if (t == SIZE_MAX)\
+	size_t _t = step;\
+	if (_t == SIZE_MAX)\
 		return SIZE_MAX;\
-	ptr += t, count -= t;\
+	ptr += _t, count -= _t;\
 } while(0)\
 
 #define derDecStep2(step, ptr, count)\
