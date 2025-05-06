@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2
 \project bee2/cmd
 \created 2022.06.09
-\version 2025.04.22
+\version 2025.05.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -587,7 +587,7 @@ void cmdPwdClose(
 
 /*!	\brief Генерация пароля
 
-	По инструкциям во фрагменте cmdline командной строки генерируется пароль pwd.
+	Пароль pwd генерируется по схеме schema.
 	\expect{ERR_NOT_IMPLEMENTED} Используется парольная схема share.
 	\return ERR_OK, если пароль успешно сгенерирован, и код ошибки в противном
 	случае. 
@@ -595,20 +595,19 @@ void cmdPwdClose(
 */
 err_t cmdPwdGen(
 	cmd_pwd_t* pwd,			/*!< [out] пароль */
-	const char* cmdline		/*!< [in] фрагмент командной строки */
+	const char* schema		/*!< [in] схема */
 );
 
 /*!	\brief Определение пароля
 
-	По инструкциям во фрагменте cmdline командной строки определяется 
-	ранее построенный пароль pwd.
+	Определяется пароль pwd, ранее построенный по схеме schema.
 	\return ERR_OK, если пароль успешно определен, и код ошибки в противном
 	случае.
 	\remark За закрытие пароля отвечает вызывающая программа.
 */
 err_t cmdPwdRead(
 	cmd_pwd_t* pwd,			/*!< [out] пароль */
-	const char* cmdline		/*!< [in] фрагмент командной строки */
+	const char* schema		/*!< [in] схема */
 );
 
 /*

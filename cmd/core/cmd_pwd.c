@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: password management
 \project bee2/cmd 
 \created 2022.06.13
-\version 2025.04.25
+\version 2025.05.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -53,19 +53,19 @@ void cmdPwdClose(cmd_pwd_t pwd)
 *******************************************************************************
 */
 
-static err_t cmdPwdGenPass(cmd_pwd_t* pwd, const char* cmdline)
+static err_t cmdPwdGenPass(cmd_pwd_t* pwd, const char* str)
 {
 	return ERR_NOT_IMPLEMENTED;
 }
 
-static err_t cmdPwdReadPass(cmd_pwd_t* pwd, const char* cmdline)
+static err_t cmdPwdReadPass(cmd_pwd_t* pwd, const char* str)
 {
 	ASSERT(memIsValid(pwd, sizeof(cmd_pwd_t)));
-	ASSERT(strIsValid(cmdline));
+	ASSERT(strIsValid(str));
 	// создать пароль
-	if (!(*pwd = cmdPwdCreate(strLen(cmdline))))
+	if (!(*pwd = cmdPwdCreate(strLen(str))))
 		return ERR_OUTOFMEMORY;
-	strCopy(*pwd, cmdline);
+	strCopy(*pwd, str);
 	return ERR_OK;
 }
 
@@ -82,19 +82,19 @@ static const char* cmdEnvGet(const char* name)
 	return strIsValid(val) ? val : 0;
 }
 
-static err_t cmdPwdGenEnv(cmd_pwd_t* pwd, const char* cmdline)
+static err_t cmdPwdGenEnv(cmd_pwd_t* pwd, const char* str)
 {
 	return ERR_NOT_IMPLEMENTED;
 }
 
-static err_t cmdPwdReadEnv(cmd_pwd_t* pwd, const char* cmdline)
+static err_t cmdPwdReadEnv(cmd_pwd_t* pwd, const char* str)
 {
 	const char* val;
 	// pre
 	ASSERT(memIsValid(pwd, sizeof(cmd_pwd_t)));
-	ASSERT(strIsValid(cmdline));
+	ASSERT(strIsValid(str));
 	// читать пароль из переменной окружения
-	if (!(val = cmdEnvGet(cmdline)))
+	if (!(val = cmdEnvGet(str)))
 		return ERR_BAD_ENV;
 	// возвратить пароль
 	if (!(*pwd = cmdPwdCreate(strLen(val))))
@@ -282,7 +282,7 @@ static err_t cmdPwdReadShare_internal(cmd_pwd_t* pwd, size_t scount,
 	return code;
 }
 
-static err_t cmdPwdGenShare(cmd_pwd_t* pwd, const char* cmdline)
+static err_t cmdPwdGenShare(cmd_pwd_t* pwd, const char* str)
 {
 	err_t code;
 	int argc;
@@ -293,7 +293,7 @@ static err_t cmdPwdGenShare(cmd_pwd_t* pwd, const char* cmdline)
 	bool_t crc = FALSE;
 	cmd_pwd_t spwd = 0;
 	// составить список аргументов
-	code = cmdArgCreate(&argc, &argv, cmdline);
+	code = cmdArgCreate(&argc, &argv, str);
 	ERR_CALL_CHECK(code);
 	// обработать опции
 	while (argc && strStartsWith(argv[offset], "-"))
@@ -401,7 +401,7 @@ final:
 	return code;
 }
 
-static err_t cmdPwdReadShare(cmd_pwd_t* pwd, const char* cmdline)
+static err_t cmdPwdReadShare(cmd_pwd_t* pwd, const char* str)
 {
 	err_t code;
 	int argc;
@@ -412,7 +412,7 @@ static err_t cmdPwdReadShare(cmd_pwd_t* pwd, const char* cmdline)
 	bool_t crc = FALSE;
 	cmd_pwd_t spwd = 0;
 	// составить список аргументов
-	code = cmdArgCreate(&argc, &argv, cmdline);
+	code = cmdArgCreate(&argc, &argv, str);
 	ERR_CALL_CHECK(code);
 	// обработать опции
 	while (argc && strStartsWith(argv[offset], "-"))
@@ -526,24 +526,24 @@ final:
 *******************************************************************************
 */
 
-err_t cmdPwdGen(cmd_pwd_t* pwd, const char* cmdline)
+err_t cmdPwdGen(cmd_pwd_t* pwd, const char* schema)
 {
-	if (strStartsWith(cmdline, "pass:"))
-		return cmdPwdGenPass(pwd, cmdline + strLen("pass:"));
-	else if (strStartsWith(cmdline, "env:"))
-		return cmdPwdGenEnv(pwd, cmdline + strLen("env:"));
-	else if (strStartsWith(cmdline, "share:"))
-		return cmdPwdGenShare(pwd, cmdline + strLen("share:"));
+	if (strStartsWith(schema, "pass:"))
+		return cmdPwdGenPass(pwd, schema + strLen("pass:"));
+	else if (strStartsWith(schema, "env:"))
+		return cmdPwdGenEnv(pwd, schema + strLen("env:"));
+	else if (strStartsWith(schema, "share:"))
+		return cmdPwdGenShare(pwd, schema + strLen("share:"));
 	return ERR_CMD_PARAMS;
 }
 
-err_t cmdPwdRead(cmd_pwd_t* pwd, const char* cmdline)
+err_t cmdPwdRead(cmd_pwd_t* pwd, const char* schema)
 {
-	if (strStartsWith(cmdline, "pass:"))
-		return cmdPwdReadPass(pwd, cmdline + strLen("pass:"));
-	else if (strStartsWith(cmdline, "env:"))
-		return cmdPwdReadEnv(pwd, cmdline + strLen("env:"));
-	else if (strStartsWith(cmdline, "share:"))
-		return cmdPwdReadShare(pwd, cmdline + strLen("share:"));
+	if (strStartsWith(schema, "pass:"))
+		return cmdPwdReadPass(pwd, schema + strLen("pass:"));
+	else if (strStartsWith(schema, "env:"))
+		return cmdPwdReadEnv(pwd, schema + strLen("env:"));
+	else if (strStartsWith(schema, "share:"))
+		return cmdPwdReadShare(pwd, schema + strLen("share:"));
 	return ERR_CMD_PARAMS;
 }
