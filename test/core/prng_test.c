@@ -4,13 +4,12 @@
 \brief Tests for pseudorandom number generators
 \project bee2/test
 \created 2014.06.30
-\version 2023.03.29
+\version 2025.05.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
-#include <bee2/core/mem.h>
 #include <bee2/core/hex.h>
 #include <bee2/core/prng.h>
 

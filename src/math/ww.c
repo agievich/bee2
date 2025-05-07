@@ -4,13 +4,12 @@
 \brief Arbitrary length words
 \project bee2 [cryptographic library]
 \created 2012.04.18
-\version 2016.05.27
+\version 2025.05.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
-#include "bee2/core/mem.h"
 #include "bee2/core/util.h"
 #include "bee2/core/word.h"
 #include "bee2/math/ww.h"

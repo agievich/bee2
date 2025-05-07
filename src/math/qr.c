@@ -4,13 +4,12 @@
 \brief Quotient rings
 \project bee2 [cryptographic library]
 \created 2013.09.14
-\version 2014.04.17
+\version 2025.04.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
-#include "bee2/core/mem.h"
 #include "bee2/core/util.h"
 #include "bee2/math/qr.h"
 #include "bee2/math/ww.h"

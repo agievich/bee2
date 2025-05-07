@@ -4,14 +4,14 @@
 \brief Tests for multiple-precision unsigned integers
 \project bee2/test
 \created 2014.07.15
-\version 2025.03.19
+\version 2025.05.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
-#include <bee2/core/mem.h>
 #include <bee2/core/prng.h>
+#include <bee2/core/safe.h>
 #include <bee2/core/util.h>
 #include <bee2/core/word.h>
 #include <bee2/math/zz.h>

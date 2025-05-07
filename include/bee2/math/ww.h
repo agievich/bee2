@@ -4,7 +4,7 @@
 \brief Arbitrary length words
 \project bee2 [cryptographic library]
 \created 2012.04.18
-\version 2023.02.02
+\version 2025.05.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -21,6 +21,7 @@
 #define __WW_H
 
 #include "bee2/defs.h"
+#include "bee2/core/mem.h"
 #include "bee2/core/safe.h"
 
 #ifdef __cplusplus

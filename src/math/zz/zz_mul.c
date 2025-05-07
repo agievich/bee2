@@ -4,13 +4,12 @@
 \brief Multiple-precision unsigned integers: multiplicative operations
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.04.25
+\version 2025.05.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
-#include "bee2/core/mem.h"
 #include "bee2/core/util.h"
 #include "bee2/core/word.h"
 #include "bee2/math/ww.h"
@@ -344,7 +343,6 @@ void zzDiv(word q[], word r[], const word a[], size_t n, const word b[],
 	divident = (word*)stack;
 	divisor = divident + n + 1;
 	mul = divisor + m;
-	stack = mul + 3;
 	// divident <- a
 	wwCopy(divident, a, n);
 	divident[n] = 0;
@@ -433,7 +431,6 @@ void zzMod(word r[], const word a[], size_t n, const word b[], size_t m, void* s
 	divident = (word*)stack;
 	divisor = divident + n + 1;
 	mul = divisor + m;
-	stack = mul + 3;
 	// divident <- a
 	wwCopy(divident, a, n);
 	divident[n] = 0;

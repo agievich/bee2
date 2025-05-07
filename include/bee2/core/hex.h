@@ -22,7 +22,6 @@
 
 #include "bee2/defs.h"
 #include "bee2/core/safe.h"
-#include "bee2/core/str.h"
 
 #ifdef __cplusplus
 extern "C" {

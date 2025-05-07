@@ -4,26 +4,29 @@
 \brief Memory management
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.04.25
+\version 2025.05.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
-#include <memory.h>
-#include <string.h>
+#include "bee2/defs.h"
+
+#ifdef OS_WIN
+	#include <windows.h>
+#else
+	#include <memory.h>
+	#include <string.h>
+	#ifndef OS_APPLE
+		#include <malloc.h>
+	#else
+		#include <stdlib.h>
+	#endif
+#endif
+
 #include "bee2/core/mem.h"
 #include "bee2/core/util.h"
 #include "bee2/core/word.h"
-
-#ifndef OS_APPLE
-	#include <malloc.h>
-#else
-	#include <stdlib.h>
-#endif
-#ifdef OS_WIN
-	#include <windows.h>
-#endif
 
 /*
 *******************************************************************************
