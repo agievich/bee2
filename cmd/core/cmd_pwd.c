@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: password management
 \project bee2/cmd 
 \created 2022.06.13
-\version 2025.05.05
+\version 2025.05.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -301,14 +301,14 @@ static err_t cmdPwdGenShare(cmd_pwd_t* pwd, const char* str)
 		// порог
 		if (strStartsWith(argv[offset], "-t"))
 		{
-			char* str = argv[offset] + strLen("-t");
+			char* dec = argv[offset] + strLen("-t");
 			if (threshold)
 			{
 				code = ERR_CMD_DUPLICATE;
 				goto final;
 			}
-			if (!decIsValid(str) || decCLZ(str) || strLen(str) > 2 ||
-				(threshold = (size_t)decToU32(str)) < 2 || threshold > 16)
+			if (!decIsValid(dec) || decCLZ(dec) || strLen(dec) > 2 ||
+				(threshold = (size_t)decToU32(dec)) < 2 || threshold > 16)
 			{
 				code = ERR_CMD_PARAMS;
 				goto final;
@@ -318,14 +318,14 @@ static err_t cmdPwdGenShare(cmd_pwd_t* pwd, const char* str)
 		// уровень стойкости
 		else if (strStartsWith(argv[offset], "-l"))
 		{
-			char* str = argv[offset] + strLen("-l");
+			char* dec = argv[offset] + strLen("-l");
 			if (len)
 			{
 				code = ERR_CMD_DUPLICATE;
 				goto final;
 			}
-			if (!decIsValid(str) || decCLZ(str) || strLen(str) != 3 ||
-				(len = (size_t)decToU32(str)) % 64 || len < 128 || len > 256)
+			if (!decIsValid(dec) || decCLZ(dec) || strLen(dec) != 3 ||
+				(len = (size_t)decToU32(dec)) % 64 || len < 128 || len > 256)
 			{
 				code = ERR_CMD_PARAMS;
 				goto final;
@@ -420,14 +420,14 @@ static err_t cmdPwdReadShare(cmd_pwd_t* pwd, const char* str)
 		// порог
 		if (strStartsWith(argv[offset], "-t"))
 		{
-			char* str = argv[offset] + strLen("-t");
+			char* dec = argv[offset] + strLen("-t");
 			if (threshold)
 			{
 				code = ERR_CMD_DUPLICATE;
 				goto final;
 			}
-			if (!decIsValid(str) || decCLZ(str) || strLen(str) > 2 ||
-				(threshold = (size_t)decToU32(str)) < 2 || threshold > 16)
+			if (!decIsValid(dec) || decCLZ(dec) || strLen(dec) > 2 ||
+				(threshold = (size_t)decToU32(dec)) < 2 || threshold > 16)
 			{
 				code = ERR_CMD_PARAMS;
 				goto final;
@@ -437,14 +437,14 @@ static err_t cmdPwdReadShare(cmd_pwd_t* pwd, const char* str)
 		// уровень стойкости
 		else if (strStartsWith(argv[offset], "-l"))
 		{
-			char* str = argv[offset] + strLen("-l");
+			char* dec = argv[offset] + strLen("-l");
 			if (len)
 			{
 				code = ERR_CMD_DUPLICATE;
 				goto final;
 			}
-			if (!decIsValid(str) || decCLZ(str) || strLen(str) != 3 ||
-				(len = (size_t)decToU32(str)) % 64 || len < 128 || len > 256)
+			if (!decIsValid(dec) || decCLZ(dec) || strLen(dec) != 3 ||
+				(len = (size_t)decToU32(dec)) % 64 || len < 128 || len > 256)
 			{
 				code = ERR_CMD_PARAMS;
 				goto final;
