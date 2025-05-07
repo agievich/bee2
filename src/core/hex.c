@@ -4,7 +4,7 @@
 \brief Hexadecimal strings
 \project bee2 [cryptographic library]
 \created 2015.10.29
-\version 2025.05.06
+\version 2025.05.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -85,13 +85,19 @@ static void hexFromOLower(char* hex, register octet o)
 
 bool_t hexIsValid2(const char* hex, size_t len)
 {
-	if (!memIsValid(hex, len + 1) || len % 2)
+	if (!memIsValid(hex, len) || len % 2)
 		return FALSE;
 	for (; len--; ++hex)
 		if (hex_dec_table[(octet)*hex] == 0xFF)
 			return FALSE;
 	return TRUE;
 }
+
+bool_t hexIsValid(const char* hex)
+{
+	return strIsValid(hex) && hexIsValid2(hex, strLen(hex));
+}
+
 
 /*
 *******************************************************************************
@@ -139,6 +145,18 @@ bool_t FAST(hexEq2)(const void* buf, const char* hex, size_t len)
 	return TRUE;
 }
 
+bool_t SAFE(hexEq)(const void* buf, const char* hex)
+{
+	ASSERT(hexIsValid(hex));
+	return SAFE(hexEq2)(buf, hex, strLen(hex));
+}
+
+bool_t FAST(hexEq)(const void* buf, const char* hex)
+{
+	ASSERT(hexIsValid(hex));
+	return FAST(hexEq2)(buf, hex, strLen(hex));
+}
+
 bool_t SAFE(hexEqRev2)(const void* buf, const char* hex, size_t len)
 {
 	register word diff = 0;
@@ -159,6 +177,18 @@ bool_t FAST(hexEqRev2)(const void* buf, const char* hex, size_t len)
 		if (*(const octet*)buf != hexToO(hex -= 2))
 			return FALSE;
 	return TRUE;
+}
+
+bool_t SAFE(hexEqRev)(const void* buf, const char* hex)
+{
+	ASSERT(hexIsValid(hex));
+	return SAFE(hexEqRev2)(buf, hex, strLen(hex));
+}
+
+bool_t FAST(hexEqRev)(const void* buf, const char* hex)
+{
+	ASSERT(hexIsValid(hex));
+	return FAST(hexEqRev2)(buf, hex, strLen(hex));
 }
 
 /*
@@ -192,6 +222,12 @@ void hexTo2(void* dest, const char* src, size_t len)
 		*(octet*)dest = hexToO(src);
 }
 
+void hexTo(void* dest, const char* src)
+{
+	ASSERT(hexIsValid(src));
+	hexTo2(dest, src, strLen(src));
+}
+
 void hexToRev2(void* dest, const char* src, size_t len)
 {
 	ASSERT(hexIsValid2(src, len));
@@ -199,4 +235,10 @@ void hexToRev2(void* dest, const char* src, size_t len)
 	src = src + len;
 	for (; len; len -= 2, dest = (octet*)dest + 1)
 		*(octet*)dest = hexToO(src -= 2);
+}
+
+void hexToRev(void* dest, const char* src)
+{
+	ASSERT(hexIsValid(src));
+	hexToRev2(dest, src, strLen(src));
 }
