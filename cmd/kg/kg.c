@@ -4,7 +4,7 @@
 \brief Generate and manage private keys
 \project bee2/cmd 
 \created 2022.06.08
-\version 2025.04.25
+\version 2025.05.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -511,7 +511,7 @@ static err_t kgPrint(int argc, char* argv[])
 *******************************************************************************
 */
 
-int kgMain(int argc, char* argv[])
+static int kgMain(int argc, char* argv[])
 {
 	err_t code;
 	// справка

@@ -4,7 +4,7 @@
 \brief Bee2 testing
 \project bee2/test
 \created 2014.04.02
-\version 2025.04.25
+\version 2025.05.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -39,7 +39,7 @@ extern bool_t u32Test();
 extern bool_t u64Test();
 extern bool_t utilTest();
 
-int testCore()
+static int testCore()
 {
 	bool_t code;
 	int ret = 0;
@@ -79,7 +79,7 @@ extern bool_t priTest();
 extern bool_t ecpTest();
 extern bool_t ecpBench();
 
-int testMath()
+static int testMath()
 {
 	bool_t code;
 	int ret = 0;
@@ -117,7 +117,7 @@ extern bool_t pfokTest();
 extern bool_t pfokTestParamsStd();
 extern bool_t stb99Test();
 
-int testCrypto()
+static int testCrypto()
 {
 	bool_t code;
 	int ret = 0;

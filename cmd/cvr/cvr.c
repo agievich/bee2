@@ -4,7 +4,7 @@
 \brief Manage CV-certificate rings
 \project bee2/cmd 
 \created 2023.06.08
-\version 2025.04.25
+\version 2025.05.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -425,6 +425,7 @@ static err_t cvrVal(int argc, char* argv[])
 	// проверить вложенный в подпись сертификат
 	if (sig->certs_len != certa_len || !memEq(sig->certs, certa, certa_len))
 		code = ERR_BAD_ANCHOR;
+	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// проверить подпись кольца
 	code = cmdSigVerify2(argv[1], argv[1], certa, certa_len);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
@@ -624,7 +625,7 @@ static err_t cvrPrint(int argc, char* argv[])
 *******************************************************************************
 */
 
-int cvrMain(int argc, char* argv[])
+static int cvrMain(int argc, char* argv[])
 {
 	err_t code;
 	// справка

@@ -4,7 +4,7 @@
 \brief Tests for utilities
 \project bee2/test
 \created 2017.01.17
-\version 2021.05.18
+\version 2025.05.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -19,7 +19,7 @@
 *******************************************************************************
 */
 
-const char* utilInfo()
+static const char* utilInfo()
 {
 	static char descr[128];
 	sprintf(descr, "%s,B_PER_W=%d,B_PER_S=%d,%s",

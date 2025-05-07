@@ -4,7 +4,7 @@
 \brief Managing file prefixes and suffixes
 \project bee2/cmd
 \created 2025.04.15
-\version 2025.04.25
+\version 2025.05.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -364,7 +364,7 @@ static err_t affixPrint(int argc, char* argv[])
 *******************************************************************************
 */
 
-int affixMain(int argc, char* argv[])
+static int affixMain(int argc, char* argv[])
 {
 	err_t code;
 	// справка

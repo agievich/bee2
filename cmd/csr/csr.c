@@ -4,7 +4,7 @@
 \brief Manage certificate signing requests
 \project bee2/cmd 
 \created 2023.12.19
-\version 2025.04.25
+\version 2025.05.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -156,7 +156,7 @@ static err_t csrVal(int argc, char* argv[])
 	ERR_CALL_CHECK(code);
 	// разбор опций
 	if (argc != 1)
-		code = ERR_CMD_PARAMS;
+		return ERR_CMD_PARAMS;
 	// проверить входной файл
 	code = cmdFileValExist(1, argv);
 	ERR_CALL_CHECK(code);
@@ -183,7 +183,7 @@ static err_t csrVal(int argc, char* argv[])
 *******************************************************************************
 */
 
-int csrMain(int argc, char* argv[])
+static int csrMain(int argc, char* argv[])
 {
 	err_t code;
 	// справка

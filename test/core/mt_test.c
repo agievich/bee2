@@ -4,7 +4,7 @@
 \brief Tests for multithreading
 \project bee2/test
 \created 2021.05.15
-\version 2021.05.18
+\version 2025.05.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -20,7 +20,8 @@
 
 static size_t _once;
 static bool_t _inited;
-void init()
+
+static void init()
 {
 	_inited = TRUE;
 }

@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): public parameters
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.05.06
+\version 2025.05.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -362,8 +362,8 @@ err_t bignParamsVal(const bign_params* params)
 *******************************************************************************
 */
 
-bool_t ecpDetIsZero(const word a[], const word b[], const word p[], size_t n, 
-	void* stack)
+static bool_t ecpDetIsZero(const word a[], const word b[], const word p[],
+	size_t n, void* stack)
 {
 	// переменные в stack
 	word* t1 = (word*)stack;
@@ -382,7 +382,7 @@ bool_t ecpDetIsZero(const word a[], const word b[], const word p[], size_t n,
 	return wwIsZero(t1, n);
 }
 
-size_t ecpDetIsZero_deep(size_t n)
+static size_t ecpDetIsZero_deep(size_t n)
 {
 	return O_OF_W(2 * n) +
 		utilMax(3,
@@ -392,7 +392,7 @@ size_t ecpDetIsZero_deep(size_t n)
 		);
 }
 
-bool_t ecpMOVIsMet(const word q[], const word p[], size_t n, 
+static bool_t ecpMOVIsMet(const word q[], const word p[], size_t n,
 	size_t threshold, void* stack)
 {
 	// переменные в stack
@@ -416,7 +416,7 @@ bool_t ecpMOVIsMet(const word q[], const word p[], size_t n,
 	return TRUE;
 }
 
-size_t ecpMOVIsMet_deep(size_t n)
+static size_t ecpMOVIsMet_deep(size_t n)
 {
 	return O_OF_W(2 * n) +
 		utilMax(2,

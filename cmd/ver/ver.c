@@ -4,7 +4,7 @@
 \brief Version and build information
 \project bee2/cmd 
 \created 2022.06.22
-\version 2024.01.25
+\version 2025.05.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -200,7 +200,7 @@ static void verPrint()
 *******************************************************************************
 */
 
-int verMain(int argc, char* argv[])
+static int verMain(int argc, char* argv[])
 {
 	if (argc != 1)
 		return verUsage();

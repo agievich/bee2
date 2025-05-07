@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): wide block encryption
 \project bee2 [cryptographic library]
 \created 2017.11.03
-\version 2025.04.25
+\version 2025.05.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -48,7 +48,7 @@ void beltWBLStart(void* state, const octet key[], size_t len)
 	st->round = 0;
 }
 
-void beltWBLStepEBase(void* buf, size_t count, void* state)
+static void beltWBLStepEBase(void* buf, size_t count, void* state)
 {
 	belt_wbl_st* st = (belt_wbl_st*)state;
 	word n = ((word)count + 15) / 16;
@@ -82,7 +82,7 @@ void beltWBLStepEBase(void* buf, size_t count, void* state)
 	while (st->round % (2 * n));
 }
 
-void beltWBLStepEOpt(void* buf, size_t count, void* state)
+static void beltWBLStepEOpt(void* buf, size_t count, void* state)
 {
 	belt_wbl_st* st = (belt_wbl_st*)state;
 	word n = ((word)count + 15) / 16;
@@ -127,7 +127,7 @@ void beltWBLStepEOpt(void* buf, size_t count, void* state)
 	while (st->round % (2 * n));
 }
 
-void beltWBLStepDBase(void* buf, size_t count, void* state)
+static void beltWBLStepDBase(void* buf, size_t count, void* state)
 {
 	belt_wbl_st* st = (belt_wbl_st*)state;
 	word n = ((word)count + 15) / 16;
@@ -159,7 +159,7 @@ void beltWBLStepDBase(void* buf, size_t count, void* state)
 	}
 }
 
-void beltWBLStepDOpt(void* buf, size_t count, void* state)
+static void beltWBLStepDOpt(void* buf, size_t count, void* state)
 {
 	belt_wbl_st* st = (belt_wbl_st*)state;
 	word n = ((word)count + 15) / 16;

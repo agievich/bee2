@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: main
 \project bee2/cmd
 \created 2022.06.07
-\version 2025.04.25
+\version 2025.05.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -60,7 +60,7 @@ err_t cmdReg(const char* name, const char* descr, cmd_main_i fn)
 *******************************************************************************
 */
 
-int cmdUsage()
+static int cmdUsage()
 {
 	size_t pos;
 	// перечень команд
@@ -98,7 +98,7 @@ extern err_t esInit();
 extern err_t stInit();
 extern err_t affixInit();
 
-err_t cmdInit()
+static err_t cmdInit()
 {
 	err_t code;
 	code = verInit();

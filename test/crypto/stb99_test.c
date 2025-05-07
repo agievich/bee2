@@ -4,7 +4,7 @@
 \brief Tests for STB 1176.2-99[generation of parameters]
 \project bee2/test
 \created 2023.08.05
-\version 2025.04.25
+\version 2025.05.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -34,7 +34,7 @@
 *******************************************************************************
 */
 
-bool_t stb99TestParamsTest()
+static bool_t stb99TestParamsTest()
 {
 	stb99_seed seed[1];
 	stb99_seed seed1[1];
@@ -104,7 +104,7 @@ bool_t stb99TestParamsStd()
 	return TRUE;
 }
 
-bool_t stb99TestParamsStd2()
+static bool_t stb99TestParamsStd2()
 {
 	stb99_params params[1];
 	stb99_seed seed[1];

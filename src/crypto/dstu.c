@@ -4,7 +4,7 @@
 \brief DSTU 4145-2002 (Ukraine): digital signature algorithms
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2023.09.22
+\version 2025.05.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -508,7 +508,7 @@ static err_t dstuEcCreate(
 *******************************************************************************
 */
 
-void dstuEcClose(ec_o* ec)
+static void dstuEcClose(ec_o* ec)
 {
 	blobClose(ec);
 }

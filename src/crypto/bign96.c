@@ -4,7 +4,7 @@
 \brief Experimental Bign level 96 signatures
 \project bee2 [cryptographic library]
 \created 2021.01.20
-\version 2025.04.25
+\version 2025.05.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -134,7 +134,7 @@ typedef size_t(*bign96_deep_i)(
 	size_t ec_deep			/*!< [in] глубина стека эллиптической кривой */
 );
 
-size_t bign96Start_keep(bign96_deep_i deep)
+static size_t bign96Start_keep(bign96_deep_i deep)
 {
 	// размерности
 	size_t n = W_OF_B(192);
@@ -151,7 +151,7 @@ size_t bign96Start_keep(bign96_deep_i deep)
 			deep ? deep(n, f_deep, ec_d, ec_deep) : 0);
 }
 
-err_t bign96Start(void* state, const bign_params* params)
+static err_t bign96Start(void* state, const bign_params* params)
 {
 	// размерности
 	size_t n;

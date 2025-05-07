@@ -4,7 +4,7 @@
 \brief Tests for Draft of RD_RB (pfok)
 \project bee2/test
 \created 2014.07.08
-\version 2025.04.25
+\version 2025.05.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -47,7 +47,7 @@ static void _on_q_silent(const word q[], size_t n, size_t num)
 *******************************************************************************
 */
 
-bool_t pfokTestParamsTest()
+static bool_t pfokTestParamsTest()
 {
 	pfok_seed seed[1];
 	pfok_seed seed1[1];

@@ -4,7 +4,7 @@
 \brief Elliptic curves over prime fields
 \project bee2 [cryptographic library]
 \created 2012.06.26
-\version 2025.04.25
+\version 2025.05.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -584,7 +584,7 @@ static size_t ecpAddAJ_deep(size_t n, size_t f_deep)
 }
 
 // [3n]c <- [3n]a - [3n]b (P <- P - P)
-void ecpSubJ(word c[], const word a[], const word b[], const ec_o* ec,
+static void ecpSubJ(word c[], const word a[], const word b[], const ec_o* ec,
 	void* stack)
 {
 	const size_t n = ec->f->n;
@@ -605,7 +605,7 @@ void ecpSubJ(word c[], const word a[], const word b[], const ec_o* ec,
 	ecpAddJ(c, a, t, ec, stack);
 }
 
-size_t ecpSubJ_deep(size_t n, size_t f_deep)
+static size_t ecpSubJ_deep(size_t n, size_t f_deep)
 {
 	return O_OF_W(3 * n) + ecpAddJ_deep(n, f_deep);
 }
@@ -796,7 +796,7 @@ static void ecpTplJA3(word b[], const word a[], const ec_o* ec, void* stack)
 	gfpDouble(ecX(b), ecX(b), ec->f);
 }
 
-size_t ecpTplJA3_deep(size_t n, size_t f_deep)
+static size_t ecpTplJA3_deep(size_t n, size_t f_deep)
 {
 	return O_OF_W(7 * n) + f_deep;
 }

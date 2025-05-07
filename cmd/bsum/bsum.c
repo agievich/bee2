@@ -4,7 +4,7 @@
 \brief Hash files using belt-hash / bash-hash
 \project bee2/cmd 
 \created 2014.10.28
-\version 2025.04.25
+\version 2025.05.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -305,7 +305,7 @@ static int bsumCheck(size_t hid, const char* name)
 *******************************************************************************
 */
 
-int bsumMain(int argc, char* argv[])
+static int bsumMain(int argc, char* argv[])
 {
 	err_t code = ERR_OK;
 	size_t hid = SIZE_MAX;

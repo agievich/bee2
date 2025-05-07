@@ -4,7 +4,7 @@
 \brief Dealing with entropy sources
 \project bee2/cmd 
 \created 2021.04.20
-\version 2025.04.25
+\version 2025.05.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -215,7 +215,7 @@ static err_t esRead(int argc, char *argv[])
 *******************************************************************************
 */
 
-int esMain(int argc, char* argv[])
+static int esMain(int argc, char* argv[])
 {
 	err_t code;
 	// справка
