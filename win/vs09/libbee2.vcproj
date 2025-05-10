@@ -199,6 +199,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\include\bee2\core\json.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\include\bee2\core\mem.h"
 					>
 				</File>
@@ -402,6 +406,10 @@
 				</File>
 				<File
 					RelativePath="..\..\src\core\hex.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\core\json.c"
 					>
 				</File>
 				<File

@@ -359,6 +359,7 @@
     <ClCompile Include="..\..\src\core\err.c" />
     <ClCompile Include="..\..\src\core\file.c" />
     <ClCompile Include="..\..\src\core\hex.c" />
+    <ClCompile Include="..\..\src\core\json.c" />
     <ClCompile Include="..\..\src\core\mem.c" />
     <ClCompile Include="..\..\src\core\mt.c" />
     <ClCompile Include="..\..\src\core\obj.c" />
@@ -445,6 +446,7 @@
     <ClInclude Include="..\..\include\bee2\core\err.h" />
     <ClInclude Include="..\..\include\bee2\core\file.h" />
     <ClInclude Include="..\..\include\bee2\core\hex.h" />
+    <ClInclude Include="..\..\include\bee2\core\json.h" />
     <ClInclude Include="..\..\include\bee2\core\mem.h" />
     <ClInclude Include="..\..\include\bee2\core\mt.h" />
     <ClInclude Include="..\..\include\bee2\core\obj.h" />
