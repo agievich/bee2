@@ -6,9 +6,10 @@ set(src
   core/der.c
   core/err.c
   core/file.c
+  core/hex.c
+  core/json.c
   core/mem.c
   core/mt.c
-  core/hex.c
   core/obj.c
   core/oid.c
   core/prng.c

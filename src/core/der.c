@@ -4,7 +4,7 @@
 \brief Distinguished Encoding Rules
 \project bee2 [cryptographic library]
 \created 2014.04.21
-\version 2025.05.06
+\version 2025.05.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -321,6 +321,8 @@ size_t derEnc(octet der[], u32 tag, const void* val, size_t len)
 *******************************************************************************
 */
 
+static const size_t _max_depth = 32;
+
 bool_t derIsValid(const octet der[], size_t count)
 {
 	size_t t_count;
@@ -358,13 +360,13 @@ bool_t derIsValid2(const octet der[], size_t count, u32 tag)
 		memIsValid(der + t_count + l_count, len);
 }
 
-static size_t derDecDeep(const octet der[], size_t count, size_t deep)
+static size_t derParse(const octet der[], size_t count, size_t depth)
 {
 	u32 tag;
 	size_t len;
 	size_t c;
 	// превышена глубина вложенности?
-	if (deep > 32)
+	if (depth > _max_depth)
 		return SIZE_MAX;
 	// обработать TL
 	c = derTLDec(&tag, &len, der, count);
@@ -387,7 +389,7 @@ static size_t derDecDeep(const octet der[], size_t count, size_t deep)
 	while (len)
 	{
 		size_t c1;
-		c1 = derDecDeep(der + c, len, deep + 1);
+		c1 = derParse(der + c, len, depth + 1);
 		if (c1 == SIZE_MAX)
 			return SIZE_MAX;
 		c += c1, len -= c1;
@@ -397,7 +399,7 @@ static size_t derDecDeep(const octet der[], size_t count, size_t deep)
 
 bool_t derIsValid3(const octet der[], size_t count)
 {
-	return derDecDeep(der, count, 0) == count;
+	return derParse(der, count, 0) == count;
 }
 
 bool_t derStartsWith(const octet der[], size_t count, u32 tag)

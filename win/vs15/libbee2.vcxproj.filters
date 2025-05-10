@@ -207,6 +207,9 @@
     <ClCompile Include="..\..\src\core\hex.c">
       <Filter>Source Files\core</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\core\json.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\crypto\bash\bash_f.c">
       <Filter>Source Files\crypto\bash</Filter>
     </ClCompile>
@@ -423,6 +426,9 @@
       <Filter>Header Files\core</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\bee2\core\hex.h">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\bee2\core\json.h">
       <Filter>Header Files\core</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\bee2\core\u16.h">

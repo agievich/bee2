@@ -317,6 +317,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\test\core\json_test.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\test\core\mem_test.c"
 					>
 				</File>

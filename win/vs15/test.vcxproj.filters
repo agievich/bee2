@@ -28,6 +28,9 @@
     <ClCompile Include="..\..\test\core\hex_test.c">
       <Filter>Source Files\core</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\test\core\json_test.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\test\core\mem_test.c">
       <Filter>Source Files\core</Filter>
     </ClCompile>
