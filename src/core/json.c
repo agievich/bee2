@@ -474,11 +474,13 @@ size_t jsonFmtEnc(char json[], size_t size, const char* fmt, ...)
 	ASSERT(strIsValid(fmt));
 	ASSERT(memIsNullOrValid(json, size));
 	// кодировать
+	if (!json || !size)
+		json = 0, size = 0;
 	va_start(args, fmt);
-	c = vsnprintf(json, json ? size : 0, fmt, args);
+	c = vsnprintf(json, size, fmt, args);
 	va_end(args);
 	// ошибка или переполнение?
-	if (c < 0 || (int)(size_t)c != c)
+	if (c < 0 || json && (size_t)c >= size)
 		return SIZE_MAX;
 	// возврат
 	return (size_t)c;

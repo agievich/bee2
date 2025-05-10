@@ -214,6 +214,8 @@ static err_t jsonTestArr()
 	return TRUE;
 }
 
+#include <stdio.h>
+
 static err_t jsonTestEnc()
 {
 	const char* fmts[] =
@@ -229,17 +231,19 @@ static err_t jsonTestEnc()
 	for (pos = 0; pos < COUNT_OF(fmts); ++pos)
 	{
 		count = jsonFmtEnc(0, sizeof(json), fmts[pos], "a", (unsigned)12);
-		if (count == SIZE_MAX || count >= sizeof(json))
+		if (count == SIZE_MAX)
 			return FALSE;
 		count = jsonFmtEnc(json, 0, fmts[pos], "a", (unsigned)12);
-		if (count == SIZE_MAX || count >= sizeof(json))
+		if (count == SIZE_MAX)
 			return FALSE;
 		count = jsonFmtEnc(0, 0, fmts[pos], "a", (unsigned)12);
-		if (count == SIZE_MAX || count >= sizeof(json))
+		if (count == SIZE_MAX)
 			return FALSE;
 		count = jsonFmtEnc(json, sizeof(json), fmts[pos], "a", (unsigned)12);
-		if (count == SIZE_MAX || count >= sizeof(json) || 
-			!jsonIsValid(json, count))
+		if (count == SIZE_MAX || !jsonIsValid(json, count))
+			return FALSE;
+		count = jsonFmtEnc(json, 3, fmts[pos], "a", (unsigned)12);
+		if (count != SIZE_MAX)
 			return FALSE;
 	}
 	return TRUE;
