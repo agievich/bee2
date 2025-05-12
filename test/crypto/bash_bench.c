@@ -4,7 +4,7 @@
 \brief Benchmarks for STB 34.101.77 (bash)
 \project bee2/test
 \created 2014.07.15
-\version 2025.04.25
+\version 2025.05.12
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -56,7 +56,7 @@ bool_t bashBench()
 		beltHashStepG(hash, belt_state);
 		ticks = tmTicks() - ticks;
 		printf("bashBench::belt-hash: %3u cpb [%5u kBytes/sec]\n",
-			(unsigned)(ticks / 1024 / reps),
+			(unsigned)(ticks / sizeof(buf) / reps),
 			(unsigned)tmSpeed(reps, ticks));
 		// эксперимент c bashHashLLL
 		for (l = 128; l <= 256; l += 64)
@@ -78,7 +78,7 @@ bool_t bashBench()
 			bashPrgStart(bash_state, l, d, hash, l / 8, 0, 0);
 			bashPrgAbsorbStart(bash_state);
 			for (i = 0, ticks = tmTicks(); i < reps; ++i)
-				bashPrgAbsorbStep(buf, 1024, bash_state);
+				bashPrgAbsorbStep(buf, sizeof(buf), bash_state);
 			bashPrgSqueeze(hash, l / 4, bash_state);
 			ticks = tmTicks() - ticks;
 			printf("bashBench::bash-prg-hash%u%u: %3u cpb [%5u kBytes/sec]\n",
@@ -93,10 +93,10 @@ bool_t bashBench()
 			bashPrgStart(bash_state, l, d, 0, 0, hash, l / 8);
 			bashPrgEncrStart(bash_state);
 			for (i = 0, ticks = tmTicks(); i < reps; ++i)
-				bashPrgEncrStep(buf, 1024, bash_state);
+				bashPrgEncrStep(buf, sizeof(buf), bash_state);
 			bashPrgDecrStart(bash_state);
-			for (i = 0, ticks = tmTicks(); i < reps; ++i)
-				bashPrgDecrStep(buf, 1024, bash_state);
+			for (i = 0; i < reps; ++i)
+				bashPrgDecrStep(buf, sizeof(buf), bash_state);
 			ticks = tmTicks() - ticks;
 			printf("bashBench::bash-prg-ae%u%u: %3u cpb [%5u kBytes/sec]\n",
 				(unsigned)l, (unsigned)d,

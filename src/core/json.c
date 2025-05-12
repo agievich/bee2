@@ -131,9 +131,9 @@ static size_t jsonSizeParse(json_elem_t* elem, const char json[], size_t count)
 
 size_t jsonSizeDec(size_t* size, const char json[], size_t count)
 {
+	register size_t s;
 	json_elem_t e;
 	size_t c;
-	size_t s;
 	// pre
 	ASSERT(memIsNullOrValid(size, O_PER_S));
 	// разобрать
@@ -155,6 +155,7 @@ size_t jsonSizeDec(size_t* size, const char json[], size_t count)
 	// возврат
 	if (size)
 		*size = s;
+	s = 0;
 	return c;
 }
 

@@ -4,7 +4,7 @@
 \brief Distinguished Encoding Rules
 \project bee2 [cryptographic library]
 \created 2014.04.21
-\version 2025.05.10
+\version 2025.05.12
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -530,7 +530,7 @@ size_t derTSIZEDec(size_t* val, const octet der[], size_t count, u32 tag)
 	l_count = derLDec(&len, der, count);
 	if (l_count == SIZE_MAX || len > O_PER_S + 1)
 		return SIZE_MAX;
-	der += l_count, count -= l_count;
+	der += l_count;
 	// декодировать V
 	{
 		register size_t v = 0;

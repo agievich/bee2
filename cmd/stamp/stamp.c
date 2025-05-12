@@ -4,7 +4,7 @@
 \brief Generate and validate file checksums
 \project bee2/cmd
 \created 2025.04.08
-\version 2025.05.07
+\version 2025.05.12
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -117,6 +117,7 @@ static err_t stampVal(int argc, char* argv[])
 	ERR_CALL_CHECK(code);
 	// самотестирование
 	code = cmdStDo(CMD_ST_BASH);
+	ERR_CALL_CHECK(code);
 	// проверить штамп
 	code = cmdStampVal(argv[0], argc == 1 ? argv[0] : argv[1]);
 	return code;

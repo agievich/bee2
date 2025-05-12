@@ -4,7 +4,7 @@
 \brief STB 34.101.78 (bpki): PKI helpers
 \project bee2 [cryptographic library]
 \created 2021.04.03
-\version 2025.05.06
+\version 2025.05.12
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -354,7 +354,7 @@ err_t bpkiPrivkeyWrap(octet epki[], size_t* epki_len, const octet privkey[],
 	ERR_CALL_HANDLE(code, blobClose(key));
 	// кодировать pki
 	pki_len = bpkiPrivkeyEnc(epki + count - pki_len, privkey, privkey_len);
-	code = pki_len != SIZE_MAX ? ERR_OK : ERR_BAD_PRIVKEY;
+	code = (pki_len != SIZE_MAX) ? ERR_OK : ERR_BAD_PRIVKEY;
 	ERR_CALL_HANDLE(code, (memWipe(epki, count), blobClose(key)));
 	// зашифровать pki
 	code = beltKWPWrap(epki + count - pki_len - 16,
@@ -363,7 +363,7 @@ err_t bpkiPrivkeyWrap(octet epki[], size_t* epki_len, const octet privkey[],
 	// кодировать edata и epki
 	count = bpkiEdataEnc(epki, epki + count - edata_len, edata_len,
 		salt, iter);
-	code = count != SIZE_MAX ? ERR_OK : ERR_BAD_FORMAT;
+	code = (count != SIZE_MAX) ? ERR_OK : ERR_BAD_FORMAT;
 	ERR_CALL_HANDLE(code, (memWipe(epki, count), blobClose(key)));
 	// все нормально
 	blobClose(key);
@@ -396,8 +396,7 @@ err_t bpkiPrivkeyUnwrap(octet privkey[], size_t* privkey_len,
 	key = salt + 8;
 	edata = key + 32;
 	// выделить edata
-	count = bpkiEdataDec(edata, 0, salt, &iter, epki, epki_len);
-	ASSERT(count == epki_len);
+	VERIFY(bpkiEdataDec(edata, 0, salt, &iter, epki, epki_len) == epki_len);
 	// построить ключ защиты 
 	code = beltPBKDF2(key, pwd, pwd_len, iter, salt, 8);
 	ERR_CALL_HANDLE(code, blobClose(state));
@@ -413,8 +412,7 @@ err_t bpkiPrivkeyUnwrap(octet privkey[], size_t* privkey_len,
 	code = memIsNullOrValid(privkey, edata_len) ? ERR_OK : ERR_BAD_INPUT;
 	ERR_CALL_HANDLE(code, blobClose(state));
 	// декодировать pki
-	count = bpkiPrivkeyDec(privkey, privkey_len, edata, pki_len);
-	ASSERT(count == pki_len);
+	VERIFY(bpkiPrivkeyDec(privkey, privkey_len, edata, pki_len) == pki_len);
 	// завершить
 	blobClose(state);
 	return code;
@@ -469,7 +467,7 @@ err_t bpkiShareWrap(octet epki[], size_t* epki_len, const octet share[],
 	ERR_CALL_HANDLE(code, blobClose(key));
 	// кодировать pki
 	pki_len = bpkiShareEnc(epki + count - pki_len, share, share_len);
-	code = pki_len != SIZE_MAX ? ERR_OK : ERR_BAD_PRIVKEY;
+	code = (pki_len != SIZE_MAX) ? ERR_OK : ERR_BAD_PRIVKEY;
 	ERR_CALL_HANDLE(code, (memWipe(epki, count), blobClose(key)));
 	// зашифровать pki
 	code = beltKWPWrap(epki + count - pki_len - 16,
@@ -478,7 +476,7 @@ err_t bpkiShareWrap(octet epki[], size_t* epki_len, const octet share[],
 	// кодировать edata и epki
 	count = bpkiEdataEnc(epki, epki + count - edata_len, edata_len,
 		salt, iter);
-	code = count != SIZE_MAX ? ERR_OK : ERR_BAD_FORMAT;
+	code = (count != SIZE_MAX) ? ERR_OK : ERR_BAD_FORMAT;
 	ERR_CALL_HANDLE(code, (memWipe(epki, count), blobClose(key)));
 	// все нормально
 	blobClose(key);
@@ -511,8 +509,7 @@ err_t bpkiShareUnwrap(octet share[], size_t* share_len,
 	key = salt + 8;
 	edata = key + 32;
 	// выделить edata
-	count = bpkiEdataDec(edata, 0, salt, &iter, epki, epki_len);
-	ASSERT(count == epki_len);
+	VERIFY(bpkiEdataDec(edata, 0, salt, &iter, epki, epki_len) == epki_len);
 	// построить ключ защиты 
 	code = beltPBKDF2(key, pwd, pwd_len, iter, salt, 8);
 	ERR_CALL_HANDLE(code, blobClose(state));
@@ -528,10 +525,9 @@ err_t bpkiShareUnwrap(octet share[], size_t* share_len,
 	code = memIsNullOrValid(share, edata_len) ? ERR_OK : ERR_BAD_INPUT;
 	ERR_CALL_HANDLE(code, blobClose(state));
 	// декодировать pki
-	count = bpkiShareDec(share, share_len, edata, pki_len);
-	ASSERT(count == pki_len);
+	VERIFY(bpkiShareDec(share, share_len, edata, pki_len) == pki_len);
 	// проверить первый октет share
-	code = !share || 1 <= share[0] && share[0] <= 16 ?
+	code = (!share || 1 <= share[0] && share[0] <= 16) ?
 		ERR_OK : ERR_BAD_SHAREKEY;
 	// завершить
 	blobClose(state);

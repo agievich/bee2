@@ -4,7 +4,7 @@
 \brief Binary polynomials: Euclidian gcd algorithms
 \project bee2 [cryptographic library]
 \created 2012.03.01
-\version 2025.05.07
+\version 2025.05.12
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -65,7 +65,6 @@ void ppGCD(word d[], const word a[], size_t n, const word b[], size_t m,
 	// переменные в stack
 	word* u = (word*)stack;
 	word* v = u + n;
-	stack = v + m;
 	// pre
 	ASSERT(wwIsDisjoint2(a, n, d, MIN2(n, m)));
 	ASSERT(wwIsDisjoint2(b, m, d, MIN2(n, m)));
@@ -123,7 +122,6 @@ void ppExGCD(word d[], word da[], word db[], const word a[], size_t n,
 	word* v = u + n;
 	word* da0 = v + m;
 	word* db0 = da0 + m;
-	stack = db0 + n;
 	// pre
 	ASSERT(wwIsDisjoint3(da, m, db, n, d, MIN2(n, m)));
 	ASSERT(wwIsDisjoint2(a, n, da, m));

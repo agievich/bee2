@@ -4,7 +4,7 @@
 \brief Binary polynomials: modular arithmetic
 \project bee2 [cryptographic library]
 \created 2012.03.01
-\version 2025.05.07
+\version 2025.05.12
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -84,7 +84,6 @@ void ppDivMod(word b[], const word divident[], const word a[],
 	word* v = u + n;
 	word* da0 = v + n;
 	word* da = da0 + n;
-	stack = da + n;
 	// pre
 	ASSERT(wwCmp(a, mod, n) < 0);
 	ASSERT(wwCmp(divident, mod, n) < 0);

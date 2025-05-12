@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: Euclidian gcd algorithms
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.05.07
+\version 2025.05.12
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -84,7 +84,6 @@ void zzGCD(word d[], const word a[], size_t n, const word b[], size_t m,
 	// переменные в stack
 	word* u = (word*)stack;
 	word* v = u + n;
-	stack = v + m;
 	// pre
 	ASSERT(wwIsDisjoint2(a, n, d, MIN2(n, m)));
 	ASSERT(wwIsDisjoint2(b, m, d, MIN2(n, m)));
@@ -200,7 +199,6 @@ void zzExGCD(word d[], word da[], word db[], const word a[], size_t n,
 	word* v = u + n;
 	word* da1 = v + m;
 	word* db1 = da1 + m;
-	stack = db1 + n;
 	// pre
 	ASSERT(wwIsDisjoint3(da, m, db, n, d, MIN2(n, m)));
 	ASSERT(wwIsDisjoint2(a, n, d, MIN2(n, m)));
@@ -317,7 +315,6 @@ void zzDivMod(word b[], const word divident[], const word a[],
 	word* v = u + n;
 	word* da = v + n;
 	word* da1 = da + n;
-	stack = da1 + n;
 	// pre
 	ASSERT(wwCmp(a, mod, n) < 0);
 	ASSERT(wwCmp(divident, mod, n) < 0);
@@ -447,7 +444,6 @@ size_t zzAlmostInvMod(word b[], const word a[], const word mod[], size_t n,
 	word* v = u + n;
 	word* da0 = v + n;
 	word* da = da0 + n + 1;
-	stack = da + n + 1;
 	// pre
 	ASSERT(!wwIsZero(a, n));
 	ASSERT(wwCmp(a, mod, n) < 0);

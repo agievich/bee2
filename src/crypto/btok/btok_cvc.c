@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): CV certificates
 \project bee2 [cryptographic library]
 \created 2022.07.04
-\version 2025.05.06
+\version 2025.05.12
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -176,6 +176,7 @@ static err_t btokVerify(const void* buf, size_t count, const octet sig[],
 		return ERR_BAD_INPUT;
 	// загрузить параметры
 	code = btokParamsStd(params, pubkey_len / 2);
+	ERR_CALL_CHECK(code);
 	// создать и разметить стек
 	stack = blobCreate(pubkey_len / 2 +
 		(pubkey_len <= 64 ? beltHash_keep() : bashHash_keep()));
@@ -499,7 +500,7 @@ err_t btokCVCWrap(octet cert[], size_t* cert_len, btok_cvc_t* cvc,
 	// ...завершить кодирование
 	t = derTSEQEncStop(cert, count, CVCert);
 	ASSERT(t != SIZE_MAX);
-	cert = cert ? cert + t : 0, count += t;
+	count += t;
 	// возвратить длину DER-кода
 	if (cert_len)
 		*cert_len = count;
@@ -567,7 +568,7 @@ err_t btokCVCUnwrap(btok_cvc_t* cvc, const octet cert[], size_t cert_len,
 	t = derTSEQDecStop(cert, CVCert);
 	if (t == SIZE_MAX)
 		return ERR_BAD_FORMAT;
-	cert = cert ? cert + t : 0, cert_len -= t;
+	cert_len -= t;
 	if (cert_len != 0)
 		return ERR_BAD_FORMAT;
 	// окончательная проверка cvc
