@@ -4,7 +4,7 @@
 \brief JSON
 \project bee2 [cryptographic library]
 \created 2025.05.07
-\version 2025.05.10
+\version 2025.05.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -284,57 +284,57 @@ static size_t jsonObjParse(json_elem_t* elem, const char json[], size_t count,
 }
 
 size_t jsonObjDec(json_elem_t elems[], const char json[], size_t count,
-	const char* names[], size_t size)
+	const char* const names[], size_t names_count)
 {
 	size_t c;
 	size_t c1;
 	size_t i;
 	// pre
 	ASSERT(memIsValid(json, count));
-	ASSERT(memIsValid(names, size * sizeof(char*)));
-	ASSERT(memIsValid(elems, size * sizeof(json_elem_t)));
+	ASSERT(memIsValid(names, names_count * sizeof(char*)));
+	ASSERT(memIsValid(elems, names_count * sizeof(json_elem_t)));
 	// подготовить elems
-	memSetZero(elems, size * sizeof(json_elem_t));
+	memSetZero(elems, names_count * sizeof(json_elem_t));
 	// декодировать {
 	if ((c = jsonDelimDec(json, count, '{')) == SIZE_MAX)
 		return SIZE_MAX;
 	json += c, count -= c;
 	// цикл по именам
-	for (i = 0; i < size; ++i)
+	for (i = 0; i < names_count; ++i)
 	{
 		const char* str;
 		size_t len;
-		size_t pos;
+		size_t j;
 		// декодировать имя
 		if ((c1 = jsonStrDec(&str, &len, json, count)) == SIZE_MAX)
 			return SIZE_MAX;
 		c += c1, json += c1, count -= c1;
 		// искать имя в names
-		for (pos = 0; pos < size; ++pos)
+		for (j = 0; j < names_count; ++j)
 		{
-			ASSERT(strIsValid(names[pos]));
+			ASSERT(strIsValid(names[j]));
 			// найдено?
-			if (len == strLen(names[pos]) && memEq(str, names[pos], len))
+			if (len == strLen(names[j]) && memEq(str, names[j], len))
 			{
 				// уже обработано?
-				if (elems[pos].json != 0)
+				if (elems[j].json != 0)
 					return SIZE_MAX;
 				break;
 			}
 		}
 		// не найдено?
-		if (pos == size)
+		if (j == names_count)
 			return SIZE_MAX;
 		// декодировать :
 		if ((c1 = jsonDelimDec(json, count, ':')) == SIZE_MAX)
 			return SIZE_MAX;
 		c += c1, json += c1, count -= c1;
 		// декодировать элемент
-		if ((c1 = jsonElemParse(elems + pos, json, count, 0)) == SIZE_MAX)
+		if ((c1 = jsonElemParse(elems + j, json, count, 0)) == SIZE_MAX)
 			return SIZE_MAX;
 		c += c1, json += c1, count -= c1;
 		// декодировать ,
-		if (i + 1 < size)
+		if (i + 1 < names_count)
 		{
 			if ((c1 = jsonDelimDec(json, count, ',')) == SIZE_MAX)
 				return SIZE_MAX;
@@ -355,15 +355,15 @@ size_t jsonObjDec(json_elem_t elems[], const char json[], size_t count,
 */
 
 static size_t jsonArrParse(json_elem_t* elem, json_elem_t elems[], 
-	size_t* size, const char json[], size_t count, size_t depth)
+	size_t* elems_count, const char json[], size_t count, size_t depth)
 {
 	size_t c;
 	size_t c1;
-	size_t s;
+	size_t ec;
 	// pre
 	ASSERT(memIsValid(json, count));
 	ASSERT(memIsNullOrValid(elem, sizeof(json_elem_t)));
-	ASSERT(memIsNullOrValid(size, O_PER_S));
+	ASSERT(memIsNullOrValid(elems_count, O_PER_S));
 	// превышена глубина?
 	if (depth > _max_depth)
 		return SIZE_MAX;
@@ -377,7 +377,7 @@ static size_t jsonArrParse(json_elem_t* elem, json_elem_t elems[],
 		elem->json = json, elem->count = c;
 	++c, ++json, --count;
 	// пока не встретилась ]
-	for (s = 0; count && json[0] != ']'; ++s)
+	for (ec = 0; count && json[0] != ']'; ++ec)
 	{
 		json_elem_t e;
 		// разобрать элемент
@@ -387,8 +387,8 @@ static size_t jsonArrParse(json_elem_t* elem, json_elem_t elems[],
 		// сохранить элемент
 		if (elems)
 		{
-			ASSERT(memIsValid(elems, (s + 1) * sizeof(json_elem_t)));
-			memCopy(elems + s, &e, sizeof(json_elem_t));
+			ASSERT(memIsValid(elems, (ec + 1) * sizeof(json_elem_t)));
+			memCopy(elems + ec, &e, sizeof(json_elem_t));
 		}
 		// декодировать ,
 		if (count && json[0] == ',')
@@ -406,15 +406,15 @@ static size_t jsonArrParse(json_elem_t* elem, json_elem_t elems[],
 	// возврат
 	if (elem)
 		elem->count = c - elem->count;
-	if (size)
-		*size = s;
+	if (elems_count)
+		*elems_count = ec;
 	return c + jsonWsDec(json, count);
 }
 
-size_t jsonArrDec(json_elem_t elems[], size_t* size, const char json[],
+size_t jsonArrDec(json_elem_t elems[], size_t* elems_count, const char json[],
 	size_t count)
 {
-	return jsonArrParse(0, elems, size, json, count, 0);
+	return jsonArrParse(0, elems, elems_count, json, count, 0);
 }
 
 /*

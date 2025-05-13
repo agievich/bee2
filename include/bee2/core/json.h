@@ -4,7 +4,7 @@
 \brief JSON (JavaScript Object Notation, https://json.org)
 \project bee2 [cryptographic library]
 \created 2025.05.07
-\version 2025.05.10
+\version 2025.05.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -148,26 +148,26 @@ size_t jsonSizeDec(
 /*!	\brief Декодирование объекта
 
 	Декодируется объект JSON, заданный кодом [count]json. В результате 
-	декодирования определяются вложенные в объект элементы [size]elems 
-	с именами [size]names: elems[i] -- это элемент с именем names[i].
+	декодирования определяются вложенные в объект элементы [names_count]elems
+	с именами [names_count]names: elems[i] -- это элемент с именем names[i].
 	\pre Указатели json, names и elems корректны.
 	\return Обработанная при декодировании длина JSON-кода (включая 
 	предваряющие и завершающие пробелы) или SIZE_MAX в случае ошибки.
-	\remark При повторении имен в names, при отсутствии нужного элемента 
-	и при наличии лишних элементов будет возвращена ошибка. 
+	\remark При повторе имен в names, при отсутствии нужного элемента и при
+	наличии лишних элементов будет возвращена ошибка. 
 */
 size_t jsonObjDec(
-	json_elem_t elems[],	/*!< [out] элементы */
-	const char json[],		/*!< [in] код */
-	size_t count,			/*!< [in] длина кода */
-	const char* names[],	/*!< [in] имена элементов */
-	size_t size				/*!< [in] число элементов */
+	json_elem_t elems[],		/*!< [out] элементы */
+	const char json[],			/*!< [in] код */
+	size_t count,				/*!< [in] длина кода */
+	const char* const names[],	/*!< [in] имена элементов */
+	size_t names_count			/*!< [in] число элементов */
 );
 
 /*!	\brief Декодирование массива
 
 	Декодируется массив JSON, заданный кодом [count]json. В результате
-	декодирования определяются вложенные в массив элементы [size?]elems.
+	декодирования определяются вложенные в массив элементы [elems_count?]elems.
 	\pre Указатель json корректен.
 	\pre Любой из указателей elems и count может быть нулевым.
 	\return Обработанная при декодировании длина JSON-кода (включая	
@@ -175,7 +175,7 @@ size_t jsonObjDec(
 */
 size_t jsonArrDec(
 	json_elem_t elems[],	/*!< [out] элементы */
-	size_t* size,			/*!< [out] число элементов */
+	size_t* elems_count,	/*!< [out] число элементов */
 	const char json[],		/*!< [in] код */
 	size_t count			/*!< [in] длина кода */
 );
