@@ -4,7 +4,7 @@
 \brief Hash files using belt-hash / bash-hash
 \project bee2/cmd 
 \created 2014.10.28
-\version 2025.05.07
+\version 2025.05.27
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -184,7 +184,7 @@ static int bsumHash(octet hash[], size_t hid, const char* name)
 	}
 	while (count == sizeof(buf));
 	// закрыть файл
-	if (!fileClose(file))
+	if (!fileClose2(file))
 	{
 		memWipe(buf, sizeof(buf));
 		memWipe(state, sizeof(state));
@@ -275,7 +275,7 @@ static int bsumCheck(size_t hid, const char* name)
 		printf("%s: OK\n", str + 2 * hash_len + 2);
 	}
 	// закрыть файл контрольных сумм
-	if (!fileClose(file))
+	if (!fileClose2(file))
 	{
 		printf("%s: FAILED [close]\n", name);
 		return -1;

@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: file stamps
 \project bee2/cmd 
 \created 2025.04.21
-\version 2025.04.25
+\version 2025.05.27
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -109,7 +109,7 @@ static err_t cmdFileStamp(
 		count -= c;
 	}
 	// закрыть файл
-	code = cmdFileClose(file);
+	code = cmdFileClose2(file);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// завершить хэширование и кодировать
 	bashHashStepG(stamp1, 8, state);

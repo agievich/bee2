@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: self-tests
 \project bee2/cmd 
 \created 2025.04.09
-\version 2025.04.25
+\version 2025.05.27
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -364,7 +364,7 @@ err_t cmdStCrc(octet crc[32], const char* prefix)
 		beltHashStepH(buf, count, state);
 	} while (count);
 	// закрыть файл
-	code = cmdFileClose(file);
+	code = cmdFileClose2(file);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// завершить
 	beltHashStepG(crc, state);

@@ -4,7 +4,7 @@
 \brief File management
 \project bee2 [cryptographic library]
 \created 2025.04.11
-\version 2025.04.25
+\version 2025.05.27
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -41,10 +41,15 @@ file_t fileTmp()
 	return tmpfile();
 }
 
-bool_t fileClose(file_t file)
+bool_t fileClose2(file_t file)
 {
 	ASSERT(fileIsValid(file));
 	return fclose(file) ? FALSE : TRUE;
+}
+
+void fileClose(file_t file)
+{
+	fileClose2(file);
 }
 
 /*

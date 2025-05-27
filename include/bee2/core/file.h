@@ -4,7 +4,7 @@
 \brief File management
 \project bee2 [cryptographic library]
 \created 2025.04.11
-\version 2025.04.22
+\version 2025.05.27
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -86,9 +86,18 @@ file_t fileTmp();
 /*!	\brief Закрытие файла
 
 	Закрывается файл file.
+*/
+void fileClose( 
+	file_t file				/*< [in,out] файл */
+);
+
+/*!	\brief Закрытие файла с контролем
+
+	Закрывается файл file. При закрытии контролируется завершение всех
+	операций записи.
 	\return Признак успеха.
 */
-bool_t fileClose( 
+bool_t fileClose2(
 	file_t file				/*< [in,out] файл */
 );
 

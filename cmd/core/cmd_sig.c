@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: signing files
 \project bee2/cmd
 \created 2022.08.20
-\version 2025.05.05
+\version 2025.05.27
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -277,7 +277,7 @@ static err_t cmdSigHash(octet hash[], size_t hash_len, const char* name,
 			bashHashStepH(stack, count, state);
 		size -= count;
 	}
-	code = cmdFileClose(file);
+	code = cmdFileClose2(file);
 	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
 	// хэшировать сертификаты и дату
 	if (hash_len <= 32)

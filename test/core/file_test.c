@@ -4,7 +4,7 @@
 \brief Tests for file management functions
 \project bee2/test
 \created 2025.04.13
-\version 2025.04.23
+\version 2025.05.27
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -74,7 +74,7 @@ bool_t fileTest()
 		return FALSE;
 	}
 	// закрыть файл
-	if (!fileClose(file))
+	if (!fileClose2(file))
 		return FALSE;				
 	// все нормально
 	return TRUE;

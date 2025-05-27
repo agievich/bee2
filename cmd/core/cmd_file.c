@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: file management
 \project bee2/cmd 
 \created 2022.06.08
-\version 2025.04.25
+\version 2025.05.27
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -37,7 +37,7 @@ size_t cmdFileSize(const char* name)
 	code = cmdFileOpen(file, name, "rb");
 	ERR_CALL_CHECK(code);
 	size = fileSize(file);
-	code = cmdFileClose(file);
+	code = cmdFileClose2(file);
 	return (size == SIZE_MAX || code != ERR_OK) ? SIZE_MAX : size;
 }
 
@@ -59,7 +59,7 @@ err_t cmdFileWrite(const char* name, const void* buf, size_t count)
 	ERR_CALL_CHECK(code);
 	code = fileWrite(&count, buf, count, file);
 	ERR_CALL_HANDLE(code, cmdFileClose(file));
-	return cmdFileClose(file);
+	return cmdFileClose2(file);
 }
 
 err_t cmdFilePrepend(const char* name, const void* buf, size_t count)
@@ -116,7 +116,7 @@ err_t cmdFilePrepend(const char* name, const void* buf, size_t count)
 		code = fileWrite(&count, buf, count, file);
 	ERR_CALL_HANDLE(code, cmdFileClose(file));
 	// завершить
-	return cmdFileClose(file);
+	return cmdFileClose2(file);
 }
 
 err_t cmdFileAppend(const char* name, const void* buf, size_t count)
@@ -131,7 +131,7 @@ err_t cmdFileAppend(const char* name, const void* buf, size_t count)
 	ERR_CALL_CHECK(code);
 	code = fileWrite(&count, buf, count, file);
 	ERR_CALL_HANDLE(code, cmdFileClose(file));
-	return cmdFileClose(file);
+	return cmdFileClose2(file);
 }
 
 err_t cmdFileReadAll(void* buf, size_t* count, const char* name)
@@ -161,7 +161,7 @@ err_t cmdFileReadAll(void* buf, size_t* count, const char* name)
 			code = ERR_BAD_FILE;
 	}
 	ERR_CALL_HANDLE(code, cmdFileClose(file));
-	return cmdFileClose(file);
+	return cmdFileClose2(file);
 }
 
 /*
@@ -210,7 +210,7 @@ err_t cmdFileBehead(const char* name, size_t count)
 		code = ERR_FILE_WRITE;
 	ERR_CALL_HANDLE(code, cmdFileClose(file));
 	// завершить
-	return cmdFileClose(file);
+	return cmdFileClose2(file);
 }
 
 err_t cmdFileDrop(const char* name, size_t count)
@@ -234,7 +234,7 @@ err_t cmdFileDrop(const char* name, size_t count)
 		code = ERR_FILE_WRITE;
 	ERR_CALL_HANDLE(code, cmdFileClose(file));
 	// завершить
-	return cmdFileClose(file);
+	return cmdFileClose2(file);
 }
 
 /*
@@ -292,9 +292,9 @@ err_t cmdFileDup(const char* oname, const char* iname, size_t skip,
 	// завершить
 	cmdBlobClose(buf);
 	ERR_CALL_HANDLE(code, (cmdFileClose(ofile), cmdFileClose(ifile)));
-	code = cmdFileClose(ofile);
+	code = cmdFileClose2(ofile);
 	ERR_CALL_HANDLE(code, cmdFileClose(ifile));
-	return cmdFileClose(ifile);
+	return cmdFileClose2(ifile);
 }
 
 /*
@@ -314,7 +314,7 @@ err_t cmdFileValNotExist(int count, char* names[])
 		code = cmdFileOpen(file, *names, "rb");
 		if (code == ERR_OK)
 		{
-			code = cmdFileClose(file);
+			code = cmdFileClose2(file);
 			ERR_CALL_CHECK(code);
 			if (printf("Some files already exist. Overwrite [y/n]?") < 0)
 				return ERR_FILE_EXISTS;
@@ -340,7 +340,7 @@ err_t cmdFileValExist(int count, char* names[])
 		code = cmdFileOpen(file, *names, "rb");
 		if (code != ERR_OK)
 			return ERR_FILE_NOT_FOUND;
-		code = cmdFileClose(file);
+		code = cmdFileClose2(file);
 		ERR_CALL_CHECK(code);
 	}
 	return ERR_OK;
@@ -418,7 +418,7 @@ err_t cmdFilePrefixRead(octet* prefix, size_t* count, const char* name,
 		code = ERR_FILE_READ;
 	ERR_CALL_HANDLE(code, (cmdBlobClose(buf), cmdFileClose(file)));
 	// закрыть файл
-	code = cmdFileClose(file);
+	code = cmdFileClose2(file);
 	ERR_CALL_HANDLE(code, cmdBlobClose(buf));
 	// проверить префикс
 	if (!derIsValid3(buf, c))
@@ -488,7 +488,7 @@ err_t cmdFileSuffixRead(octet* suffix, size_t* count, const char* name,
 		code = ERR_FILE_READ;
 	ERR_CALL_HANDLE(code, (cmdBlobClose(buf), cmdFileClose(file)));
 	// закрыть файл
-	code = cmdFileClose(file);
+	code = cmdFileClose2(file);
 	ERR_CALL_HANDLE(code, cmdBlobClose(buf));
 	// проверить суффикс
 	memRev(buf, c);

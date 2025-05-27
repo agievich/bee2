@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2
 \project bee2/cmd
 \created 2022.06.09
-\version 2025.05.05
+\version 2025.05.27
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -314,7 +314,11 @@ err_t cmdPrintDate(
 
 /*! \brief Закрытие файла */
 #define cmdFileClose(file) \
-	(fileClose(file) ? ERR_OK : ERR_BAD_FILE)
+	(fileClose(file))
+
+/*! \brief Закрытие файла с контролем */
+#define cmdFileClose2(file) \
+	(fileClose2(file) ? ERR_OK : ERR_BAD_FILE)
 
 /*!	\brief Размер файла
 
