@@ -4,7 +4,7 @@
 \brief File management
 \project bee2 [cryptographic library]
 \created 2025.04.11
-\version 2025.05.27
+\version 2025.06.04
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -78,12 +78,15 @@ size_t fileTell(file_t file)
 /*
 *******************************************************************************
 Проверка
+
+\remark Проверка memIsValid(file, sizeof(file)) не работает в OS_ANDROID:
+	invalid applicaton of `sizeof` to an incomplete type FILE
 *******************************************************************************
 */
 
 bool_t fileIsValid(const file_t file)
 {
-	return memIsValid(file, sizeof(FILE));
+	return file != 0;
 }
 
 /*

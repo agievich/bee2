@@ -4,7 +4,7 @@
 \brief Basic definitions
 \project bee2 [cryptographic library]
 \created 2012.04.01
-\version 2024.01.24
+\version 2025.06.04
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -183,38 +183,43 @@ T == octet.
 
 \def OS_UNIX
 \brief Операционная система линейки Unix
-\remark Включает линейки Linux и MAC OS X
+\remark Включает линейки Linux и OS X / iOS
 
 \def OS_LINUX
 \brief Операционная система линейки Linux
+\remark Включает Android
 
 \def OS_APPLE
 \brief Операционная система линеек OS X / iOS
+
+\def OS_ANDROID
+\brief Операционная система Android
+
+\remark Тип операционной системы определяется в соответствии с
+* https://sourceforge.net/p/predef/wiki/OperatingSystems/;
+* https://stackoverflow.com/questions/5919996.
 *******************************************************************************
 */
+
+#undef OS_WIN
+#undef OS_UNIX
+#undef OS_LINUX
+#undef OS_APPLE
+#undef OS_ANDROID
 
 #if defined(_WIN32) || defined(_WIN64) || defined(__WINNT) ||\
 	defined(__WIN32__) || defined(__WIN64__)  || defined(__WINNT__)
 	#define OS_WIN
-	#undef OS_UNIX
-	#undef OS_LINUX
-	#undef OS_APPLE
-#elif defined(unix) || defined(_unix_) || defined(__unix__) ||\
-	defined(__APPLE__)
-	#undef OS_WIN
+#elif defined(__unix) || defined(__unix__) || defined(__APPLE__)
 	#define OS_UNIX
-	#if defined(__unix__)
+	#if defined(__linux__) || defined (linux) || defined(__linux)
 		#define OS_LINUX
-		#undef OS_APPLE
+		#if defined(__ANDROID__)
+			#define OS_ANDROID
+		#endif
 	#elif defined(__APPLE__)
-		#undef OS_LINUX
 		#define OS_APPLE
 	#endif
-#else
-	#undef OS_WIN
-	#undef OS_UNIX
-	#undef OS_LINUX
-	#undef OS_APPLE
 #endif
 
 /*!
