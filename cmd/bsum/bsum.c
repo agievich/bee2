@@ -4,7 +4,7 @@
 \brief Hash files using belt-hash / bash-hash
 \project bee2/cmd 
 \created 2014.10.28
-\version 2025.05.27
+\version 2025.06.09
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -19,7 +19,7 @@
 #include <bee2/core/util.h>
 #include <bee2/crypto/bash.h>
 #include <bee2/crypto/belt.h>
-#include "../cmd.h"
+#include "bee2/cmd.h"
 
 #ifdef OS_WIN
 #include <locale.h>

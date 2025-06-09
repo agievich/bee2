@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: managing dates
 \project bee2/cmd
 \created 2023.05.29
-\version 2025.04.25
+\version 2025.06.09
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -13,7 +13,7 @@
 #include <bee2/core/err.h>
 #include <bee2/core/mem.h>
 #include <bee2/core/str.h>
-#include "../cmd.h"
+#include "bee2/cmd.h"
 
 /*
 *******************************************************************************

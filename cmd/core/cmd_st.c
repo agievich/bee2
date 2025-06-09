@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: self-tests
 \project bee2/cmd 
 \created 2025.04.09
-\version 2025.05.27
+\version 2025.06.09
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -22,7 +22,7 @@
 #include <bee2/crypto/belt.h>
 #include <bee2/crypto/bign.h>
 #include <bee2/crypto/brng.h>
-#include "../cmd.h"
+#include "bee2/cmd.h"
 
 /*
 *******************************************************************************

@@ -28,6 +28,8 @@ add_executable(bee2cmd
   cmd_main.c
 )
 
+include_directories(include)
+
 target_link_libraries(bee2cmd bee2_static)
 
 install(TARGETS bee2cmd

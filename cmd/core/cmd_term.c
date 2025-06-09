@@ -4,13 +4,13 @@
 \brief Command-line interface to Bee2: terminal
 \project bee2/cmd 
 \created 2022.06.08
-\version 2023.03.21
+\version 2025.06.09
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
-#include "../cmd.h"
+#include "bee2/cmd.h"
 
 /*
 *******************************************************************************

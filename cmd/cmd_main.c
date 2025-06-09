@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: main
 \project bee2/cmd
 \created 2022.06.07
-\version 2025.05.07
+\version 2025.06.09
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -14,7 +14,7 @@
 #include <bee2/core/err.h>
 #include <bee2/core/str.h>
 #include <bee2/core/util.h>
-#include "cmd.h"
+#include "bee2/cmd.h"
 
 /*
 *******************************************************************************

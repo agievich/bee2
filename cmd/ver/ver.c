@@ -4,7 +4,7 @@
 \brief Version and build information
 \project bee2/cmd 
 \created 2022.06.22
-\version 2025.05.07
+\version 2025.06.09
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -12,7 +12,7 @@
 
 #include <stdio.h>
 #include <bee2/core/util.h>
-#include "../cmd.h"
+#include "bee2/cmd.h"
 
 /*
 *******************************************************************************

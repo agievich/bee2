@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: signing files
 \project bee2/cmd
 \created 2022.08.20
-\version 2025.05.27
+\version 2025.06.09
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -24,7 +24,7 @@
 #include <bee2/crypto/bign.h>
 #include <bee2/crypto/bign96.h>
 #include <bee2/crypto/btok.h>
-#include "../cmd.h"
+#include "bee2/cmd.h"
 
 /*
 *******************************************************************************
