@@ -4,7 +4,7 @@
 \brief Basic definitions
 \project bee2 [cryptographic library]
 \created 2012.04.01
-\version 2025.06.04
+\version 2025.06.09
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -179,21 +179,26 @@ T == octet.
 /*!
 *******************************************************************************
 \def OS_WIN
-\brief Операционная система линейки Windows
+\brief Операционная система Windows
 
 \def OS_UNIX
-\brief Операционная система линейки Unix
-\remark Включает линейки Linux и OS X / iOS
+\brief Операционная система Unix
 
 \def OS_LINUX
-\brief Операционная система линейки Linux
-\remark Включает Android
-
-\def OS_APPLE
-\brief Операционная система линеек OS X / iOS
+\brief Операционная система Linux
+\remark Подсистема OS_UNIX
 
 \def OS_ANDROID
 \brief Операционная система Android
+\remark Подсистема OS_LINUX
+
+\def OS_APPLE
+\brief Операционная система macOS / iOS
+\remark Подсистема OS_UNIX
+
+\def OS_IPHONE
+\brief Операционная система iOS для iPhone
+\remark Подсистема OS_APPLE
 
 \remark Тип операционной системы определяется в соответствии с
 * https://sourceforge.net/p/predef/wiki/OperatingSystems/;
@@ -204,8 +209,9 @@ T == octet.
 #undef OS_WIN
 #undef OS_UNIX
 #undef OS_LINUX
-#undef OS_APPLE
 #undef OS_ANDROID
+#undef OS_APPLE
+#undef OS_IPHONE
 
 #if defined(_WIN32) || defined(_WIN64) || defined(__WINNT) ||\
 	defined(__WIN32__) || defined(__WIN64__)  || defined(__WINNT__)
@@ -218,7 +224,11 @@ T == octet.
 			#define OS_ANDROID
 		#endif
 	#elif defined(__APPLE__)
+		#include <TargetConditionals.h>
 		#define OS_APPLE
+		#if defined(TARGET_OS_IPHONE)
+			#define OS_IPHONE
+		#endif
 	#endif
 #endif
 
