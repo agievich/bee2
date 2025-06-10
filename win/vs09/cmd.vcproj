@@ -357,7 +357,7 @@
 			UniqueIdentifier="{2585731B-934C-4D01-9DF3-8948C17AB834}"
 			>
 			<File
-				RelativePath="..\..\cmd\cmd.h"
+				RelativePath="..\..\cmd\include\bee2\cmd.h"
 				>
 			</File>
 		</Filter>

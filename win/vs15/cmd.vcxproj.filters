@@ -136,7 +136,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\cmd\cmd.h">
+    <ClInclude Include="..\..\cmd\include\bee2\cmd.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
