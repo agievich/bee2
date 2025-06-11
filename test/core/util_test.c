@@ -4,13 +4,14 @@
 \brief Tests for utilities
 \project bee2/test
 \created 2017.01.17
-\version 2025.05.07
+\version 2025.06.11
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <bee2/core/util.h>
 
 /*
@@ -46,9 +47,12 @@ static size_t _ctr = 5;
 
 static void destroy1()
 {
-	volatile size_t x = (_ctr == 2) ? 1 : 0;
 	// увы, результат проверки станет известен только on_exit
-	_ctr = 1 / x;
+	if (_ctr != 2)
+	{
+		printf("Assertion in %s::%d\n", __FILE__, __LINE__);
+		abort();
+	}
 }
 
 static void destroy2()
