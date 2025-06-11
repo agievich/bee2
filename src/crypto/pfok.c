@@ -4,7 +4,7 @@
 \brief Draft of RD_RB: key establishment protocols in finite fields
 \project bee2 [cryptographic library]
 \created 2014.07.01
-\version 2025.04.25
+\version 2025.06.11
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -671,25 +671,26 @@ err_t pfokParamsGen(pfok_params* params, const pfok_seed* seed,
 				offset += W_OF_B(seed->li[i++]);
 				continue;
 			}
+			// последнее простое?
+			if (i == 0)
+			{
+				// обработать новое q
+				on_q ? on_q(qi, W_OF_B(seed->li[0]), ++num) : 0;
+				// p <- 2 * q + 1
+				ASSERT(W_OF_B(seed->li[0]) == n);
+				wwCopy(p, qi, n);
+				wwShHi(p, n, 1);
+				p[0] |= 1;
+				// p -- простое?
+				if (priIsSieved(p, n, base_count, stack) && 
+					priIsSGPrime(qi, n, stack))
+					break;
+				else
+					continue;
+			}
 		}
-		// последнее простое?
-		if (i == 0)
-		{
-			// обработать новое q
-			on_q ? on_q(qi, W_OF_B(seed->li[0]), ++num) : 0;
-			// p <- 2 * q + 1
-			ASSERT(W_OF_B(seed->li[0]) == n);
-			wwCopy(p, qi, n);
-			wwShHi(p, n, 1);
-			p[0] |= 1;
-			// p -- простое?
-			if (priIsSieved(p, n, base_count, stack) && 
-				priIsSGPrime(qi, n, stack))
-				break;
-		}
-		// нет, к следующему простому
-		else
-			offset -= W_OF_B(seed->li[--i]);
+		// к следующему простому
+		offset -= W_OF_B(seed->li[--i]);
 	}
 	// информировать о завершении
 	on_q ? on_q(qi, W_OF_B(seed->li[0]), 0) : 0;
