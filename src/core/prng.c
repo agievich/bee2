@@ -4,7 +4,7 @@
 \brief Pseudorandom number generators
 \project bee2 [cryptographic library]
 \created 2014.05.02
-\version 2025.04.25
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -226,5 +226,5 @@ void prngSTBStepR(void* buf, size_t count, void* state)
 		*((octet*)buf) = (s->u) + u / 255;
 		buf = (octet*)buf + 1;
 	}
-	u = 0;
+	CLEAN(u);
 }

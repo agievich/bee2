@@ -4,7 +4,7 @@
 \brief JSON
 \project bee2 [cryptographic library]
 \created 2025.05.07
-\version 2025.05.13
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -155,7 +155,7 @@ size_t jsonSizeDec(size_t* size, const char json[], size_t count)
 	// возврат
 	if (size)
 		*size = s;
-	s = 0;
+	CLEAN(s);
 	return c;
 }
 

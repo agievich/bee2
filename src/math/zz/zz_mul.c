@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: multiplicative operations
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.05.07
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -38,7 +38,7 @@ word zzMulW(word b[], const word a[], size_t n, register word w)
 		b[i] = (word)prod;
 		carry = (word)(prod >> B_PER_W);
 	}
-	prod = 0, w = 0;
+	CLEAN2(prod, w);
 	return carry;
 }
 
@@ -56,7 +56,7 @@ word zzAddMulW(word b[], const word a[], size_t n, register word w)
 		b[i] = (word)prod;
 		carry = (word)(prod >> B_PER_W);
 	}
-	prod = 0, w = 0;
+	CLEAN2(prod, w);
 	return carry;
 }
 
@@ -75,7 +75,7 @@ word zzSubMulW(word b[], const word a[], size_t n, register word w)
 		b[i] = (word)prod;
 		borrow = WORD_0 - (word)(prod >> B_PER_W);
 	}
-	prod = 0, w = 0;
+	CLEAN2(prod, w);
 	return borrow;
 }
 
@@ -101,7 +101,7 @@ void zzMul(word c[], const word a[], size_t n, const word b[], size_t m,
 		c[i + j] = carry;
 		carry = 0;
 	}
-	prod = 0;
+	CLEAN(prod);
 }
 
 size_t zzMul_deep(size_t n, size_t m)
@@ -150,8 +150,7 @@ void zzSqr(word b[], const word a[], size_t n, void* stack)
 		b[i + i + 1] = (word)prod;
 		carry = (word)(prod >> B_PER_W);
 	}
-	prod = 0;
-	carry = carry1 = 0;
+	CLEAN3(prod, carry, carry1);
 }
 
 size_t zzSqr_deep(size_t n)
@@ -198,7 +197,7 @@ word zzDivW(word q[], const word a[], size_t n, register word w)
 		q[n] = (word)(divisor / w);
 		r = (word)(divisor % w);
 	}
-	divisor = 0, w = 0;
+	CLEAN2(divisor, w);
 	return r;
 }
 
@@ -215,7 +214,7 @@ word zzModW(const word a[], size_t n, register word w)
 		divisor |= a[n];
 		r = (word)(divisor % w);
 	}
-	divisor = 0, w = 0;
+	CLEAN2(divisor, w);
 	return r;
 }
 
@@ -260,7 +259,7 @@ word zzModW2(const word a[], size_t n, register word w)
 	r0 = (word)r1 % w;
 #endif
 	// очистка и возврат
-	r1 = 0, b = w = 0;
+	CLEAN3(r1, b, w);
 	return r0;
 }
 
@@ -390,7 +389,7 @@ void zzDiv(word q[], word r[], const word a[], size_t n, const word b[],
 	// сохранить остаток
 	wwCopy(r, divident, m);
 	// очистить регистровые переменные
-	t = 0, shift = 0, qhat = 0;
+	CLEAN3(t, shift, qhat);
 }
 
 size_t zzDiv_deep(size_t n, size_t m)
@@ -474,7 +473,7 @@ void zzMod(word r[], const word a[], size_t n, const word b[], size_t m, void* s
 	// сохранить остаток
 	wwCopy(r, divident, m);
 	// очистить регистровые переменные
-	t = 0, shift = 0, qhat = 0;
+	CLEAN3(t, shift, qhat);
 }
 
 size_t zzMod_deep(size_t n, size_t m)

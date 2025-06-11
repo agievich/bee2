@@ -65,8 +65,7 @@ void FAST(zzRedCrand)(word a[], const word mod[], size_t n, void* stack)
 		// correct
 		zzAddW2(a, n, WORD_0 - mod[0]);
 	// очистка
-	prod = 0;
-	carry = 0;
+	CLEAN2(prod, carry);
 }
 
 void SAFE(zzRedCrand)(word a[], const word mod[], size_t n, void* stack)
@@ -102,8 +101,7 @@ void SAFE(zzRedCrand)(word a[], const word mod[], size_t n, void* stack)
 	mask &= (WORD_0 - mod[0]);
 	zzAddW2(a, n, mask);
 	// очистка
-	prod = 0;
-	carry = mask = 0;
+	CLEAN3(prod, carry, mask);
 }
 
 size_t zzRedCrand_deep(size_t n)
@@ -203,7 +201,7 @@ void SAFE(zzRedBarr)(word a[], const word mod[], size_t n,
 	w |= a[n], w = WORD_0 - w;
 	zzSubAndW(a, mod, n, w);
 	// очистка
-	w = 0;
+	CLEAN(w);
 }
 
 size_t zzRedBarr_deep(size_t n)
@@ -256,7 +254,7 @@ void FAST(zzRedMont)(word a[], const word mod[], size_t n,
 		// a <- a - mod
 		zzSub2(a, mod, n);
 	// очистка
-	carry = w = 0;
+	CLEAN2(carry, w);
 }
 
 void SAFE(zzRedMont)(word a[], const word mod[], size_t n, 
@@ -286,7 +284,7 @@ void SAFE(zzRedMont)(word a[], const word mod[], size_t n,
 	w |= carry, w = WORD_0 - w;
 	zzSubAndW(a, mod, n, w);
 	// очистка
-	carry = w = 0;
+	CLEAN2(carry, w);
 }
 
 size_t zzRedMont_deep(size_t n)
@@ -349,8 +347,7 @@ void FAST(zzRedCrandMont)(word a[], const word mod[], size_t n,
 		// a <- a - mod
 		zzSub2(a, mod, n);
 	// очистка
-	prod = 0;
-	carry = borrow = w = 0;
+	CLEAN(prod), CLEAN3(carry, borrow, w);
 }
 
 void SAFE(zzRedCrandMont)(word a[], const word mod[], size_t n, 
@@ -392,8 +389,7 @@ void SAFE(zzRedCrandMont)(word a[], const word mod[], size_t n,
 	w |= carry, w = WORD_0 - w;
 	zzSubAndW(a, mod, n, w);
 	// очистка
-	prod = 0;
-	carry = borrow = w = 0;
+	CLEAN(prod), CLEAN3(carry, borrow, w);
 }
 
 size_t zzRedCrandMont_deep(size_t n)

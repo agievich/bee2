@@ -4,7 +4,7 @@
 \brief Binary fields
 \project bee2 [cryptographic library]
 \created 2012.04.17
-\version 2025.05.07
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -70,7 +70,7 @@ static void gf2RedTrinomial0(word a[], size_t n, const gf2_trinom_st* p)
 	a[n - p->wk] ^= hi;
 	a[n] ^= hi;
 	// очистка
-	hi = 0;
+	CLEAN(hi);
 }
 
 static void gf2RedTrinomial1(word a[], size_t n, const gf2_trinom_st* p)
@@ -107,7 +107,7 @@ static void gf2RedTrinomial1(word a[], size_t n, const gf2_trinom_st* p)
 	a[n - p->wk] ^= hi >> p->bk;
 	a[n] ^= hi;
 	// очистка
-	hi = 0;
+	CLEAN(hi);
 }
 
 /*
@@ -185,7 +185,7 @@ static void gf2RedPentanomial(word a[], size_t n, const gf2_pentanom_st* p)
 	a[n - p->wk] ^= hi >> p->bk;
 	a[n] ^= hi;
 	// очистка
-	hi = 0;
+	CLEAN(hi);
 }
 
 /*

@@ -4,7 +4,7 @@
 \brief Binary polynomials: multiplicative operations
 \project bee2 [cryptographic library]
 \created 2012.03.01
-\version 2025.05.07
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -792,7 +792,7 @@ word ppMulW(word b[], const word a[], size_t n, register word w,
 		b[i] = carry ^ t[16];
 		carry = t[17];
 	}
-	w = 0;
+	CLEAN(w);
 	return carry;
 }
 
@@ -816,7 +816,7 @@ word ppAddMulW(word b[], const word a[], size_t n, register word w,
 		b[i] ^= carry ^ t[16];
 		carry = t[17];
 	}
-	w = 0;
+	CLEAN(w);
 	return carry;
 }
 
@@ -1289,8 +1289,7 @@ void ppDiv(word q[], word r[], const word a[], size_t n, const word b[],
 	// сохранить остаток
 	wwCopy(r, divident, m);
 	// очистить регистровые переменные
-	shift = 0;
-	dividentHi = 0;
+	CLEAN2(shift, dividentHi);
 }
 
 size_t ppDiv_deep(size_t n, size_t m)
@@ -1366,9 +1365,7 @@ void ppMod(word r[], const word a[], size_t n, const word b[], size_t m,
 	// сохранить остаток
 	wwCopy(r, divident, m);
 	// очистить регистровые переменные
-	shift = 0;
-	tmp = 0;
-	dividentHi = 0;
+	CLEAN3(shift, tmp, dividentHi);
 }
 
 size_t ppMod_deep(size_t n, size_t m)

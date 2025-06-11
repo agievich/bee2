@@ -264,7 +264,7 @@ static void bignSeedInc(octet seed[8])
 	ASSERT(memIsValid(seed, 8));
 	for (carry = 1, pos = 0; pos < 8; ++pos)
 		carry += seed[pos], seed[pos] = (octet)carry, carry >>= 8;
-	carry = 0;
+	CLEAN(carry);
 }
 
 static size_t bignParamsVal_deep(size_t n, size_t f_deep, size_t ec_d,

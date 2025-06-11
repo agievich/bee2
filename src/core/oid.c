@@ -4,7 +4,7 @@
 \brief Object identifiers
 \project bee2 [cryptographic library]
 \created 2013.02.04
-\version 2025.04.25
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -14,6 +14,7 @@
 #include "bee2/core/oid.h"
 #include "bee2/core/str.h"
 #include "bee2/core/u32.h"
+#include "bee2/core/util.h"
 
 /*
 *******************************************************************************
@@ -75,7 +76,7 @@ bool_t oidIsValid(const char* oid)
 		++pos;
 	}
 	// очистка и выход
-	val = d1 = 0, pos = 0;
+	CLEAN3(val, d1, pos);
 	return n >= 2;
 }
 

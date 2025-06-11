@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: modular exponentiation
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.05.07
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -130,7 +130,7 @@ word zzPowerModW(register word a, register word b, register word mod,
 		}
 	}
 	// выход
-	prod = 0, slide = b = mod = 0, pos = slide_size = 0;
+	CLEAN3(prod, slide, b), CLEAN3(mod, pos, slide_size);
 	return a;
 }
 

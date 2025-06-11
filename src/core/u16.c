@@ -4,7 +4,7 @@
 \brief 16-bit unsigned words
 \project bee2 [cryptographic library]
 \created 2015.10.28
-\version 2019.07.08
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -68,15 +68,15 @@ size_t SAFE(u16CTZ)(register u16 w)
 
 size_t FAST(u16CTZ)(register u16 w)
 {
-	register size_t l = 16;
 	register u16 t;
+	size_t l = 16;
 	if (t = w << 8)
 		l -= 8, w = t;
 	if (t = w << 4)
 		l -= 4, w = t;
 	if (t = w << 2)
 		l -= 2, w = t;
-	t = 0;
+	CLEAN(t);
 	return ((u16)(w << 1)) ? l - 2 : l - (w ? 1 : 0);
 }
 
@@ -91,15 +91,15 @@ size_t SAFE(u16CLZ)(register u16 w)
 
 size_t FAST(u16CLZ)(register u16 w)
 {
-	register size_t l = 16;
 	register u16 t;
+	size_t l = 16;
 	if (t = w >> 8)
 		l -= 8, w = t;
 	if (t = w >> 4)
 		l -= 4, w = t;
 	if (t = w >> 2)
 		l -= 2, w = t;
-	t = 0;
+	CLEAN(t);
 	return (w >> 1) ? l - 2 : l - (w ? 1 : 0);
 }
 
@@ -109,7 +109,7 @@ u16 u16Shuffle(register u16 w)
 	t = (w ^ (w >> 4)) & 0x00F0, w ^= t ^ (t << 4);
 	t = (w ^ (w >> 2)) & 0x0C0C, w ^= t ^ (t << 2);
 	t = (w ^ (w >> 1)) & 0x2222, w ^= t ^ (t << 1);
-	t = 0;
+	CLEAN(t);
 	return w;
 }
 
@@ -119,7 +119,7 @@ u16 u16Deshuffle(register u16 w)
 	t = (w ^ (w >> 1)) & 0x2222, w ^= t ^ (t << 1);
 	t = (w ^ (w >> 2)) & 0x0C0C, w ^= t ^ (t << 2);
 	t = (w ^ (w >> 4)) & 0x00F0, w ^= t ^ (t << 4);
-	t = 0;
+	CLEAN(t);
 	return w;
 }
 
@@ -131,7 +131,7 @@ u16 u16NegInv(register u16 w)
 	ret = ret * (w * ret + 2);
 	ret = ret * (w * ret + 2);
 	ret = ret * (w * ret + 2);
-	w = 0;
+	CLEAN(w);
 	return ret;
 }
 
@@ -158,7 +158,7 @@ void u16To(void* dest, size_t count, const u16 src[])
 	{
 		register u16 u = src[--count / 2];
 		((octet*)dest)[count] = (octet)u;
-		u = 0;
+		CLEAN(u);
 	}
 	for (count /= 2; count--;)
 		((u16*)dest)[count] = u16Rev(((u16*)dest)[count]);

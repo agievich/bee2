@@ -4,7 +4,7 @@
 \brief Entropy sources and random number generators
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2025.04.25
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -567,7 +567,7 @@ static err_t rngTimerRead(void* buf, size_t* read, size_t count)
 			((octet*)buf)[i] ^= wordParity(w) << j;
 		}
 	}
-	ticks = t = 0, w = 0;
+	CLEAN3(ticks, t, w);
 	*read = count;
 	return ERR_OK;
 }
@@ -830,7 +830,7 @@ void rngStepR(void* buf, size_t count, void* state)
 			r = 0;
 		read += r, ++pos;
 	}
-	read = r = pos = 0;
+	CLEAN3(read, r, pos);
 	// генерация
 	ASSERT(rngIsValid_internal());
 	brngCTRStepR(buf, count, _state->alg_state);

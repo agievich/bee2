@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2014.03.04
-\version 2025.04.25
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -227,8 +227,7 @@ bool_t ecMulA(word b[], const word a[], const ec_o* ec, const word d[],
 			ecDbl(t, t, ec, stack), ++i;
 	}
 	// очистка
-	w = 0;
-	i = 0;
+	CLEAN2(w, i);
 	// к аффинным координатам
 	return ecToA(b, t, ec, stack);
 }
@@ -382,7 +381,7 @@ bool_t ecAddMulA(word b[], const ec_o* ec, void* stack, size_t k, ...)
 		}
 	}
 	// очистка
-	w = 0;
+	CLEAN(w);
 	// к аффинным координатам
 	return ecToA(b, t, ec, stack);
 }

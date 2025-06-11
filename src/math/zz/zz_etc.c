@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: other functions
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.05.07
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -61,7 +61,7 @@ void zzAddAndW(word b[], const word a[], size_t n, register word w)
 		b[i] += prod;
 		carry |= wordLess01(b[i], prod);
 	}
-	prod = w = carry = 0;
+	CLEAN3(prod, w, carry);
 }
 
 word zzSubAndW(word b[], const word a[], size_t n, register word w)
@@ -78,7 +78,7 @@ word zzSubAndW(word b[], const word a[], size_t n, register word w)
 		borrow |= wordLess01(b[i], prod);
 		b[i] -= prod;
 	}
-	prod = w = 0;
+	CLEAN2(prod, w);
 	return borrow;
 }
 
@@ -150,6 +150,7 @@ int zzJacobi(const word a[], size_t n, const word b[], size_t m, void* stack)
 		s = m, m = n, n = s;
 	}
 	// символ Якоби
+	CLEAN(s);
 	return t;
 }
 

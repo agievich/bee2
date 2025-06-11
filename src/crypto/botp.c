@@ -4,7 +4,7 @@
 \brief STB 34.101.47/botp: OTP algorithms
 \project bee2 [cryptographic library]
 \created 2015.11.02
-\version 2025.05.06
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -70,8 +70,7 @@ void botpDT(char* otp, size_t digit, const octet mac[], size_t mac_len)
 	pwd &= 0x7FFFFFFF;
 	pwd %= powers_of_10[digit];
 	decFromU32(otp, digit, pwd);
-	offset = 0;
-	pwd = 0;
+	CLEAN2(offset, pwd);
 }
 
 static void botpTimeToCtr(octet ctr[8], tm_time_t t)
@@ -96,7 +95,7 @@ void botpCtrNext(octet ctr[8])
 	carry = ((ctr[2] += carry) < carry);
 	carry = ((ctr[1] += carry) < carry);
 	ctr[0] += carry;
-	carry = 0;
+	CLEAN(carry);
 }
 
 /*

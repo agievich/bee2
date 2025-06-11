@@ -4,7 +4,7 @@
 \brief Memory management
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.05.07
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -214,7 +214,7 @@ int SAFE(memCmp)(const void* buf1, const void* buf2, size_t count)
 		less |= ~greater & wordLess(w1, w2);
 		greater |= ~less & wordGreater(w1, w2);
 	}
-	w1 = w2 = 0;
+	CLEAN2(w1, w2);
 	return (wordEq(less, 0) - 1) | wordNeq(greater, 0);
 }
 
@@ -263,7 +263,7 @@ int SAFE(memCmpRev)(const void* buf1, const void* buf2, size_t count)
 		less |= ~greater & wordLess(w1, w2);
 		greater |= ~less & wordGreater(w1, w2);
 	}
-	w1 = w2 = 0;
+	CLEAN2(w1, w2);
 	return (wordEq(less, 0) - 1) | wordNeq(greater, 0);
 }
 

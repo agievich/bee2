@@ -4,7 +4,7 @@
 \brief 32-bit unsigned words
 \project bee2 [cryptographic library]
 \created 2015.10.28
-\version 2024.11.18
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -118,8 +118,8 @@ size_t SAFE(u32CTZ)(register u32 w)
 
 size_t FAST(u32CTZ)(register u32 w)
 {
-	register size_t l = 32;
 	register u32 t;
+	size_t l = 32;
 	// дихотомия
 	if (t = w << 16)
 		l -= 16, w = t;
@@ -130,7 +130,7 @@ size_t FAST(u32CTZ)(register u32 w)
 	if (t = w << 2)
 		l -= 2, w = t;
 	// возврат
-	t = 0;
+	CLEAN(t);
 	return ((u32)(w << 1)) ? l - 2 : l - (w ? 1 : 0);
 }
 
@@ -146,8 +146,8 @@ size_t SAFE(u32CLZ)(register u32 w)
 
 size_t FAST(u32CLZ)(register u32 w)
 {
-	register size_t l = 32;
 	register u32 t;
+	size_t l = 32;
 	// дихотомия
 	if (t = w >> 16)
 		l -= 16, w = t;
@@ -158,7 +158,7 @@ size_t FAST(u32CLZ)(register u32 w)
 	if (t = w >> 2)
 		l -= 2, w = t;
 	// возврат
-	t = 0;
+	CLEAN(t);
 	return (w >> 1) ? l - 2 : l - (w ? 1 : 0);
 }
 
@@ -177,7 +177,7 @@ u32 u32Shuffle(register u32 w)
 	t = (w ^ (w >> 4)) & 0x00F000F0, w ^= t ^ (t << 4);
 	t = (w ^ (w >> 2)) & 0x0C0C0C0C, w ^= t ^ (t << 2);
 	t = (w ^ (w >> 1)) & 0x22222222, w ^= t ^ (t << 1);
-	t = 0;
+	CLEAN(t);
 	return w;
 }
 
@@ -188,7 +188,7 @@ u32 u32Deshuffle(register u32 w)
 	t = (w ^ (w >> 2)) & 0x0C0C0C0C, w ^= t ^ (t << 2);
 	t = (w ^ (w >> 4)) & 0x00F000F0, w ^= t ^ (t << 4);
 	t = (w ^ (w >> 8)) & 0x0000FF00, w ^= t ^ (t << 8);
-	t = 0;
+	CLEAN(t);
 	return w;
 }
 
@@ -220,7 +220,7 @@ u32 u32NegInv(register u32 w)
 	ret = ret * (w * ret + 2);
 	ret = ret * (w * ret + 2);
 	ret = ret * (w * ret + 2);
-	w = 0;
+	CLEAN(w);
 	return ret;
 }
 
@@ -255,6 +255,7 @@ void u32To(void* dest, size_t count, const u32 src[])
 		register u32 u = src[t];
 		for (t *= 4; t < count; ++t, u >>= 8)
 			((octet*)dest)[t] = (octet)u;
+		CLEAN(u);
 	}
 	for (count /= 4; count--;)
 		((u32*)dest)[count] = u32Rev(((u32*)dest)[count]);

@@ -4,7 +4,7 @@
 \brief DSTU 4145-2002 (Ukraine): digital signature algorithms
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.05.07
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -800,7 +800,7 @@ err_t dstuPointRecover(octet point[], const dstu_params* params,
 	// Solve[z^2 + z == y]
 	if (!gf2QSolve(y, ec->f->unity, y, ec->f, stack))
 	{
-		trace = 0;
+		CLEAN(trace);
 		dstuEcClose(ec);
 		return ERR_BAD_PARAMS;
 	}
@@ -816,7 +816,7 @@ err_t dstuPointRecover(octet point[], const dstu_params* params,
 	qrTo(point, x, ec->f, stack);
 	qrTo(point + ec->f->no, y, ec->f, stack);
 	// все нормально
-	trace = 0;
+	CLEAN(trace);
 	dstuEcClose(ec);
 	return code;
 }

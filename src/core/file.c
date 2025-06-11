@@ -4,7 +4,7 @@
 \brief File management
 \project bee2 [cryptographic library]
 \created 2025.04.11
-\version 2025.06.04
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -49,7 +49,7 @@ bool_t fileClose2(file_t file)
 
 void fileClose(file_t file)
 {
-	fileClose2(file);
+	(void)fileClose2(file);
 }
 
 /*

@@ -4,7 +4,7 @@
 \brief Arbitrary length words
 \project bee2 [cryptographic library]
 \created 2012.04.18
-\version 2025.05.07
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -85,14 +85,14 @@ int SAFE(wwCmp2)(const word a[], size_t n, const word b[], size_t m)
 		register int z = wwIsZero(a + m, n - m);
 		ret = wwCmp(a, b, m);
 		ret = -z & ret | (z - 1) & 1;
-		z = 0;
+		CLEAN(z);
 	}
 	else if (n < m)
 	{
 		register int z = wwIsZero(b + n, m - n);
 		ret = wwCmp(a, b, n);
 		ret = -z & ret | (z - 1) & -1;
-		z = 0;
+		CLEAN(z);
 	}
 	else
 		ret = wwCmp(a, b, n);
@@ -120,9 +120,9 @@ int SAFE(wwCmpW)(const word a[], size_t n, register word w)
 		register int z = wwIsZero(a + 1, n - 1);
 		ret = -wordLess(a[0], w) & -1 | -wordGreater(a[0], w) & 1;
 		ret = -z & ret | (z - 1) & 1;
-		z = 0;
+		CLEAN(z);
 	}
-	w = 0;
+	CLEAN(w);
 	return ret;
 }
 
@@ -145,7 +145,7 @@ int FAST(wwCmpW)(const word a[], size_t n, register word w)
 				cmp = 1;
 		}
 	}
-	w = 0;
+	CLEAN(w);
 	return cmp;
 }
 
@@ -178,7 +178,7 @@ void wwSetW(word a[], size_t n, register word w)
 		for (a[0] = w; --n; a[n] = 0);
 	else
 		ASSERT(w == 0);
-	w = 0;
+	CLEAN(w);
 }
 
 void wwRepW(word a[], size_t n, register word w)
@@ -188,7 +188,7 @@ void wwRepW(word a[], size_t n, register word w)
 		for (; n--; a[n] = w);
 	else
 		ASSERT(w == 0);
-	w = 0;
+	CLEAN(w);
 }
 
 bool_t SAFE(wwIsZero)(const word a[], size_t n)
@@ -221,7 +221,7 @@ bool_t SAFE(wwIsW)(const word a[], size_t n, register word w)
 		while (--n)
 			ret &= wordEq(a[n], 0);
 	}
-	w = 0;
+	CLEAN(w);
 	return ret;
 }
 
@@ -237,7 +237,7 @@ bool_t FAST(wwIsW)(const word a[], size_t n, register word w)
 		while (ret && --n)
 			ret = (a[n] == 0);
 	}
-	w = 0;
+	CLEAN(w);
 	return ret;
 }
 
@@ -253,7 +253,7 @@ bool_t SAFE(wwIsRepW)(const word a[], size_t n, register word w)
 		while (--n)
 			ret &= wordEq(a[n], w);
 	}
-	w = 0;
+	CLEAN(w);
 	return ret;
 }
 
@@ -269,7 +269,7 @@ bool_t FAST(wwIsRepW)(const word a[], size_t n, register word w)
 			ret = (a[--n] == w);
 		while (ret && n);
 	}
-	w = 0;
+	CLEAN(w);
 	return ret;
 }
 
@@ -337,7 +337,7 @@ void wwSetBit(word a[], size_t pos, register bool_t val)
 	ASSERT(val == TRUE || val == FALSE);
 	f = WORD_0 - (word)val;
 	a[pos / B_PER_W] ^= (f ^ a[pos / B_PER_W]) & WORD_BIT_POS(pos % B_PER_W);
-	f = 0;
+	CLEAN(f);
 }
 
 void wwSetBits(word a[], size_t pos, size_t width, register word val)
@@ -466,8 +466,7 @@ size_t wwNAF(word naf[], const word a[], size_t n, size_t w)
 		if (i < a_len)
 			window += hi_bit * wwTestBit(a, i);
 	}
-	digit = window = 0;
-	naf_len = a_len = 0;
+	CLEAN2(digit, window), CLEAN2(naf_len, a_len);
 	return naf_size;
 }
 

@@ -235,7 +235,7 @@ static void beltBin2StrAdd(u32 mod, u16 str[], size_t count,
 		str[0] = (u16)t, ++str;
 		zzDivW(a, a, m, mod);
 	}
-	t = 0;
+	CLEAN(t);
 }
 
 static void beltBin2StrSub(word mod, u16 str[], size_t count, 
@@ -266,7 +266,7 @@ static void beltBin2StrSub(word mod, u16 str[], size_t count,
 		str[0] = (u16)t, ++str;
 		zzDivW(a, a, m, mod);
 	}
-	t = 0;
+	CLEAN(t);
 }
 
 /*

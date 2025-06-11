@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): Secure Messaging
 \project bee2 [cryptographic library]
 \created 2022.10.31
-\version 2025.04.25
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -67,7 +67,7 @@ void btokSMCtrInc(void* state)
 	// инкремент
 	for (pos = 0; pos < 16; ++pos)
 		carry += st->ctr[pos], st->ctr[pos] = (octet)carry, carry >>= 8;
-	carry = 0;
+	CLEAN(carry);
 }
 
 /*

@@ -4,7 +4,7 @@
 \brief Quotient rings
 \project bee2 [cryptographic library]
 \created 2013.09.14
-\version 2025.04.07
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -172,7 +172,7 @@ void qrPower(word c[], const word a[], const word b[], size_t m,
 			qrMul(power, power, powers + r->n * (slide / 2), r, stack);
 		}
 	// очистка и возврат
-	slide_size = 0, slide = 0;
+	CLEAN2(slide_size, slide);
 	wwCopy(c, power, r->n);
 }
 

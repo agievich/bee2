@@ -4,7 +4,7 @@
 \brief Prime numbers
 \project bee2 [cryptographic library]
 \created 2012.08.13
-\version 2025.04.25
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -458,7 +458,7 @@ bool_t priIsSmooth(const word a[], size_t n, size_t base_count, void* stack)
 	n = wwWordSize(t, n);
 	if (wwIsW(t, n, 1))
 	{
-		i = 0;
+		CLEAN(i);
 		return TRUE;
 	}
 	// цикл по простым из факторной базы
@@ -473,7 +473,7 @@ bool_t priIsSmooth(const word a[], size_t n, size_t base_count, void* stack)
 			n = wwWordSize(t, n);
 			if (wwIsW(t, n, 1))
 			{
-				i = 0, mod = 0;
+				CLEAN2(i, mod);
 				return TRUE;
 			}
 		}
@@ -481,7 +481,7 @@ bool_t priIsSmooth(const word a[], size_t n, size_t base_count, void* stack)
 		else 
 			++i;
 	}
-	i = 0, mod = 0;
+	CLEAN2(i, mod);
 	return FALSE;
 }
 
@@ -564,17 +564,17 @@ bool_t priIsPrimeW(register word a, void* stack)
 				break;
 			if (base == 1)
 			{
-				r = base = 0, s = iter = i = 0, prod = 0;
+				CLEAN3(r, base, prod), CLEAN3(s, iter, i), CLEAN(prod);
 				return FALSE;
 			}
 		}
 		if (i == s)
 		{
-			r = base = 0, s = iter = i = 0, prod = 0;
+			CLEAN3(r, base, prod), CLEAN3(s, iter, i), CLEAN(prod);
 			return FALSE;
 		}
 	}
-	r = base = 0, s = iter = i = 0, prod = 0;
+	CLEAN3(r, base, prod), CLEAN3(s, iter, i), CLEAN(prod);
 	return TRUE;
 }
 
@@ -639,7 +639,7 @@ bool_t priRMTest(const word a[], size_t n, size_t iter, void* stack)
 			if (i++ * 45 > B_PER_IMPOSSIBLE * 10 || 
 				!zzRandNZMod(base, a, n, prngCOMBOStepR, combo_state))
 			{
-				s = m = 0;
+				CLEAN3(s, m, i);
 				return FALSE;
 			}
 		while (wwEq(base, qr->unity, n) || zzIsSumEq(a, base, qr->unity, n));
@@ -654,7 +654,7 @@ bool_t priRMTest(const word a[], size_t n, size_t iter, void* stack)
 			qrSqr(base, base, qr, stack);
 			if (wwEq(base, qr->unity, n))
 			{
-				s = m = i = 0;
+				CLEAN3(s, m, i);
 				return FALSE;
 			}
 			if (zzIsSumEq(a, base, qr->unity, n))
@@ -662,11 +662,11 @@ bool_t priRMTest(const word a[], size_t n, size_t iter, void* stack)
 		}
 		if (i == s)
 		{
-			s = m = i = 0;
+			CLEAN3(s, m, i);
 			return FALSE;
 		}
 	}
-	s = m = i = 0;
+	CLEAN3(s, m, i);
 	// простое
 	return TRUE;
 }
@@ -761,11 +761,11 @@ bool_t priNextPrimeW(word p[1], register word a, void* stack)
 		p[0] += 2;
 		if (wwBitSize(p, 1) != l)
 		{
-			l = 0;
+			CLEAN(l);
 			return FALSE;
 		}
 	}
-	l = 0;
+	CLEAN(l);
 	return TRUE;
 }
 

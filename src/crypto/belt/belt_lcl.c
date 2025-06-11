@@ -4,12 +4,13 @@
 \brief STB 34.101.31 (belt): local functions
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.04.25
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
+#include "bee2/core/util.h"
 #include "bee2/math/pp.h"
 #include "bee2/math/ww.h"
 #include "belt_lcl.h"
@@ -44,9 +45,9 @@ void beltBlockAddBitSizeU32(u32 block[4], size_t count)
 	t >>= 16, t >>= 16;
 	block[3] += carry;
 	block[3] += (u32)t;
-	t = 0;
+	CLEAN(t);
 #endif
-	carry = 0;
+	CLEAN(carry);
 }
 
 void beltHalfBlockAddBitSizeW(word block[W_OF_B(64)], size_t count)
@@ -74,13 +75,13 @@ void beltHalfBlockAddBitSizeW(word block[W_OF_B(64)], size_t count)
 	t >>= 15, t >>= 14;
 	block[1] += carry;
 	block[1] += (u32)t;
-	t = 0;
+	CLEAN(t);
 #elif (B_PER_W == 64)
 	block[0] += carry;
 #else
 	#error "Unsupported word size"
 #endif // B_PER_W
-	carry = 0;
+	CLEAN(carry);
 }
 
 /*
@@ -122,5 +123,5 @@ void beltBlockMulC(u32 block[4])
 	block[2] = (block[2] << 1) ^ (block[1] >> 31);
 	block[1] = (block[1] << 1) ^ (block[0] >> 31);
 	block[0] = (block[0] << 1) ^ t;
-	t = 0;
+	CLEAN(t);
 }

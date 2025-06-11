@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: additive operations
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.05.07
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -61,7 +61,7 @@ word zzAdd(word c[], const word a[], const word b[], size_t n)
 			w += b[i], carry = w < b[i], c[i] = w;
 #endif
 	}
-	w = 0;
+	CLEAN(w);
 	return carry;
 }
 
@@ -84,7 +84,7 @@ word zzAdd2(word b[], const word a[], size_t n)
 			w += b[i], carry = w < b[i], b[i] = w;
 #endif
 	}
-	w = 0;
+	CLEAN(w);
 	return carry;
 }
 
@@ -147,7 +147,7 @@ bool_t SAFE(zzIsSumEq)(const word c[], const word a[], const word b[],
 		diff |= c[i] ^ (w + b[i]);
 		carry |= wordLess01(c[i], w);
 	}
-	w = 0;
+	CLEAN(w);
 	return wordEq(diff | carry, 0);
 }
 
@@ -172,7 +172,7 @@ bool_t FAST(zzIsSumEq)(const word c[], const word a[], const word b[],
 			return FALSE;
 		carry = c[i] < w;
 	}
-	w = 0;
+	CLEAN(w);
 	return carry == 0;
 }
 
@@ -201,7 +201,7 @@ bool_t FAST(zzIsSumWEq)(const word b[], const word a[], size_t n,
 	{
 		if (b[i] != (word)(a[i] + w))
 		{
-			w = 0;
+			CLEAN(w);
 			return FALSE;
 		}
 		w = b[i] < a[i];
@@ -231,7 +231,7 @@ word zzSub(word c[], const word a[], const word b[], size_t n)
 			w -= b[i], borrow = w > (word)~b[i], c[i] = w;
 #endif
 	}
-	w = 0;
+	CLEAN(w);
 	return borrow;
 }
 
@@ -257,7 +257,7 @@ word zzSub2(word b[], const word a[], size_t n)
 		b[i] = w;
 #endif
 	}
-	w = 0;
+	CLEAN(w);
 	return borrow;
 }
 

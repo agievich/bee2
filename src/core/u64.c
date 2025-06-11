@@ -4,7 +4,7 @@
 \brief 64-bit unsigned words
 \project bee2 [cryptographic library]
 \created 2015.10.28
-\version 2024.11.18
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -76,8 +76,8 @@ size_t SAFE(u64CTZ)(register u64 w)
 
 size_t FAST(u64CTZ)(register u64 w)
 {
-	register size_t l = 64;
 	register u64 t;
+	size_t l = 64;
 	if (t = w << 32)
 		l -= 32, w = t;
 	if (t = w << 16)
@@ -88,7 +88,7 @@ size_t FAST(u64CTZ)(register u64 w)
 		l -= 4, w = t;
 	if (t = w << 2)
 		l -= 2, w = t;
-	t = 0;
+	CLEAN(t);
 	return ((u64)(w << 1)) ? l - 2 : l - (w ? 1 : 0);
 }
 
@@ -105,8 +105,8 @@ size_t SAFE(u64CLZ)(register u64 w)
 
 size_t FAST(u64CLZ)(register u64 w)
 {
-	register size_t l = 64;
 	register u64 t;
+	size_t l = 64;
 	if (t = w >> 32)
 		l -= 32, w = t;
 	if (t = w >> 16)
@@ -117,7 +117,7 @@ size_t FAST(u64CLZ)(register u64 w)
 		l -= 4, w = t;
 	if (t = w >> 2)
 		l -= 2, w = t;
-	t = 0;
+	CLEAN(t);
 	return (w >> 1) ? l - 2 : l - (w ? 1 : 0);
 }
 
@@ -129,7 +129,7 @@ u64 u64Shuffle(register u64 w)
 	t = (w ^ (w >> 4)) & 0x00F000F000F000F0, w ^= t ^ (t << 4);
 	t = (w ^ (w >> 2)) & 0x0C0C0C0C0C0C0C0C, w ^= t ^ (t << 2);
 	t = (w ^ (w >> 1)) & 0x2222222222222222, w ^= t ^ (t << 1);
-	t = 0;
+	CLEAN(t);
 	return w;
 }
 
@@ -141,7 +141,7 @@ u64 u64Deshuffle(register u64 w)
 	t = (w ^ (w >> 4 )) & 0x00F000F000F000F0, w ^= t ^ (t << 4);
 	t = (w ^ (w >> 8 )) & 0x0000FF000000FF00, w ^= t ^ (t << 8);
 	t = (w ^ (w >> 16)) & 0x00000000FFFF0000, w ^= t ^ (t << 16);
-	t = 0;
+	CLEAN(t);
 	return w;
 }
 
@@ -155,7 +155,7 @@ u64 u64NegInv(register u64 w)
 	ret = ret * (w * ret + 2);
 	ret = ret * (w * ret + 2);
 	ret = ret * (w * ret + 2);
-	w = 0;
+	CLEAN(w);
 	return ret;
 }
 
@@ -184,6 +184,7 @@ void u64To(void* dest, size_t count, const u64 src[])
 		register u64 u = src[t];
 		for (t *= 8; t < count; ++t, u >>= 8)
 			((octet*)dest)[t] = (octet)u;
+		CLEAN(u);
 	}
 	for (count /= 8; count--;)
 		((u64*)dest)[count] = u64Rev(((u64*)dest)[count]);

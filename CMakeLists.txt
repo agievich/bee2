@@ -70,8 +70,7 @@ endif()
 # * https://clang.llvm.org/docs/DiagnosticsReference.html
 
 set(CMAKE_C_WARNINGS "-Wall -Wextra -W -Wdeclaration-after-statement \
-  -Wwrite-strings -Wno-parentheses -Wno-unused-parameter -Wno-strict-aliasing \
-  -Wno-xor-used-as-pow")
+  -Wwrite-strings -Wno-parentheses -Wno-unused-parameter -Wno-strict-aliasing")
 
 if(CMAKE_COMPILER_IS_GNUCC)
   set(CMAKE_C_WARNINGS "${CMAKE_C_WARNINGS} -Wno-maybe-uninitialized")

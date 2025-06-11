@@ -4,7 +4,7 @@
 \brief Hexadecimal strings
 \project bee2 [cryptographic library]
 \created 2015.10.29
-\version 2025.05.07
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -66,7 +66,7 @@ static void hexFromOUpper(char* hex, register octet o)
 	ASSERT(memIsValid(hex, 2));
 	hex[0] = hex_upper[o >> 4];
 	hex[1] = hex_upper[o & 15];
-	o = 0;
+	CLEAN(o);
 }
 
 static void hexFromOLower(char* hex, register octet o)
@@ -74,7 +74,7 @@ static void hexFromOLower(char* hex, register octet o)
 	ASSERT(memIsValid(hex, 2));
 	hex[0] = hex_lower[o >> 4];
 	hex[1] = hex_lower[o & 15];
-	o = 0;
+	CLEAN(o);
 }
 
 /*

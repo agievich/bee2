@@ -4,7 +4,7 @@
 \brief Utilities
 \project bee2 [cryptographic library]
 \created 2012.07.16
-\version 2023.02.02
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -119,6 +119,36 @@ extern "C" {
 	*((octet**)&(a)) = (octet*)(a) - ((octet*)(b) - (octet*)0),\
 	*((octet**)&(b)) = (octet*)(b) + ((octet*)(a) - (octet*)0),\
 	*((octet**)&(a)) = (octet*)(b) - ((octet*)(a) - (octet*)0)
+
+/*!
+*******************************************************************************
+\def CLEAN
+\brief Очистить переменную
+
+\def CLEAN2
+\brief Очистить две переменные
+
+\def CLEAN3
+\brief Очистить три переменные
+
+\pre Целевые переменные допускают присваивание нуля.
+
+\remark Макросы CLEANx предназначены для очистки критических переменных по
+завершении функций. После очистки переменная приводится к типу void, что 
+потенциально подавляет предупреждения статических анализаторов о 
+неиспользуемых участках кода (см. напр. 
+https://clang.llvm.org/docs/analyzer/user-docs/FAQ.html#dead-store).
+*******************************************************************************
+*/
+
+#define CLEAN(a)\
+	(a) = 0, (void)(a)
+
+#define CLEAN2(a, b)\
+	CLEAN(a), CLEAN(b)
+
+#define CLEAN3(a, b, c)\
+	CLEAN2(a, b), CLEAN(c)
 
 /*
 *******************************************************************************

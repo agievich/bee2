@@ -4,7 +4,7 @@
 \brief STB 34.101.77 (bash): bash-f
 \project bee2 [cryptographic library]
 \created 2014.07.15
-\version 2021.03.25
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -168,7 +168,7 @@ static void bashF0(u64 s[24])
 	bashR(s, P3, P4, 22, t0, t1, t2);
 	bashR(s, P4, P5, 23, t0, t1, t2);
 	bashR(s, P5, P0, 24, t0, t1, t2);
-	t0 = t1 = t2 = 0;
+	CLEAN3(t0, t1, t2);
 }
 
 void bashF(octet block[192], void* stack)

@@ -4,7 +4,7 @@
 \brief Binary polynomials: modular reductions
 \project bee2 [cryptographic library]
 \created 2012.03.01
-\version 2023.11.10
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -71,7 +71,7 @@ void ppRedTrinomial(word a[], const pp_trinom_st* p)
 	a[n - kw] ^= hi >> kb;
 	a[n] ^= hi;
 	// очистка
-	hi = 0;
+	CLEAN(hi);
 }
 
 void ppRedPentanomial(word a[], const pp_pentanom_st* p)
@@ -123,7 +123,7 @@ void ppRedPentanomial(word a[], const pp_pentanom_st* p)
 	a[n - kw] ^= hi >> kb;
 	a[n] ^= hi;
 	// очистка
-	hi = 0;
+	CLEAN(hi);
 }
 
 void ppRedBelt(word a[])

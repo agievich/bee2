@@ -4,7 +4,7 @@
 \brief Distinguished Encoding Rules
 \project bee2 [cryptographic library]
 \created 2014.04.21
-\version 2025.05.12
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -490,7 +490,7 @@ size_t derTSIZEEnc(octet der[], u32 tag, size_t val)
 	{
 		register size_t v = val;
 		for (; v >= 256; v >>= 8, ++len);
-		len += v >> 7, v = 0;
+		len += v >> 7, CLEAN(v);
 	}
 	// кодировать T
 	t_count = derTEnc(der, tag);
@@ -547,7 +547,7 @@ size_t derTSIZEDec(size_t* val, const octet der[], size_t count, u32 tag)
 			v <<= 8, v |= der[pos];
 		if (val)
 			*val = v;
-		v = 0;
+		CLEAN(v);
 	}
 	return t_count + l_count + len;
 }
@@ -558,7 +558,7 @@ size_t derTSIZEDec2(const octet der[], size_t count, u32 tag, size_t val)
 	count = derTSIZEDec(&val, der, count, tag);
 	if (v != val)
 		count = SIZE_MAX;
-	v = 0;
+	CLEAN(v);
 	return count;
 }
 
@@ -914,7 +914,7 @@ size_t derOIDEnc(octet der[], const char* oid)
 	// кодировать TL
 	count = derEnc(der, 0x06, der, count);
 	// очистка и выход
-	d1 = val = 0, pos = 0;
+	CLEAN3(d1, val, pos);
 	return count;
 }
 
@@ -963,7 +963,7 @@ size_t derOIDDec(char* oid, size_t* len, const octet der[], size_t count)
 		}
 	}
 	// очистка и выход
-	d1 = val = 0, pos = l = 0;
+	CLEAN2(d1, val), CLEAN2(pos, l);
 	oid ? oid[oid_len] = '\0' : oid_len;
 	if (len)
 	{
@@ -1027,7 +1027,7 @@ size_t derOIDDec2(const octet der[], size_t count, const char* oid)
 		}
 	}
 	// очистка и выход
-	d1 = val = 0, pos = len = 0;
+	CLEAN2(d1, val), CLEAN2(pos, len);
 	if (*oid != '\0')
 		return SIZE_MAX;
 	return count;
@@ -1068,10 +1068,10 @@ size_t derTPSTRDec(char* val, size_t* len, const octet der[], size_t count,
 			(ch < 'a' || ch > 'z') &&
 			!strContains(" '()+,-./:=?", ch))
 		{
-			ch = 0;
+			CLEAN(ch);
 			return SIZE_MAX;
 		}
-		ch = 0;
+		CLEAN(ch);
 	}
 	// возвратить строку
 	if (val)

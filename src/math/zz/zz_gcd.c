@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: Euclidian gcd algorithms
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.05.12
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -120,7 +120,7 @@ void zzGCD(word d[], const word a[], size_t n, const word b[], size_t m,
 	// d <- d * 2^s
 	wwShHi(d, W_OF_B(wwBitSize(d, m) + s), s);
 	// очистка
-	s = 0;
+	CLEAN(s);
 }
 
 size_t zzGCD_deep(size_t n, size_t m)
@@ -286,7 +286,7 @@ void zzExGCD(word d[], word da[], word db[], const word a[], size_t n,
 	// d <- d * 2^s
 	wwShHi(d, W_OF_B(wwBitSize(d, nu) + s), s);
 	// очистка
-	s = nu = mv = 0;
+	CLEAN3(s, nu, mv);
 }
 
 size_t zzExGCD_deep(size_t n, size_t m)
@@ -376,7 +376,7 @@ void zzDivMod(word b[], const word divident[], const word a[],
 	// здесь da * a == divident \mod mod
 	wwCopy(b, da, n);
 	// очистка
-	nu = nv = 0;
+	CLEAN2(nu, nv);
 }
 
 size_t zzDivMod_deep(size_t n)

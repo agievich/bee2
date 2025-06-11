@@ -4,7 +4,7 @@
 \brief Elliptic curves over prime fields
 \project bee2 [cryptographic library]
 \created 2012.06.26
-\version 2025.05.07
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -860,7 +860,7 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	ec->hdr.p_count = 6;
 	ec->hdr.o_count = 1;
 	// все нормально
-	bA3 = 0;
+	CLEAN(bA3);
 	return TRUE;
 }
 
@@ -1263,7 +1263,7 @@ void ecpSWU(word b[], const word a[], const ec_o* ec, void* stack)
 	qrCopy(ecX(b), x1 + (mask & n), ec->f);
 	qrMul(ecY(b, n), t, y + (mask & n), ec->f, stack);
 	// очистка
-	mask = 0;
+	CLEAN(mask);
 }
 
 size_t ecpSWU_deep(size_t n, size_t f_deep)

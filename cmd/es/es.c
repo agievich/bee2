@@ -4,7 +4,7 @@
 \brief Dealing with entropy sources
 \project bee2/cmd 
 \created 2021.04.20
-\version 2025.06.09
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -137,7 +137,7 @@ static err_t rngReadSourceEx(size_t* read, void* buf, size_t count,
 				((octet*)buf)[i] ^= wordParity(w) << j;
 			}
 		}
-		ticks = t = 0, w = 0;
+		CLEAN3(ticks, t, w);
 		*read = count;
 		return ERR_OK;
 	}

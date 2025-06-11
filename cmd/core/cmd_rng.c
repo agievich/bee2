@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: random number generation
 \project bee2/cmd 
 \created 2022.06.08
-\version 2025.06.09
+\version 2025.06.11
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -121,7 +121,7 @@ err_t cmdRngKbRead(tm_ticks_t data[128])
 		if (pos % 2)
 			printf(".");
 	}
-	ticks = t = 0;
+	CLEAN2(ticks, t);
 	cmdTermEcho(echo);
 	printf("\n");
 	return code;

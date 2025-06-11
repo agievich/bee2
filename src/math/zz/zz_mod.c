@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: modular arithmetic
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.05.07
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -66,7 +66,7 @@ void SAFE(zzAddMod)(word c[], const word a[], const word b[], const word mod[],
 	mask |= carry;
 	mask = WORD_0 - mask;
 	zzSubAndW(c, mod, n, mask);
-	w = mask = carry = 0;
+	CLEAN3(w, mask, carry);
 }
 
 void FAST(zzAddWMod)(word b[], const word a[], register word w, 
@@ -78,7 +78,7 @@ void FAST(zzAddWMod)(word b[], const word a[], register word w,
 	// a + w >= mod => a + w - mod < mod
 	if (zzAddW(b, a, n, w) || wwCmp(b, mod, n) > 0)
 		zzSub2(b, mod, n);
-	w = 0;
+	CLEAN(w);
 }
 
 void SAFE(zzAddWMod)(word b[], const word a[], register word w, 
@@ -102,7 +102,7 @@ void SAFE(zzAddWMod)(word b[], const word a[], register word w,
 	mask |= w;
 	mask = WORD_0 - mask;
 	zzSubAndW(b, mod, n, mask);
-	mask = w = 0;
+	CLEAN2(mask, w);
 }
 
 void FAST(zzSubMod)(word c[], const word a[], const word b[], const word mod[],
@@ -128,7 +128,7 @@ void SAFE(zzSubMod)(word c[], const word a[], const word b[], const word mod[],
 	// mask <- a < b ? WORD_MAX : WORD_0
 	mask = WORD_0 - zzSub(c, a, b, n);
 	zzAddAndW(c, mod,  n, mask);
-	mask = 0;
+	CLEAN(mask);
 }
 
 void FAST(zzSubWMod)(word b[], const word a[], register word w, 
@@ -140,7 +140,7 @@ void FAST(zzSubWMod)(word b[], const word a[], register word w,
 	// a < w => a - w + mod < mod
 	if (zzSubW(b, a, n, w))
 		zzAdd2(b, mod, n);
-	w = 0;
+	CLEAN(w);
 }
 
 void SAFE(zzSubWMod)(word b[], const word a[], register word w, 
@@ -153,7 +153,7 @@ void SAFE(zzSubWMod)(word b[], const word a[], register word w,
 	// mask <- a < w ? WORD_MAX : WORD_0
 	mask = WORD_0 - zzSubW(b, a, n, w);
 	zzAddAndW(b, mod,  n, mask);
-	w = mask = 0;
+	CLEAN2(w, mask);
 }
 
 void FAST(zzNegMod)(word b[], const word a[], const word mod[], size_t n)
@@ -180,7 +180,7 @@ void SAFE(zzNegMod)(word b[], const word a[], const word mod[], size_t n)
 	mask = WORD_0 - (word)wwEq(b, mod, n);
 	// b <- b - mod & mask
 	zzSubAndW(b, mod, n, mask);
-	mask = 0;
+	CLEAN(mask);
 }
 
 /*
@@ -222,6 +222,7 @@ void zzMulWMod(word b[], const word a[], register word w, const word mod[],
 	ASSERT(n > 0 && mod[n - 1] != 0);
 	prod[n] = zzMulW(prod, a, n, w);
 	zzMod(b, prod, n + 1, mod, n, stack);
+	CLEAN(w);
 }
 
 size_t zzMulWMod_deep(size_t n)
@@ -282,7 +283,7 @@ void FAST(zzDoubleMod)(word b[], const word a[], const word mod[], size_t n)
 	if (carry || wwCmp(b, mod, n) >= 0)
 		zzSub2(b, mod, n);
 	// очистка
-	hi = carry = 0;
+	CLEAN2(hi, carry);
 }
 
 void SAFE(zzDoubleMod)(word b[], const word a[], const word mod[], size_t n)
@@ -310,7 +311,7 @@ void SAFE(zzDoubleMod)(word b[], const word a[], const word mod[], size_t n)
 	mask = WORD_0 - mask;
 	zzSubAndW(b, mod, n, mask);
 	// очистка
-	hi = carry = mask = 0;
+	CLEAN3(hi, carry, mask);
 }
 
 void FAST(zzHalfMod)(word b[], const word a[], const word mod[], size_t n)
@@ -338,7 +339,7 @@ void FAST(zzHalfMod)(word b[], const word a[], const word mod[], size_t n)
 			b[n] = a[n] >> 1 | carry << (B_PER_W - 1),
 			carry = lo;
 	// очистка
-	lo = carry = 0;
+	CLEAN2(lo, carry);
 }
 
 void SAFE(zzHalfMod)(word b[], const word a[], const word mod[], size_t n)
@@ -372,7 +373,7 @@ void SAFE(zzHalfMod)(word b[], const word a[], const word mod[], size_t n)
 	}
 	b[n - 1] |= carry << (B_PER_W - 1);
 	// очистка
-	carry = mask = w = 0;
+	CLEAN3(carry, mask, w);
 }
 
 bool_t zzRandMod(word a[], const word mod[], size_t n, gen_i rng, 
@@ -394,7 +395,7 @@ bool_t zzRandMod(word a[], const word mod[], size_t n, gen_i rng,
 	}
 	while (wwCmp(a, mod, n) >= 0 && i--);
 	// выход
-	l = 0;
+	CLEAN(l);
 	return i != SIZE_MAX;
 }
 
@@ -417,6 +418,6 @@ bool_t zzRandNZMod(word a[], const word mod[], size_t n, gen_i rng,
 	}
 	while ((wwIsZero(a, n) || wwCmp(a, mod, n) >= 0) && i--);
 	// выход
-	l = 0;
+	CLEAN(l);
 	return i != SIZE_MAX;
 }

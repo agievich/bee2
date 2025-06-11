@@ -4,7 +4,7 @@
 \brief STB 34.101.47 (brng): algorithms of pseudorandom number generation
 \project bee2 [cryptographic library]
 \created 2013.01.31
-\version 2018.07.09
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -52,7 +52,7 @@ static void brngBlockInc(octet block[32])
 #endif
 	}
 	while (w[i] == 0 && i++ < W_OF_O(32));
-	i = 0;
+	CLEAN(i);
 }
 
 /*

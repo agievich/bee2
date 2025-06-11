@@ -4,7 +4,7 @@
 \brief The Base64 encoding
 \project bee2 [cryptographic library]
 \created 2016.06.16
-\version 2016.09.01
+\version 2025.06.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -127,7 +127,7 @@ void b64From(char* dest, const void* src, size_t count)
 		dest += 4;
 	}
 	*dest = '\0';
-	block = 0;
+	CLEAN(block);
 }
 
 void b64To(void* dest, size_t* count, const char* src)
@@ -173,5 +173,5 @@ void b64To(void* dest, size_t* count, const char* src)
 		block |= b64_dec_table[(octet)src[1]], block >>= 4;
 		((octet*)dest)[0] = block;
 	}
-	block = 0;
+	CLEAN(block);
 }
