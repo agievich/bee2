@@ -4,7 +4,7 @@
 \brief STB 34.101.47 (brng): algorithms of pseudorandom number generation
 \project bee2 [cryptographic library]
 \created 2013.01.31
-\version 2025.06.10
+\version 2025.06.11
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -14,6 +14,7 @@
 #include "bee2/core/err.h"
 #include "bee2/core/mem.h"
 #include "bee2/core/util.h"
+#include "bee2/core/word.h"
 #include "bee2/crypto/belt.h"
 #include "bee2/crypto/brng.h"
 

@@ -4,7 +4,7 @@
 \brief STB 34.101.77 (bash): bash-f optimized for 32-bit platforms
 \project bee2 [cryptographic library]
 \created 2019.04.03
-\version 2021.03.25
+\version 2023.02.02
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************

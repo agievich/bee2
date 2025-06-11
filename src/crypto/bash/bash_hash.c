@@ -4,7 +4,7 @@
 \brief STB 34.101.77 (bash): hashing algorithms
 \project bee2 [cryptographic library]
 \created 2014.07.15
-\version 2021.02.03
+\version 2023.02.02
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
