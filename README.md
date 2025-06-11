@@ -97,6 +97,7 @@ Static analysis:
 
 * [Coverity Scan](https://scan.coverity.com/projects/agievich-bee2);
 * [PVS-Studio](https://pvs-studio.com/en/pvs-studio/?utm_source=website&utm_medium=github&utm_campaign=open_source);
+* [GCC Static Analyzer](https://gcc.gnu.org/wiki/StaticAnalyzer);
 * [Clang Static Analyzer](https://clang-analyzer.llvm.org/).
 
 Code coverage:
