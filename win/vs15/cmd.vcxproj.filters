@@ -51,6 +51,9 @@
     <Filter Include="Source Files\affix">
       <UniqueIdentifier>{8ead9d74-e892-4ce5-9ff2-75f219e0168f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\fmt">
+      <UniqueIdentifier>{357cb2f9-dbc4-4c7c-8467-86e44a8016fb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\cmd\bsum\bsum.c">
@@ -133,6 +136,9 @@
     </ClCompile>
     <ClCompile Include="..\..\cmd\core\cmd_sys.c">
       <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cmd\fmt\fmt.c">
+      <Filter>Source Files\fmt</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

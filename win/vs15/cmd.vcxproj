@@ -532,6 +532,7 @@
     <ClCompile Include="..\..\cmd\cvc\cvc.c" />
     <ClCompile Include="..\..\cmd\cvr\cvr.c" />
     <ClCompile Include="..\..\cmd\es\es.c" />
+    <ClCompile Include="..\..\cmd\fmt\fmt.c" />
     <ClCompile Include="..\..\cmd\kg\kg.c" />
     <ClCompile Include="..\..\cmd\pwd\pwd.c" />
     <ClCompile Include="..\..\cmd\sig\sig.c" />
