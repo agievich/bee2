@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2023.09.23
+\version 2025.07.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -194,8 +194,6 @@ bool_t zzIsSumEq(
 	size_t n			/*!< [in] длина a, b, c в машинных словах */
 );
 
-bool_t SAFE(zzIsSumEq)(const word c[], const word a[], const word b[],
-	size_t n);
 bool_t FAST(zzIsSumEq)(const word c[], const word a[], const word b[],
 	size_t n);
 
@@ -215,8 +213,6 @@ bool_t zzIsSumWEq(
 	register word w		/*!< [in] второе слагаемое */
 );
 
-bool_t SAFE(zzIsSumWEq)(const word b[], const word a[], size_t n,
-	register word w);
 bool_t FAST(zzIsSumWEq)(const word b[], const word a[], size_t n,
 	register word w);
 
@@ -667,8 +663,6 @@ void zzAddMod(
 	size_t n			/*!< [in] длина чисел в машинных словах */
 );
 
-void SAFE(zzAddMod)(word c[], const word a[], const word b[], const word mod[],
-	size_t n);
 void FAST(zzAddMod)(word c[], const word a[], const word b[], const word mod[],
 	size_t n);
 
@@ -691,8 +685,6 @@ void zzAddWMod(
 	size_t n			/*!< [in] длина чисел в машинных словах */
 );
 
-void SAFE(zzAddWMod)(word b[], const word a[], register word w,
-	const word mod[], size_t n);
 void FAST(zzAddWMod)(word b[], const word a[], register word w,
 	const word mod[], size_t n);
 
@@ -716,8 +708,6 @@ void zzSubMod(
 	size_t n			/*!< [in] длина чисел в машинных словах */
 );
 
-void SAFE(zzSubMod)(word c[], const word a[], const word b[],
-	const word mod[], size_t n);
 void FAST(zzSubMod)(word c[], const word a[], const word b[],
 	const word mod[], size_t n);
 
@@ -740,8 +730,6 @@ void zzSubWMod(
 	size_t n			/*!< [in] длина чисел в машинных словах */
 );
 
-void SAFE(zzSubWMod)(word b[], const word a[], register word w,
-	const word mod[], size_t n);
 void FAST(zzSubWMod)(word b[], const word a[], register word w,
 	const word mod[], size_t n);
 
@@ -764,7 +752,6 @@ void zzNegMod(
 	size_t n			/*!< [in] длина чисел в машинных словах */
 );
 
-void SAFE(zzNegMod)(word b[], const word a[], const word mod[], size_t n);
 void FAST(zzNegMod)(word b[], const word a[], const word mod[], size_t n);
 
 /*!	\brief Умножение чисел по модулю
@@ -897,7 +884,6 @@ void zzDoubleMod(
 	size_t n			/*!< [in] длина чисел в машинных словах */
 );
 
-void SAFE(zzDoubleMod)(word b[], const word a[], const word mod[], size_t n);
 void FAST(zzDoubleMod)(word b[], const word a[], const word mod[], size_t n);
 
 /*!	\brief Половина числа по модулю
@@ -919,7 +905,6 @@ void zzHalfMod(
 	size_t n			/*!< [in] длина чисел в машинных словах */
 );
 
-void SAFE(zzHalfMod)(word b[], const word a[], const word mod[], size_t n);
 void FAST(zzHalfMod)(word b[], const word a[], const word mod[], size_t n);
 
 /*!	\brief Почти-обращение по модулю
@@ -1058,7 +1043,6 @@ void zzRedCrand(
 	void* stack					/*!< [in] вспомогательная память (не исп.) */
 );
 
-void SAFE(zzRedCrand)(word a[], const word mod[], size_t n, void* stack);
 void FAST(zzRedCrand)(word a[], const word mod[], size_t n, void* stack);
 
 size_t zzRedCrand_deep(size_t n);
@@ -1101,8 +1085,6 @@ void zzRedBarr(
 	void* stack					/*!< [in] вспомогательная память */
 );
 
-void SAFE(zzRedBarr)(word a[], const word mod[], size_t n,
-	const word barr_param[], void* stack);
 void FAST(zzRedBarr)(word a[], const word mod[], size_t n,
 	const word barr_param[], void* stack);
 
@@ -1134,8 +1116,6 @@ void zzRedMont(
 	void* stack					/*!< [in] вспомогательная память */
 );
 
-void SAFE(zzRedMont)(word a[], const word mod[], size_t n,
-	register word mont_param, void* stack);
 void FAST(zzRedMont)(word a[], const word mod[], size_t n,
 	register word mont_param, void* stack);
 
@@ -1164,8 +1144,6 @@ void zzRedCrandMont(
 	void* stack					/*!< [in] вспомогательная память */
 );
 
-void SAFE(zzRedCrandMont)(word a[], const word mod[], size_t n,
-	register word mont_param, void* stack);
 void FAST(zzRedCrandMont)(word a[], const word mod[], size_t n,
 	register word mont_param, void* stack);
 

@@ -4,7 +4,7 @@
 \brief 16-bit unsigned words
 \project bee2 [cryptographic library]
 \created 2015.10.28
-\version 2025.06.10
+\version 2025.07.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -61,7 +61,7 @@ bool_t u16Parity(register u16 w)
 	return (bool_t)(w & U16_1);
 }
 
-size_t SAFE(u16CTZ)(register u16 w)
+size_t u16CTZ(register u16 w)
 {
 	return 16 - u16Weight(w | (U16_0 - w));
 }
@@ -80,7 +80,7 @@ size_t FAST(u16CTZ)(register u16 w)
 	return ((u16)(w << 1)) ? l - 2 : l - (w ? 1 : 0);
 }
 
-size_t SAFE(u16CLZ)(register u16 w)
+size_t u16CLZ(register u16 w)
 {
 	w = w | w >> 1;
 	w = w | w >> 2;

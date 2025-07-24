@@ -4,7 +4,7 @@
 \brief 64-bit unsigned words
 \project bee2 [cryptographic library]
 \created 2015.10.28
-\version 2025.06.10
+\version 2025.07.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -69,7 +69,7 @@ bool_t u64Parity(register u64 w)
 	return (bool_t)(w & U64_1);
 }
 
-size_t SAFE(u64CTZ)(register u64 w)
+size_t u64CTZ(register u64 w)
 {
 	return 64 - u64Weight(w | (U64_0 - w));
 }
@@ -92,7 +92,7 @@ size_t FAST(u64CTZ)(register u64 w)
 	return ((u64)(w << 1)) ? l - 2 : l - (w ? 1 : 0);
 }
 
-size_t SAFE(u64CLZ)(register u64 w)
+size_t u64CLZ(register u64 w)
 {
 	w = w | w >> 1;
 	w = w | w >> 2;

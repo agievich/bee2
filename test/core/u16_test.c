@@ -4,7 +4,7 @@
 \brief Tests for operations on 16-bit words
 \project bee2/test
 \created 2017.01.11
-\version 2024.11.18
+\version 2025.07.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -47,12 +47,12 @@ bool_t u16Test()
 		u16Weight(0xFFF8) != 13)
 		return FALSE;
 	// CTZ / CLZ
-	if (SAFE(u16CTZ)(0) != 16 || FAST(u16CTZ)(0) != 16 ||
-		SAFE(u16CLZ)(0) != 16 || FAST(u16CLZ)(0) != 16 ||
-		SAFE(u16CTZ)(1) != 0 || FAST(u16CTZ)(1) != 0 ||
-		SAFE(u16CLZ)(1) != 15 || FAST(u16CLZ)(1) != 15 ||
-		SAFE(u16CTZ)(0xFFF8) != 3 || FAST(u16CTZ)(0xFFF8) != 3 ||
-		SAFE(u16CLZ)(0xFFF8) != 0 || FAST(u16CLZ)(0xFFF8) != 0
+	if (u16CTZ(0) != 16 || FAST(u16CTZ)(0) != 16 ||
+		u16CLZ(0) != 16 || FAST(u16CLZ)(0) != 16 ||
+		u16CTZ(1) != 0 || FAST(u16CTZ)(1) != 0 ||
+		u16CLZ(1) != 15 || FAST(u16CLZ)(1) != 15 ||
+		u16CTZ(0xFFF8) != 3 || FAST(u16CTZ)(0xFFF8) != 3 ||
+		u16CLZ(0xFFF8) != 0 || FAST(u16CLZ)(0xFFF8) != 0
 		)
 		return FALSE;
 	// shuffle

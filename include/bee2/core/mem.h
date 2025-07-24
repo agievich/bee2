@@ -4,7 +4,7 @@
 \brief Memory management
 \project bee2 [cryptographic library]
 \created 2012.07.16
-\version 2025.04.25
+\version 2025.07.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -187,7 +187,6 @@ bool_t memEq(
 	size_t count		/*!< [in] размер буферов */
 );
 
-bool_t SAFE(memEq)(const void* buf1, const void* buf2, size_t count);
 bool_t FAST(memEq)(const void* buf1, const void* buf2, size_t count);
 
 /*!	\brief Сравнение
@@ -207,7 +206,6 @@ int memCmp(
 	size_t count		/*!< [in] размер буферов */
 );
 
-int SAFE(memCmp)(const void* buf1, const void* buf2, size_t count);
 int FAST(memCmp)(const void* buf1, const void* buf2, size_t count);
 
 /*!	\brief Обратное сравнение
@@ -226,7 +224,6 @@ int memCmpRev(
 	size_t count		/*!< [in] размер буферов */
 );
 
-int SAFE(memCmpRev)(const void* buf1, const void* buf2, size_t count);
 int FAST(memCmpRev)(const void* buf1, const void* buf2, size_t count);
 
 /*!	\brief Очистить буфер памяти
@@ -251,7 +248,6 @@ bool_t memIsZero(
 	size_t count		/*!< [in] размер буфера */
 );
 
-bool_t SAFE(memIsZero)(const void* buf, size_t count);
 bool_t FAST(memIsZero)(const void* buf, size_t count);
 
 /*!	\brief Размер значащей части буфера
@@ -280,7 +276,6 @@ bool_t memIsRep(
 	octet o				/*!< [in] значение */
 );
 
-bool_t SAFE(memIsRep)(const void* buf, size_t count, octet o);
 bool_t FAST(memIsRep)(const void* buf, size_t count, octet o);
 
 /*!	\brief Объединение двух буферов

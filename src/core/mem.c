@@ -4,7 +4,7 @@
 \brief Memory management
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.06.10
+\version 2025.07.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -160,7 +160,7 @@ void memFree(void* buf)
 *******************************************************************************
 */
 
-bool_t SAFE(memEq)(const void* buf1, const void* buf2, size_t count)
+bool_t memEq(const void* buf1, const void* buf2, size_t count)
 {
 	register word diff = 0;
 	ASSERT(memIsValid(buf1, count));
@@ -187,7 +187,7 @@ bool_t FAST(memEq)(const void* buf1, const void* buf2, size_t count)
 	return memcmp(buf1, buf2, count) == 0;
 }
 
-int SAFE(memCmp)(const void* buf1, const void* buf2, size_t count)
+int memCmp(const void* buf1, const void* buf2, size_t count)
 {
 	register word less = 0;
 	register word greater = 0;
@@ -232,7 +232,7 @@ int FAST(memCmp)(const void* buf1, const void* buf2, size_t count)
 	return 0;
 }
 
-int SAFE(memCmpRev)(const void* buf1, const void* buf2, size_t count)
+int memCmpRev(const void* buf1, const void* buf2, size_t count)
 {
 	register word less = 0;
 	register word greater = 0;
@@ -297,7 +297,7 @@ void memWipe(void* buf, size_t count)
 	wipe_ctr = (octet)ctr;
 }
 
-bool_t SAFE(memIsZero)(const void* buf, size_t count)
+bool_t memIsZero(const void* buf, size_t count)
 {
 	register word diff = 0;
 	ASSERT(memIsValid(buf, count));
@@ -335,7 +335,7 @@ size_t memNonZeroSize(const void* buf, size_t count)
 	return 0;
 }
 
-bool_t SAFE(memIsRep)(const void* buf, size_t count, octet o)
+bool_t memIsRep(const void* buf, size_t count, octet o)
 {
 	register word diff = 0;
 	ASSERT(memIsValid(buf, count));

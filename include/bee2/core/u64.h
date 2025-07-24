@@ -4,7 +4,7 @@
 \brief 64-bit words
 \project bee2 [cryptographic library]
 \created 2015.10.28
-\version 2024.11.18
+\version 2025.07.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -123,7 +123,6 @@ size_t u64CTZ(
 	register u64 w		/*!< [in] слово */
 );
 
-size_t SAFE(u64CTZ)(register u64 w);
 size_t FAST(u64CTZ)(register u64 w);
 
 /*!	\brief Число старших нулевых битов
@@ -137,7 +136,6 @@ size_t u64CLZ(
 	register u64 w		/*!< [in] слово */
 );
 
-size_t SAFE(u64CLZ)(register u64 w);
 size_t FAST(u64CLZ)(register u64 w);
 
 /*!	\brief Тасование битов

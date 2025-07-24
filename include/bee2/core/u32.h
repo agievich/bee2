@@ -4,7 +4,7 @@
 \brief 32-bit words
 \project bee2 [cryptographic library]
 \created 2015.10.28
-\version 2024.11.18
+\version 2025.07.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -112,7 +112,6 @@ size_t u32CTZ(
 	register u32 w		/*!< [in] слово */
 );
 
-size_t SAFE(u32CTZ)(register u32 w);
 size_t FAST(u32CTZ)(register u32 w);
 
 /*!	\brief Число старших нулевых битов
@@ -126,7 +125,6 @@ size_t u32CLZ(
 	register u32 w		/*!< [in] слово */
 );
 
-size_t SAFE(u32CLZ)(register u32 w);
 size_t FAST(u32CLZ)(register u32 w);
 
 /*!	\brief Тасование битов

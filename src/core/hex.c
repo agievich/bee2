@@ -4,7 +4,7 @@
 \brief Hexadecimal strings
 \project bee2 [cryptographic library]
 \created 2015.10.29
-\version 2025.06.10
+\version 2025.07.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -125,7 +125,7 @@ void hexLower(char* hex)
 *******************************************************************************
 */
 
-bool_t SAFE(hexEq2)(const void* buf, const char* hex, size_t len)
+bool_t hexEq2(const void* buf, const char* hex, size_t len)
 {
 	register word diff = 0;
 	ASSERT(hexIsValid2(hex, len));
@@ -145,10 +145,10 @@ bool_t FAST(hexEq2)(const void* buf, const char* hex, size_t len)
 	return TRUE;
 }
 
-bool_t SAFE(hexEq)(const void* buf, const char* hex)
+bool_t hexEq(const void* buf, const char* hex)
 {
 	ASSERT(hexIsValid(hex));
-	return SAFE(hexEq2)(buf, hex, strLen(hex));
+	return hexEq2(buf, hex, strLen(hex));
 }
 
 bool_t FAST(hexEq)(const void* buf, const char* hex)
@@ -157,7 +157,7 @@ bool_t FAST(hexEq)(const void* buf, const char* hex)
 	return FAST(hexEq2)(buf, hex, strLen(hex));
 }
 
-bool_t SAFE(hexEqRev2)(const void* buf, const char* hex, size_t len)
+bool_t hexEqRev2(const void* buf, const char* hex, size_t len)
 {
 	register word diff = 0;
 	ASSERT(hexIsValid(hex));
@@ -179,10 +179,10 @@ bool_t FAST(hexEqRev2)(const void* buf, const char* hex, size_t len)
 	return TRUE;
 }
 
-bool_t SAFE(hexEqRev)(const void* buf, const char* hex)
+bool_t hexEqRev(const void* buf, const char* hex)
 {
 	ASSERT(hexIsValid(hex));
-	return SAFE(hexEqRev2)(buf, hex, strLen(hex));
+	return hexEqRev2(buf, hex, strLen(hex));
 }
 
 bool_t FAST(hexEqRev)(const void* buf, const char* hex)

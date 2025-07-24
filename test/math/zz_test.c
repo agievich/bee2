@@ -4,7 +4,7 @@
 \brief Tests for multiple-precision unsigned integers
 \project bee2/test
 \created 2014.07.15
-\version 2025.05.07
+\version 2025.07.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -47,7 +47,7 @@ static bool_t zzTestAdd()
 		carry = zzAdd(c, a, b, n);
 		if (zzSub(c1, c, b, n) != carry || 
 			!wwEq(c1, a, n) ||
-			SAFE(zzIsSumEq)(c, a, b, n) != wordEq(carry, 0) ||
+			zzIsSumEq(c, a, b, n) != wordEq(carry, 0) ||
 			FAST(zzIsSumEq)(c, a, b, n) != wordEq(carry, 0))
 			return FALSE;
 		// zzAdd2 / zzSub2
@@ -61,7 +61,7 @@ static bool_t zzTestAdd()
 		carry = zzAddW(c, a, n, b[0]);
 		if (zzSubW(c1, c, n, b[0]) != carry || 
 			!wwEq(c1, a, n) ||
-			SAFE(zzIsSumWEq)(c, a, n, b[0]) != wordEq(carry, 0) ||
+			zzIsSumWEq(c, a, n, b[0]) != wordEq(carry, 0) ||
 			FAST(zzIsSumWEq)(c, a, n, b[0]) != wordEq(carry, 0))
 			return FALSE;
 		// zzAddW2 / zzSubW2
@@ -75,7 +75,7 @@ static bool_t zzTestAdd()
 		carry = zzAddW(c, a, 1, b[0]);
 		if (zzSubW(c1, c, 1, b[0]) != carry || 
 			!wwEq(c1, a, 1) ||
-			SAFE(zzIsSumWEq)(c, a, 1, b[0]) != wordEq(carry, 0) ||
+			zzIsSumWEq(c, a, 1, b[0]) != wordEq(carry, 0) ||
 			FAST(zzIsSumWEq)(c, a, 1, b[0]) != wordEq(carry, 0))
 			return FALSE;
 		// zzAdd3 / zzAdd
@@ -261,13 +261,13 @@ static bool_t zzTestMod()
 			mod[n - 1] = WORD_MAX;
 		zzMod(a, a, n, mod, n, stack);
 		zzMod(b, b, n, mod, n, stack);
-		// SAFE(zzAddMod) / SAFE(zzSubMod)
-		SAFE(zzAddMod)(t, a, b, mod, n);
-		SAFE(zzSubMod)(t1, t, b, mod, n);
-		if (!SAFE(wwEq)(t1, a, n))
+		// zzAddMod / zzSubMod
+		zzAddMod(t, a, b, mod, n);
+		zzSubMod(t1, t, b, mod, n);
+		if (!wwEq(t1, a, n))
 			return FALSE;
-		SAFE(zzSubMod)(t1, t, a, mod, n);
-		if (!SAFE(wwEq)(t1, b, n))
+		zzSubMod(t1, t, a, mod, n);
+		if (!wwEq(t1, b, n))
 			return FALSE;
 		// FAST(zzAddMod) / FAST(zzSubMod)
 		FAST(zzAddMod)(t, a, b, mod, n);
@@ -277,23 +277,23 @@ static bool_t zzTestMod()
 		FAST(zzSubMod)(t1, t, a, mod, n);
 		if (!FAST(wwEq)(t1, b, n))
 			return FALSE;
-		// SAFE(zzAddWMod) / SAFE(zzSubWMod)
-		SAFE(zzAddWMod)(t, a, b[0], mod, n);
-		SAFE(zzSubWMod)(t1, t, b[0], mod, n);
-		if (!SAFE(wwEq)(t1, a, n))
+		// zzAddWMod / zzSubWMod
+		zzAddWMod(t, a, b[0], mod, n);
+		zzSubWMod(t1, t, b[0], mod, n);
+		if (!wwEq(t1, a, n))
 			return FALSE;
 		// FAST(zzAddWMod) / FAST(zzSubWMod)
 		FAST(zzAddWMod)(t, a, b[0], mod, n);
 		FAST(zzSubWMod)(t1, t, b[0], mod, n);
 		if (!FAST(wwEq)(t1, a, n))
 			return FALSE;
-		// SAFE(zzNegMod)
-		SAFE(zzNegMod)(t, a, mod, n);
-		SAFE(zzAddMod)(t1, t, a, mod, n);
-		if (!SAFE(wwIsZero)(t1, n))
+		// zzNegMod
+		zzNegMod(t, a, mod, n);
+		zzAddMod(t1, t, a, mod, n);
+		if (!wwIsZero(t1, n))
 			return FALSE;
-		SAFE(zzNegMod)(t1, t1, mod, n);
-		if (!SAFE(wwIsZero)(t1, n))
+		zzNegMod(t1, t1, mod, n);
+		if (!wwIsZero(t1, n))
 			return FALSE;
 		// FAST(zzNegMod)
 		FAST(zzNegMod)(t, a, mod, n);
@@ -303,11 +303,11 @@ static bool_t zzTestMod()
 		FAST(zzNegMod)(t1, t1, mod, n);
 		if (!FAST(wwIsZero)(t1, n))
 			return FALSE;
-		// SAFE(zzDoubleMod) / SAFE(zzHalfMod)
+		// zzDoubleMod / zzHalfMod
 		mod[0] |= 1;
-		SAFE(zzHalfMod)(t, a, mod, n);
-		SAFE(zzDoubleMod)(t1, t, mod, n);
-		if (!SAFE(wwEq)(t1, a, n))
+		zzHalfMod(t, a, mod, n);
+		zzDoubleMod(t1, t, mod, n);
+		if (!wwEq(t1, a, n))
 			return FALSE;
 		// FAST(zzDoubleMod) / FAST(zzHalfMod)
 		FAST(zzHalfMod)(t, a, mod, n);
@@ -451,12 +451,12 @@ static bool_t zzTestRed()
 		FAST(zzRedBarr)(t1, mod, n, barr_param, stack);
 		if (!wwEq(t1, t, n))
 			return FALSE;
-		// zzRed / SAFE(zzRedMont)
+		// zzRed / zzRedMont
 		mod[0] |= 1;
 		wwCopy(t, a, 2 * n);
 		zzRed(t, mod, n, stack);
 		wwCopy(t1, a, 2 * n);
-		SAFE(zzRedMont)(t1, mod, n, wordNegInv(mod[0]), stack);
+		zzRedMont(t1, mod, n, wordNegInv(mod[0]), stack);
 		wwCopy(t1 + n, t1, n);
 		wwSetZero(t1, n);
 		zzRed(t1, mod, n, stack);
@@ -470,12 +470,12 @@ static bool_t zzTestRed()
 		zzRed(t1, mod, n, stack);
 		if (!wwEq(t1, t, n))
 			return FALSE;
-		// zzRed / SAFE(zzRedCrand)
+		// zzRed / zzRedCrand
 		wwRepW(mod + 1, n - 1, WORD_MAX);
 		wwCopy(t, a, 2 * n);
 		zzRed(t, mod, n, stack);
 		wwCopy(t1, a, 2 * n);
-		SAFE(zzRedCrand)(t1, mod, n, stack);
+		zzRedCrand(t1, mod, n, stack);
 		if (!wwEq(t1, t, n))
 			return FALSE;
 		// zzRed / FAST(zzRedCrand)
@@ -483,12 +483,12 @@ static bool_t zzTestRed()
 		FAST(zzRedCrand)(t1, mod, n, stack);
 		if (!wwEq(t1, t, n))
 			return FALSE;
-		// SAFE(zzRedMont) / SAFE(zzRedCrandMont)
+		// zzRedMont / zzRedCrandMont
 		wwCopy(t, a, 2 * n);
 		wwCopy(t1, a, 2 * n);
-		SAFE(zzRedMont)(t, mod, n, wordNegInv(mod[0]), stack);
-		SAFE(zzRedCrandMont)(t1, mod, n, wordNegInv(mod[0]), stack);
-		if (!SAFE(wwEq)(t1, t, n))
+		zzRedMont(t, mod, n, wordNegInv(mod[0]), stack);
+		zzRedCrandMont(t1, mod, n, wordNegInv(mod[0]), stack);
+		if (!wwEq(t1, t, n))
 			return FALSE;
 		// FAST(zzRedMont) / FAST(zzRedCrandMont)
 		wwCopy(t, a, 2 * n);

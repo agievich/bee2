@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: modular arithmetic
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.06.10
+\version 2025.07.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -20,8 +20,8 @@
 *******************************************************************************
 Модулярная арифметика: аддитивные операции
 
-В первом проходе функции SAFE(zzAddMod)() выполняется сложение и 
-одновременно проверяется, не превосходит ли сумма модуль. Во втором проходе 
+В первом проходе регулярной редакции zzAddMod() выполняется сложение
+и одновременно проверяется, не превосходит ли сумма модуль. Во втором проходе 
 выполняется вычитание либо собственно модуля, либо нуля.
 
 Примерно так регуляризированы и другие функции.
@@ -39,7 +39,7 @@ void FAST(zzAddMod)(word c[], const word a[], const word b[], const word mod[],
 		zzSub2(c, mod, n);
 }
 
-void SAFE(zzAddMod)(word c[], const word a[], const word b[], const word mod[],
+void zzAddMod(word c[], const word a[], const word b[], const word mod[],
 	size_t n)
 {
 	register word carry = 0;
@@ -81,8 +81,8 @@ void FAST(zzAddWMod)(word b[], const word a[], register word w,
 	CLEAN(w);
 }
 
-void SAFE(zzAddWMod)(word b[], const word a[], register word w, 
-	const word mod[], size_t n)
+void zzAddWMod(word b[], const word a[], register word w, const word mod[],
+	size_t n)
 {
 	register word mask = 1;
 	size_t i;
@@ -117,7 +117,7 @@ void FAST(zzSubMod)(word c[], const word a[], const word b[], const word mod[],
 		zzAdd2(c, mod, n);
 }
 
-void SAFE(zzSubMod)(word c[], const word a[], const word b[], const word mod[],
+void zzSubMod(word c[], const word a[], const word b[], const word mod[],
 	size_t n)
 {
 	register word mask = 0;
@@ -143,8 +143,8 @@ void FAST(zzSubWMod)(word b[], const word a[], register word w,
 	CLEAN(w);
 }
 
-void SAFE(zzSubWMod)(word b[], const word a[], register word w, 
-	 const word mod[], size_t n)
+void zzSubWMod(word b[], const word a[], register word w, const word mod[],
+	size_t n)
 {
 	register word mask;
 	ASSERT(wwIsSameOrDisjoint(a, b, n));
@@ -168,7 +168,7 @@ void FAST(zzNegMod)(word b[], const word a[], const word mod[], size_t n)
 		wwSetZero(b, n);
 }
 
-void SAFE(zzNegMod)(word b[], const word a[], const word mod[], size_t n)
+void zzNegMod(word b[], const word a[], const word mod[], size_t n)
 {
 	register word mask;
 	ASSERT(wwIsSameOrDisjoint(a, b, n));
@@ -286,7 +286,7 @@ void FAST(zzDoubleMod)(word b[], const word a[], const word mod[], size_t n)
 	CLEAN2(hi, carry);
 }
 
-void SAFE(zzDoubleMod)(word b[], const word a[], const word mod[], size_t n)
+void zzDoubleMod(word b[], const word a[], const word mod[], size_t n)
 {
 	register word carry = 0;
 	register word hi;
@@ -342,7 +342,7 @@ void FAST(zzHalfMod)(word b[], const word a[], const word mod[], size_t n)
 	CLEAN2(lo, carry);
 }
 
-void SAFE(zzHalfMod)(word b[], const word a[], const word mod[], size_t n)
+void zzHalfMod(word b[], const word a[], const word mod[], size_t n)
 {
 	register word carry = 0;
 	register word mask = 0;

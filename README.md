@@ -38,7 +38,6 @@ Russia and Ukraine.
 mkdir build
 cd build
 cmake [-DCMAKE_BUILD_TYPE={Release|Debug|Coverage|ASan|ASanDbg|MemSan|MemSanDbg|Check}]\
-      [-DBUILD_FAST=ON]\
       [-DBASH_PLATFORM={BASH_32|BASH_64|BASH_AVX2|BASH_AVX512|BASH_NEON}]\
       ..
 make
@@ -53,7 +52,6 @@ compiler:
 > mkdir build
 > cd build
 > cmake [-DCMAKE_BUILD_TYPE={Release|Debug|Coverage|ASan|ASanDbg|MemSan|MemSanDbg|Check}]\
->       [-DBUILD_FAST=ON]\
 >       [-DBASH_PLATFORM={BASH_32|BASH_64|BASH_AVX2|BASH_AVX512|BASH_NEON}]\
 >       -G "MinGW Makefiles"\
 >       ..
@@ -68,9 +66,6 @@ Build types (`Release` by default):
 *  `ASan`, `ASanDbg` — [address sanitizer](http://en.wikipedia.org/wiki/AddressSanitizer);
 *  `MemSan`, `MemSanDbg` — [memory sanitizer](http://code.google.com/p/memory-sanitizer/);
 *  `Check` — strict compile rules.
-
-The `BUILD_FAST` option (`OFF` by default) switches from safe (constant-time) 
-functions to fast (non-constant-time) ones.
 
 The `BASH_PLATFORM` option (`BASH_64` by default) requests to use a specific
 implementation of the STB 34.101.77 algorithms optimized for a given hardware

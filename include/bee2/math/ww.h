@@ -4,7 +4,7 @@
 \brief Arbitrary length words
 \project bee2 [cryptographic library]
 \created 2012.04.18
-\version 2025.05.07
+\version 2025.07.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -138,7 +138,6 @@ bool_t wwEq(
 	size_t n		/*!< [in] длина a и b в машинных словах */
 );
 
-bool_t SAFE(wwEq)(const word a[], const word b[], size_t n);
 bool_t FAST(wwEq)(const word a[], const word b[], size_t n);
 
 /*!	\brief Сравнение слов
@@ -154,7 +153,6 @@ int wwCmp(
 	size_t n		/*!< [in] длина a и b в машинных словах */
 );
 
-int SAFE(wwCmp)(const word a[], const word b[], size_t n);
 int FAST(wwCmp)(const word a[], const word b[], size_t n);
 
 /*!	\brief Сравнение слов разной длины
@@ -171,7 +169,6 @@ int wwCmp2(
 	size_t m		/*!< [in] длина b в машинных словах */
 );
 
-int SAFE(wwCmp2)(const word a[], size_t n, const word b[], size_t m);
 int FAST(wwCmp2)(const word a[], size_t n, const word b[], size_t m);
 
 /*!	\brief Сравнение слова c машинным словом
@@ -186,7 +183,6 @@ int wwCmpW(
 	register word w		/*!< [in] машинное слово */
 );
 
-int SAFE(wwCmpW)(const word a[], size_t n, register word w);
 int FAST(wwCmpW)(const word a[], size_t n, register word w);
 
 /*!	\brief Cложение слов по модулю 2
@@ -270,7 +266,6 @@ bool_t wwIsZero(
 	size_t n		/*!< [in] длина a в машинных словах */
 );
 
-bool_t SAFE(wwIsZero)(const word a[], size_t n);
 bool_t FAST(wwIsZero)(const word a[], size_t n);
 
 /*! \brief	Принимает значение -- машинное слово?
@@ -290,7 +285,6 @@ bool_t wwIsW(
 	register word w		/*!< [in] значение */
 );
 
-bool_t SAFE(wwIsW)(const word a[], size_t n, register word w);
 bool_t FAST(wwIsW)(const word a[], size_t n, register word w);
 
 /*!	\brief Повтор машинного слова?
@@ -309,7 +303,6 @@ bool_t wwIsRepW(
 	register word w		/*!< [in] значение */
 );
 
-bool_t SAFE(wwIsRepW)(const word a[], size_t n, register word w);
 bool_t FAST(wwIsRepW)(const word a[], size_t n, register word w);
 
 /*!	\brief Размер значащей части слова в машинных словах
