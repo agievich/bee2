@@ -1,11 +1,8 @@
 cmake_minimum_required(VERSION 3.5...3.31)
-project(BEE2 C)
-
-set(BEE2_VERSION_MAJOR "2")
-set(BEE2_VERSION_MINOR "1")
-set(BEE2_VERSION_PATCH "8")
-set(BEE2_VERSION 
-  "${BEE2_VERSION_MAJOR}.${BEE2_VERSION_MINOR}.${BEE2_VERSION_PATCH}")
+project(BEE2
+  VERSION 2.1.8
+  LANGUAGES C
+)
 
 # \remark Set BUILD_PIC even for static libraries if they are linked 
 # into shared libraries
