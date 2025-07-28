@@ -17,9 +17,6 @@ option(BUILD_TESTS "Build tests." ON)
 option(BUILD_DOC "Build documentation (doxygen required)." OFF)
 option(INSTALL_HEADERS "Install headers." ON)
 
-set(LIB_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}" CACHE PATH "Equivalent to CMAKE_INSTALL_LIBDIR")
-set(BIN_INSTALL_DIR "${CMAKE_INSTALL_BINDIR}" CACHE PATH "Equivalent to CMAKE_INSTALL_BINDIR")
-
 if(CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE}
     CACHE STRING "Choose the type of build: \
