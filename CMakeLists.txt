@@ -1,11 +1,10 @@
 cmake_minimum_required(VERSION 3.5...3.31)
-project(BEE2 C)
+project(BEE2
+  VERSION 2.1.9
+  LANGUAGES C
+)
 
-set(BEE2_VERSION_MAJOR "2")
-set(BEE2_VERSION_MINOR "1")
-set(BEE2_VERSION_PATCH "9")
-set(BEE2_VERSION 
-  "${BEE2_VERSION_MAJOR}.${BEE2_VERSION_MINOR}.${BEE2_VERSION_PATCH}")
+include(GNUInstallDirs)
 
 # \remark Set BUILD_PIC even for static libraries if they are linked 
 # into shared libraries
@@ -17,6 +16,9 @@ option(BUILD_CMD "Build bee2cmd." ON)
 option(BUILD_TESTS "Build tests." ON)
 option(BUILD_DOC "Build documentation (doxygen required)." OFF)
 option(INSTALL_HEADERS "Install headers." ON)
+
+set(LIB_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}" CACHE PATH "Equivalent to CMAKE_INSTALL_LIBDIR")
+set(BIN_INSTALL_DIR "${CMAKE_INSTALL_BINDIR}" CACHE PATH "Equivalent to CMAKE_INSTALL_BINDIR")
 
 if(CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE}
@@ -143,14 +145,6 @@ endif(CMAKE_COMPILER_IS_MSVC)
 
 if(BUILD_FAST)
   add_definitions(-DSAFE_FAST)
-endif()
-
-if(NOT LIB_INSTALL_DIR)
-  set(LIB_INSTALL_DIR lib)
-endif()
-
-if(NOT BIN_INSTALL_DIR)
-  set(BIN_INSTALL_DIR bin)
 endif()
 
 include_directories(include)
