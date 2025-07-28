@@ -4,7 +4,7 @@
 \brief 32-bit unsigned words
 \project bee2 [cryptographic library]
 \created 2015.10.28
-\version 2025.06.10
+\version 2025.07.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -111,7 +111,7 @@ bool_t u32Parity(register u32 w)
 *******************************************************************************
 */
 
-size_t SAFE(u32CTZ)(register u32 w)
+size_t u32CTZ(register u32 w)
 {
 	return 32 - u32Weight(w | (U32_0 - w));
 }
@@ -134,7 +134,7 @@ size_t FAST(u32CTZ)(register u32 w)
 	return ((u32)(w << 1)) ? l - 2 : l - (w ? 1 : 0);
 }
 
-size_t SAFE(u32CLZ)(register u32 w)
+size_t u32CLZ(register u32 w)
 {
 	w = w | w >> 1;
 	w = w | w >> 2;

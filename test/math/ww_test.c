@@ -4,7 +4,7 @@
 \brief Tests for operations on arbitrary length words
 \project bee2/test
 \created 2023.03.31
-\version 2023.02.31
+\version 2025.07.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -26,30 +26,30 @@ bool_t wwTest()
 	word c[8];
 	// заполнение и сравнение
 	if ((wwSetW(a, COUNT_OF(a), 0), FALSE) ||
-			!SAFE(wwIsZero)(a, 8) || !FAST(wwIsZero)(a, 8) ||
+			!wwIsZero(a, 8) || !FAST(wwIsZero)(a, 8) ||
 		(wwSetZero(a, COUNT_OF(a)), FALSE) ||
-			!SAFE(wwIsZero)(a, 8) || !FAST(wwIsZero)(a, 8) ||
+			!wwIsZero(a, 8) || !FAST(wwIsZero)(a, 8) ||
 		(wwSetW(a, COUNT_OF(a), 0x36), FALSE) ||
-			SAFE(wwIsZero)(a, 8) || FAST(wwIsZero)(a, 8) ||
-			!SAFE(wwIsW)(a, 8, 0x36) || !FAST(wwIsW)(a, 8, 0x36) ||
-			SAFE(wwIsW)(a, 8, 0x5C) || FAST(wwIsW)(a, 8, 0x5C) ||
-			SAFE(wwCmpW)(a, 8, 0x36) != 0 || FAST(wwCmpW)(a, 8, 0x36) != 0 ||
-			SAFE(wwCmpW)(a, 8, 0x5C) >=0 || FAST(wwCmpW)(a, 8, 0x5C) >= 0 ||
+			wwIsZero(a, 8) || FAST(wwIsZero)(a, 8) ||
+			!wwIsW(a, 8, 0x36) || !FAST(wwIsW)(a, 8, 0x36) ||
+			wwIsW(a, 8, 0x5C) || FAST(wwIsW)(a, 8, 0x5C) ||
+			wwCmpW(a, 8, 0x36) != 0 || FAST(wwCmpW)(a, 8, 0x36) != 0 ||
+			wwCmpW(a, 8, 0x5C) >=0 || FAST(wwCmpW)(a, 8, 0x5C) >= 0 ||
 		(wwRepW(a, COUNT_OF(a), 0x36), FALSE) ||
-			SAFE(wwIsZero)(a, 8) || FAST(wwIsZero)(a, 8) ||
-			!SAFE(wwIsRepW)(a, 8, 0x36) || !FAST(wwIsRepW)(a, 8, 0x36) ||
-			SAFE(wwIsRepW)(a, 8, 0x5C) || FAST(wwIsRepW)(a, 8, 0x5C))
+			wwIsZero(a, 8) || FAST(wwIsZero)(a, 8) ||
+			!wwIsRepW(a, 8, 0x36) || !FAST(wwIsRepW)(a, 8, 0x36) ||
+			wwIsRepW(a, 8, 0x5C) || FAST(wwIsRepW)(a, 8, 0x5C))
 		return FALSE;
 	// копирование и сравнение
 	if ((wwCopy(a, a, 8), FALSE) ||
-			!SAFE(wwEq)(a, a, 8) || !FAST(wwEq)(a, a, 8) ||
+			!wwEq(a, a, 8) || !FAST(wwEq)(a, a, 8) ||
 		(wwRepW(b, 8, 0x5C), FALSE) ||
-			SAFE(wwEq)(a, b, 8) || FAST(wwEq)(a, b, 8) ||
-			SAFE(wwCmp)(a, b, 8) >= 0 || FAST(wwCmp)(a, b, 8) >= 0 ||
-			SAFE(wwCmp2)(a, 8, b, 7) <= 0 || FAST(wwCmp2)(a, 8, b, 7) <= 0 ||
+			wwEq(a, b, 8) || FAST(wwEq)(a, b, 8) ||
+			wwCmp(a, b, 8) >= 0 || FAST(wwCmp)(a, b, 8) >= 0 ||
+			wwCmp2(a, 8, b, 7) <= 0 || FAST(wwCmp2)(a, 8, b, 7) <= 0 ||
 		(wwSwap(a, b, 8), FALSE) ||
-			SAFE(wwCmp)(a, b, 8) <= 0 || FAST(wwCmp)(a, b, 8) <= 0 ||
-			SAFE(wwCmp2)(a, 7, b, 8) >= 0 || FAST(wwCmp2)(a, 7, b, 8) >= 0)
+			wwCmp(a, b, 8) <= 0 || FAST(wwCmp)(a, b, 8) <= 0 ||
+			wwCmp2(a, 7, b, 8) >= 0 || FAST(wwCmp2)(a, 7, b, 8) >= 0)
 		return FALSE;
 	// операции с битами
 	ASSERT(wwIsRepW(b, 8, 0x36));

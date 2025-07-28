@@ -4,7 +4,7 @@
 \brief Tests for operations on 32-bit words
 \project bee2/test
 \created 2017.01.11
-\version 2024.11.18
+\version 2025.07.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -49,14 +49,14 @@ bool_t u32Test()
 		u32Weight(0xFFFFFFFF) != 32 || u32Parity(0xFFFFFFFF))
 		return FALSE;
 	// CTZ / CLZ
-	if (SAFE(u32CTZ)(0) != 32 || FAST(u32CTZ)(0) != 32 ||
-		SAFE(u32CLZ)(0) != 32 || FAST(u32CLZ)(0) != 32 ||
-		SAFE(u32CTZ)(1) != 0 ||	FAST(u32CTZ)(1) != 0 ||
-		SAFE(u32CLZ)(1) != 31 || FAST(u32CLZ)(1) != 31 ||
-		SAFE(u32CTZ)(0xFFF8) != 3 || FAST(u32CTZ)(0xFFF8) != 3 ||
-		SAFE(u32CLZ)(0xFFF8) != 16 || FAST(u32CLZ)(0xFFF8) != 16 ||
-		SAFE(u32CTZ)(0x7FFFE000) != 13 || FAST(u32CTZ)(0x7FFFE000) != 13 ||
-		SAFE(u32CLZ)(0x7FFFE000) != 1 || FAST(u32CLZ)(0x7FFFE000) != 1)
+	if (u32CTZ(0) != 32 || FAST(u32CTZ)(0) != 32 ||
+		u32CLZ(0) != 32 || FAST(u32CLZ)(0) != 32 ||
+		u32CTZ(1) != 0 ||	FAST(u32CTZ)(1) != 0 ||
+		u32CLZ(1) != 31 || FAST(u32CLZ)(1) != 31 ||
+		u32CTZ(0xFFF8) != 3 || FAST(u32CTZ)(0xFFF8) != 3 ||
+		u32CLZ(0xFFF8) != 16 || FAST(u32CLZ)(0xFFF8) != 16 ||
+		u32CTZ(0x7FFFE000) != 13 || FAST(u32CTZ)(0x7FFFE000) != 13 ||
+		u32CLZ(0x7FFFE000) != 1 || FAST(u32CLZ)(0x7FFFE000) != 1)
 		return FALSE;
 	// shuffle
 	if (u32Deshuffle(0) != 0 || u32Deshuffle(1) != 1 || 

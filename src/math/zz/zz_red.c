@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: modular reductions
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.05.07
+\version 2025.07.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -68,7 +68,7 @@ void FAST(zzRedCrand)(word a[], const word mod[], size_t n, void* stack)
 	CLEAN2(prod, carry);
 }
 
-void SAFE(zzRedCrand)(word a[], const word mod[], size_t n, void* stack)
+void zzRedCrand(word a[], const word mod[], size_t n, void* stack)
 {
 	register word carry;
 	register dword prod;
@@ -165,7 +165,7 @@ void FAST(zzRedBarr)(word a[], const word mod[], size_t n,
 		a[n] -= zzSub2(a, mod, n);
 }
 
-void SAFE(zzRedBarr)(word a[], const word mod[], size_t n, 
+void zzRedBarr(word a[], const word mod[], size_t n,
 	const word barr_param[], void* stack)
 {
 	register word w;
@@ -257,8 +257,8 @@ void FAST(zzRedMont)(word a[], const word mod[], size_t n,
 	CLEAN2(carry, w);
 }
 
-void SAFE(zzRedMont)(word a[], const word mod[], size_t n, 
-	register word mont_param, void* stack)
+void zzRedMont(word a[], const word mod[], size_t n, register word mont_param,
+	void* stack)
 {
 	register word carry = 0;
 	register word w = 0;
@@ -350,7 +350,7 @@ void FAST(zzRedCrandMont)(word a[], const word mod[], size_t n,
 	CLEAN(prod), CLEAN3(carry, borrow, w);
 }
 
-void SAFE(zzRedCrandMont)(word a[], const word mod[], size_t n, 
+void zzRedCrandMont(word a[], const word mod[], size_t n,
 	register word mont_param, void* stack)
 {
 	register word carry = 0;

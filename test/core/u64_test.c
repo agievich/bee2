@@ -4,7 +4,7 @@
 \brief Tests for operations on 64-bit words
 \project bee2/test
 \created 2017.01.11
-\version 2024.11.18
+\version 2025.07.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -56,17 +56,17 @@ bool_t u64Test()
 		u64Parity(0xFFFFFFFFFFFFFFFF))
 		return FALSE;
 	// CTZ / CLZ
-	if (SAFE(u64CTZ)(0) != 64 || FAST(u64CTZ)(0) != 64 ||
-		SAFE(u64CLZ)(0) != 64 || FAST(u64CLZ)(0) != 64 ||
-		SAFE(u64CTZ)(1) != 0 || FAST(u64CTZ)(1) != 0 ||
-		SAFE(u64CLZ)(1) != 63 || FAST(u64CLZ)(1) != 63 ||
-		SAFE(u64CTZ)(0xFFF8) != 3 || FAST(u64CTZ)(0xFFF8) != 3 ||
-		SAFE(u64CLZ)(0xFFF8) != 48 || FAST(u64CLZ)(0xFFF8) != 48 ||
-		SAFE(u64CTZ)(0x7FFFE000) != 13 || FAST(u64CTZ)(0x7FFFE000) != 13 ||
-		SAFE(u64CLZ)(0x7FFFE000) != 33 || FAST(u64CLZ)(0x7FFFE000) != 33 ||
-		SAFE(u64CTZ)(0x0000003FFDDF8000) != 15 ||
+	if (u64CTZ(0) != 64 || FAST(u64CTZ)(0) != 64 ||
+		u64CLZ(0) != 64 || FAST(u64CLZ)(0) != 64 ||
+		u64CTZ(1) != 0 || FAST(u64CTZ)(1) != 0 ||
+		u64CLZ(1) != 63 || FAST(u64CLZ)(1) != 63 ||
+		u64CTZ(0xFFF8) != 3 || FAST(u64CTZ)(0xFFF8) != 3 ||
+		u64CLZ(0xFFF8) != 48 || FAST(u64CLZ)(0xFFF8) != 48 ||
+		u64CTZ(0x7FFFE000) != 13 || FAST(u64CTZ)(0x7FFFE000) != 13 ||
+		u64CLZ(0x7FFFE000) != 33 || FAST(u64CLZ)(0x7FFFE000) != 33 ||
+		u64CTZ(0x0000003FFDDF8000) != 15 ||
 		FAST(u64CTZ)(0x0000003FFDDF8000) != 15 ||
-		SAFE(u64CLZ)(0x0000003FFDDF8000) != 26 ||
+		u64CLZ(0x0000003FFDDF8000) != 26 ||
 		FAST(u64CLZ)(0x0000003FFDDF8000) != 26)
 		return FALSE;
 	// shuffle

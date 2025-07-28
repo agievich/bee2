@@ -4,7 +4,7 @@
 \brief Machine words
 \project bee2 [cryptographic library]
 \created 2014.07.18
-\version 2025.04.25
+\version 2025.07.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -54,13 +54,8 @@ extern "C" {
 	#define wordParity u16Parity
 	#define wordCTZ u16CTZ
 	#define wordCLZ u16CLZ
-	#ifdef SAFE_FAST
-		#define wordCTZ_safe u16CTZ_safe
-		#define wordCLZ_safe u16CLZ_safe
-	#else
-		#define wordCTZ_fast u16CTZ_fast
-		#define wordCLZ_fast u16CLZ_fast
-	#endif
+	#define wordCTZ_fast u16CTZ_fast
+	#define wordCLZ_fast u16CLZ_fast
 	#define	wordShuffle u16Shuffle
 	#define	wordDeshuffle u16Deshuffle
 	#define	wordNegInv u16NegInv
@@ -74,13 +69,8 @@ extern "C" {
 	#define wordParity u32Parity
 	#define wordCTZ u32CTZ
 	#define wordCLZ u32CLZ
-	#ifdef SAFE_FAST
-		#define wordCTZ_safe u32CTZ_safe
-		#define wordCLZ_safe u32CLZ_safe
-	#else
-		#define wordCTZ_fast u32CTZ_fast
-		#define wordCLZ_fast u32CLZ_fast
-	#endif
+	#define wordCTZ_fast u32CTZ_fast
+	#define wordCLZ_fast u32CLZ_fast
 	#define	wordShuffle u32Shuffle
 	#define	wordDeshuffle u32Deshuffle
 	#define	wordNegInv u32NegInv
@@ -94,13 +84,8 @@ extern "C" {
 	#define wordParity u64Parity
 	#define wordCTZ u64CTZ
 	#define wordCLZ u64CLZ
-	#ifdef SAFE_FAST
-		#define wordCTZ_safe u64CTZ_safe
-		#define wordCLZ_safe u64CLZ_safe
-	#else
-		#define wordCTZ_fast u64CTZ_fast
-		#define wordCLZ_fast u64CLZ_fast
-	#endif
+	#define wordCTZ_fast u64CTZ_fast
+	#define wordCLZ_fast u64CLZ_fast
 	#define	wordShuffle u64Shuffle
 	#define	wordDeshuffle u64Deshuffle
 	#define	wordNegInv u64NegInv
