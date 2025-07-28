@@ -4,7 +4,7 @@
 \brief Common info
 \project bee2 [cryptographic library]
 \created 2012.04.01
-\version 2023.02.12
+\version 2025.07.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -22,15 +22,10 @@
 #define __BEE2_INFO
 
 #define BEE2_NAME				"Bee2"
+#define BEE2_VERSION			"2.1.9"
 #define BEE2_VERSION_MAJOR		"2"
 #define BEE2_VERSION_MINOR 		"1"
 #define BEE2_VERSION_PATCH		"9"
-
-#define BEE2_VERSION\
-		BEE2_VERSION_MAJOR "." BEE2_VERSION_MINOR "." BEE2_VERSION_PATCH
-
-#define BEE2_VERSION_NUM\
-		2, 1, 9
 
 /*!
 *******************************************************************************
@@ -94,7 +89,6 @@
 mkdir build
 cd build
 cmake [-DCMAKE_BUILD_TYPE={Release|Debug|Coverage|ASan|ASanDbg|MemSan|MemSanDbg|Check}]\
-      [-DBUILD_FAST=ON]\
       [-DBASH_PLATFORM={BASH_32|BASH_64|BASH_AVX2|BASH_AVX512|BASH_NEON}] ..
 \endverbatim
 
