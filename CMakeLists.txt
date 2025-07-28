@@ -4,6 +4,8 @@ project(BEE2
   LANGUAGES C
 )
 
+include(GNUInstallDirs)
+
 # \remark Set BUILD_PIC even for static libraries if they are linked 
 # into shared libraries
 
@@ -14,6 +16,9 @@ option(BUILD_CMD "Build bee2cmd." ON)
 option(BUILD_TESTS "Build tests." ON)
 option(BUILD_DOC "Build documentation (doxygen required)." OFF)
 option(INSTALL_HEADERS "Install headers." ON)
+
+set(LIB_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}" CACHE PATH "Equivalent to CMAKE_INSTALL_LIBDIR")
+set(BIN_INSTALL_DIR "${CMAKE_INSTALL_BINDIR}" CACHE PATH "Equivalent to CMAKE_INSTALL_BINDIR")
 
 if(CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE}
@@ -140,14 +145,6 @@ endif(CMAKE_COMPILER_IS_MSVC)
 
 if(BUILD_FAST)
   add_definitions(-DSAFE_FAST)
-endif()
-
-if(NOT LIB_INSTALL_DIR)
-  set(LIB_INSTALL_DIR lib)
-endif()
-
-if(NOT BIN_INSTALL_DIR)
-  set(BIN_INSTALL_DIR bin)
 endif()
 
 include_directories(include)
