@@ -4,7 +4,7 @@
 \brief Object identifiers
 \project bee2 [cryptographic library]
 \created 2013.02.04
-\version 2025.06.10
+\version 2025.07.31
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -95,7 +95,7 @@ size_t oidFromDER(char* oid, const octet der[], size_t count)
 {
 	size_t len, c;
 	c = derOIDDec(oid, &len, der, count);
-	if (len == SIZE_MAX || c != count)
+	if (c == SIZE_MAX || c != count || len == SIZE_MAX)
 		return SIZE_MAX;
 	return len;
 }
