@@ -4,7 +4,7 @@
 \brief Memory management
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.07.24
+\version 2025.08.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -23,6 +23,7 @@
 		#include <stdlib.h>
 	#endif
 #endif
+#include <stdarg.h>
 
 #include "bee2/core/mem.h"
 #include "bee2/core/util.h"
@@ -130,33 +131,10 @@ void memFree(void* buf)
 #endif
 }
 
+
 /*
 *******************************************************************************
-Дополнительные функции
-
-\remark Функция memWipe() повторяет функцию OPENSSL_cleanse()
-из библиотеки OpenSSL:
-\code
-	unsigned char cleanse_ctr = 0;
-	void OPENSSL_cleanse(void *ptr, size_t len)
-	{
-		unsigned char *p = ptr;
-		size_t loop = len, ctr = cleanse_ctr;
-		while(loop--)
-		{
-			*(p++) = (unsigned char)ctr;
-			ctr += (17 + ((size_t)p & 0xF));
-		}
-		p=memchr(ptr, (unsigned char)ctr, len);
-		if(p)
-			ctr += (63 + (size_t)p);
-		cleanse_ctr = (unsigned char)ctr;
-	}
-\endcode
-
-\remark На платформе Windows есть функции SecureZeroMemory()
-и RtlSecureZeroMemory(), которые, как и memWipe(), выполняют
-гарантированную очистку памяти.
+Сравнение буферов памяти
 *******************************************************************************
 */
 
@@ -281,6 +259,36 @@ int FAST(memCmpRev)(const void* buf1, const void* buf2, size_t count)
 	return 0;
 }
 
+/*
+*******************************************************************************
+Очистка буфера памяти
+
+\remark Функция memWipe() повторяет функцию OPENSSL_cleanse()
+из библиотеки OpenSSL:
+\code
+	unsigned char cleanse_ctr = 0;
+	void OPENSSL_cleanse(void *ptr, size_t len)
+	{
+		unsigned char *p = ptr;
+		size_t loop = len, ctr = cleanse_ctr;
+		while(loop--)
+		{
+			*(p++) = (unsigned char)ctr;
+			ctr += (17 + ((size_t)p & 0xF));
+		}
+		p=memchr(ptr, (unsigned char)ctr, len);
+		if(p)
+			ctr += (63 + (size_t)p);
+		cleanse_ctr = (unsigned char)ctr;
+	}
+\endcode
+
+\remark На платформе Windows есть функции SecureZeroMemory()
+и RtlSecureZeroMemory(), которые, как и memWipe(), выполняют
+гарантированную очистку памяти.
+*******************************************************************************
+*/
+
 void memWipe(void* buf, size_t count)
 {
 	static octet wipe_ctr = 0;
@@ -296,6 +304,12 @@ void memWipe(void* buf, size_t count)
 		ctr += (63 + (size_t)p);
 	wipe_ctr = (octet)ctr;
 }
+
+/*
+*******************************************************************************
+Другие функции
+*******************************************************************************
+*/
 
 bool_t memIsZero(const void* buf, size_t count)
 {
@@ -514,12 +528,6 @@ void memSwap(void* buf1, void* buf2, size_t count)
 	}
 }
 
-/*
-*******************************************************************************
-Реверс октетов
-*******************************************************************************
-*/
-
 void memRev(void* buf, size_t count)
 {
 	register size_t i = count / 2;
@@ -531,3 +539,80 @@ void memRev(void* buf, size_t count)
 		((octet*)buf)[i] ^= ((octet*)buf)[count - 1 - i];
 	}
 }
+
+/*
+*******************************************************************************
+Разметка памяти
+
+\remark Тип mem_block_t, фундаментальный блок, инкапсулирует все скалярные типы 
+Bee2. По адресу, выровненному на границу блока, можно размещать любой скалярный 
+тип и, следовательно, любой объект.
+*******************************************************************************
+*/
+
+typedef union 
+{
+	dword dw;
+	size_t s;
+    void *p;
+    void (*fp)(void);
+} mem_block_t;
+
+static size_t memPadof(size_t count)
+{
+	register size_t c;
+	c = count % sizeof(mem_block_t);
+	return c ? sizeof(mem_block_t) - c : c;
+}
+
+#define memSizeof(count)\
+	((count) + memPadof(count))
+
+size_t memSlice(const void* buf, ...)
+{
+	size_t count;
+	size_t c;
+	va_list args;
+	va_start(args, buf);
+	// выровнять buf на границу блока
+	count = (size_t)(buf - (const void*)0);
+	count = memPadof(count);
+	buf = buf ? (const octet*)buf + count : buf;
+	// обработать аргументы
+	va_start(args, buf);
+	c = 0;
+	while (1)
+	{
+		size_t c1;
+		const void** p;
+		c1 = va_arg(args, size_t);
+		if (c1 == SIZE_MAX)
+			break;
+		p = va_arg(args, const void**);
+		if (buf && p)
+		{
+			ASSERT(memIsValid(*p, sizeof(const void*)));
+			*p = buf;
+		}
+		if (c1 & SIZE_HI)
+		{
+			c1 &= ~SIZE_HI;
+			if (c1 > c)
+			{
+				count -= memSizeof(c);
+				count += memSizeof(c1);
+				c = c1;
+			}
+			continue;
+		}
+		c = memSizeof(c1);
+		count += c;
+		buf = buf ? (const octet*)buf + c : buf;
+		c = 0;
+	}
+	va_end(args);
+	// возвратить объем размеченной памяти
+	ASSERT(memIsNullOrValid(buf, count));
+	return count;
+}
+

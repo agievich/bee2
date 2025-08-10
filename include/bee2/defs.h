@@ -4,7 +4,7 @@
 \brief Basic definitions
 \project bee2 [cryptographic library]
 \created 2012.04.01
-\version 2025.06.09
+\version 2025.08.09
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -403,6 +403,8 @@ T == octet.
 #else
 	#error "Unsupported size_t size"
 #endif
+
+#define SIZE_HI (SIZE_1 << (B_PER_S - 1))
 
 /*
 *******************************************************************************

@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2014.03.04
-\version 2025.06.10
+\version 2025.08.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -284,7 +284,7 @@ bool_t ecAddMulA(word b[], const ec_o* ec, void* stack, size_t k, ...)
 	const size_t n = ec->f->n;
 	register word w;
 	size_t i, naf_max_size = 0;
-	va_list marker;
+	va_list args;
 	// переменные в stack
 	word* t;			/* проективная точка */
 	size_t* m;			/* длины d[i] */
@@ -306,18 +306,18 @@ bool_t ecAddMulA(word b[], const ec_o* ec, void* stack, size_t k, ...)
 	pre = naf + k;
 	stack = pre + k;
 	// обработать параметры (a[i], d[i], m[i])
-	va_start(marker, k);
+	va_start(args, k);
 	for (i = 0; i < k; ++i)
 	{
 		const word* a;
 		const word* d;
 		size_t naf_count, j;
 		// a <- a[i]
-		a = va_arg(marker, const word*);
+		a = va_arg(args, const word*);
 		// d <- d[i]
-		d = va_arg(marker, const word*);
+		d = va_arg(args, const word*);
 		// прочитать m[i]
-		m[i] = va_arg(marker, size_t);
+		m[i] = va_arg(args, size_t);
 		// подправить m[i]
 		m[i] = wwWordSize(d, m[i]);
 		// расчет naf[i]
@@ -342,7 +342,7 @@ bool_t ecAddMulA(word b[], const ec_o* ec, void* stack, size_t k, ...)
 			ecAdd(pre[i] + j * ec->d * n, t, pre[i] + (j - 1) * ec->d * n, ec,
 				stack);
 	}
-	va_end(marker);
+	va_end(args);
 	// t <- O
 	ecSetO(t, ec);
 	// основной цикл
@@ -389,20 +389,20 @@ bool_t ecAddMulA(word b[], const ec_o* ec, void* stack, size_t k, ...)
 size_t ecAddMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t k, ...)
 {
 	size_t i, ret;
-	va_list marker;
+	va_list args;
 	ret = O_OF_W(ec_d * n);
 	ret += 4 * sizeof(size_t) * k;
 	ret += 2 * sizeof(word**) * k;
-	va_start(marker, k);
+	va_start(args, k);
 	for (i = 0; i < k; ++i)
 	{
-		size_t m = va_arg(marker, size_t);
+		size_t m = va_arg(args, size_t);
 		size_t naf_width = ecNAFWidth(B_OF_W(m));
 		size_t naf_count = SIZE_1 << (naf_width - 2);
 		ret += O_OF_W(2 * m + 1);
 		ret += O_OF_W(ec_d * n * naf_count);
 	}
-	va_end(marker);
+	va_end(args);
 	ret += ec_deep;
 	return ret;
 }

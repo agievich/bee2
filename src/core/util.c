@@ -4,7 +4,7 @@
 \brief Utilities
 \project bee2 [cryptographic library]
 \created 2012.05.10
-\version 2025.04.25
+\version 2025.08.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -121,32 +121,32 @@ void utilAssert(int b, const char* file, int line)
 size_t utilMin(size_t n, ...)
 {
 	size_t min = SIZE_MAX;
-	va_list marker;
+	va_list args;
 	ASSERT(n > 0);
-	va_start(marker, n);
+	va_start(args, n);
 	while (n--)
 	{
-		size_t current = va_arg(marker, size_t);
+		size_t current = va_arg(args, size_t);
 		if (current < min)
 			min = current;
 	}
-	va_end(marker);
+	va_end(args);
 	return min;
 }
 
 size_t utilMax(size_t n, ...)
 {
 	size_t max = 0;
-	va_list marker;
+	va_list args;
 	ASSERT(n > 0);
-	va_start(marker, n);
+	va_start(args, n);
 	while (n--)
 	{
-		size_t current = va_arg(marker, size_t);
+		size_t current = va_arg(args, size_t);
 		if (current > max)
 			max = current;
 	}
-	va_end(marker);
+	va_end(args);
 	return max;
 }
 
