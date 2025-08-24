@@ -4,7 +4,7 @@
 \brief Memory management
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.08.08
+\version 2025.08.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -543,13 +543,13 @@ void memRev(void* buf, size_t count)
 /*
 *******************************************************************************
 Разметка памяти
-
-\remark Тип mem_block_t, фундаментальный блок, инкапсулирует все скалярные типы 
-Bee2. По адресу, выровненному на границу блока, можно размещать любой скалярный 
-тип и, следовательно, любой объект.
 *******************************************************************************
 */
 
+/* Фундаментальный блок памяти 
+   \remark Равенство sizeof(void*) == sizeof(void(*)()) может нарушаться
+   (см. https://stackoverflow.com/questions/12358843/).
+*/
 typedef union 
 {
 	dword dw;
@@ -558,61 +558,59 @@ typedef union
     void (*fp)(void);
 } mem_block_t;
 
-static size_t memPadof(size_t count)
+static size_t memSizeof(register size_t count)
 {
-	register size_t c;
-	c = count % sizeof(mem_block_t);
-	return c ? sizeof(mem_block_t) - c : c;
+	count += sizeof(mem_block_t) - 1;
+	count /= sizeof(mem_block_t);
+	count *= sizeof(mem_block_t);
+	return count;
 }
 
-#define memSizeof(count)\
-	((count) + memPadof(count))
-
-size_t memSlice(const void* buf, ...)
+size_t memSlice2(const void* buf, size_t s1, va_list args)
 {
 	size_t count;
 	size_t c;
-	va_list args;
-	va_start(args, buf);
-	// выровнять buf на границу блока
-	count = (size_t)(buf - (const void*)0);
-	count = memPadof(count);
-	buf = buf ? (const octet*)buf + count : buf;
-	// обработать аргументы
-	va_start(args, buf);
-	c = 0;
-	while (1)
+	size_t c1;
+	// pre
+	ASSERT(memIsAligned(buf, sizeof(mem_block_t)));
+	// обработать параметры
+	count = c = 0;
+	c1 = s1;
+	while (c1 != SIZE_MAX)
 	{
-		size_t c1;
 		const void** p;
-		c1 = va_arg(args, size_t);
-		if (c1 == SIZE_MAX)
-			break;
 		p = va_arg(args, const void**);
 		if (buf && p)
 		{
-			ASSERT(memIsValid(*p, sizeof(const void*)));
+			ASSERT(memIsValid(p, sizeof(const void*)));
 			*p = buf;
 		}
 		if (c1 & SIZE_HI)
 		{
 			c1 &= ~SIZE_HI;
 			if (c1 > c)
-			{
-				count -= memSizeof(c);
-				count += memSizeof(c1);
-				c = c1;
-			}
-			continue;
+				c = memSizeof(c1);
 		}
-		c = memSizeof(c1);
-		count += c;
-		buf = buf ? (const octet*)buf + c : buf;
-		c = 0;
+		else
+		{
+			count += c;
+			buf = buf ? (const octet*)buf + c : buf;
+			c = memSizeof(c1);
+		}
+		c1 = va_arg(args, size_t);
 	}
-	va_end(args);
-	// возвратить объем размеченной памяти
+	count += c;
+	// объем размеченной памяти
 	ASSERT(memIsNullOrValid(buf, count));
 	return count;
 }
 
+size_t memSlice(const void* buf, size_t s1, ...)
+{
+	va_list args;
+	size_t count;	
+	va_start(args, s1);
+	count = memSlice2(buf, s1, args);
+	va_end(args);
+	return count;
+}

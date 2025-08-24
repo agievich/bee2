@@ -179,12 +179,19 @@ bool_t memTest()
 	if (memSlice(0, 
 			SIZE_1, &p, 
 			SIZE_1 | SIZE_HI, &p1, 
-			SIZE_1, (const void**)0, 
-			SIZE_1, (const void**)0, 
+			SIZE_1, NULL, 
+			SIZE_1, NULL, 
 			SIZE_MAX) != 3 * block_size)
 		return FALSE;
-	if (memSlice(0, 
+	if (memSlice(buf, 
 			SIZE_1, &p, 
+			SIZE_1 | SIZE_HI, &p1, 
+			SIZE_0, NULL,
+			SIZE_MAX) != block_size || 
+		p != buf || p1 != buf)
+		return FALSE;
+	if (memSlice(buf, 
+			SIZE_1 | SIZE_HI, &p, 
 			SIZE_1 | SIZE_HI, &p1, 
 			SIZE_MAX) != block_size || 
 		p != buf || p1 != buf)

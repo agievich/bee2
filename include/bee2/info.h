@@ -4,7 +4,7 @@
 \brief Common info
 \project bee2 [cryptographic library]
 \created 2012.04.01
-\version 2025.07.28
+\version 2025.08.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -26,6 +26,8 @@
 #define BEE2_VERSION_MAJOR		"2"
 #define BEE2_VERSION_MINOR 		"1"
 #define BEE2_VERSION_PATCH		"9"
+#define BEE2_VERSION_NUM\
+	2, 1, 9
 
 /*!
 *******************************************************************************

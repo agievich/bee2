@@ -4,12 +4,13 @@
 \brief Blobs
 \project bee2 [cryptographic library]
 \created 2012.04.01
-\version 2023.03.23
+\version 2025.08.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
+#include <stdarg.h>
 #include "bee2/core/blob.h"
 #include "bee2/core/mem.h"
 #include "bee2/core/util.h"
@@ -63,6 +64,26 @@ blob_t blobCreate(size_t size)
 	*ptr = size;
 	memSetZero(blobValueOf(ptr), size);
 	return blobValueOf(ptr);
+}
+
+blob_t blobCreate2(size_t s1, ...)
+{
+	va_list args;
+	size_t size;
+	blob_t blob;
+	// определить размер блоба
+	va_start(args, s1);
+	size = memSlice2(0, s1, args);
+	va_end(args);
+	// создать блоб и разметить память
+	blob = blobCreate(size);
+	if (blob)
+	{
+		va_start(args, s1);
+		memSlice2(blob, s1, args);
+		va_end(args);
+	}
+	return blob;
 }
 
 bool_t blobIsValid(const blob_t blob)
