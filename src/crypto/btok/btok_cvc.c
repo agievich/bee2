@@ -186,10 +186,11 @@ static err_t btokVerify(const void* buf, size_t count, const octet sig[],
 	hash = (octet*)stack;
 	state = hash + pubkey_len / 2;
 */
-	stack = blobCreate2(
+	stack = blobSlice(0,
 		pubkey_len / 2, &hash, 
 		pubkey_len <= 64 ? beltHash_keep() : bashHash_keep(), &state,
 		SIZE_MAX);
+
 	if (!stack)
 		return ERR_OUTOFMEMORY;
 	hash = (octet*)stack;

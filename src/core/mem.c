@@ -4,7 +4,7 @@
 \brief Memory management
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.08.23
+\version 2025.08.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -42,9 +42,32 @@ bool_t memIsValid(const void* buf, size_t count)
 	return count == 0 || buf != 0;
 }
 
-bool_t memIsAligned(const void* buf, size_t size)
+/*
+*******************************************************************************
+Выравнивание
+*******************************************************************************
+*/
+
+bool_t memIsAligned(const void* buf, size_t alignment)
 {
-	return (size_t)buf % size == 0;
+	return (uintptr_t)buf % alignment == 0;
+}
+
+/* Фундаментальный блок
+   \remark Равенство sizeof(void*) == sizeof(void(*)()) может нарушаться
+   (см. https://stackoverflow.com/questions/12358843/).
+*/
+typedef union 
+{
+	dword dw;
+	size_t s;
+    void *p;
+    void (*fp)(void);
+} mem_max_align_t;
+
+size_t memMaxAlign()
+{
+	return sizeof(mem_max_align_t);
 }
 
 /*
@@ -546,71 +569,59 @@ void memRev(void* buf, size_t count)
 *******************************************************************************
 */
 
-/* Фундаментальный блок памяти 
-   \remark Равенство sizeof(void*) == sizeof(void(*)()) может нарушаться
-   (см. https://stackoverflow.com/questions/12358843/).
-*/
-typedef union 
-{
-	dword dw;
-	size_t s;
-    void *p;
-    void (*fp)(void);
-} mem_block_t;
-
 static size_t memSizeof(register size_t count)
 {
-	count += sizeof(mem_block_t) - 1;
-	count /= sizeof(mem_block_t);
-	count *= sizeof(mem_block_t);
+	size_t max_align = memMaxAlign();
+	count += max_align - 1, count /= max_align, count *= max_align;
 	return count;
 }
 
-size_t memSlice2(const void* buf, size_t s1, va_list args)
+size_t memSlice2(const void* buf, va_list args)
 {
-	size_t count;
-	size_t c;
-	size_t c1;
+	size_t size;
+	size_t s;
+	size_t s1;
 	// pre
-	ASSERT(memIsAligned(buf, sizeof(mem_block_t)));
+	ASSERT(memIsAligned(buf, memMaxAlign()));
 	// обработать параметры
-	count = c = 0;
-	c1 = s1;
-	while (c1 != SIZE_MAX)
+	size = s = 0;
+	for (s1 = va_arg(args, size_t); s1 != SIZE_MAX;)
 	{
 		const void** p;
 		p = va_arg(args, const void**);
 		if (buf && p)
 		{
 			ASSERT(memIsValid(p, sizeof(const void*)));
+			ASSERT(memIsAligned(buf, memMaxAlign()));
 			*p = buf;
 		}
-		if (c1 & SIZE_HI)
+		if (s1 & SIZE_HI)
 		{
-			c1 &= ~SIZE_HI;
-			if (c1 > c)
-				c = memSizeof(c1);
+			s1 &= ~SIZE_HI;
+			if (s1 > s)
+				s = s1;
 		}
 		else
 		{
-			count += c;
-			buf = buf ? (const octet*)buf + c : buf;
-			c = memSizeof(c1);
+			s = memSizeof(s);
+			size += s;
+			buf = buf ? (const octet*)buf + s : buf;
+			s = s1;
 		}
-		c1 = va_arg(args, size_t);
+		s1 = va_arg(args, size_t);
 	}
-	count += c;
+	size += s;
 	// объем размеченной памяти
-	ASSERT(memIsNullOrValid(buf, count));
-	return count;
+	ASSERT(memIsNullOrValid(buf, s));
+	return size;
 }
 
-size_t memSlice(const void* buf, size_t s1, ...)
+size_t memSlice(const void* buf, ...)
 {
 	va_list args;
 	size_t count;	
-	va_start(args, s1);
-	count = memSlice2(buf, s1, args);
+	va_start(args, buf);
+	count = memSlice2(buf, args);
 	va_end(args);
 	return count;
 }

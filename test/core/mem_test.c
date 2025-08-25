@@ -4,7 +4,7 @@
 \brief Tests for memory functions
 \project bee2/test
 \created 2014.02.01
-\version 2025.08.09
+\version 2025.08.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -35,7 +35,6 @@ bool_t memTest()
 	void* p;
 	void* p1;
 	size_t i;
-	size_t block_size;
 	// pre
 	CASSERT(sizeof(buf) == sizeof(buf1));
 	memSetZero(buf, sizeof(buf));
@@ -169,31 +168,26 @@ bool_t memTest()
 	if (!memIsRep(buf2, 8, 0) || buf2[8] != 0x08)
 		return FALSE;
 	// разметка
-	block_size = utilMax(4,
-		sizeof(dword), 
-		sizeof(size_t), 
-		sizeof(void*), 
-		sizeof(void(*)(void)));
-	if (sizeof(buf) < block_size)
+	if (sizeof(buf) < memMaxAlign())
 		return FALSE;
 	if (memSlice(0, 
 			SIZE_1, &p, 
 			SIZE_1 | SIZE_HI, &p1, 
 			SIZE_1, NULL, 
 			SIZE_1, NULL, 
-			SIZE_MAX) != 3 * block_size)
+			SIZE_MAX) != 2 * memMaxAlign() + 1)
 		return FALSE;
 	if (memSlice(buf, 
 			SIZE_1, &p, 
 			SIZE_1 | SIZE_HI, &p1, 
 			SIZE_0, NULL,
-			SIZE_MAX) != block_size || 
+			SIZE_MAX) != memMaxAlign() || 
 		p != buf || p1 != buf)
 		return FALSE;
 	if (memSlice(buf, 
 			SIZE_1 | SIZE_HI, &p, 
 			SIZE_1 | SIZE_HI, &p1, 
-			SIZE_MAX) != block_size || 
+			SIZE_MAX) != 1 || 
 		p != buf || p1 != buf)
 		return FALSE;
 	// все нормально
