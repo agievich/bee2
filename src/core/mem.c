@@ -4,7 +4,7 @@
 \brief Memory management
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.08.25
+\version 2025.08.27
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -48,26 +48,13 @@ bool_t memIsValid(const void* buf, size_t count)
 *******************************************************************************
 */
 
-bool_t memIsAligned(const void* buf, size_t alignment)
-{
-	return (uintptr_t)buf % alignment == 0;
-}
+#ifndef UINTPTR_MAX
+typedef size_t uintptr_t;
+#endif
 
-/* Фундаментальный блок
-   \remark Равенство sizeof(void*) == sizeof(void(*)()) может нарушаться
-   (см. https://stackoverflow.com/questions/12358843/).
-*/
-typedef union 
+bool_t memIsAligned(const void* buf, size_t align)
 {
-	dword dw;
-	size_t s;
-    void *p;
-    void (*fp)(void);
-} mem_max_align_t;
-
-size_t memMaxAlign()
-{
-	return sizeof(mem_max_align_t);
+	return (uintptr_t)buf % align == 0;
 }
 
 /*
@@ -571,8 +558,9 @@ void memRev(void* buf, size_t count)
 
 static size_t memSizeof(register size_t count)
 {
-	size_t max_align = memMaxAlign();
-	count += max_align - 1, count /= max_align, count *= max_align;
+	count += sizeof(mem_align_t) - 1;
+	count /= sizeof(mem_align_t);
+	count *= sizeof(mem_align_t);
 	return count;
 }
 
@@ -582,17 +570,23 @@ size_t memSlice2(const void* buf, va_list args)
 	size_t s;
 	size_t s1;
 	// pre
-	ASSERT(memIsAligned(buf, memMaxAlign()));
+	ASSERT(memIsAligned(buf, sizeof(mem_align_t)));
 	// обработать параметры
 	size = s = 0;
 	for (s1 = va_arg(args, size_t); s1 != SIZE_MAX;)
 	{
 		const void** p;
+		if ((s1 & SIZE_HI) == 0)
+		{
+			s = memSizeof(s);
+			size += s;
+			buf = buf ? (const octet*)buf + s : buf;
+		}
 		p = va_arg(args, const void**);
 		if (buf && p)
 		{
 			ASSERT(memIsValid(p, sizeof(const void*)));
-			ASSERT(memIsAligned(buf, memMaxAlign()));
+			ASSERT(memIsAligned(buf, sizeof(mem_align_t)));
 			*p = buf;
 		}
 		if (s1 & SIZE_HI)
@@ -602,12 +596,7 @@ size_t memSlice2(const void* buf, va_list args)
 				s = s1;
 		}
 		else
-		{
-			s = memSizeof(s);
-			size += s;
-			buf = buf ? (const octet*)buf + s : buf;
 			s = s1;
-		}
 		s1 = va_arg(args, size_t);
 	}
 	size += s;

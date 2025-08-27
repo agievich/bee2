@@ -4,7 +4,7 @@
 \brief Blobs
 \project bee2 [cryptographic library]
 \created 2012.04.01
-\version 2025.08.25
+\version 2025.08.27
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -21,11 +21,12 @@
 
 В куче выделяется память под указатель ptr. Память выделяется страницами.
 
-Первые sizeof(size_t) октетов по адресу ptr --- размер блоба,
-следующие октеты --- собственно блоб.
+Первые sizeof(mem_align_t) октетов по адресу ptr --- заголовок блоба,
+следующие за заголовком октеты --- собственно блоб. В заголовке указывается 
+длина блоба. Длина заголовка выбрана так, чтобы блоб был выровнен на границу
+фундаментального блока.
 
 \todo Обеспечить защиту памяти блоба от утечек.
-
 \todo Полноценная проверка корректности блоба.
 *******************************************************************************
 */
@@ -35,33 +36,37 @@
 
 // требуется страниц
 #define blobPageCount(size)\
-	(((size) + sizeof(size_t) + BLOB_PAGE_SIZE - 1) / BLOB_PAGE_SIZE)
+	(((size) + sizeof(mem_align_t) + BLOB_PAGE_SIZE - 1) / BLOB_PAGE_SIZE)
 
 // требуется памяти на страницах
 #define blobActualSize(size)\
 	(blobPageCount(size) * BLOB_PAGE_SIZE)
 
-// heap-указатель для блоба
-#define blobPtrOf(blob) ((size_t*)blob - 1)
+// заголовок блоба
+#define blobHdrOf(blob) ((mem_align_t*)(blob) - 1)
+
+// heap-указатель блоба
+#define blobPtrOf(blob) ((void*)blobHdrOf(blob))
 
 // размер блоба
-#define blobSizeOf(blob) (*blobPtrOf(blob))
+#define blobSizeOf(blob) (blobHdrOf(blob)->s)
 
 // страничный размер блоба
 #define blobActualSizeOf(blob) (blobActualSize(blobSizeOf(blob)))
 
-// блоб для heap-указателя
-#define blobValueOf(ptr) ((blob_t)((size_t*)ptr + 1))
+// блоб по heap-указателю
+#define blobValueOf(ptr) ((blob_t)((mem_align_t*)(ptr) + 1))
 
 blob_t blobCreate(size_t size)
 {
-	size_t* ptr;
+	void* ptr;
 	if (size == 0)
 		return 0;
-	ptr = (size_t*)memAlloc(blobActualSize(size));
+	ptr = memAlloc(blobActualSize(size));
 	if (ptr == 0)
 		return 0;
-	*ptr = size;
+	ASSERT(memIsAligned(ptr, sizeof(mem_align_t)));
+	((mem_align_t*)ptr)->s = size;
 	memSetZero(blobValueOf(ptr), size);
 	return blobValueOf(ptr);
 }
@@ -91,7 +96,7 @@ void blobClose(blob_t blob)
 blob_t blobResize(blob_t blob, size_t size)
 {
 	size_t old_size;
-	size_t* ptr;
+	void* ptr;
 	// pre
 	ASSERT(blobIsValid(blob));
 	// создать блоб
@@ -109,12 +114,13 @@ blob_t blobResize(blob_t blob, size_t size)
 	ptr = blobPtrOf(blob);
 	if (blobActualSizeOf(blob) != blobActualSize(size))
 	{
-		ptr = (size_t*)memRealloc(ptr, blobActualSize(size));
+		ptr = memRealloc(ptr, blobActualSize(size));
 		if (ptr == 0)
 			return 0;
+		ASSERT(memIsAligned(ptr, sizeof(mem_align_t)));
 	}
 	// настроить и возвратить блоб
-	*ptr = size;
+	((mem_align_t*)ptr)->s = size;
 	blob = blobValueOf(ptr);
 	if (size > old_size)
 		memSetZero((octet*)blob + old_size, size - old_size);

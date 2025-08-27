@@ -4,7 +4,7 @@
 \brief Tests for multiple-precision unsigned integers
 \project bee2/test
 \created 2014.07.15
-\version 2025.07.24
+\version 2025.08.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -179,8 +179,8 @@ static bool_t zzTestMul()
 			c[na + 1] = zzAddW(c, c, na + 1, r[0]);
 			if (zzModW(c, na + 2, w) != r[0])
 				return FALSE;
-			w &= WORD_BIT_HALF - WORD_1;
-			w = w ? w : WORD_BIT_HALF;
+			w &= WORD_MID - WORD_1;
+			w = w ? w : WORD_MID;
 			r[1] %= w;
 			c[na] = zzMulW(c, a, na, w);
 			c[na + 1] = zzAddW(c, c, na + 1, r[1]);
@@ -193,14 +193,14 @@ static bool_t zzTestMul()
 		ASSERT(n > 3);
 		// переполнение частного, уточнение пробного частного
 		b1[0] = b1[1] = WORD_MAX;
-		b[0] = WORD_MAX, b[1] = WORD_BIT_HI;
+		b[0] = WORD_MAX, b[1] = WORD_HI;
 		zzMul(a, b, 2, b1, 2, stack);
 		zzDiv(c1, r, a, 4, b, 2, stack);
 		if (!wwIsZero(r, 2) || !wwEq(c1, b1, 2) || c1[2] != 0)
 			return FALSE;
 		// корректирующее сложение
 		b1[0] = b1[1] = b1[2] = WORD_MAX;
-		b[0] = WORD_MAX, b[1] = 0, b[2] = WORD_BIT_HI;
+		b[0] = WORD_MAX, b[1] = 0, b[2] = WORD_HI;
 		zzMul(a, b, 3, b1, 3, stack);
 		zzDiv(c1, r, a, 6, b, 3, stack);
 		if (!wwIsZero(r, 2) || !wwEq(c1, b1, 3) || c1[3] != 0)

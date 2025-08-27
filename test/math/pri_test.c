@@ -4,7 +4,7 @@
 \brief Tests for prime numbers
 \project bee2/test
 \created 2014.07.07
-\version 2025.04.25
+\version 2025.08.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -89,7 +89,7 @@ bool_t priTest()
 	priBaseMod(mods, a, W_OF_B(521), i);
 	while (i--)
 		if (mods[i] != zzModW(a, W_OF_B(521), priBasePrime(i)) ||
-			priBasePrime(i) < WORD_BIT_HALF &&
+			priBasePrime(i) < WORD_MID &&
 				mods[i] != zzModW2(a, W_OF_B(521), priBasePrime(i)))
 			return FALSE;
 	// найти 2-битовое нечетное простое число

@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: multiplicative operations
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.06.10
+\version 2025.08.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -225,7 +225,7 @@ word zzModW2(const word a[], size_t n, register word w)
 	register word b;
 	// pre
 	ASSERT(w > 0);
-	ASSERT(w <= WORD_BIT_HALF);
+	ASSERT(w <= WORD_MID);
 	ASSERT(wwIsValid(a, n));
 	// b <- B \mod mod
 	b = (WORD_MAX - w + 1) % w;

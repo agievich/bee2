@@ -4,7 +4,7 @@
 \brief Blobs
 \project bee2 [cryptographic library]
 \created 2012.04.01
-\version 2025.08.25
+\version 2025.08.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -155,7 +155,7 @@ int blobCmp(
 
 /*!	\brief Разметка блоба
 
-	В памяти блоба выделяются фрагменты памяти [с1]p1, [с2]p2, ...., 
+	В памяти блоба blob выделяются фрагменты памяти [с1]p1, [с2]p2, ...., 
 	[сn]pn. Фрагменты описываются параметрами .... Описание имеет вид:
 		c1, pp1, c2, pp2, ..., cn, ppn, SIZE_MAX,
 	где сi -- длина фрагмента в октетах (size_t), ppi -- указатель на pi 

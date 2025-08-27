@@ -4,7 +4,7 @@
 \brief Tests for memory functions
 \project bee2/test
 \created 2014.02.01
-\version 2025.08.25
+\version 2025.08.27
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -32,8 +32,11 @@ bool_t memTest()
 	octet buf[16];
 	octet buf1[16];
 	octet buf2[16];
+	octet buf3[3 * sizeof(mem_align_t)];
 	void* p;
 	void* p1;
+	void* p2;
+	void* p3;
 	size_t i;
 	// pre
 	CASSERT(sizeof(buf) == sizeof(buf1));
@@ -168,27 +171,34 @@ bool_t memTest()
 	if (!memIsRep(buf2, 8, 0) || buf2[8] != 0x08)
 		return FALSE;
 	// разметка
-	if (sizeof(buf) < memMaxAlign())
-		return FALSE;
 	if (memSlice(0, 
 			SIZE_1, &p, 
 			SIZE_1 | SIZE_HI, &p1, 
 			SIZE_1, NULL, 
 			SIZE_1, NULL, 
-			SIZE_MAX) != 2 * memMaxAlign() + 1)
+			SIZE_MAX) != 2 * sizeof(mem_align_t) + 1)
 		return FALSE;
-	if (memSlice(buf, 
+	if (memSlice(buf3, 
 			SIZE_1, &p, 
 			SIZE_1 | SIZE_HI, &p1, 
-			SIZE_0, NULL,
-			SIZE_MAX) != memMaxAlign() || 
-		p != buf || p1 != buf)
+			SIZE_0, &p2,
+			SIZE_0, &p3,
+			SIZE_MAX) != sizeof(mem_align_t) ||
+		p != buf3 || p1 != p || p2 != p3)
 		return FALSE;
-	if (memSlice(buf, 
+	if (memSlice(buf3, 
 			SIZE_1 | SIZE_HI, &p, 
 			SIZE_1 | SIZE_HI, &p1, 
 			SIZE_MAX) != 1 || 
-		p != buf || p1 != buf)
+		p != buf3 || p1 != p)
+		return FALSE;
+	if (memSlice(buf3, 
+			SIZE_1, &p, 
+			SIZE_1, &p1, 
+			SIZE_1, &p2, 
+			SIZE_1 | SIZE_HI, NULL, 
+			SIZE_MAX) != 2 * sizeof(mem_align_t) + 1 || 
+		p != buf3 || p1 == p || p2 == p1)
 		return FALSE;
 	// все нормально
 	return TRUE;

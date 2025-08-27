@@ -4,7 +4,7 @@
 \brief Machine words
 \project bee2 [cryptographic library]
 \created 2014.07.18
-\version 2025.07.24
+\version 2025.08.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -41,8 +41,8 @@ extern "C" {
 #define WORD_MAX ((word)(WORD_0 - WORD_1))
 
 #define WORD_BIT_POS(pos) (WORD_1 << (pos))
-#define WORD_BIT_HI WORD_BIT_POS(B_PER_W - 1)
-#define WORD_BIT_HALF WORD_BIT_POS(B_PER_W / 2)
+#define WORD_HI WORD_BIT_POS(B_PER_W - 1)
+#define WORD_MID WORD_BIT_POS(B_PER_W / 2)
 
 #if (B_PER_W == 16)
 	#include "bee2/core/u16.h"
