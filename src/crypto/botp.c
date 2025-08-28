@@ -4,7 +4,7 @@
 \brief STB 34.101.47/botp: OTP algorithms
 \project bee2 [cryptographic library]
 \created 2015.11.02
-\version 2025.06.10
+\version 2025.08.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -523,7 +523,7 @@ void botpOCRAStepS(void* state, const octet ctr[8], const octet p[],
 	// загрузить s
 	if (st->s_len)
 	{
-		ASSERT(memIsDisjoint2(p, st->s_len, s, botpOCRA_keep()) || s == st->s);
+		ASSERT(memIsDisjoint2(p, st->s_len, st, botpOCRA_keep()) || s == st->s);
 		memMove(st->s, s, st->s_len);
 	}
 }
