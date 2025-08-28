@@ -4,7 +4,7 @@
 \brief STB 34.101.60 (bels): secret sharing algorithms
 \project bee2 [cryptographic library]
 \created 2013.05.14
-\version 2021.04.15
+\version 2025.08.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -83,7 +83,7 @@ err_t belsValM(const octet m0[], size_t len)
 		return ERR_BAD_INPUT;
 	// создать состояние
 	n = W_OF_O(len);
-	state = blobCreate(n + 1 + ppIsIrred_deep(n + 1));
+	state = blobCreate(O_OF_W(n + 1) + ppIsIrred_deep(n + 1));
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// раскладка состояния
@@ -123,7 +123,7 @@ err_t belsGenM0(octet m0[], size_t len, gen_i ang, void* ang_state)
 		return ERR_BAD_INPUT;
 	// создать состояние
 	n = W_OF_O(len);
-	state = blobCreate(n + 1 + ppIsIrred_deep(n + 1));
+	state = blobCreate(O_OF_W(n + 1) + ppIsIrred_deep(n + 1));
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// раскладка состояния
