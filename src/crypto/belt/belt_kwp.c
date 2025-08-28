@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): KWP (keywrap = key encryption + authentication)
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2019.06.26
+\version 2025.08.27
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -65,10 +65,12 @@ err_t beltKWPUnwrap(octet dest[], const octet src[], size_t count,
 		!memIsValid(dest, count - 16))
 		return ERR_BAD_INPUT;
 	// создать состояние
-	state = blobCreate(beltKWP_keep() + 16);
+	state = blobCreate2(
+		beltKWP_keep(), NULL,
+		(size_t)16, &header2,
+		SIZE_MAX);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	header2 = (octet*)state + beltKWP_keep();
 	// снять защиту
 	beltKWPStart(state, key, len);
 	memCopy(header2, src + count - 16, 16);

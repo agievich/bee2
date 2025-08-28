@@ -297,7 +297,7 @@ err_t beltCHEUnwrap(void* dest, const void* src1, size_t count1,
 		!memIsValid(dest, count1))
 		return ERR_BAD_INPUT;
 	// создать состояние
-	state = blobCreate(beltDWP_keep());
+	state = blobCreate(beltCHE_keep());
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// снять защиту

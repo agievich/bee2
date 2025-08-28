@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): CV certificates
 \project bee2 [cryptographic library]
 \created 2022.07.04
-\version 2025.05.12
+\version 2025.08.27
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -116,14 +116,14 @@ static err_t btokSign(octet sig[], const void* buf, size_t count,
 	// загрузить параметры
 	code = btokParamsStd(params, privkey_len);
 	ERR_CALL_CHECK(code);
-	// создать и разметить стек
-	stack = blobCreate(2 * privkey_len + 
-		(privkey_len <= 32 ? beltHash_keep() : bashHash_keep()));
+	// создать стек
+	stack = blobCreate2(
+		privkey_len, &hash,
+		privkey_len, &t,
+		(privkey_len <= 32 ? beltHash_keep() : bashHash_keep()), &state,
+		SIZE_MAX);
 	if (!stack)
 		return ERR_OUTOFMEMORY;
-	hash = (octet*)stack;
-	t = hash + privkey_len;
-	state = t + privkey_len;
 	// хэшировать
 	if (privkey_len <= 32)
 	{
@@ -177,24 +177,13 @@ static err_t btokVerify(const void* buf, size_t count, const octet sig[],
 	// загрузить параметры
 	code = btokParamsStd(params, pubkey_len / 2);
 	ERR_CALL_CHECK(code);
-	// создать и разметить стек
-/*
-	stack = blobCreate(pubkey_len / 2 +
-		(pubkey_len <= 64 ? beltHash_keep() : bashHash_keep()));
-	if (!stack)
-		return ERR_OUTOFMEMORY;
-	hash = (octet*)stack;
-	state = hash + pubkey_len / 2;
-*/
-	stack = blobSlice(0,
+	// создать стек
+	stack = blobCreate2(
 		pubkey_len / 2, &hash, 
 		pubkey_len <= 64 ? beltHash_keep() : bashHash_keep(), &state,
 		SIZE_MAX);
-
 	if (!stack)
 		return ERR_OUTOFMEMORY;
-	hash = (octet*)stack;
-	state = hash + pubkey_len / 2;
    	// хэшировать
 	if (pubkey_len <= 64)
 	{
@@ -647,12 +636,13 @@ err_t btokCVCVal(const octet cert[], size_t cert_len,
 	// входной контроль
 	if (!memIsNullOrValid(date, 6))
 		return ERR_BAD_INPUT;
-	// выделить и разметить память
-	stack = blobCreate(2 * sizeof(btok_cvc_t));
+	// слздать стек
+	stack = blobCreate2(
+		sizeof(btok_cvc_t), &cvc,
+		sizeof(btok_cvc_t), &cvca,
+		SIZE_MAX);
 	if (!stack)
 		return ERR_OUTOFMEMORY;
-	cvc = (btok_cvc_t*)stack;
-	cvca = cvc + 1;
 	// разобрать сертификаты
 	code = btokCVCUnwrap(cvca, certa, certa_len, 0, 0);
 	ERR_CALL_HANDLE(code, blobClose(stack));

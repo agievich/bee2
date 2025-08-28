@@ -4,7 +4,7 @@
 \brief Memory management
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.08.27
+\version 2025.08.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -564,19 +564,18 @@ static size_t memSizeof(register size_t count)
 	return count;
 }
 
-size_t memSlice2(const void* buf, va_list args)
+size_t memSlice2(const void* buf, size_t c1, va_list args)
 {
 	size_t size;
 	size_t s;
-	size_t s1;
 	// pre
 	ASSERT(memIsAligned(buf, sizeof(mem_align_t)));
 	// обработать параметры
 	size = s = 0;
-	for (s1 = va_arg(args, size_t); s1 != SIZE_MAX;)
+	while (c1 != SIZE_MAX)
 	{
 		const void** p;
-		if ((s1 & SIZE_HI) == 0)
+		if ((c1 & SIZE_HI) == 0)
 		{
 			s = memSizeof(s);
 			size += s;
@@ -589,15 +588,15 @@ size_t memSlice2(const void* buf, va_list args)
 			ASSERT(memIsAligned(buf, sizeof(mem_align_t)));
 			*p = buf;
 		}
-		if (s1 & SIZE_HI)
+		if (c1 & SIZE_HI)
 		{
-			s1 &= ~SIZE_HI;
-			if (s1 > s)
-				s = s1;
+			c1 &= ~SIZE_HI;
+			if (c1 > s)
+				s = c1;
 		}
 		else
-			s = s1;
-		s1 = va_arg(args, size_t);
+			s = c1;
+		c1 = va_arg(args, size_t);
 	}
 	size += s;
 	// объем размеченной памяти
@@ -605,12 +604,12 @@ size_t memSlice2(const void* buf, va_list args)
 	return size;
 }
 
-size_t memSlice(const void* buf, ...)
+size_t memSlice(const void* buf, size_t c1, ...)
 {
 	va_list args;
-	size_t count;	
-	va_start(args, buf);
-	count = memSlice2(buf, args);
+	size_t size;	
+	va_start(args, c1);
+	size = memSlice2(buf, c1, args);
 	va_end(args);
-	return count;
+	return size;
 }

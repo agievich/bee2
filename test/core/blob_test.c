@@ -60,7 +60,7 @@ bool_t blobTest()
 		void* p;
 		void* p1;
 		void* p2;
-		b3 = blobSlice(0,
+		b3 = blobCreate2(
 			(size_t)11, &p,
 			(size_t)10, &p1,
 			(size_t)32 | SIZE_HI, &p2, 
@@ -69,18 +69,6 @@ bool_t blobTest()
 			!memIsAligned(b3, sizeof(mem_align_t)) ||
 			!memIsAligned(p1, sizeof(mem_align_t)) ||
 			b3 != p || p == p1 || p1 != p2)
-		{
-			blobClose(b3);
-			return FALSE;
-		}
-		b3 = blobSlice(b3,
-			(size_t)127, &p,
-			(size_t)11, &p1,
-			SIZE_MAX);
-		if (!b3 || 
-			!memIsAligned(b3, sizeof(mem_align_t)) ||
-			!memIsAligned(p1, sizeof(mem_align_t)) ||
-			b3 != p || p1 == p)
 		{
 			blobClose(b3);
 			return FALSE;

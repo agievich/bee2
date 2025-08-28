@@ -4,7 +4,7 @@
 \brief STB 34.101.78 (bpki): PKI helpers
 \project bee2 [cryptographic library]
 \created 2021.04.03
-\version 2025.05.12
+\version 2025.08.27
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -389,12 +389,13 @@ err_t bpkiPrivkeyUnwrap(octet privkey[], size_t* privkey_len,
 	if (count != epki_len)
 		return ERR_BAD_FORMAT;
 	// подготовить буферы для параметров PBKDF2
-	state = blobCreate(8 + 32 + edata_len);
+	state = blobCreate2(
+		(size_t)8, &salt, 
+		(size_t)32, &key,
+		edata_len, &edata,
+		SIZE_MAX);
 	if (!state)
 		return ERR_OUTOFMEMORY;
-	salt = (octet*)state;
-	key = salt + 8;
-	edata = key + 32;
 	// выделить edata
 	VERIFY(bpkiEdataDec(edata, 0, salt, &iter, epki, epki_len) == epki_len);
 	// построить ключ защиты 
@@ -502,12 +503,13 @@ err_t bpkiShareUnwrap(octet share[], size_t* share_len,
 	if (count != epki_len)
 		return ERR_BAD_FORMAT;
 	// подготовить буферы для параметров PBKDF2
-	state = blobCreate(8 + 32 + edata_len);
+	state = blobCreate2(
+		(size_t)8, &salt,
+		(size_t)32, &key, 
+		edata_len, &edata,
+		SIZE_MAX);
 	if (!state)
 		return ERR_OUTOFMEMORY;
-	salt = (octet*)state;
-	key = salt + 8;
-	edata = key + 32;
 	// выделить edata
 	VERIFY(bpkiEdataDec(edata, 0, salt, &iter, epki, epki_len) == epki_len);
 	// построить ключ защиты 

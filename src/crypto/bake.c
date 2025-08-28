@@ -4,7 +4,7 @@
 \brief STB 34.101.66 (bake): authenticated key establishment (AKE) protocols
 \project bee2 [cryptographic library]
 \created 2014.04.14
-\version 2025.04.25
+\version 2025.08.27
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -46,10 +46,13 @@ err_t bakeKDF(octet key[32], const octet secret[], size_t secret_len,
 		!memIsValid(key, 32))
 		return ERR_BAD_INPUT;
 	// создать состояние
-	state = blobCreate(utilMax(2, beltHash_keep(), beltKRP_keep() + 16));
+	state = blobCreate2( 
+		beltHash_keep(), NULL,
+		beltKRP_keep() | SIZE_HI, NULL,
+		(size_t)16, &block,
+		SIZE_MAX);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	block = (octet*)state + beltKRP_keep();
 	// key <- beltHash(secret || iv)
 	beltHashStart(state);
 	beltHashStepH(secret, secret_len, state);
@@ -634,13 +637,13 @@ err_t bakeBMQVRunB(octet key[32], const bign_params* params,
 	// создать блоб
 	if (params->l != 128 && params->l != 192 && params->l != 256)
 		return ERR_BAD_PARAMS;
-	blob = blobCreate(params->l + 8 + bakeBMQV_keep(params->l));
+	blob = blobCreate2(
+		params->l / 2 + 8, &in,
+		params->l / 2, &out,
+		bakeBMQV_keep(params->l), &state,
+		SIZE_MAX);						
 	if (blob == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка блоба
-	in = (octet*)blob;
-	out = in + params->l / 2 + 8;
-	state = out + params->l / 2;
 	// старт
 	code = bakeBMQVStart(state, params, settings, privkeyb, certb);
 	ERR_CALL_HANDLE(code, blobClose(blob));
@@ -683,13 +686,13 @@ err_t bakeBMQVRunA(octet key[32], const bign_params* params,
 	// создать блоб
 	if (params->l != 128 && params->l != 192 && params->l != 256)
 		return ERR_BAD_PARAMS;
-	blob = blobCreate(params->l + 8 + bakeBMQV_keep(params->l));
+	blob = blobCreate2(
+		params->l / 2, &in,
+		params->l / 2 + 8, &out,
+		bakeBMQV_keep(params->l), &state,
+		SIZE_MAX);
 	if (blob == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка блоба
-	in = (octet*)blob;
-	out = in + params->l / 2;
-	state = out + params->l / 2 + 8;
 	// старт
 	code = bakeBMQVStart(state, params, settings, privkeya, certa);
 	ERR_CALL_HANDLE(code, blobClose(blob));
@@ -1241,15 +1244,13 @@ err_t bakeBSTSRunB(octet key[32], const bign_params* params,
 	// создать блоб
 	if (params->l != 128 && params->l != 192 && params->l != 256)
 		return ERR_BAD_PARAMS;
-	blob = blobCreate(512 +
-		MAX2(params->l / 2, params->l / 4 + certb->len + 8) +
-		bakeBSTS_keep(params->l));
+	blob = blobCreate2( 
+		(size_t)512, &in, 
+		MAX2(params->l / 2, params->l / 4 + certb->len + 8), &out,
+		bakeBSTS_keep(params->l), &state,
+		SIZE_MAX);
 	if (blob == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка блоба
-	in = (octet*)blob;
-	out = in + 512;
-	state = out + MAX2(params->l / 2, params->l / 4 + certb->len + 8);
 	// старт
 	code = bakeBSTSStart(state, params, settings, privkeyb, certb);
 	ERR_CALL_HANDLE(code, blobClose(blob));
@@ -1331,14 +1332,13 @@ err_t bakeBSTSRunA(octet key[32], const bign_params* params,
 	// создать блоб
 	if (params->l != 128 && params->l != 192 && params->l != 256)
 		return ERR_BAD_PARAMS;
-	blob = blobCreate(MAX2(512, params->l / 2) + 3 * params->l / 4 +
-		certa->len + 8 + bakeBSTS_keep(params->l));
+	blob = blobCreate2( 
+		MAX2(512, params->l / 2), &in, 
+		3 * params->l / 4 + certa->len + 8, &out, 
+		bakeBSTS_keep(params->l), &state,
+		SIZE_MAX);
 	if (blob == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка блоба
-	in = (octet*)blob;
-	out = in + MAX2(512, params->l / 2);
-	state = out + 3 * params->l / 4 + certa->len + 8;
 	// старт
 	code = bakeBSTSStart(state, params, settings, privkeya, certa);
 	ERR_CALL_HANDLE(code, blobClose(blob));
@@ -1838,13 +1838,13 @@ err_t bakeBPACERunB(octet key[32], const bign_params* params,
 	// создать блоб
 	if (params->l != 128 && params->l != 192 && params->l != 256)
 		return ERR_BAD_PARAMS;
-	blob = blobCreate(9 * params->l / 8 + 8 + bakeBPACE_keep(params->l));
+	blob = blobCreate2( 
+		5 * params->l / 8, &in, 
+		params->l / 2 + 8, &out, 
+		bakeBPACE_keep(params->l), &state,
+		SIZE_MAX);
 	if (blob == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка блоба
-	in = (octet*)blob;
-	out = in + 5 * params->l / 8;
-	state = out + params->l / 2 + 8;
 	// старт
 	code = bakeBPACEStart(state, params, settings, pwd, pwd_len);
 	ERR_CALL_HANDLE(code, blobClose(blob));
@@ -1891,13 +1891,13 @@ err_t bakeBPACERunA(octet key[32], const bign_params* params,
 	// создать блоб
 	if (params->l != 128 && params->l != 192 && params->l != 256)
 		return ERR_BAD_PARAMS;
-	blob = blobCreate(9 * params->l / 8 + 8 + bakeBPACE_keep(params->l));
+	blob = blobCreate2(
+		params->l / 2 + 8, &in,
+		5 * params->l / 8, &out,
+		bakeBPACE_keep(params->l), &state,
+		SIZE_MAX);
 	if (blob == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка блоба
-	in = (octet*)blob;
-	out = in + params->l / 2 + 8;
-	state = out + 5 * params->l / 8;
 	// старт
 	code = bakeBPACEStart(state, params, settings, pwd, pwd_len);
 	ERR_CALL_HANDLE(code, blobClose(blob));
