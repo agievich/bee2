@@ -4,7 +4,7 @@
 \brief Memory management
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.08.28
+\version 2025.08.31
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -568,10 +568,12 @@ size_t memSlice2(const void* buf, size_t c1, va_list args)
 {
 	size_t size;
 	size_t s;
+	const octet* ptr;
 	// pre
 	ASSERT(memIsAligned(buf, sizeof(mem_align_t)));
 	// обработать параметры
 	size = s = 0;
+	ptr = buf;
 	while (c1 != SIZE_MAX)
 	{
 		const void** p;
@@ -579,14 +581,15 @@ size_t memSlice2(const void* buf, size_t c1, va_list args)
 		{
 			s = memSizeof(s);
 			size += s;
-			buf = buf ? (const octet*)buf + s : buf;
+			ptr = ptr ? ptr + s : ptr;
+			s = 0;
 		}
 		p = va_arg(args, const void**);
-		if (buf && p)
+		if (ptr && p)
 		{
 			ASSERT(memIsValid(p, sizeof(const void*)));
-			ASSERT(memIsAligned(buf, sizeof(mem_align_t)));
-			*p = buf;
+			ASSERT(memIsAligned(ptr, sizeof(mem_align_t)));
+			*p = ptr;
 		}
 		if (c1 & SIZE_HI)
 		{
@@ -598,9 +601,9 @@ size_t memSlice2(const void* buf, size_t c1, va_list args)
 			s = c1;
 		c1 = va_arg(args, size_t);
 	}
-	size += s;
+	size += memSizeof(s);
 	// объем размеченной памяти
-	ASSERT(memIsNullOrValid(buf, s));
+	ASSERT(memIsNullOrValid(buf, size));
 	return size;
 }
 

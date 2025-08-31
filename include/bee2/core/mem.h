@@ -4,7 +4,7 @@
 \brief Memory management
 \project bee2 [cryptographic library]
 \created 2012.07.16
-\version 2025.08.28
+\version 2025.08.31
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -461,9 +461,9 @@ void memRev(
 	   в разные моменты времени для размещения разных объектов.
 	\pre Указатель buf выровнен на границу фундаментального блока.
 	\post Указатели pi, если они формируются, выровнены на границу 
-	фундаментального блока. 
+	фундаментального блока: memIsAligned(pi, sizeof(mem_block_t)) == TRUE.
 	\return Суммарная длина фрагментов с учетом выравнивания и возможных 
-	пересечений.
+	пересечений. Суммарная длина кратна длине фундаментального блока.
 */
 size_t memSlice(
 	const void* buf,	/*!< [in] буфер */
@@ -481,7 +481,7 @@ size_t memSlice(
 	\post Указатели pi, если они формируются, выровнены на границу 
 	фундаментального блока: memIsAligned(pi, sizeof(mem_block_t)) == TRUE.
 	\return Суммарная длина фрагментов с учетом выравнивания и возможных 
-	пересечений.
+	пересечений. Суммарная длина кратна длине фундаментального блока.
 */
 size_t memSlice2(
 	const void* buf,	/*!< [in] буфер */

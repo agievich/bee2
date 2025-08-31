@@ -83,12 +83,12 @@ err_t belsValM(const octet m0[], size_t len)
 		return ERR_BAD_INPUT;
 	// создать состояние
 	n = W_OF_O(len);
-	state = blobCreate(O_OF_W(n + 1) + ppIsIrred_deep(n + 1));
+	state = blobCreate2(
+		O_OF_W(n + 1), &f0, 
+		ppIsIrred_deep(n + 1), &stack,
+		SIZE_MAX);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка состояния
-	f0 = (word*)state;
-	stack = f0 + n + 1;
 	// загрузить многочлен
 	wwFrom(f0, m0, len);
 	f0[n] = 1;
@@ -123,12 +123,12 @@ err_t belsGenM0(octet m0[], size_t len, gen_i ang, void* ang_state)
 		return ERR_BAD_INPUT;
 	// создать состояние
 	n = W_OF_O(len);
-	state = blobCreate(O_OF_W(n + 1) + ppIsIrred_deep(n + 1));
+	state = blobCreate2(
+		O_OF_W(n + 1), &f0,
+		ppIsIrred_deep(n + 1), &stack,
+		SIZE_MAX);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка состояния
-	f0 = (word*)state;
-	stack = f0 + n + 1;
 	// сгенерировать многочлен
 	f0[n] = 1;
 	for (reps = len * 8 * B_PER_IMPOSSIBLE * 3 / 4; reps--;)
@@ -166,14 +166,14 @@ err_t belsGenMi(octet mi[], size_t len, const octet m0[], gen_i ang,
 	EXPECT(belsValM(m0, len) == ERR_OK);
 	// создать состояние
 	n = W_OF_O(len);
-	state = blobCreate(O_OF_W(2 * n + 2) + ppMinPolyMod_deep(n + 1));
+	state = blobCreate2(
+		O_OF_W(n + 1), &f0,
+		O_OF_W(n + 1), &f,
+		O_OF_W(n + 1) | SIZE_HI, &u,
+		ppMinPolyMod_deep(n + 1), &stack,
+		SIZE_MAX);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка состояния
-	f0 = (word*)state;
-	f = f0 + n + 1;
-	u = f;
-	stack = f + n + 1;
 	// загрузить многочлен
 	wwFrom(f0, m0, len);
 	f0[n] = 1;
@@ -219,17 +219,16 @@ err_t belsGenMid(octet mid[], size_t len, const octet m0[], const octet id[],
 	EXPECT(belsValM(m0, len) == ERR_OK);
 	// создать состояние
 	n = W_OF_O(len);
-	state = blobCreate(O_OF_W(2 * n + 2) + 32 + O_PER_W +
+	state = blobCreate2(
+		O_OF_W(n + 1), &f0,
+		O_OF_W(n + 1), &f,
+		O_OF_W(W_OF_O(32) + 1), &u,
 		utilMax(2, 
 			beltHash_keep(),
-			ppMinPolyMod_deep(n + 1)));
+			ppMinPolyMod_deep(n + 1)), &stack,
+		SIZE_MAX);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка состояния
-	f0 = (word*)state;
-	f = f0 + n + 1;
-	u = f + n + 1;
-	stack = u + W_OF_O(32) + 1;
 	// загрузить многочлен
 	wwFrom(f0, m0, len);
 	f0[n] = 1;
@@ -333,17 +332,16 @@ err_t belsShare(octet si[], size_t count, size_t threshold, size_t len,
 	EXPECT(belsValM(m0, len) == ERR_OK);
 	// создать состояние
 	n = W_OF_O(len);
-	state = blobCreate(O_OF_W(2 * threshold * n + 1) + 
+	state = blobCreate2(
+		O_OF_W(n + 1), &f,
+		O_OF_W(threshold * n - n), &k,
+		O_OF_W(threshold * n), &c,
 		utilMax(2, 
 			ppMul_deep(threshold * n - n, n),
-			ppMod_deep(threshold * n, n + 1)));
+			ppMod_deep(threshold * n, n + 1)), &stack,
+		SIZE_MAX);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка состояния
-	f = (word*)state;
-	k = f + n + 1;
-	c = k + threshold * n - n;
-	stack = c + threshold * n;
 	// сгенерировать k
 	rng(k, threshold * len - len, rng_state);
 	wwFrom(k, k, threshold * len - len);
@@ -388,17 +386,16 @@ err_t belsShare2(octet si[], size_t count, size_t threshold, size_t len,
 		return ERR_BAD_INPUT;
 	// создать состояние
 	n = W_OF_O(len);
-	state = blobCreate(O_OF_W(2 * threshold * n + 1) +
+	state = blobCreate2(
+		O_OF_W(n + 1), &f,
+		O_OF_W(threshold * n - n), &k,
+		O_OF_W(threshold * n), &c,
 		utilMax(2,
 			ppMul_deep(threshold * n - n, n),
-			ppMod_deep(threshold * n, n + 1)));
+			ppMod_deep(threshold * n, n + 1)), &stack,
+		SIZE_MAX);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка состояния
-	f = (word*)state;
-	k = f + n + 1;
-	c = k + threshold * n - n;
-	stack = c + threshold * n;
 	// сгенерировать k
 	rng(k, threshold * len - len, rng_state);
 	wwFrom(k, k, threshold * len - len);
@@ -488,27 +485,19 @@ err_t belsRecover(octet s[], size_t count, size_t len, const octet si[],
 			ppMul_deep(2 * i * n, n),
 			ppMul_deep(2 * n, i * n),
 			ppMod_deep((2 * i + 1) * n, (i + 1) * n + 1));
-	deep += O_OF_W(
-		n + 1 +			
-		count * n + 1 +
-		(count - 1) * n + 1 +
-		(count - 1) * n + 1 +
-		n + 1 +
-		(2 * count - 1) * n + 
-		MAX2((2 * count - 2) * n, (count + 1) * n));
 	// создать состояние
-	state = blobCreate(deep);
+	state = blobCreate2(
+		O_OF_W(n + 1), &f,
+		O_OF_W(count * n + 1), &g,
+		O_OF_W((count - 1) * n + 1), &d,
+		O_OF_W((count - 1) * n + 1), &u,
+		O_OF_W(n + 1), &v,
+		O_OF_W((2 * count - 1) * n), &c,
+		O_OF_W(MAX2(2 * count - 2, count + 1) * n), &t,
+		deep, &stack,
+		SIZE_MAX);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка состояния
-	f = (word*)state;
-	g = f + n + 1;
-	d = g + count * n + 1;
-	u = d + (count - 1) * n + 1;
-	v = u + (count - 1) * n + 1;
-	c = v + n + 1;
-	t = c + (2 * count - 1) * n;
-	stack = t + MAX2((2 * count - 2) * n, (count + 1) * n);
 	// [n]c(x) <- s1(x)
 	wwFrom(c, si, len);
 	// [n + 1]g(x) <- x^l + m1(x)
@@ -607,18 +596,18 @@ err_t belsRecover2(octet s[], size_t count, size_t len, const octet si[])
 		(2 * count - 1) * n +
 		MAX2((2 * count - 2) * n, (count + 1) * n));
 	// создать состояние
-	state = blobCreate(deep);
+	state = blobCreate2(
+		O_OF_W(n + 1), &f,
+		O_OF_W(count * n + 1), &g,
+		O_OF_W((count - 1) * n + 1), &d,
+		O_OF_W((count - 1) * n + 1), &u,
+		O_OF_W(n + 1), &v,
+		O_OF_W((2 * count - 1) * n), &c,
+		O_OF_W(MAX2(2 * count - 2, count + 1) * n), &t,
+		deep, &stack,
+		SIZE_MAX);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка состояния
-	f = (word*)state;
-	g = f + n + 1;
-	d = g + count * n + 1;
-	u = d + (count - 1) * n + 1;
-	v = u + (count - 1) * n + 1;
-	c = v + n + 1;
-	t = c + (2 * count - 1) * n;
-	stack = t + MAX2((2 * count - 2) * n, (count + 1) * n);
 	// [n]c(x) <- s1(x)
 	wwFrom(c, si + 1, len);
 	// [n + 1]g(x) <- x^l + m1(x)

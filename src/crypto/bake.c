@@ -4,7 +4,7 @@
 \brief STB 34.101.66 (bake): authenticated key establishment (AKE) protocols
 \project bee2 [cryptographic library]
 \created 2014.04.14
-\version 2025.08.27
+\version 2025.08.31
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -40,6 +40,7 @@ err_t bakeKDF(octet key[32], const octet secret[], size_t secret_len,
 {
 	void* state;
 	octet* block;
+	void* stack;
 	// проверить входные данные
 	if (!memIsValid(secret, secret_len) ||
 		!memIsValid(iv, iv_len) ||
@@ -47,27 +48,28 @@ err_t bakeKDF(octet key[32], const octet secret[], size_t secret_len,
 		return ERR_BAD_INPUT;
 	// создать состояние
 	state = blobCreate2( 
-		beltHash_keep(), NULL,
-		beltKRP_keep() | SIZE_HI, NULL,
 		(size_t)16, &block,
+		utilMax(2,
+			beltHash_keep(), 
+			beltKRP_keep()), &stack,
 		SIZE_MAX);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// key <- beltHash(secret || iv)
-	beltHashStart(state);
-	beltHashStepH(secret, secret_len, state);
-	beltHashStepH(iv, iv_len, state);
-	beltHashStepG(key, state);
+	beltHashStart(stack);
+	beltHashStepH(secret, secret_len, stack);
+	beltHashStepH(iv, iv_len, stack);
+	beltHashStepG(key, stack);
 	// key <- beltKRP(Y, 1^96, num)
 	memSet(block, 0xFF, 12);
-	beltKRPStart(state, key, 32, block);
+	beltKRPStart(stack, key, 32, block);
 	CASSERT(B_PER_S <= 128);
 	memCopy(block, &num, sizeof(size_t));
 #if (OCTET_ORDER == BIG_ENDIAN)
 	memRev(block, sizeof(size_t));
 #endif
 	memSetZero(block + sizeof(size_t), 16 - sizeof(size_t));
-	beltKRPStepG(key, 32, block, state);
+	beltKRPStepG(key, 32, block, stack);
 	// завершить
 	blobClose(state);
 	return ERR_OK;

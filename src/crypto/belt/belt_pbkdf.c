@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): PBKDF (password-based key derivation)
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2017.08.27
+\version 2017.08.31
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -26,6 +26,7 @@ err_t beltPBKDF2(octet key[32], const octet pwd[], size_t pwd_len,
 {
 	void* state;
 	octet* t;
+	void* stack;
 	// проверить входные данные
 	if (iter == 0 ||
 		!memIsValid(pwd, pwd_len) ||
@@ -34,24 +35,24 @@ err_t beltPBKDF2(octet key[32], const octet pwd[], size_t pwd_len,
 		return ERR_BAD_INPUT;
 	// создать состояние
 	state = blobCreate2(
-		beltHMAC_keep(), NULL,
 		(size_t)32, &t,
+		beltHMAC_keep(), &stack,
 		SIZE_MAX);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// key <- HMAC(pwd, salt || 00000001)
-	beltHMACStart(state, pwd, pwd_len);
-	beltHMACStepA(salt, salt_len, state);
+	beltHMACStart(stack, pwd, pwd_len);
+	beltHMACStepA(salt, salt_len, stack);
 	*(u32*)key = 0, key[3] = 1;
-	beltHMACStepA(key, 4, state);
-	beltHMACStepG(key, state);
+	beltHMACStepA(key, 4, stack);
+	beltHMACStepG(key, stack);
 	// пересчитать key
 	memCopy(t, key, 32);
 	while (--iter)
 	{
-		beltHMACStart(state, pwd, pwd_len);
-		beltHMACStepA(t, 32, state);
-		beltHMACStepG(t, state);
+		beltHMACStart(stack, pwd, pwd_len);
+		beltHMACStepA(t, 32, stack);
+		beltHMACStepG(t, stack);
 		memXor2(key, t, 32);
 	}
 	// завершить
