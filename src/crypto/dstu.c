@@ -4,7 +4,7 @@
 \brief DSTU 4145-2002 (Ukraine): digital signature algorithms
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.06.10
+\version 2025.09.03
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -20,23 +20,6 @@
 #include "bee2/math/gf2.h"
 #include "bee2/math/ww.h"
 #include "bee2/math/zz.h"
-
-/*
-*******************************************************************************
-Глубина стека
-
-Высокоуровневые функции сообщают о потребностях в стековой памяти через 
-функции интерфейса dstu_deep_i. Потребности не должны учитывать память для 
-размещения описаний базового поля и эллиптической кривой.
-*******************************************************************************
-*/
-
-typedef size_t (*dstu_deep_i)(
-	size_t n,					/* размерность (в машинных словах) */
-	size_t f_deep,				/* глубина стека базового поля */
-	size_t ec_d,				/* число проективных координат */
-	size_t ec_deep				/* глубина стека эллиптической кривой */
-);
 
 /*
 *******************************************************************************
@@ -347,7 +330,6 @@ static octet _curve431pb_c = 2;
 	memCopy((params)->n, _##name##_n, sizeof(_##name##_n));\
 	(params)->c = _##name##_c;\
 
-
 err_t dstuParamsStd(dstu_params* params, const char* name)
 {
 	if (!memIsValid(params, sizeof(dstu_params)))
@@ -412,13 +394,11 @@ err_t dstuParamsStd(dstu_params* params, const char* name)
 Создание описания эллиптической кривой
 
 По долговременным параметрам params формируется описание pec эллиптической
-кривой. Указатель *pec является одновременно началом фрагмента памяти, 
-в котором размещается состояние и стек. Длина фрагмента определяется с учетом 
-потребностей deep и размерностей dims.
+кривой. 
+
 \pre Указатель pec корректен.
 \return ERR_OK, если описание успешно создано, и код ошибки в противном 
 случае.
-\remark Запрошенная память начинается по адресу objEnd(*pec, void).
 \remark Проводится минимальная проверка параметров, обеспечивающая 
 работоспособность высокоуровневых функций.
 *******************************************************************************
@@ -426,8 +406,7 @@ err_t dstuParamsStd(dstu_params* params, const char* name)
 
 static err_t dstuEcCreate(
 	ec_o** pec,						/* [out] описание эллиптической кривой */
-	const dstu_params* params,		/* [in] долговременные параметры */
-	dstu_deep_i deep				/* [in] потребности в стековой памяти */
+	const dstu_params* params		/* [in] долговременные параметры */
 )
 {
 	// размерности
@@ -435,15 +414,14 @@ static err_t dstuEcCreate(
 	size_t n;
 	size_t f_keep;
 	size_t f_deep;
-	size_t ec_d;
 	size_t ec_keep;
-	size_t ec_deep;
-	// состояние
+	// состояния
 	void* state;	
-	size_t* p;			/* описание многочлена */
-	qr_o* f;			/* поле */
-	octet* A;			/* коэффициент A */
 	ec_o* ec;			/* кривая */
+	qr_o* f;			/* поле */
+	void* state1;
+	size_t* p;			/* [4] описание многочлена */
+	octet* A;			/* [no] коэффициент A */
 	void* stack;
 	// pre
 	ASSERT(memIsValid(pec, sizeof(*pec)));
@@ -456,48 +434,56 @@ static err_t dstuEcCreate(
 	n = W_OF_B(m);
 	f_keep = gf2Create_keep(m);
 	f_deep = gf2Create_deep(m);
-	ec_d = 3;
 	ec_keep = ec2CreateLD_keep(n);
-	ec_deep = ec2CreateLD_deep(n, f_deep);
 	// создать состояние
-	state = blobCreate(
-		f_keep + ec_keep +
-		utilMax(4,
-			4 * sizeof(size_t) + f_deep,
-			O_OF_B(m) + ec_deep,
-			ecCreateGroup_deep(f_deep),
-			deep(n, f_deep, ec_d, ec_deep)));
+	state = blobCreate2(
+		ec_keep,
+		f_keep,
+		SIZE_MAX,
+		&ec, &f);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
+	// создать второе состояние
+	state1 = blobCreate2(
+		sizeof(size_t) * 4,
+		O_OF_B(n) | SIZE_HI,
+		utilMax(3,
+			gf2Create_deep(m),
+			ec2CreateLD_deep(n, f_deep),
+			ecCreateGroup_deep(f_deep)),
+		SIZE_MAX,
+		&p, &A, &stack);
+	if (state1 == 0)
+	{
+		blobClose(state);
+		return ERR_OUTOFMEMORY;
+	}
 	// создать поле
-	f = (qr_o*)((octet*)state + ec_keep);
-	p = (size_t*)((octet*)f + f_keep);
 	p[0] = params->p[0];
 	p[1] = params->p[1];
 	p[2] = params->p[2];
 	p[3] = params->p[3];
-	stack = p + 4;
 	if (!gf2Create(f, p, stack))
 	{
+		blobClose(state1);
 		blobClose(state);
 		return ERR_BAD_PARAMS;
 	}
 	// создать кривую и группу
-	ec = (ec_o*)state;
-	A = (octet*)p;
 	A[0] = params->A;
 	memSetZero(A + 1, f->no - 1);
-	stack = A + f->no;
 	if (!ec2CreateLD(ec, f, A, params->B, stack) ||
 		!ecCreateGroup(ec, params->P, params->P + ec->f->no, params->n, 
 			ec->f->no, params->c, stack))
 	{
+		blobClose(state1);
 		blobClose(state);
 		return ERR_BAD_PARAMS;
 	}
 	// присоединить f к ec
 	objAppend(ec, f, 0);
-	// все нормально
+	// завершить
+	blobClose(state1);
 	*pec = ec;
 	return ERR_OK;
 }
@@ -537,34 +523,42 @@ static void dstuEcClose(ec_o* ec)
 *******************************************************************************
 */
 
-static size_t dstuParamsVal_deep(size_t n, size_t f_deep, size_t ec_d, 
-	size_t ec_deep)
+static err_t dstuParamsValEc(const ec_o* ec)
 {
-	return utilMax(4,
-			ec2IsValid_deep(n),
-			ec2SeemsValidGroup_deep(n, f_deep),
-			ec2IsSafeGroup_deep(n),
-			ecHasOrderA_deep(n, ec_d, ec_deep, n));
-}
-
-err_t dstuParamsVal(const dstu_params* params)
-{
-	err_t code;
-	// состояние
-	ec_o* ec = 0;
 	void* stack;
-	// старт
-	code = dstuEcCreate(&ec, params, dstuParamsVal_deep);
-	ERR_CALL_CHECK(code);
-	stack = objEnd(ec, void);
+	// pre
+	ASSERT(ecIsOperable(ec));
+	// создать стек
+	stack = blobCreate(
+		utilMax(4,
+			ec2IsValid_deep(ec->f->n),
+			ec2SeemsValidGroup_deep(ec->f->n, ec->f->deep),
+			ec2IsSafeGroup_deep(ec->f->n),
+			ecHasOrderA_deep(ec->f->n, ec->d, ec->deep, ec->f->n)));
+	if (stack == 0)
+		return ERR_OUTOFMEMORY;
 	// проверить кривую и базовую точку
 	if (wwBitSize(ec->order, ec->f->n) <= 160 ||
 		!ec2IsValid(ec, stack) ||
 		!ec2SeemsValidGroup(ec, stack) ||
 		!ec2IsSafeGroup(ec, 32, stack) ||
 		!ecHasOrderA(ec->base, ec, ec->order, ec->f->n, stack))
-		code = ERR_BAD_PARAMS;
+	{
+		blobClose(stack);
+		return ERR_BAD_PARAMS;
+	}
 	// завершение
+	blobClose(stack);
+	return ERR_OK;
+}
+
+err_t dstuParamsVal(const dstu_params* params)
+{
+	err_t code;
+	ec_o* ec = 0;
+	code = dstuEcCreate(&ec, params);
+	ERR_CALL_CHECK(code);
+	code = dstuParamsValEc(ec);
 	dstuEcClose(ec);
 	return code;
 }
@@ -575,42 +569,37 @@ err_t dstuParamsVal(const dstu_params* params)
 *******************************************************************************
 */
 
-static size_t dstuPointGen_deep(size_t n, size_t f_deep, size_t ec_d, 
-	size_t ec_deep)
+static err_t dstuPointGenEc(octet point[], const ec_o* ec,
+	gen_i rng, void* rng_state)
 {
-	return O_OF_W(3 * n) + 
-		utilMax(2,
-			gf2QSolve_deep(n, f_deep),
-			ecHasOrderA_deep(n, ec_d, ec_deep, n));
-}
-
-err_t dstuPointGen(octet point[], const dstu_params* params, gen_i rng, 
-	void* rng_state)
-{
-	err_t code;
-	// состояние
-	ec_o* ec = 0;
-	word* x;
-	word* y;
-	word* t;
+	size_t m;
+	void* state;
+	word* R;		/* [2n] */
+	word* x;		/*   [n] */
+	word* y;		/*   [n] */
+	word* t;		/* [n] */
 	void* stack;
-	// проверить rng
+	// pre
+	ASSERT(ecIsOperable(ec));
+	// размерность order
+	m = W_OF_B(wwBitSize(ec->order, ec->f->n));
+	// входной контроль
+	if (!memIsValid(point, 2 * ec->f->no))
+		return ERR_BAD_INPUT;
 	if (rng == 0)
 		return ERR_BAD_RNG;
-	// старт
-	code = dstuEcCreate(&ec, params, dstuPointGen_deep);
-	ERR_CALL_CHECK(code);
-	// проверить входные указатели
-	if (!memIsValid(point, 2 * ec->f->no))
-	{
-		dstuEcClose(ec);
-		return ERR_BAD_INPUT;
-	}
-	// раскладка состояния
-	x = objEnd(ec, word);
-	y = x + ec->f->n;
-	t = y + ec->f->n;
-	stack = t + ec->f->n;
+	// создать состояние
+	state = blobCreate2(
+		O_OF_W(2 * ec->f->n),
+		O_OF_W(ec->f->n),
+		utilMax(2,
+			gf2QSolve_deep(ec->f->n, ec->f->deep),
+			ecHasOrderA_deep(ec->f->n, ec->d, ec->deep, ec->f->n)),
+		SIZE_MAX,
+		&R, &t, &stack);
+	if (state == 0)
+		return ERR_OUTOFMEMORY;
+	x = R, y = R + ec->f->n;
 	// пока точка не сгенерирована
 	while (1)
 	{
@@ -629,98 +618,113 @@ err_t dstuPointGen(octet point[], const dstu_params* params, gen_i rng,
 		gf2Add2(t, ec->B, ec->f);
 		// y <- Solve[y^2 + x y == t], ord(x, y) == order?
 		if (gf2QSolve(y, x, t, ec->f, stack) &&
-			ecHasOrderA(x, ec, ec->order, ec->f->n, stack))
+			ecHasOrderA(R, ec, ec->order, m, stack))
 			break;
 	}
 	// выгрузить точку
 	qrTo(point, x, ec->f, stack);
 	qrTo(point + ec->f->no, y, ec->f, stack);
 	// завершение
-	dstuEcClose(ec);
+	blobClose(state);
 	return ERR_OK;
 }
 
-static size_t dstuPointVal_deep(size_t n, size_t f_deep, size_t ec_d, 
-	size_t ec_deep)
+err_t dstuPointGen(octet point[], const dstu_params* params, gen_i rng,
+	void* rng_state)
 {
-	return O_OF_W(2 * n) + 
+	err_t code;
+	ec_o* ec = 0;
+	code = dstuEcCreate(&ec, params);
+	ERR_CALL_CHECK(code);
+	code = dstuPointGenEc(point, ec, rng, rng_state);
+	dstuEcClose(ec);
+	return code;
+}
+
+static err_t dstuPointValEc(const ec_o* ec, const octet point[])
+{
+	size_t m;
+	void* state;
+	word* R;		/* [2n] */
+	word* x;		/*   [n] */
+	word* y;		/*   [n] */
+	void* stack;
+	// pre
+	ASSERT(ecIsOperable(ec));
+	// размерность order
+	m = W_OF_B(wwBitSize(ec->order, ec->f->n));
+	// входной контроль
+	if (!memIsValid(point, 2 * ec->f->no))
+		return ERR_BAD_INPUT;
+	// создать состояние
+	state = blobCreate2(
+		O_OF_W(2 * ec->f->n),
 		utilMax(2,
-			ec2IsOnA_deep(n, f_deep),
-			ecHasOrderA_deep(n, ec_d, ec_deep, n));
+			ec2IsOnA_deep(ec->f->n, ec->f->deep),
+			ecHasOrderA_deep(ec->f->n, ec->d, ec->deep, ec->f->n)),
+		SIZE_MAX,
+		&R, &stack);
+	if (state == 0)
+		return ERR_OUTOFMEMORY;
+	x = R, y = R + ec->f->n;
+	// (x, y) лежит на ЭК? (x, y) имеет порядок order?
+	if (!qrFrom(x, point, ec->f, stack) ||
+		!qrFrom(y, point + ec->f->no, ec->f, stack) ||
+		!ec2IsOnA(R, ec, stack) ||
+		!ecHasOrderA(R, ec, ec->order, m, stack))
+	{
+		blobClose(state);
+		return ERR_BAD_POINT;
+	}
+	// завершение
+	blobClose(state);
+	return ERR_OK;
 }
 
 err_t dstuPointVal(const dstu_params* params, const octet point[])
 {
 	err_t code;
-	// состояние
 	ec_o* ec = 0;
-	word* x;
-	word* y;
-	void* stack;
-	// старт
-	code = dstuEcCreate(&ec, params, dstuPointVal_deep);
+	code = dstuEcCreate(&ec, params);
 	ERR_CALL_CHECK(code);
-	// проверить входные указатели
-	if (!memIsValid(point, 2 * ec->f->no))
-	{
-		dstuEcClose(ec);
-		return ERR_BAD_INPUT;
-	}
-	// раскладка состояния
-	x = objEnd(ec, word);
-	y = x + ec->f->n;
-	stack = y + ec->f->n;
-	// (x, y) лежит на ЭК? (x, y) имеет порядок order?
-	if (!qrFrom(x, point, ec->f, stack) ||
-		!qrFrom(y, point + ec->f->no, ec->f, stack) ||
-		!ec2IsOnA(x, ec, stack) ||
-		!ecHasOrderA(x, ec, ec->order, ec->f->n, stack))
-		code = ERR_BAD_POINT;
-	// завершение
+	code = dstuPointValEc(ec, point);
 	dstuEcClose(ec);
 	return code;
 }
 
-static size_t dstuPointCompress_deep(size_t n, size_t f_deep, size_t ec_d, 
-	size_t ec_deep)
-{
-	return O_OF_W(2 * n) + gf2Tr_deep(n, f_deep);
-}
-
-err_t dstuPointCompress(octet xpoint[], const dstu_params* params, 
+static err_t dstuPointCompressEc(octet xpoint[], const ec_o* ec,
 	const octet point[])
 {
-	err_t code;
-	// состояние
-	ec_o* ec = 0;
-	word* x;
-	word* y;
+	void* state;
+	word* x;		/* [n] */
+	word* y;		/* [n] */
 	void* stack;
-	// старт
-	code = dstuEcCreate(&ec, params, dstuPointCompress_deep);
-	ERR_CALL_CHECK(code);
+	// pre
+	ASSERT(ecIsOperable(ec));
 	// проверить входные указатели
 	if (!memIsValid(point, 2 * ec->f->no) || 
 		!memIsValid(xpoint, ec->f->no))
-	{
-		dstuEcClose(ec);
 		return ERR_BAD_INPUT;
-	}
-	// раскладка состояния
-	x = objEnd(ec, word);
-	y = x + ec->f->n;
-	stack = y + ec->f->n;
+	// создать состояние
+	state = blobCreate2(
+		O_OF_W(ec->f->n),
+		O_OF_W(ec->f->n),
+		gf2Tr_deep(ec->f->n, ec->f->deep),
+		SIZE_MAX,
+		&x, &y, &stack);
+	if (state == 0)
+		return ERR_OUTOFMEMORY;
 	// загрузить точку
 	if (!qrFrom(x, point, ec->f, stack) ||
 		!qrFrom(y, point + ec->f->no, ec->f, stack))
 	{
-		dstuEcClose(ec);
+		blobClose(state);
 		return ERR_BAD_POINT;
 	}
 	// x == 0?
 	if (wwIsZero(x, ec->f->n))
 	{
-		dstuEcClose(ec);
+		blobClose(state);
 		return ERR_OK;
 	}
 	// y <- y / x
@@ -730,47 +734,51 @@ err_t dstuPointCompress(octet xpoint[], const dstu_params* params,
 	xpoint[0] &= 0xFE;
 	xpoint[0] |= gf2Tr(y, ec->f, stack);
 	// завершение
-	dstuEcClose(ec);
+	blobClose(state);
 	return ERR_OK;
 }
 
-static size_t dstuPointRecover_deep(size_t n, size_t f_deep, size_t ec_d, 
-	size_t ec_deep)
-{
-	return O_OF_W(2 * n) + 
-		utilMax(2,
-			gf2QSolve_deep(n, f_deep),
-			gf2Tr_deep(n, f_deep));
-}
-
-err_t dstuPointRecover(octet point[], const dstu_params* params, 
-	const octet xpoint[])
+err_t dstuPointCompress(octet xpoint[], const dstu_params* params,
+	const octet point[])
 {
 	err_t code;
-	register bool_t trace;
-	// состояние
 	ec_o* ec = 0;
-	word* x;
-	word* y;
-	void* stack;
-	// старт
-	code = dstuEcCreate(&ec, params, dstuPointRecover_deep);
+	code = dstuEcCreate(&ec, params);
 	ERR_CALL_CHECK(code);
-	// проверить входные указатели
+	code = dstuPointCompressEc(xpoint, ec, point);
+	dstuEcClose(ec);
+	return code;
+}
+
+static err_t dstuPointRecoverEc(octet point[], const ec_o* ec,
+	const octet xpoint[])
+{
+	register bool_t trace;
+	void* state;
+	word* x;		/* [n] */
+	word* y;		/* [n] */
+	void* stack;
+	// pre
+	ASSERT(ecIsOperable(ec));
+	// входной контроль
 	if (!memIsValid(xpoint, ec->f->no) || 
 		!memIsValid(point, 2 * ec->f->no))
-	{
-		dstuEcClose(ec);
 		return ERR_BAD_INPUT;
-	}
-	// раскладка состояния
-	x = objEnd(ec, word);
-	y = x + ec->f->n;
-	stack = y + ec->f->n;
+	// создать состояние
+	state = blobCreate2(
+		O_OF_W(ec->f->n),
+		O_OF_W(ec->f->n),
+		utilMax(2,
+			gf2QSolve_deep(ec->f->n, ec->f->deep),
+			gf2Tr_deep(ec->f->n, ec->f->deep)),
+		SIZE_MAX,
+		&x, &y, &stack);
+	if (state == 0)
+		return ERR_OUTOFMEMORY;
 	// загрузить сжатое представление точки
 	if (!qrFrom(x, xpoint, ec->f, stack))
 	{
-		dstuEcClose(ec);
+		blobClose(state);
 		return ERR_BAD_POINT;
 	}
 	// x == 0?
@@ -783,25 +791,25 @@ err_t dstuPointRecover(octet point[], const dstu_params* params,
 		// выгрузить y-координату
 		qrTo(point + ec->f->n, ec->B, ec->f, stack);
 		// все нормально
-		dstuEcClose(ec);
+		blobClose(state);
 		return ERR_OK;
 	}
 	// восстановить первый разряд x
 	trace = wwTestBit(x, 0);
 	wwSetBit(x, 0, 0);
-	if (gf2Tr(x, ec->f, stack) != (bool_t)params->A)
+	if (gf2Tr(x, ec->f, stack) != (bool_t)ec->A[0])
 		wwSetBit(x, 0, 1);
 	// y <- x + a + b / x^2
 	qrSqr(y, x, ec->f, stack);
 	qrDiv(y, ec->B, y, ec->f, stack);
 	gf2Add2(y, x, ec->f);
-	if (params->A)
+	if (ec->A[0])
 		wwFlipBit(y, 0);
 	// Solve[z^2 + z == y]
 	if (!gf2QSolve(y, ec->f->unity, y, ec->f, stack))
 	{
 		CLEAN(trace);
-		dstuEcClose(ec);
+		blobClose(state);
 		return ERR_BAD_PARAMS;
 	}
 	// tr(y) == trace?
@@ -815,8 +823,20 @@ err_t dstuPointRecover(octet point[], const dstu_params* params,
 	// выгрузить точку
 	qrTo(point, x, ec->f, stack);
 	qrTo(point + ec->f->no, y, ec->f, stack);
-	// все нормально
+	// завершение
 	CLEAN(trace);
+	blobClose(state);
+	return ERR_OK;
+}
+
+err_t dstuPointRecover(octet point[], const dstu_params* params,
+	const octet xpoint[])
+{
+	err_t code;
+	ec_o* ec = 0;
+	code = dstuEcCreate(&ec, params);
+	ERR_CALL_CHECK(code);
+	code = dstuPointRecoverEc(point, ec, xpoint);
 	dstuEcClose(ec);
 	return code;
 }
@@ -827,136 +847,129 @@ err_t dstuPointRecover(octet point[], const dstu_params* params,
 *******************************************************************************
 */
 
-static size_t dstuKeypairGen_deep(size_t n, size_t f_deep, size_t ec_d, 
-	size_t ec_deep)
+static err_t dstuKeypairGenEc(octet privkey[], octet pubkey[], const ec_o* ec,
+	gen_i rng, void* rng_state)
 {
-	return O_OF_W(3 * n) + 
-		ecMulA_deep(n, ec_d, ec_deep, n);
-}
-
-err_t dstuKeypairGen(octet privkey[], octet pubkey[], 
-	const dstu_params* params, gen_i rng, void* rng_state)
-{
-	err_t code;
-	size_t order_n, order_no, order_nb;
-	// состояние
-	ec_o* ec = 0;
-	word* d;
-	word* x;
-	word* y;
+	size_t m, mo, mb;
+	void* state;
+	word* d;		/* [m] */
+	word* Q;		/* [2n] */
 	void* stack;
-	// проверить rng
+	// pre
+	ASSERT(ecIsOperable(ec));
+	// размерности order
+	mb = wwBitSize(ec->order, ec->f->n);
+	mo = O_OF_B(mb);
+	m = W_OF_B(mb);
+	// входной контроль
+	if (!memIsValid(privkey, mo) ||
+		!memIsValid(pubkey, 2 * ec->f->no))
+		return ERR_BAD_INPUT;
 	if (rng == 0)
 		return ERR_BAD_RNG;
-	// старт
-	code = dstuEcCreate(&ec, params, dstuKeypairGen_deep);
-	ERR_CALL_CHECK(code);
-	// размерности order
-	order_nb = wwBitSize(ec->order, ec->f->n);
-	order_no = O_OF_B(order_nb);
-	order_n = W_OF_B(order_nb);
-	// проверить входные указатели
-	if (!memIsValid(privkey, order_no) || 
-		!memIsValid(pubkey, 2 * ec->f->no))
-	{
-		dstuEcClose(ec);
-		return ERR_BAD_INPUT;
-	}
-	// раскладка состояния
-	d = objEnd(ec, word);
-	x = d + ec->f->n;
-	y = x + ec->f->n;
-	stack = y + ec->f->n;
+	// создать состояние
+	state = blobCreate2(
+		O_OF_W(m),
+		O_OF_W(2 * ec->f->n),
+		ecMulA_deep(ec->f->n, ec->d, ec->deep, m),
+		SIZE_MAX,
+		&d, &Q, &stack);
+	if (state == 0)
+		return ERR_OUTOFMEMORY;
 	// d <-R {1,2,..., order - 1}
 	// [алгоритм из раздела 6.3 ДСТУ --- обрезка d]
-	wwSetZero(d, order_n);
+	wwSetZero(d, m);
 	while (1)
 	{
-		rng(d, O_OF_B(order_nb), rng_state);
-		wwFrom(d, d, O_OF_B(order_nb));
-		wwTrimHi(d, order_n, order_nb - 1);
-		ASSERT(wwCmp(d, ec->order, order_n) < 0);
+		rng(d, mo, rng_state);
+		wwFrom(d, d, mo);
+		wwTrimHi(d, m, mb - 1);
+		ASSERT(wwCmp(d, ec->order, m) < 0);
 		// 0 < d?
-		if (!wwIsZero(d, order_n))
+		if (!wwIsZero(d, m))
 			break;
 	}
 	// Q <- d G
-	if (!ecMulA(x, ec->base, ec, d, order_n, stack))
+	if (!ecMulA(Q, ec->base, ec, d, m, stack))
 	{
 		// если params корректны, то этого быть не должно
-		dstuEcClose(ec);
+		blobClose(state);
 		return ERR_BAD_PARAMS;
 	}
 	// Q <- -Q
-	ec2NegA(x, x, ec);
+	ec2NegA(Q, Q, ec);
 	// выгрузить ключи
-	wwTo(privkey, order_no, d);
-	qrTo(pubkey, x, ec->f, stack);
-	qrTo(pubkey + ec->f->no, y, ec->f, stack);
-	// все нормально
+	wwTo(privkey, mo, d);
+	qrTo(pubkey, ecX(Q), ec->f, stack);
+	qrTo(pubkey + ec->f->no, ecY(Q, ec->f->n), ec->f, stack);
+	// завершение
+	blobClose(state);
+	return ERR_OK;
+}
+
+err_t dstuKeypairGen(octet privkey[], octet pubkey[],
+	const dstu_params* params, gen_i rng, void* rng_state)
+{
+	err_t code;
+	ec_o* ec = 0;
+	code = dstuEcCreate(&ec, params);
+	ERR_CALL_CHECK(code);
+	code = dstuKeypairGenEc(privkey, pubkey, ec, rng, rng_state);
 	dstuEcClose(ec);
 	return code;
 }
 
 /*
 *******************************************************************************
-ЭЦП
+Выработка ЭЦП
 *******************************************************************************
 */
 
-static size_t dstuSign_deep(size_t n, size_t f_deep, size_t ec_d, 
-	size_t ec_deep)
-{
-	return O_OF_W(6 * n) + 
-		utilMax(2,
-			ecMulA_deep(n, ec_d, ec_deep, n),
-			zzMulMod_deep(n));
-}
-
-err_t dstuSign(octet sig[], const dstu_params* params, size_t ld, 
+static err_t dstuSignEc(octet sig[], const ec_o* ec, size_t ld, 
 	const octet hash[], size_t hash_len, const octet privkey[], 
 	gen_i rng, void* rng_state)
 {
-	err_t code;
-	size_t order_n, order_no, order_nb;
-	// состояние
-	ec_o* ec = 0;
-	word* e;		/* эфемерный лк */
-	word* h;		/* хэш-значение как элемент поля */
-	word* x;		/* х-координата эфемерного ок */
-	word* y;		/* y-координата эфемерного ок */
-	word* r;		/* первая часть ЭЦП */
-	word* s;		/* вторая часть ЭЦП */
+	size_t m, mo, mb;
+	void* state;
+	word* e;		/* [m] эфемерный лк */
+	word* h;		/* [n] хэш-значение как элемент поля */
+	word* R;		/* [2n] эфемерный ок */
+	word* x;		/*   [n] x-координата R */
+	word* y;		/*   [n] y-координата R */
+	word* r;		/* [m] первая часть ЭЦП */
+	word* s;		/* [m] вторая часть ЭЦП */
 	void* stack;
-	// проверить rng
-	if (rng == 0)
-		return ERR_BAD_RNG;
-	// старт
-	code = dstuEcCreate(&ec, params, dstuSign_deep);
-	ERR_CALL_CHECK(code);
+	// pre
+	ASSERT(ecIsOperable(ec));
 	// размерности order
-	order_nb = wwBitSize(ec->order, ec->f->n);
-	order_no = O_OF_B(order_nb);
-	order_n = W_OF_B(order_nb);
-	// проверить входные указатели
-	// шаги 1, 2: проверка params, privkey
-	// шаг 3: проверить ld
-	if (!memIsValid(privkey, order_no) || 
-		ld % 16 != 0 || ld < 16 * order_no ||
+	mb = wwBitSize(ec->order, ec->f->n);
+	mo = O_OF_B(mb);
+	m = W_OF_B(mb);
+	// входной контроль
+	// * шаги 1, 2: проверка params, privkey
+	// * шаг 3: проверить ld
+	if (!memIsValid(privkey, mo) || 
+		ld % 16 != 0 || ld < 16 * mo ||
 		!memIsValid(hash, hash_len) ||
 		!memIsValid(sig, O_OF_B(ld)))
-	{
-		dstuEcClose(ec);
 		return ERR_BAD_INPUT;
-	}
-	// раскладка состояния
-	e = objEnd(ec, word);
-	h = e + ec->f->n;
-	x = h + ec->f->n;
-	y = x + ec->f->n;
-	r = y + ec->f->n;
-	s = r + ec->f->n;
-	stack = s + ec->f->n;
+	if (rng == 0)
+		return ERR_BAD_RNG;
+	// создать состояние
+	state = blobCreate2(
+		O_OF_W(m),
+		O_OF_W(ec->f->n),
+		O_OF_W(2 * ec->f->n),
+		O_OF_W(m),
+		O_OF_W(m),
+		utilMax(2,
+			ecMulA_deep(ec->f->n, ec->d, ec->deep, m),
+			zzMulMod_deep(m)),
+		SIZE_MAX,
+		&e, &h, &R, &r, &s, &stack);
+	if (state == 0)
+		return ERR_OUTOFMEMORY;
+	x = R, y = R + ec->f->n;
 	// шаги 4 -- 6: хэширование
 	// шаг 7: перевести hash в элемент основного поля h
 	// [алгоритм из раздела 5.9 ДСТУ]
@@ -980,18 +993,18 @@ err_t dstuSign(octet sig[], const dstu_params* params, size_t ld,
 step8:
 	while (1)
 	{
-		rng(e, O_OF_B(order_nb), rng_state);
-		wwFrom(e, e, O_OF_B(order_nb));
-		wwTrimHi(e, order_n, order_nb - 1);
-		ASSERT(wwCmp(e, ec->order, order_n) < 0);
-		if (!wwIsZero(e, order_n))
+		rng(e, mo, rng_state);
+		wwFrom(e, e, mo);
+		wwTrimHi(e, m, mb - 1);
+		ASSERT(wwCmp(e, ec->order, m) < 0);
+		if (!wwIsZero(e, m))
 			break;
 	}
-	// шаг 8: (x, y) <- e G
-	if (!ecMulA(x, ec->base, ec, e, order_n, stack))
+	// шаг 8: R = (x, y) <- e G
+	if (!ecMulA(R, ec->base, ec, e, m, stack))
 	{
 		// если params корректны, то этого быть не должно
-		dstuEcClose(ec);
+		blobClose(state);
 		return ERR_BAD_PARAMS;
 	}
 	// шаг 8: если x == 0, то повторить генерацию
@@ -1000,81 +1013,95 @@ step8:
 	// шаг 9: y <- x * h
 	qrMul(y, x, h, ec->f, stack);
 	// шаг 10: r <- \bar{y}
-	ASSERT(order_n <= ec->f->n);
+	ASSERT(m <= ec->f->n);
 	qrTo((octet*)r, y, ec->f, stack);
-	wwFrom(r, r, order_no);
-	wwTrimHi(r, order_n, order_nb - 1);
+	wwFrom(r, r, mo);
+	wwTrimHi(r, m, mb - 1);
 	// шаг 11: если r = 0, то повторить генерацию
-	if (wwIsZero(r, order_n))
+	if (wwIsZero(r, m))
 		goto step8;
 	// шаг 12: s <- (e + dr) mod order
-	wwFrom(s, privkey, order_no);
-	zzMulMod(s, s, r, ec->order, order_n, stack);
-	zzAddMod(s, s, e, ec->order, order_n);
+	wwFrom(s, privkey, mo);
+	zzMulMod(s, s, r, ec->order, m, stack);
+	zzAddMod(s, s, e, ec->order, m);
 	// шаг 13: если s = 0, то повторить генерацию
-	if (wwIsZero(s, order_n))
+	if (wwIsZero(s, m))
 		goto step8;
 	// шаг 14: сформировать ЭЦП из r и s
 	// [алгоритм из раздела 5.10 ДСТУ]
 	memSetZero(sig, O_OF_B(ld));
-	wwTo(sig, order_no, r);
-	wwTo(sig + ld / 16, order_no, s);
-	// все нормально
+	wwTo(sig, mo, r);
+	wwTo(sig + ld / 16, mo, s);
+	// завершение
+	blobClose(state);
+	return ERR_OK;
+}
+
+err_t dstuSign(octet sig[], const dstu_params* params, size_t ld,
+	const octet hash[], size_t hash_len, const octet privkey[],
+	gen_i rng, void* rng_state)
+{
+	err_t code;
+	ec_o* ec = 0;
+	code = dstuEcCreate(&ec, params);
+	ERR_CALL_CHECK(code);
+	code = dstuSignEc(sig, ec, ld, hash, hash_len, privkey, rng,
+		rng_state);
 	dstuEcClose(ec);
 	return code;
 }
 
-static size_t dstuVerify_deep(size_t n, size_t f_deep, size_t ec_d, 
-	size_t ec_deep)
-{
-	return O_OF_W(5 * n) + 
-		ecAddMulA_deep(n, ec_d, ec_deep, 2, n, n);
-}
+/*
+*******************************************************************************
+Проверка ЭЦП
+*******************************************************************************
+*/
 
-err_t dstuVerify(const dstu_params* params, size_t ld, const octet hash[], 
+static err_t dstuVerifyEc(const ec_o* ec, size_t ld, const octet hash[], 
 	size_t hash_len, const octet sig[], const octet pubkey[])
 {
 	err_t code;
-	size_t order_n, order_no, order_nb, i;
-	// состояние
-	ec_o* ec = 0;
-	word* h;		/* хэш-значение как элемент поля */
-	word* x;		/* х-координата эфемерного ок */
-	word* y;		/* y-координата эфемерного ок */
-	word* r;		/* первая часть ЭЦП */
-	word* s;		/* вторая часть ЭЦП */
+	size_t m, mo, mb, i;
+	void* state;
+	word* h;		/* [n] хэш-значение как элемент поля */
+	word* R;		/* [2n] долговременный / эфемерный ок */
+	word* x;		/*   [n] x-координата R */
+	word* y;		/*   [n] y-координата R */
+	word* r;		/* [m] первая часть ЭЦП */
+	word* s;		/* [m] вторая часть ЭЦП */
 	void* stack;
-	// старт
-	code = dstuEcCreate(&ec, params, dstuVerify_deep);
-	ERR_CALL_CHECK(code);
+	// pre
+	ASSERT(ecIsOperable(ec));
 	// размерности order
-	order_nb = wwBitSize(ec->order, ec->f->n);
-	order_no = O_OF_B(order_nb);
-	order_n = W_OF_B(order_nb);
-	// проверить входные указатели
-	// шаги 1, 2: обработка идентификатора хэш-функции
-	// шаг 3: проверить ld
+	mb = wwBitSize(ec->order, ec->f->n);
+	mo = O_OF_B(mb);
+	m = W_OF_B(mb);
+	// входной контроль
+	// * шаги 1, 2: обработка идентификатора хэш-функции
+	// * шаг 3: проверить ld
 	if (!memIsValid(pubkey, 2 * ec->f->no) || 
-		ld % 16 != 0 || ld < 16 * order_no ||
+		ld % 16 != 0 || ld < 16 * mo ||
 		!memIsValid(hash, hash_len))
-	{
-		dstuEcClose(ec);
 		return ERR_BAD_INPUT;
-	}
-	// раскладка состояния
-	h = objEnd(ec, word);
-	x = h + ec->f->n;
-	y = x + ec->f->n;
-	r = y + ec->f->n;
-	s = r + ec->f->n;
-	stack = s + ec->f->n;
+	// создать состояние
+	state = blobCreate2(
+		O_OF_W(ec->f->n),
+		O_OF_W(2 * ec->f->n),
+		O_OF_W(m),
+		O_OF_W(m),
+		ecAddMulA_deep(ec->f->n, ec->d, ec->deep, 2, ec->f->n, m),
+		SIZE_MAX,
+		&h, &R, &r, &s, &stack);
+	if (state == 0)
+		return ERR_OUTOFMEMORY;
+	x = R, y = R + ec->f->n;
 	// шаг 4: проверить params
 	// шаг 5: проверить pubkey
 	// [минимальная проверка принадлежности координат базовому полю]
 	if (!qrFrom(x, pubkey, ec->f, stack) || 
 		!qrFrom(y, pubkey + ec->f->no, ec->f, stack))
 	{
-		dstuEcClose(ec);
+		blobClose(state);
 		return ERR_BAD_PUBKEY;
 	}
 	// шаги 6, 7: хэширование
@@ -1096,40 +1123,51 @@ err_t dstuVerify(const dstu_params* params, size_t ld, const octet hash[],
 	if (qrIsZero(h, ec->f))
 		qrSetUnity(h, ec->f);
 	// шаг 9: выделить части подписи
-	wwFrom(r, sig, order_no);
-	wwFrom(s, sig + ld / 16, order_no);
-	for (i = order_no; i < ld / 16; ++i)
+	wwFrom(r, sig, mo);
+	wwFrom(s, sig + ld / 16, mo);
+	for (i = mo; i < ld / 16; ++i)
 		if (sig[i] || sig[i + ld / 16])
 		{
-			dstuEcClose(ec);
+			blobClose(state);
 			return ERR_BAD_SIG;
 		}
 	// шаги 10, 11: проверить r и s
-	if (wwIsZero(r, order_n) ||
-		wwIsZero(s, order_n) ||
-		wwCmp(r, ec->order, order_n) >= 0 ||
-		wwCmp(s, ec->order, order_n) >= 0)
+	if (wwIsZero(r, m) ||
+		wwIsZero(s, m) ||
+		wwCmp(r, ec->order, m) >= 0 ||
+		wwCmp(s, ec->order, m) >= 0)
 	{
-		dstuEcClose(ec);
+		blobClose(state);
 		return ERR_BAD_SIG;
 	}
 	// шаг 12: R <- sP + rQ
-	if (!ecAddMulA(x, ec, stack, 2, ec->base, s, order_n, x, r, order_n))
+	if (!ecAddMulA(R, ec, stack, 2, ec->base, s, m, R, r, m))
 	{
-		dstuEcClose(ec);
+		blobClose(state);
 		return ERR_BAD_SIG;
 	}
 	// шаг 13: y <- h * x
 	qrMul(y, x, h, ec->f, stack);
 	// шаг 14: r' <- \bar{y}
-	ASSERT(order_n <= ec->f->n);
+	ASSERT(m <= ec->f->n);
 	qrTo((octet*)s, y, ec->f, stack);
-	wwFrom(s, s, order_no);
-	wwTrimHi(s, order_n, order_nb - 1);
+	wwFrom(s, s, mo);
+	wwTrimHi(s, m, mb - 1);
 	// шаг 15:
-	if (!wwEq(r, s, order_n))
-		code = ERR_BAD_SIG;
-	// все нормально
+	code = wwEq(r, s, m) ? ERR_OK : ERR_BAD_SIG;
+	// завершение
+	blobClose(state);
+	return code;
+}
+
+err_t dstuVerify(const dstu_params* params, size_t ld, const octet hash[],
+	size_t hash_len, const octet sig[], const octet pubkey[])
+{
+	err_t code;
+	ec_o* ec = 0;
+	code = dstuEcCreate(&ec, params);
+	ERR_CALL_CHECK(code);
+	code = dstuVerifyEc(ec, ld, hash, hash_len, sig, pubkey);
 	dstuEcClose(ec);
 	return code;
 }

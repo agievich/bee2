@@ -4,7 +4,7 @@
 \brief STB 1176.2-99: generation of parameters
 \project bee2 [cryptographic library]
 \created 2023.08.01
-\version 2025.08.27
+\version 2025.09.01
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -669,14 +669,14 @@ err_t stb99ParamsGen(stb99_params* params, const stb99_seed* seed)
 	ASSERT(n <= gw);
 	// создать состояние
 	state = blobCreate2(
-		prngSTB_keep(), &stb_state,
-		O_OF_W(gw), &fi,
-		O_OF_W(gw) | SIZE_HI, &gi,
-		O_OF_W(gw) | SIZE_HI, &d,
-		O_OF_W(W_OF_B(seed->di[0])), &g0,
-		O_OF_W(n), &p,
-		O_OF_W(n), &a,
-		zmMontCreate_keep(no), &qr,
+		prngSTB_keep(),
+		O_OF_W(gw),
+		O_OF_W(gw) | SIZE_HI,
+		O_OF_W(gw) | SIZE_HI,
+		O_OF_W(W_OF_B(seed->di[0])),
+		O_OF_W(n),
+		O_OF_W(n),
+		zmMontCreate_keep(no),
 		utilMax(6,
 			priNextPrimeW_deep(),
 			priExtendPrime_deep(params->l, W_OF_B(seed->di[1]),
@@ -685,8 +685,9 @@ err_t stb99ParamsGen(stb99_params* params, const stb99_seed* seed)
 				W_OF_B(seed->ri[0]), (params->l + 3) / 4),
 			zmMontCreate_deep(no),
 			zzDiv_deep(n, m),
-			qrPower_deep(n, n, zmMontCreate_deep(no))), &stack,
-		SIZE_MAX);
+			qrPower_deep(n, n, zmMontCreate_deep(no))),
+		SIZE_MAX,
+		&stb_state, &fi, &gi, &d, &g0, &p, &a, &qr, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// запустить генератор
@@ -853,18 +854,19 @@ err_t stb99ParamsVal(const stb99_params* params)
 	m = W_OF_B(params->r), mo = O_OF_B(params->r);
 	// создать состояние
 	state = blobCreate2(
-		O_OF_W(n), &p,
-		O_OF_W(n) | SIZE_HI, &d,
-		O_OF_W(m), &q,
-		O_OF_W(n - m + 1), &t,
-		O_OF_W(n), &a,
-		zmMontCreate_keep(no), &qr,
+		O_OF_W(n),
+		O_OF_W(n) | SIZE_HI,
+		O_OF_W(m),
+		O_OF_W(n - m + 1),
+		O_OF_W(n),
+		zmMontCreate_keep(no),
 		utilMax(4,
 			priIsPrime_deep(n),
 			zzDiv_deep(n, m),
 			zmMontCreate_deep(no),
-			qrPower_deep(n, n - m + 1, zmMontCreate_deep(no))), &stack,
-		SIZE_MAX);
+			qrPower_deep(n, n - m + 1, zmMontCreate_deep(no))), 
+		SIZE_MAX,
+		&p, &d, &q, &t, &a, &qr, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// p -- l-битовое простое?

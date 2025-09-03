@@ -4,7 +4,7 @@
 \brief Memory management
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.08.31
+\version 2025.09.01
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -566,44 +566,58 @@ static size_t memSizeof(register size_t count)
 
 size_t memSlice2(const void* buf, size_t c1, va_list args)
 {
+	va_list args1;
+	va_list args2;
 	size_t size;
 	size_t s;
-	const octet* ptr;
+	size_t t;
 	// pre
 	ASSERT(memIsAligned(buf, sizeof(mem_align_t)));
-	// обработать параметры
-	size = s = 0;
-	ptr = buf;
-	while (c1 != SIZE_MAX)
+	// первый проход: объем памяти
+	va_copy(args1, args);
+	va_copy(args2, args);
+	for (size = s = 0, t = c1; t != SIZE_MAX;)
 	{
-		const void** p;
-		if ((c1 & SIZE_HI) == 0)
+		if ((t & SIZE_HI) == 0)
 		{
 			s = memSizeof(s);
 			size += s;
-			ptr = ptr ? ptr + s : ptr;
-			s = 0;
+			s = t;
 		}
-		p = va_arg(args, const void**);
-		if (ptr && p)
-		{
-			ASSERT(memIsValid(p, sizeof(const void*)));
-			ASSERT(memIsAligned(ptr, sizeof(mem_align_t)));
-			*p = ptr;
-		}
-		if (c1 & SIZE_HI)
-		{
-			c1 &= ~SIZE_HI;
-			if (c1 > s)
-				s = c1;
-		}
-		else
-			s = c1;
-		c1 = va_arg(args, size_t);
+		else if ((t &= ~SIZE_HI) > s)
+			s = t;
+		t = va_arg(args, size_t);
 	}
 	size += memSizeof(s);
+	if (!buf)
+		return size;
+	// второй проходЖ указатели
+	ASSERT(memIsValid(buf, size));
+	for (t = c1; t != SIZE_MAX;)
+		t = va_arg(args2, size_t);
+	for (s = 0, t = c1; t != SIZE_MAX;)
+	{
+		const void** p;
+		if ((t & SIZE_HI) == 0)
+		{
+			s = memSizeof(s);
+			buf = (const octet*)buf + s;
+			s = 0;
+		}
+		p = va_arg(args2, const void**);
+		ASSERT(memIsValid(p, sizeof(const void*)));
+		ASSERT(memIsAligned(buf, sizeof(mem_align_t)));
+		*p = buf;
+		if ((t & SIZE_HI) != 0)
+		{
+			if ((t &= ~SIZE_HI) > s)
+				s = t;
+		}
+		else
+			s = t;
+		t = va_arg(args1, size_t);
+	}
 	// объем размеченной памяти
-	ASSERT(memIsNullOrValid(buf, size));
 	return size;
 }
 

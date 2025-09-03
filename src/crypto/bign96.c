@@ -144,11 +144,14 @@ static size_t bign96Start_keep(bign96_deep_i deep)
 	size_t ec_keep = ecpCreateJ_keep(n);
 	size_t ec_deep = ecpCreateJ_deep(n, f_deep);
 	// расчет
-	return f_keep + ec_keep +
+	return memSlice(0,
+		ec_keep,
+		f_keep,
 		utilMax(3,
 			ec_deep,
 			ecCreateGroup_deep(f_deep),
-			deep ? deep(n, f_deep, ec_d, ec_deep) : 0);
+			deep ? deep(n, f_deep, ec_d, ec_deep) : 0),
+		SIZE_MAX);
 }
 
 static err_t bign96Start(void* state, const bign_params* params)
@@ -158,8 +161,8 @@ static err_t bign96Start(void* state, const bign_params* params)
 	size_t f_keep;
 	size_t ec_keep;
 	// состояние
-	qr_o* f;		/* поле */
 	ec_o* ec;		/* кривая */
+	qr_o* f;		/* поле */
 	void* stack;	/* вложенный стек */
 	// pre
 	ASSERT(memIsValid(params, sizeof(bign_params)));
@@ -169,15 +172,19 @@ static err_t bign96Start(void* state, const bign_params* params)
 	n = W_OF_B(192);
 	f_keep = gfpCreate_keep(24);
 	ec_keep = ecpCreateJ_keep(n);
+	// разметить память
+	(void)memSlice(state,
+		ec_keep,
+		f_keep,
+		SIZE_0,
+		SIZE_MAX,
+		&ec, &f, &stack);
 	// создать поле и выполнить минимальные проверки p
-	f = (qr_o*)((octet*)state + ec_keep);
-	stack = (octet*)f + f_keep;
 	if (!gfpCreate(f, params->p, 24, stack) ||
 		wwBitSize(f->mod, n) != 192 ||
 		wwGetBits(f->mod, 0, 2) != 3)
 		return ERR_BAD_PARAMS;
 	// создать кривую и группу, выполнить минимальную проверку order
-	ec = (ec_o*)state;
 	if (!ecpCreateJ(ec, f, params->a, params->b, stack) ||
 		!ecCreateGroup(ec, 0, params->yG, params->q, 24, 1, stack) ||
 		wwBitSize(ec->order, n) != params->l * 2 ||

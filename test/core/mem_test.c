@@ -4,7 +4,7 @@
 \brief Tests for memory functions
 \project bee2/test
 \created 2014.02.01
-\version 2025.08.31
+\version 2025.09.01
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -172,32 +172,35 @@ bool_t memTest()
 		return FALSE;
 	// разметка
 	if (memSlice(0, 
-			SIZE_1, &p, 
-			SIZE_1 | SIZE_HI, &p1, 
-			SIZE_1, &p2, 
-			SIZE_1, &p3, 
+			SIZE_1,
+			SIZE_1 | SIZE_HI,
+			SIZE_1,
+			SIZE_1, 
 			SIZE_MAX) != 3 * sizeof(mem_align_t))
 		return FALSE;
 	if (memSlice(buf3, 
-			SIZE_1, &p, 
-			SIZE_1 | SIZE_HI, &p1, 
-			SIZE_0, &p2,
-			SIZE_0, &p3,
-			SIZE_MAX) != sizeof(mem_align_t) ||
-		p != buf3 || p1 != p || p2 != p1 || p3 != p2)
+			SIZE_1,
+			SIZE_1 | SIZE_HI,
+			SIZE_0,
+			SIZE_0,
+			SIZE_MAX,
+			&p, &p1, &p2, &p3) != sizeof(mem_align_t) ||
+		p != buf3 || p1 != p || p2 == p1 || p3 != p2)
 		return FALSE;
 	if (memSlice(buf3, 
-			SIZE_1 | SIZE_HI, &p, 
-			SIZE_1 | SIZE_HI, &p1, 
-			SIZE_MAX) != sizeof(mem_align_t) || 
+			SIZE_1 | SIZE_HI,
+			SIZE_1 | SIZE_HI, 
+			SIZE_MAX,
+			&p, &p1) != sizeof(mem_align_t) || 
 		p != buf3 || p1 != p)
 		return FALSE;
 	if (memSlice(buf3, 
-			SIZE_1, &p, 
-			SIZE_1 | SIZE_HI, &p1, 
-			SIZE_1 | SIZE_HI, &p2, 
-			SIZE_1, &p3, 
-			SIZE_MAX) != 2 * sizeof(mem_align_t) || 
+			SIZE_1,
+			SIZE_1 | SIZE_HI,
+			SIZE_1 | SIZE_HI, 
+			SIZE_1,
+			SIZE_MAX,
+			&p, &p1, &p2, &p3) != 2 * sizeof(mem_align_t) || 
 		p != buf3 || p1 != p || p2 != p || p3 == p2)
 		return FALSE;
 	// все нормально

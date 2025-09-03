@@ -4,7 +4,7 @@
 \brief GOST R 34.10-94 (Russia): digital signature algorithms
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2025.05.07
+\version 2025.09.03
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -20,23 +20,6 @@
 #include "bee2/math/gfp.h"
 #include "bee2/math/ww.h"
 #include "bee2/math/zz.h"
-
-/*
-*******************************************************************************
-Глубина стека
-
-Высокоуровневые функции сообщают о потребностях в стековой памяти через 
-функции интерфейса g12s_deep_i. Потребности не должны учитывать память для 
-размещения описаний базового поля и эллиптической кривой.
-*******************************************************************************
-*/
-
-typedef size_t (*g12s_deep_i)(
-	size_t n,					/* размерность (в машинных словах) */
-	size_t f_deep,				/* глубина стека базового поля */
-	size_t ec_d,				/* число проективных координат */
-	size_t ec_deep				/* глубина стека эллиптической кривой */
-);
 
 /*
 *******************************************************************************
@@ -568,13 +551,11 @@ err_t g12sParamsStd(g12s_params* params, const char* name)
 Создание описания эллиптической кривой
 
 По долговременным параметрам params формируется описание pec эллиптической
-кривой. Указатель *pec является одновременно началом фрагмента памяти, 
-в котором размещается состояние и стек. Длина фрагмента определяется с учетом 
-потребностей deep и размерностей dims.
+кривой.
+
 \pre Указатель pec корректен.
 \return ERR_OK, если описание успешно создано, и код ошибки в противном 
 случае.
-\remark Запрошенная память начинается по адресу objEnd(*pec, void).
 \remark Проводится минимальная проверка параметров, обеспечивающая 
 работоспособность высокоуровневых функций.
 \remark Диапазоны для q:
@@ -582,32 +563,29 @@ err_t g12sParamsStd(g12s_params* params, const char* name)
 -	2^508 \leq q \leq 2^512 (l == 512).
 .
 \post Диапазоны для p:
-	|nq - (p + 1)| \leq 2\sqrt{p} =>
+	|cofactor * q - (p + 1)| \leq 2\sqrt{p} =>
 		(\sqrt{nq} - 1)^2 \leq p \leq (\sqrt{nq} + 1)^2 =>
 			p \geq (\sqrt{q} - 1)^2 =>
 				p > 2^253 (l == 256)
 				p > 2^507 (l == 512)
 В частности, длина p (в октетах, в словах) не меньше длины q. 
+\remark После создания эллиптической кривой ec уровень стойкости можно 
+определить по ec->f->no: ec->f->no < 64 <=> l == 256.
 *******************************************************************************
 */
 
 static err_t g12sEcCreate(
 	ec_o** pec,						/* [out] описание эллиптической кривой */
-	const g12s_params* params,		/* [in] долговременные параметры */
-	g12s_deep_i deep				/* [in] потребности в стековой памяти */
+	const g12s_params* params		/* [in] долговременные параметры */
 )
 {
-	// размерности
 	size_t n, no, nb;
 	size_t f_keep;
 	size_t f_deep;
-	size_t ec_d;
 	size_t ec_keep;
-	size_t ec_deep;
-	// состояние
 	void* state;	
-	qr_o* f;			/* базовое поле */
 	ec_o* ec;			/* кривая */
+	qr_o* f;			/* базовое поле */
 	void* stack;
 	// pre
 	ASSERT(memIsValid(pec, sizeof(*pec)));
@@ -620,23 +598,30 @@ static err_t g12sEcCreate(
 	n = W_OF_O(no);
 	f_keep = gfpCreate_keep(no);
 	f_deep = gfpCreate_deep(no);
-	ec_d = 3;
 	ec_keep = ecpCreateJ_keep(no);
-	ec_deep = ecpCreateJ_deep(no, f_deep);
 	// создать состояние
-	state = blobCreate(
-		f_keep + ec_keep +
-		utilMax(3,
-			ec_deep,
-			ecCreateGroup_deep(f_deep),
-			deep(n, f_deep, ec_d, ec_deep)));
+	state = blobCreate2(
+		ec_keep,
+		f_keep,
+		SIZE_MAX,
+		&ec, &f);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
+	// создать стек
+	stack = blobCreate(
+		utilMax(3,
+			gfpCreate_deep(no),
+			ecpCreateJ_deep(n, f_deep),
+			ecCreateGroup_deep(f_deep)));
+	if (stack == 0)
+	{
+		blobClose(state);
+		return ERR_OUTOFMEMORY;
+	}
 	// создать поле
-	f = (qr_o*)((octet*)state + ec_keep);
-	stack = (octet*)f + f_keep;
 	if (!gfpCreate(f, params->p, no, stack))
 	{
+		blobClose(stack);
 		blobClose(state);
 		return ERR_BAD_PARAMS;
 	}
@@ -645,15 +630,16 @@ static err_t g12sEcCreate(
 	if (params->l == 256 && nb <= 253 ||
 		params->l == 512 && nb <= 507)
 	{
+		blobClose(stack);
 		blobClose(state);
 		return ERR_BAD_PARAMS;
 	}
 	// создать кривую и группу
-	ec = (ec_o*)state;
 	if (!ecpCreateJ(ec, f, params->a, params->b, stack) ||
 		!ecCreateGroup(ec, params->xP, params->yP, params->q, 
 			params->l / 8, params->n, stack))
 	{
+		blobClose(stack);
 		blobClose(state);
 		return ERR_BAD_PARAMS;
 	}
@@ -664,12 +650,14 @@ static err_t g12sEcCreate(
 		params->l == 512 && nb <= 508 ||
 		zzIsEven(ec->order, n))
 	{
+		blobClose(stack);
 		blobClose(state);
 		return ERR_BAD_PARAMS;
 	}
 	// присоединить f к ec
 	objAppend(ec, f, 0);
-	// все нормально
+	// завершить
+	blobClose(stack);
 	*pec = ec;
 	return ERR_OK;
 }
@@ -699,41 +687,48 @@ static void g12sEcClose(ec_o* ec)
 -#	J(E) \notin {0, 1728} <=> a, b != 0 (g12sParamsVal)
 -#	4a^3 + 27b^2 \not\equiv 0 (\mod p) (ecpIsValid)
 -#	P \in E (ecpSeemsValidGroup)
--#	|n * q - (p + 1)| \leq 2\sqrt{p} (ecpSeemsValidGroup)
+-#	|cofactor * q - (p + 1)| \leq 2\sqrt{p} (ecpSeemsValidGroup)
 -#	qP = O (ecpHasOrder)
-
 *******************************************************************************
 */
 
-static size_t g12sParamsVal_deep(size_t n, size_t f_deep, size_t ec_d, 
-	size_t ec_deep)
+static err_t g12sParamsValEc(const ec_o* ec)
 {
-	return utilMax(4,
-			ecpIsValid_deep(n, f_deep),
-			ecpSeemsValidGroup_deep(n, f_deep),
-			ecpIsSafeGroup_deep(n),
-			ecHasOrderA_deep(n, ec_d, ec_deep, n));
+	void* stack;
+	// pre
+	ASSERT(ecIsOperable(ec));
+	// создать стек
+	stack = blobCreate(
+		utilMax(4,
+			ecpIsValid_deep(ec->f->n, ec->f->deep),
+			ecpSeemsValidGroup_deep(ec->f->n, ec->f->deep),
+			ecpIsSafeGroup_deep(ec->f->n),
+			ecHasOrderA_deep(ec->f->n, ec->d, ec->deep, ec->f->n)));
+	if (stack == 0)
+		return ERR_OUTOFMEMORY;
+	// проверить кривую, проверить J(E)
+	if (!ecpIsValid(ec, stack) ||
+		!ecpSeemsValidGroup(ec, stack) ||
+		!ecpIsSafeGroup(ec, ec->f->no < 64 ? 31 : 131, stack) ||
+		!ecHasOrderA(ec->base, ec, ec->order, ec->f->n, stack) ||
+		qrIsZero(ec->A, ec->f) ||
+		qrIsZero(ec->B, ec->f))
+	{
+		blobClose(stack);
+		return ERR_BAD_PARAMS;
+	}
+	// завершение
+	blobClose(stack);
+	return ERR_OK;
 }
 
 err_t g12sParamsVal(const g12s_params* params)
 {
 	err_t code;
-	// состояние
 	ec_o* ec = 0;
-	void* stack;
-	// старт
-	code = g12sEcCreate(&ec, params, g12sParamsVal_deep);
+	code = g12sEcCreate(&ec, params);
 	ERR_CALL_CHECK(code);
-	stack = objEnd(ec, void);
-	// проверить кривую, проверить J(E)
-	if (!ecpIsValid(ec, stack) ||
-		!ecpSeemsValidGroup(ec, stack) ||
-		!ecpIsSafeGroup(ec, params->l == 256 ? 31 : 131, stack) ||
-		!ecHasOrderA(ec->base, ec, ec->order, ec->f->n, stack) ||
-		qrIsZero(ec->A, ec->f) || 
-		qrIsZero(ec->B, ec->f))
-		code = ERR_BAD_PARAMS;
-	// завершение
+	code = g12sParamsValEc(ec);
 	g12sEcClose(ec);
 	return code;
 }
@@ -744,63 +739,65 @@ err_t g12sParamsVal(const g12s_params* params)
 *******************************************************************************
 */
 
-static size_t g12sKeypairGen_deep(size_t n, size_t f_deep, size_t ec_d, 
-	size_t ec_deep)
+static err_t g12sKeypairGenEc(octet privkey[], octet pubkey[],
+	const ec_o* ec, gen_i rng, void* rng_state)
 {
-	const size_t m = n;
-	return O_OF_W(m + 2 * n) + 
-		ecMulA_deep(n, ec_d, ec_deep, n);
-}
-
-err_t g12sKeypairGen(octet privkey[], octet pubkey[],
-	const g12s_params* params, gen_i rng, void* rng_stack)
-{
-	err_t code;
 	size_t m, mo;
-	// состояние
-	ec_o* ec = 0;
-	word* d;				/* [m] личный ключ */
-	word* Q;				/* [2n] открытый ключ */	
+	void* state;
+	word* d;			/* [m] личный ключ */
+	word* Q;			/* [2n] открытый ключ */	
 	void* stack;
-	// проверить rng
+	// pre
+	ASSERT(ecIsOperable(ec));
+	// размерности order
+	mo = ec->f->no < 64 ? 32 : 64;
+	m = W_OF_O(mo);
+	// входной контроль
+	if (!memIsValid(privkey, mo) ||
+		!memIsValid(pubkey, 2 * ec->f->no))
+		return ERR_BAD_INPUT;
 	if (rng == 0)
 		return ERR_BAD_RNG;
-	// старт
-	code = g12sEcCreate(&ec, params, g12sKeypairGen_deep);
-	ERR_CALL_CHECK(code);
-	// размерности order
-	m = W_OF_B(params->l);
-	mo = O_OF_B(params->l);
-	// проверить входные указатели
-	if (!memIsValid(privkey, mo) || 
-		!memIsValid(pubkey, 2 * ec->f->no))
-	{
-		g12sEcClose(ec);
-		return ERR_BAD_INPUT;
-	}
-	// раскладка состояния
-	d = objEnd(ec, word);
-	Q = d + m;
-	stack = Q + 2 * ec->f->n;
+	// создать состояние
+	state = blobCreate2(
+		O_OF_W(m),
+		O_OF_W(2 * ec->f->n),
+		ecMulA_deep(ec->f->n, ec->d, ec->deep, m),
+		SIZE_MAX,
+		&d, &Q, &stack);
+	if (state == 0)
+		return ERR_OUTOFMEMORY;
 	// d <-R {1,2,..., q - 1}
-	if (!zzRandNZMod(d, ec->order, m, rng, rng_stack))
+	if (!zzRandNZMod(d, ec->order, m, rng, rng_state))
 	{
-		g12sEcClose(ec);
+		blobClose(state);
 		return ERR_BAD_RNG;
 	}
 	// Q <- d P
 	if (!ecMulA(Q, ec->base, ec, d, m, stack))
 	{
-		g12sEcClose(ec);
+		blobClose(state);
 		return ERR_BAD_PARAMS;
 	}
 	// выгрузить ключи
 	wwTo(privkey, mo, d);
 	qrTo(pubkey, ecX(Q), ec->f, stack);
 	qrTo(pubkey + ec->f->no, ecY(Q, ec->f->n), ec->f, stack);
-	// все нормально
-	g12sEcClose(ec);
+	// завершение
+	blobClose(state);
 	return ERR_OK;
+}
+
+err_t g12sKeypairGen(octet privkey[], octet pubkey[],
+	const g12s_params* params, gen_i rng, void* rng_state)
+{
+	err_t code;
+	ec_o* ec = 0;
+	code = g12sEcCreate(&ec, params);
+	ERR_CALL_CHECK(code);
+	code = g12sKeypairGenEc(privkey, pubkey, ec, rng, rng_state);
+	g12sEcClose(ec);
+	return code;
 }
 
 /*
@@ -809,24 +806,11 @@ err_t g12sKeypairGen(octet privkey[], octet pubkey[],
 *******************************************************************************
 */
 
-static size_t g12sSign_deep(size_t n, size_t f_deep, size_t ec_d, 
-	size_t ec_deep)
+static err_t g12sSignEc(octet sig[], const ec_o* ec, const octet hash[], 
+	const octet privkey[], gen_i rng, void* rng_state)
 {
-	const size_t m = n;
-	return 	O_OF_W(3 * m + 2 * n) +
-		utilMax(3,
-			zzMod_deep(m, m),
-			ecMulA_deep(n, ec_d, ec_deep, n),
-			zzMulMod_deep(m));
-}
-
-err_t g12sSign(octet sig[], const g12s_params* params, const octet hash[],
-	const octet privkey[], gen_i rng, void* rng_stack)
-{
-	err_t code;
 	size_t m, mo;
-	// состояние
-	ec_o* ec = 0;
+	void* state;
 	word* d;		/* [m] личный ключ */
 	word* e;		/* [m] обработанное хэш-значение */
 	word* k;		/* [m] одноразовый ключ */
@@ -834,37 +818,40 @@ err_t g12sSign(octet sig[], const g12s_params* params, const octet hash[],
 	word* r;		/* [m] первая (старшая) часть подписи */
 	word* s;		/* [m] вторая часть подписи */
 	void* stack;
-	// проверить rng
-	if (rng == 0)
-		return ERR_BAD_RNG;
-	// старт
-	code = g12sEcCreate(&ec, params, g12sSign_deep);
-	ERR_CALL_CHECK(code);
+	// pre
+	ASSERT(ecIsOperable(ec));
 	// размерности order
-	m = W_OF_B(params->l);
-	mo = O_OF_B(params->l);
-	// проверить входные указатели
+	mo = ec->f->no < 64 ? 32 : 64;
+	m = W_OF_O(mo);
+	// входной контроль
 	if (!memIsValid(hash, mo) ||
 		!memIsValid(privkey, mo) ||
 		!memIsValid(sig, 2 * mo))
-	{
-		g12sEcClose(ec);
 		return ERR_BAD_INPUT;
-	}
-	// раскладка состояния
-	d = objEnd(ec, word);
-	e = d + m;
-	k = e + m;
-	C = k + m;
-	r = C + 2 * ec->f->n;
-	s = r + m;
-	stack = s + m;
+	if (rng == 0)
+		return ERR_BAD_RNG;
+	// создать состояние
+	state = blobCreate2(
+		O_OF_W(m),
+		O_OF_W(m),
+		O_OF_W(m),
+		O_OF_W(2 * ec->f->n),
+		O_OF_W(m),
+		O_OF_W(m),
+		utilMax(3,
+			zzMod_deep(m, m),
+			ecMulA_deep(ec->f->n, ec->d, ec->deep, ec->f->n),
+			zzMulMod_deep(m)),
+		SIZE_MAX,
+		&d, &e, &k, &C, &r, &s, &stack);
+	if (state == 0)
+		return ERR_OUTOFMEMORY;
 	// загрузить d
 	wwFrom(d, privkey, mo);
-	if (wwIsZero(d, m) || 
+	if (wwIsZero(d, m) ||
 		wwCmp(d, ec->order, m) >= 0)
 	{
-		g12sEcClose(ec);
+		blobClose(state);
 		return ERR_BAD_PRIVKEY;
 	}
 	// e <- hash \mod q
@@ -877,17 +864,17 @@ err_t g12sSign(octet sig[], const g12s_params* params, const octet hash[],
 		e[0] = 1;
 	// k <-R {1,2,..., q - 1}
 gen_k:
-	if (!zzRandNZMod(k, ec->order, m, rng, rng_stack))
+	if (!zzRandNZMod(k, ec->order, m, rng, rng_state))
 	{
-		g12sEcClose(ec);
+		blobClose(state);
 		return ERR_BAD_RNG;
 	}
 	// C <- k P
 	if (!ecMulA(C, ec->base, ec, k, m, stack))
 	{
+		blobClose(state);
 		// если params корректны, то этого быть не должно
-		g12sEcClose(ec);
-		return ERR_BAD_INPUT;
+		return ERR_BAD_PARAMS;
 	}
 	// r <- x_C \mod q
 	qrTo((octet*)C, ecX(C), ec->f, stack);
@@ -904,9 +891,21 @@ gen_k:
 	wwTo(sig, mo, s);
 	wwTo(sig + mo, mo, r);
 	memRev(sig, 2 * mo);
-	// все нормально
-	g12sEcClose(ec);
+	// завершение
+	blobClose(state);
 	return ERR_OK;
+}
+
+err_t g12sSign(octet sig[], const g12s_params* params, const octet hash[],
+	const octet privkey[], gen_i rng, void* rng_state)
+{
+	err_t code;
+	ec_o* ec = 0;
+	code = g12sEcCreate(&ec, params);
+	ERR_CALL_CHECK(code);
+	code = g12sSignEc(sig, ec, hash, privkey, rng, rng_state);
+	g12sEcClose(ec);
+	return code;
 }
 
 /*
@@ -915,57 +914,44 @@ gen_k:
 *******************************************************************************
 */
 
-static size_t g12sVerify_deep(size_t n, size_t f_deep, size_t ec_d, 
-	size_t ec_deep)
-{
-	const size_t m = n;
-	return O_OF_W(5 * m + 2 * n) +
-		utilMax(4,
-			zzMod_deep(m, m),
-			zzMulMod_deep(m),
-			zzInvMod_deep(m),
-			ecAddMulA_deep(n, ec_d, ec_deep, 2, m, m));
-}
-
-err_t g12sVerify(const g12s_params* params, const octet hash[], 
+static err_t g12sVerifyEc(const ec_o* ec, const octet hash[], 
 	const octet sig[], const octet pubkey[])
 {
 	err_t code;
 	size_t m, mo;
-	// состояние
-	ec_o* ec = 0;
+	void* state;
 	word* Q;		/* [2n] открытый ключ / точка R */
 	word* r;		/* [m] первая (старшая) часть подписи */
 	word* s;		/* [m] вторая часть подписи */
 	word* e;		/* [m] обработанное хэш-значение, v */
 	void* stack;
-	// старт
-	code = g12sEcCreate(&ec, params, g12sVerify_deep);
-	ERR_CALL_CHECK(code);
 	// размерности order
-	m = W_OF_B(params->l);
-	mo = O_OF_B(params->l);
-	// проверить входные указатели
+	mo = ec->f->no < 64 ? 32 : 64;
+	m = W_OF_O(mo);
+	// входной контроль
 	if (!memIsValid(hash, mo) ||
 		!memIsValid(sig, 2 * mo) ||
 		!memIsValid(pubkey, 2 * ec->f->no))
-	{
-		g12sEcClose(ec);
 		return ERR_BAD_INPUT;
-	}
-	// раскладка состояния
-	Q = objEnd(ec, word);
-	r = Q + 2 * ec->f->n;
-	s = r + m;
-	e = s + m;
-	stack = e + m;
+	// создать состояние
+	state = blobCreate2(
+		O_OF_W(2 * ec->f->n),
+		O_OF_W(m),
+		O_OF_W(m),
+		O_OF_W(m),
+		utilMax(4,
+			zzMod_deep(m, m),
+			zzMulMod_deep(m),
+			zzInvMod_deep(m),
+			ecAddMulA_deep(ec->f->n, ec->d, ec->deep, 2, m, m)),
+		SIZE_MAX,
+		&Q, &r, &s, &e, &stack);
+	if (state == 0)
+		return ERR_OUTOFMEMORY;
 	// загрузить Q
 	if (!qrFrom(ecX(Q), pubkey, ec->f, stack) ||
 		!qrFrom(ecY(Q, ec->f->n), pubkey + ec->f->no, ec->f, stack))
-	{
-		g12sEcClose(ec);
 		return ERR_BAD_PUBKEY;
-	}
 	// загрузить r и s
 	memCopy(s, sig + mo, mo);
 	memRev(s, mo);
@@ -977,10 +963,7 @@ err_t g12sVerify(const g12s_params* params, const octet hash[],
 		wwIsZero(r, m) || 
 		wwCmp(s, ec->order, m) >= 0 ||
 		wwCmp(r, ec->order, m) >= 0)
-	{
-		g12sEcClose(ec);
 		return ERR_BAD_SIG;
-	}
 	// e <- hash \mod q
 	memCopy(e, hash, mo);
 	memRev(e, mo);
@@ -998,17 +981,25 @@ err_t g12sVerify(const g12s_params* params, const octet hash[],
 	zzNegMod(e, e, ec->order, m);
 	// Q <- s P + e Q [z1 P + z2 Q = R]
 	if (!ecAddMulA(Q, ec, stack, 2, ec->base, s, m, Q, e, m))
-	{
-		g12sEcClose(ec);
 		return ERR_BAD_PARAMS;
-	}
 	// s <- x_Q \mod q [x_R \mod q]
 	qrTo((octet*)Q, ecX(Q), ec->f, stack);
 	wwFrom(Q, Q, ec->f->no);
 	zzMod(s, Q, ec->f->n, ec->order, m, stack);
 	// s == r?
 	code = wwEq(r, s, m) ? ERR_OK : ERR_BAD_SIG;
-	// завершение
+	blobClose(state);
+	return code;
+}
+
+err_t g12sVerify(const g12s_params* params, const octet hash[],
+	const octet sig[], const octet pubkey[])
+{
+	err_t code;
+	ec_o* ec = 0;
+	code = g12sEcCreate(&ec, params);
+	ERR_CALL_CHECK(code);
+	code = g12sVerifyEc(ec, hash, sig, pubkey);
 	g12sEcClose(ec);
 	return code;
 }

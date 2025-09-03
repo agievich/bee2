@@ -4,7 +4,7 @@
 \brief Tests for blob functions
 \project bee2/test
 \created 2023.03.21
-\version 2025.08.27
+\version 2025.09.01
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -61,10 +61,11 @@ bool_t blobTest()
 		void* p1;
 		void* p2;
 		b3 = blobCreate2(
-			(size_t)11, &p,
-			(size_t)10, &p1,
-			(size_t)32 | SIZE_HI, &p2, 
-			SIZE_MAX);
+			(size_t)11,
+			(size_t)10,
+			(size_t)32 | SIZE_HI,
+			SIZE_MAX,
+			&p, &p1, &p2);
 		if (!b3 || 
 			!memIsAligned(b3, sizeof(mem_align_t)) ||
 			!memIsAligned(p1, sizeof(mem_align_t)) ||

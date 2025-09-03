@@ -4,7 +4,7 @@
 \brief Draft of RD_RB: key establishment protocols in finite fields
 \project bee2 [cryptographic library]
 \created 2014.07.01
-\version 2025.08.27
+\version 2025.09.01
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -618,11 +618,11 @@ err_t pfokParamsGen(pfok_params* params, const pfok_seed* seed,
 	ASSERT(W_OF_B(seed->li[0]) == n);
 	// создать состояние
 	state = blobCreate2(
-		prngSTB_keep(), &stb_state,
-		O_OF_W(qw), &qi,
-		O_OF_W(n), &p, 
-		O_OF_W(n), &g, 
-		zmMontCreate_keep(no), &qr,
+		prngSTB_keep(),
+		O_OF_W(qw),
+		O_OF_W(n),
+		O_OF_W(n),
+		zmMontCreate_keep(no),
 		utilMax(6,
 			priNextPrimeW_deep(),
 			priExtendPrime_deep(params->l, W_OF_B(seed->li[1]),
@@ -630,8 +630,9 @@ err_t pfokParamsGen(pfok_params* params, const pfok_seed* seed,
 			priIsSieved_deep((seed->li[0] + 3) / 4),
 			priIsSGPrime_deep(n),
 			zmMontCreate_deep(no), 
-			qrPower_deep(n, n, zmMontCreate_deep(no))), &stack,
-		SIZE_MAX);
+			qrPower_deep(n, n, zmMontCreate_deep(no))),
+		SIZE_MAX,
+		&stb_state, &qi, &p, &g, &qr, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// запустить генератор
@@ -736,14 +737,15 @@ err_t pfokParamsVal(const pfok_params* params)
 	no = O_OF_B(params->l), n = W_OF_B(params->l);
 	// создать состояние
 	state = blobCreate2(
-		O_OF_W(n), &p,
-		O_OF_W(n), &g,
-		zmMontCreate_keep(no), &qr,
+		O_OF_W(n),
+		O_OF_W(n),
+		zmMontCreate_keep(no),
 		utilMax(3, 
 			priIsPrime_deep(n),
 			zmMontCreate_deep(no),
-			qrPower_deep(n, n, zmMontCreate_deep(no))), &stack,
-		SIZE_MAX);
+			qrPower_deep(n, n, zmMontCreate_deep(no))),
+		SIZE_MAX,
+		&p, &g, &qr, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// p -- простое?
@@ -807,13 +809,14 @@ err_t pfokKeypairGen(octet privkey[], octet pubkey[],
 		return ERR_BAD_INPUT;
 	// создать состояние
 	state = blobCreate2(
-		O_OF_W(m), &x,
-		O_OF_W(n), &y,
-		zmMontCreate_keep(no), &qr, 
+		O_OF_W(m),
+		O_OF_W(n),
+		zmMontCreate_keep(no),
 		utilMax(2,
 			zmMontCreate_deep(no),
-			qrPower_deep(n, n, zmMontCreate_deep(no))), &stack,
-		SIZE_MAX);
+			qrPower_deep(n, n, zmMontCreate_deep(no))),
+		SIZE_MAX,
+		&x, &y, &qr, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// построить кольцо Монтгомери
@@ -879,13 +882,14 @@ err_t pfokPubkeyCalc(octet pubkey[], const pfok_params* params,
 		return ERR_BAD_INPUT;
 	// создать состояние
 	state = blobCreate2(
-		O_OF_W(m), &x,
-		O_OF_W(n), &y,
-		zmMontCreate_keep(no), &qr,
+		O_OF_W(m),
+		O_OF_W(n),
+		zmMontCreate_keep(no),
 		utilMax(2,
 			zmMontCreate_deep(no),
-			qrPower_deep(n, n, zmMontCreate_deep(no))), &stack,
-		SIZE_MAX);
+			qrPower_deep(n, n, zmMontCreate_deep(no))),
+		SIZE_MAX,
+		&x, &y, &qr, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// построить кольцо Монтгомери
@@ -940,13 +944,14 @@ err_t pfokDH(octet sharekey[], const pfok_params* params,
 		return ERR_BAD_INPUT;
 	// создать состояние
 	state = blobCreate2(
-		O_OF_W(m), &x,
-		O_OF_W(n), &y,
-		zmMontCreate_keep(no), &qr,
+		O_OF_W(m),
+		O_OF_W(n),
+		zmMontCreate_keep(no),
 		utilMax(2,
 			zmMontCreate_deep(no),
-			qrPower_deep(n, n, zmMontCreate_deep(no))), &stack,
-		SIZE_MAX);
+			qrPower_deep(n, n, zmMontCreate_deep(no))),
+		SIZE_MAX,
+		&x, &y, &qr, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// построить кольцо Монтгомери
@@ -1008,15 +1013,16 @@ err_t pfokMTI(octet sharekey[], const pfok_params* params,
 		return ERR_BAD_INPUT;
 	// создать состояние
 	state = blobCreate2(
-		O_OF_W(m), &x,
-		O_OF_W(m), &u,
-		O_OF_W(n), &y,
-		O_OF_W(n), &v,
-	    zmMontCreate_keep(no), &qr,
+		O_OF_W(m),
+		O_OF_W(m),
+		O_OF_W(n),
+		O_OF_W(n),
+	    zmMontCreate_keep(no),
 		utilMax(2,
 			zmMontCreate_deep(no),
-			qrPower_deep(n, n, zmMontCreate_deep(no))), &stack,
-		SIZE_MAX);
+			qrPower_deep(n, n, zmMontCreate_deep(no))),
+		SIZE_MAX,
+		&x, &u, &y, &v, &qr, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// построить кольцо Монтгомери

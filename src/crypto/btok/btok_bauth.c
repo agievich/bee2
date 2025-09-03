@@ -79,7 +79,7 @@ typedef struct
 	octet K0[32];				/*< ключ K0 */
 	octet K1[32];				/*< ключ K1 */
 	octet K2[32];				/*< ключ K2 */
-	octet data[];				/*< данные */
+	mem_align_t data[];			/*< данные */
 } bake_bauth_t_o;
 
 static size_t btokBAuthT_deep(

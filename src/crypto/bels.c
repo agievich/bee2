@@ -4,7 +4,7 @@
 \brief STB 34.101.60 (bels): secret sharing algorithms
 \project bee2 [cryptographic library]
 \created 2013.05.14
-\version 2025.08.28
+\version 2025.09.01
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -84,9 +84,10 @@ err_t belsValM(const octet m0[], size_t len)
 	// создать состояние
 	n = W_OF_O(len);
 	state = blobCreate2(
-		O_OF_W(n + 1), &f0, 
-		ppIsIrred_deep(n + 1), &stack,
-		SIZE_MAX);
+		O_OF_W(n + 1),
+		ppIsIrred_deep(n + 1),
+		SIZE_MAX, 
+		&f0, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// загрузить многочлен
@@ -124,9 +125,10 @@ err_t belsGenM0(octet m0[], size_t len, gen_i ang, void* ang_state)
 	// создать состояние
 	n = W_OF_O(len);
 	state = blobCreate2(
-		O_OF_W(n + 1), &f0,
-		ppIsIrred_deep(n + 1), &stack,
-		SIZE_MAX);
+		O_OF_W(n + 1),
+		ppIsIrred_deep(n + 1),
+		SIZE_MAX,
+		&f0, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// сгенерировать многочлен
@@ -167,11 +169,12 @@ err_t belsGenMi(octet mi[], size_t len, const octet m0[], gen_i ang,
 	// создать состояние
 	n = W_OF_O(len);
 	state = blobCreate2(
-		O_OF_W(n + 1), &f0,
-		O_OF_W(n + 1), &f,
-		O_OF_W(n + 1) | SIZE_HI, &u,
-		ppMinPolyMod_deep(n + 1), &stack,
-		SIZE_MAX);
+		O_OF_W(n + 1),
+		O_OF_W(n + 1),
+		O_OF_W(n + 1) | SIZE_HI,
+		ppMinPolyMod_deep(n + 1),
+		SIZE_MAX,
+		&f0, &f, &u, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// загрузить многочлен
@@ -220,13 +223,14 @@ err_t belsGenMid(octet mid[], size_t len, const octet m0[], const octet id[],
 	// создать состояние
 	n = W_OF_O(len);
 	state = blobCreate2(
-		O_OF_W(n + 1), &f0,
-		O_OF_W(n + 1), &f,
-		O_OF_W(W_OF_O(32) + 1), &u,
+		O_OF_W(n + 1),
+		O_OF_W(n + 1),
+		O_OF_W(W_OF_O(32) + 1),
 		utilMax(2, 
 			beltHash_keep(),
-			ppMinPolyMod_deep(n + 1)), &stack,
-		SIZE_MAX);
+			ppMinPolyMod_deep(n + 1)),
+		SIZE_MAX,
+		&f0, &f, &u, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// загрузить многочлен
@@ -333,13 +337,14 @@ err_t belsShare(octet si[], size_t count, size_t threshold, size_t len,
 	// создать состояние
 	n = W_OF_O(len);
 	state = blobCreate2(
-		O_OF_W(n + 1), &f,
-		O_OF_W(threshold * n - n), &k,
-		O_OF_W(threshold * n), &c,
+		O_OF_W(n + 1),
+		O_OF_W(threshold * n - n),
+		O_OF_W(threshold * n),
 		utilMax(2, 
 			ppMul_deep(threshold * n - n, n),
-			ppMod_deep(threshold * n, n + 1)), &stack,
-		SIZE_MAX);
+			ppMod_deep(threshold * n, n + 1)),
+		SIZE_MAX,
+		&f, &k, &c, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// сгенерировать k
@@ -387,13 +392,14 @@ err_t belsShare2(octet si[], size_t count, size_t threshold, size_t len,
 	// создать состояние
 	n = W_OF_O(len);
 	state = blobCreate2(
-		O_OF_W(n + 1), &f,
-		O_OF_W(threshold * n - n), &k,
-		O_OF_W(threshold * n), &c,
+		O_OF_W(n + 1),
+		O_OF_W(threshold * n - n),
+		O_OF_W(threshold * n),
 		utilMax(2,
 			ppMul_deep(threshold * n - n, n),
-			ppMod_deep(threshold * n, n + 1)), &stack,
-		SIZE_MAX);
+			ppMod_deep(threshold * n, n + 1)),
+		SIZE_MAX,
+		&f, &k, &c, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// сгенерировать k
@@ -487,15 +493,16 @@ err_t belsRecover(octet s[], size_t count, size_t len, const octet si[],
 			ppMod_deep((2 * i + 1) * n, (i + 1) * n + 1));
 	// создать состояние
 	state = blobCreate2(
-		O_OF_W(n + 1), &f,
-		O_OF_W(count * n + 1), &g,
-		O_OF_W((count - 1) * n + 1), &d,
-		O_OF_W((count - 1) * n + 1), &u,
-		O_OF_W(n + 1), &v,
-		O_OF_W((2 * count - 1) * n), &c,
-		O_OF_W(MAX2(2 * count - 2, count + 1) * n), &t,
-		deep, &stack,
-		SIZE_MAX);
+		O_OF_W(n + 1),
+		O_OF_W(count * n + 1),
+		O_OF_W((count - 1) * n + 1),
+		O_OF_W((count - 1) * n + 1),
+		O_OF_W(n + 1),
+		O_OF_W((2 * count - 1) * n),
+		O_OF_W(MAX2(2 * count - 2, count + 1) * n),
+		deep,
+		SIZE_MAX,
+		&f, &g, &d, &u, &v, &c, &t, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// [n]c(x) <- s1(x)
@@ -597,15 +604,16 @@ err_t belsRecover2(octet s[], size_t count, size_t len, const octet si[])
 		MAX2((2 * count - 2) * n, (count + 1) * n));
 	// создать состояние
 	state = blobCreate2(
-		O_OF_W(n + 1), &f,
-		O_OF_W(count * n + 1), &g,
-		O_OF_W((count - 1) * n + 1), &d,
-		O_OF_W((count - 1) * n + 1), &u,
-		O_OF_W(n + 1), &v,
-		O_OF_W((2 * count - 1) * n), &c,
-		O_OF_W(MAX2(2 * count - 2, count + 1) * n), &t,
-		deep, &stack,
-		SIZE_MAX);
+		O_OF_W(n + 1),
+		O_OF_W(count * n + 1),
+		O_OF_W((count - 1) * n + 1),
+		O_OF_W((count - 1) * n + 1),
+		O_OF_W(n + 1),
+		O_OF_W((2 * count - 1) * n),
+		O_OF_W(MAX2(2 * count - 2, count + 1) * n),
+		deep,
+		SIZE_MAX,
+		&f, &g, &d, &u, &v, &c, &t, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// [n]c(x) <- s1(x)

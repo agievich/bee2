@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): CV certificates
 \project bee2 [cryptographic library]
 \created 2022.07.04
-\version 2025.08.27
+\version 2025.09.01
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -118,10 +118,11 @@ static err_t btokSign(octet sig[], const void* buf, size_t count,
 	ERR_CALL_CHECK(code);
 	// создать стек
 	stack = blobCreate2(
-		privkey_len, &hash,
-		privkey_len, &t,
-		(privkey_len <= 32 ? beltHash_keep() : bashHash_keep()), &state,
-		SIZE_MAX);
+		privkey_len,
+		privkey_len,
+		(privkey_len <= 32 ? beltHash_keep() : bashHash_keep()),
+		SIZE_MAX,
+		&hash, &t, &state);
 	if (!stack)
 		return ERR_OUTOFMEMORY;
 	// хэшировать
@@ -179,9 +180,10 @@ static err_t btokVerify(const void* buf, size_t count, const octet sig[],
 	ERR_CALL_CHECK(code);
 	// создать стек
 	stack = blobCreate2(
-		pubkey_len / 2, &hash, 
-		pubkey_len <= 64 ? beltHash_keep() : bashHash_keep(), &state,
-		SIZE_MAX);
+		pubkey_len / 2,
+		pubkey_len <= 64 ? beltHash_keep() : bashHash_keep(),
+		SIZE_MAX,
+		&hash, &state);
 	if (!stack)
 		return ERR_OUTOFMEMORY;
    	// хэшировать
@@ -638,9 +640,10 @@ err_t btokCVCVal(const octet cert[], size_t cert_len,
 		return ERR_BAD_INPUT;
 	// слздать стек
 	stack = blobCreate2(
-		sizeof(btok_cvc_t), &cvc,
-		sizeof(btok_cvc_t), &cvca,
-		SIZE_MAX);
+		sizeof(btok_cvc_t),
+		sizeof(btok_cvc_t),
+		SIZE_MAX,
+		&cvc, &cvca);
 	if (!stack)
 		return ERR_OUTOFMEMORY;
 	// разобрать сертификаты

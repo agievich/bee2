@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): local definitions
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2023.09.19
+\version 2025.09.01
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -62,8 +62,8 @@ err_t bignStart(void* state, const bign_params* params)
 	size_t f_keep;
 	size_t ec_keep;
 	// состояние
-	qr_o* f;		/* поле */
 	ec_o* ec;		/* кривая */
+	qr_o* f;		/* поле */
 	void* stack;	/* вложенный стек */
 	// pre
 	ASSERT(memIsValid(params, sizeof(bign_params)));
@@ -74,15 +74,19 @@ err_t bignStart(void* state, const bign_params* params)
 	n = W_OF_B(2 * params->l);
 	f_keep = gfpCreate_keep(no);
 	ec_keep = ecpCreateJ_keep(n);
+	// разметить память
+	(void)memSlice(state,
+		ec_keep,
+		f_keep,
+		SIZE_0,
+		SIZE_MAX,
+		&ec, &f, &stack);
 	// создать поле
-	f = (qr_o*)((octet*)state + ec_keep);
-	stack = (octet*)f + f_keep;
 	if (!gfpCreate(f, params->p, no, stack))
 		return ERR_BAD_PARAMS;
 	ASSERT(wwBitSize(f->mod, n) == params->l * 2);
 	ASSERT(wwGetBits(f->mod, 0, 2) == 3);
 	// создать кривую и группу
-	ec = (ec_o*)state;
 	if (!ecpCreateJ(ec, f, params->a, params->b, stack) ||
 		!ecCreateGroup(ec, 0, params->yG, params->q, no, 1, stack))
 		return ERR_BAD_PARAMS;
@@ -105,10 +109,12 @@ size_t bignStart_keep(size_t l, bign_deep_i deep)
 	size_t ec_keep = ecpCreateJ_keep(n);
 	size_t ec_deep = ecpCreateJ_deep(n, f_deep);
 	// расчет
-	return f_keep + ec_keep +
+	return memSlice(0,
+		ec_keep,
+		f_keep,
 		utilMax(3,
 			ec_deep,
 			ecCreateGroup_deep(f_deep),
-			deep ? deep(n, f_deep, ec_d, ec_deep) : 0);
+			deep ? deep(n, f_deep, ec_d, ec_deep) : 0),
+		SIZE_MAX);
 }
-
