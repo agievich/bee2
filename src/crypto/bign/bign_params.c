@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): public parameters
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.05.07
+\version 2025.09.04
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -239,20 +239,20 @@ err_t bignParamsStd(bign_params* params, const char* name)
 *******************************************************************************
 Проверка параметров
 
--#	l \in {128, 192, 256} (bignIsOperable)
--#	2^{l - 1} < p, q < 2^l (bignIsOperable)
--#	p \equiv 3 \mod 4 (bignIsOperable)
--#	0 < a (bignIsOperable)
--#	0 < b (bignIsOperable, zzJacobi)
+-#	l \in {128, 192, 256} (bignParamsAreOperable)
+-#	2^{l - 1} < p, q < 2^l (bignParamsAreOperable)
+-#	p \equiv 3 \mod 4 (bignParamsAreOperable)
+-#	0 < a (bignParamsAreOperable)
+-#	0 < b (bignParamsAreOperable, zzJacobi)
 -#	p -- простое (ecpIsValid)
 -#	q -- простое (ecpIsSafeGroup)
 -#	q != p (ecpIsSafeGroup)
 -#	p^m \not\equiv 1 (mod q), m = 1, 2,..., 50 (ecpIsSafeGroup)
--#	a, b < p (ecpCreateJ in bignStart)
--#	b \equiv B (mod p) (bignValParams)
+-#	a, b < p (ecpCreateJ in bignEcCreate)
+-#	b \equiv B (mod p) (bignParamsVal)
 -#	4a^3 + 27b^2 \not\equiv 0 (\mod p) (ecpIsValid)
 -#	(b / p) = 1 (zzJacobi)
--#	G = (0, b^{(p + 1) /4}) (bignValParams)
+-#	G = (0, b^{(p + 1) /4}) (bignParamsVal)
 -#	qG = O (ecpHasOrder)
 *******************************************************************************
 */
@@ -267,51 +267,43 @@ static void bignSeedInc(octet seed[8])
 	CLEAN(carry);
 }
 
-static size_t bignParamsVal_deep(size_t n, size_t f_deep, size_t ec_d,
-	size_t ec_deep)
-{
-	return beltHash_keep() + O_OF_B(512) +
-		utilMax(6,
-			beltHash_keep(),
-			ecpIsValid_deep(n, f_deep),
-			ecpIsSafeGroup_deep(n),
-			ecpIsOnA_deep(n, f_deep),
-			qrPower_deep(n, n, f_deep),
-			ecHasOrderA_deep(n, ec_d, ec_deep, n));
-}
-
 err_t bignParamsVal(const bign_params* params)
 {
 	err_t code;
 	size_t no, n;
-	// состояние (буферы могут пересекаться)
+	ec_o* ec;
 	void* state;
-	ec_o* ec;				/* описание эллиптической кривой */
 	octet* hash_state;		/* [beltHash_keep] состояние хэширования */
 	octet* seed;			/* [8] копия seed */
-	word* B;				/* [W_OF_B(512)] переменная B */
+	octet* B;				/* [64] переменная B */
+	word* b;				/* [W_OF_O(64)] коэффициент b */
 	void* stack;
-	// проверить params
-	if (!memIsValid(params, sizeof(bign_params)))
-		return ERR_BAD_INPUT;
-	if (!bignIsOperable(params))
-		return ERR_BAD_PARAMS;
-	// создать состояние
-	state = blobCreate(bignStart_keep(params->l, bignParamsVal_deep));
-	if (state == 0)
-		return ERR_OUTOFMEMORY;
-	// старт
-	code = bignStart(state, params);
-	ERR_CALL_HANDLE(code, blobClose(state));
-	ec = (ec_o*)state;
+	// создать кривую
+	code = bignEcCreate(&ec, params);
+	ERR_CALL_CHECK(code);
+	ASSERT(ecIsOperable(ec));
 	// размерности
-	no  = ec->f->no;
-	n = ec->f->n;
-	// раскладка состояния
-	hash_state = objEnd(ec, octet);
-	seed = hash_state + beltHash_keep();
-	B = (word*)seed;
-	stack = B + W_OF_B(512);
+	no = ec->f->no, n = ec->f->n;
+	// создать состояние
+	state = blobCreate2(
+		beltHash_keep(),
+		(size_t)8,
+		(size_t)64,
+		W_OF_O(64) | SIZE_HI,
+		utilMax(6,
+			beltHash_keep(),
+			ecpIsValid_deep(n, ec->f->deep),
+			ecpIsSafeGroup_deep(n),
+			ecpIsOnA_deep(n, ec->f->deep),
+			qrPower_deep(n, n, ec->f->deep),
+			ecHasOrderA_deep(n, ec->d, ec->deep, n)),
+		SIZE_MAX,
+		&hash_state, &seed, &B, &b, &stack);
+	if (state == 0)
+	{
+		bignEcClose(ec);
+		return ERR_OUTOFMEMORY;
+	}
 	// belt-hash(p..)
 	beltHashStart(hash_state);
 	beltHashStepH(params->p, no, hash_state);
@@ -325,27 +317,27 @@ err_t bignParamsVal(const bign_params* params)
 	bignSeedInc(seed);
 	beltHashStepH(seed, 8, stack);
 	// B <- belt-hash(p || a || seed) || belt-hash(p || a || seed + 1)
-	beltHashStepG((octet*)B, hash_state);
-	beltHashStepG((octet*)B + 32, stack);
-	wwFrom(B, B, 64);
-	// B <- B \mod p
-	zzMod(B, B, W_OF_O(64), ec->f->mod, n, stack);
-	wwTo(B, 64, B);
+	beltHashStepG(B, hash_state);
+	beltHashStepG(B + 32, stack);
+	// b <- B \mod p
+	wwFrom(b, B, 64);
+	zzMod(b, b, W_OF_O(64), ec->f->mod, n, stack);
+	wwTo(B, 64, b);
 	// проверить условия алгоритма 6.1.4
-	if (qrFrom(B, (octet*)B, ec->f, stack) &&
-		wwEq(B, ec->B, n) &&
+	if (qrFrom(b, B, ec->f, stack) &&
+		wwEq(b, ec->B, n) &&
 		!wwIsZero(ec->B, n) &&
 		ecpIsValid(ec, stack) &&
 		ecpIsSafeGroup(ec, 50, stack) &&
 		zzJacobi(ec->B, n, ec->f->mod, n, stack) == 1)
 	{
-		// B <- b^{(p + 1) / 4} = \sqrt{b} mod p
-		wwCopy(B, ec->f->mod, n);
-		zzAddW2(B, n, 1);
-		wwShLo(B, n, 2);
-		qrPower(B, ec->B, B, n, ec->f, stack);
+		// b <- b^{(p + 1) / 4} = \sqrt{b} mod p
+		wwCopy(b, ec->f->mod, n);
+		zzAddW2(b, n, 1);
+		wwShLo(b, n, 2);
+		qrPower(b, ec->B, b, n, ec->f, stack);
 		// оставшиеся условия
-		if (!wwEq(B, ecY(ec->base, n), n) ||
+		if (!wwEq(b, ecY(ec->base, n), n) ||
 			!ecHasOrderA(ec->base, ec, ec->order, n, stack))
 			code = ERR_BAD_PARAMS;
 	}
@@ -353,6 +345,7 @@ err_t bignParamsVal(const bign_params* params)
 		code = ERR_BAD_PARAMS;
 	// завершение
 	blobClose(state);
+	bignEcClose(ec);
 	return code;
 }
 
@@ -365,10 +358,15 @@ err_t bignParamsVal(const bign_params* params)
 static bool_t ecpDetIsZero(const word a[], const word b[], const word p[],
 	size_t n, void* stack)
 {
-	// переменные в stack
-	word* t1 = (word*)stack;
-	word* t2 = t1 + n;
-	stack = t2 + n;
+	word* t1;
+	word* t2;
+	// разметить память
+	(void)memSlice(stack,
+		O_OF_W(2 * n),
+		SIZE_0,
+		SIZE_MAX,
+		&t1, &stack);
+	t2 = t1 + n;
 	// t1 <- 4 A^3
 	zzSqrMod(t1, a, p, n, stack);
 	zzMulMod(t1, t1, a, p, n, stack);
@@ -384,21 +382,27 @@ static bool_t ecpDetIsZero(const word a[], const word b[], const word p[],
 
 static size_t ecpDetIsZero_deep(size_t n)
 {
-	return O_OF_W(2 * n) +
+	return memSlice(0,
+		O_OF_W(2 * n),
 		utilMax(3,
 			zzSqrMod_deep(n),
 			zzMulMod_deep(n),
-			zzMulWMod_deep(n)
-		);
+			zzMulWMod_deep(n)),
+		SIZE_MAX);
 }
 
 static bool_t ecpMOVIsMet(const word q[], const word p[], size_t n,
 	size_t threshold, void* stack)
 {
-	// переменные в stack
-	word* t1 = (word*)stack;
-	word* t2 = t1 + n;
-	stack = t2 + n;
+	word* t1;
+	word* t2;
+	// разметить память 
+	(void)memSlice(stack,
+		O_OF_W(2 * n),
+		SIZE_0,
+		SIZE_MAX,
+		&t1, &stack);
+	t2 = t1 + n;
 	// t1, t2 <- p mod q
 	ASSERT(threshold > 0);
 	zzMod(t1, p, n, q, n, stack);
@@ -418,23 +422,12 @@ static bool_t ecpMOVIsMet(const word q[], const word p[], size_t n,
 
 static size_t ecpMOVIsMet_deep(size_t n)
 {
-	return O_OF_W(2 * n) +
+	return memSlice(0,
+		O_OF_W(2 * n),
 		utilMax(2,
 			zzMod_deep(n, n),
-			zzMulMod_deep(n)
-		);
-}
-
-static size_t bignParamsGen_deep(size_t n)
-{
-	return O_OF_W(4 * n) + 8 + beltHash_keep() + 
-		utilMax(5,
-			beltHash_keep(),
-			priIsPrime_deep(n),
-			ecpDetIsZero_deep(n),
-			ecpMOVIsMet_deep(n),
-			zzPowerMod_deep(n, n)
-		);
+			zzMulMod_deep(n)),
+		SIZE_MAX);
 }
 
 err_t bignParamsGen(bign_params* params, bign_pgen_calc_q calc_q,
@@ -442,18 +435,18 @@ err_t bignParamsGen(bign_params* params, bign_pgen_calc_q calc_q,
 {
 	err_t code;
 	size_t no, n;
-	// состояние (буферы могут пересекаться)
 	void* st;
 	word* p;				/* [n] */
 	word* a;				/* [n] */
-	word* b;				/* [W_OF_B(512)] B / [n] b */
+	octet* B;				/* [64] */
+	word* b;				/* [W_OF_O(64)] */
 	word* q;				/* [n] */
 	word* yG;				/* [n] */
 	octet* seed;			/* [8] */
 	octet* hash_state;		/* [beltHash_keep] */
 	void* stack;
 	// проверить входные данные
-	if (!memIsValid(params, sizeof(bign_params)) || 
+	if (!memIsValid(params, sizeof(bign_params)) ||
 		!calc_q)
 		return ERR_BAD_INPUT;
 	// проверить уровень стойкости
@@ -474,18 +467,25 @@ err_t bignParamsGen(bign_params* params, bign_pgen_calc_q calc_q,
 		!memIsZero(params->a + no, sizeof(params->a) - no))
 		return ERR_BAD_PARAMS;
 	// создать состояние
-	st = blobCreate(bignParamsGen_deep(n));
+	st = blobCreate2(
+		O_OF_W(n),
+		O_OF_W(n),
+		(size_t)64,
+		W_OF_O(64) | SIZE_HI,
+		O_OF_W(n),
+		O_OF_W(n) | SIZE_HI,
+		(size_t)8,
+		beltHash_keep(),
+		utilMax(5,
+			beltHash_keep(),
+			priIsPrime_deep(n),
+			ecpDetIsZero_deep(n),
+			ecpMOVIsMet_deep(n),
+			zzPowerMod_deep(n, n)),
+		SIZE_MAX,
+		&p, &a, &B, &b, &q, &yG, &seed, &hash_state, &stack);
 	if (st == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка состояния
-	p = (word*)st;
-	a = p + n;
-	b = a + n;
-	q = yG = b + n;
-	seed = (octet*)(q + n);
-	hash_state = seed + 8;
-	stack = hash_state + beltHash_keep();
-	ASSERT((octet*)b + 64 <= seed);
 	// загрузить и проверить p
 	wwFrom(p, params->p, no);
 	ASSERT(wwBitSize(p, n) == params->l * 2);
@@ -522,10 +522,10 @@ err_t bignParamsGen(bign_params* params, bign_pgen_calc_q calc_q,
 		bignSeedInc(seed);
 		beltHashStepH(seed, 8, stack);
 		// B <- belt-hash(p || a || seed) || belt-hash(p || a || seed + 1)
-		beltHashStepG((octet*)b, hash_state);
-		beltHashStepG((octet*)b + 32, stack);
+		beltHashStepG(B, hash_state);
+		beltHashStepG(B + 32, stack);
 		// b <- B \mod p
-		wwFrom(b, b, 64);
+		wwFrom(b, B, 64);
 		zzMod(b, b, W_OF_O(64), p, n, stack);
 		// проверить b
 		if (ecpDetIsZero(a, b, p, n, stack) ||
@@ -689,7 +689,7 @@ err_t bignParamsEnc(octet der[], size_t* count, const bign_params* params)
 		!memIsValid(count, O_PER_S) ||
 		!memIsNullOrValid(der, *count))
 		return ERR_BAD_INPUT;
-	if (!bignIsOperable(params))
+	if (!bignParamsAreOperable(params))
 		return ERR_BAD_PARAMS;
 	len = bignParamsEnc_internal(0, params);
 	if (len == SIZE_MAX)

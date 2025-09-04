@@ -4,7 +4,7 @@
 \brief GOST R 34.10-94 (Russia): digital signature algorithms
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2025.09.03
+\version 2025.09.04
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -548,14 +548,13 @@ err_t g12sParamsStd(g12s_params* params, const char* name)
 
 /*
 *******************************************************************************
-Создание описания эллиптической кривой
+Создание эллиптической кривой
 
-По долговременным параметрам params формируется описание pec эллиптической
-кривой.
+По долговременным параметрам params создается эллиптическая кривая. Указатель
+на описание кривой возвращается по адресу pec.
 
 \pre Указатель pec корректен.
-\return ERR_OK, если описание успешно создано, и код ошибки в противном 
-случае.
+\return ERR_OK, если кривая успешно создана, и код ошибки в противном случае.
 \remark Проводится минимальная проверка параметров, обеспечивающая 
 работоспособность высокоуровневых функций.
 \remark Диапазоны для q:
@@ -575,34 +574,30 @@ err_t g12sParamsStd(g12s_params* params, const char* name)
 */
 
 static err_t g12sEcCreate(
-	ec_o** pec,						/* [out] описание эллиптической кривой */
+	ec_o** pec,						/* [out] эллиптическая кривая */
 	const g12s_params* params		/* [in] долговременные параметры */
 )
 {
 	size_t n, no, nb;
-	size_t f_keep;
 	size_t f_deep;
-	size_t ec_keep;
 	void* state;	
 	ec_o* ec;			/* кривая */
 	qr_o* f;			/* базовое поле */
 	void* stack;
-	// pre
-	ASSERT(memIsValid(pec, sizeof(*pec)));
-	// минимальная проверка входных данных
-	if (!memIsValid(params, sizeof(g12s_params)) ||
-		params->l != 256 && params->l != 512)
+	// входной контроль
+	if (!memIsValid(pec, sizeof(*pec)) ||
+		!memIsValid(params, sizeof(g12s_params)))
+		return ERR_BAD_INPUT;
+	if (params->l != 256 && params->l != 512)
 		return ERR_BAD_PARAMS;
-	// определить размерности
+	// размерности
 	no = memNonZeroSize(params->p, sizeof(params->p) * params->l / 512);
 	n = W_OF_O(no);
-	f_keep = gfpCreate_keep(no);
 	f_deep = gfpCreate_deep(no);
-	ec_keep = ecpCreateJ_keep(no);
 	// создать состояние
 	state = blobCreate2(
-		ec_keep,
-		f_keep,
+		ecpCreateJ_keep(n),
+		gfpCreate_keep(no),
 		SIZE_MAX,
 		&ec, &f);
 	if (state == 0)
@@ -664,7 +659,7 @@ static err_t g12sEcCreate(
 
 /*
 *******************************************************************************
-Закрытие описания эллиптической кривой
+Закрытие эллиптической кривой
 *******************************************************************************
 */
 
@@ -749,7 +744,7 @@ static err_t g12sKeypairGenEc(octet privkey[], octet pubkey[],
 	void* stack;
 	// pre
 	ASSERT(ecIsOperable(ec));
-	// размерности order
+	// размерности
 	mo = ec->f->no < 64 ? 32 : 64;
 	m = W_OF_O(mo);
 	// входной контроль
@@ -820,7 +815,7 @@ static err_t g12sSignEc(octet sig[], const ec_o* ec, const octet hash[],
 	void* stack;
 	// pre
 	ASSERT(ecIsOperable(ec));
-	// размерности order
+	// размерности
 	mo = ec->f->no < 64 ? 32 : 64;
 	m = W_OF_O(mo);
 	// входной контроль
@@ -925,7 +920,9 @@ static err_t g12sVerifyEc(const ec_o* ec, const octet hash[],
 	word* s;		/* [m] вторая часть подписи */
 	word* e;		/* [m] обработанное хэш-значение, v */
 	void* stack;
-	// размерности order
+	// pre
+	ASSERT(ecIsOperable(ec));
+	// размерности
 	mo = ec->f->no < 64 ? 32 : 64;
 	m = W_OF_O(mo);
 	// входной контроль

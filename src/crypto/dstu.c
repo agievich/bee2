@@ -4,7 +4,7 @@
 \brief DSTU 4145-2002 (Ukraine): digital signature algorithms
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.09.03
+\version 2025.09.04
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -391,54 +391,49 @@ err_t dstuParamsStd(dstu_params* params, const char* name)
 
 /*
 *******************************************************************************
-Создание описания эллиптической кривой
+Создание эллиптической кривой
 
-По долговременным параметрам params формируется описание pec эллиптической
-кривой. 
+По долговременным параметрам params создается эллиптическая кривая. Указатель
+на описание кривой возвращается по адресу pec.
 
 \pre Указатель pec корректен.
-\return ERR_OK, если описание успешно создано, и код ошибки в противном 
-случае.
+\return ERR_OK, если кривая успешно создана, и код ошибки в противном случае.
 \remark Проводится минимальная проверка параметров, обеспечивающая 
 работоспособность высокоуровневых функций.
 *******************************************************************************
 */
 
 static err_t dstuEcCreate(
-	ec_o** pec,						/* [out] описание эллиптической кривой */
+	ec_o** pec,						/* [out] эллиптическая кривая */
 	const dstu_params* params		/* [in] долговременные параметры */
 )
 {
-	// размерности
 	size_t m;
 	size_t n;
-	size_t f_keep;
 	size_t f_deep;
-	size_t ec_keep;
-	// состояния
+	// состояние
 	void* state;	
 	ec_o* ec;			/* кривая */
 	qr_o* f;			/* поле */
+	// второе состояние
 	void* state1;
-	size_t* p;			/* [4] описание многочлена */
+	size_t* p;			/* [4] многочлен */
 	octet* A;			/* [no] коэффициент A */
 	void* stack;
-	// pre
-	ASSERT(memIsValid(pec, sizeof(*pec)));
-	// минимальная проверка входных данных
+	// входной контроль
 	if (!memIsValid(params, sizeof(dstu_params)) ||
-		(m = params->p[0]) < 160 || m > 509 || 
+		!memIsValid(pec, sizeof(*pec)))
+		return ERR_BAD_INPUT;
+	if ((m = params->p[0]) < 160 || m > 509 || 
 		params->A > 1)
 		return ERR_BAD_PARAMS;
-	// определить размерности
+	// размерности
 	n = W_OF_B(m);
-	f_keep = gf2Create_keep(m);
 	f_deep = gf2Create_deep(m);
-	ec_keep = ec2CreateLD_keep(n);
 	// создать состояние
 	state = blobCreate2(
-		ec_keep,
-		f_keep,
+		ec2CreateLD_keep(n),
+		gf2Create_keep(m),
 		SIZE_MAX,
 		&ec, &f);
 	if (state == 0)
@@ -458,7 +453,7 @@ static err_t dstuEcCreate(
 		blobClose(state);
 		return ERR_OUTOFMEMORY;
 	}
-	// создать поле
+	// создать поле кривую и группу
 	p[0] = params->p[0];
 	p[1] = params->p[1];
 	p[2] = params->p[2];
@@ -490,7 +485,7 @@ static err_t dstuEcCreate(
 
 /*
 *******************************************************************************
-Закрытие описания эллиптической кривой
+Закрытие эллиптической кривой
 *******************************************************************************
 */
 
@@ -857,7 +852,7 @@ static err_t dstuKeypairGenEc(octet privkey[], octet pubkey[], const ec_o* ec,
 	void* stack;
 	// pre
 	ASSERT(ecIsOperable(ec));
-	// размерности order
+	// размерности
 	mb = wwBitSize(ec->order, ec->f->n);
 	mo = O_OF_B(mb);
 	m = W_OF_B(mb);
@@ -941,7 +936,7 @@ static err_t dstuSignEc(octet sig[], const ec_o* ec, size_t ld,
 	void* stack;
 	// pre
 	ASSERT(ecIsOperable(ec));
-	// размерности order
+	// размерности
 	mb = wwBitSize(ec->order, ec->f->n);
 	mo = O_OF_B(mb);
 	m = W_OF_B(mb);
@@ -1072,7 +1067,7 @@ static err_t dstuVerifyEc(const ec_o* ec, size_t ld, const octet hash[],
 	void* stack;
 	// pre
 	ASSERT(ecIsOperable(ec));
-	// размерности order
+	// размерности
 	mb = wwBitSize(ec->order, ec->f->n);
 	mo = O_OF_B(mb);
 	m = W_OF_B(mb);

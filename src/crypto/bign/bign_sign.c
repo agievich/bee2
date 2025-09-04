@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): digital signature
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.05.07
+\version 2025.09.04
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -30,70 +30,49 @@
 *******************************************************************************
 */
 
-static size_t bignSign_deep(size_t n, size_t f_deep, size_t ec_d,
-	size_t ec_deep)
-{
-	return O_OF_W(4 * n) +
-		utilMax(4,
-			beltHash_keep(),
-			ecMulA_deep(n, ec_d, ec_deep, n),
-			zzMul_deep(n / 2, n),
-			zzMod_deep(n + n / 2 + 1, n));
-}
-
-err_t bignSign(octet sig[], const bign_params* params, const octet oid_der[],
+err_t bignSignEc(octet sig[], const ec_o* ec, const octet oid_der[],
 	size_t oid_len, const octet hash[], const octet privkey[], gen_i rng, 
 	void* rng_state)
 {
-	err_t code;
 	size_t no, n;
-	// состояние (буферы могут пересекаться)
 	void* state;			
-	ec_o* ec;				/* описание эллиптической кривой */
 	word* d;				/* [n] личный ключ */
 	word* k;				/* [n] одноразовый личный ключ */
 	word* R;				/* [2n] точка R */
 	word* s0;				/* [n/2] первая часть подписи */
 	word* s1;				/* [n] вторая часть подписи */
 	octet* stack;
-	// проверить params
-	if (!memIsValid(params, sizeof(bign_params)))
-		return ERR_BAD_INPUT;
-	if (!bignIsOperable(params))
-		return ERR_BAD_PARAMS;
-	// проверить oid_der
-	if (oid_len == SIZE_MAX || oidFromDER(0, oid_der, oid_len)  == SIZE_MAX)
-		return ERR_BAD_OID;
-	// проверить rng
-	if (rng == 0)
-		return ERR_BAD_RNG;
-	// создать состояние
-	state = blobCreate(bignStart_keep(params->l, bignSign_deep));
-	if (state == 0)
-		return ERR_OUTOFMEMORY;
-	// старт
-	code = bignStart(state, params);
-	ERR_CALL_HANDLE(code, blobClose(state));
-	ec = (ec_o*)state;
+	// pre
+	ASSERT(ecIsOperable(ec));
 	// размерности
-	no  = ec->f->no;
-	n = ec->f->n;
+	no = ec->f->no, n = ec->f->n;
 	ASSERT(n % 2 == 0);
-	// проверить входные указатели
+	// входной контроль
 	if (!memIsValid(hash, no) ||
 		!memIsValid(privkey, no) ||
 		!memIsValid(sig, no + no / 2) ||
 		!memIsDisjoint2(hash, no, sig, no + no / 2))
-	{
-		blobClose(state);
 		return ERR_BAD_INPUT;
-	}
-	// раскладка состояния
-	d = s1 = objEnd(ec, word);
-	k = d + n;
-	R = k + n;
-	s0 = R + n + n / 2;
-	stack = (octet*)(R + 2 * n);
+	if (oid_len == SIZE_MAX || oidFromDER(0, oid_der, oid_len)  == SIZE_MAX)
+		return ERR_BAD_OID;
+	if (rng == 0)
+		return ERR_BAD_RNG;
+	// создать состояние
+	state = blobCreate2(
+		O_OF_W(n),
+		O_OF_W(n) | SIZE_HI,
+		O_OF_W(n),
+		O_OF_W(2 * n),
+		O_OF_W(n / 2),
+		utilMax(4,
+			beltHash_keep(),
+			ecMulA_deep(n, ec->d, ec->deep, n),
+			zzMul_deep(n / 2, n),
+			zzMod_deep(n + n / 2 + 1, n)),
+		SIZE_MAX,
+		&d, &s1, &k, &R, &s0, &stack);
+	if (state == 0)
+		return ERR_OUTOFMEMORY;
 	// загрузить d
 	wwFrom(d, privkey, no);
 	if (wwIsZero(d, n) || wwCmp(d, ec->order, n) >= 0)
@@ -132,33 +111,37 @@ err_t bignSign(octet sig[], const bign_params* params, const octet oid_der[],
 	zzSubMod(s1, s1, k, ec->order, n);
 	// выгрузить s1
 	wwTo(sig + no / 2, no, s1);
-	// все нормально
+	// завершение
 	blobClose(state);
 	return ERR_OK;
 }
 
-static size_t bignSign2_deep(size_t n, size_t f_deep, size_t ec_d,
-	size_t ec_deep)
+err_t bignSign(octet sig[], const bign_params* params, const octet oid_der[],
+	size_t oid_len, const octet hash[], const octet privkey[], gen_i rng,
+	void* rng_state)
 {
-	return O_OF_W(4 * n) + beltHash_keep() +
-		utilMax(6,
-			beltHash_keep(),
-			32,
-			beltWBL_keep(),
-			ecMulA_deep(n, ec_d, ec_deep, n),
-			zzMul_deep(n / 2, n),
-			zzMod_deep(n + n / 2 + 1, n));
+	err_t code;
+	ec_o* ec = 0;
+	code = bignEcCreate(&ec, params);
+	ERR_CALL_CHECK(code);
+	code = bignSignEc(sig, ec, oid_der, oid_len, hash, privkey, rng,
+		rng_state);
+	bignEcClose(ec);
+	return code;
 }
 
-err_t bignSign2(octet sig[], const bign_params* params, const octet oid_der[],
+/*
+*******************************************************************************
+Детерминированная выработка ЭЦП
+*******************************************************************************
+*/
+
+err_t bignSign2Ec(octet sig[], const ec_o* ec, const octet oid_der[],
 	size_t oid_len, const octet hash[], const octet privkey[], const void* t, 
 	size_t t_len)
 {
-	err_t code;
 	size_t no, n;
-	// состояние (буферы могут пересекаться)
 	void* state;
-	ec_o* ec;				/* описание эллиптической кривой */
 	word* d;				/* [n] личный ключ */
 	word* k;				/* [n] одноразовый личный ключ */
 	word* R;				/* [2n] точка R */
@@ -166,45 +149,40 @@ err_t bignSign2(octet sig[], const bign_params* params, const octet oid_der[],
 	word* s1;				/* [n] вторая часть подписи */
 	octet* hash_state;		/* [beltHash_keep] состояние хэширования */
 	octet* stack;
-	// проверить params
-	if (!memIsValid(params, sizeof(bign_params)))
+	// pre
+	ASSERT(ecIsOperable(ec));
+	// размерности
+	no = ec->f->no, n = ec->f->n;
+	ASSERT(n % 2 == 0);
+	// входной контроль
+	if (!memIsValid(hash, no) || !memIsValid(privkey, no) ||
+		!memIsValid(sig, no + no / 2) ||
+		!memIsDisjoint2(hash, no, sig, no + no / 2))
 		return ERR_BAD_INPUT;
-	if (!bignIsOperable(params))
-		return ERR_BAD_PARAMS;
-	// проверить oid_der
 	if (oid_len == SIZE_MAX || oidFromDER(0, oid_der, oid_len)  == SIZE_MAX)
 		return ERR_BAD_OID;
-	// проверить t
 	if (!memIsNullOrValid(t, t_len))
 		return ERR_BAD_INPUT;
 	// создать состояние
-	state = blobCreate(bignStart_keep(params->l, bignSign2_deep));
+	ASSERT(n % 2 == 0);
+	state = blobCreate2(
+		O_OF_W(n),
+		O_OF_W(n) | SIZE_HI,
+		O_OF_W(n),
+		O_OF_W(2 * n),
+		O_OF_W(n / 2),
+		beltHash_keep(),
+		utilMax(6,
+			beltHash_keep(),
+			32,
+			beltWBL_keep(),
+			ecMulA_deep(n, ec->d, ec->deep, n),
+			zzMul_deep(n / 2, n),
+			zzMod_deep(n + n / 2 + 1, n)),
+		SIZE_MAX,
+		&d, &s1, &k, &R, &s0, &hash_state, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	// старт
-	code = bignStart(state, params);
-	ERR_CALL_HANDLE(code, blobClose(state));
-	ec = (ec_o*)state;
-	// размерности
-	no  = ec->f->no;
-	n = ec->f->n;
-	ASSERT(n % 2 == 0);
-	// проверить входные указатели
-	if (!memIsValid(hash, no) ||
-		!memIsValid(privkey, no) ||
-		!memIsValid(sig, no + no / 2) ||
-		!memIsDisjoint2(hash, no, sig, no + no / 2))
-	{
-		blobClose(state);
-		return ERR_BAD_INPUT;
-	}
-	// раскладка состояния
-	d = s1 = objEnd(ec, word);
-	k = d + n;
-	R = k + n;
-	s0 = R + n + n / 2;
-	hash_state = (octet*)(R + 2 * n);
-	stack = hash_state + beltHash_keep();
 	// загрузить d
 	wwFrom(d, privkey, no);
 	if (wwIsZero(d, n) || wwCmp(d, ec->order, n) >= 0)
@@ -260,9 +238,22 @@ err_t bignSign2(octet sig[], const bign_params* params, const octet oid_der[],
 	zzSubMod(s1, s1, k, ec->order, n);
 	// выгрузить s1
 	wwTo(sig + no / 2, no, s1);
-	// все нормально
+	// завершение
 	blobClose(state);
 	return ERR_OK;
+}
+
+err_t bignSign2(octet sig[], const bign_params* params, const octet oid_der[],
+	size_t oid_len, const octet hash[], const octet privkey[], const void* t,
+	size_t t_len)
+{
+	err_t code;
+	ec_o* ec = 0;
+	code = bignEcCreate(&ec, params);
+	ERR_CALL_CHECK(code);
+	code = bignSign2Ec(sig, ec, oid_der, oid_len, hash, privkey, t, t_len);
+	bignEcClose(ec);
+	return code;
 }
 
 /*
@@ -271,62 +262,43 @@ err_t bignSign2(octet sig[], const bign_params* params, const octet oid_der[],
 *******************************************************************************
 */
 
-static size_t bignVerify_deep(size_t n, size_t f_deep, size_t ec_d,
-	size_t ec_deep)
-{
-	return O_OF_W(4 * n) +
-		utilMax(2,
-			beltHash_keep(),
-			ecAddMulA_deep(n, ec_d, ec_deep, 2, n, n / 2 + 1));
-}
-
-err_t bignVerify(const bign_params* params, const octet oid_der[],
-	size_t oid_len, const octet hash[], const octet sig[], const octet pubkey[])
+err_t bignVerifyEc(const ec_o* ec, const octet oid_der[], size_t oid_len,
+	const octet hash[], const octet sig[], const octet pubkey[])
 {
 	err_t code;
 	size_t no, n;
-	// состояние (буферы могут пересекаться)
 	void* state;
-	ec_o* ec;			/* описание эллиптической кривой */	
 	word* Q;			/* [2n] открытый ключ */
 	word* R;			/* [2n] точка R */
 	word* H;			/* [n] хэш-значение */
 	word* s0;			/* [n / 2 + 1] первая часть подписи */
 	word* s1;			/* [n] вторая часть подписи */
 	octet* stack;
-	// проверить params
-	if (!memIsValid(params, sizeof(bign_params)))
+	// pre
+	ASSERT(ecIsOperable(ec));
+	// размерности
+	no = ec->f->no, n = ec->f->n;
+	ASSERT(n % 2 == 0);
+	// входной контроль
+	if (!memIsValid(hash, no) || !memIsValid(sig, no + no / 2) ||
+		!memIsValid(pubkey, 2 * no))
 		return ERR_BAD_INPUT;
-	if (!bignIsOperable(params))
-		return ERR_BAD_PARAMS;
-	// проверить oid_der
 	if (oid_len == SIZE_MAX || oidFromDER(0, oid_der, oid_len)  == SIZE_MAX)
 		return ERR_BAD_OID;
 	// создать состояние
-	state = blobCreate(bignStart_keep(params->l, bignVerify_deep));
+	state = blobCreate2(
+		O_OF_W(2 * n),
+		O_OF_W(2 * n) | SIZE_HI,
+		O_OF_W(n),
+		O_OF_W(n) | SIZE_HI,
+		O_OF_W(n),
+		utilMax(2,
+			beltHash_keep(),
+			ecAddMulA_deep(n, ec->d, ec->deep, 2, n, n / 2 + 1)),
+		SIZE_MAX,
+		&Q, &R, &H, &s0, &s1, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	// старт
-	code = bignStart(state, params);
-	ERR_CALL_HANDLE(code, blobClose(state));
-	ec = (ec_o*)state;
-	// размерности
-	no  = ec->f->no;
-	n = ec->f->n;
-	ASSERT(n % 2 == 0);
-	// проверить входные указатели
-	if (!memIsValid(hash, no) ||
-		!memIsValid(sig, no + no / 2) ||
-		!memIsValid(pubkey, 2 * no))
-	{
-		blobClose(state);
-		return ERR_BAD_INPUT;
-	}
-	// раскладка состояния
-	Q = R = objEnd(ec, word);
-	H = s0 = Q + 2 * n;
-	s1 = H + n;
-	stack = (octet*)(s1 + n);
 	// загрузить Q
 	if (!qrFrom(ecX(Q), pubkey, ec->f, stack) ||
 		!qrFrom(ecY(Q, n), pubkey + no, ec->f, stack))
@@ -368,5 +340,17 @@ err_t bignVerify(const bign_params* params, const octet oid_der[],
 	code = beltHashStepV2(sig, no / 2, stack) ? ERR_OK : ERR_BAD_SIG;
 	// завершение
 	blobClose(state);
+	return code;
+}
+
+err_t bignVerify(const bign_params* params, const octet oid_der[],
+	size_t oid_len, const octet hash[], const octet sig[], const octet pubkey[])
+{
+	err_t code;
+	ec_o* ec = 0;
+	code = bignEcCreate(&ec, params);
+	ERR_CALL_CHECK(code);
+	code = bignVerifyEc(ec, oid_der, oid_len, hash, sig, pubkey);
+	bignEcClose(ec);
 	return code;
 }
