@@ -4,7 +4,7 @@
 \brief Elliptic curves over prime fields
 \project bee2 [cryptographic library]
 \created 2012.06.24
-\version 2021.06.30
+\version 2025.09.03
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -61,7 +61,7 @@ O -- бесконечно удаленная точка.
 	\pre gfpIsOperable(f) == TRUE.
 	\expect{FALSE} f->mod > 3.
 	\post ec->d == 3.
-	\post Буферы ec->order и ec->base подготовлены для ecCreateGroup().
+	\post Буферы ec->order и ec->base подготовлены для ecGroupCreate().
 	\keep{ec} ecpCreateJ_keep(f->n).
 	\deep{stack} ecpCreateJ_deep(f->n, f->deep).
 */
@@ -106,21 +106,21 @@ size_t ecpIsValid_deep(size_t n, size_t f_deep);
 
 	Проверяется корректность описания группы точек эллиптической кривой ec.
 	Описание корректно, если:
-	-	ecIsOperableGroup(ec) == TRUE;
+	-	ecGroupIsOperable(ec) == TRUE;
 	-	|ec->order * ec->cofactor - (p + 1)| <= 2 * \sqrt(p) (границы Хассе);
 	-	точка ec->base лежит на ec.
 	.
 	\pre Описание ec работоспособно.
 	\return Признак корректности.
 	\remark Не проверяется, что порядок ec->base равняется ec->order.
-	\deep{stack} ecpSeemsValidGroup_deep(ec->f->n, ec->f->deep).
+	\deep{stack} ecpGroupSeemsValid_deep(ec->f->n, ec->f->deep).
 */
-bool_t ecpSeemsValidGroup(
+bool_t ecpGroupSeemsValid(
 	const ec_o* ec,		/*!< [in] описание кривой */
 	void* stack			/*!< [in] вспомогательная память */
 );
 
-size_t ecpSeemsValidGroup_deep(size_t n, size_t f_deep);
+size_t ecpGroupSeemsValid_deep(size_t n, size_t f_deep);
 
 /*!	\brief Надежная группа точек эллиптической кривой?
 
@@ -133,15 +133,15 @@ size_t ecpSeemsValidGroup_deep(size_t n, size_t f_deep);
 	\pre Описание ec (включая описание группы точек) работоспособно.
 	\expect Описание ec (включая описание группы точек) корректно.
 	\return Признак успеха проверки.
-	\deep{stack} ecpIsSafeGroup_deep(ec->f->n).
+	\deep{stack} ecpGroupIsSafe_deep(ec->f->n).
 */
-bool_t ecpIsSafeGroup(
+bool_t ecpGroupIsSafe(
 	const ec_o* ec,			/*!< [in] описание кривой */
 	size_t mov_threshold,	/*!< [in] MOV-порог */
 	void* stack				/*!< [in] вспомогательная память */
 );
 
-size_t ecpIsSafeGroup_deep(size_t n);
+size_t ecpGroupIsSafe_deep(size_t n);
 
 /*
 *******************************************************************************

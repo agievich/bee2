@@ -289,9 +289,9 @@ err_t bignParamsCheck(const bign_params* params)
 -#	0 < a (bignParamsCheck)
 -#	0 < b (bignParamsCheck, zzJacobi)
 -#	p -- простое (ecpIsValid)
--#	q -- простое (ecpIsSafeGroup)
--#	q != p (ecpIsSafeGroup)
--#	p^m \not\equiv 1 (mod q), m = 1, 2,..., 50 (ecpIsSafeGroup)
+-#	q -- простое (ecpGroupIsSafe)
+-#	q != p (ecpGroupIsSafe)
+-#	p^m \not\equiv 1 (mod q), m = 1, 2,..., 50 (ecpGroupIsSafe)
 -#	a, b < p (ecpCreateJ in bignEcCreate)
 -#	b \equiv B (mod p) (bignParamsVal)
 -#	4a^3 + 27b^2 \not\equiv 0 (\mod p) (ecpIsValid)
@@ -334,7 +334,7 @@ err_t bignParamsValEc(const ec_o* ec, const bign_params* params)
 		utilMax(6,
 			beltHash_keep(),
 			ecpIsValid_deep(n, ec->f->deep),
-			ecpIsSafeGroup_deep(n),
+			ecpGroupIsSafe_deep(n),
 			ecpIsOnA_deep(n, ec->f->deep),
 			qrPower_deep(n, n, ec->f->deep),
 			ecHasOrderA_deep(n, ec->d, ec->deep, n)),
@@ -366,7 +366,7 @@ err_t bignParamsValEc(const ec_o* ec, const bign_params* params)
 		wwEq(b, ec->B, n) &&
 		!wwIsZero(ec->B, n) &&
 		ecpIsValid(ec, stack) &&
-		ecpIsSafeGroup(ec, 50, stack) &&
+		ecpGroupIsSafe(ec, 50, stack) &&
 		zzJacobi(ec->B, n, ec->f->mod, n, stack) == 1)
 	{
 		// b <- b^{(p + 1) / 4} = \sqrt{b} mod p
@@ -412,9 +412,7 @@ static bool_t ecpDetIsZero(const word a[], const word b[], const word p[],
 	word* t2;
 	// разметить память
 	(void)memSlice(stack,
-		O_OF_W(2 * n),
-		SIZE_0,
-		SIZE_MAX,
+		O_OF_W(2 * n), SIZE_0, SIZE_MAX,
 		&t1, &stack);
 	t2 = t1 + n;
 	// t1 <- 4 A^3
@@ -448,9 +446,7 @@ static bool_t ecpMOVIsMet(const word q[], const word p[], size_t n,
 	word* t2;
 	// разметить память 
 	(void)memSlice(stack,
-		O_OF_W(2 * n),
-		SIZE_0,
-		SIZE_MAX,
+		O_OF_W(2 * n), SIZE_0, SIZE_MAX,
 		&t1, &stack);
 	t2 = t1 + n;
 	// t1, t2 <- p mod q

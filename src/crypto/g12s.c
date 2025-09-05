@@ -4,7 +4,7 @@
 \brief GOST R 34.10-94 (Russia): digital signature algorithms
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2025.09.04
+\version 2025.09.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -607,7 +607,7 @@ static err_t g12sEcCreate(
 		utilMax(3,
 			gfpCreate_deep(no),
 			ecpCreateJ_deep(n, f_deep),
-			ecCreateGroup_deep(f_deep)));
+			ecGroupCreate_deep(f_deep)));
 	if (stack == 0)
 	{
 		blobClose(state);
@@ -631,7 +631,7 @@ static err_t g12sEcCreate(
 	}
 	// создать кривую и группу
 	if (!ecpCreateJ(ec, f, params->a, params->b, stack) ||
-		!ecCreateGroup(ec, params->xP, params->yP, params->q, 
+		!ecGroupCreate(ec, params->xP, params->yP, params->q, 
 			params->l / 8, params->n, stack))
 	{
 		blobClose(stack);
@@ -675,14 +675,14 @@ static void g12sEcClose(ec_o* ec)
 -#	l \in {256, 512} (g12sEcCreate)
 -#	2^254 < q < 2^256 или 2^508 < q < 2^512 (g12sEcCreate)
 -#	p -- простое (ecpIsValid)
--#	q -- простое (ecpIsSafeGroup)
--#	q != p (ecpIsSafeGroup)
--#	p^m \not\equiv 1 (mod q), m = 1, 2,..., 31 или 131 (ecpIsSafeGroup)
+-#	q -- простое (ecpGroupIsSafe)
+-#	q != p (ecpGroupIsSafe)
+-#	p^m \not\equiv 1 (mod q), m = 1, 2,..., 31 или 131 (ecpGroupIsSafe)
 -#	a, b < p (ecpCreateJ in g12sEcCreate)
 -#	J(E) \notin {0, 1728} <=> a, b != 0 (g12sParamsVal)
 -#	4a^3 + 27b^2 \not\equiv 0 (\mod p) (ecpIsValid)
--#	P \in E (ecpSeemsValidGroup)
--#	|cofactor * q - (p + 1)| \leq 2\sqrt{p} (ecpSeemsValidGroup)
+-#	P \in E (ecpGroupSeemsValid)
+-#	|cofactor * q - (p + 1)| \leq 2\sqrt{p} (ecpGroupSeemsValid)
 -#	qP = O (ecpHasOrder)
 *******************************************************************************
 */
@@ -696,15 +696,15 @@ static err_t g12sParamsValEc(const ec_o* ec)
 	stack = blobCreate(
 		utilMax(4,
 			ecpIsValid_deep(ec->f->n, ec->f->deep),
-			ecpSeemsValidGroup_deep(ec->f->n, ec->f->deep),
-			ecpIsSafeGroup_deep(ec->f->n),
+			ecpGroupSeemsValid_deep(ec->f->n, ec->f->deep),
+			ecpGroupIsSafe_deep(ec->f->n),
 			ecHasOrderA_deep(ec->f->n, ec->d, ec->deep, ec->f->n)));
 	if (stack == 0)
 		return ERR_OUTOFMEMORY;
 	// проверить кривую, проверить J(E)
 	if (!ecpIsValid(ec, stack) ||
-		!ecpSeemsValidGroup(ec, stack) ||
-		!ecpIsSafeGroup(ec, ec->f->no < 64 ? 31 : 131, stack) ||
+		!ecpGroupSeemsValid(ec, stack) ||
+		!ecpGroupIsSafe(ec, ec->f->no < 64 ? 31 : 131, stack) ||
 		!ecHasOrderA(ec->base, ec, ec->order, ec->f->n, stack) ||
 		qrIsZero(ec->A, ec->f) ||
 		qrIsZero(ec->B, ec->f))

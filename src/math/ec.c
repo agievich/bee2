@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2014.03.04
-\version 2025.08.08
+\version 2025.09.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -50,7 +50,7 @@ bool_t ecIsOperable(const ec_o* ec)
 		ec->deep >= ec->f->deep;
 }
 
-bool_t ecCreateGroup(ec_o* ec, const octet xbase[], const octet ybase[], 
+bool_t ecGroupCreate(ec_o* ec, const octet xbase[], const octet ybase[], 
 	const octet order[], size_t order_len, u32 cofactor, void* stack)
 {
 	ASSERT(ecIsOperable(ec));
@@ -82,12 +82,12 @@ bool_t ecCreateGroup(ec_o* ec, const octet xbase[], const octet ybase[],
 	return TRUE;
 }
 
-size_t ecCreateGroup_deep(size_t f_deep)
+size_t ecGroupCreate_deep(size_t f_deep)
 {
 	return f_deep;
 }
 
-bool_t ecIsOperableGroup(const ec_o* ec)
+bool_t ecGroupIsOperable(const ec_o* ec)
 {
 	ASSERT(ecIsOperable(ec));
 	return wwIsValid(ec->base, 2 * ec->f->n) &&

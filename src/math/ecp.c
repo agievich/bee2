@@ -4,7 +4,7 @@
 \brief Elliptic curves over prime fields
 \project bee2 [cryptographic library]
 \created 2012.06.26
-\version 2025.06.10
+\version 2025.09.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -938,7 +938,7 @@ size_t ecpIsValid_deep(size_t n, size_t f_deep)
 			gfpIsValid_deep(n));
 }
 
-bool_t ecpSeemsValidGroup(const ec_o* ec, void* stack)
+bool_t ecpGroupSeemsValid(const ec_o* ec, void* stack)
 {
 	size_t n = ec->f->n;
 	int cmp;
@@ -950,8 +950,8 @@ bool_t ecpSeemsValidGroup(const ec_o* ec, void* stack)
 	stack = t3 + 2 * n;
 	// pre
 	ASSERT(ecIsOperable(ec));
-	// ecIsOperableGroup(ec) == TRUE? base \in ec?
-	if (!ecIsOperableGroup(ec) ||
+	// ecGroupIsOperable(ec) == TRUE? base \in ec?
+	if (!ecGroupIsOperable(ec) ||
 		!ecpIsOnA(ec->base, ec, stack))
 		return FALSE;
 	// [n + 2]t1 <- order * cofactor
@@ -980,7 +980,7 @@ bool_t ecpSeemsValidGroup(const ec_o* ec, void* stack)
 	return TRUE;
 }
 
-size_t ecpSeemsValidGroup_deep(size_t n, size_t f_deep)
+size_t ecpGroupSeemsValid_deep(size_t n, size_t f_deep)
 {
 	return O_OF_W(4 * n + 3) + 
 		utilMax(2, 
@@ -988,7 +988,7 @@ size_t ecpSeemsValidGroup_deep(size_t n, size_t f_deep)
 			zzSqr_deep(n));
 }
 
-bool_t ecpIsSafeGroup(const ec_o* ec, size_t mov_threshold, void* stack)
+bool_t ecpGroupIsSafe(const ec_o* ec, size_t mov_threshold, void* stack)
 {
 	size_t n1 = ec->f->n + 1;
 	// переменные в stack
@@ -997,7 +997,7 @@ bool_t ecpIsSafeGroup(const ec_o* ec, size_t mov_threshold, void* stack)
 	stack = t2 + n1;
 	// pre
 	ASSERT(ecIsOperable(ec));
-	ASSERT(ecIsOperableGroup(ec));
+	ASSERT(ecGroupIsOperable(ec));
 	// order -- простое?
 	n1 = wwWordSize(ec->order, n1);
 	if (!priIsPrime(ec->order, n1, stack))
@@ -1023,7 +1023,7 @@ bool_t ecpIsSafeGroup(const ec_o* ec, size_t mov_threshold, void* stack)
 	return TRUE;
 }
 
-size_t ecpIsSafeGroup_deep(size_t n)
+size_t ecpGroupIsSafe_deep(size_t n)
 {
 	const size_t n1 = n + 1;
 	return O_OF_W(2 * n1) +

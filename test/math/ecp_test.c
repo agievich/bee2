@@ -4,7 +4,7 @@
 \brief Tests for elliptic curves over prime fields
 \project bee2/test
 \created 2017.05.29
-\version 2023.03.30
+\version 2025.09.03
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -77,8 +77,8 @@ bool_t ecpTest()
 		return FALSE;
 	// создать группу точек ec
 	hexToRev(t, xbase), hexToRev(t + no, ybase), hexToRev(t + 2 * no, q);
-	if (sizeof(stack) < ecCreateGroup_deep(f_deep) ||
-		!ecCreateGroup(ec, t, t + no, t + 2 * no, no, cofactor, stack))
+	if (sizeof(stack) < ecGroupCreate_deep(f_deep) ||
+		!ecGroupCreate(ec, t, t + no, t + 2 * no, no, cofactor, stack))
 		return FALSE;
 	// присоединить f к ec
 	objAppend(ec, f, 0);
@@ -87,12 +87,12 @@ bool_t ecpTest()
 		!ecpIsValid(ec, stack))
 		return FALSE;
 	// корректная группа?
-	if (sizeof(stack) < ecpSeemsValidGroup_deep(n, f_deep) ||
-		!ecpSeemsValidGroup(ec, stack))
+	if (sizeof(stack) < ecpGroupSeemsValid_deep(n, f_deep) ||
+		!ecpGroupSeemsValid(ec, stack))
 		return FALSE;
 	// надежная группа?
-	if (sizeof(stack) < ecpIsSafeGroup_deep(n) ||
-		!ecpIsSafeGroup(ec, 40, stack))
+	if (sizeof(stack) < ecpGroupIsSafe_deep(n) ||
+		!ecpGroupIsSafe(ec, 40, stack))
 		return FALSE;
 	// базовая точка имеет порядок q?
 	if (sizeof(stack) < ecHasOrderA_deep(n, ec->d, ec->deep, n) ||

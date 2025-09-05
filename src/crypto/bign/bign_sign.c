@@ -48,8 +48,7 @@ err_t bignSignEc(octet sig[], const ec_o* ec, const octet oid_der[],
 	no = ec->f->no, n = ec->f->n;
 	ASSERT(n % 2 == 0);
 	// входной контроль
-	if (!memIsValid(hash, no) ||
-		!memIsValid(privkey, no) ||
+	if (!memIsValid(hash, no) || !memIsValid(privkey, no) ||
 		!memIsValid(sig, no + no / 2) ||
 		!memIsDisjoint2(hash, no, sig, no + no / 2))
 		return ERR_BAD_INPUT;

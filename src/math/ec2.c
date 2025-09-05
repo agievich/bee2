@@ -4,7 +4,7 @@
 \brief Elliptic curves over binary fields
 \project bee2 [cryptographic library]
 \created 2012.06.26
-\version 2025.04.25
+\version 2025.09.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -620,7 +620,7 @@ size_t ec2IsValid_deep(size_t n)
 	return gf2IsValid_deep(n);
 }
 
-bool_t ec2SeemsValidGroup(const ec_o* ec, void* stack)
+bool_t ec2GroupSeemsValid(const ec_o* ec, void* stack)
 {
 	size_t n = ec->f->n;
 	// переменные в stack
@@ -630,8 +630,8 @@ bool_t ec2SeemsValidGroup(const ec_o* ec, void* stack)
 	stack = t3 + 2 * n;
 	// pre
 	ASSERT(ecIsOperable(ec));
-	// ecIsOperableGroup(ec) == TRUE? base \in ec?
-	if (!ecIsOperableGroup(ec) ||
+	// ecGroupIsOperable(ec)? base \in ec?
+	if (!ecGroupIsOperable(ec) ||
 		!ec2IsOnA(ec->base, ec, stack))
 		return FALSE;
 	// [n + 1]t1 <- 2^m
@@ -660,7 +660,7 @@ bool_t ec2SeemsValidGroup(const ec_o* ec, void* stack)
 	return wwCmp2(t3, 2 * n, t3, ec->f->n + 1) <= 0;
 }
 
-size_t ec2SeemsValidGroup_deep(size_t n, size_t f_deep)
+size_t ec2GroupSeemsValid_deep(size_t n, size_t f_deep)
 {
 	return O_OF_W(4 * n + 3) +
 		utilMax(2,
@@ -668,7 +668,7 @@ size_t ec2SeemsValidGroup_deep(size_t n, size_t f_deep)
 			zzSqr_deep(n));
 }
 
-bool_t ec2IsSafeGroup(const ec_o* ec, size_t mov_threshold, void* stack)
+bool_t ec2GroupIsSafe(const ec_o* ec, size_t mov_threshold, void* stack)
 {
 	size_t n1 = ec->f->n + 1;
 	// переменные в stack
@@ -677,7 +677,7 @@ bool_t ec2IsSafeGroup(const ec_o* ec, size_t mov_threshold, void* stack)
 	stack = t2 + n1;
 	// pre
 	ASSERT(ecIsOperable(ec));
-	ASSERT(ecIsOperableGroup(ec));
+	ASSERT(ecGroupIsOperable(ec));
 	// order -- простое?
 	n1 = wwWordSize(ec->order, n1);
 	if (!priIsPrime(ec->order, n1, stack))
@@ -706,7 +706,7 @@ bool_t ec2IsSafeGroup(const ec_o* ec, size_t mov_threshold, void* stack)
 	return TRUE;
 }
 
-size_t ec2IsSafeGroup_deep(size_t n)
+size_t ec2GroupIsSafe_deep(size_t n)
 {
 	const size_t n1 = n + 1;
 	return O_OF_W(2 * n1) +

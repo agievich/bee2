@@ -54,7 +54,7 @@ err_t bignEcCreate(ec_o** pec, const bign_params* params)
 		utilMax(3,
 			gfpCreate_deep(no),
 			ecpCreateJ_deep(n, f_deep),
-			ecCreateGroup_deep(f_deep)));
+			ecGroupCreate_deep(f_deep)));
 	if (stack == 0)
 	{
 		blobClose(state);
@@ -63,7 +63,7 @@ err_t bignEcCreate(ec_o** pec, const bign_params* params)
 	// создать поле, кривую и группу
 	if (!gfpCreate(f, params->p, no, stack) ||
 		!ecpCreateJ(ec, f, params->a, params->b, stack) ||
-		!ecCreateGroup(ec, 0, params->yG, params->q, no, 1, stack))
+		!ecGroupCreate(ec, 0, params->yG, params->q, no, 1, stack))
 	{
 		blobClose(state);
 		blobClose(stack);
@@ -131,7 +131,7 @@ err_t bignStart(void* state, const bign_params* params)
 	ASSERT(wwGetBits(f->mod, 0, 2) == 3);
 	// создать кривую и группу
 	if (!ecpCreateJ(ec, f, params->a, params->b, stack) ||
-		!ecCreateGroup(ec, 0, params->yG, params->q, no, 1, stack))
+		!ecGroupCreate(ec, 0, params->yG, params->q, no, 1, stack))
 		return ERR_BAD_PARAMS;
 	ASSERT(wwBitSize(ec->order, n) == params->l * 2);
 	ASSERT(zzIsOdd(ec->order, n));
@@ -157,7 +157,7 @@ size_t bignStart_keep(size_t l, bign_deep_i deep)
 		f_keep,
 		utilMax(3,
 			ec_deep,
-			ecCreateGroup_deep(f_deep),
+			ecGroupCreate_deep(f_deep),
 			deep ? deep(n, f_deep, ec_d, ec_deep) : 0),
 		SIZE_MAX);
 }

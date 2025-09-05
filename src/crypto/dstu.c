@@ -4,7 +4,7 @@
 \brief DSTU 4145-2002 (Ukraine): digital signature algorithms
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.09.04
+\version 2025.09.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -445,7 +445,7 @@ static err_t dstuEcCreate(
 		utilMax(3,
 			gf2Create_deep(m),
 			ec2CreateLD_deep(n, f_deep),
-			ecCreateGroup_deep(f_deep)),
+			ecGroupCreate_deep(f_deep)),
 		SIZE_MAX,
 		&p, &A, &stack);
 	if (state1 == 0)
@@ -468,7 +468,7 @@ static err_t dstuEcCreate(
 	A[0] = params->A;
 	memSetZero(A + 1, f->no - 1);
 	if (!ec2CreateLD(ec, f, A, params->B, stack) ||
-		!ecCreateGroup(ec, params->P, params->P + ec->f->no, params->n, 
+		!ecGroupCreate(ec, params->P, params->P + ec->f->no, params->n, 
 			ec->f->no, params->c, stack))
 	{
 		blobClose(state1);
@@ -527,16 +527,16 @@ static err_t dstuParamsValEc(const ec_o* ec)
 	stack = blobCreate(
 		utilMax(4,
 			ec2IsValid_deep(ec->f->n),
-			ec2SeemsValidGroup_deep(ec->f->n, ec->f->deep),
-			ec2IsSafeGroup_deep(ec->f->n),
+			ec2GroupSeemsValid_deep(ec->f->n, ec->f->deep),
+			ec2GroupIsSafe_deep(ec->f->n),
 			ecHasOrderA_deep(ec->f->n, ec->d, ec->deep, ec->f->n)));
 	if (stack == 0)
 		return ERR_OUTOFMEMORY;
 	// проверить кривую и базовую точку
 	if (wwBitSize(ec->order, ec->f->n) <= 160 ||
 		!ec2IsValid(ec, stack) ||
-		!ec2SeemsValidGroup(ec, stack) ||
-		!ec2IsSafeGroup(ec, 32, stack) ||
+		!ec2GroupSeemsValid(ec, stack) ||
+		!ec2GroupIsSafe(ec, 32, stack) ||
 		!ecHasOrderA(ec->base, ec, ec->order, ec->f->n, stack))
 	{
 		blobClose(stack);
