@@ -728,15 +728,15 @@
 					Name="bign"
 					>
 					<File
+						RelativePath="..\..\src\crypto\bign\bign_ec.c"
+						>
+					</File>
+					<File
 						RelativePath="..\..\src\crypto\bign\bign_ibs.c"
 						>
 					</File>
 					<File
 						RelativePath="..\..\src\crypto\bign\bign_keyt.c"
-						>
-					</File>
-					<File
-						RelativePath="..\..\src\crypto\bign\bign_lcl.c"
 						>
 					</File>
 					<File

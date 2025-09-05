@@ -276,9 +276,6 @@
     <ClCompile Include="..\..\src\crypto\bign\bign_keyt.c">
       <Filter>Source Files\crypto\bign</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\crypto\bign\bign_lcl.c">
-      <Filter>Source Files\crypto\bign</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\crypto\bign\bign_misc.c">
       <Filter>Source Files\crypto\bign</Filter>
     </ClCompile>
@@ -305,6 +302,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\core\file.c">
       <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\bign\bign_ec.c">
+      <Filter>Source Files\crypto\bign</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

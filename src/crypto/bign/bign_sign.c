@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): digital signature
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.09.04
+\version 2025.09.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -122,6 +122,8 @@ err_t bignSign(octet sig[], const bign_params* params, const octet oid_der[],
 {
 	err_t code;
 	ec_o* ec = 0;
+	code = bignParamsCheck(params);
+	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
 	ERR_CALL_CHECK(code);
 	code = bignSignEc(sig, ec, oid_der, oid_len, hash, privkey, rng,
@@ -174,7 +176,7 @@ err_t bignSign2Ec(octet sig[], const ec_o* ec, const octet oid_der[],
 		beltHash_keep(),
 		utilMax(6,
 			beltHash_keep(),
-			32,
+			(size_t)32,
 			beltWBL_keep(),
 			ecMulA_deep(n, ec->d, ec->deep, n),
 			zzMul_deep(n / 2, n),
@@ -249,6 +251,8 @@ err_t bignSign2(octet sig[], const bign_params* params, const octet oid_der[],
 {
 	err_t code;
 	ec_o* ec = 0;
+	code = bignParamsCheck(params);
+	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
 	ERR_CALL_CHECK(code);
 	code = bignSign2Ec(sig, ec, oid_der, oid_len, hash, privkey, t, t_len);
@@ -348,6 +352,8 @@ err_t bignVerify(const bign_params* params, const octet oid_der[],
 {
 	err_t code;
 	ec_o* ec = 0;
+	code = bignParamsCheck(params);
+	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
 	ERR_CALL_CHECK(code);
 	code = bignVerifyEc(ec, oid_der, oid_len, hash, sig, pubkey);

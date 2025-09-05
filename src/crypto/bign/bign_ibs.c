@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): identity-based signature
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.09.03
+\version 2025.09.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -123,6 +123,8 @@ err_t bignIdExtract(octet id_privkey[], octet id_pubkey[],
 {
 	err_t code;
 	ec_o* ec = 0;
+	code = bignParamsCheck(params);
+	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
 	ERR_CALL_CHECK(code);
 	code = bignIdExtractEc(id_privkey, id_pubkey, ec, oid_der, oid_len,
@@ -228,6 +230,8 @@ err_t bignIdSign(octet id_sig[], const bign_params* params,
 {
 	err_t code;
 	ec_o* ec = 0;
+	code = bignParamsCheck(params);
+	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
 	ERR_CALL_CHECK(code);
 	code = bignIdSignEc(id_sig, ec, oid_der, oid_len, id_hash, hash,
@@ -354,6 +358,8 @@ err_t bignIdSign2(octet id_sig[], const bign_params* params,
 {
 	err_t code;
 	ec_o* ec = 0;
+	code = bignParamsCheck(params);
+	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
 	ERR_CALL_CHECK(code);
 	code = bignIdSign2Ec(id_sig, ec, oid_der, oid_len, id_hash, hash,
@@ -490,6 +496,8 @@ err_t bignIdVerify(const bign_params* params, const octet oid_der[],
 {
 	err_t code;
 	ec_o* ec = 0;
+	code = bignParamsCheck(params);
+	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
 	ERR_CALL_CHECK(code);
 	code = bignIdVerifyEc(ec, oid_der, oid_len, id_hash, hash, id_sig,

@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): public parameters
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.09.04
+\version 2025.09.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -237,13 +237,57 @@ err_t bignParamsStd(bign_params* params, const char* name)
 
 /*
 *******************************************************************************
+Предварительная проверка параметров
+*******************************************************************************
+*/
+
+err_t bignParamsCheck2(const bign_params* params)
+{
+	size_t no;
+	// корректный указатель?
+	if (!memIsValid(params, sizeof(bign_params)))
+		return ERR_BAD_INPUT;
+	// l % B_PER_W == 0?
+	if (2 * params->l % B_PER_W)
+		return ERR_NOT_IMPLEMENTED;
+	// p mod 4 == 3? q mod 2 == 1?
+	// p и q -- 2l-битовые?
+	// a != 0? b != 0?
+	// неиспользуемые октеты обнулены?
+	return
+		(no = O_OF_B(2 * params->l)) &&
+		params->p[0] % 4 == 3 && params->q[0] % 2 == 1 &&
+		params->p[no - 1] >= 128 && params->q[no - 1] >= 128 &&
+		memIsZero(params->p + no, sizeof(params->p) - no) &&
+		!memIsZero(params->a, no) &&
+		!memIsZero(params->b, no) &&
+		memIsZero(params->a + no, sizeof(params->a) - no) &&
+		memIsZero(params->b + no, sizeof(params->b) - no) &&
+		memIsZero(params->q + no, sizeof(params->q) - no) &&
+		memIsZero(params->yG + no, sizeof(params->yG) - no) ?
+			ERR_OK : ERR_BAD_PARAMS;
+}
+
+err_t bignParamsCheck(const bign_params* params)
+{
+	err_t code;
+	code = bignParamsCheck2(params);
+	ERR_CALL_CHECK(code);
+	if (params->l % B_PER_W)
+		return ERR_NOT_IMPLEMENTED;
+	return (params->l == 128 || params->l == 192 || params->l == 256) ?
+		ERR_OK : ERR_BAD_PARAMS;
+}
+
+/*
+*******************************************************************************
 Проверка параметров
 
--#	l \in {128, 192, 256} (bignParamsAreOperable)
--#	2^{l - 1} < p, q < 2^l (bignParamsAreOperable)
--#	p \equiv 3 \mod 4 (bignParamsAreOperable)
--#	0 < a (bignParamsAreOperable)
--#	0 < b (bignParamsAreOperable, zzJacobi)
+-#	l \in {128, 192, 256} (bignParamsCheck)
+-#	2^{l - 1} < p, q < 2^l (bignParamsCheck)
+-#	p \equiv 3 \mod 4 (bignParamsCheck)
+-#	0 < a (bignParamsCheck)
+-#	0 < b (bignParamsCheck, zzJacobi)
 -#	p -- простое (ecpIsValid)
 -#	q -- простое (ecpIsSafeGroup)
 -#	q != p (ecpIsSafeGroup)
@@ -267,20 +311,17 @@ static void bignSeedInc(octet seed[8])
 	CLEAN(carry);
 }
 
-err_t bignParamsVal(const bign_params* params)
+err_t bignParamsValEc(const ec_o* ec, const bign_params* params)
 {
-	err_t code;
+	err_t code = ERR_OK;
 	size_t no, n;
-	ec_o* ec;
 	void* state;
 	octet* hash_state;		/* [beltHash_keep] состояние хэширования */
 	octet* seed;			/* [8] копия seed */
 	octet* B;				/* [64] переменная B */
 	word* b;				/* [W_OF_O(64)] коэффициент b */
 	void* stack;
-	// создать кривую
-	code = bignEcCreate(&ec, params);
-	ERR_CALL_CHECK(code);
+	// pre
 	ASSERT(ecIsOperable(ec));
 	// размерности
 	no = ec->f->no, n = ec->f->n;
@@ -300,10 +341,7 @@ err_t bignParamsVal(const bign_params* params)
 		SIZE_MAX,
 		&hash_state, &seed, &B, &b, &stack);
 	if (state == 0)
-	{
-		bignEcClose(ec);
 		return ERR_OUTOFMEMORY;
-	}
 	// belt-hash(p..)
 	beltHashStart(hash_state);
 	beltHashStepH(params->p, no, hash_state);
@@ -345,6 +383,18 @@ err_t bignParamsVal(const bign_params* params)
 		code = ERR_BAD_PARAMS;
 	// завершение
 	blobClose(state);
+	return code;
+}
+
+err_t bignParamsVal(const bign_params* params)
+{
+	err_t code;
+	ec_o* ec = 0;
+	code = bignParamsCheck(params);
+	ERR_CALL_CHECK(code);
+	code = bignEcCreate(&ec, params);
+	ERR_CALL_CHECK(code);
+	code = bignParamsValEc(ec, params);
 	bignEcClose(ec);
 	return code;
 }
@@ -684,13 +734,13 @@ static size_t bignParamsDec_internal(bign_params* params, const octet der[],
 
 err_t bignParamsEnc(octet der[], size_t* count, const bign_params* params)
 {
+	err_t code;
 	size_t len;
-	if (!memIsValid(params, sizeof(bign_params)) ||
-		!memIsValid(count, O_PER_S) ||
+	code = bignParamsCheck(params);
+	ERR_CALL_CHECK(code);
+	if (!memIsValid(count, O_PER_S) ||
 		!memIsNullOrValid(der, *count))
 		return ERR_BAD_INPUT;
-	if (!bignParamsAreOperable(params))
-		return ERR_BAD_PARAMS;
 	len = bignParamsEnc_internal(0, params);
 	if (len == SIZE_MAX)
 		return ERR_BAD_PARAMS;

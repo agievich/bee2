@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): miscellaneous (OIDs, keys, DH)
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.09.04
+\version 2025.09.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -107,6 +107,8 @@ err_t bignKeypairGen(octet privkey[], octet pubkey[],
 {
 	err_t code;
 	ec_o* ec = 0;
+	code = bignParamsCheck(params);
+	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
 	ERR_CALL_CHECK(code);
 	code = bignKeypairGenEc(privkey, pubkey, ec, rng, rng_state);
@@ -175,6 +177,8 @@ err_t bignKeypairVal(const bign_params* params, const octet privkey[],
 {
 	err_t code;
 	ec_o* ec = 0;
+	code = bignParamsCheck(params);
+	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
 	ERR_CALL_CHECK(code);
 	code = bignKeypairValEc(ec, privkey, pubkey);
@@ -227,6 +231,8 @@ err_t bignPubkeyVal(const bign_params* params, const octet pubkey[])
 {
 	err_t code;
 	ec_o* ec = 0;
+	code = bignParamsCheck(params);
+	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
 	ERR_CALL_CHECK(code);
 	code = bignPubkeyValEc(ec, pubkey);
@@ -289,6 +295,8 @@ err_t bignPubkeyCalc(octet pubkey[], const bign_params* params,
 {
 	err_t code;
 	ec_o* ec = 0;
+	code = bignParamsCheck(params);
+	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
 	ERR_CALL_CHECK(code);
 	code = bignPubkeyCalcEc(pubkey, ec, privkey);
@@ -372,6 +380,8 @@ err_t bignDH(octet key[], const bign_params* params, const octet privkey[],
 {
 	err_t code;
 	ec_o* ec = 0;
+	code = bignParamsCheck(params);
+	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
 	ERR_CALL_CHECK(code);
 	code = bignDHEc(key, ec, privkey, pubkey, key_len);

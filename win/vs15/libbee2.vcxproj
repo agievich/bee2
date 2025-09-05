@@ -399,7 +399,7 @@
     <ClCompile Include="..\..\src\crypto\bign96.c" />
     <ClCompile Include="..\..\src\crypto\bign\bign_ibs.c" />
     <ClCompile Include="..\..\src\crypto\bign\bign_keyt.c" />
-    <ClCompile Include="..\..\src\crypto\bign\bign_lcl.c" />
+    <ClCompile Include="..\..\src\crypto\bign\bign_ec.c" />
     <ClCompile Include="..\..\src\crypto\bign\bign_misc.c" />
     <ClCompile Include="..\..\src\crypto\bign\bign_params.c" />
     <ClCompile Include="..\..\src\crypto\bign\bign_sign.c" />
