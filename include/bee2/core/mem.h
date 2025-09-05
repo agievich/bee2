@@ -4,7 +4,7 @@
 \brief Memory management
 \project bee2 [cryptographic library]
 \created 2012.07.16
-\version 2025.09.01
+\version 2025.09.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -129,14 +129,14 @@ void memNeg(
 	size_t count		/*< [in] число октетов */
 );
 
-/*!	\brief Буфер выровнен на границу блока?
+/*!	\brief Указатель выровнен на границу блока?
 
-	Проверяется, что buf выровнен на границу блока из align октетов.
+	Проверяется, что указатель p выровнен на границу блока из align октетов.
 	\return Проверяемый признак.
 */
 bool_t memIsAligned(
-	const void* buf,	/*!< [in] буфер */
-	size_t align		/*!< [in] длина блока */
+	const void* p,		/*!< [in] указатель */
+	size_t alignment	/*!< [in] длина блока */
 );
 
 /*!	\brief Выделение блока памяти

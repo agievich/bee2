@@ -173,7 +173,7 @@ typedef struct
 	bake_cert cert[1];			/*< сертификат */
 	octet K0[32];				/*< ключ K0 */
 	octet K1[32];				/*< ключ K1 */
-	mem_align_t data[];				/*< данные */
+	mem_align_t data[];			/*< данные */
 } bake_bmqv_o;
 
 static size_t bakeBMQV_deep(size_t n, size_t f_deep, size_t ec_d, size_t ec_deep);
@@ -270,7 +270,7 @@ err_t bakeBMQVStep2(octet out[], void* state)
 	if (!memIsValid(out, 2 * no))
 		return ERR_BAD_INPUT;
 	ASSERT(memIsDisjoint2(out, 2 * no, s, objKeep(s)));
-	// раскладка стека
+	// разметить стек
 	Vb = objEnd(s, word);
 	stack = Vb + 2 * n;
 	// ub <-R {1, 2, ..., q - 1}
@@ -285,17 +285,19 @@ err_t bakeBMQVStep2(octet out[], void* state)
 	qrTo(out + no, ecY(Vb, n), s->ec->f, stack);
 	// сохранить ecX(Vb)
 	memCopy(s->Vb, out, no);
-	// все нормально
+	// завершение
 	return ERR_OK;
 }
 
 static size_t bakeBMQVStep2_deep(size_t n, size_t f_deep, size_t ec_d,
 	size_t ec_deep)
 {
-	return O_OF_W(2 * n) +
+	return memSlice(0,
+		O_OF_W(2 * n),
 		utilMax(2,
 			f_deep,
-			ecMulA_deep(n, ec_d, ec_deep, n));
+			ecMulA_deep(n, ec_d, ec_deep, n)),
+		SIZE_MAX);
 }
 
 err_t bakeBMQVStep3(octet out[], const octet in[], const bake_cert* certb,

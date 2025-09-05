@@ -52,9 +52,9 @@ bool_t memIsValid(const void* buf, size_t count)
 typedef size_t uintptr_t;
 #endif
 
-bool_t memIsAligned(const void* buf, size_t align)
+bool_t memIsAligned(const void* buf, size_t alignment)
 {
-	return (uintptr_t)buf % align == 0;
+	return (uintptr_t)buf % alignment == 0;
 }
 
 /*
@@ -553,20 +553,14 @@ void memRev(void* buf, size_t count)
 /*
 *******************************************************************************
 Разметка памяти
+
+\remark Макрос va_copy поддержан в Visual Studio только в 2013 году.
 *******************************************************************************
 */
 
-#ifndef va_copy
+#if defined(_MSC_VER) && (_MSC_VER < 1800)
 	#define va_copy(dest, src) ((dest) = (src))
 #endif
-
-static size_t memSizeof(register size_t count)
-{
-	count += sizeof(mem_align_t) - 1;
-	count /= sizeof(mem_align_t);
-	count *= sizeof(mem_align_t);
-	return count;
-}
 
 size_t memSlice2(const void* buf, size_t c1, va_list args)
 {
@@ -584,7 +578,7 @@ size_t memSlice2(const void* buf, size_t c1, va_list args)
 	{
 		if ((t & SIZE_HI) == 0)
 		{
-			s = memSizeof(s);
+			s = utilAlign(s, sizeof(mem_align_t));
 			size += s;
 			s = t;
 		}
@@ -592,7 +586,7 @@ size_t memSlice2(const void* buf, size_t c1, va_list args)
 			s = t;
 		t = va_arg(args, size_t);
 	}
-	size += memSizeof(s);
+	size += utilAlign(s, sizeof(mem_align_t));
 	if (!buf)
 		return size;
 	// второй проходЖ указатели
@@ -604,7 +598,7 @@ size_t memSlice2(const void* buf, size_t c1, va_list args)
 		const void** p;
 		if ((t & SIZE_HI) == 0)
 		{
-			s = memSizeof(s);
+			s = utilAlign(s, sizeof(mem_align_t));
 			buf = (const octet*)buf + s;
 			s = 0;
 		}
