@@ -4,7 +4,7 @@
 \brief Tests for memory functions
 \project bee2/test
 \created 2014.02.01
-\version 2025.09.01
+\version 2025.09.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -176,7 +176,7 @@ bool_t memTest()
 			SIZE_1 | SIZE_HI,
 			SIZE_1,
 			SIZE_1, 
-			SIZE_MAX) != 3 * sizeof(mem_align_t))
+			SIZE_MAX) != 2 * sizeof(mem_align_t) + 1)
 		return FALSE;
 	if (memSlice(buf3, 
 			SIZE_1,
@@ -191,7 +191,7 @@ bool_t memTest()
 			SIZE_1 | SIZE_HI,
 			SIZE_1 | SIZE_HI, 
 			SIZE_MAX,
-			&p, &p1) != sizeof(mem_align_t) || 
+			&p, &p1) != 1 || 
 		p != buf3 || p1 != p)
 		return FALSE;
 	if (memSlice(buf3, 
@@ -200,7 +200,7 @@ bool_t memTest()
 			SIZE_1 | SIZE_HI, 
 			SIZE_1,
 			SIZE_MAX,
-			&p, &p1, &p2, &p3) != 2 * sizeof(mem_align_t) || 
+			&p, &p1, &p2, &p3) != sizeof(mem_align_t) + 1 || 
 		p != buf3 || p1 != p || p2 != p || p3 == p2)
 		return FALSE;
 	// все нормально

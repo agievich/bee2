@@ -586,7 +586,7 @@ size_t memSlice2(const void* buf, size_t c1, va_list args)
 			s = t;
 		t = va_arg(args, size_t);
 	}
-	size += utilAlign(s, sizeof(mem_align_t));
+	size += s;
 	if (!buf)
 		return size;
 	// второй проходЖ указатели
