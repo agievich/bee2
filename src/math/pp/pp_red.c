@@ -139,4 +139,3 @@ void ppRedBelt(word a[])
 			a[n] >> (B_PER_W - 2) ^ a[n] >> (B_PER_W - 7);
 	}
 }
-

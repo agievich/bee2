@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: multiplicative operations
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.08.26
+\version 2025.09.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -307,6 +307,11 @@ Vanstone S. Handbook of Applied Cryptography]:
 *******************************************************************************
 */
 
+#define zzDiv_schema(n, m)\
+/* divident */	O_OF_W(n + 1),\
+/* divisor */	O_OF_W(m),\
+/* mul */		O_OF_W(3)
+
 void zzDiv(word q[], word r[], const word a[], size_t n, const word b[],
 	size_t m, void* stack)
 {
@@ -314,10 +319,9 @@ void zzDiv(word q[], word r[], const word a[], size_t n, const word b[],
 	register size_t shift;
 	register word t;
 	size_t i;
-	// переменные в stack
-	word* divident;		/*< нормализованное делимое (n + 1 слово) */
-	word* divisor;		/*< нормализованный делитель (m слов) */
-	word* mul;			/*< вспомогательное произведение (3 слова) */
+	word* divident;			/* [n + 1] нормализованное делимое */
+	word* divisor;			/* [m] нормализованный делитель */
+	word* mul;				/* [3] вспомогательное произведение */
 	// pre
 	ASSERT(n >= m);
 	ASSERT(wwIsValid(a, n) && wwIsValid(b, m));
@@ -338,10 +342,10 @@ void zzDiv(word q[], word r[], const word a[], size_t n, const word b[],
 		r[0] = zzDivW(q, a, n, b[0]);
 		return;
 	}
-	// резервируем переменные в stack
-	divident = (word*)stack;
-	divisor = divident + n + 1;
-	mul = divisor + m;
+	// разметить стек
+	memSlice(stack,
+		zzDiv_schema(n, m), SIZE_MAX,
+		&divident, &divisor, &mul);
 	// divident <- a
 	wwCopy(divident, a, n);
 	divident[n] = 0;
@@ -394,19 +398,25 @@ void zzDiv(word q[], word r[], const word a[], size_t n, const word b[],
 
 size_t zzDiv_deep(size_t n, size_t m)
 {
-	return O_OF_W(n + m + 4);
+	return memSliceSize(
+		zzDiv_schema(n, m), SIZE_MAX);
 }
 
-void zzMod(word r[], const word a[], size_t n, const word b[], size_t m, void* stack)
+#define zzMod_schema(n, m)\
+/* divident */	O_OF_W(n + 1),\
+/* divisor */	O_OF_W(m),\
+/* mul */		O_OF_W(3)
+
+void zzMod(word r[], const word a[], size_t n, const word b[], size_t m, 
+void* stack) 
 {
 	register dword qhat;
 	register size_t shift;
 	register word t;
 	size_t i;
-	// переменные в stack
-	word* divident;		/*< нормализованное делимое (n + 1 слово) */
-	word* divisor;		/*< нормализованный делитель (m слов) */
-	word* mul;			/*< вспомогательное произведение (3 слова) */
+	word* divident;		/*< [n + 1] нормализованное делимое */
+	word* divisor;		/*< [m] нормализованный делитель */
+	word* mul;			/*< [3] вспомогательное произведение */
 	// pre
 	ASSERT(wwIsValid(a, n) && wwIsValid(b, m));
 	ASSERT(m > 0 && b[m - 1] > 0);
@@ -426,10 +436,10 @@ void zzMod(word r[], const word a[], size_t n, const word b[], size_t m, void* s
 		r[0] = zzModW(a, n, b[0]);
 		return;
 	}
-	// резервируем переменные в stack
-	divident = (word*)stack;
-	divisor = divident + n + 1;
-	mul = divisor + m;
+	// разметить стек
+	memSlice(stack,
+		zzMod_schema(n, m), SIZE_MAX,
+		&divident, &divisor, &mul);
 	// divident <- a
 	wwCopy(divident, a, n);
 	divident[n] = 0;
@@ -478,5 +488,6 @@ void zzMod(word r[], const word a[], size_t n, const word b[], size_t m, void* s
 
 size_t zzMod_deep(size_t n, size_t m)
 {
-	return O_OF_W(n + m + 4);
+	return memSliceSize(
+		zzMod_schema(n, m), SIZE_MAX);
 }

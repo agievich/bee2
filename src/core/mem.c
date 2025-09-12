@@ -555,6 +555,8 @@ void memRev(void* buf, size_t count)
 Разметка памяти
 
 \remark Макрос va_copy поддержан в Visual Studio только в 2013 году.
+\remark Неотрицательное целое n есть степень двойки <=>
+	(n & (n - 1)) == 0.
 *******************************************************************************
 */
 
@@ -562,69 +564,81 @@ void memRev(void* buf, size_t count)
 	#define va_copy(dest, src) ((dest) = (src))
 #endif
 
-size_t memSlice2(const void* buf, size_t c1, va_list args)
+size_t memSliceSizeArgs(size_t c1, va_list args)
 {
-	va_list args1;
-	va_list args2;
 	size_t size;
 	size_t s;
-	size_t t;
+	size_t c;
 	// pre
-	ASSERT(memIsAligned(buf, sizeof(mem_align_t)));
-	// первый проход: объем памяти
-	va_copy(args1, args);
-	va_copy(args2, args);
-	for (size = s = 0, t = c1; t != SIZE_MAX;)
+	CASSERT((sizeof(mem_align_t) & (sizeof(mem_align_t) - 1)) == 0);
+	// просмотреть ci
+	for (size = s = 0, c = c1; c != SIZE_MAX;)
 	{
-		if ((t & SIZE_HI) == 0)
+		if ((c & SIZE_HI) == 0)
 		{
-			s = utilAlign(s, sizeof(mem_align_t));
+			s = (s + sizeof(mem_align_t) - 1) & ~(sizeof(mem_align_t) - 1);
 			size += s;
-			s = t;
+			s = c;
 		}
-		else if ((t &= ~SIZE_HI) > s)
-			s = t;
-		t = va_arg(args, size_t);
+		else if ((c &= ~SIZE_HI) > s)
+			s = c;
+		c = va_arg(args, size_t);
 	}
-	size += s;
-	if (!buf)
-		return size;
-	// второй проходЖ указатели
-	ASSERT(memIsValid(buf, size));
-	for (t = c1; t != SIZE_MAX;)
-		t = va_arg(args2, size_t);
-	for (s = 0, t = c1; t != SIZE_MAX;)
+	return size + s;
+}
+
+void memSliceArgs(const void* buf, size_t c1, va_list args)
+{
+	va_list args1;
+	size_t s;
+	size_t c;
+	// pre
+	CASSERT((sizeof(mem_align_t) & (sizeof(mem_align_t) - 1)) == 0);
+	ASSERT(memIsAligned(buf, sizeof(mem_align_t)));
+	// найти p1
+	va_copy(args1, args);
+	for (c = c1; c != SIZE_MAX;)
+		c = va_arg(args1, size_t);
+	// просмотреть (ci, pi)
+	for (s = 0, c = c1; c != SIZE_MAX;)
 	{
 		const void** p;
-		if ((t & SIZE_HI) == 0)
+		if ((c & SIZE_HI) == 0)
 		{
-			s = utilAlign(s, sizeof(mem_align_t));
+			s = (s + sizeof(mem_align_t) - 1) & ~(sizeof(mem_align_t) - 1);
 			buf = (const octet*)buf + s;
 			s = 0;
 		}
-		p = va_arg(args2, const void**);
+		p = va_arg(args1, const void**);
 		ASSERT(memIsValid(p, sizeof(const void*)));
 		ASSERT(memIsAligned(buf, sizeof(mem_align_t)));
 		*p = buf;
-		if ((t & SIZE_HI) != 0)
+		if ((c & SIZE_HI) != 0)
 		{
-			if ((t &= ~SIZE_HI) > s)
-				s = t;
+			if ((c &= ~SIZE_HI) > s)
+				s = c;
 		}
 		else
-			s = t;
-		t = va_arg(args1, size_t);
+			s = c;
+		c = va_arg(args, size_t);
 	}
-	// объем размеченной памяти
-	return size;
 }
 
-size_t memSlice(const void* buf, size_t c1, ...)
+size_t memSliceSize(size_t c1, ...)
 {
 	va_list args;
 	size_t size;	
 	va_start(args, c1);
-	size = memSlice2(buf, c1, args);
+	size = memSliceSizeArgs(c1, args);
 	va_end(args);
 	return size;
 }
+
+void memSlice(const void* buf, size_t c1, ...)
+{
+	va_list args;
+	va_start(args, c1);
+	memSliceArgs(buf, c1, args);
+	va_end(args);
+}
+

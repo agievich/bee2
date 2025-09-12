@@ -4,13 +4,14 @@
 \brief Benchmarks for elliptic curves over prime fields
 \project bee2/test
 \created 2013.10.17
-\version 2025.04.25
+\version 2025.09.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
 #include <stdio.h>
+#include <bee2/core/blob.h>
 #include <bee2/core/prng.h>
 #include <bee2/core/tm.h>
 #include <bee2/core/util.h>
@@ -23,38 +24,31 @@
 *******************************************************************************
 */
 
-static size_t _ecpBench_deep(size_t n, size_t f_deep, size_t ec_d, 
-	size_t ec_deep)
-{
-	return O_OF_W(3 * n) + prngCOMBO_keep() +
-		ecMulA_deep(n, ec_d, ec_deep, n);
-}
-
 bool_t ecpBench()
 {
-	// описание кривой
 	bign_params params[1];
-	// состояние
-	octet state[6000];
 	ec_o* ec;
+	void* state;
 	octet* combo_state;
 	word* pt;
 	word* d;
 	void* stack;
-	// подготовить память
-	if (sizeof(state) < bignStart_keep(128, _ecpBench_deep))
-		return FALSE;
-	// загрузить параметры и создать описание кривой
+	// загрузить параметры
 	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK ||
-		bignStart(state, params) != ERR_OK)
+		bignEcCreate(&ec, params) != ERR_OK)
 		return FALSE;
-	// раскладка состояния
-	ec = (ec_o*)state;
+	// заблокировать утроение точек
 	ec->tpl = 0;
-	combo_state = objEnd(ec, octet);
-	pt = (word*)(combo_state + prngCOMBO_keep());
-	d = pt + 2 * ec->f->n;
-	stack = d + ec->f->n;
+	// создать состояние
+	state = blobCreate2(
+		prngCOMBO_keep(),
+		O_OF_W(2 * ec->f->n),
+		O_OF_W(ec->f->n),
+		ecMulA_deep(ec->f->n, ec->d, ec->deep, ec->f->n),
+		SIZE_MAX,
+		&combo_state, &pt, &d, &stack);
+	if (state == 0)
+		return FALSE;
 	// создать генератор COMBO
 	prngCOMBOStart(combo_state, utilNonce32());
 	// оценить число кратных точек в секунду
@@ -70,10 +64,11 @@ bool_t ecpBench()
 		}
 		ticks = tmTicks() - ticks;
 		// печать результатов
-		printf("ecpBench: %u cycles/mulpoint [%u mulpoints/sec]\n", 
+		printf("ecpBench: %u cycles/mulpoint [%u mulpoints/sec]\n",  
 			(unsigned)(ticks / reps),
 			(unsigned)tmSpeed(reps, ticks));
 	}
-	// все нормально
+	// завершение
+	bignEcClose(ec);
 	return TRUE;
 }

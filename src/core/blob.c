@@ -4,7 +4,7 @@
 \brief Blobs
 \project bee2 [cryptographic library]
 \created 2012.04.01
-\version 2025.08.28
+\version 2025.09.12
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -17,7 +17,7 @@
 
 /*
 *******************************************************************************
-Блоб: реализация
+Создание / изменение размера
 
 В куче выделяется память под указатель ptr. Память выделяется страницами.
 
@@ -71,49 +71,6 @@ blob_t blobCreate(size_t size)
 	return blobValueOf(ptr);
 }
 
-blob_t blobCreate2(size_t c1, ...)
-{
-	va_list args;
-	size_t size;
-	blob_t blob;
-	// определить требуемый размер блоба
-	va_start(args, c1);
-	size = memSlice2(0, c1, args);
-	va_end(args);
-	// создать блоб
-	blob = blobCreate(size);
-	// разметить память
-	if (blob)
-	{
-		va_start(args, c1);
-		memSlice2(blob, c1, args);
-		va_end(args);
-	}
-	return blob;
-}
-
-bool_t blobIsValid(const blob_t blob)
-{
-	return blob == 0 || memIsValid(blobPtrOf(blob), blobActualSizeOf(blob));
-}
-
-void blobWipe(blob_t blob)
-{
-	ASSERT(blobIsValid(blob));
-	if (blob != 0)
-		memWipe(blob, blobSizeOf(blob));
-}
-
-void blobClose(blob_t blob)
-{
-	ASSERT(blobIsValid(blob));
-	if (blob)
-	{
-		memWipe(blobPtrOf(blob), blobActualSizeOf(blob));
-		memFree(blobPtrOf(blob));
-	}
-}
-
 blob_t blobResize(blob_t blob, size_t size)
 {
 	size_t old_size;
@@ -146,6 +103,64 @@ blob_t blobResize(blob_t blob, size_t size)
 	if (size > old_size)
 		memSetZero((octet*)blob + old_size, size - old_size);
 	return blob;
+}
+
+/*
+*******************************************************************************
+Создание с разметкой памяти
+*******************************************************************************
+*/
+
+extern size_t memSliceSizeArgs(size_t c1, va_list args);
+extern void memSliceArgs(const void* buf, size_t c1, va_list args);
+
+blob_t blobCreate2(size_t c1, ...)
+{
+	va_list args;
+	size_t size;
+	blob_t blob;
+	// определить требуемый размер блоба
+	va_start(args, c1);
+	size = memSliceSizeArgs(c1, args);
+	va_end(args);
+	// создать блоб
+	blob = blobCreate(size);
+	// разметить память
+	if (blob)
+	{
+		va_start(args, c1);
+		memSliceArgs(blob, c1, args);
+		va_end(args);
+	}
+	return blob;
+}
+
+/*
+*******************************************************************************
+Другие функции
+*******************************************************************************
+*/
+
+bool_t blobIsValid(const blob_t blob)
+{
+	return blob == 0 || memIsValid(blobPtrOf(blob), blobActualSizeOf(blob));
+}
+
+void blobWipe(blob_t blob)
+{
+	ASSERT(blobIsValid(blob));
+	if (blob != 0)
+		memWipe(blob, blobSizeOf(blob));
+}
+
+void blobClose(blob_t blob)
+{
+	ASSERT(blobIsValid(blob));
+	if (blob)
+	{
+		memWipe(blobPtrOf(blob), blobActualSizeOf(blob));
+		memFree(blobPtrOf(blob));
+	}
 }
 
 size_t blobSize(const blob_t blob)

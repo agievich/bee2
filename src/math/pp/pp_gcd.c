@@ -4,7 +4,7 @@
 \brief Binary polynomials: Euclidian gcd algorithms
 \project bee2 [cryptographic library]
 \created 2012.03.01
-\version 2025.06.10
+\version 2025.09.12
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -58,17 +58,24 @@
 *******************************************************************************
 */
 
+#define ppGCD_schema(n, m)\
+/* u */		O_OF_W(m),\
+/* v */		O_OF_W(n)
+
 void ppGCD(word d[], const word a[], size_t n, const word b[], size_t m,
 	void* stack)
 {
 	register size_t s;
-	// переменные в stack
-	word* u = (word*)stack;
-	word* v = u + n;
+	word* u;			/* [m] */
+	word* v;			/* [n] */
 	// pre
 	ASSERT(wwIsDisjoint2(a, n, d, MIN2(n, m)));
 	ASSERT(wwIsDisjoint2(b, m, d, MIN2(n, m)));
 	ASSERT(!wwIsZero(a, n) && !wwIsZero(b, m));
+	// разметить стек
+	memSlice(stack,
+		ppGCD_schema(n, m), SIZE_MAX,
+		&u, &v);
 	// d <- 0
 	wwSetZero(d, MIN2(n, m));
 	// u <- a, v <- b
@@ -107,21 +114,30 @@ void ppGCD(word d[], const word a[], size_t n, const word b[], size_t m,
 
 size_t ppGCD_deep(size_t n, size_t m)
 {
-	return O_OF_W(n + m);
+	return memSliceSize(
+		ppGCD_schema(n, m), SIZE_MAX);
 }
+
+#define ppExGCD_schema(n, m)\
+/* aa */	O_OF_W(n),\
+/* bb */	O_OF_W(m),\
+/* u */		O_OF_W(n),\
+/* v */		O_OF_W(m),\
+/* da0 */	O_OF_W(m),\
+/* db0 */	O_OF_W(n)
 
 void ppExGCD(word d[], word da[], word db[], const word a[], size_t n,
 	const word b[], size_t m, void* stack)
 {
 	register size_t s;
-	size_t nu, mv;
-	// переменные в stack
-	word* aa = (word*)stack;
-	word* bb = aa + n;
-	word* u = bb + m;
-	word* v = u + n;
-	word* da0 = v + m;
-	word* db0 = da0 + m;
+	size_t nu;
+	size_t mv;
+	word* aa;			/* [n] */
+	word* bb;			/* [m] */
+	word* u;			/* [n] */
+	word* v;			/* [m] */
+	word* da0;			/* [m] */
+	word* db0;			/* [n] */
 	// pre
 	ASSERT(wwIsDisjoint3(da, m, db, n, d, MIN2(n, m)));
 	ASSERT(wwIsDisjoint2(a, n, da, m));
@@ -129,6 +145,10 @@ void ppExGCD(word d[], word da[], word db[], const word a[], size_t n,
 	ASSERT(wwIsDisjoint2(a, n, db, n));
 	ASSERT(wwIsDisjoint2(b, m, db, n));
 	ASSERT(!wwIsZero(a, n) && !wwIsZero(b, m));
+	// разметить стек
+	memSlice(stack,
+		ppExGCD_schema(n, m), SIZE_MAX,
+		&aa, &bb, &u, &v, &da0, &db0);
 	// d <- 0, da0 <- 1, db0 <- 0, da <- 0, db <- 1
 	wwSetZero(d, MIN2(n, m));
 	wwSetW(da0, m, 1);
@@ -209,6 +229,7 @@ void ppExGCD(word d[], word da[], word db[], const word a[], size_t n,
 
 size_t ppExGCD_deep(size_t n, size_t m)
 {
-	return O_OF_W(3 * n + 3 * m);
+	return memSliceSize(
+		ppExGCD_schema(n, m), SIZE_MAX);
 }
 

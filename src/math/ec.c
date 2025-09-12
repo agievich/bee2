@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2014.03.04
-\version 2025.09.05
+\version 2025.09.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -174,16 +174,15 @@ bool_t ecMulA(word b[], const word a[], const ec_o* ec, const word d[],
 	register size_t i;
 	register word w;
 	// переменные в stack
-	word* naf;			/* NAF */
-	word* t;			/* вспомогательная точка */
-	word* pre;			/* pre[i] = (2i + 1)a (naf_count элементов) */
+	word* naf;			/* [2 * m + 1] NAF */
+	word* t;			/* [ec->d * n] вспомогательная точка */
+	word* pre;			/* [naf_count * ec->d * n] pre[i] = (2i + 1)a (naf_count элементов) */
 	// pre
 	ASSERT(ecIsOperable(ec));
-	// раскладка stack
-	naf = (word*)stack;
-	t = naf + 2 * m + 1;
-	pre = t + ec->d * n;
-	stack = pre + naf_count * ec->d * n;
+	// разметить стек
+	memSlice(stack,
+		O_OF_W(2 * m + 1), O_OF_W(ec->d * n), O_OF_W(naf_count * ec->d * n), SIZE_0, SIZE_MAX,
+		&naf, &t, &pre, &stack);
 	// расчет NAF
 	ASSERT(naf_width >= 3);
 	naf_size = wwNAF(naf, d, m, naf_width);
@@ -236,10 +235,12 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 {
 	const size_t naf_width = ecNAFWidth(B_OF_W(m));
 	const size_t naf_count = SIZE_1 << (naf_width - 2);
-	return O_OF_W(2 * m + 1) + 
-		O_OF_W(ec_d * n) + 
-		O_OF_W(ec_d * n * naf_count) + 
-		ec_deep;
+	return memSliceSize(
+		O_OF_W(2 * m + 1),
+		O_OF_W(ec_d * n),
+		O_OF_W(naf_count * ec_d * n),
+		ec_deep,
+		SIZE_MAX);
 }
 
 /*
@@ -286,25 +287,21 @@ bool_t ecAddMulA(word b[], const ec_o* ec, void* stack, size_t k, ...)
 	size_t i, naf_max_size = 0;
 	va_list args;
 	// переменные в stack
-	word* t;			/* проективная точка */
-	size_t* m;			/* длины d[i] */
-	size_t* naf_width;	/* размеры NAF-окон */
-	size_t* naf_size;	/* длины NAF */
-	size_t* naf_pos;	/* позиция в NAF-представлении */
-	word** naf;			/* NAF */
-	word** pre;			/* предвычисленные точки */
+	word* t;			/* [ec->d * n] проективная точка */
+	size_t* m;			/* [k] длины d[i] */
+	size_t* naf_width;	/* [k] размеры NAF-окон */
+	size_t* naf_size;	/* [k] длины NAF */
+	size_t* naf_pos;	/* [k] позиция в NAF-представлении */
+	word** naf;			/* [k] NAF */
+	word** pre;			/* [k] предвычисленные точки */
 	// pre
 	ASSERT(ecIsOperable(ec));
 	ASSERT(k > 0);
-	// раскладка stack
-	t = (word*)stack;
-	m = (size_t*)(t + ec->d * n);
-	naf_width = m + k;
-	naf_size = naf_width + k;
-	naf_pos = naf_size + k;
-	naf = (word**)(naf_pos + k);
-	pre = naf + k;
-	stack = pre + k;
+	// разметить стек
+	memSlice(stack,
+		O_OF_W(ec->d * n), O_PER_S * k, O_PER_S * k, O_PER_S * k, O_PER_S * k,
+		sizeof(word*) * k, sizeof(word*) * k, SIZE_0, SIZE_MAX,
+		&t, &m, &naf_width, &naf_size, &naf_pos, &naf, &pre, &stack);
 	// обработать параметры (a[i], d[i], m[i])
 	va_start(args, k);
 	for (i = 0; i < k; ++i)
@@ -320,18 +317,18 @@ bool_t ecAddMulA(word b[], const ec_o* ec, void* stack, size_t k, ...)
 		m[i] = va_arg(args, size_t);
 		// подправить m[i]
 		m[i] = wwWordSize(d, m[i]);
-		// расчет naf[i]
+		// зарезервировать память для naf[i] и pre[i]
 		naf_width[i] = ecNAFWidth(B_OF_W(m[i]));
 		naf_count = SIZE_1 << (naf_width[i] - 2);
-		naf[i] = (word*)stack;
-		stack = naf[i] + 2 * m[i] + 1;
+		memSlice(stack,
+			O_OF_W(2 * m[i] + 1), O_OF_W(ec->d * n * naf_count), SIZE_0,
+			SIZE_MAX,
+			naf + i, pre + i, &stack);
+		// расчет naf[i]
 		naf_size[i] = wwNAF(naf[i], d, m[i], naf_width[i]);
 		if (naf_size[i] > naf_max_size)
 			naf_max_size = naf_size[i];
 		naf_pos[i] = 0;
-		// резервируем память для pre[i]
-		pre[i] = (word*)stack;
-		stack = pre[i] + ec->d * n * naf_count;
 		// pre[i][0] <- a[i]
 		ecFromA(pre[i], a, ec, stack);
 		// расчет pre[i][j]: t <- 2a[i], pre[i][j] <- t + pre[i][j - 1]
@@ -390,17 +387,27 @@ size_t ecAddMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t k, ...)
 {
 	size_t i, ret;
 	va_list args;
-	ret = O_OF_W(ec_d * n);
-	ret += 4 * sizeof(size_t) * k;
-	ret += 2 * sizeof(word**) * k;
+	ret = memSliceSize(
+		O_OF_W(ec_d * n),
+		O_PER_S * k,
+		O_PER_S * k,
+		O_PER_S * k,
+		O_PER_S * k,
+		sizeof(word*) * k,
+		sizeof(word*) * k,
+		SIZE_0,
+		SIZE_MAX);
 	va_start(args, k);
 	for (i = 0; i < k; ++i)
 	{
 		size_t m = va_arg(args, size_t);
 		size_t naf_width = ecNAFWidth(B_OF_W(m));
 		size_t naf_count = SIZE_1 << (naf_width - 2);
-		ret += O_OF_W(2 * m + 1);
-		ret += O_OF_W(ec_d * n * naf_count);
+		ret += memSliceSize(
+			O_OF_W(2 * m + 1),
+			O_OF_W(ec_d * n * naf_count),
+			SIZE_0,
+			SIZE_MAX);
 	}
 	va_end(args);
 	ret += ec_deep;

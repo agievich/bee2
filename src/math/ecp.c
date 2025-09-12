@@ -4,7 +4,7 @@
 \brief Elliptic curves over prime fields
 \project bee2 [cryptographic library]
 \created 2012.06.26
-\version 2025.09.05
+\version 2025.09.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -816,7 +816,7 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 		return FALSE;
 	// обнулить
 	memSetZero(ec, sizeof(ec_o));
-	// зафикисровать размерности
+	// зафиксировать размерности
 	ec->d = 3;
 	// запомнить базовое поле
 	ec->f = f;

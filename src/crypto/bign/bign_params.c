@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): public parameters
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.09.05
+\version 2025.09.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -411,7 +411,7 @@ static bool_t ecpDetIsZero(const word a[], const word b[], const word p[],
 	word* t1;
 	word* t2;
 	// разметить память
-	(void)memSlice(stack,
+	memSlice(stack,
 		O_OF_W(2 * n), SIZE_0, SIZE_MAX,
 		&t1, &stack);
 	t2 = t1 + n;
@@ -430,7 +430,7 @@ static bool_t ecpDetIsZero(const word a[], const word b[], const word p[],
 
 static size_t ecpDetIsZero_deep(size_t n)
 {
-	return memSlice(0,
+	return memSliceSize(0,
 		O_OF_W(2 * n),
 		utilMax(3,
 			zzSqrMod_deep(n),
@@ -445,7 +445,7 @@ static bool_t ecpMOVIsMet(const word q[], const word p[], size_t n,
 	word* t1;
 	word* t2;
 	// разметить память 
-	(void)memSlice(stack,
+	memSlice(stack,
 		O_OF_W(2 * n), SIZE_0, SIZE_MAX,
 		&t1, &stack);
 	t2 = t1 + n;
@@ -468,7 +468,7 @@ static bool_t ecpMOVIsMet(const word q[], const word p[], size_t n,
 
 static size_t ecpMOVIsMet_deep(size_t n)
 {
-	return memSlice(0,
+	return memSliceSize(
 		O_OF_W(2 * n),
 		utilMax(2,
 			zzMod_deep(n, n),

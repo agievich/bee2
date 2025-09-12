@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: Euclidian gcd algorithms
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.06.10
+\version 2025.09.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -77,17 +77,24 @@
 *******************************************************************************
 */
 
+#define zzGCD_schema(n, m)\
+/* u */		O_OF_W(n),\
+/* v */		O_OF_W(m)
+
 void zzGCD(word d[], const word a[], size_t n, const word b[], size_t m,
 	void* stack)
 {
 	register size_t s;
-	// переменные в stack
-	word* u = (word*)stack;
-	word* v = u + n;
+	word* u; 				/* [n] */
+	word* v;				/* [m] */
 	// pre
 	ASSERT(wwIsDisjoint2(a, n, d, MIN2(n, m)));
 	ASSERT(wwIsDisjoint2(b, m, d, MIN2(n, m)));
 	ASSERT(!wwIsZero(a, n) && !wwIsZero(b, m));
+	// разметить стек
+	memSlice(stack,
+		zzGCD_schema(n, m), SIZE_MAX,
+		&u, &v);
 	// d <- 0
 	wwSetZero(d, MIN2(n, m));
 	// u <- a, v <- b
@@ -125,13 +132,22 @@ void zzGCD(word d[], const word a[], size_t n, const word b[], size_t m,
 
 size_t zzGCD_deep(size_t n, size_t m)
 {
-	return O_OF_W(n + m);
+	return memSliceSize(
+		zzGCD_schema(n, m), SIZE_MAX);
 }
 
-bool_t zzIsCoprime(const word a[], size_t n, const word b[], size_t m, void* stack)
+#define zzIsCoprime_schema(n, m)\
+/* d */		O_OF_W(MIN2(n, m)),\
+/* stack */	zzGCD_deep(n, m)
+
+bool_t zzIsCoprime(const word a[], size_t n, const word b[], size_t m, 
+	void* stack)
 {
-	word* d = (word*)stack;
-	stack = d + MIN2(n, m);
+	word* d;			/* [MIN2(n, m)] */
+	// разметить стек
+	memSlice(stack,
+		zzIsCoprime_schema(n, m), SIZE_MAX,
+		&d, &stack);
 	// a == 0 => (a, b) = b
 	if (wwIsZero(a, n))
 		return wwIsW(b, m, 1);
@@ -145,21 +161,33 @@ bool_t zzIsCoprime(const word a[], size_t n, const word b[], size_t m, void* sta
 
 size_t zzIsCoprime_deep(size_t n, size_t m)
 {
-	return O_OF_W(MIN2(n, m)) + zzGCD_deep(n, m);
+	return memSliceSize(
+		zzIsCoprime_schema(n, m), SIZE_MAX);
 }
+
+#define zzLCM_schema(n, m)\
+/* prod */	O_OF_W(n + m),\
+/* gcd */	O_OF_W(MIN2(n, m)),\
+/* r */		O_OF_W(MIN2(n, m)),\
+/* stack */	utilMax(3,\
+				zzMul_deep(n, m),\
+				zzGCD_deep(n, m),\
+				zzMod_deep(n + m, MIN2(n, m)))
 
 void zzLCM(word d[], const word a[], size_t n, const word b[], size_t m,
 	void* stack)
 {
-	// переменные в stack
-	word* prod = (word*)stack;
-	word* gcd = prod + n + m;
-	word* r = gcd + MIN2(n, m);
-	stack = r + MIN2(n, m);
+	word* prod;			/* [n + m] */
+	word* gcd; 			/* [MIN2(n, m)] */
+	word* r;			/* [MIN2(n, m)] */
 	// pre
 	ASSERT(wwIsDisjoint2(a, n, d, MAX2(n, m)));
 	ASSERT(wwIsDisjoint2(b, m, d, MAX2(n, m)));
 	ASSERT(!wwIsZero(a, n) && !wwIsZero(b, m));
+	// разметить стек
+	memSlice(stack,
+		zzLCM_schema(n, m), SIZE_MAX,
+		&prod, &gcd, &r, &stack);
 	// d <- 0
 	wwSetZero(d, n + m);
 	// нормализация
@@ -180,25 +208,30 @@ void zzLCM(word d[], const word a[], size_t n, const word b[], size_t m,
 
 size_t zzLCM_deep(size_t n, size_t m)
 {
-	return O_OF_W(n + m + MIN2(n, m) + MIN2(n, m)) +
-		utilMax(3,
-			zzMul_deep(n, m),
-			zzGCD_deep(n, m),
-			zzMod_deep(n + m, MIN2(n, m)));
+	return memSliceSize(
+		zzLCM_schema(n, m), SIZE_MAX);
 }
+
+#define zzExGCD_schema(n, m)\
+/* aa */	O_OF_W(n),\
+/* bb */	O_OF_W(m),\
+/* u */		O_OF_W(n),\
+/* v */		O_OF_W(m),\
+/* da1 */	O_OF_W(m),\
+/* db1 */	O_OF_W(n)
 
 void zzExGCD(word d[], word da[], word db[], const word a[], size_t n,
 	const word b[], size_t m, void* stack)
 {
 	register size_t s;
-	register size_t nu, mv;
-	// переменные в stack
-	word* aa = (word*)stack;
-	word* bb = aa + n;
-	word* u = bb + m;
-	word* v = u + n;
-	word* da1 = v + m;
-	word* db1 = da1 + m;
+	register size_t nu;
+	register size_t mv;
+	word* aa;			/* [n] */
+	word* bb;			/* [m] */
+	word* u;			/* [n] */
+	word* v;			/* [m] */
+	word* da1;			/* [m] */
+	word* db1;			/* [n] */
 	// pre
 	ASSERT(wwIsDisjoint3(da, m, db, n, d, MIN2(n, m)));
 	ASSERT(wwIsDisjoint2(a, n, d, MIN2(n, m)));
@@ -208,6 +241,10 @@ void zzExGCD(word d[], word da[], word db[], const word a[], size_t n,
 	ASSERT(wwIsDisjoint2(a, n, db, n));
 	ASSERT(wwIsDisjoint2(b, m, db, n));
 	ASSERT(!wwIsZero(a, n) && !wwIsZero(b, m));
+	// разметить стек
+	memSlice(stack,
+		zzExGCD_schema(n, m), SIZE_MAX,
+		&aa, &bb, &u, &v, &da1, &db1);
 	// d <- 0, da <- 1, db <- 0, da1 <- 0, db1 <- 1
 	wwSetZero(d, MIN2(n, m));
 	wwSetW(da, m, 1);
@@ -291,7 +328,8 @@ void zzExGCD(word d[], word da[], word db[], const word a[], size_t n,
 
 size_t zzExGCD_deep(size_t n, size_t m)
 {
-	return O_OF_W(3 * n + 3 * m);
+	return memSliceSize(
+		zzExGCD_schema(n, m), SIZE_MAX);
 }
 
 /*
@@ -306,20 +344,30 @@ size_t zzExGCD_deep(size_t n, size_t m)
 *******************************************************************************
 */
 
+#define zzDivMod_schema(n)\
+/* u */		O_OF_W(n),\
+/* v */		O_OF_W(n),\
+/* da */	O_OF_W(n),\
+/* da1 */	O_OF_W(n)
+
 void zzDivMod(word b[], const word divident[], const word a[],
 	const word mod[], size_t n, void* stack)
 {
-	register size_t nu, nv;
-	// переменные в stack
-	word* u = (word*)stack;
-	word* v = u + n;
-	word* da = v + n;
-	word* da1 = da + n;
+	register size_t nu;
+	register size_t nv;
+	word* u; 			/* [n] */
+	word* v;			/* [n] */
+	word* da;			/* [n] */
+	word* da1;			/* [n] */
 	// pre
 	ASSERT(wwCmp(a, mod, n) < 0);
 	ASSERT(wwCmp(divident, mod, n) < 0);
 	ASSERT(wwIsDisjoint(b, mod, n));
 	ASSERT(zzIsOdd(mod, n) && mod[n - 1] != 0);
+	// разметить стек
+	memSlice(stack,
+		zzDivMod_schema(n), SIZE_MAX,
+		&u, &v, &da, &da1);
 	// da <- divident, da1 <- 0
 	wwCopy(da, divident, n);
 	wwSetZero(da1, n);
@@ -329,7 +377,7 @@ void zzDivMod(word b[], const word divident[], const word a[],
 	nu = wwWordSize(u, n);
 	nv = n;
 	// итерации со следующими инвариантами:
-	//	da * a  =  divident * u \mod mod
+	//	da * a = divident * u \mod mod
 	//	da1 * a = -divident * v \mod mod
 	while (!wwIsZero(v, nv))
 	{
@@ -381,7 +429,8 @@ void zzDivMod(word b[], const word divident[], const word a[],
 
 size_t zzDivMod_deep(size_t n)
 {
-	return O_OF_W(4 * n);
+	return memSliceSize(
+		zzDivMod_schema(n), SIZE_MAX);
 }
 
 /*
@@ -434,16 +483,26 @@ a и mod < 2^m, причем условие a < mod может нарушать�
 *******************************************************************************
 */
 
+#define zzAlmostInvMod_schema(n)\
+/* u */		O_OF_W(n),\
+/* v */		O_OF_W(n),\
+/* da0 */	O_OF_W(n + 1),\
+/* da */	O_OF_W(n + 1)
+
 size_t zzAlmostInvMod(word b[], const word a[], const word mod[], size_t n,
 	void* stack)
 {
 	register size_t k = 0;
-	size_t nu, nv;
-	// переменные в stack
-	word* u = (word*)stack;
-	word* v = u + n;
-	word* da0 = v + n;
-	word* da = da0 + n + 1;
+	size_t nu;
+	size_t nv;
+	word* u;			/* [n] */
+	word* v;			/* [n] */
+	word* da0;			/* [n + 1] */
+	word* da;			/* [n + 1] */
+	// разметить стек
+	memSlice(stack,
+		zzAlmostInvMod_schema(n), SIZE_MAX,
+		&u, &v, &da0, &da, &stack);		
 	// pre
 	ASSERT(!wwIsZero(a, n));
 	ASSERT(wwCmp(a, mod, n) < 0);
@@ -514,5 +573,6 @@ size_t zzAlmostInvMod(word b[], const word a[], const word mod[], size_t n,
 
 size_t zzAlmostInvMod_deep(size_t n)
 {
-	return O_OF_W(4 * n + 2);
+	return memSliceSize(
+		zzAlmostInvMod_schema(n), SIZE_MAX);
 }

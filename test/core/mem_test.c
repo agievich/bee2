@@ -170,38 +170,34 @@ bool_t memTest()
 	memXor2(buf2, buf, 8);
 	if (!memIsRep(buf2, 8, 0) || buf2[8] != 0x08)
 		return FALSE;
-	// разметка
-	if (memSlice(0, 
-			SIZE_1,
-			SIZE_1 | SIZE_HI,
-			SIZE_1,
-			SIZE_1, 
-			SIZE_MAX) != 2 * sizeof(mem_align_t) + 1)
+	// разметка #1
+	if (memSliceSize(
+		SIZE_1, SIZE_1 | SIZE_HI, SIZE_1, SIZE_1, SIZE_MAX) !=
+		2 * sizeof(mem_align_t) + 1)
 		return FALSE;
-	if (memSlice(buf3, 
-			SIZE_1,
-			SIZE_1 | SIZE_HI,
-			SIZE_0,
-			SIZE_0,
-			SIZE_MAX,
-			&p, &p1, &p2, &p3) != sizeof(mem_align_t) ||
-		p != buf3 || p1 != p || p2 == p1 || p3 != p2)
+	memSlice(buf3,
+		SIZE_1, SIZE_1 | SIZE_HI, SIZE_0, SIZE_0, SIZE_MAX,
+		&p, &p1, &p2, &p3);
+	if (p != buf3 || p1 != p || p2 == p1 || p3 != p2)
 		return FALSE;
-	if (memSlice(buf3, 
-			SIZE_1 | SIZE_HI,
-			SIZE_1 | SIZE_HI, 
-			SIZE_MAX,
-			&p, &p1) != 1 || 
-		p != buf3 || p1 != p)
+	// разметка #2
+	if (memSliceSize(
+		SIZE_1 | SIZE_HI, SIZE_1 | SIZE_HI, SIZE_MAX) != 1)
 		return FALSE;
-	if (memSlice(buf3, 
-			SIZE_1,
-			SIZE_1 | SIZE_HI,
-			SIZE_1 | SIZE_HI, 
-			SIZE_1,
-			SIZE_MAX,
-			&p, &p1, &p2, &p3) != sizeof(mem_align_t) + 1 || 
-		p != buf3 || p1 != p || p2 != p || p3 == p2)
+	memSlice(buf3,
+		SIZE_1 | SIZE_HI, SIZE_1 | SIZE_HI, SIZE_MAX,
+		&p, &p1);
+	if (p != buf3 || p1 != p)
+		return FALSE;
+	// разметка #3
+	if (memSliceSize(
+		SIZE_1, SIZE_1 | SIZE_HI, SIZE_1 | SIZE_HI, SIZE_1, SIZE_MAX,
+		&p, &p1, &p2, &p3) != sizeof(mem_align_t) + 1)
+		return FALSE;
+	memSlice(buf3,
+		SIZE_1, SIZE_1 | SIZE_HI, SIZE_1 | SIZE_HI, SIZE_1, SIZE_MAX,
+		&p, &p1, &p2, &p3);
+	if (p != buf3 || p1 != p || p2 != p || p3 == p2)
 		return FALSE;
 	// все нормально
 	return TRUE;

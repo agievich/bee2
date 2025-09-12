@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: modular reductions
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.07.24
+\version 2025.09.09
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -123,14 +123,21 @@ size_t zzRedCrand_deep(size_t n)
 *******************************************************************************
 */
 
+#define zzRedBarrStart_schema(n)\
+/* divident */	O_OF_W(2 * n + 1),\
+/* stack */		zzDiv_deep(2 * n + 1, n)
+
 void zzRedBarrStart(word barr_param[], const word mod[], size_t n, 
 	void* stack)
 {
-	word* divident = (word*)stack;
-	stack = divident + 2 * n + 1;
+	word* divident;			/* [2n + 1] */
 	// pre
 	ASSERT(wwIsDisjoint2(barr_param, n + 2, mod, n));
 	ASSERT(n > 0 && mod[n - 1] != 0);
+	// разметить стек
+	memSlice(stack,
+		zzRedBarrStart_schema(n), SIZE_MAX,
+		&divident, &stack);
 	// divident <- B^{2n}
 	wwSetZero(divident, 2 * n);
 	divident[2 * n] = 1;
@@ -140,20 +147,30 @@ void zzRedBarrStart(word barr_param[], const word mod[], size_t n,
 
 size_t zzRedBarrStart_deep(size_t n)
 {
-	return O_OF_W(2 * n + 1) + zzDiv_deep(2 * n + 1, n);
+	return memSliceSize(
+		zzRedBarrStart_schema(n), SIZE_MAX);
 }
+
+#define zzRedBarr_schema(n)\
+/* q */		O_OF_W(2 * n + 3),\
+/* qm */	O_OF_W(2 * n + 2),\
+/* stack */	utilMax(2,\
+				zzMul_deep(n + 1, n + 2),\
+				zzMul_deep(n + 2, n))
 
 void FAST(zzRedBarr)(word a[], const word mod[], size_t n, 
 	const word barr_param[], void* stack)
 {
-	// переменные в stack
-	word* q = (word*)stack;
-	word* qm = q + (n + 1) + (n + 2);
-	stack = qm + (n + 2) + n;
+	word* q;			/* [(n + 1) + (n + 2)] */
+	word* qm;			/* [(n + 2) + n] */
 	// pre
 	ASSERT(wwIsDisjoint2(a, 2 * n, mod, n));
 	ASSERT(wwIsDisjoint2(a, 2 * n, barr_param, n + 2));
 	ASSERT(n > 0 && mod[n - 1] != 0);
+	// разметить стек
+	memSlice(stack,
+		zzRedBarr_schema(n), SIZE_MAX,
+		&q, &qm, &stack);
 	// q <- (a \div B^{n - 1}) * barr_param
 	zzMul(q, a + n - 1, n + 1, barr_param, n + 2, stack);
 	// qm <- (q \div B^{n + 1}) * mod
@@ -170,14 +187,16 @@ void zzRedBarr(word a[], const word mod[], size_t n,
 {
 	register word w;
 	size_t i;
-	// переменные в stack
-	word* q = (word*)stack;
-	word* qm = q + (n + 1) + (n + 2);
-	stack = qm + (n + 2) + n;
+	word* q;			/* [(n + 1) + (n + 2)] */
+	word* qm;			/* [(n + 2) + n] */
 	// pre
 	ASSERT(wwIsDisjoint2(a, 2 * n, mod, n));
 	ASSERT(wwIsDisjoint2(a, 2 * n, barr_param, n + 2));
 	ASSERT(n > 0 && mod[n - 1] != 0);
+	// разметить стек
+	memSlice(stack,
+		zzRedBarr_schema(n), SIZE_MAX,
+		&q, &qm, &stack);
 	// q <- (a \div B^{n - 1}) * barr_param
 	zzMul(q, a + n - 1, n + 1, barr_param, n + 2, stack);
 	// qm <- (q \div B^{n + 1}) * mod
@@ -206,10 +225,8 @@ void zzRedBarr(word a[], const word mod[], size_t n,
 
 size_t zzRedBarr_deep(size_t n)
 {
-	return O_OF_W(4 * n + 5) + 
-		utilMax(2, 
-			zzMul_deep(n + 1, n + 2), 
-			zzMul_deep(n + 2, n));
+	return memSliceSize(
+		zzRedBarr_schema(n), SIZE_MAX);
 }
 
 /*
@@ -294,7 +311,7 @@ size_t zzRedMont_deep(size_t n)
 
 /*
 *******************************************************************************
-Редукция Крэндалла-Монтгомери
+Редукция Крендалла-Монтгомери
 
 Редукция Монтгомери для модуля mod = B^n - c, 0 < c < B, n >= 2, упрощается:
 [pretime]    m* <- c^{-1} \bmod B

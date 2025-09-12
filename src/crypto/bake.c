@@ -292,7 +292,7 @@ err_t bakeBMQVStep2(octet out[], void* state)
 static size_t bakeBMQVStep2_deep(size_t n, size_t f_deep, size_t ec_d,
 	size_t ec_deep)
 {
-	return memSlice(0,
+	return memSliceSize(
 		O_OF_W(2 * n),
 		utilMax(2,
 			f_deep,

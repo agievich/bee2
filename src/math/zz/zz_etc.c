@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: other functions
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.06.10
+\version 2025.09.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -102,17 +102,26 @@ Handbook of Applied Cryptography] в редакции CТБ 34.101.45 (прил�
 *******************************************************************************
 */
 
+#define zzJacobi_schema(n, m)\
+/* u */		O_OF_W(n),\
+/* v */		O_OF_W(m),\
+/* stack */	utilMax(2,\
+				zzMod_deep(n, m),\
+				zzMod_deep(m, n))
+
 int zzJacobi(const word a[], size_t n, const word b[], size_t m, void* stack)
 {
 	register int t = 1;
 	register size_t s;
-	// переменные в stack
-	word* u = (word*)stack;
-	word* v = u + n;
-	stack = v + m;
+	word* u;				/* [n] */
+	word* v;				/* [m] */
 	// pre
 	ASSERT(wwIsValid(a, n));
 	ASSERT(zzIsOdd(b, m));
+	// разметить стек
+	memSlice(stack,
+		zzJacobi_schema(n, m), SIZE_MAX,
+		&u, &v, &stack);
 	// v <- b
 	wwCopy(v, b, m);
 	m = wwWordSize(v, m);
@@ -156,10 +165,8 @@ int zzJacobi(const word a[], size_t n, const word b[], size_t m, void* stack)
 
 size_t zzJacobi_deep(size_t n, size_t m)
 {
-	return O_OF_W(n + m) + 
-		utilMax(2, 
-			zzMod_deep(n, m), 
-			zzMod_deep(m, n));
+	return memSliceSize(
+		zzJacobi_schema(n, m), SIZE_MAX);
 }
 
 /*
@@ -187,15 +194,23 @@ size_t zzJacobi_deep(size_t n, size_t m)
 *******************************************************************************
 */
 
+#define zzSqrt_schema(n, m)\
+/* t */		O_OF_W(m + 1),\
+/* r */		O_OF_W(m),\
+/* stack */	zzDiv_deep(n, m)
+
 bool_t zzSqrt(word b[], const word a[], size_t n, void* stack)
 {
 	register int cmp;
 	size_t m = (n + 1) / 2;
-	word* t = (word*)stack;
-	word* r = t + m + 1;
-	stack = r + m;
+	word* t;					/* [m + 1] */
+	word* r;					/* [m] */
 	// pre
 	ASSERT(wwIsDisjoint2(a, n, b, m));
+	// разметить стек
+	memSlice(stack,
+		zzSqrt_schema(n, m), SIZE_MAX,
+		&t, &r, &stack);
 	// нормализовать a и обработать a == 0
 	if ((n = wwWordSize(a, n)) == 0)
 	{
@@ -237,6 +252,6 @@ bool_t zzSqrt(word b[], const word a[], size_t n, void* stack)
 size_t zzSqrt_deep(size_t n)
 {
 	const size_t m = (n + 1) / 2;
-	return m + 1 + m + zzDiv_deep(n, m);
+	return memSliceSize(
+		zzSqrt_schema(n, m), SIZE_MAX);
 }
-

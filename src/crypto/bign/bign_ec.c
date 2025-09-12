@@ -118,7 +118,7 @@ err_t bignStart(void* state, const bign_params* params)
 	f_keep = gfpCreate_keep(no);
 	ec_keep = ecpCreateJ_keep(n);
 	// разметить память
-	(void)memSlice(state,
+	memSlice(state,
 		ec_keep,
 		f_keep,
 		SIZE_0,
@@ -152,7 +152,7 @@ size_t bignStart_keep(size_t l, bign_deep_i deep)
 	size_t ec_keep = ecpCreateJ_keep(n);
 	size_t ec_deep = ecpCreateJ_deep(n, f_deep);
 	// расчет
-	return memSlice(0,
+	return memSliceSize(
 		ec_keep,
 		f_keep,
 		utilMax(3,
