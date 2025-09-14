@@ -4,7 +4,7 @@
 \brief STB 34.101.60 (bels): secret sharing algorithms
 \project bee2 [cryptographic library]
 \created 2013.05.14
-\version 2025.09.01
+\version 2025.09.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -208,11 +208,12 @@ err_t belsGenMi(octet mi[], size_t len, const octet m0[], gen_i ang,
 err_t belsGenMid(octet mid[], size_t len, const octet m0[], const octet id[], 
 	size_t id_len)
 {
-	size_t n, reps;
+	size_t n;
+	size_t reps;
 	void* state;
-	word* f0;
-	word* f;
-	word* u;
+	word* f0;			/* [n+1] */
+	word* f;			/* [n+1] */
+	word* u;			/* [n+1] */
 	void* stack;
 	// проверить входные данные
 	if ((len != 16 && len != 24 && len != 32) || 

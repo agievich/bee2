@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: modular reductions
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.09.09
+\version 2025.09.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -123,9 +123,8 @@ size_t zzRedCrand_deep(size_t n)
 *******************************************************************************
 */
 
-#define zzRedBarrStart_schema(n)\
-/* divident */	O_OF_W(2 * n + 1),\
-/* stack */		zzDiv_deep(2 * n + 1, n)
+#define zzRedBarrStart_local(n)\
+/* divident */	O_OF_W(2 * n + 1)
 
 void zzRedBarrStart(word barr_param[], const word mod[], size_t n, 
 	void* stack)
@@ -136,7 +135,7 @@ void zzRedBarrStart(word barr_param[], const word mod[], size_t n,
 	ASSERT(n > 0 && mod[n - 1] != 0);
 	// разметить стек
 	memSlice(stack,
-		zzRedBarrStart_schema(n), SIZE_MAX,
+		zzRedBarrStart_local(n), SIZE_0, SIZE_MAX,
 		&divident, &stack);
 	// divident <- B^{2n}
 	wwSetZero(divident, 2 * n);
@@ -148,15 +147,14 @@ void zzRedBarrStart(word barr_param[], const word mod[], size_t n,
 size_t zzRedBarrStart_deep(size_t n)
 {
 	return memSliceSize(
-		zzRedBarrStart_schema(n), SIZE_MAX);
+		zzRedBarrStart_local(n), 
+		zzDiv_deep(2 * n + 1, n),
+		SIZE_MAX);
 }
 
-#define zzRedBarr_schema(n)\
+#define zzRedBarr_local(n)\
 /* q */		O_OF_W(2 * n + 3),\
-/* qm */	O_OF_W(2 * n + 2),\
-/* stack */	utilMax(2,\
-				zzMul_deep(n + 1, n + 2),\
-				zzMul_deep(n + 2, n))
+/* qm */	O_OF_W(2 * n + 2)
 
 void FAST(zzRedBarr)(word a[], const word mod[], size_t n, 
 	const word barr_param[], void* stack)
@@ -169,7 +167,7 @@ void FAST(zzRedBarr)(word a[], const word mod[], size_t n,
 	ASSERT(n > 0 && mod[n - 1] != 0);
 	// разметить стек
 	memSlice(stack,
-		zzRedBarr_schema(n), SIZE_MAX,
+		zzRedBarr_local(n), SIZE_0, SIZE_MAX,
 		&q, &qm, &stack);
 	// q <- (a \div B^{n - 1}) * barr_param
 	zzMul(q, a + n - 1, n + 1, barr_param, n + 2, stack);
@@ -195,7 +193,7 @@ void zzRedBarr(word a[], const word mod[], size_t n,
 	ASSERT(n > 0 && mod[n - 1] != 0);
 	// разметить стек
 	memSlice(stack,
-		zzRedBarr_schema(n), SIZE_MAX,
+		zzRedBarr_local(n), SIZE_0, SIZE_MAX,
 		&q, &qm, &stack);
 	// q <- (a \div B^{n - 1}) * barr_param
 	zzMul(q, a + n - 1, n + 1, barr_param, n + 2, stack);
@@ -226,7 +224,11 @@ void zzRedBarr(word a[], const word mod[], size_t n,
 size_t zzRedBarr_deep(size_t n)
 {
 	return memSliceSize(
-		zzRedBarr_schema(n), SIZE_MAX);
+		zzRedBarr_local(n), 
+		utilMax(2,
+			zzMul_deep(n + 1, n + 2),
+			zzMul_deep(n + 2, n)),
+		SIZE_MAX);
 }
 
 /*

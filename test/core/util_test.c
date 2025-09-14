@@ -4,7 +4,7 @@
 \brief Tests for utilities
 \project bee2/test
 \created 2017.01.17
-\version 2025.09.12
+\version 2025.09.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -71,6 +71,9 @@ bool_t utilTest()
 	// min / max
 	if (utilMin(5, SIZE_1, (size_t)2, (size_t)3, SIZE_1, SIZE_0) != 0 ||
 		utilMax(5, SIZE_1, (size_t)2, (size_t)3, SIZE_1, SIZE_0) != 3)
+		return FALSE;
+	// выравнивание
+	if (utilAlign(10, 5) != 10 || utilAlign(11, 5) != 15)
 		return FALSE;
 	// контрольные суммы
 	if (utilCRC32("123456789", 9, 0) != 0xCBF43926)

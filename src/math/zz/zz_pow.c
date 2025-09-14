@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: modular exponentiation
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.09.10
+\version 2025.09.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -22,18 +22,14 @@
 *******************************************************************************
 */
 
-#define zzPowerMod_schema(n, no, r_deep)\
+#define zzPowerMod_local(n, no)\
 /* t */		O_OF_W(n + 1),\
-/* r */		zmCreate_keep(no),\
-/* stack */	utilMax(2,\
-				r_deep,\
-				qrPower_deep(n, m, r_deep))
+/* r */		zmCreate_keep(no)
 
 void zzPowerMod(word c[], const word a[], size_t n, const word b[], size_t m,
 	const word mod[], void* stack)
 {
 	size_t no;
-	size_t r_deep;
 	word* t;			/* [n] */
 	qr_o* r;			/* [zmCreate_keep(no)] */
 	// pre
@@ -41,10 +37,9 @@ void zzPowerMod(word c[], const word a[], size_t n, const word b[], size_t m,
 	ASSERT(wwCmp(a, mod, n) < 0);
 	// размерности
 	no = wwOctetSize(mod, n);
-	r_deep = zmCreate_deep(no);
 	// разметить стек
 	memSlice(stack,
-		zzPowerMod_schema(n, no, r_deep), SIZE_MAX,
+		zzPowerMod_local(n, no), SIZE_0, SIZE_MAX,
 		&t, &r, &stack);
 	// r <- Zm(mod)
 	wwTo(t, no, mod);
@@ -64,7 +59,11 @@ size_t zzPowerMod_deep(size_t n, size_t m)
 	const size_t no = O_OF_W(n);
 	const size_t r_deep = zmCreate_deep(no);
 	return memSliceSize(
-		zzPowerMod_schema(n, m, r_deep), SIZE_MAX);
+		zzPowerMod_local(n, m), 
+		utilMax(2,
+			r_deep,
+			qrPower_deep(n, m, r_deep)),
+		SIZE_MAX);
 }
 
 /*
@@ -75,7 +74,7 @@ size_t zzPowerMod_deep(size_t n, size_t m)
 *******************************************************************************
 */
 
-#define zzPowerModW_schema()\
+#define zzPowerModW_local()\
 /* powers */	O_OF_W(4)
 
 word zzPowerModW(register word a, register word b, register word mod, 
@@ -93,7 +92,7 @@ word zzPowerModW(register word a, register word b, register word mod,
 		return 1;
 	// разметить стек
 	memSlice(stack,
-		zzPowerModW_schema(), SIZE_MAX,
+		zzPowerModW_local(), SIZE_MAX,
 		&powers);
 	// powers <- малые нечетные степени a
 	prod = a;
@@ -147,5 +146,6 @@ word zzPowerModW(register word a, register word b, register word mod,
 size_t zzPowerModW_deep()
 {
 	return memSliceSize(
-		zzPowerModW_schema(), SIZE_MAX);
+		zzPowerModW_local(), 
+		SIZE_MAX);
 }

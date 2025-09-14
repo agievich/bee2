@@ -135,17 +135,22 @@ static bool_t ec2FromALD(word b[], const word a[], const ec_o* ec,
 	return TRUE;
 }
 
+#define ec2ToALD_local(n)\
+/* t1 */	O_OF_W(n)
+
 // [2n]b <- [3n]a (A <- P)
 static bool_t ec2ToALD(word b[], const word a[], const ec_o* ec, void* stack)
 {
 	const size_t n = ec->f->n;
-	// переменные в stack
-	word* t1 = (word*)stack;
-	stack = t1 + n;
+	word* t1;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ec2SeemsOn3(a, ec));
 	ASSERT(a == b || wwIsDisjoint2(a, 3 * n, b, 2 * n));
+	// разметить стек
+	memSlice(stack,
+		ec2ToALD_local(n), SIZE_0, SIZE_MAX,
+		&t1, &stack);
 	// a == O => b <- O
 	if (qrIsZero(ecZ(a, n), ec->f))
 		return FALSE;
@@ -163,20 +168,28 @@ static bool_t ec2ToALD(word b[], const word a[], const ec_o* ec, void* stack)
 
 static size_t ec2ToALD_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(n) + f_deep;
+	return memSliceSize(
+		ec2ToALD_local(n), 
+		f_deep,
+		SIZE_MAX);
 }
+
+#define ec2NegLD_local(n)\
+/* t1 */	O_OF_W(n)
 
 // [3n]b <- -[3n]a (P <- -P)
 static void ec2NegLD(word b[], const word a[], const ec_o* ec, void* stack)
 {
 	const size_t n = ec->f->n;
-	// переменные в stack
-	word* t1 = (word*)stack;
-	stack = t1 + n;
+	word* t1;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ec2SeemsOn3(a, ec));
 	ASSERT(wwIsSameOrDisjoint(a, b, 3 * n));
+	// разметить стек
+	memSlice(stack,
+		ec2NegLD_local(n), SIZE_0, SIZE_MAX,
+		&t1, &stack);
 	// t1 <- xa * za
 	qrMul(t1, ecX(a), ecZ(a, n), ec->f, stack);
 	// b <- (xa, ya + t1, za)
@@ -186,21 +199,30 @@ static void ec2NegLD(word b[], const word a[], const ec_o* ec, void* stack)
 
 static size_t ec2NegLD_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(n) + f_deep;
+	return memSliceSize(
+		ec2NegLD_local(n), 
+		f_deep,
+		SIZE_MAX);
 }
+
+#define ec2DblLD_local(n)\
+/* t1 */	O_OF_W(n),\
+/* t2 */	O_OF_W(n)
 
 // [3n]b <- 2[3n]a (P <- 2P)
 static void ec2DblLD(word b[], const word a[], const ec_o* ec, void* stack)
 {
 	const size_t n = ec->f->n;
-	// переменные в stack
-	word* t1 = (word*)stack;
-	word* t2 = t1 + n;
-	stack = t2 + n;
+	word* t1;			/* [n] */
+	word* t2;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ec2SeemsOn3(a, ec));
 	ASSERT(wwIsSameOrDisjoint(a, b, 3 * n));
+	// разметить стек
+	memSlice(stack,
+		ec2DblLD_local(n), SIZE_0, SIZE_MAX,
+		&t1, &t2, &stack);
 	// za == 0 или xa == 0? => b <- O
 	if (qrIsZero(ecZ(a, n), ec->f) || qrIsZero(ecX(a), ec->f))
 	{
@@ -241,20 +263,28 @@ static void ec2DblLD(word b[], const word a[], const ec_o* ec, void* stack)
 
 static size_t ec2DblLD_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(2 * n) + f_deep;
+	return memSliceSize(
+		ec2DblLD_local(n), 
+		f_deep,
+		SIZE_MAX);
 }
+
+#define ec2DblALD_local(n)\
+/* t1 */	O_OF_W(n)
 
 // [3n]b <- 2[2n]a (P <- 2A)
 static void ec2DblALD(word b[], const word a[], const ec_o* ec, void* stack)
 {
 	const size_t n = ec->f->n;
-	// переменные в stack
-	word* t1 = (word*)stack;
-	stack = t1 + n;
+	word* t1;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ec2SeemsOnA(a, ec));
 	ASSERT(a == b || wwIsDisjoint2(a, 2 * n, b, 3 * n));
+	// разметить стек
+	memSlice(stack,
+		ec2DblALD_local(n), SIZE_0, SIZE_MAX,
+		&t1, &stack);
 	// xa == 0? => b <- O
 	if (qrIsZero(ecX(a), ec->f))
 	{
@@ -287,28 +317,41 @@ static void ec2DblALD(word b[], const word a[], const ec_o* ec, void* stack)
 
 static size_t ec2DblALD_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(n) + f_deep;
+	return memSliceSize(
+		ec2DblALD_local(n), 
+		f_deep,
+		SIZE_MAX);
 }
+
+#define ec2AddLD_local(n)\
+/* t1 */	O_OF_W(n),\
+/* t2 */	O_OF_W(n),\
+/* t3 */	O_OF_W(n),\
+/* t4 */	O_OF_W(n),\
+/* t5 */	O_OF_W(n),\
+/* t6 */	O_OF_W(n)
 
 // [3n]c <- [3n]a + [3n]b (P <- P + P)
 static void ec2AddLD(word c[], const word a[], const word b[],
 	const ec_o* ec, void* stack)
 {
 	const size_t n = ec->f->n;
-	// переменные в stack
-	word* t1 = (word*)stack;
-	word* t2 = t1 + n;
-	word* t3 = t2 + n;
-	word* t4 = t3 + n;
-	word* t5 = t4 + n;
-	word* t6 = t5 + n;
-	stack = t6 + n;
+	word* t1;			/* [n] */
+	word* t2; 			/* [n] */
+	word* t3;			/* [n] */
+	word* t4;			/* [n] */
+	word* t5;			/* [n] */
+	word* t6;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ec2SeemsOn3(a, ec));
 	ASSERT(ec2SeemsOn3(b, ec));
 	ASSERT(wwIsSameOrDisjoint(a, c, 3 * n));
 	ASSERT(wwIsSameOrDisjoint(b, c, 3 * n));
+	// разметить стек
+	memSlice(stack,
+		ec2AddLD_local(n), SIZE_0, SIZE_MAX,
+		&t1, &t2, &t3, &t4, &t5, &t6, &stack);
 	// a == O => c <- b
 	if (qrIsZero(ecZ(a, n), ec->f))
 	{
@@ -380,29 +423,39 @@ static void ec2AddLD(word c[], const word a[], const word b[],
 
 static size_t ec2AddLD_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(6 * n) +
+	return memSliceSize(
+		ec2AddLD_local(n), 
 		utilMax(2,
 			f_deep,
-			ec2DblLD_deep(n, f_deep));
+			ec2DblLD_deep(n, f_deep)),
+		SIZE_MAX);
 }
+
+#define ec2AddALD_local(n)\
+/* t1 */	O_OF_W(n),\
+/* t2 */	O_OF_W(n),\
+/* t3 */	O_OF_W(n),\
+/* t4 */	O_OF_W(n)
 
 // [3n]c <- [3n]a + [2n]b (P <- P + A)
 static void ec2AddALD(word c[], const word a[], const word b[],
 	const ec_o* ec, void* stack)
 {
 	const size_t n = ec->f->n;
-	// переменные в stack
-	word* t1 = (word*)stack;
-	word* t2 = t1 + n;
-	word* t3 = t2 + n;
-	word* t4 = t3 + n;
-	stack = t4 + n;
+	word* t1;			/* [n] */
+	word* t2; 			/* [n] */
+	word* t3;			/* [n] */
+	word* t4;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ec2SeemsOn3(a, ec));
 	ASSERT(ec2SeemsOnA(b, ec));
 	ASSERT(wwIsSameOrDisjoint(a,  c, 3 * n));
 	ASSERT(b == c || wwIsDisjoint2(b, 2 * n, c, 3 * n));
+	// разметить стек
+	memSlice(stack,
+		ec2AddALD_local(n), SIZE_0, SIZE_MAX,
+		&t1, &t2, &t3, &t4, &stack);
 	// a == O => c <- (xb : yb : 1)
 	if (qrIsZero(ecZ(a, n), ec->f))
 	{
@@ -467,26 +520,33 @@ static void ec2AddALD(word c[], const word a[], const word b[],
 
 static size_t ec2AddALD_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(4 * n) +
+	return memSliceSize(
+		ec2AddALD_local(n), 
 		utilMax(2,
 			f_deep,
-			ec2DblALD_deep(n, f_deep));
+			ec2DblALD_deep(n, f_deep)),
+		SIZE_MAX);
 }
+
+#define ec2SubLD_local(n)\
+/* t */		O_OF_W(3 * n)
 
 // [3n]c <- [3n]a - [3n]b (P <- P - P)
 static void ec2SubLD(word c[], const word a[], const word b[],
 	const ec_o* ec, void* stack)
 {
 	const size_t n = ec->f->n;
-	// переменные в stack
-	word* t = (word*)stack;
-	stack = t + 3 * n;
+	word* t;			/* [3n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ec2SeemsOn3(a, ec));
 	ASSERT(ec2SeemsOn3(b, ec));
 	ASSERT(wwIsSameOrDisjoint(a, c, 3 * n));
 	ASSERT(wwIsSameOrDisjoint(b, c, 3 * n));
+	// разметить стек
+	memSlice(stack,
+		ec2SubLD_local(n), SIZE_0, SIZE_MAX,
+		&t, &stack);
 	// t <- -b
 	qrMul(ecY(t, n), ecX(b), ecZ(b, n), ec->f, stack);
 	gf2Add2(ecY(t, n), ecY(b, n), ec->f);
@@ -498,26 +558,33 @@ static void ec2SubLD(word c[], const word a[], const word b[],
 
 static size_t ec2SubLD_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(3 * n) +
+	return memSliceSize(
+		ec2SubLD_local(n), 
 		utilMax(2,
 			f_deep,
-			ec2AddLD_deep(n, f_deep));
+			ec2AddLD_deep(n, f_deep)),
+		SIZE_MAX);
 }
+
+#define ec2SubALD_local(n)\
+/* t */		O_OF_W(2 * n)
 
 // [3n]c <- [3n]a - [2n]b (P <- P - A)
 static void ec2SubALD(word c[], const word a[], const word b[],
 	const ec_o* ec, void* stack)
 {
 	const size_t n = ec->f->n;
-	// переменные в stack
-	word* t = (word*)stack;
-	stack = t + 2 * n;
+	word* t;			/* [2n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ec2SeemsOn3(a, ec));
 	ASSERT(ec2SeemsOnA(b, ec));
 	ASSERT(wwIsSameOrDisjoint(a,  c, 3 * n));
 	ASSERT(b == c || wwIsDisjoint2(b, 2 * n, c, 3 * n));
+	// разметить стек
+	memSlice(stack,
+		ec2SubALD_local(n), SIZE_0, SIZE_MAX,
+		&t, &stack);
 	// t <- -b
 	wwCopy(t, b, 2 * n);
 	gf2Add2(ecY(t, n), ecX(t), ec->f);
@@ -527,7 +594,10 @@ static void ec2SubALD(word c[], const word a[], const word b[],
 
 static size_t ec2SubALD_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(2 * n) + ec2AddALD_deep(n, f_deep);
+	return memSliceSize(
+		ec2SubALD_local(n), 
+		ec2AddALD_deep(n, f_deep),
+		SIZE_MAX);
 }
 
 bool_t ec2CreateLD(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
@@ -620,16 +690,23 @@ size_t ec2IsValid_deep(size_t n)
 	return gf2IsValid_deep(n);
 }
 
+#define ec2GroupSeemsValid_local(n)\
+/* t1 */	O_OF_W(n + 1),\
+/* t2 */	O_OF_W(n + 2),\
+/* t3 */	O_OF_W(2 * n)
+
 bool_t ec2GroupSeemsValid(const ec_o* ec, void* stack)
 {
 	size_t n = ec->f->n;
-	// переменные в stack
-	word* t1 = (word*)stack;
-	word* t2 = t1 + n + 1;
-	word* t3 = t2 + n + 2;
-	stack = t3 + 2 * n;
+	word* t1;			/* [n + 1] */
+	word* t2; 			/* [n + 2] */
+	word* t3; 			/* [2n] */
 	// pre
 	ASSERT(ecIsOperable(ec));
+	// разметить стек
+	memSlice(stack,
+		ec2GroupSeemsValid_local(n), SIZE_0, SIZE_MAX,
+		&t1, &t2, &t3, &stack);
 	// ecGroupIsOperable(ec)? base \in ec?
 	if (!ecGroupIsOperable(ec) ||
 		!ec2IsOnA(ec->base, ec, stack))
@@ -662,22 +739,30 @@ bool_t ec2GroupSeemsValid(const ec_o* ec, void* stack)
 
 size_t ec2GroupSeemsValid_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(4 * n + 3) +
+	return memSliceSize(
+		ec2GroupSeemsValid_local(n), 
 		utilMax(2,
 			ec2IsOnA_deep(n, f_deep),
-			zzSqr_deep(n));
+			zzSqr_deep(n)),
+		SIZE_MAX);
 }
+
+#define ec2GroupIsSafe_local(n1)\
+/* t1 */	O_OF_W(n1),\
+/* t2 */	O_OF_W(n1)
 
 bool_t ec2GroupIsSafe(const ec_o* ec, size_t mov_threshold, void* stack)
 {
 	size_t n1 = ec->f->n + 1;
-	// переменные в stack
-	word* t1 = (word*)stack;
-	word* t2 = t1 + n1;
-	stack = t2 + n1;
+	word* t1;			/* [n1] */
+	word* t2;			/* [n1] */
 	// pre
 	ASSERT(ecIsOperable(ec));
 	ASSERT(ecGroupIsOperable(ec));
+	// разметить стек
+	memSlice(stack,
+		ec2GroupIsSafe_local(n1), SIZE_0, SIZE_MAX,
+		&t1, &t2, &stack);
 	// order -- простое?
 	n1 = wwWordSize(ec->order, n1);
 	if (!priIsPrime(ec->order, n1, stack))
@@ -709,11 +794,13 @@ bool_t ec2GroupIsSafe(const ec_o* ec, size_t mov_threshold, void* stack)
 size_t ec2GroupIsSafe_deep(size_t n)
 {
 	const size_t n1 = n + 1;
-	return O_OF_W(2 * n1) +
+	return memSliceSize(
+		ec2GroupIsSafe_local(n1), 
 		utilMax(3,
 			priIsPrime_deep(n1),
 			zzMod_deep(n + 1, n1),
-			zzMulMod_deep(n1));
+			zzMulMod_deep(n1)),
+		SIZE_MAX);
 }
 
 /*
@@ -728,15 +815,21 @@ size_t ec2GroupIsSafe_deep(size_t n)
 *******************************************************************************
 */
 
+#define ec2IsOnA_local(n)\
+/* t1 */	O_OF_W(n),\
+/* t2 */	O_OF_W(n)
+
 bool_t ec2IsOnA(const word a[], const ec_o* ec, void* stack)
 {
 	const size_t n = ec->f->n;
-	// переменные в stack
-	word* t1 = (word*)stack;
-	word* t2 = t1 + n;
-	stack = t2 + n;
+	word* t1;			/* [n] */
+	word* t2;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec));
+	// разметить стек
+	memSlice(stack,
+		ec2IsOnA_local(n), SIZE_0, SIZE_MAX,
+		&t1, &t2, &stack);
 	// xa, ya \in ec->f?
 	if (!ec2SeemsOnA(a, ec))
 		return FALSE;
@@ -754,7 +847,10 @@ bool_t ec2IsOnA(const word a[], const ec_o* ec, void* stack)
 
 size_t ec2IsOnA_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(2 * n) + f_deep;
+	return memSliceSize(
+		ec2IsOnA_local(n), 
+		f_deep,
+		SIZE_MAX);
 }
 
 void ec2NegA(word b[], const word a[], const ec_o* ec)
@@ -769,20 +865,27 @@ void ec2NegA(word b[], const word a[], const ec_o* ec)
 	gf2Add(ecY(b, n), ecX(a), ecY(a, n), ec->f);
 }
 
+#define ec2AddAA_local(n)\
+/* t1 */	O_OF_W(n),\
+/* t2 */	O_OF_W(n),\
+/* t3 */	O_OF_W(n)
+
 bool_t ec2AddAA(word c[], const word a[], const word b[], const ec_o* ec,
 	void* stack)
 {
 	const size_t n = ec->f->n;
-	// переменные в stack
-	word* t1 = (word*)stack;
-	word* t2 = t1 + n;
-	word* t3 = t2 + n;
-	stack = t3 + n;
+	word* t1;			/* [n] */
+	word* t2;			/* [n] */
+	word* t3;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec));
 	ASSERT(ec2SeemsOnA(a, ec));
 	ASSERT(ec2SeemsOnA(b, ec));
 	ASSERT(wwIsDisjoint(a, c, 2 * n));
+	// разметить стек
+	memSlice(stack,
+		ec2AddAA_local(n), SIZE_0, SIZE_MAX,
+		&t1, &t2, &t3, &stack);
 	// xa == xb => (xa, ya) == \pm(xb, yb)
 	if (qrCmp(ecX(a), ecX(b), ec->f) == 0)
 	{
@@ -837,16 +940,24 @@ bool_t ec2AddAA(word c[], const word a[], const word b[], const ec_o* ec,
 
 size_t ec2AddAA_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(3 * n) + f_deep;
+	return memSliceSize(
+		ec2AddAA_local(n), 
+		f_deep,
+		SIZE_MAX);
 }
+
+#define ec2SubAA_local(n)\
+/* t */		O_OF_W(2 * n)
 
 bool_t ec2SubAA(word c[], const word a[], const word b[], const ec_o* ec,
 	void* stack)
 {
 	const size_t n = ec->f->n;
-	// переменные в stack
-	word* t = (word*)stack;
-	stack = t + 2 * n;
+	word* t;			/* [2n] */
+	// разметить стек
+	memSlice(stack,
+		ec2SubAA_local(n), SIZE_0, SIZE_MAX,
+		&t, &stack);
 	// t <- -b
 	ec2NegA(t, b, ec);
 	// с <- a + t
@@ -855,5 +966,8 @@ bool_t ec2SubAA(word c[], const word a[], const word b[], const ec_o* ec,
 
 size_t ec2SubAA_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(2 * n) + ec2AddAA_deep(n, f_deep);
+	return memSliceSize(
+		ec2SubAA_local(n), 
+		ec2AddAA_deep(n, f_deep),
+		SIZE_MAX);
 }

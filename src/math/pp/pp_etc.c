@@ -4,7 +4,7 @@
 \brief Binary polynomials: other functions
 \project bee2 [cryptographic library]
 \created 2012.03.01
-\version 2025.09.12
+\version 2025.09.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -53,10 +53,9 @@ Irreducible Polynomials over Finite Fields] этот алгоритм обраб
 *******************************************************************************
 */
 
-#define ppIsIrred_schema(n)\
+#define ppIsIrred_local(n)\
 /* h */		O_OF_W(n),\
-/* d */		O_OF_W(n),\
-/* stack */	ppSqrMod_deep(n)
+/* d */		O_OF_W(n)
 
 bool_t ppIsIrred(const word a[], size_t n, void* stack)
 {
@@ -65,7 +64,7 @@ bool_t ppIsIrred(const word a[], size_t n, void* stack)
 	word* d;			/* [n] */
 	// разметить стек
 	memSlice(stack,
-		ppIsIrred_schema(n), SIZE_MAX,
+		ppIsIrred_local(n), SIZE_0, SIZE_MAX,
 		&h, &d, &stack);
 	// нормализация (нужна для \mod a)
 	n = wwWordSize(a, n);
@@ -95,7 +94,9 @@ bool_t ppIsIrred(const word a[], size_t n, void* stack)
 size_t ppIsIrred_deep(size_t n)
 {
 	return memSliceSize(
-		ppIsIrred_schema(n), SIZE_MAX);
+		ppIsIrred_local(n), 
+		ppSqrMod_deep(n),
+		SIZE_MAX);
 }
 
 /*
@@ -124,14 +125,13 @@ and Algebra]. В последней работе можно найти обос�
 *******************************************************************************
 */
 
-#define ppMinPoly_schema(n, m)\
+#define ppMinPoly_local(n, m)\
 /* aa */	O_OF_W(2 * n),\
 /* bb */	O_OF_W(2 * n + 1),\
 /* q */		O_OF_W(n + 2),\
 /* r */		O_OF_W(2 * n),\
 /* da */	O_OF_W(m),\
-/* db */	O_OF_W(m + n + 2),\
-			ppAddMulW_deep(m)
+/* db */	O_OF_W(m + n + 2)
 
 void ppMinPoly(word b[], const word a[], size_t l, void* stack)
 {
@@ -148,7 +148,7 @@ void ppMinPoly(word b[], const word a[], size_t l, void* stack)
 	ASSERT(wwIsValid(b, m) && wwIsValid(a, 2 * n));
 	// разметить стек
 	memSlice(stack,
-		ppMinPoly_schema(n, m), SIZE_MAX,
+		ppMinPoly_local(n, m), SIZE_0, SIZE_MAX,
 		&aa, &bb, &q, &r, &da, &db, &stack);
 	// aa <- a
 	wwCopy(aa, a, 2 * n);
@@ -192,20 +192,20 @@ size_t ppMinPoly_deep(size_t l)
 	const size_t n = W_OF_B(l);
 	const size_t m = W_OF_B(l + 1);
 	return memSliceSize( 
-		ppMinPoly_schema(n, m), SIZE_MAX);
+		ppMinPoly_local(n, m), 
+		ppAddMulW_deep(m),
+		SIZE_MAX);
 }
 
-#define ppMinPolyMod_schema(n)\
+#define ppMinPolyMod_local(n)\
 /* t */		O_OF_W(n),\
-/* s */		O_OF_W(2 * n),\
-/* stack */	utilMax(2,\
-				ppMulMod_deep(n),\
-				ppMinPoly_deep(n * B_PER_W))
+/* s */		O_OF_W(2 * n)
 
 void ppMinPolyMod(word b[], const word a[], const word mod[], size_t n,
 	void* stack)
 {
-	size_t l, i;
+	size_t l;
+	size_t i;
 	word* t;			/* [n] */
 	word* s;			/* [2n] */
 	// pre
@@ -213,7 +213,7 @@ void ppMinPolyMod(word b[], const word a[], const word mod[], size_t n,
 	ASSERT(wwCmpW(mod, n, 1) > 0 && wwCmp(a, mod, n) < 0);
 	// разметить стек
 	memSlice(stack,
-		ppMinPolyMod_schema(n), SIZE_MAX,
+		ppMinPolyMod_local(n), SIZE_0, SIZE_MAX,
 		&t, &s, &stack);
 	// l <- \deg(mod)
 	l = ppDeg(mod, n);
@@ -233,5 +233,9 @@ void ppMinPolyMod(word b[], const word a[], const word mod[], size_t n,
 size_t ppMinPolyMod_deep(size_t n)
 {
 	return memSliceSize( 
-		ppMinPolyMod_schema(n), SIZE_MAX);
+		ppMinPolyMod_local(n), 
+		utilMax(2,
+			ppMulMod_deep(n),
+			ppMinPoly_deep(n * B_PER_W)),
+		SIZE_MAX);
 }

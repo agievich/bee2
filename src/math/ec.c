@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2014.03.04
-\version 2025.09.10
+\version 2025.09.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -163,6 +163,11 @@ static size_t ecNAFWidth(size_t l)
 	return 3;
 }
 
+#define ecMulA_local(n, ec_d, m, naf_count)\
+/* naf */	O_OF_W(2 * m + 1),\
+/* t */		O_OF_W(ec_d * n),\
+/* pre */	O_OF_W(naf_count * ec_d * n)
+
 bool_t ecMulA(word b[], const word a[], const ec_o* ec, const word d[],
 	size_t m, void* stack)
 {
@@ -173,15 +178,14 @@ bool_t ecMulA(word b[], const word a[], const ec_o* ec, const word d[],
 	register size_t naf_size;
 	register size_t i;
 	register word w;
-	// переменные в stack
 	word* naf;			/* [2 * m + 1] NAF */
 	word* t;			/* [ec->d * n] вспомогательная точка */
-	word* pre;			/* [naf_count * ec->d * n] pre[i] = (2i + 1)a (naf_count элементов) */
+	word* pre;			/* [naf_count * ec->d * n] pre[i] = (2i + 1)a */
 	// pre
 	ASSERT(ecIsOperable(ec));
 	// разметить стек
 	memSlice(stack,
-		O_OF_W(2 * m + 1), O_OF_W(ec->d * n), O_OF_W(naf_count * ec->d * n), SIZE_0, SIZE_MAX,
+		ecMulA_local(n, ec->d, m, naf_count), SIZE_0, SIZE_MAX,
 		&naf, &t, &pre, &stack);
 	// расчет NAF
 	ASSERT(naf_width >= 3);
@@ -236,9 +240,7 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 	const size_t naf_width = ecNAFWidth(B_OF_W(m));
 	const size_t naf_count = SIZE_1 << (naf_width - 2);
 	return memSliceSize(
-		O_OF_W(2 * m + 1),
-		O_OF_W(ec_d * n),
-		O_OF_W(naf_count * ec_d * n),
+		ecMulA_local(n, ec_d, m, naf_count), 
 		ec_deep,
 		SIZE_MAX);
 }
@@ -249,20 +251,28 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 *******************************************************************************
 */
 
+#define ecHasOrderA_local(n, ec_d)\
+/* b */		O_OF_W(ec_d * n)
+
 bool_t ecHasOrderA(const word a[], const ec_o* ec, const word q[], size_t m,
 	void* stack)
 {
 	const size_t n = ec->f->n;
-	// переменные в stack
-	word* b = (word*)stack;
-	stack = b + ec->d * n;
+	word* b;			/* [ec->d * n] */
+	// разметить стек
+	memSlice(stack,
+		ecHasOrderA_local(n, ec->d), SIZE_0, SIZE_MAX,
+		&b, &stack);
 	// q a == O?
 	return !ecMulA(b, a, ec, q, m, stack);
 }
 
 size_t ecHasOrderA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 {
-	return O_OF_W(ec_d * n) + ecMulA_deep(n, ec_d, ec_deep, m);
+	return memSliceSize(
+		ecHasOrderA_local(n, ec_d), 
+		ecMulA_deep(n, ec_d, ec_deep, m),
+		SIZE_MAX);
 }
 
 /*
@@ -280,13 +290,21 @@ Elliptic Curve Cryptography, Springer, 2004] (interleaving with NAF).
 *******************************************************************************
 */
 
+#define ecAddMulA_local(n, ec_d)\
+/* t */			O_OF_W(ec_d * n),\
+/* m */			O_PER_S * k,\
+/* naf_width */	O_PER_S * k,\
+/* naf_size */	O_PER_S * k,\
+/* naf_pos */	O_PER_S * k,\
+/* naf */		sizeof(word*) * k,\
+/* pre */		sizeof(word*) * k
+
 bool_t ecAddMulA(word b[], const ec_o* ec, void* stack, size_t k, ...)
 {
 	const size_t n = ec->f->n;
 	register word w;
 	size_t i, naf_max_size = 0;
 	va_list args;
-	// переменные в stack
 	word* t;			/* [ec->d * n] проективная точка */
 	size_t* m;			/* [k] длины d[i] */
 	size_t* naf_width;	/* [k] размеры NAF-окон */
@@ -299,8 +317,7 @@ bool_t ecAddMulA(word b[], const ec_o* ec, void* stack, size_t k, ...)
 	ASSERT(k > 0);
 	// разметить стек
 	memSlice(stack,
-		O_OF_W(ec->d * n), O_PER_S * k, O_PER_S * k, O_PER_S * k, O_PER_S * k,
-		sizeof(word*) * k, sizeof(word*) * k, SIZE_0, SIZE_MAX,
+		ecAddMulA_local(n, ec->d), SIZE_0, SIZE_MAX,
 		&t, &m, &naf_width, &naf_size, &naf_pos, &naf, &pre, &stack);
 	// обработать параметры (a[i], d[i], m[i])
 	va_start(args, k);
@@ -388,15 +405,7 @@ size_t ecAddMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t k, ...)
 	size_t i, ret;
 	va_list args;
 	ret = memSliceSize(
-		O_OF_W(ec_d * n),
-		O_PER_S * k,
-		O_PER_S * k,
-		O_PER_S * k,
-		O_PER_S * k,
-		sizeof(word*) * k,
-		sizeof(word*) * k,
-		SIZE_0,
-		SIZE_MAX);
+		ecAddMulA_local(n, ec_d), SIZE_0, SIZE_MAX);
 	va_start(args, k);
 	for (i = 0; i < k; ++i)
 	{
@@ -406,8 +415,7 @@ size_t ecAddMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t k, ...)
 		ret += memSliceSize(
 			O_OF_W(2 * m + 1),
 			O_OF_W(ec_d * n * naf_count),
-			SIZE_0,
-			SIZE_MAX);
+			SIZE_0,	SIZE_MAX);
 	}
 	va_end(args);
 	ret += ec_deep;

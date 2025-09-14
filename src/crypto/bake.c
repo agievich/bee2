@@ -227,6 +227,7 @@ err_t bakeBMQVStart(void* state, const bign_params* params,
 	s->Vb = (octet*)(s->u + n);
 	// настроить заголовок
 	s->hdr.keep = sizeof(bake_bmqv_o) + objKeep(s->ec) + O_OF_W(2 * n) + no;
+	s->hdr.keep = utilAlign(s->hdr.keep, sizeof(mem_align_t));
 	s->hdr.p_count = 4;
 	s->hdr.o_count = 1;
 	// загрузить личный ключ

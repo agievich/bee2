@@ -4,7 +4,7 @@
 \brief Binary polynomials: Euclidian gcd algorithms
 \project bee2 [cryptographic library]
 \created 2012.03.01
-\version 2025.09.12
+\version 2025.09.14
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -58,23 +58,23 @@
 *******************************************************************************
 */
 
-#define ppGCD_schema(n, m)\
-/* u */		O_OF_W(m),\
-/* v */		O_OF_W(n)
+#define ppGCD_local(n, m)\
+/* u */		O_OF_W(n),\
+/* v */		O_OF_W(m)
 
 void ppGCD(word d[], const word a[], size_t n, const word b[], size_t m,
 	void* stack)
 {
 	register size_t s;
-	word* u;			/* [m] */
-	word* v;			/* [n] */
+	word* u;			/* [n] */
+	word* v;			/* [m] */
 	// pre
 	ASSERT(wwIsDisjoint2(a, n, d, MIN2(n, m)));
 	ASSERT(wwIsDisjoint2(b, m, d, MIN2(n, m)));
 	ASSERT(!wwIsZero(a, n) && !wwIsZero(b, m));
 	// разметить стек
 	memSlice(stack,
-		ppGCD_schema(n, m), SIZE_MAX,
+		ppGCD_local(n, m), SIZE_MAX,
 		&u, &v);
 	// d <- 0
 	wwSetZero(d, MIN2(n, m));
@@ -115,10 +115,11 @@ void ppGCD(word d[], const word a[], size_t n, const word b[], size_t m,
 size_t ppGCD_deep(size_t n, size_t m)
 {
 	return memSliceSize(
-		ppGCD_schema(n, m), SIZE_MAX);
+		ppGCD_local(n, m), 
+		SIZE_MAX);
 }
 
-#define ppExGCD_schema(n, m)\
+#define ppExGCD_local(n, m)\
 /* aa */	O_OF_W(n),\
 /* bb */	O_OF_W(m),\
 /* u */		O_OF_W(n),\
@@ -147,7 +148,7 @@ void ppExGCD(word d[], word da[], word db[], const word a[], size_t n,
 	ASSERT(!wwIsZero(a, n) && !wwIsZero(b, m));
 	// разметить стек
 	memSlice(stack,
-		ppExGCD_schema(n, m), SIZE_MAX,
+		ppExGCD_local(n, m), SIZE_MAX,
 		&aa, &bb, &u, &v, &da0, &db0);
 	// d <- 0, da0 <- 1, db0 <- 0, da <- 0, db <- 1
 	wwSetZero(d, MIN2(n, m));
@@ -230,6 +231,7 @@ void ppExGCD(word d[], word da[], word db[], const word a[], size_t n,
 size_t ppExGCD_deep(size_t n, size_t m)
 {
 	return memSliceSize(
-		ppExGCD_schema(n, m), SIZE_MAX);
+		ppExGCD_local(n, m), 
+		SIZE_MAX);
 }
 

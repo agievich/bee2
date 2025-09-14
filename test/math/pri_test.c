@@ -4,7 +4,7 @@
 \brief Tests for prime numbers
 \project bee2/test
 \created 2014.07.07
-\version 2025.08.26
+\version 2025.09.14
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -32,7 +32,7 @@ bool_t priTest()
 	word p[W_OF_B(289)];
 	word mods[1024];
 	octet combo_state[32];
-	octet stack[4096];
+	mem_align_t stack[4096 / sizeof(mem_align_t)];
 	// инициализировать генератор COMBO
 	if (sizeof(combo_state) < prngCOMBO_keep())
 		return FALSE;

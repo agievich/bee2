@@ -4,7 +4,7 @@
 \brief Binary polynomials: modular arithmetic
 \project bee2 [cryptographic library]
 \created 2012.03.01
-\version 2025.09.12
+\version 2025.09.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -30,11 +30,8 @@
 *******************************************************************************
 */
 
-#define ppMulMod_schema(n)\
-/* prod */	O_OF_W(2 * n),\
-/* stack */	utilMax(2,\
-				ppMul_deep(n, n),\
-				ppMod_deep(2 * n, n))
+#define ppMulMod_local(n)\
+/* prod */	O_OF_W(2 * n)
 
 void ppMulMod(word c[], const word a[], const word b[], const word mod[],
 	size_t n, void* stack)
@@ -46,7 +43,7 @@ void ppMulMod(word c[], const word a[], const word b[], const word mod[],
 	ASSERT(wwIsValid(c, n));
 	// разметить стек
 	memSlice(stack,
-		ppMulMod_schema(n), SIZE_MAX,
+		ppMulMod_local(n), SIZE_0, SIZE_MAX,
 		&prod, &stack);
 	// умножить
 	ppMul(prod, a, n, b, n, stack);
@@ -57,14 +54,15 @@ void ppMulMod(word c[], const word a[], const word b[], const word mod[],
 size_t ppMulMod_deep(size_t n)
 {
 	return memSliceSize(
-		ppMulMod_schema(n), SIZE_MAX);
+		ppMulMod_local(n), 
+		utilMax(2,
+			ppMul_deep(n, n),
+			ppMod_deep(2 * n, n)),
+		SIZE_MAX);
 }
 
-#define ppSqrMod_schema(n)\
-/* sqr */	O_OF_W(2 * n),\
-/* stack */	utilMax(2,\
-				ppSqr_deep(n),\
-				ppMod_deep(2 * n, n))
+#define ppSqrMod_local(n)\
+/* sqr */	O_OF_W(2 * n)
 
 void ppSqrMod(word b[], const word a[], const word mod[], size_t n,
 	void* stack)
@@ -76,7 +74,7 @@ void ppSqrMod(word b[], const word a[], const word mod[], size_t n,
 	ASSERT(wwIsValid(b, n));
 	// разметить стек
 	memSlice(stack,
-		ppSqrMod_schema(n), SIZE_MAX,
+		ppSqrMod_local(n), SIZE_0, SIZE_MAX,
 		&sqr, &stack);
 	// вычисления
 	ppSqr(sqr, a, n, stack);
@@ -86,10 +84,14 @@ void ppSqrMod(word b[], const word a[], const word mod[], size_t n,
 size_t ppSqrMod_deep(size_t n)
 {
 	return memSliceSize(
-		ppSqrMod_schema(n), SIZE_MAX);
+		ppSqrMod_local(n), 
+		utilMax(2,
+			ppSqr_deep(n),
+			ppMod_deep(2 * n, n)),
+		SIZE_MAX);
 }
 
-#define ppDivMod_schema(n)\
+#define ppDivMod_local(n)\
 /* u */		O_OF_W(n),\
 /* v */		O_OF_W(n),\
 /* da0 */	O_OF_W(n),\
@@ -111,7 +113,7 @@ void ppDivMod(word b[], const word divident[], const word a[],
 	ASSERT(wwIsValid(b, n));
 	// разметить стек
 	memSlice(stack,
-		ppDivMod_schema(n), SIZE_MAX,
+		ppDivMod_local(n), SIZE_MAX,
 		&u, &v, &da0, &da);
 	// da0 <- divident, da <- 0
 	wwCopy(da0, divident, n);
@@ -171,19 +173,19 @@ void ppDivMod(word b[], const word divident[], const word a[],
 size_t ppDivMod_deep(size_t n)
 {
 	return memSliceSize(
-		ppDivMod_schema(n), SIZE_MAX);
+		ppDivMod_local(n), 
+		SIZE_MAX);
 }
 
-#define ppInvMod_schema(n)\
-/* u */		O_OF_W(n),\
-/* stack */	ppDivMod_deep(n)
+#define ppInvMod_local(n)\
+/* u */		O_OF_W(n)
 
 void ppInvMod(word b[], const word a[], const word mod[], size_t n,
 	void* stack)
 {
 	word* divident;			/* [n] */
 	memSlice(stack, 
-		ppInvMod_schema(n), SIZE_MAX,
+		ppInvMod_local(n), SIZE_0, SIZE_MAX,
 		&divident, &stack);
 	wwSetW(divident, n, 1);
 	ppDivMod(b, divident, a, mod, n, stack);
@@ -192,5 +194,7 @@ void ppInvMod(word b[], const word a[], const word mod[], size_t n,
 size_t ppInvMod_deep(size_t n)
 {
 	return memSliceSize(
-		ppInvMod_schema(n), SIZE_MAX);
+		ppInvMod_local(n), 
+		ppDivMod_deep(n),
+		SIZE_MAX);
 }

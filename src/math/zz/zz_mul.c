@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: multiplicative operations
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.09.10
+\version 2025.09.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -307,7 +307,7 @@ Vanstone S. Handbook of Applied Cryptography]:
 *******************************************************************************
 */
 
-#define zzDiv_schema(n, m)\
+#define zzDiv_local(n, m)\
 /* divident */	O_OF_W(n + 1),\
 /* divisor */	O_OF_W(m),\
 /* mul */		O_OF_W(3)
@@ -344,7 +344,7 @@ void zzDiv(word q[], word r[], const word a[], size_t n, const word b[],
 	}
 	// разметить стек
 	memSlice(stack,
-		zzDiv_schema(n, m), SIZE_MAX,
+		zzDiv_local(n, m), SIZE_MAX,
 		&divident, &divisor, &mul);
 	// divident <- a
 	wwCopy(divident, a, n);
@@ -399,10 +399,11 @@ void zzDiv(word q[], word r[], const word a[], size_t n, const word b[],
 size_t zzDiv_deep(size_t n, size_t m)
 {
 	return memSliceSize(
-		zzDiv_schema(n, m), SIZE_MAX);
+		zzDiv_local(n, m), 
+		SIZE_MAX);
 }
 
-#define zzMod_schema(n, m)\
+#define zzMod_local(n, m)\
 /* divident */	O_OF_W(n + 1),\
 /* divisor */	O_OF_W(m),\
 /* mul */		O_OF_W(3)
@@ -438,7 +439,7 @@ void* stack)
 	}
 	// разметить стек
 	memSlice(stack,
-		zzMod_schema(n, m), SIZE_MAX,
+		zzMod_local(n, m), SIZE_MAX,
 		&divident, &divisor, &mul);
 	// divident <- a
 	wwCopy(divident, a, n);
@@ -489,5 +490,6 @@ void* stack)
 size_t zzMod_deep(size_t n, size_t m)
 {
 	return memSliceSize(
-		zzMod_schema(n, m), SIZE_MAX);
+		zzMod_local(n, m), 
+		SIZE_MAX);
 }

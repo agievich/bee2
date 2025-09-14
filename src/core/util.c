@@ -4,7 +4,7 @@
 \brief Utilities
 \project bee2 [cryptographic library]
 \created 2012.05.10
-\version 2025.09.12
+\version 2025.09.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -148,6 +148,17 @@ size_t utilMax(size_t n, ...)
 	}
 	va_end(args);
 	return max;
+}
+
+/*
+*******************************************************************************
+Выравнивание
+*******************************************************************************
+*/
+
+size_t utilAlign(size_t size, size_t alignment)
+{
+	return (size + alignment - 1) / alignment * alignment;
 }
 
 /*

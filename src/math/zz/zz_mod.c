@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: modular arithmetic
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.09.10
+\version 2025.09.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -191,11 +191,8 @@ void zzNegMod(word b[], const word a[], const word mod[], size_t n)
 *******************************************************************************
 */
 
-#define zzMulMod_schema(n)\
-/* prod */	O_OF_W(2 * n),\
-/* stack */	utilMax(2,\
-				zzMul_deep(n, n),\
-				zzMod_deep(2 * n, n))
+#define zzMulMod_local(n)\
+/* prod */	O_OF_W(2 * n)
 
 void zzMulMod(word c[], const word a[], const word b[], const word mod[],
 	size_t n, void* stack)
@@ -206,7 +203,7 @@ void zzMulMod(word c[], const word a[], const word b[], const word mod[],
 	ASSERT(wwIsValid(c, n));
 	ASSERT(n > 0 && mod[n - 1] != 0);
 	memSlice(stack,
-		zzMulMod_schema(n), SIZE_MAX,
+		zzMulMod_local(n), SIZE_0, SIZE_MAX,
 		&prod, &stack);
 	zzMul(prod, a, n, b, n, stack);
 	zzMod(c, prod, 2 * n, mod, n, stack);
@@ -215,12 +212,15 @@ void zzMulMod(word c[], const word a[], const word b[], const word mod[],
 size_t zzMulMod_deep(size_t n)
 {
 	return memSliceSize(
-		zzMulMod_schema(n), SIZE_MAX);
+		zzMulMod_local(n), 
+		utilMax(2,
+			zzMul_deep(n, n),
+			zzMod_deep(2 * n, n)),
+		SIZE_MAX);
 }
 
-#define zzMulWMod_schema(n)\
-/* prod */	O_OF_W(n + 1),\
-/* stack */	zzMod_deep(n + 1, n)
+#define zzMulWMod_local(n)\
+/* prod */	O_OF_W(n + 1)
 
 void zzMulWMod(word b[], const word a[], register word w, const word mod[],
 	size_t n, void* stack)
@@ -230,7 +230,7 @@ void zzMulWMod(word b[], const word a[], register word w, const word mod[],
 	ASSERT(wwIsValid(b, n));
 	ASSERT(n > 0 && mod[n - 1] != 0);
 	memSlice(stack, 
-		zzMulWMod_schema(n), SIZE_MAX,
+		zzMulWMod_local(n), SIZE_0, SIZE_MAX,
 		&prod, &stack);
 	prod[n] = zzMulW(prod, a, n, w);
 	zzMod(b, prod, n + 1, mod, n, stack);
@@ -240,14 +240,13 @@ void zzMulWMod(word b[], const word a[], register word w, const word mod[],
 size_t zzMulWMod_deep(size_t n)
 {
 	return memSliceSize(
-		zzMulWMod_schema(n), SIZE_MAX);
+		zzMulWMod_local(n), 
+		zzMod_deep(n + 1, n),
+		SIZE_MAX);
 }
 
-#define zzSqrMod_schema(n)\
-/* sqr */	O_OF_W(2 * n),\
-/* stack */	utilMax(2,\
-				zzSqr_deep(n),\
-				zzMod_deep(2 * n, n))
+#define zzSqrMod_local(n)\
+/* sqr */	O_OF_W(2 * n)
 
 void zzSqrMod(word b[], const word a[], const word mod[], size_t n,
 	void* stack)
@@ -257,7 +256,7 @@ void zzSqrMod(word b[], const word a[], const word mod[], size_t n,
 	ASSERT(wwIsValid(b, n));
 	ASSERT(n > 0 && mod[n - 1] != 0);
 	memSlice(stack,
-		zzSqrMod_schema(n), SIZE_MAX,
+		zzSqrMod_local(n), SIZE_0, SIZE_MAX,
 		&sqr, &stack);
 	zzSqr(sqr, a, n, stack);
 	zzMod(b, sqr, 2 * n, mod, n, stack);
@@ -266,19 +265,22 @@ void zzSqrMod(word b[], const word a[], const word mod[], size_t n,
 size_t zzSqrMod_deep(size_t n)
 {
 	return memSliceSize(
-		zzSqrMod_schema(n), SIZE_MAX);
+		zzSqrMod_local(n), 
+		utilMax(2,
+			zzSqr_deep(n),
+			zzMod_deep(2 * n, n)),
+		SIZE_MAX);
 }
 
-#define zzInvMod_schema(n)\
-/* divident */	O_OF_W(n),\
-/* stack */		zzDivMod_deep(n)
+#define zzInvMod_local(n)\
+/* divident */	O_OF_W(n)
 
 void zzInvMod(word b[], const word a[], const word mod[], size_t n,
 	void* stack)
 {
 	word* divident;			/* [n] */
 	memSlice(stack,
-		zzInvMod_schema(n), SIZE_MAX,
+		zzInvMod_local(n), SIZE_0, SIZE_MAX,
 		&divident, &stack);
 	wwSetW(divident, n, 1);
 	zzDivMod(b, divident, a, mod, n, stack);
@@ -287,7 +289,9 @@ void zzInvMod(word b[], const word a[], const word mod[], size_t n,
 size_t zzInvMod_deep(size_t n)
 {
 	return memSliceSize(
-		zzInvMod_schema(n), SIZE_MAX);
+		zzInvMod_local(n), 
+		zzDivMod_deep(n),
+		SIZE_MAX);
 }
 
 void FAST(zzDoubleMod)(word b[], const word a[], const word mod[], size_t n)
