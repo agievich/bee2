@@ -4,7 +4,7 @@
 \brief Experimental Bign signatures of security level 96
 \project bee2 [cryptographic library]
 \created 2021.01.20
-\version 2025.09.05
+\version 2025.09.15
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -339,7 +339,7 @@ err_t bign96Sign2Ec(octet sig[34], const ec_o* ec, const octet oid_der[],
 	word* R;				/* [2n] точка R */
 	word* s0;				/* [W_OF_O(13)] первая часть подписи */
 	word* s1;				/* [n] вторая часть подписи */
-	octet* hash_state;		/* [beltHash_keep] состояние хэширования */
+	octet* hash_state;		/* [beltHash_keep()] состояние хэширования */
 	octet* stack;
 	u32 round = 1;
 	// pre

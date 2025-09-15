@@ -39,7 +39,7 @@ err_t bakeKDF(octet key[32], const octet secret[], size_t secret_len,
 	const octet iv[], size_t iv_len, size_t num)
 {
 	void* state;
-	octet* block;
+	octet* block;		/* [16] */
 	void* stack;
 	// проверить входные данные
 	if (!memIsValid(secret, secret_len) ||
@@ -636,7 +636,7 @@ err_t bakeBMQVRunB(octet key[32], const bign_params* params,
 	blob_t blob;
 	octet* in;			/* [l / 2 + 8] */
 	octet* out;			/* [l / 2] */
-	void* state;		/* [bakeBMQV_keep()] */
+	void* state;		/* [bakeBMQV_keep(l)] */
 	// проверить key
 	if (!memIsValid(key, 32))
 		return ERR_BAD_INPUT;
@@ -686,7 +686,7 @@ err_t bakeBMQVRunA(octet key[32], const bign_params* params,
 	blob_t blob;
 	octet* in;			/* [l / 2] */
 	octet* out;			/* [l / 2 + 8] */
-	void* state;		/* [bakeBMQV_keep()] */
+	void* state;		/* [bakeBMQV_keep(l)] */
 	// проверить key
 	if (!memIsValid(key, 32))
 		return ERR_BAD_INPUT;

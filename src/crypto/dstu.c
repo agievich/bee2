@@ -413,8 +413,8 @@ static err_t dstuEcCreate(
 	size_t f_deep;
 	// состояние
 	void* state;	
-	ec_o* ec;			/* кривая */
-	qr_o* f;			/* поле */
+	ec_o* ec;			/* [ec2CreateLD_keep(n)] кривая */
+	qr_o* f;			/* [gf2Create_keep(m)] поле */
 	// второе состояние
 	void* state1;
 	size_t* p;			/* [4] многочлен */
@@ -569,10 +569,10 @@ static err_t dstuPointGenEc(octet point[], const ec_o* ec,
 {
 	size_t m;
 	void* state;
-	word* R;		/* [2n] */
-	word* x;		/*   [n] */
-	word* y;		/*   [n] */
-	word* t;		/* [n] */
+	word* R;			/* [2n] */
+	word* x;			/*   [n] */
+	word* y;			/*   [n] */
+	word* t;			/* [n] */
 	void* stack;
 	// pre
 	ASSERT(ecIsOperable(ec));
@@ -640,9 +640,9 @@ static err_t dstuPointValEc(const ec_o* ec, const octet point[])
 {
 	size_t m;
 	void* state;
-	word* R;		/* [2n] */
-	word* x;		/*   [n] */
-	word* y;		/*   [n] */
+	word* R;			/* [2n] */
+	word* x;			/*   [n] */
+	word* y;			/*   [n] */
 	void* stack;
 	// pre
 	ASSERT(ecIsOperable(ec));

@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): curves
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.09.05
+\version 2025.09.15
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -31,8 +31,8 @@ err_t bignEcCreate(ec_o** pec, const bign_params* params)
 	size_t no, n;
 	size_t f_deep;
 	void* state; 
-	ec_o* ec;
-	qr_o* f;
+	ec_o* ec;		/* [ecpCreateJ_keep(n)] */
+	qr_o* f;		/* [gfpCreate_keep(no)] */
 	void* stack;
 	// pre
 	ASSERT(memIsValid(pec, sizeof(*pec)));

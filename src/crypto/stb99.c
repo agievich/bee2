@@ -4,7 +4,7 @@
 \brief STB 1176.2-99: generation of parameters
 \project bee2 [cryptographic library]
 \created 2023.08.01
-\version 2025.09.01
+\version 2025.09.15
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -628,14 +628,14 @@ err_t stb99ParamsGen(stb99_params* params, const stb99_seed* seed)
 	size_t base_count;
 	// состояние 
 	void* state;
-	octet* stb_state;
-	word* gi;			/* промежуточные простые при построении g0 */
-	word* fi;			/* промежуточные простые при построении q */
-	word* g0;
-	word* p;
-	word* d;
-	word* a;
-	qr_o* qr;
+	octet* stb_state;	/* [prngSTB_keep()] */
+	word* gi;			/* [gw] промежуточные простые при построении g0 */
+	word* fi;			/* [gw] промежуточные простые при построении q */
+	word* g0;           /* [gw] */
+	word* p;			/* [seed->di[0]] */
+	word* d;			/* [n] */
+	word* a;			/* [n] */
+	qr_o* qr;			/* [zmMontCreate_deep(no)] кольцо Монтгомери */
 	void* stack;
 	// проверить seed
 	code = stb99SeedVal(seed);
@@ -833,12 +833,12 @@ err_t stb99ParamsVal(const stb99_params* params)
 	size_t m, mo;
 	// состояние 
 	void* state;
-	word* p;
-	word* q;
-	word* t;
-	word* d;
-	word* a;
-	qr_o* qr;
+	word* p;			/* [n] */
+	word* q;			/* [n] */
+	word* t;			/* [n] */
+	word* d;			/* [m] */
+	word* a;			/* [n - m + 1] */
+	qr_o* qr;			/* [zmMontCreate_keep(no)] */
 	void* stack;
 	// проверить указатели
 	if (!memIsValid(params, sizeof(stb99_params)))

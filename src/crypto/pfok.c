@@ -4,7 +4,7 @@
 \brief Draft of RD_RB: key establishment protocols in finite fields
 \project bee2 [cryptographic library]
 \created 2014.07.01
-\version 2025.09.01
+\version 2025.09.15
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -588,11 +588,11 @@ err_t pfokParamsGen(pfok_params* params, const pfok_seed* seed,
 	size_t base_count;
 	// состояние 
 	void* state;
-	octet* stb_state;
-	word* qi;
-	word* p;
-	word* g;
-	qr_o* qr;
+	octet* stb_state;	/* [prngSTB_keep()] */
+	word* qi;			/* [qw] */
+	word* p;			/* [n] */
+	word* g;			/* [n] */
+	qr_o* qr;			/* [zmMontCreate_keep(no)] кольцо Монтгомери */
 	void* stack;
 	// проверить seed
 	code = pfokSeedVal(seed);
@@ -722,10 +722,10 @@ err_t pfokParamsVal(const pfok_params* params)
 	size_t n, no;
 	// состояние 
 	void* state;
-	word* p;
-	word* q;
-	word* g;
-	qr_o* qr;
+	word* p;			/* [n] */
+	word* q;			/* [n] */
+	word* g;			/* [n] */
+	qr_o* qr;			/* [zmMontCreate_keep(no)] */
 	void* stack;
 	// проверить указатели
 	if (!memIsValid(params, sizeof(pfok_params)))
@@ -793,7 +793,7 @@ err_t pfokKeypairGen(octet privkey[], octet pubkey[],
 	void* state;
 	word* x;				/* [m] личный ключ */
 	word* y;				/* [n] открытый ключ */
-	qr_o* qr;				/* описание кольца Монтгомери */
+	qr_o* qr;				/* [zmMontCreate_keep(no)] */
 	void* stack;
 	// проверить params
 	if (!memIsValid(params, sizeof(pfok_params)))
@@ -866,7 +866,7 @@ err_t pfokPubkeyCalc(octet pubkey[], const pfok_params* params,
 	void* state;
 	word* x;				/* [m] личный ключ */
 	word* y;				/* [n] открытый ключ */
-	qr_o* qr;				/* описание кольца Монтгомери */
+	qr_o* qr;				/* [zmMontCreate_keep(no)] */
 	void* stack;
 	// проверить params
 	if (!memIsValid(params, sizeof(pfok_params)))
@@ -926,7 +926,7 @@ err_t pfokDH(octet sharekey[], const pfok_params* params,
 	void* state;
 	word* x;				/* [m] личный ключ */
 	word* y;				/* [n] открытый ключ визави */
-	qr_o* qr;				/* описание кольца Монтгомери */
+	qr_o* qr;				/* [zmMontCreate_keep(no)] */
 	void* stack;
 	// проверить params
 	if (!memIsValid(params, sizeof(pfok_params)))
@@ -993,7 +993,7 @@ err_t pfokMTI(octet sharekey[], const pfok_params* params,
 	word* u;				/* [m] одноразовый личный ключ */
 	word* y;				/* [n] открытый ключ визави */
 	word* v;				/* [n] одноразовый открытый ключ визави */
-	qr_o* qr;				/* описание кольца Монтгомери */
+	qr_o* qr;				/* [zmMontCreate_keep(no)] */
 	void* stack;
 	// проверить params
 	if (!memIsValid(params, sizeof(pfok_params)))

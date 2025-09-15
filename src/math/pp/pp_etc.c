@@ -4,7 +4,7 @@
 \brief Binary polynomials: other functions
 \project bee2 [cryptographic library]
 \created 2012.03.01
-\version 2025.09.13
+\version 2025.09.15
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -94,8 +94,10 @@ bool_t ppIsIrred(const word a[], size_t n, void* stack)
 size_t ppIsIrred_deep(size_t n)
 {
 	return memSliceSize(
-		ppIsIrred_local(n), 
-		ppSqrMod_deep(n),
+		ppIsIrred_local(n),
+		utilMax(2,
+			ppGCD_deep(n, n),
+			ppSqrMod_deep(n)),
 		SIZE_MAX);
 }
 
@@ -192,8 +194,10 @@ size_t ppMinPoly_deep(size_t l)
 	const size_t n = W_OF_B(l);
 	const size_t m = W_OF_B(l + 1);
 	return memSliceSize( 
-		ppMinPoly_local(n, m), 
-		ppAddMulW_deep(m),
+		ppMinPoly_local(n, m),
+		utilMax(2,
+			ppDiv_deep(2 * n + 1, 2 * n),
+			ppAddMulW_deep(m)),
 		SIZE_MAX);
 }
 

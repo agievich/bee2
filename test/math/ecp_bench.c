@@ -4,7 +4,7 @@
 \brief Benchmarks for elliptic curves over prime fields
 \project bee2/test
 \created 2013.10.17
-\version 2025.09.08
+\version 2025.09.15
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -29,9 +29,9 @@ bool_t ecpBench()
 	bign_params params[1];
 	ec_o* ec;
 	void* state;
-	octet* combo_state;
-	word* pt;
-	word* d;
+	octet* combo_state;		/* [prngCOMBO_keep()] */
+	word* pt;				/* [2n] */
+	word* d;				/* [n] */
 	void* stack;
 	// загрузить параметры
 	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK ||

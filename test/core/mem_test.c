@@ -4,7 +4,7 @@
 \brief Tests for memory functions
 \project bee2/test
 \created 2014.02.01
-\version 2025.09.05
+\version 2025.09.15
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -32,7 +32,7 @@ bool_t memTest()
 	octet buf[16];
 	octet buf1[16];
 	octet buf2[16];
-	octet buf3[3 * sizeof(mem_align_t)];
+	mem_align_t buf3[3];
 	void* p;
 	void* p1;
 	void* p2;

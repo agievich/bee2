@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): KWP (keywrap = key encryption + authentication)
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.09.01
+\version 2025.09.15
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -55,8 +55,8 @@ err_t beltKWPUnwrap(octet dest[], const octet src[], size_t count,
 	const octet header[16], const octet key[], size_t len)
 {
 	void* state;
-	octet* header2;
-	void* stack;
+	octet* header2;				/* [16] */
+	void* kwp_state;			/* beltKWP_keep() */
 	// проверить входные данные
 	if (count < 32 ||
 		len != 16 && len != 24 && len != 32 ||
@@ -70,14 +70,14 @@ err_t beltKWPUnwrap(octet dest[], const octet src[], size_t count,
 		(size_t)16,
 		beltKWP_keep(),
 		SIZE_MAX,
-		&header2, &stack);
+		&header2, &kwp_state);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// снять защиту
-	beltKWPStart(stack, key, len);
+	beltKWPStart(kwp_state, key, len);
 	memCopy(header2, src + count - 16, 16);
 	memMove(dest, src, count - 16);
-	beltKWPStepD2(dest, header2, count, stack);
+	beltKWPStepD2(dest, header2, count, kwp_state);
 	if (header && !memEq(header, header2, 16) ||
 		header == 0 && !memIsZero(header2, 16))
 	{

@@ -4,7 +4,7 @@
 \brief Tests for elliptic curves over prime fields
 \project bee2/test
 \created 2017.05.29
-\version 2025.09.08
+\version 2025.09.15
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -56,9 +56,9 @@ bool_t ecpTest()
 	const size_t ec_deep = ecpCreateJ_deep(n, f_deep);
 	// состояние
 	void* state;
-	ec_o* ec;
-	qr_o* f;
-	octet* t;
+	ec_o* ec;		/* [ec_keep] */
+	qr_o* f;		/* [f_keep] */
+	octet* t;		/* [5 * no] */
 	void* stack;
 	// создать состояние
 	state = blobCreate2(

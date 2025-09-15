@@ -4,7 +4,7 @@
 \brief STB 34.101.60 (bels): secret sharing algorithms
 \project bee2 [cryptographic library]
 \created 2013.05.14
-\version 2025.09.13
+\version 2025.09.15
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -75,7 +75,7 @@ err_t belsValM(const octet m0[], size_t len)
 {
 	size_t n;
 	void* state;
-	word* f0;
+	word* f0;			/* [n + 1] */
 	void* stack;
 	err_t code;
 	// проверить входные данные
@@ -111,9 +111,10 @@ B_PER_IMPOSSIBLE.
 
 err_t belsGenM0(octet m0[], size_t len, gen_i ang, void* ang_state)
 {
-	size_t n, reps;
+	size_t n;
+	size_t reps;
 	void* state;
-	word* f0;
+	word* f0;			/* [n + 1] */
 	void* stack;
 	// проверить генератор
 	if (ang == 0)
@@ -151,12 +152,13 @@ err_t belsGenM0(octet m0[], size_t len, gen_i ang, void* ang_state)
 err_t belsGenMi(octet mi[], size_t len, const octet m0[], gen_i ang, 
 	void* ang_state)
 {
-	size_t n, reps;
+	size_t n;
+	size_t reps;
 	err_t code;
 	void* state;
-	word* f0;
-	word* u;
-	word* f;
+	word* f0;			/* [n + 1] */
+	word* u;			/* [n + 1] */
+	word* f;			/* [n + 1] */
 	void* stack;
 	// проверить генератор
 	if (ang == 0)
@@ -211,9 +213,9 @@ err_t belsGenMid(octet mid[], size_t len, const octet m0[], const octet id[],
 	size_t n;
 	size_t reps;
 	void* state;
-	word* f0;			/* [n+1] */
-	word* f;			/* [n+1] */
-	word* u;			/* [n+1] */
+	word* f0;			/* [n + 1] */
+	word* f;			/* [n + 1] */
+	word* u;			/* [W_OF_O(32) + 1] */
 	void* stack;
 	// проверить входные данные
 	if ((len != 16 && len != 24 && len != 32) || 
@@ -319,11 +321,12 @@ err_t belsShare(octet si[], size_t count, size_t threshold, size_t len,
 	const octet s[], const octet m0[], const octet mi[], 
 	gen_i rng, void* rng_state)
 {
-	size_t n, i;
+	size_t n;
+	size_t i;
 	void* state;
-	word* f;
-	word* k;
-	word* c;
+	word* f;			/* [n + 1] */
+	word* k;			/* [threshold * n - n] */
+	word* c;			/* [threshold * n] */
 	void* stack;
 	// проверить генератор
 	if (rng == 0)
@@ -376,11 +379,12 @@ err_t belsShare(octet si[], size_t count, size_t threshold, size_t len,
 err_t belsShare2(octet si[], size_t count, size_t threshold, size_t len,
 	const octet s[], gen_i rng, void* rng_state)
 {
-	size_t n, i;
+	size_t n;
+	size_t i;
 	void* state;
-	word* f;
-	word* k;
-	word* c;
+	word* f;			/* [n + 1] */
+	word* k;			/* [threshold * n - n] */
+	word* c;			/* [threshold * n] */
 	void* stack;
 	// проверить генератор
 	if (rng == 0)
@@ -463,15 +467,17 @@ err_t belsShare3(octet si[], size_t count, size_t threshold, size_t len,
 err_t belsRecover(octet s[], size_t count, size_t len, const octet si[], 
 	const octet m0[], const octet mi[])
 {
-	size_t n, i, deep;
+	size_t n;
+	size_t i;
+	size_t deep;
 	void* state;
-	word* f;
-	word* g;
-	word* d;
-	word* u;
-	word* v;
-	word* c;
-	word* t;
+	word* f;			/* [n + 1] */
+	word* g;			/* [count * n + 1] */
+	word* d;			/* [count * n - n + 1] */
+	word* u;			/* [count * n - n + 1] */
+	word* v;			/* [n + 1] */
+	word* c;			/* [(2 * count - 1) * n] */
+	word* t;			/* [MAX2(2 * count - 2, count + 1) * n] */
 	void* stack;
 	// проверить входные данные
 	if ((len != 16 && len != 24 && len != 32) || count == 0 || 
@@ -496,8 +502,8 @@ err_t belsRecover(octet s[], size_t count, size_t len, const octet si[],
 	state = blobCreate2(
 		O_OF_W(n + 1),
 		O_OF_W(count * n + 1),
-		O_OF_W((count - 1) * n + 1),
-		O_OF_W((count - 1) * n + 1),
+		O_OF_W(count * n - n + 1),
+		O_OF_W(count * n - n + 1),
 		O_OF_W(n + 1),
 		O_OF_W((2 * count - 1) * n),
 		O_OF_W(MAX2(2 * count - 2, count + 1) * n),
@@ -559,15 +565,18 @@ err_t belsRecover(octet s[], size_t count, size_t len, const octet si[],
 
 err_t belsRecover2(octet s[], size_t count, size_t len, const octet si[])
 {
-	size_t n, i, j, deep;
+	size_t n;
+	size_t i;
+	size_t j;
+	size_t deep;
 	void* state;
-	word* f;
-	word* g;
-	word* d;
-	word* u;
-	word* v;
-	word* c;
-	word* t;
+	word* f;			/* [n + 1] */
+	word* g;			/* [count * n + 1] */
+	word* d;			/* [count * n - n + 1] */
+	word* u;			/* [count * n - n + 1] */
+	word* v;			/* [n + 1] */
+	word* c;			/* [(2 * count - 1) * n] */
+	word* t;			/* [MAX2(2 * count - 2, count + 1) * n] */
 	void* stack;
 	// проверить входные данные
 	if ((len != 16 && len != 24 && len != 32) || count == 0 || count > 16 ||
@@ -607,8 +616,8 @@ err_t belsRecover2(octet s[], size_t count, size_t len, const octet si[])
 	state = blobCreate2(
 		O_OF_W(n + 1),
 		O_OF_W(count * n + 1),
-		O_OF_W((count - 1) * n + 1),
-		O_OF_W((count - 1) * n + 1),
+		O_OF_W(count * n - n + 1),
+		O_OF_W(count * n - n + 1),
 		O_OF_W(n + 1),
 		O_OF_W((2 * count - 1) * n),
 		O_OF_W(MAX2(2 * count - 2, count + 1) * n),

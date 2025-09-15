@@ -581,8 +581,8 @@ static err_t g12sEcCreate(
 	size_t n, no, nb;
 	size_t f_deep;
 	void* state;	
-	ec_o* ec;			/* кривая */
-	qr_o* f;			/* базовое поле */
+	ec_o* ec;			/* [ecpCreateJ_keep(n)] кривая */
+	qr_o* f;			/* [gfpCreate_keep(no)] базовое поле */
 	void* stack;
 	// входной контроль
 	if (!memIsValid(pec, sizeof(*pec)) ||
