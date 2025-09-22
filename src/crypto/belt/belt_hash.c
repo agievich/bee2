@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): hashing
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2022.07.18
+\version 2025.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -32,7 +32,7 @@ typedef struct {
 	u32 h1[8];				/*< копия переменной h */
 	octet block[32];		/*< блок данных */
 	size_t filled;			/*< накоплено октетов в блоке */
-	octet stack[];			/*< [beltCompr_deep()] стек beltCompr */
+	mem_align_t stack[];	/*< [beltCompr_deep()] стек beltCompr */
 } belt_hash_st;
 
 size_t beltHash_keep()

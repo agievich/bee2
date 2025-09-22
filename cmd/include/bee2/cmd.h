@@ -33,7 +33,11 @@ extern "C" {
 #define cmdBlobCreate(blob, size) \
 	(((blob) = blobCreate(size)) ? ERR_OK : ERR_OUTOFMEMORY)
 
-/*! \brief Изменение размера блоба */
+/*! \brief Создание блоба с разметкой памяти */
+#define cmdBlobCreate2(blob, ...) \
+	(((blob) = blobCreate2(__VA_ARGS__)) ? ERR_OK : ERR_OUTOFMEMORY)
+
+	/*! \brief Изменение размера блоба */
 #define cmdBlobResize(b, blob, size)\
 	(((b) = blobResize(blob, size)) ? ERR_OK : ERR_OUTOFMEMORY)
 

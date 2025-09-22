@@ -4,7 +4,7 @@
 \brief STB 34.101.47/botp: OTP algorithms
 \project bee2 [cryptographic library]
 \created 2015.11.02
-\version 2025.08.28
+\version 2025.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -106,12 +106,12 @@ void botpCtrNext(octet ctr[8])
 
 typedef struct
 {
-	size_t digit;		/*< число цифр в пароле */
-	octet ctr[8];		/*< счетчик */
-	octet ctr1[8];		/*< копия счетчика */
-	octet mac[32];		/*< имитовставка */
-	char otp[10];		/*< текущий пароль */
-	octet stack[];		/*< [2 * beltHMAC_deep()] */
+	size_t digit;			/*< число цифр в пароле */
+	octet ctr[8];			/*< счетчик */
+	octet ctr1[8];			/*< копия счетчика */
+	octet mac[32];			/*< имитовставка */
+	char otp[10];			/*< текущий пароль */
+	octet stack[];			/*< [2 * beltHMAC_keep()] */
 } botp_hotp_st;
 
 size_t botpHOTP_keep()
@@ -231,11 +231,11 @@ err_t botpHOTPVerify(const char* otp, const octet key[], size_t key_len,
 
 typedef struct
 {
-	size_t digit;		/*< число цифр в пароле */
-	octet t[8];			/*< округленная отметка времени */
-	octet mac[32];		/*< имитовставка */
-	char otp[10];		/*< текущий пароль */
-	octet stack[];		/*< [2 * beltHMAC_deep()] */
+	size_t digit;			/*< число цифр в пароле */
+	octet t[8];				/*< округленная отметка времени */
+	octet mac[32];			/*< имитовставка */
+	char otp[10];			/*< текущий пароль */
+	mem_align_t stack[];	/*< [2 * beltHMAC_deep()] */
 } botp_totp_st;
 
 size_t botpTOTP_keep()
@@ -337,22 +337,22 @@ err_t botpTOTPVerify(const char* otp, const octet key[], size_t key_len,
 
 typedef struct botp_ocra_st
 {
-	size_t digit;		/*< число цифр в пароле */
-	octet ctr[8];		/*< счетчик */
-	octet ctr1[8];		/*< копия счетчика */
-	size_t ctr_len;		/*< длина счетчика */
-	octet q[128];		/*< запрос */
-	char q_type;		/*< тип запроса (A, N, H) */
-	size_t q_max;		/*< максимальная длина одиночного запроса */
-	octet p[64];		/*< хэш-значение статического пароля */
-	size_t p_len;		/*< длина p */
-	octet s[512];		/*< идентификатор сеанса */
-	size_t s_len;		/*< длина идентификатора */
-	octet t[8];			/*< отметка времени */
-	tm_time_t ts;		/*< шаг времени */
-	octet mac[32];		/*< имитовставка */
-	char otp[10];		/*< текущий пароль */
-	octet stack[];		/*< [2 * beltHMAC_deep()] */
+	size_t digit;			/*< число цифр в пароле */
+	octet ctr[8];			/*< счетчик */
+	octet ctr1[8];			/*< копия счетчика */
+	size_t ctr_len;			/*< длина счетчика */
+	octet q[128];			/*< запрос */
+	char q_type;			/*< тип запроса (A, N, H) */
+	size_t q_max;			/*< максимальная длина одиночного запроса */
+	octet p[64];			/*< хэш-значение статического пароля */
+	size_t p_len;			/*< длина p */
+	octet s[512];			/*< идентификатор сеанса */
+	size_t s_len;			/*< длина идентификатора */
+	octet t[8];				/*< отметка времени */
+	tm_time_t ts;			/*< шаг времени */
+	octet mac[32];			/*< имитовставка */
+	char otp[10];			/*< текущий пароль */
+	mem_align_t stack[];	/*< [2 * beltHMAC_keep()] */
 } botp_ocra_st;
 
 size_t botpOCRA_keep()

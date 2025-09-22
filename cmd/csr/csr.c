@@ -4,7 +4,7 @@
 \brief Manage certificate signing requests
 \project bee2/cmd 
 \created 2023.12.19
-\version 2025.06.09
+\version 2025.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -66,9 +66,9 @@ static err_t csrRewrap(int argc, char* argv[])
 	cmd_pwd_t pwd = 0;
 	size_t privkey_len = 0;
 	size_t csr_len;
-	void* stack;
-	octet* privkey;
-	octet* csr;
+	void* state;
+	octet* privkey;				/* [privkey_len] */
+	octet* csr;					/* [csr_len] */
 	// самотестирование
 	code = cmdStDo(CMD_ST_BIGN);
 	ERR_CALL_CHECK(code);
@@ -115,25 +115,27 @@ static err_t csrRewrap(int argc, char* argv[])
 	// определить длину запроса
 	code = cmdFileReadAll(0, &csr_len, argv[1]);
 	ERR_CALL_CHECK(code);
-	// выделить память и разметить ее
-	code = cmdBlobCreate(stack, privkey_len + csr_len);
+	// выделить и разметить память
+	code = cmdBlobCreate2(state, 
+		privkey_len,
+		csr_len,
+		SIZE_MAX,
+		&privkey, &csr);
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
-	privkey = (octet*)stack;
-	csr = privkey + privkey_len;
 	// определить личный ключ
 	code = cmdPrivkeyRead(privkey, &privkey_len, argv[0], pwd);
 	cmdPwdClose(pwd);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// прочитать запрос
 	code = cmdFileReadAll(csr, &csr_len, argv[1]);
 	ERR_CALL_CHECK(code);
 	// перевыпустить запрос
 	code = bpkiCSRRewrap(csr, csr_len, privkey, privkey_len);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// сохранить запрос
 	code = cmdFileWrite(argv[2], csr, csr_len);
 	// завершить
-	cmdBlobClose(stack);
+	cmdBlobClose(state);
 	return code;
 }
 
@@ -149,7 +151,7 @@ static err_t csrVal(int argc, char* argv[])
 {
 	err_t code = ERR_OK;
 	size_t csr_len;
-	void* stack;
+	void* state;
 	octet* csr;
 	// самотестирование
 	code = cmdStDo(CMD_ST_BIGN);
@@ -163,17 +165,19 @@ static err_t csrVal(int argc, char* argv[])
 	// определить длину запроса
 	code = cmdFileReadAll(0, &csr_len, argv[0]);
 	ERR_CALL_CHECK(code);
-	// выделить память и разметить ее
-	code = cmdBlobCreate(stack, csr_len);
+	// выделить и разметить память
+	code = cmdBlobCreate2(state, 
+		csr_len,
+		SIZE_MAX,
+		&csr);
 	ERR_CALL_CHECK(code);
-	csr = stack;
 	// прочитать запрос
 	code = cmdFileReadAll(csr, &csr_len, argv[0]);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// проверить запрос
 	code = bpkiCSRUnwrap(0, 0, csr, csr_len);
 	// завершить
-	cmdBlobClose(stack);
+	cmdBlobClose(state);
 	return code;
 }
 

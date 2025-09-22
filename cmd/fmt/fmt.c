@@ -4,7 +4,7 @@
 \brief Format-preserving encryption
 \project bee2/cmd 
 \created 2025.06.12
-\version 2025.06.12
+\version 2025.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -101,7 +101,7 @@ static err_t fmtEnc(int argc, char* argv[])
 	err_t code = ERR_OK;
 	size_t base = 0;
 	cmd_pwd_t pwd = 0;
-	void* stack = 0;
+	void* state = 0;
 	char* str;
 	// самотестирование
 	code = cmdStDo(CMD_ST_BELS | CMD_ST_BELT | CMD_ST_BRNG);
@@ -157,19 +157,21 @@ static err_t fmtEnc(int argc, char* argv[])
 	if (!fmtStrIsValid(argv[0], base))	
 		code = ERR_BAD_FORMAT;
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
-	// выделить память
-	code = cmdBlobCreate(stack, strLen(argv[0]) + 1);
+	// выделить и разметить память
+	code = cmdBlobCreate2(state, 
+		strLen(argv[0]) + 1,
+		SIZE_MAX,
+		&str);
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
-	str = (char*)stack;
 	strCopy(str, argv[0]);
 	// зашифровать
 	code = fmtStrEnc(str, base, pwd);
 	cmdPwdClose(pwd);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// напечатать
 	code = fmtStrPrint(str);
 	// завершить
-	cmdBlobClose(stack);
+	cmdBlobClose(state);
 	return code;
 }
 

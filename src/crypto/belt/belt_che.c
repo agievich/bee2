@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): CHE (Ctr-Hash-Encrypt) authenticated encryption
 \project bee2 [cryptographic library]
 \created 2020.03.20
-\version 2025.08.28
+\version 2025.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -36,7 +36,7 @@ typedef struct
 	octet block1[16];		/*< блок гаммы */
 	size_t filled;			/*< накоплено октетов в block */
 	size_t reserved;		/*< резерв октетов гаммы */
-	octet stack[];			/*< стек умножения */
+	mem_align_t stack[];	/*< стек умножения */
 } belt_che_st;
 
 size_t beltCHE_keep()
