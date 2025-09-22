@@ -4,7 +4,7 @@
 \brief Memory management
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.09.05
+\version 2025.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -45,6 +45,16 @@ bool_t memIsValid(const void* buf, size_t count)
 /*
 *******************************************************************************
 Выравнивание
+
+\remark В первых редакциях модуля (вплоть до 2025-09-22) буферы памяти 
+по возможности обрабатывались как массивы машинных слов (word). При этом 
+не учитывалось выравнивание буферов на границу машшинного слова. Чтобы учесть
+выравнивание, нужно либо 
+a) перейти к работе с буферами как массивами октетов, либо 
+b) усложнять функции, придавая им довольно громоздкую форму.
+
+Был выбран вариант a). Для быстрой работы с массивами машинных слов можно 
+переключиться на функции модуля ww.
 *******************************************************************************
 */
 
@@ -95,11 +105,6 @@ void memSet(void* buf, octet c, size_t count)
 void memNeg(void* buf, size_t count)
 {
 	ASSERT(memIsValid(buf, count));
-	for (; count >= O_PER_W; count -= O_PER_W)
-	{
-		*(word*)buf = ~*(word*)buf;
-		buf = (word*)buf + 1;
-	}
 	while (count--)
 	{
 		*(octet*)buf = ~*(octet*)buf;
@@ -153,12 +158,6 @@ bool_t memEq(const void* buf1, const void* buf2, size_t count)
 	register word diff = 0;
 	ASSERT(memIsValid(buf1, count));
 	ASSERT(memIsValid(buf2, count));
-	for (; count >= O_PER_W; count -= O_PER_W)
-	{
-		diff |= *(const word*)buf1 ^ *(const word*)buf2;
-		buf1 = (const word*)buf1 + 1;
-		buf2 = (const word*)buf2 + 1;
-	}
 	while (count--)
 	{
 		diff |= *(const octet*)buf1 ^ *(const octet*)buf2;
@@ -224,30 +223,24 @@ int memCmpRev(const void* buf1, const void* buf2, size_t count)
 {
 	register word less = 0;
 	register word greater = 0;
-	register word w1;
-	register word w2;
+	register word w1 = 0;
+	register word w2 = 0;
+	size_t filled = 0;
 	ASSERT(memIsValid(buf1, count));
 	ASSERT(memIsValid(buf2, count));
-	if (count % O_PER_W)
-	{
-		w1 = w2 = 0;
-		while (count % O_PER_W)
-		{
-			w1 = w1 << 8 | ((const octet*)buf1)[--count];
-			w2 = w2 << 8 | ((const octet*)buf2)[count];
-		}
-		less |= ~greater & wordLess01(w1, w2);
-		greater |= ~less & wordGreater01(w1, w2);
-	}
-	count /= O_PER_W;
 	while (count--)
 	{
-		w1 = ((const word*)buf1)[count];
-		w2 = ((const word*)buf2)[count];
-#if (OCTET_ORDER == BIG_ENDIAN)
-		w1 = wordRev(w1);
-		w2 = wordRev(w2);
-#endif
+		w1 = w1 << 8 | ((const octet*)buf1)[count];
+		w2 = w2 << 8 | ((const octet*)buf2)[count];
+		if (++filled == O_PER_W)
+		{
+			less |= ~greater & wordLess(w1, w2);
+			greater |= ~less & wordGreater(w1, w2);
+			filled = 0;
+		}
+	}
+	if (filled)
+	{
 		less |= ~greater & wordLess(w1, w2);
 		greater |= ~less & wordGreater(w1, w2);
 	}
@@ -325,11 +318,6 @@ bool_t memIsZero(const void* buf, size_t count)
 {
 	register word diff = 0;
 	ASSERT(memIsValid(buf, count));
-	for (; count >= O_PER_W; count -= O_PER_W)
-	{
-		diff |= *(const word*)buf;
-		buf = (const word*)buf + 1;
-	}
 	while (count--)
 	{
 		diff |= *(const octet*)buf;
@@ -341,9 +329,6 @@ bool_t memIsZero(const void* buf, size_t count)
 bool_t FAST(memIsZero)(const void* buf, size_t count)
 {
 	ASSERT(memIsValid(buf, count));
-	for (; count >= O_PER_W; count -= O_PER_W, buf = (const word*)buf + 1)
-		if (*(const word*)buf)
-			return FALSE;
 	for (; count--; buf = (const octet*)buf + 1)
 		if (*(const octet*)buf)
 			return FALSE;
@@ -488,13 +473,6 @@ void memXor(void* dest, const void* src1, const void* src2, size_t count)
 {
 	ASSERT(memIsSameOrDisjoint(src1, dest, count));
 	ASSERT(memIsSameOrDisjoint(src2, dest, count));
-	for (; count >= O_PER_W; count -= O_PER_W)
-	{
-		*(word*)dest = *(const word*)src1 ^ *(const word*)src2;
-		src1 = (const word*)src1 + 1;
-		src2 = (const word*)src2 + 1;
-		dest = (word*)dest + 1;
-	}
 	while (count--)
 	{
 		*(octet*)dest = *(const octet*)src1 ^ *(const octet*)src2;
@@ -507,12 +485,6 @@ void memXor(void* dest, const void* src1, const void* src2, size_t count)
 void memXor2(void* dest, const void* src, size_t count)
 {
 	ASSERT(memIsSameOrDisjoint(src, dest, count));
-	for (; count >= O_PER_W; count -= O_PER_W)
-	{
-		*(word*)dest ^= *(const word*)src;
-		src = (const word*)src + 1;
-		dest = (word*)dest + 1;
-	}
 	while (count--)
 	{
 		*(octet*)dest ^= *(const octet*)src;
@@ -524,12 +496,6 @@ void memXor2(void* dest, const void* src, size_t count)
 void memSwap(void* buf1, void* buf2, size_t count)
 {
 	ASSERT(memIsDisjoint(buf1, buf2, count));
-	for (; count >= O_PER_W; count -= O_PER_W)
-	{
-		SWAP(*(word*)buf1, *(word*)buf2);
-		buf1 = (word*)buf1 + 1;
-		buf2 = (word*)buf2 + 1;
-	}
 	while (count--)
 	{
 		SWAP(*(octet*)buf1, *(octet*)buf2);
