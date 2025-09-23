@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: Euclidian gcd algorithms
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.09.13
+\version 2025.09.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -506,7 +506,7 @@ size_t zzAlmostInvMod(word b[], const word a[], const word mod[], size_t n,
 	word* da;			/* [n + 1] */
 	// разметить стек
 	memSlice(stack,
-		zzAlmostInvMod_local(n), SIZE_MAX,
+		zzAlmostInvMod_local(n), SIZE_0, SIZE_MAX,
 		&u, &v, &da0, &da, &stack);		
 	// pre
 	ASSERT(!wwIsZero(a, n));

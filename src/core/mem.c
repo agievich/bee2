@@ -4,7 +4,7 @@
 \brief Memory management
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.09.22
+\version 2025.09.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -521,7 +521,7 @@ void memRev(void* buf, size_t count)
 Разметка памяти
 
 \remark Макрос va_copy поддержан в Visual Studio только в 2013 году.
-\remark Неотрицательное целое n есть степень двойки <=>
+\remark Неотрицательное целое n является степенью двойки <=>
 	(n & (n - 1)) == 0.
 *******************************************************************************
 */
@@ -530,19 +530,21 @@ void memRev(void* buf, size_t count)
 	#define va_copy(dest, src) ((dest) = (src))
 #endif
 
+#define memSliceSizeof(c)\
+	(CASSERT((sizeof(mem_align_t) & (sizeof(mem_align_t) - 1)) == 0),\
+		((c + sizeof(mem_align_t) - 1) & ~(sizeof(mem_align_t) - 1)))
+
 size_t memSliceSizeArgs(size_t c1, va_list args)
 {
 	size_t size;
 	size_t s;
 	size_t c;
-	// pre
-	CASSERT((sizeof(mem_align_t) & (sizeof(mem_align_t) - 1)) == 0);
 	// просмотреть ci
 	for (size = s = 0, c = c1; c != SIZE_MAX;)
 	{
 		if ((c & SIZE_HI) == 0)
 		{
-			s = (s + sizeof(mem_align_t) - 1) & ~(sizeof(mem_align_t) - 1);
+			s = memSliceSizeof(s);
 			size += s;
 			s = c;
 		}
@@ -559,7 +561,6 @@ void memSliceArgs(const void* buf, size_t c1, va_list args)
 	size_t s;
 	size_t c;
 	// pre
-	CASSERT((sizeof(mem_align_t) & (sizeof(mem_align_t) - 1)) == 0);
 	ASSERT(memIsAligned(buf, sizeof(mem_align_t)));
 	// найти p1
 	va_copy(args1, args);
@@ -571,7 +572,7 @@ void memSliceArgs(const void* buf, size_t c1, va_list args)
 		const void** p;
 		if ((c & SIZE_HI) == 0)
 		{
-			s = (s + sizeof(mem_align_t) - 1) & ~(sizeof(mem_align_t) - 1);
+			s = memSliceSizeof(s);
 			buf = (const octet*)buf + s;
 			s = 0;
 		}
@@ -608,3 +609,12 @@ void memSlice(const void* buf, size_t c1, ...)
 	va_end(args);
 }
 
+void* memSliceNext(void* ptr, size_t count)
+{
+	return (octet*)ptr + memSliceSizeof(count);
+}
+
+const void* memSliceNext2(const void* ptr, size_t count)
+{
+	return (const octet*)ptr + memSliceSizeof(count);
+}

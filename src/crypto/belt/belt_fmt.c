@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): FMT (format preserving encryption)
 \project bee2 [cryptographic library]
 \created 2017.09.28
-\version 2021.01.21
+\version 2025.09.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -77,12 +77,13 @@ static size_t beltFMTCalcB(u32 mod, size_t count)
 	word num[W_OF_B(128)];
 	word den[W_OF_B(128)];
 	size_t k;
-	word stack[W_OF_B(128) * 5];
-	word* t0 = stack; 
-	word* t1 = t0 + m; 
-	word* t2 = t1 + m; 
-	word* t3 = t2 + m; 
-	word* t4 = t3 + m; 
+	mem_align_t stack[(O_OF_W(W_OF_B(128)) * 5 + sizeof(mem_align_t) - 1) / 
+		sizeof(mem_align_t)];
+	word* t0 = (word*)stack;
+	word* t1 = t0 + m;
+	word* t2 = t1 + m;
+	word* t3 = t2 + m;
+	word* t4 = t3 + m;
 	// pre
 	ASSERT(2 <= mod && mod <= 65536);
 	ASSERT(1 <= count && count <= 300);

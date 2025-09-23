@@ -90,11 +90,18 @@ void beltHalfBlockAddBitSizeW(word block[W_OF_B(64)], size_t count)
 *******************************************************************************
 */
 
+#define beltPolyMul_local(n)\
+/* prod */		O_OF_W(2 * n)
+
 void beltPolyMul(word c[], const word a[], const word b[], void* stack)
 {
 	const size_t n = W_OF_B(128);
 	word* prod = (word*)stack;
 	stack = prod + 2 * n;
+	// разметить стек
+	memSlice(stack,
+		beltPolyMul_local(n), SIZE_0, SIZE_MAX,
+		&prod, &stack);
 	// умножить
 	ppMul(prod, a, n, b, n, stack);
 	// привести по модулю

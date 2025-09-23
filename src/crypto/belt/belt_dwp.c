@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): DWP (datawrap = data encryption + authentication)
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2020.03.24
+\version 2025.09.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -33,7 +33,7 @@ typedef struct
 	word len[W_OF_B(128)];	/*< обработано открытых || критических данных */
 	octet block[16];		/*< блок данных */
 	size_t filled;			/*< накоплено октетов в блоке */
-	octet stack[];			/*< стек умножения */
+	mem_align_t stack[];	/*< стек умножения */
 } belt_dwp_st;
 
 size_t beltDWP_keep()
