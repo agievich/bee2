@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): HMAC message authentication
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2022.07.18
+\version 2025.09.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -34,7 +34,7 @@ typedef struct
 	u32 s1[4];				/*< копия переменной s */
 	octet block[32];		/*< блок данных */
 	size_t filled;			/*< накоплено октетов в блоке */
-	mem_align_t stack[];	/*< [beltCompr_deep()] стек beltCompr */
+	mem_align_t stack[];	/*< стек beltCompr */
 } belt_hmac_st;
 
 size_t beltHMAC_keep()

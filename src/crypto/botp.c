@@ -111,7 +111,7 @@ typedef struct
 	octet ctr1[8];			/*< копия счетчика */
 	octet mac[32];			/*< имитовставка */
 	char otp[10];			/*< текущий пароль */
-	mem_align_t stack[];	/*< [2 * beltHMAC_keep()] */
+	mem_align_t stack[];	/*< 2 состояния beltHMAC */
 } botp_hotp_st;
 
 size_t botpHOTP_keep()
@@ -237,12 +237,13 @@ typedef struct
 	octet t[8];				/*< округленная отметка времени */
 	octet mac[32];			/*< имитовставка */
 	char otp[10];			/*< текущий пароль */
-	mem_align_t stack[];	/*< [2 * beltHMAC_deep()] */
+	mem_align_t stack[];	/*< 2 состояния beltHMAC */
 } botp_totp_st;
 
 size_t botpTOTP_keep()
 {
-	return sizeof(botp_totp_st) + 2 * beltHMAC_keep();
+	return sizeof(botp_totp_st) + 
+		memSliceSize( beltHMAC_keep(), beltHMAC_keep(), SIZE_MAX);
 }
 
 void botpTOTPStart(void* state, size_t digit, const octet key[], 
@@ -355,12 +356,13 @@ typedef struct botp_ocra_st
 	tm_time_t ts;			/*< шаг времени */
 	octet mac[32];			/*< имитовставка */
 	char otp[10];			/*< текущий пароль */
-	mem_align_t stack[];	/*< [2 * beltHMAC_keep()] */
+	mem_align_t stack[];	/*< 2 состояния beltHMAC */
 } botp_ocra_st;
 
 size_t botpOCRA_keep()
 {
-	return sizeof(botp_ocra_st) + 2 * beltHMAC_keep();
+	return sizeof(botp_ocra_st) + 
+		memSliceSize( beltHMAC_keep(), beltHMAC_keep(), SIZE_MAX);
 }
 
 static const char ocra_prefix[] = "OCRA-1:HOTP-";

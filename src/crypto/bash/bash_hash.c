@@ -4,7 +4,7 @@
 \brief STB 34.101.77 (bash): hashing algorithms
 \project bee2 [cryptographic library]
 \created 2014.07.15
-\version 2025.09.22
+\version 2025.09.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -27,7 +27,7 @@ typedef struct {
 	octet s1[192];			/*< копия s */
 	size_t buf_len;			/*< длина буфера */
 	size_t pos;				/*< позиция в буфере (накоплено октетов) */
-	mem_align_t stack[];	/*< [bashF_deep()] стек bashF */
+	mem_align_t stack[];	/*< стек bashF */
 } bash_hash_st;
 
 size_t bashHash_keep()

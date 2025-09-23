@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): local declarations
 \project bee2 [cryptographic library]
 \created 2014.04.03
-\version 2025.09.05
+\version 2025.09.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -43,7 +43,7 @@ EC-функции имеют самостоятельное значение. И
 стандартных (l == 128 || l == 192 || l == 256). Для этого необходимо
 (но не обязательно достаточно), чтобы уровень l был кратен длине машинного
 слова в битах:
-	l % B_OF_O(sizeof(word)) == 0.
+	l % B_PER_W == 0.
 Последнее условие проверяется в функции bignParamsCheck2(), которая является
 ослабленной редакцией bignParamsCheck().
 *******************************************************************************
@@ -77,7 +77,7 @@ err_t bignParamsCheck(
 	- l == 128 || l == 192 || l == 256;
 	- l % B_PER_W == 0;
 	на условие
-	- 2 * l % B_PER_W == 0.
+	- (2 * l) % B_PER_W == 0.
 	\return ERR_OK в случае успеха и код ошибки в противном	случае.
 */
 err_t bignParamsCheck2(

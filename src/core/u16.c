@@ -4,7 +4,7 @@
 \brief 16-bit unsigned words
 \project bee2 [cryptographic library]
 \created 2015.10.28
-\version 2025.07.24
+\version 2025.09.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -139,6 +139,7 @@ void u16From(u16 dest[], const void* src, size_t count)
 {
 	ASSERT(memIsValid(src, count));
 	ASSERT(memIsValid(dest, count + count % 2));
+	ASSERT(memIsAligned(dest, 2));
 	memMove(dest, src, count);
 	if (count % 2)
 		((octet*)dest)[count] = 0;

@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): Secure Messaging
 \project bee2 [cryptographic library]
 \created 2022.10.31
-\version 2025.06.10
+\version 2025.09.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -29,16 +29,16 @@
 */
 
 typedef struct {
-	octet key1[32];		/*!< ключ belt-mac */
-	octet key2[32];		/*!< ключ belt-cfb */
-	octet ctr[16];		/*!< счетчик */
-	octet stack[];		/*!< стек */
+	octet key1[32];			/*!< ключ belt-mac */
+	octet key2[32];			/*!< ключ belt-cfb */
+	octet ctr[16];			/*!< счетчик */
+	mem_align_t stack[];	/*!< стек */
 } btok_sm_st;
 
 size_t btokSM_keep()
 {
-	return sizeof(btok_sm_st) + utilMax(3,
-		beltKRP_keep(), beltMAC_keep(), beltCFB_keep());
+	return sizeof(btok_sm_st) + 
+		utilMax(3, beltKRP_keep(), beltMAC_keep(), beltCFB_keep());
 }
 
 void btokSMStart(void* state, const octet key[32])

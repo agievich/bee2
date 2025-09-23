@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): local functions
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.06.10
+\version 2025.09.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -47,6 +47,7 @@ void beltBlockAddBitSizeU32(u32 block[4], size_t count)
 	block[3] += (u32)t;
 	CLEAN(t);
 #endif
+	ASSERT(memIsAligned(block, 4));
 	CLEAN(carry);
 }
 
@@ -81,6 +82,7 @@ void beltHalfBlockAddBitSizeW(word block[W_OF_B(64)], size_t count)
 #else
 	#error "Unsupported word size"
 #endif // B_PER_W
+	ASSERT(memIsAligned(block, O_PER_W));
 	CLEAN(carry);
 }
 
@@ -96,8 +98,7 @@ void beltHalfBlockAddBitSizeW(word block[W_OF_B(64)], size_t count)
 void beltPolyMul(word c[], const word a[], const word b[], void* stack)
 {
 	const size_t n = W_OF_B(128);
-	word* prod = (word*)stack;
-	stack = prod + 2 * n;
+	word* prod;			/* [2n] */
 	// разметить стек
 	memSlice(stack,
 		beltPolyMul_local(n), SIZE_0, SIZE_MAX,
@@ -112,7 +113,10 @@ void beltPolyMul(word c[], const word a[], const word b[], void* stack)
 size_t beltPolyMul_deep()
 {
 	const size_t n = W_OF_B(128);
-	return O_OF_W(2 * n) + ppMul_deep(n, n);
+	return memSliceSize(
+		beltPolyMul_local(n),
+		ppMul_deep(n, n),
+		SIZE_MAX);
 }
 
 /*
@@ -130,5 +134,6 @@ void beltBlockMulC(u32 block[4])
 	block[2] = (block[2] << 1) ^ (block[1] >> 31);
 	block[1] = (block[1] << 1) ^ (block[0] >> 31);
 	block[0] = (block[0] << 1) ^ t;
+	ASSERT(memIsAligned(block, 4));
 	CLEAN(t);
 }

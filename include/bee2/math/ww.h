@@ -4,7 +4,7 @@
 \brief Arbitrary length words
 \project bee2 [cryptographic library]
 \created 2012.04.18
-\version 2025.07.24
+\version 2025.09.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -75,18 +75,21 @@ extern "C" {
 	#error "Unsupported word size"
 #endif /* B_PER_W */
 
-
 /*!	Корректное слово [n]a? */
-#define wwIsValid(a, n) memIsValid((a), O_OF_W(n))
+#define wwIsValid(a, n)\
+	(memIsValid((a), O_OF_W(n)) && memIsAligned((a), O_PER_W))
 
 /*!	Буферы слов [n]a и [n]b не пересекаются? */
-#define wwIsDisjoint(a, b, n) memIsDisjoint(a, b, O_OF_W(n))
+#define wwIsDisjoint(a, b, n)\
+	memIsDisjoint(a, b, O_OF_W(n))
 
 /*!	Буферы слов [n]a и [n]b совпадают или не пересекаются? */
-#define wwIsSameOrDisjoint(a, b, n) memIsSameOrDisjoint(a, b, O_OF_W(n))
+#define wwIsSameOrDisjoint(a, b, n)\
+	memIsSameOrDisjoint(a, b, O_OF_W(n))
 
 /*!	Буферы слов [n]a и [m]b не пересекаются? */
-#define wwIsDisjoint2(a, n, b, m) memIsDisjoint2(a, O_OF_W(n), b, O_OF_W(m))
+#define wwIsDisjoint2(a, n, b, m)\
+	memIsDisjoint2(a, O_OF_W(n), b, O_OF_W(m))
 
 /*!	Буферы слов [n]a, [m]b и [k]c не пересекаются? */
 #define wwIsDisjoint3(a, n, b, m, c, k)\

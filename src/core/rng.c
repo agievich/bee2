@@ -666,7 +666,7 @@ err_t rngESHealth()
 typedef struct 
 {
 	octet block[32];			/*< дополнительные данные brngCTR */
-	octet alg_state[];			/*< [MAX(beltHash_keep(), brngCTR_keep())] */
+	mem_align_t alg_state[];	/*< [MAX(beltHash_keep(), brngCTR_keep())] */
 } rng_state_st;
 
 static size_t _once;			/*< триггер однократности */

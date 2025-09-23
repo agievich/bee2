@@ -32,7 +32,7 @@ typedef struct {
 	u32 h1[8];				/*< копия переменной h */
 	octet block[32];		/*< блок данных */
 	size_t filled;			/*< накоплено октетов в блоке */
-	mem_align_t stack[];	/*< [beltCompr_deep()] стек beltCompr */
+	mem_align_t stack[];	/*< стек beltCompr */
 } belt_hash_st;
 
 size_t beltHash_keep()
