@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): local declarations
 \project bee2 [cryptographic library]
 \created 2014.04.03
-\version 2025.09.23
+\version 2025.09.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -86,8 +86,8 @@ err_t bignParamsCheck2(
 
 /*!	\brief Создание эллиптической кривой
 
-	По долговременным параметрам params создается эллиптическая кривая.Указатель
-	на описание кривой возвращается по адресу pec.
+	По долговременным параметрам params создается эллиптическая кривая.
+	Описание кривой возвращается по адресу *pec.
 	\pre Указатель pec корректен.
 	\pre bignParamsCheck2(params) == ERR_OK.
 	\return ERR_OK, если кривая успешно создана, и код ошибки в противном случае.

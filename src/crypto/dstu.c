@@ -4,7 +4,7 @@
 \brief DSTU 4145-2002 (Ukraine): digital signature algorithms
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.09.05
+\version 2025.09.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -550,7 +550,7 @@ static err_t dstuParamsValEc(const ec_o* ec)
 err_t dstuParamsVal(const dstu_params* params)
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = dstuEcCreate(&ec, params);
 	ERR_CALL_CHECK(code);
 	code = dstuParamsValEc(ec);
@@ -628,7 +628,7 @@ err_t dstuPointGen(octet point[], const dstu_params* params, gen_i rng,
 	void* rng_state)
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = dstuEcCreate(&ec, params);
 	ERR_CALL_CHECK(code);
 	code = dstuPointGenEc(point, ec, rng, rng_state);
@@ -679,7 +679,7 @@ static err_t dstuPointValEc(const ec_o* ec, const octet point[])
 err_t dstuPointVal(const dstu_params* params, const octet point[])
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = dstuEcCreate(&ec, params);
 	ERR_CALL_CHECK(code);
 	code = dstuPointValEc(ec, point);
@@ -737,7 +737,7 @@ err_t dstuPointCompress(octet xpoint[], const dstu_params* params,
 	const octet point[])
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = dstuEcCreate(&ec, params);
 	ERR_CALL_CHECK(code);
 	code = dstuPointCompressEc(xpoint, ec, point);
@@ -828,7 +828,7 @@ err_t dstuPointRecover(octet point[], const dstu_params* params,
 	const octet xpoint[])
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = dstuEcCreate(&ec, params);
 	ERR_CALL_CHECK(code);
 	code = dstuPointRecoverEc(point, ec, xpoint);
@@ -906,7 +906,7 @@ err_t dstuKeypairGen(octet privkey[], octet pubkey[],
 	const dstu_params* params, gen_i rng, void* rng_state)
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = dstuEcCreate(&ec, params);
 	ERR_CALL_CHECK(code);
 	code = dstuKeypairGenEc(privkey, pubkey, ec, rng, rng_state);
@@ -1037,7 +1037,7 @@ err_t dstuSign(octet sig[], const dstu_params* params, size_t ld,
 	gen_i rng, void* rng_state)
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = dstuEcCreate(&ec, params);
 	ERR_CALL_CHECK(code);
 	code = dstuSignEc(sig, ec, ld, hash, hash_len, privkey, rng,
@@ -1159,7 +1159,7 @@ err_t dstuVerify(const dstu_params* params, size_t ld, const octet hash[],
 	size_t hash_len, const octet sig[], const octet pubkey[])
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = dstuEcCreate(&ec, params);
 	ERR_CALL_CHECK(code);
 	code = dstuVerifyEc(ec, ld, hash, hash_len, sig, pubkey);

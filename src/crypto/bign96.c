@@ -4,7 +4,7 @@
 \brief Experimental Bign signatures of security level 96
 \project bee2 [cryptographic library]
 \created 2021.01.20
-\version 2025.09.15
+\version 2025.09.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -146,7 +146,7 @@ static err_t bign96ParamsCheck(const bign_params* params)
 err_t bign96ParamsVal(const bign_params* params)
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = bign96ParamsCheck(params);
 	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
@@ -166,7 +166,7 @@ err_t bign96KeypairGen(octet privkey[24], octet pubkey[48],
 	const bign_params* params, gen_i rng, void* rng_state)
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = bign96ParamsCheck(params);
 	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
@@ -180,7 +180,7 @@ err_t bign96KeypairVal(const bign_params* params, const octet privkey[24],
 	const octet pubkey[48])
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = bign96ParamsCheck(params);
 	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
@@ -193,7 +193,7 @@ err_t bign96KeypairVal(const bign_params* params, const octet privkey[24],
 err_t bign96PubkeyVal(const bign_params* params, const octet pubkey[48])
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = bign96ParamsCheck(params);
 	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
@@ -207,7 +207,7 @@ err_t bign96PubkeyCalc(octet pubkey[48], const bign_params* params,
 	const octet privkey[24])
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = bign96ParamsCheck(params);
 	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
@@ -234,7 +234,7 @@ err_t bign96SignEc(octet sig[34], const ec_o* ec, const octet oid_der[],
 	word* R;				/* [2n] точка R */
 	word* s0;				/* [W_OF_O(13)] первая часть подписи */
 	word* s1;				/* [n] вторая часть подписи */
-	octet* stack;
+	void* stack;
 	// pre
 	ASSERT(ecIsOperable(ec));
 	// размерности
@@ -311,7 +311,7 @@ err_t bign96Sign(octet sig[34], const bign_params* params,
 	const octet privkey[24], gen_i rng,	void* rng_state)
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = bign96ParamsCheck(params);
 	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
@@ -340,7 +340,7 @@ err_t bign96Sign2Ec(octet sig[34], const ec_o* ec, const octet oid_der[],
 	word* s0;				/* [W_OF_O(13)] первая часть подписи */
 	word* s1;				/* [n] вторая часть подписи */
 	octet* hash_state;		/* [beltHash_keep()] состояние хэширования */
-	octet* stack;
+	void* stack;
 	u32 round = 1;
 	// pre
 	ASSERT(ecIsOperable(ec));
@@ -437,7 +437,7 @@ err_t bign96Sign2(octet sig[34], const bign_params* params,
 	const octet privkey[24], const void* t, size_t t_len)
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = bign96ParamsCheck(params);
 	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
@@ -464,7 +464,7 @@ err_t bign96VerifyEc(const ec_o* ec, const octet oid_der[], size_t oid_len,
 	word* H;			/* [n] хэш-значение */
 	word* s0;			/* [W_OF_O(13)] первая часть подписи */
 	word* s1;			/* [n] вторая часть подписи */
-	octet* stack;
+	void* stack;
 	// pre
 	ASSERT(ecIsOperable(ec));
 	// размерности
@@ -539,7 +539,7 @@ err_t bign96Verify(const bign_params* params, const octet oid_der[],
 	const octet pubkey[48])
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = bign96ParamsCheck(params);
 	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);

@@ -41,7 +41,7 @@ err_t bignSignEc(octet sig[], const ec_o* ec, const octet oid_der[],
 	word* R;				/* [2n] точка R */
 	word* s0;				/* [n/2] первая часть подписи */
 	word* s1;				/* [n] вторая часть подписи */
-	octet* stack;
+	void* stack;
 	// pre
 	ASSERT(ecIsOperable(ec));
 	// размерности
@@ -120,7 +120,7 @@ err_t bignSign(octet sig[], const bign_params* params, const octet oid_der[],
 	void* rng_state)
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = bignParamsCheck(params);
 	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
@@ -149,7 +149,7 @@ err_t bignSign2Ec(octet sig[], const ec_o* ec, const octet oid_der[],
 	word* s0;				/* [n/2] первая часть подписи */
 	word* s1;				/* [n] вторая часть подписи */
 	octet* hash_state;		/* [beltHash_keep] состояние хэширования */
-	octet* stack;
+	void* stack;
 	// pre
 	ASSERT(ecIsOperable(ec));
 	// размерности
@@ -249,7 +249,7 @@ err_t bignSign2(octet sig[], const bign_params* params, const octet oid_der[],
 	size_t t_len)
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = bignParamsCheck(params);
 	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
@@ -276,7 +276,7 @@ err_t bignVerifyEc(const ec_o* ec, const octet oid_der[], size_t oid_len,
 	word* H;			/* [n] хэш-значение */
 	word* s0;			/* [n / 2 + 1] первая часть подписи */
 	word* s1;			/* [n] вторая часть подписи */
-	octet* stack;
+	void* stack;
 	// pre
 	ASSERT(ecIsOperable(ec));
 	// размерности
@@ -350,7 +350,7 @@ err_t bignVerify(const bign_params* params, const octet oid_der[],
 	size_t oid_len, const octet hash[], const octet sig[], const octet pubkey[])
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = bignParamsCheck(params);
 	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);

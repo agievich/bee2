@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): local functions
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.09.23
+\version 2025.09.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -25,29 +25,31 @@ void beltBlockAddBitSizeU32(u32 block[4], size_t count)
 {
 	// block <- block + 8 * count
 	register u32 carry = (u32)count << 3;
+	ASSERT(memIsAligned(block, 4));
 #if (B_PER_S < 32)
 	carry = (block[0] += carry) < carry;
 	carry = (block[1] += carry) < carry;
 	carry = (block[2] += carry) < carry;
 	block[3] += carry;
 #else
-	register size_t t = count >> 29;
-	carry = (block[0] += carry) < carry;
-	if ((block[1] += carry) < carry)
-		block[1] = (u32)t;
-	else
-		carry = (block[1] += (u32)t) < (u32)t;
-	t >>= 16, t >>= 16;
-	if ((block[2] += carry) < carry)
-		block[2] = (u32)t;
-	else
-		carry = (block[2] += (u32)t) < (u32)t;
-	t >>= 16, t >>= 16;
-	block[3] += carry;
-	block[3] += (u32)t;
-	CLEAN(t);
+	{
+		register size_t t = count >> 29;
+		carry = (block[0] += carry) < carry;
+		if ((block[1] += carry) < carry)
+			block[1] = (u32)t;
+		else
+			carry = (block[1] += (u32)t) < (u32)t;
+		t >>= 16, t >>= 16;
+		if ((block[2] += carry) < carry)
+			block[2] = (u32)t;
+		else
+			carry = (block[2] += (u32)t) < (u32)t;
+		t >>= 16, t >>= 16;
+		block[3] += carry;
+		block[3] += (u32)t;
+		CLEAN(t);
+	}
 #endif
-	ASSERT(memIsAligned(block, 4));
 	CLEAN(carry);
 }
 
@@ -55,34 +57,39 @@ void beltHalfBlockAddBitSizeW(word block[W_OF_B(64)], size_t count)
 {
 	// block <- block + 8 * count
 	register word carry = (word)count << 3;
+	ASSERT(memIsAligned(block, O_PER_W));
 #if (B_PER_W == 16)
-	register size_t t = count >> 13;
-	carry = (block[0] += carry) < carry;
-	if ((block[1] += carry) < carry)
-		block[1] = (word)t;
-	else
-		carry = (block[1] += (word)t) < (word)t;
-	t >>= 8, t >>= 8;
-	if ((block[2] += carry) < carry)
-		block[2] = (word)t;
-	else
-		carry = (block[2] += (word)t) < (word)t;
-	t >>= 8, t >>= 8;
-	block[3] += carry;
-	block[3] += (word)t;
+	{
+		register size_t t = count >> 13;
+		carry = (block[0] += carry) < carry;
+		if ((block[1] += carry) < carry)
+			block[1] = (word)t;
+		else
+			carry = (block[1] += (word)t) < (word)t;
+		t >>= 8, t >>= 8;
+		if ((block[2] += carry) < carry)
+			block[2] = (word)t;
+		else
+			carry = (block[2] += (word)t) < (word)t;
+		t >>= 8, t >>= 8;
+		block[3] += carry;
+		block[3] += (word)t;
+		CLEAN(t);
+	}
 #elif (B_PER_W == 32)
-	register size_t t = count;
-	carry = (block[0] += carry) < carry;
-	t >>= 15, t >>= 14;
-	block[1] += carry;
-	block[1] += (u32)t;
-	CLEAN(t);
+	{
+		register size_t t = count;
+		carry = (block[0] += carry) < carry;
+		t >>= 15, t >>= 14;
+		block[1] += carry;
+		block[1] += (u32)t;
+		CLEAN(t);
+	}
 #elif (B_PER_W == 64)
 	block[0] += carry;
 #else
 	#error "Unsupported word size"
 #endif // B_PER_W
-	ASSERT(memIsAligned(block, O_PER_W));
 	CLEAN(carry);
 }
 
@@ -129,11 +136,12 @@ size_t beltPolyMul_deep()
 
 void beltBlockMulC(u32 block[4])
 {
-	register u32 t = ~((block[3] >> 31) - U32_1) & 0x00000087;
+	register u32 t;
+	ASSERT(memIsAligned(block, 4));
+	t = ~((block[3] >> 31) - U32_1) & 0x00000087;
 	block[3] = (block[3] << 1) ^ (block[2] >> 31);
 	block[2] = (block[2] << 1) ^ (block[1] >> 31);
 	block[1] = (block[1] << 1) ^ (block[0] >> 31);
 	block[0] = (block[0] << 1) ^ t;
-	ASSERT(memIsAligned(block, 4));
 	CLEAN(t);
 }

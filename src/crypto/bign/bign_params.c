@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): public parameters
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.09.10
+\version 2025.09.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -389,7 +389,7 @@ err_t bignParamsValEc(const ec_o* ec, const bign_params* params)
 err_t bignParamsVal(const bign_params* params)
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = bignParamsCheck(params);
 	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);

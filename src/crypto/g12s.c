@@ -4,7 +4,7 @@
 \brief GOST R 34.10-94 (Russia): digital signature algorithms
 \project bee2 [cryptographic library]
 \created 2012.07.09
-\version 2025.09.05
+\version 2025.09.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -720,7 +720,7 @@ static err_t g12sParamsValEc(const ec_o* ec)
 err_t g12sParamsVal(const g12s_params* params)
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = g12sEcCreate(&ec, params);
 	ERR_CALL_CHECK(code);
 	code = g12sParamsValEc(ec);
@@ -787,7 +787,7 @@ err_t g12sKeypairGen(octet privkey[], octet pubkey[],
 	const g12s_params* params, gen_i rng, void* rng_state)
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = g12sEcCreate(&ec, params);
 	ERR_CALL_CHECK(code);
 	code = g12sKeypairGenEc(privkey, pubkey, ec, rng, rng_state);
@@ -895,7 +895,7 @@ err_t g12sSign(octet sig[], const g12s_params* params, const octet hash[],
 	const octet privkey[], gen_i rng, void* rng_state)
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = g12sEcCreate(&ec, params);
 	ERR_CALL_CHECK(code);
 	code = g12sSignEc(sig, ec, hash, privkey, rng, rng_state);
@@ -993,7 +993,7 @@ err_t g12sVerify(const g12s_params* params, const octet hash[],
 	const octet sig[], const octet pubkey[])
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = g12sEcCreate(&ec, params);
 	ERR_CALL_CHECK(code);
 	code = g12sVerifyEc(ec, hash, sig, pubkey);

@@ -569,10 +569,6 @@
 				Name="crypto"
 				>
 				<File
-					RelativePath="..\..\src\crypto\bake.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\src\crypto\bels.c"
 					>
 				</File>
@@ -753,6 +749,26 @@
 					</File>
 					<File
 						RelativePath="..\..\src\crypto\bign\bign_sign.c"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="bake"
+					>
+					<File
+						RelativePath="..\..\src\crypto\bake\bake_bmqv.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\bake\bake_bpace.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\bake\bake_bsts.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\bake\bake_kdf.c"
 						>
 					</File>
 				</Filter>

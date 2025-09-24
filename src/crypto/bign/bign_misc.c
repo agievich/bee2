@@ -106,7 +106,7 @@ err_t bignKeypairGen(octet privkey[], octet pubkey[],
 	const bign_params* params, gen_i rng, void* rng_state)
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = bignParamsCheck(params);
 	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
@@ -176,7 +176,7 @@ err_t bignKeypairVal(const bign_params* params, const octet privkey[],
 	const octet pubkey[])
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = bignParamsCheck(params);
 	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
@@ -230,7 +230,7 @@ err_t bignPubkeyValEc(const ec_o* ec, const octet pubkey[])
 err_t bignPubkeyVal(const bign_params* params, const octet pubkey[])
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = bignParamsCheck(params);
 	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
@@ -294,7 +294,7 @@ err_t bignPubkeyCalc(octet pubkey[], const bign_params* params,
 	const octet privkey[])
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = bignParamsCheck(params);
 	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
@@ -379,7 +379,7 @@ err_t bignDH(octet key[], const bign_params* params, const octet privkey[],
 	const octet pubkey[], size_t key_len)
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = bignParamsCheck(params);
 	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);

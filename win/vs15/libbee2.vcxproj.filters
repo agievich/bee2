@@ -49,6 +49,9 @@
     <Filter Include="Source Files\math\pp">
       <UniqueIdentifier>{669eff52-7fc5-4c8a-94df-a1881f5218d5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\crypto\bake">
+      <UniqueIdentifier>{0b5a3a20-08c0-4130-8991-a0a96f8c4c7f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\math\ecp.c">
@@ -107,9 +110,6 @@
     </ClCompile>
     <ClCompile Include="..\..\src\core\obj.c">
       <Filter>Source Files\core</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\crypto\bake.c">
-      <Filter>Source Files\crypto</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\crypto\pfok.c">
       <Filter>Source Files\crypto</Filter>
@@ -305,6 +305,18 @@
     </ClCompile>
     <ClCompile Include="..\..\src\crypto\bign\bign_ec.c">
       <Filter>Source Files\crypto\bign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\bake\bake_bmqv.c">
+      <Filter>Source Files\crypto\bake</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\bake\bake_bpace.c">
+      <Filter>Source Files\crypto\bake</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\bake\bake_bsts.c">
+      <Filter>Source Files\crypto\bake</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\bake\bake_kdf.c">
+      <Filter>Source Files\crypto\bake</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

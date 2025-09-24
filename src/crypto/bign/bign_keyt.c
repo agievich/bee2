@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): key transport
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.09.15
+\version 2025.09.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -39,7 +39,7 @@ err_t bignKeyWrapEc(octet token[], const ec_o* ec, const octet key[],
 	word* k;				/* [n] одноразовый личный ключ */
 	word* R;				/* [2n] точка R */
 	octet* theta;			/* [32] ключ защиты */
-	octet* stack;
+	void* stack;
 	// pre
 	ASSERT(ecIsOperable(ec));
 	// размерности
@@ -113,7 +113,7 @@ err_t bignKeyWrap(octet token[], const bign_params* params, const octet key[],
 	void* rng_state)
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = bignParamsCheck(params);
 	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
@@ -228,7 +228,7 @@ err_t bignKeyUnwrap(octet key[], const bign_params* params, const octet token[],
 	size_t len, const octet header[16], const octet privkey[])
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = bignParamsCheck(params);
 	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);

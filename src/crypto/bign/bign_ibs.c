@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): identity-based signature
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.09.05
+\version 2025.09.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -39,7 +39,7 @@ err_t bignIdExtractEc(octet id_privkey[], octet id_pubkey[],
 	word* H;			/* [n] хэш-значение */
 	word* s0;			/* [n / 2 + 1] первая часть подписи */
 	word* s1;			/* [n] вторая часть подписи */
-	octet* stack;
+	void* stack;
 	// pre
 	ASSERT(ecIsOperable(ec));
 	// размерности
@@ -122,7 +122,7 @@ err_t bignIdExtract(octet id_privkey[], octet id_pubkey[],
 	const octet id_hash[], const octet sig[], octet pubkey[])
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = bignParamsCheck(params);
 	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
@@ -150,7 +150,7 @@ err_t bignIdSignEc(octet id_sig[], const ec_o* ec, const octet oid_der[],
 	word* V;				/* [2n] точка V */
 	word* s0;				/* [n/2] первая часть подписи */
 	word* s1;				/* [n] вторая часть подписи */
-	octet* stack;
+	void* stack;
 	// pre
 	ASSERT(ecIsOperable(ec));
 	// размерности
@@ -229,7 +229,7 @@ err_t bignIdSign(octet id_sig[], const bign_params* params,
 	const octet hash[], const octet id_privkey[], gen_i rng, void* rng_state)
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = bignParamsCheck(params);
 	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
@@ -258,7 +258,7 @@ err_t bignIdSign2Ec(octet id_sig[], const ec_o* ec, const octet oid_der[],
 	word* s0;				/* [n/2] первая часть подписи */
 	word* s1;				/* [n] вторая часть подписи */
 	octet* hash_state;		/* [beltHash_keep] состояние хэширования */
-	octet* stack;
+	void* stack;
 	// pre
 	ASSERT(ecIsOperable(ec));
 	// размерности
@@ -357,7 +357,7 @@ err_t bignIdSign2(octet id_sig[], const bign_params* params,
 	const octet hash[], const octet id_privkey[], const void* t, size_t t_len)
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = bignParamsCheck(params);
 	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
@@ -389,7 +389,7 @@ err_t bignIdVerifyEc(const ec_o* ec, const octet oid_der[], size_t oid_len,
 	word* t;			/* [n / 2] переменная t */
 	word* t1;			/* [n + 1] произведение (s0 + 2^l)(t + 2^l) */
 	octet* hash_state;	/* [beltHash_keep] состояние хэширования */
-	octet* stack;
+	void* stack;
 	// pre
 	ASSERT(ecIsOperable(ec));
 	// размерности
@@ -495,7 +495,7 @@ err_t bignIdVerify(const bign_params* params, const octet oid_der[],
 	const octet id_sig[], const octet id_pubkey[], const octet pubkey[])
 {
 	err_t code;
-	ec_o* ec = 0;
+	ec_o* ec;
 	code = bignParamsCheck(params);
 	ERR_CALL_CHECK(code);
 	code = bignEcCreate(&ec, params);
