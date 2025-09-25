@@ -4,7 +4,7 @@
 \brief STB 34.101.66 (bake): the BMQV protocol
 \project bee2 [cryptographic library]
 \created 2014.04.14
-\version 2025.09.24
+\version 2025.09.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -17,11 +17,13 @@
 #include "bee2/core/util.h"
 #include "bee2/crypto/bake.h"
 #include "bee2/crypto/belt.h"
+#include "bee2/crypto/bign.h"
 #include "bee2/math/qr.h"
 #include "bee2/math/ecp.h"
 #include "bee2/math/ww.h"
 #include "bee2/math/zz.h"
 #include "../bign/bign_lcl.h"
+#include "bake_lcl.h"
 
 /*
 *******************************************************************************
@@ -65,7 +67,7 @@ size_t bakeBMQV_keep(size_t l)
 	const size_t no = O_OF_B(2 * l);
 	return sizeof(bake_bmqv_st) +
 		memSliceSize(
-			bignStart_keep(l, bakeBMQV_deep),
+			bakeEcStart_keep(l, bakeBMQV_deep),
 			bakeBMQV_state(n, no),
 			SIZE_MAX);
 }
@@ -96,7 +98,7 @@ err_t bakeBMQVStart(void* state, const bign_params* params,
 	if (settings->rng == 0)
 		return ERR_BAD_RNG;
 	// развернуть кривую
-	code = bignStart(s->data, params);
+	code = bakeEcStart(s->data, params);
 	ERR_CALL_CHECK(code);
 	memSlice(s->data,
 		objKeep(s->data), SIZE_0, SIZE_MAX,

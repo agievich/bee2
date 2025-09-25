@@ -315,7 +315,7 @@
     <ClCompile Include="..\..\src\crypto\bake\bake_bsts.c">
       <Filter>Source Files\crypto\bake</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\crypto\bake\bake_kdf.c">
+    <ClCompile Include="..\..\src\crypto\bake\bake_misc.c">
       <Filter>Source Files\crypto\bake</Filter>
     </ClCompile>
   </ItemGroup>

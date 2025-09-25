@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): BAUTH protocol
 \project bee2 [cryptographic library]
 \created 2022.02.22
-\version 2025.09.03
+\version 2025.09.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -21,6 +21,7 @@
 #include "bee2/math/ecp.h"
 #include "bee2/math/ww.h"
 #include "bee2/math/zz.h"
+#include "crypto/bake/bake_lcl.h"
 #include "crypto/bign/bign_lcl.h"
 
 /*
@@ -90,7 +91,7 @@ size_t btokBAuthT_keep(size_t l)
 	const size_t n = W_OF_B(2 * l);
 	const size_t no = O_OF_B(2 * l);
 	return sizeof(bake_bauth_t_o) +
-		bignStart_keep(l, btokBAuthT_deep) +
+		bakeEcStart_keep(l, btokBAuthT_deep) +
 		3 * O_OF_W(n) + no / 2;
 }
 
@@ -119,7 +120,7 @@ size_t btokBAuthCT_keep(size_t l)
 	const size_t n = W_OF_B(2 * l);
 	const size_t no = O_OF_B(2 * l);
 	return sizeof(bake_bauth_ct_o) +
-		bignStart_keep(l, btokBAuthCT_deep) +
+		bakeEcStart_keep(l, btokBAuthCT_deep) +
 		2 * O_OF_W(n) + no + no / 2;
 }
 
@@ -156,7 +157,7 @@ err_t btokBAuthTStart(void* state, const bign_params* params,
 		cert->val == 0)
 		return ERR_BAD_INPUT;
 	// загрузить параметры
-	code = bignStart(s->data, params);
+	code = bakeEcStart(s->data, params);
 	ERR_CALL_CHECK(code);
 	s->ec = (ec_o*)s->data;
 	n = s->ec->f->n, no = s->ec->f->no;
@@ -227,7 +228,7 @@ err_t btokBAuthCTStart(void* state, const bign_params* params,
 		cert->val == 0)
 		return ERR_BAD_INPUT;
 	// загрузить параметры
-	code = bignStart(s->data, params);
+	code = bakeEcStart(s->data, params);
 	ERR_CALL_CHECK(code);
 	s->ec = (ec_o*)s->data;
 	n = s->ec->f->n, no = s->ec->f->no;

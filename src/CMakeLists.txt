@@ -24,7 +24,7 @@ set(src
   crypto/bake/bake_bmqv.c
   crypto/bake/bake_bsts.c
   crypto/bake/bake_bpace.c
-  crypto/bake/bake_kdf.c
+  crypto/bake/bake_misc.c
   crypto/bash/bash_f.c
   crypto/bash/bash_hash.c
   crypto/bash/bash_prg.c

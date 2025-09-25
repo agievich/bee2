@@ -768,7 +768,7 @@
 						>
 					</File>
 					<File
-						RelativePath="..\..\src\crypto\bake\bake_kdf.c"
+						RelativePath="..\..\src\crypto\bake\bake_misc.c"
 						>
 					</File>
 				</Filter>

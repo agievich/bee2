@@ -376,7 +376,7 @@
     <ClCompile Include="..\..\src\crypto\bake\bake_bmqv.c" />
     <ClCompile Include="..\..\src\crypto\bake\bake_bpace.c" />
     <ClCompile Include="..\..\src\crypto\bake\bake_bsts.c" />
-    <ClCompile Include="..\..\src\crypto\bake\bake_kdf.c" />
+    <ClCompile Include="..\..\src\crypto\bake\bake_misc.c" />
     <ClCompile Include="..\..\src\crypto\bash\bash_prg.c" />
     <ClCompile Include="..\..\src\crypto\bash\bash_f.c" />
     <ClCompile Include="..\..\src\crypto\bash\bash_hash.c" />

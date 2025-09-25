@@ -4,7 +4,7 @@
 \brief STB 34.101.66 (bake): the BSTS protocol
 \project bee2 [cryptographic library]
 \created 2014.04.14
-\version 2025.09.24
+\version 2025.09.25
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -21,7 +21,7 @@
 #include "bee2/math/ecp.h"
 #include "bee2/math/ww.h"
 #include "bee2/math/zz.h"
-#include "../bign/bign_lcl.h"
+#include "bake_lcl.h"
 
 /*
 *******************************************************************************
@@ -47,7 +47,7 @@ typedef struct
 	octet K0[32];				/*< ключ K0 */
 	octet K1[32];				/*< ключ K1 */
 	octet K2[32];				/*< ключ K2 */
-	octet data[];				/*< данные */
+	mem_align_t data[];			/*< данные */
 } bake_bsts_o;
 
 static size_t bakeBSTS_deep(size_t n, size_t f_deep, size_t ec_d, size_t ec_deep);
@@ -56,7 +56,7 @@ size_t bakeBSTS_keep(size_t l)
 {
 	const size_t n = W_OF_B(2 * l);
 	return sizeof(bake_bsts_o) +
-		bignStart_keep(l, bakeBSTS_deep) +
+		bakeEcStart_keep(l, bakeBSTS_deep) +
 		O_OF_W(4 * n);
 }
 
@@ -87,7 +87,7 @@ err_t bakeBSTSStart(void* state, const bign_params* params,
 		cert->val == 0)
 		return ERR_BAD_INPUT;
 	// загрузить параметры
-	code = bignStart(s->data, params);
+	code = bakeEcStart(s->data, params);
 	ERR_CALL_CHECK(code);
 	s->ec = (ec_o*)s->data;
 	n = s->ec->f->n, no = s->ec->f->no;
