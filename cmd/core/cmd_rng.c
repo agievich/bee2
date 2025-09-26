@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: random number generation
 \project bee2/cmd 
 \created 2022.06.08
-\version 2025.09.22
+\version 2025.09.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -163,9 +163,9 @@ err_t cmdRngStart(bool_t verbose)
 	{
 		void* state;
 		tm_ticks_t* data;			/* [128] */
-		octet* hash;				/* [32] */
+		octet* hash;				/* [32] (|data) */
 		void* hash_state;			/* [beltHash_keep()] */
-		void* prng_state;			/* [prngEcho_keep()] */
+		void* prng_state;			/* [prngEcho_keep()] (|hash_state) */
 		// выделить и разметить память
 		code = cmdBlobCreate2(state, 
 			128 * sizeof(tm_ticks_t),

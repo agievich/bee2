@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.66 (bake)
 \project bee2/test
 \created 2014.04.23
-\version 2025.04.25
+\version 2025.09.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -427,7 +427,7 @@ bool_t bakeTest()
 			"DAC4D8F411F9C523D28BBAAB32A5270E"
 			"4DFA1F0F757EF8E0F30AF08FBDE1E7F4"))
 		return FALSE;
-	// тест Б.4: сеанс протокола
+	// тест Б.4: сообщения
 	if (!bakeTestMsgVal(4, _bpace_m1, _bpace_m2, _bpace_m3, _bpace_m4))
 		return FALSE;
 	// тест bakeKDF (по данным из теста Б.4)

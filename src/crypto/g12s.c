@@ -740,7 +740,7 @@ static err_t g12sKeypairGenEc(octet privkey[], octet pubkey[],
 	size_t m, mo;
 	void* state;
 	word* d;			/* [m] личный ключ */
-	word* Q;			/* [2n] открытый ключ */	
+	word* Q;			/* [2 * n] открытый ключ */	
 	void* stack;
 	// pre
 	ASSERT(ecIsOperable(ec));
@@ -809,7 +809,7 @@ static err_t g12sSignEc(octet sig[], const ec_o* ec, const octet hash[],
 	word* d;		/* [m] личный ключ */
 	word* e;		/* [m] обработанное хэш-значение */
 	word* k;		/* [m] одноразовый ключ */
-	word* C;		/* [2n] вспомогательная точка */
+	word* C;		/* [2 * n] вспомогательная точка */
 	word* r;		/* [m] первая (старшая) часть подписи */
 	word* s;		/* [m] вторая часть подписи */
 	void* stack;
@@ -915,7 +915,7 @@ static err_t g12sVerifyEc(const ec_o* ec, const octet hash[],
 	err_t code;
 	size_t m, mo;
 	void* state;
-	word* Q;		/* [2n] открытый ключ / точка R */
+	word* Q;		/* [2 * n] открытый ключ / точка R */
 	word* r;		/* [m] первая (старшая) часть подписи */
 	word* s;		/* [m] вторая часть подписи */
 	word* e;		/* [m] обработанное хэш-значение, v */

@@ -4,7 +4,7 @@
 \brief DSTU 4145-2002 (Ukraine): digital signature algorithms
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.09.24
+\version 2025.09.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -394,7 +394,7 @@ err_t dstuParamsStd(dstu_params* params, const char* name)
 Создание эллиптической кривой
 
 По долговременным параметрам params создается эллиптическая кривая. Указатель
-на описание кривой возвращается по адресу pec.
+на описание кривой возвращается |pec.
 
 \pre Указатель pec корректен.
 \return ERR_OK, если кривая успешно создана, и код ошибки в противном случае.
@@ -418,7 +418,7 @@ static err_t dstuEcCreate(
 	// второе состояние
 	void* state1;
 	size_t* p;			/* [4] многочлен */
-	octet* A;			/* [no] коэффициент A */
+	octet* A;			/* [no] коэффициент A (|p) */
 	void* stack;
 	// входной контроль
 	if (!memIsValid(params, sizeof(dstu_params)) ||
@@ -569,7 +569,7 @@ static err_t dstuPointGenEc(octet point[], const ec_o* ec,
 {
 	size_t m;
 	void* state;
-	word* R;			/* [2n] */
+	word* R;			/* [2 * n] */
 	word* x;			/*   [n] */
 	word* y;			/*   [n] */
 	word* t;			/* [n] */
@@ -640,7 +640,7 @@ static err_t dstuPointValEc(const ec_o* ec, const octet point[])
 {
 	size_t m;
 	void* state;
-	word* R;			/* [2n] */
+	word* R;			/* [2 * n] */
 	word* x;			/*   [n] */
 	word* y;			/*   [n] */
 	void* stack;
@@ -848,7 +848,7 @@ static err_t dstuKeypairGenEc(octet privkey[], octet pubkey[], const ec_o* ec,
 	size_t m, mo, mb;
 	void* state;
 	word* d;		/* [m] */
-	word* Q;		/* [2n] */
+	word* Q;		/* [2 * n] */
 	void* stack;
 	// pre
 	ASSERT(ecIsOperable(ec));
@@ -928,7 +928,7 @@ static err_t dstuSignEc(octet sig[], const ec_o* ec, size_t ld,
 	void* state;
 	word* e;		/* [m] эфемерный лк */
 	word* h;		/* [n] хэш-значение как элемент поля */
-	word* R;		/* [2n] эфемерный ок */
+	word* R;		/* [2 * n] эфемерный ок */
 	word* x;		/*   [n] x-координата R */
 	word* y;		/*   [n] y-координата R */
 	word* r;		/* [m] первая часть ЭЦП */
@@ -1059,7 +1059,7 @@ static err_t dstuVerifyEc(const ec_o* ec, size_t ld, const octet hash[],
 	size_t m, mo, mb, i;
 	void* state;
 	word* h;		/* [n] хэш-значение как элемент поля */
-	word* R;		/* [2n] долговременный / эфемерный ок */
+	word* R;		/* [2 * n] долговременный / эфемерный ок */
 	word* x;		/*   [n] x-координата R */
 	word* y;		/*   [n] y-координата R */
 	word* r;		/* [m] первая часть ЭЦП */

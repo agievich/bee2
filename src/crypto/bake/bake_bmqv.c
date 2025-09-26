@@ -4,7 +4,7 @@
 \brief STB 34.101.66 (bake): the BMQV protocol
 \project bee2 [cryptographic library]
 \created 2014.04.14
-\version 2025.09.25
+\version 2025.09.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -54,7 +54,8 @@ typedef struct
 	mem_align_t data[];			/*< данные */
 } bake_bmqv_st;
 
-static size_t bakeBMQV_deep(size_t n, size_t f_deep, size_t ec_d, size_t ec_deep);
+static size_t bakeBMQV_deep(size_t n, size_t f_deep, size_t ec_d, 
+	size_t ec_deep);
 
 #define bakeBMQV_state(n, no)\
 /* d */			O_OF_W(n),\
@@ -82,7 +83,7 @@ err_t bakeBMQVStart(void* state, const bign_params* params,
 	err_t code;
 	bake_bmqv_st* s = (bake_bmqv_st*)state;
 	size_t n, no;
-	word* Q;				/* [2n] */
+	word* Q;				/* [2 * n] */
 	void* stack;
 	// входной контроль
 	code = bignParamsCheck(params);
@@ -108,7 +109,7 @@ err_t bakeBMQVStart(void* state, const bign_params* params,
 	memSlice(stack,
 		bakeBMQV_state(n, no), SIZE_0,
 		bakeBMQVStart_local(n), SIZE_0, SIZE_MAX,
-		&s->d, &s->u, &s->Vb, &s->stack,
+		&s->d, &s->u, &s->Vb, &s->stack, 
 		&Q, &stack);
 	// сохранить параметры
 	memCopy(s->params, params, sizeof(bign_params));
@@ -146,7 +147,7 @@ err_t bakeBMQVStep2(octet out[], void* state)
 {
 	bake_bmqv_st* s = (bake_bmqv_st*)state;
 	size_t n, no;
-	word* Vb;			/* [2n] */
+	word* Vb;			/* [2 * n] */
 	void* stack;
 	// обработать входные данные
 	if (!memIsValid(s, sizeof(bake_bmqv_st)) || !ecIsOperable(s->ec))
@@ -201,14 +202,14 @@ err_t bakeBMQVStep3(octet out[], const octet in[], const bake_cert* certb,
 	err_t code;
 	bake_bmqv_st* s = (bake_bmqv_st*)state;
 	size_t n, no;
-	word* Qb;				/* [2n] */
-	word* Va;				/* [2n] */
-	word* Vb;				/* [2n] */
+	word* Qb;				/* [2 * n] */
+	word* Va;				/* [2 * n] */
+	word* Vb;				/* [2 * n] */
 	word* t;				/* [n / 2 + 1] */
 	word* sa;				/* [n + n / 2 + 1] */
-	octet* K;				/* [no] */
-	octet* block0;			/* [16] */
-	octet* block1;			/* [16] */
+	octet* K;				/* [no] (|Qb) */
+	octet* block0;			/* [16] (|t) */
+	octet* block1;			/* [16] (|sa) */
 	void* stack;
 	// проверить входные данные
 	if (!memIsValid(s, sizeof(bake_bmqv_st)) || !ecIsOperable(s->ec))
@@ -340,9 +341,9 @@ err_t bakeBMQVStep4(octet out[], const octet in[], const bake_cert* certa,
 	word* Va;				/* [2 * n] */
 	word* t;				/* [n / 2 + 1] */
 	word* sb;				/* [n + n / 2 + 1] */
-	octet* K;				/* [no] */
-	octet* block0;			/* [16] */
-	octet* block1;			/* [16] */
+	octet* K;				/* [no] (|Qa) */
+	octet* block0;			/* [16] (|t) */
+	octet* block1;			/* [16] (|sb) */
 	void* stack;
 	// проверить входные данные
 	if (!memIsValid(s, sizeof(bake_bmqv_st)) || !ecIsOperable(s->ec))

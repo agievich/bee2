@@ -4,7 +4,7 @@
 \brief STB 34.101.60 (bels): secret sharing algorithms
 \project bee2 [cryptographic library]
 \created 2013.05.14
-\version 2025.09.15
+\version 2025.09.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -158,7 +158,7 @@ err_t belsGenMi(octet mi[], size_t len, const octet m0[], gen_i ang,
 	void* state;
 	word* f0;			/* [n + 1] */
 	word* u;			/* [n + 1] */
-	word* f;			/* [n + 1] */
+	word* f;			/* [n + 1] (|u) */
 	void* stack;
 	// проверить генератор
 	if (ang == 0)
@@ -176,7 +176,7 @@ err_t belsGenMi(octet mi[], size_t len, const octet m0[], gen_i ang,
 		O_OF_W(n + 1) | SIZE_HI,
 		ppMinPolyMod_deep(n + 1),
 		SIZE_MAX,
-		&f0, &f, &u, &stack);
+		&f0, &u, &f, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// загрузить многочлен

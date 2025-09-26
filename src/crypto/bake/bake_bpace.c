@@ -4,7 +4,7 @@
 \brief STB 34.101.66 (bake): the BPACE protocol
 \project bee2 [cryptographic library]
 \created 2014.04.14
-\version 2025.09.25
+\version 2025.09.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -37,7 +37,7 @@
 static void bakeSWUEc(word W[], const ec_o* ec, const octet X[], void* stack)
 {
 	octet* H;	/* [no + 16] */
-	word* s;	/* [n + W_OF_O(16)] */
+	word* s;	/* [n + W_OF_O(16)] (|H) */
 	// pre
 	ASSERT(ecIsOperable(ec));
 	ASSERT(memIsValid(X, ec->f->no));
@@ -75,7 +75,7 @@ err_t bakeSWU(octet pt[], const bign_params* params, const octet msg[])
 	err_t code;
 	ec_o* ec;
 	void* state;
-	word* W;			/* [2n] */
+	word* W;			/* [2 * n] */
 	void* stack;
 	// входной контроль
 	code = bignParamsCheck(params);
@@ -115,91 +115,93 @@ err_t bakeSWU(octet pt[], const bign_params* params, const octet msg[])
 
 typedef struct
 {
-	obj_hdr_t hdr;				/*< заголовок */
-// ptr_table {
-	ec_o* ec;					/*< описание эллиптической кривой */
-	octet* R;					/*< [ec->f->no](Ra || Rb или ecX(Va)) */
-	word* W;					/*< [2 * ec->f->n] точка W */
-	word* u;					/*< [ec->f->n] ua или ub */
-// }
 	bake_settings settings[1];	/*< настройки */
 	octet K0[32];				/*< ключ K0 */
 	octet K1[32];				/*< ключ K1 */
 	octet K2[32];				/*< ключ K2 */
+	ec_o* ec;					/*< эллиптическая кривая */
+	octet* R;					/*< [no] (Ra || Rb или ecX(Va)) */
+	word* W;					/*< [2 * n] точка W */
+	word* u;					/*< [n] ua или ub */
+	void* stack;				/*< [bakeBPACE_deep] стек */
 	mem_align_t data[];			/*< данные */
-} bake_bpace_o;
+} bake_bpace_st;
 
-static size_t bakeBPACE_deep(size_t n, size_t f_deep, size_t ec_d, size_t ec_deep);
+static size_t bakeBPACE_deep(size_t n, size_t f_deep, size_t ec_d, 
+	size_t ec_deep); 
+
+#define bakeBPACE_state(n, no)\
+/* R */			no,\
+/* W */			O_OF_W(2 * n),\
+/* u */			O_OF_W(n)
 
 size_t bakeBPACE_keep(size_t l)
 {
 	const size_t n = W_OF_B(2 * l);
 	const size_t no = O_OF_B(2 * l);
-	return sizeof(bake_bpace_o) +
-		bakeEcStart_keep(l, bakeBPACE_deep) +
-		no + O_OF_W(3 * n);
+	return sizeof(bake_bpace_st) +
+		memSliceSize(
+			bakeEcStart_keep(l, bakeBPACE_deep),
+			bakeBPACE_state(n, no),
+			SIZE_MAX);
 }
 
 err_t bakeBPACEStart(void* state, const bign_params* params,
 	const bake_settings* settings, const octet pwd[], size_t pwd_len)
 {
 	err_t code;
-	bake_bpace_o* s = (bake_bpace_o*)state;
+	bake_bpace_st* s = (bake_bpace_st*)state;
 	size_t n, no;
-	// проверить входные данные
-	if (!memIsValid(params, sizeof(bign_params)) ||
-		!memIsValid(settings, sizeof(bake_settings)) ||
+	void* stack;
+	// входной контроль
+	code = bignParamsCheck(params);
+	ERR_CALL_CHECK(code);
+	if (!memIsValid(settings, sizeof(bake_settings)) ||
 		!memIsNullOrValid(settings->helloa, settings->helloa_len) ||
 		!memIsNullOrValid(settings->hellob, settings->hellob_len) ||
 		!memIsValid(pwd, pwd_len))
 		return ERR_BAD_INPUT;
-	if (bignParamsCheck(params) != ERR_OK)
-		return ERR_BAD_PARAMS;
 	if (settings->rng == 0)
 		return ERR_BAD_RNG;
-	// загрузить параметры
+	// развернуть кривую
 	code = bakeEcStart(s->data, params);
 	ERR_CALL_CHECK(code);
-	s->ec = (ec_o*)s->data;
+	memSlice(s->data,
+		objKeep(s->data), SIZE_0, SIZE_MAX,
+		&s->ec, &stack);
 	n = s->ec->f->n, no = s->ec->f->no;
+	// разметить состояние
+	memSlice(stack,
+		bakeBPACE_state(n, no), SIZE_0, SIZE_0, SIZE_MAX,
+		&s->R, &s->W, &s->u, &s->stack, &stack);
 	// загрузить настройки
 	memCopy(s->settings, settings, sizeof(bake_settings));
-	// настроить указатели
-	s->R = objEnd(s->ec, octet);
-	s->W = (word*)(s->R + no);
-	s->u = s->W + 2 * n;
-	// настроить заголовок
-	s->hdr.keep = sizeof(bake_bpace_o) + objKeep(s->ec) + no + O_OF_W(3 * n);
-	s->hdr.p_count = 4;
-	s->hdr.o_count = 1;
 	// K2 <- beltHash(pwd)
-	beltHashStart(objEnd(s, void));
-	beltHashStepH(pwd, pwd_len, objEnd(s, void));
-	beltHashStepG(s->K2, objEnd(s, void));
+	beltHashStart(stack);
+	beltHashStepH(pwd, pwd_len, stack);
+	beltHashStepG(s->K2, stack);
 	// завершение
 	return code;
 }
 
-static size_t bakeBPACEStart_deep(size_t n, size_t f_deep, size_t ec_d,
-	size_t ec_deep)
+static size_t bakeBPACEStart_deep()
 {
 	return beltHash_keep();
 }
 
 err_t bakeBPACEStep2(octet out[], void* state)
 {
-	bake_bpace_o* s = (bake_bpace_o*)state;
+	bake_bpace_st* s = (bake_bpace_st*)state;
 	size_t no;
-	// стек
 	void* stack;
 	// обработать входные данные
-	if (!objIsOperable(s))
+	if (!memIsValid(s, sizeof(bake_bpace_st)) || !ecIsOperable(s->ec))
 		return ERR_BAD_INPUT;
 	no = s->ec->f->no;
 	if (!memIsValid(out, no / 2))
 		return ERR_BAD_INPUT;
-	// раскладка стека
-	stack = objEnd(s, void);
+	// разметить стек
+	stack = s->stack;
 	// Rb <-R {0, 1}^l
 	s->settings->rng(out, no / 2, s->settings->rng_state);
 	memCopy(s->R + no / 2, out, no / 2);
@@ -210,30 +212,31 @@ err_t bakeBPACEStep2(octet out[], void* state)
 	return ERR_OK;
 }
 
-static size_t bakeBPACEStep2_deep(size_t n, size_t f_deep, size_t ec_d,
-	size_t ec_deep)
+static size_t bakeBPACEStep2_deep()
 {
 	return beltECB_keep();
 }
 
+#define bakeBPACEStep3_local(n)\
+/* Va */		O_OF_W(2 * n)
+
 err_t bakeBPACEStep3(octet out[], const octet in[], void* state)
 {
-	bake_bpace_o* s = (bake_bpace_o*)state;
+	bake_bpace_st* s = (bake_bpace_st*)state;
 	size_t n, no;
-	// стек
-	word* Va;			/* [2 * n] */
+	word* Va;				/* [2 * n] */
 	void* stack;
-	// проверить входные данные
-	if (!objIsOperable(s))
+	// обработать входные данные
+	if (!memIsValid(s, sizeof(bake_bpace_st)) || !ecIsOperable(s->ec))
 		return ERR_BAD_INPUT;
 	n = s->ec->f->n, no = s->ec->f->no;
 	if (!memIsValid(in, no / 2) ||
 		!memIsValid(out, 5 * no / 2))
 		return ERR_BAD_INPUT;
-	ASSERT(memIsDisjoint2(out, 5 * no / 2, s, objKeep(s)));
-	// раскладка стека
-	Va = objEnd(s, word);
-	stack = Va + 2 * n;
+	// разметить стек
+	memSlice(s->stack,
+		bakeBPACEStep3_local(n), SIZE_0, SIZE_MAX,
+		&Va, &stack);
 	// Rb <- beltECBDecr(Yb, K2)
 	memCopy(s->R + no / 2, in, no / 2);
 	beltECBStart(stack, s->K2, 32);
@@ -265,43 +268,46 @@ err_t bakeBPACEStep3(octet out[], const octet in[], void* state)
 static size_t bakeBPACEStep3_deep(size_t n, size_t f_deep, size_t ec_d,
 	size_t ec_deep)
 {
-	return O_OF_W(2 * n) +
+	return memSliceSize(
+		bakeBPACEStep3_local(n),
 		utilMax(4,
 			beltECB_keep(),
 			bakeSWUEc_deep(n, f_deep),
 			ecMulA_deep(n, ec_d, ec_deep, n),
-			f_deep);
+			f_deep),
+		SIZE_MAX);
 }
+
+#define bakeBPACEStep4_local(n)\
+/* Va */		O_OF_W(2 * n),\
+/* K */			O_OF_W(2 * n) | SIZE_HI,\
+/* Y */			(size_t)32 | SIZE_HI,\
+/* Vb */		O_OF_W(2 * n),\
+/* block0 */	(size_t)16 | SIZE_HI,\
+/* block1 */	(size_t)16
 
 err_t bakeBPACEStep4(octet out[], const octet in[], void* state)
 {
-	bake_bpace_o* s = (bake_bpace_o*)state;
+	bake_bpace_st* s = (bake_bpace_st*)state;
 	size_t n, no;
-	// стек
-	word* Va;		/* [2 * n] */
-	word* K;		/* [2 * n] (совпадает c Va) */
-	octet* Y;		/* [32] (совпадает c K) */
-	word* Vb;		/* [2 * n] (смещен на n относительно Va) */
-	octet* block0;	/* [16] (совпадает с Vb) */
-	octet* block1;	/* [16] (следует за block1) */
+	word* Va;			/* [2 * n] */
+	word* K;			/* [2 * n] (|Va) */
+	octet* Y;			/* [32] (|K) */
+	word* Vb;			/* [2 * n] */
+	octet* block0;		/* [16] (|Vb) */
+	octet* block1;		/* [16] */
 	void* stack;
-	// проверить входные данные
-	if (!objIsOperable(s))
+	// обработать входные данные
+	if (!memIsValid(s, sizeof(bake_bpace_st)) || !ecIsOperable(s->ec))
 		return ERR_BAD_INPUT;
 	n = s->ec->f->n, no = s->ec->f->no;
 	if (!memIsValid(in, 5 * no / 2) ||
 		!memIsValid(out, 2 * no + (s->settings->kcb ? 8u : 0)))
 		return ERR_BAD_INPUT;
-	ASSERT(memIsDisjoint2(out, 2 * no + (s->settings->kcb ? 8u : 0),
-		s, objKeep(s)));
-	// раскладка стека [Y должен умещаться в no октетов]
-	Va = K = objEnd(s, word);
-	Y = (octet*)K;
-	Vb = K + n;
-	block0 = (octet*)Vb;
-	block1 = block0 + 16;
-	stack = Vb + 2 * n;
-	ASSERT(32 <= no);
+	// разметить стек
+	memSlice(s->stack,
+		bakeBPACEStep4_local(n), SIZE_0, SIZE_MAX,
+		&Va, &K, &Y, &Vb, &block0, &block1, &stack);
 	// Va <- ... || in, Va \in E*?
 	if (!qrFrom(ecX(Va), in + no / 2, s->ec->f, stack) ||
 		!qrFrom(ecY(Va, n), in + no / 2 + no, s->ec->f, stack) ||
@@ -364,7 +370,8 @@ err_t bakeBPACEStep4(octet out[], const octet in[], void* state)
 static size_t bakeBPACEStep4_deep(size_t n, size_t f_deep, size_t ec_d,
 	size_t ec_deep)
 {
-	return O_OF_W(3 * n) +
+	return memSliceSize(
+		bakeBPACEStep4_local(n),
 		utilMax(7,
 			f_deep,
 			beltECB_keep(),
@@ -372,36 +379,38 @@ static size_t bakeBPACEStep4_deep(size_t n, size_t f_deep, size_t ec_d,
 			ecMulA_deep(n, ec_d, ec_deep, n),
 			beltHash_keep(),
 			beltKRP_keep(),
-			beltMAC_keep());
+			beltMAC_keep()),
+		SIZE_MAX);
 }
+
+#define bakeBPACEStep5_local(n)\
+/* Vb */		O_OF_W(2 * n),\
+/* K */			O_OF_W(2 * n),\
+/* Y */			(size_t)32,\
+/* block0 */	(size_t)16,\
+/* block1 */	(size_t)16
 
 err_t bakeBPACEStep5(octet out[], const octet in[], void* state)
 {
-	bake_bpace_o* s = (bake_bpace_o*)state;
+	bake_bpace_st* s = (bake_bpace_st*)state;
 	size_t n, no;
-	// стек
-	word* Vb;		/* [2 * n] */
-	word* K;		/* [2 * n] (смещен на n относительно Vb) */
-	octet* Y;		/* [32] (совпадает c Vb) */
-	octet* block0;	/* [16] (следует за Y) */
-	octet* block1;	/* [16] (следует за block0) */
+	word* Vb;			/* [2 * n] */
+	word* K;			/* [2 * n] */
+	octet* Y;			/* [32] */
+	octet* block0;		/* [16] */
+	octet* block1;		/* [16] */
 	void* stack;
-	// проверить входные данные
-	if (!objIsOperable(s))
+	// обработать входные данные
+	if (!memIsValid(s, sizeof(bake_bpace_st)) || !ecIsOperable(s->ec))
 		return ERR_BAD_INPUT;
 	n = s->ec->f->n, no = s->ec->f->no;
 	if (!memIsValid(in, 2 * no + (s->settings->kcb ? 8u : 0)) ||
 		!memIsValid(out, s->settings->kca ? 8u : 0))
 		return ERR_BAD_INPUT;
-	ASSERT(memIsDisjoint2(out, s->settings->kca ? 8u : 0, s, objKeep(s)));
-	// раскладка стека [Y || block0 || block1 должны умещаться в 3 * n слов]
-	Vb = objEnd(s, word);
-	K = Vb + n;
-	Y = (octet*)Vb;
-	block0 = Y + 32;
-	block1 = block0 + 16;
-	stack = K + 2 * n;
-	ASSERT(32 + 16 + 16 <= 3 * no);
+	// разметить стек
+	memSlice(s->stack,
+		bakeBPACEStep5_local(n), SIZE_0, SIZE_MAX,
+		&Vb, &K, &Y, &block0, &block1, &stack);
 	// Vb <- in ||..., Vb \in E*?
 	if (!qrFrom(ecX(Vb), in, s->ec->f, stack) ||
 		!qrFrom(ecY(Vb, n), in + no, s->ec->f, stack) ||
@@ -457,31 +466,36 @@ err_t bakeBPACEStep5(octet out[], const octet in[], void* state)
 static size_t bakeBPACEStep5_deep(size_t n, size_t f_deep, size_t ec_d,
 	size_t ec_deep)
 {
-	return O_OF_W(3 * n) +
+	return memSliceSize(
+		bakeBPACEStep5_local(n),
 		utilMax(5,
 			f_deep,
 			ecMulA_deep(n, ec_d, ec_deep, n),
 			beltHash_keep(),
 			beltKRP_keep(),
-			beltMAC_keep());
+			beltMAC_keep()),
+		SIZE_MAX);
 }
+
+#define bakeBPACEStep6_local()\
+/* block0 */	(size_t)16
 
 err_t bakeBPACEStep6(const octet in[8], void* state)
 {
-	bake_bpace_o* s = (bake_bpace_o*)state;
-	// стек
+	bake_bpace_st* s = (bake_bpace_st*)state;
 	octet* block0;	/* [16] */
 	void* stack;
-	// проверить входные данные
-	if (!objIsOperable(s))
+	// обработать входные данные
+	if (!memIsValid(s, sizeof(bake_bpace_st)) || !ecIsOperable(s->ec))
 		return ERR_BAD_INPUT;
 	if (!s->settings->kca)
 		return ERR_BAD_LOGIC;
 	if (!memIsValid(in, 8))
 		return ERR_BAD_INPUT;
-	// раскладка стека
-	block0 = objEnd(s, octet);
-	stack = block0 + 16;
+	// разметить стек
+	memSlice(s->stack,
+		bakeBPACEStep6_local(), SIZE_0, SIZE_MAX,
+		&block0, &stack);
 	// Ta == beltMAC(0^128, K1)?
 	memSetZero(block0, 16);
 	beltMACStart(stack, s->K1, 32);
@@ -492,17 +506,19 @@ err_t bakeBPACEStep6(const octet in[8], void* state)
 	return ERR_OK;
 }
 
-static size_t bakeBPACEStep6_deep(size_t n, size_t f_deep, size_t ec_d,
-	size_t ec_deep)
+static size_t bakeBPACEStep6_deep()
 {
-	return 16 + beltMAC_keep();
+	return memSliceSize(
+		bakeBPACEStep6_local(),
+		beltMAC_keep(),
+		SIZE_MAX);
 }
 
 err_t bakeBPACEStepG(octet key[32], void* state)
 {
-	bake_bpace_o* s = (bake_bpace_o*)state;
+	bake_bpace_st* s = (bake_bpace_st*)state;
 	// проверить входные данные
-	if (!objIsOperable(s) ||
+	if (!memIsValid(s, sizeof(bake_bpace_st)) || !ecIsOperable(s->ec) ||
 		!memIsValid(key, 32))
 		return ERR_BAD_INPUT;
 	// key <- K0
@@ -515,12 +531,12 @@ static size_t bakeBPACE_deep(size_t n, size_t f_deep, size_t ec_d,
 	size_t ec_deep)
 {
 	return utilMax(6,
-		bakeBPACEStart_deep(n, f_deep, ec_d, ec_deep),
-		bakeBPACEStep2_deep(n, f_deep, ec_d, ec_deep),
+		bakeBPACEStart_deep(),
+		bakeBPACEStep2_deep(),
 		bakeBPACEStep3_deep(n, f_deep, ec_d, ec_deep),
 		bakeBPACEStep4_deep(n, f_deep, ec_d, ec_deep),
 		bakeBPACEStep5_deep(n, f_deep, ec_d, ec_deep),
-		bakeBPACEStep6_deep(n, f_deep, ec_d, ec_deep));
+		bakeBPACEStep6_deep());
 }
 
 /*

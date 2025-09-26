@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): digital signature
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.09.05
+\version 2025.09.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -37,8 +37,8 @@ err_t bignSignEc(octet sig[], const ec_o* ec, const octet oid_der[],
 	size_t no, n;
 	void* state;			
 	word* d;				/* [n] личный ключ */
-	word* k;				/* [n] одноразовый личный ключ */
-	word* R;				/* [2n] точка R */
+	word* k;				/* [n] одноразовый личный ключ (|d) */
+	word* R;				/* [2 * n] точка R */
 	word* s0;				/* [n/2] первая часть подписи */
 	word* s1;				/* [n] вторая часть подписи */
 	void* stack;
@@ -144,8 +144,8 @@ err_t bignSign2Ec(octet sig[], const ec_o* ec, const octet oid_der[],
 	size_t no, n;
 	void* state;
 	word* d;				/* [n] личный ключ */
-	word* k;				/* [n] одноразовый личный ключ */
-	word* R;				/* [2n] точка R */
+	word* k;				/* [n] одноразовый личный ключ (|d) */
+	word* R;				/* [2 * n] точка R */
 	word* s0;				/* [n/2] первая часть подписи */
 	word* s1;				/* [n] вторая часть подписи */
 	octet* hash_state;		/* [beltHash_keep] состояние хэширования */
@@ -271,10 +271,10 @@ err_t bignVerifyEc(const ec_o* ec, const octet oid_der[], size_t oid_len,
 	err_t code;
 	size_t no, n;
 	void* state;
-	word* Q;			/* [2n] открытый ключ */
-	word* R;			/* [2n] точка R */
+	word* Q;			/* [2 * n] открытый ключ */
+	word* R;			/* [2 * n] точка R (|Q) */
 	word* H;			/* [n] хэш-значение */
-	word* s0;			/* [n / 2 + 1] первая часть подписи */
+	word* s0;			/* [n / 2 + 1] первая часть подписи (|H) */
 	word* s1;			/* [n] вторая часть подписи */
 	void* stack;
 	// pre

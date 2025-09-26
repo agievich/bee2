@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: password management
 \project bee2/cmd 
 \created 2022.06.13
-\version 2025.09.22
+\version 2025.09.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -118,8 +118,8 @@ static err_t cmdPwdGenShare_internal(cmd_pwd_t* pwd, size_t scount,
 	size_t epki_len;
 	void* state;
 	octet* pwd_bin;				/* [len] */
-	octet* mac_state;			/* [beltMAC_keep()] */
 	octet* share;				/* [scount * (len + 1)] */
+	octet* mac_state;			/* [beltMAC_keep()] (|share) */
 	octet* salt;				/* [8] */
 	octet* epki;				/* [epki_len] */
 	// pre
@@ -143,12 +143,12 @@ static err_t cmdPwdGenShare_internal(cmd_pwd_t* pwd, size_t scount,
 	// выделить и разметить память
 	code = cmdBlobCreate2(state, 
 		len,
-		beltMAC_keep(),
-		scount * (len + 1) | SIZE_HI,
+		scount * (len + 1),
+		beltMAC_keep() | SIZE_HI,
 		(size_t)8,
 		epki_len,
 		SIZE_MAX,
-		&pwd_bin, &mac_state, &share, &salt, &epki);
+		&pwd_bin, &share, &mac_state, &salt, &epki);
 	ERR_CALL_CHECK(code);
 	// генерировать пароль
 	if (crc)

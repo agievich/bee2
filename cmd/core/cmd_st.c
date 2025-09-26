@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: self-tests
 \project bee2/cmd 
 \created 2025.04.09
-\version 2025.09.22
+\version 2025.09.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -330,7 +330,7 @@ err_t cmdStCrc(octet crc[32], const char* prefix)
 	size_t count;
 	void* state;
 	char* name;					/* [count] */
-	octet* buf;					/* [buf_size] */
+	octet* buf;					/* [buf_size] (|name) */
 	void* hash_state;			/* [beltHash_keep()] */
 	file_t file;
 	// входной контроль

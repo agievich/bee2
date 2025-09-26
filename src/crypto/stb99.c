@@ -4,7 +4,7 @@
 \brief STB 1176.2-99: generation of parameters
 \project bee2 [cryptographic library]
 \created 2023.08.01
-\version 2025.09.15
+\version 2025.09.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -629,9 +629,9 @@ err_t stb99ParamsGen(stb99_params* params, const stb99_seed* seed)
 	// состояние 
 	void* state;
 	octet* stb_state;	/* [prngSTB_keep()] */
-	word* gi;			/* [gw] промежуточные простые при построении g0 */
-	word* fi;			/* [gw] промежуточные простые при построении q */
-	word* g0;           /* [gw] */
+	word* gi;			/* [gw] промежуточные простые для g0 */
+	word* fi;			/* [gw] промежуточные простые для q (|gi) */
+	word* g0;           /* [gw] (|gi) */
 	word* p;			/* [seed->di[0]] */
 	word* d;			/* [n] */
 	word* a;			/* [n] */
@@ -834,7 +834,7 @@ err_t stb99ParamsVal(const stb99_params* params)
 	// состояние 
 	void* state;
 	word* p;			/* [n] */
-	word* q;			/* [n] */
+	word* q;			/* [n] (|p) */
 	word* t;			/* [n] */
 	word* d;			/* [m] */
 	word* a;			/* [n - m + 1] */

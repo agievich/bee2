@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): identity-based signature
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.09.24
+\version 2025.09.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -34,10 +34,10 @@ err_t bignIdExtractEc(octet id_privkey[], octet id_pubkey[],
 {
 	size_t no, n;
 	void* state;
-	word* Q;			/* [2n] открытый ключ */
-	word* R;			/* [2n] точка R */
+	word* Q;			/* [2 * n] открытый ключ */
+	word* R;			/* [2 * n] точка R (|Q) */
 	word* H;			/* [n] хэш-значение */
-	word* s0;			/* [n / 2 + 1] первая часть подписи */
+	word* s0;			/* [n / 2 + 1] первая часть подписи (|H) */
 	word* s1;			/* [n] вторая часть подписи */
 	void* stack;
 	// pre
@@ -146,9 +146,9 @@ err_t bignIdSignEc(octet id_sig[], const ec_o* ec, const octet oid_der[],
 	size_t no, n;
 	void* state;
 	word* e;				/* [n] личный ключ */
-	word* k;				/* [n] одноразовый личный ключ */
-	word* V;				/* [2n] точка V */
-	word* s0;				/* [n/2] первая часть подписи */
+	word* k;				/* [n] одноразовый личный ключ ||e */
+	word* V;				/* [2 * n] точка V */
+	word* s0;				/* [n / 2] первая часть подписи */
 	word* s1;				/* [n] вторая часть подписи */
 	void* stack;
 	// pre
@@ -253,9 +253,9 @@ err_t bignIdSign2Ec(octet id_sig[], const ec_o* ec, const octet oid_der[],
 	size_t no, n;
 	void* state;
 	word* e;				/* [n] личный ключ */
-	word* k;				/* [n] одноразовый личный ключ */
-	word* V;				/* [2n] точка V */
-	word* s0;				/* [n/2] первая часть подписи */
+	word* k;				/* [n] одноразовый личный ключ (|e) */
+	word* V;				/* [2 * n] точка V */
+	word* s0;				/* [n / 2] первая часть подписи */
 	word* s1;				/* [n] вторая часть подписи */
 	octet* hash_state;		/* [beltHash_keep] состояние хэширования */
 	void* stack;
@@ -381,9 +381,9 @@ err_t bignIdVerifyEc(const ec_o* ec, const octet oid_der[], size_t oid_len,
 	err_t code;
 	size_t no, n;
 	void* state;
-	word* R;			/* [2n] открытый ключ R */
-	word* Q;			/* [2n] открытый ключ Q */
-	word* V;			/* [2n] точка V (V == R) */
+	word* R;			/* [2 * n] открытый ключ R */
+	word* Q;			/* [2 * n] открытый ключ Q (|R) */
+	word* V;			/* [2 * n] точка V (V == R) */
 	word* s0;			/* [n / 2 + 1] первая часть подписи */
 	word* s1;			/* [n] вторая часть подписи */
 	word* t;			/* [n / 2] переменная t */

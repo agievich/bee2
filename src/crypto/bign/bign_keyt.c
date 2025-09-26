@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): key transport
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.09.24
+\version 2025.09.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -37,7 +37,7 @@ err_t bignKeyWrapEc(octet token[], const ec_o* ec, const octet key[],
 	size_t no, n;
 	void* state;
 	word* k;				/* [n] одноразовый личный ключ */
-	word* R;				/* [2n] точка R */
+	word* R;				/* [2 * n] точка R */
 	octet* theta;			/* [32] ключ защиты */
 	void* stack;
 	// pre
@@ -135,7 +135,7 @@ err_t bignKeyUnwrapEc(octet key[], const ec_o* ec, const octet token[],
 	size_t no, n;
 	void* state;
 	word* d;				/* [n] личный ключ */
-	word* R;				/* [2n] точка R */
+	word* R;				/* [2 * n] точка R */
 	word* t1;				/* [n] вспомогательное число */
 	word* t2;				/* [n] вспомогательное число */
 	octet* theta;			/* [32] ключ защиты */

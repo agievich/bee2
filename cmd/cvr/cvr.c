@@ -4,7 +4,7 @@
 \brief Manage CV-certificate rings
 \project bee2/cmd 
 \created 2023.06.08
-\version 2025.09.22
+\version 2025.09.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -467,7 +467,7 @@ static err_t cvrFind(int argc, char* argv[])
 	void* state;
 	octet* cert;				/* [cert_len] */
 	cmd_sig_t* sig;				/* [1] */
-	octet* certs;				/* [ring_len] */
+	octet* certs;				/* [ring_len] (|sig) */
 	// обработать опции
 	if (argc != 2)
 		return ERR_CMD_PARAMS;
@@ -521,7 +521,7 @@ static err_t cvrExtr(int argc, char* argv[])
 	size_t ring_len;
 	void* state;
 	cmd_sig_t* sig;			/* [1] */
-	octet* certs;			/* [ring_len] */
+	octet* certs;			/* [ring_len] (|sig) */
 	size_t offset;
 	size_t cert_len;
 	// обработать опции
@@ -580,7 +580,7 @@ static err_t cvrPrint(int argc, char* argv[])
 	size_t ring_len;
 	void* state;
 	cmd_sig_t* sig;					/* [1] */
-	octet* certs;					/* [ring_len] */
+	octet* certs;					/* [ring_len] (|sig) */
 	size_t count;
 	// обработать опции
 	if (argc == 1)

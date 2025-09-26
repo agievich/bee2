@@ -4,7 +4,7 @@
 \brief Experimental Bign signatures of security level 96
 \project bee2 [cryptographic library]
 \created 2021.01.20
-\version 2025.09.24
+\version 2025.09.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -230,8 +230,8 @@ err_t bign96SignEc(octet sig[34], const ec_o* ec, const octet oid_der[],
 	size_t n;
 	void* state;			
 	word* d;				/* [n] личный ключ */
-	word* k;				/* [n] одноразовый личный ключ */
-	word* R;				/* [2n] точка R */
+	word* k;				/* [n] одноразовый личный ключ (|d) */
+	word* R;				/* [2 * n] точка R */
 	word* s0;				/* [W_OF_O(13)] первая часть подписи */
 	word* s1;				/* [n] вторая часть подписи */
 	void* stack;
@@ -335,8 +335,8 @@ err_t bign96Sign2Ec(octet sig[34], const ec_o* ec, const octet oid_der[],
 	size_t n;
 	void* state;
 	word* d;				/* [n] личный ключ */
-	word* k;				/* [n] одноразовый личный ключ */
-	word* R;				/* [2n] точка R */
+	word* k;				/* [n] одноразовый личный ключ (|d) */
+	word* R;				/* [2 * n] точка R */
 	word* s0;				/* [W_OF_O(13)] первая часть подписи */
 	word* s1;				/* [n] вторая часть подписи */
 	octet* hash_state;		/* [beltHash_keep()] состояние хэширования */
@@ -459,10 +459,10 @@ err_t bign96VerifyEc(const ec_o* ec, const octet oid_der[], size_t oid_len,
 	err_t code;
 	size_t n;
 	void* state;
-	word* Q;			/* [2n] открытый ключ */
-	word* R;			/* [2n] точка R */
+	word* Q;			/* [2 * n] открытый ключ */
+	word* R;			/* [2 * n] точка R (|Q) */
 	word* H;			/* [n] хэш-значение */
-	word* s0;			/* [W_OF_O(13)] первая часть подписи */
+	word* s0;			/* [W_OF_O(13)] первая часть подписи (|H) */
 	word* s1;			/* [n] вторая часть подписи */
 	void* stack;
 	// pre

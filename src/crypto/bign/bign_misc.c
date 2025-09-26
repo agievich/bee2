@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): miscellaneous (OIDs, keys, DH)
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.09.05
+\version 2025.09.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -61,7 +61,7 @@ err_t bignKeypairGenEc(octet privkey[], octet pubkey[], const ec_o* ec,
 	size_t no, n;
 	void* state;
 	word* d;				/* [n] личный ключ */
-	word* Q;				/* [2n] открытый ключ */
+	word* Q;				/* [2 * n] открытый ключ */
 	void* stack;
 	// pre
 	ASSERT(ecIsOperable(ec));
@@ -128,7 +128,7 @@ err_t bignKeypairValEc(const ec_o* ec, const octet privkey[],
 	size_t no, n;
 	void* state;
 	word* d;				/* [n] личный ключ */
-	word* Q;				/* [2n] открытый ключ */
+	word* Q;				/* [2 * n] открытый ключ */
 	void* stack;
 	// pre
 	ASSERT(ecIsOperable(ec));
@@ -196,7 +196,7 @@ err_t bignPubkeyValEc(const ec_o* ec, const octet pubkey[])
 {
 	size_t no, n;
 	void* state;
-	word* Q;			/* [2n] открытый ключ */
+	word* Q;			/* [2 * n] открытый ключ */
 	void* stack;
 	// pre
 	ASSERT(ecIsOperable(ec));
@@ -251,7 +251,7 @@ err_t bignPubkeyCalcEc(octet pubkey[], const ec_o* ec, const octet privkey[])
 	size_t no, n;
 	void* state;
 	word* d;				/* [n] личный ключ */
-	word* Q;				/* [2n] открытый ключ */
+	word* Q;				/* [2 * n] открытый ключ */
 	void* stack;
 	// pre
 	ASSERT(ecIsOperable(ec));
@@ -316,8 +316,8 @@ err_t bignDHEc(octet key[], const ec_o* ec, const octet privkey[],
 	size_t no, n;
 	void* state;
 	word* u;				/* [n] личный ключ */
-	octet* K;				/* [no] координаты общего ключа */
-	word* V;				/* [2n] открытый ключ */
+	octet* K;				/* [no] координаты общего ключа (|u) */
+	word* V;				/* [2 * n] открытый ключ */
 	void* stack;
 	// pre
 	ASSERT(ecIsOperable(ec));

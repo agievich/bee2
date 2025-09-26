@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): public parameters
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.09.24
+\version 2025.09.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -319,7 +319,7 @@ err_t bignParamsValEc(const ec_o* ec, const bign_params* params)
 	octet* hash_state;		/* [beltHash_keep] состояние хэширования */
 	octet* seed;			/* [8] копия seed */
 	octet* B;				/* [64] переменная B */
-	word* b;				/* [W_OF_O(64)] коэффициент b */
+	word* b;				/* [W_OF_O(64)] коэффициент b (|B) */
 	void* stack;
 	// pre
 	ASSERT(ecIsOperable(ec));
@@ -485,9 +485,9 @@ err_t bignParamsGen(bign_params* params, bign_pgen_calc_q calc_q,
 	word* p;				/* [n] */
 	word* a;				/* [n] */
 	octet* B;				/* [64] */
-	word* b;				/* [W_OF_O(64)] */
+	word* b;				/* [W_OF_O(64)] (|B) */
 	word* q;				/* [n] */
-	word* yG;				/* [n] */
+	word* yG;				/* [n] (|q) */
 	octet* seed;			/* [8] */
 	octet* hash_state;		/* [beltHash_keep] */
 	void* stack;
