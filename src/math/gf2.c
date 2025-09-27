@@ -4,7 +4,7 @@
 \brief Binary fields
 \project bee2 [cryptographic library]
 \created 2012.04.17
-\version 2025.09.14
+\version 2025.09.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -233,7 +233,7 @@ static void gf2Neg2(word b[], const word a[], const qr_o* f)
 static void gf2MulTrinomial0(word c[], const word a[], const word b[], 
 	const qr_o* f, void* stack)
 {
-	word* prod;			/* [2n] */
+	word* prod;			/* [2 * n] */
 	ASSERT(gf2IsOperable(f));
 	ASSERT(gf2IsIn(a, f));
 	ASSERT(gf2IsIn(b, f));
@@ -259,7 +259,7 @@ static size_t gf2MulTrinomial0_deep(size_t n)
 static void gf2MulTrinomial1(word c[], const word a[], const word b[], 
 	const qr_o* f, void* stack)
 {
-	word* prod;			/* [2n] */
+	word* prod;			/* [2  * n] */
 	ASSERT(gf2IsOperable(f));
 	ASSERT(gf2IsIn(a, f));
 	ASSERT(gf2IsIn(b, f));
@@ -285,7 +285,7 @@ static size_t gf2MulTrinomial1_deep(size_t n)
 static void gf2MulPentanomial(word c[], const word a[], const word b[], 
 	const qr_o* f, void* stack)
 {
-	word* prod;			/* [2n] */
+	word* prod;			/* [2 * n] */
 	ASSERT(gf2IsOperable(f));
 	ASSERT(gf2IsIn(a, f));
 	ASSERT(gf2IsIn(b, f));
@@ -311,7 +311,7 @@ static size_t gf2MulPentanomial_deep(size_t n)
 static void gf2SqrTrinomial0(word b[], const word a[], const qr_o* f, 
 	void* stack)
 {
-	word* prod;			/* [2n] */
+	word* prod;			/* [2 * n] */
 	ASSERT(gf2IsOperable(f));
 	ASSERT(gf2IsIn(a, f));
 	memSlice(stack,
@@ -336,7 +336,7 @@ static size_t gf2SqrTrinomial0_deep(size_t n)
 static void gf2SqrTrinomial1(word b[], const word a[], const qr_o* f, 
 	void* stack)
 {
-	word* prod;			/* [2n] */
+	word* prod;			/* [2 * n] */
 	ASSERT(gf2IsOperable(f));
 	ASSERT(gf2IsIn(a, f));
 	memSlice(stack,
@@ -361,7 +361,7 @@ static size_t gf2SqrTrinomial1_deep(size_t n)
 static void gf2SqrPentanomial(word b[], const word a[], const qr_o* f, 
 	void* stack)
 {
-	word* prod;			/* [2n] */
+	word* prod;			/* [2 * n] */
 	ASSERT(gf2IsOperable(f));
 	ASSERT(gf2IsIn(a, f));
 	memSlice(stack,

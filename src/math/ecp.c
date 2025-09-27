@@ -4,7 +4,7 @@
 \brief Elliptic curves over prime fields
 \project bee2 [cryptographic library]
 \created 2012.06.26
-\version 2025.09.22
+\version 2025.09.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -1062,7 +1062,7 @@ bool_t ecpGroupSeemsValid(const ec_o* ec, void* stack)
 	word w;
 	word* t1;			/* [n + 1] */
 	word* t2;			/* [n + 2] */
-	word* t3;			/* [2n] */
+	word* t3;			/* [2 * n] */
 	// pre
 	ASSERT(ecIsOperable(ec));
 	// разметить стек

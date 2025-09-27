@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: modular reductions
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.09.13
+\version 2025.09.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -129,7 +129,7 @@ size_t zzRedCrand_deep(size_t n)
 void zzRedBarrStart(word barr_param[], const word mod[], size_t n, 
 	void* stack)
 {
-	word* divident;			/* [2n + 1] */
+	word* divident;			/* [2 * n + 1] */
 	// pre
 	ASSERT(wwIsDisjoint2(barr_param, n + 2, mod, n));
 	ASSERT(n > 0 && mod[n - 1] != 0);

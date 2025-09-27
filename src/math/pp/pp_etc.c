@@ -4,7 +4,7 @@
 \brief Binary polynomials: other functions
 \project bee2 [cryptographic library]
 \created 2012.03.01
-\version 2025.09.15
+\version 2025.09.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -140,10 +140,10 @@ void ppMinPoly(word b[], const word a[], size_t l, void* stack)
 	const size_t n = W_OF_B(l);
 	const size_t m = W_OF_B(l + 1);
 	size_t na, nb;
-	word* aa; 			/* [2n] */
-	word* bb;			/* [2n + 1] */
+	word* aa; 			/* [2 * n] */
+	word* bb;			/* [2 * n + 1] */
 	word* q;			/* [n + 2] */
-	word* r;			/* [2n] */
+	word* r;			/* [2 * n] */
 	word* da; 			/* [m] */
 	word* db;			/* [m + n + 2] */
 	// pre
@@ -211,7 +211,7 @@ void ppMinPolyMod(word b[], const word a[], const word mod[], size_t n,
 	size_t l;
 	size_t i;
 	word* t;			/* [n] */
-	word* s;			/* [2n] */
+	word* s;			/* [2 * n] */
 	// pre
 	ASSERT(wwIsValid(b, n) && wwIsValid(a, n) && wwIsValid(mod, n));
 	ASSERT(wwCmpW(mod, n, 1) > 0 && wwCmp(a, mod, n) < 0);

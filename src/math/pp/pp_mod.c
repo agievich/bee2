@@ -36,7 +36,7 @@
 void ppMulMod(word c[], const word a[], const word b[], const word mod[],
 	size_t n, void* stack)
 {
-	word* prod;			/* [2n] */
+	word* prod;			/* [2 * n] */
 	// pre
 	ASSERT(wwCmp(a, mod, n) < 0 && wwCmp(b, mod, n) < 0);
 	ASSERT(n > 0 && mod[n - 1] != 0);

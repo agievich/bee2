@@ -4,7 +4,7 @@
 \brief STB 34.101.66 (bake): the BSTS protocol
 \project bee2 [cryptographic library]
 \created 2014.04.14
-\version 2025.09.26
+\version 2025.09.27
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -79,7 +79,6 @@ err_t bakeBSTSStart(void* state, const bign_params* params,
 	bake_bsts_st* s = (bake_bsts_st*)state;
 	size_t n, no;
 	word* Q;		/* [2 * n] */
-	// стек
 	void* stack;
 	// входной контроль
 	code = bignParamsCheck(params);

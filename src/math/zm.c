@@ -4,7 +4,7 @@
 \brief Quotient rings of integers modulo m
 \project bee2 [cryptographic library]
 \created 2013.09.14
-\version 2025.09.25
+\version 2025.09.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -66,7 +66,7 @@ static void zmNeg2(word b[], const word a[], const qr_o* r)
 static void zmMul(word c[], const word a[], const word b[],
 	const qr_o* r, void* stack)
 {
-	word* prod; 			/* [2n] */
+	word* prod; 			/* [2 * n] */
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(a, r));
 	ASSERT(zmIsIn(b, r));
@@ -93,7 +93,7 @@ static size_t zmMul_deep(size_t n)
 
 static void zmSqr(word b[], const word a[], const qr_o* r, void* stack)
 {
-	word* prod; 			/* [2n] */
+	word* prod; 			/* [2 * n] */
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(a, r));
 	memSlice(stack,
@@ -206,7 +206,7 @@ size_t zmCreatePlain_deep(size_t no)
 static void zmMulCrand(word c[], const word a[], const word b[],
 	const qr_o* r, void* stack)
 {
-	word* prod;				/* [2n] */
+	word* prod;				/* [2 * n] */
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(a, r));
 	ASSERT(zmIsIn(b, r));
@@ -233,7 +233,7 @@ static size_t zmMulCrand_deep(size_t n)
 
 static void zmSqrCrand(word b[], const word a[], const qr_o* r, void* stack)
 {
-	word* prod;				/* [2n] */
+	word* prod;				/* [2 * n] */
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(a, r));
 	memSlice(stack,
@@ -323,7 +323,7 @@ size_t zmCreateCrand_deep(size_t no)
 static void zmMulBarr(word c[], const word a[], const word b[],
 	const qr_o* r, void* stack)
 {
-	word* prod;				/* [2n] */
+	word* prod;				/* [2 * n] */
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(a, r));
 	ASSERT(zmIsIn(b, r));
@@ -350,7 +350,7 @@ static size_t zmMulBarr_deep(size_t n)
 
 static void zmSqrBarr(word b[], const word a[], const qr_o* r, void* stack)
 {
-	word* prod;				/* [2n] */
+	word* prod;				/* [2 * n] */
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(a, r));
 	memSlice(stack,
@@ -448,7 +448,7 @@ Revisited. IEEE Transactions on Computers, 49(7):763–766, 2000].
 static bool_t zmFromMont(word b[], const octet a[], const qr_o* r,
 	void* stack)
 {
-	word* c;			/* [2n] */
+	word* c;			/* [2 * n] */
 	ASSERT(zmIsOperable(r));
 	memSlice(stack,
 		zmFromMont_local(r->n), SIZE_0, SIZE_MAX,
@@ -476,7 +476,7 @@ static size_t zmFromMont_deep(size_t n)
 
 static void zmToMont(octet b[], const word a[], const qr_o* r, void* stack)
 {
-	word* c;			/* [2n] */
+	word* c;			/* [2  * n] */
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(a, r));
 	memSlice(stack,
@@ -504,7 +504,7 @@ static size_t zmToMont_deep(size_t n)
 static void zmMulMont(word c[], const word a[], const word b[],
 	const qr_o* r, void* stack)
 {
-	word* prod;			/* [2n] */
+	word* prod;			/* [2 * n] */
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(a, r));
 	ASSERT(zmIsIn(b, r));
@@ -531,7 +531,7 @@ static size_t zmMulMont_deep(size_t n)
 
 static void zmSqrMont(word b[], const word a[], const qr_o* r, void* stack)
 {
-	word* prod;			/* [2n] */
+	word* prod;			/* [2 * n] */
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(a, r));
 	memSlice(stack,

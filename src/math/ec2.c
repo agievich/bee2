@@ -4,7 +4,7 @@
 \brief Elliptic curves over binary fields
 \project bee2 [cryptographic library]
 \created 2012.06.26
-\version 2025.09.05
+\version 2025.09.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -574,7 +574,7 @@ static void ec2SubALD(word c[], const word a[], const word b[],
 	const ec_o* ec, void* stack)
 {
 	const size_t n = ec->f->n;
-	word* t;			/* [2n] */
+	word* t;			/* [2 * n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ec2SeemsOn3(a, ec));
@@ -700,7 +700,7 @@ bool_t ec2GroupSeemsValid(const ec_o* ec, void* stack)
 	size_t n = ec->f->n;
 	word* t1;			/* [n + 1] */
 	word* t2; 			/* [n + 2] */
-	word* t3; 			/* [2n] */
+	word* t3; 			/* [2 * n] */
 	// pre
 	ASSERT(ecIsOperable(ec));
 	// разметить стек
@@ -953,7 +953,7 @@ bool_t ec2SubAA(word c[], const word a[], const word b[], const ec_o* ec,
 	void* stack)
 {
 	const size_t n = ec->f->n;
-	word* t;			/* [2n] */
+	word* t;			/* [2 * n] */
 	// разметить стек
 	memSlice(stack,
 		ec2SubAA_local(n), SIZE_0, SIZE_MAX,
