@@ -4,7 +4,7 @@
 \brief Tests for DSTU 4145-2002 (Ukraine)
 \project bee2/test
 \created 2012.03.01
-\version 2024.02.29
+\version 2025.09.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -45,7 +45,7 @@ bool_t dstuTest()
 	octet hash[32];
 	octet sig[2 * DSTU_SIZE];
 	size_t ld;
-	octet state[512];
+	mem_align_t state[512 / sizeof(mem_align_t)];
 	// подготовить память
 	if (sizeof(state) < prngEcho_keep() ||
 		sizeof(state) < prngCOMBO_keep())

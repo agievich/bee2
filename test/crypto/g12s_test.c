@@ -4,13 +4,14 @@
 \brief Tests for GOST R 34.10-2012 (Russia)
 \project bee2/test
 \created 2014.04.07
-\version 2025.05.07
+\version 2025.09.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
 #include <bee2/core/hex.h>
+#include <bee2/core/mem.h>
 #include <bee2/core/prng.h>
 #include <bee2/crypto/g12s.h>
 
@@ -31,10 +32,10 @@ bool_t g12sTest()
 	octet pubkey[2 * G12S_FIELD_SIZE];
 	octet hash[64];
 	octet sig[2 * G12S_ORDER_SIZE];
-	octet echo[64];
+	mem_align_t state[64 / sizeof(mem_align_t)];
 	// подготовить память
-	if (sizeof(echo) < prngEcho_keep() ||
-		sizeof(echo) < prngCOMBO_keep())
+	if (sizeof(state) < prngEcho_keep() ||
+		sizeof(state) < prngCOMBO_keep())
 		return FALSE;
 	// тест A.1 [загрузка параметров]
 	if (g12sParamsStd(params, "1.2.643.2.2.35.0") != ERR_OK ||
@@ -44,8 +45,8 @@ bool_t g12sTest()
 	hexToRev(buf, 
 		"7A929ADE789BB9BE10ED359DD39A72C1"
 		"1B60961F49397EEE1D19CE9891EC3B28");
-	prngEchoStart(echo, buf, 32);
-	if (g12sKeypairGen(privkey, pubkey, params, prngEchoStepR, echo) 
+	prngEchoStart(state, buf, 32);
+	if (g12sKeypairGen(privkey, pubkey, params, prngEchoStepR, state) 
 		!= ERR_OK ||
 		!hexEqRev(privkey, 
 			"7A929ADE789BB9BE10ED359DD39A72C1"
@@ -63,7 +64,7 @@ bool_t g12sTest()
 	hexToRev(buf, 
 		"77105C9B20BCD3122823C8CF6FCC7B95"
 		"6DE33814E95B7FE64FED924594DCEAB3");
-	if (g12sSign(sig, params, hash, privkey, prngEchoStepR, echo) != ERR_OK ||
+	if (g12sSign(sig, params, hash, privkey, prngEchoStepR, state) != ERR_OK ||
 		!hexEq(sig, 
 			"41AA28D2F1AB148280CD9ED56FEDA419"
 			"74053554A42767B83AD043FD39DC0493"
@@ -84,9 +85,9 @@ bool_t g12sTest()
 		"3091A0E8514669700EE7508E508B1020"
 		"72E8123B2200A0563322DAD2827E2714"
 		"A2636B7BFD18AADFC62967821FA18DD4");
-	prngEchoStart(echo, buf, 64);
-	if (g12sKeypairGen(privkey, pubkey, params, prngEchoStepR, echo) 
-		!= ERR_OK ||
+	prngEchoStart(state, buf, 64);
+	if (g12sKeypairGen(privkey, pubkey, params, prngEchoStepR, 
+			state) != ERR_OK ||
 		!hexEqRev(privkey, 
 			"0BA6048AADAE241BA40936D47756D7C9"
 			"3091A0E8514669700EE7508E508B1020"
@@ -113,8 +114,8 @@ bool_t g12sTest()
 		"946312120B39D019D455986E364F3658"
 		"86748ED7A44B3E794434006011842286"
 		"212273A6D14CF70EA3AF71BB1AE679F1");
-	if (g12sSign(sig, params, hash, privkey, prngEchoStepR, echo) 
-		!= ERR_OK ||
+	if (g12sSign(sig, params, hash, privkey, prngEchoStepR, 
+			state) != ERR_OK ||
 		!hexEq(sig, 
 			"2F86FA60A081091A23DD795E1E3C689E"
 			"E512A3C82EE0DCC2643C78EEA8FCACD3"

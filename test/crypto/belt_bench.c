@@ -4,13 +4,14 @@
 \brief Benchmarks for STB 34.101.31 (belt)
 \project bee2/test
 \created 2014.11.18
-\version 2025.04.25
+\version 2025.09.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
 #include <stdio.h>
+#include <bee2/core/mem.h>
 #include <bee2/core/prng.h>
 #include <bee2/core/tm.h>
 #include <bee2/core/util.h>
@@ -25,8 +26,8 @@
 bool_t beltBench()
 {
 	const size_t reps = 5000;
-	octet belt_state[512];
-	octet combo_state[256];
+	mem_align_t belt_state[512 / sizeof(mem_align_t)];
+	mem_align_t combo_state[64 / sizeof(mem_align_t)];
 	octet buf[1024];
 	octet key[32];
 	octet iv[16];

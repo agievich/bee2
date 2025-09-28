@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): BAUTH protocol
 \project bee2 [cryptographic library]
 \created 2022.02.22
-\version 2025.09.27
+\version 2025.09.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -86,8 +86,8 @@ typedef struct
 /* Vct */		O_OF_W(2 * n),\
 /* R */			no / 2
 
-static size_t btokBAuthT_deep(
-	size_t n, size_t f_deep, size_t ec_d, size_t ec_deep);
+static size_t btokBAuthT_deep(size_t n, size_t f_deep, size_t ec_d, 
+	size_t ec_deep);
 
 size_t btokBAuthT_keep(size_t l)
 {
@@ -115,8 +115,8 @@ typedef struct
 	mem_align_t data[];			/*< данные */
 } btok_bauth_ct_st;
 
-static size_t btokBAuthCT_deep(
-	size_t n, size_t f_deep, size_t ec_d, size_t ec_deep);
+static size_t btokBAuthCT_deep(size_t n, size_t f_deep, size_t ec_d, 
+	size_t ec_deep);
 
 #define btokBAuthCT_state(n, no)\
 /* d */			O_OF_W(n),\

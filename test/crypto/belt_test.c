@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.31 (belt)
 \project bee2/test
 \created 2012.06.20
-\version 2024.01.25
+\version 2025.09.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -131,7 +131,7 @@ bool_t beltTest()
 	u32 key[8];
 	u32 block[4];
 	octet level[12];
-	octet state[1024];
+	mem_align_t state[1024 / sizeof(mem_align_t)];
 	size_t count;
 	// подготовить память
 	if (sizeof(state) < utilMax(17,

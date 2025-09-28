@@ -4,13 +4,14 @@
 \brief Tests for pseudorandom number generators
 \project bee2/test
 \created 2014.06.30
-\version 2025.05.07
+\version 2025.09.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
 #include <bee2/core/hex.h>
+#include <bee2/core/mem.h>
 #include <bee2/core/prng.h>
 
 /*
@@ -22,7 +23,7 @@
 bool_t prngTest()
 {
 	octet buf[128];
-	char state[256];
+	mem_align_t state[256 / sizeof(mem_align_t)];
 	// подготовить память
 	if (sizeof(state) < prngSTB_keep())
 		return FALSE;

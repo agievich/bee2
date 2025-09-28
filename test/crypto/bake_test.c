@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.66 (bake)
 \project bee2/test
 \created 2014.04.23
-\version 2025.09.26
+\version 2025.09.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -302,8 +302,8 @@ bool_t bakeTest()
 	bign_params params[1];
 	octet randa[48];
 	octet randb[48];
-	octet echoa[64];
-	octet echob[64];
+	mem_align_t echoa[64 / sizeof(mem_align_t)];
+	mem_align_t echob[64 / sizeof(mem_align_t)];
 	bake_settings settingsa[1];
 	bake_settings settingsb[1];
 	octet da[32];
@@ -320,7 +320,8 @@ bool_t bakeTest()
 	octet secret[32];
 	octet iv[64];
 	// подготовить память
-	if (sizeof(echoa) < prngEcho_keep())
+	if (sizeof(echoa) < prngEcho_keep() ||
+		sizeof(echob) < prngEcho_keep())
 		return FALSE;
 	// загрузить долговременные параметры
 	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK)

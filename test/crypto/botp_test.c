@@ -35,7 +35,7 @@ bool_t botpTest()
 	char p_str[72];
 	char s_str[136];
 	tm_time_t t;
-	octet state[2048];
+	mem_align_t state[2048 / sizeof(mem_align_t)];
 	// подготовить память
 	if (sizeof(state) < utilMax(3,
 		botpHOTP_keep(),

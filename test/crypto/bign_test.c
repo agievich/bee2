@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.45 (bign)
 \project bee2/test
 \created 2012.08.27
-\version 2023.09.25
+\version 2023.09.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -30,10 +30,10 @@ brngCTRX: Расширение brngCTR
 */
 typedef struct
 {
-	const octet* X;		/*< дополнительное слово */
-	size_t count;		/*< размер X в октетах */
-	size_t offset;		/*< текущее смещение в X */
-	octet state_ex[];	/*< состояние brngCTR */
+	const octet* X;			/*< дополнительное слово */
+	size_t count;			/*< размер X в октетах */
+	size_t offset;			/*< текущее смещение в X */
+	mem_align_t state_ex[];	/*< состояние brngCTR */
 } brng_ctrx_st;
 
 static size_t brngCTRX_keep()
@@ -124,8 +124,8 @@ bool_t bignTest()
 	octet id_hash[64];
 	octet sig[64 + 32];
 	octet id_sig[64 + 32 + 128];
-	octet brng_state[1024];
-	octet zz_stack[512];
+	mem_align_t brng_state[1024 / sizeof(mem_align_t)];
+	mem_align_t zz_stack[512 / sizeof(mem_align_t)];
 	octet token[80];
 	word q[W_OF_O(32)];
 	word d[W_OF_O(32)];
@@ -217,7 +217,7 @@ bool_t bignTest()
 	if (beltHash(hash, beltH(), 13) != ERR_OK)
 		return FALSE;
 	if (bignSign(sig, params, der, count, hash, privkey, brngCTRXStepR, 
-		brng_state) != ERR_OK)
+			brng_state) != ERR_OK)
 		return FALSE;
 	if (!hexEq(sig, 
 		"E36B7F0377AE4C524027C387FADF1B20"
@@ -249,7 +249,7 @@ bool_t bignTest()
 		return FALSE;
 	// тест Г.4
 	if (bignKeyWrap(token, params, beltH(), 18, beltH() + 32, pubkey,
-		brngCTRXStepR, brng_state) != ERR_OK)
+			brngCTRXStepR, brng_state) != ERR_OK)
 		return FALSE;
 	if (!hexEq(token,
 		"9B4EA669DABDF100A7D4B6E6EB76EE52"
@@ -267,7 +267,7 @@ bool_t bignTest()
 	if (beltHash(hash, beltH(), 48) != ERR_OK)
 		return FALSE;
 	if (bignSign(sig, params, der, count, hash, privkey, brngCTRXStepR, 
-		brng_state) != ERR_OK)
+			brng_state) != ERR_OK)
 		return FALSE;
 	if (!hexEq(sig, 
 		"47A63C8B9C936E94B5FAB3D9CBD78366"
@@ -336,7 +336,7 @@ bool_t bignTest()
 	if (beltHash(hash, beltH() + 32, 16) != ERR_OK)
 		return FALSE;
 	if (bignIdSign(id_sig, params, der, count, id_hash, hash, id_privkey,
-		brngCTRXStepR, brng_state) != ERR_OK)
+			brngCTRXStepR, brng_state) != ERR_OK)
 		return FALSE;
 	if (!hexEq(id_sig,
 		"1697FE6A073D3B28C9D0DD832A169D7B"
@@ -359,7 +359,7 @@ bool_t bignTest()
 	if (beltHash(hash, beltH() + 32, 23) != ERR_OK)
 		return FALSE;
 	if (bignIdSign(id_sig, params, der, count, id_hash, hash, id_privkey,
-		brngCTRXStepR, brng_state) != ERR_OK)
+			brngCTRXStepR, brng_state) != ERR_OK)
 		return FALSE;
 	if (!hexEq(id_sig,
 		"31CBA14FC2D79AFCD8F50E29F993FC2C"
@@ -408,9 +408,9 @@ bool_t bignTest()
 		return FALSE;
 	// дополнительный тест: транспорт ключа из 16 октетов
 	if (bignKeyWrap(token, params, beltH(), 16, beltH() + 64,
-		pubkey, brngCTRXStepR, brng_state) != ERR_OK ||
+			pubkey, brngCTRXStepR, brng_state) != ERR_OK ||
 		bignKeyUnwrap(token, params, token, 32 + 16 + 16, beltH() + 64,
-		privkey) != ERR_OK ||
+			privkey) != ERR_OK ||
 		!memEq(token, beltH(), 16))
 		return FALSE;
 	// дополнительные тесты (vs OpenSSL)

@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.79 (btok)
 \project bee2/test
 \created 2022.07.07
-\version 2025.01.08
+\version 2025.09.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -104,7 +104,7 @@ CV-сертификаты
 
 static bool_t btokCVCTest()
 {
-	octet echo[256];
+	mem_align_t echo_state[64 / sizeof(mem_align_t)];
 	btok_cvc_t cvc0[1];
 	btok_cvc_t cvc1[1];
 	btok_cvc_t cvc2[1];
@@ -123,7 +123,7 @@ static bool_t btokCVCTest()
 	octet cert3[400];
 	size_t cert3_len, cert3_len1;
 	// запустить ГПСЧ
-	prngEchoStart(echo, beltH(), 256);
+	prngEchoStart(echo_state, beltH(), 256);
 	// определить максимальную длину сертификата
 	memSetZero(cvc0, sizeof(btok_cvc_t));
 	strCopy(cvc0->authority, "BYCA00000000");
@@ -137,7 +137,7 @@ static bool_t btokCVCTest()
 		return FALSE;
 	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.3") != ERR_OK ||
 		bignKeypairGen(privkey0, cvc0->pubkey, params, prngEchoStepR,
-			echo) != ERR_OK ||
+			echo_state) != ERR_OK ||
 		btokCVCCheck(cvc0) != ERR_OK)
 		return FALSE;
 	if (btokCVCWrap(0, 0, cvc0, privkey0, 64) != ERR_OK)
@@ -177,7 +177,7 @@ static bool_t btokCVCTest()
 	cvc1->pubkey_len = 96;
 	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.2") != ERR_OK ||
 		bignKeypairGen(privkey1, cvc1->pubkey, params, prngEchoStepR,
-			echo) != ERR_OK ||
+			echo_state) != ERR_OK ||
 		btokCVCCheck(cvc1) != ERR_OK)
 		return FALSE;
 	// создать pre-cert1 (запрос на выпуск сертификата)
@@ -214,7 +214,7 @@ static bool_t btokCVCTest()
 	cvc2->pubkey_len = 64;
 	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK ||
 		bignKeypairGen(privkey2, cvc2->pubkey, params, prngEchoStepR,
-			echo) != ERR_OK ||
+			echo_state) != ERR_OK ||
 		btokCVCCheck(cvc2) != ERR_OK)
 		return FALSE;
 	// выпустить cert2
@@ -238,7 +238,7 @@ static bool_t btokCVCTest()
 	cvc3->pubkey_len = 48;
 	if (bign96ParamsStd(params, "1.2.112.0.2.0.34.101.45.3.0") != ERR_OK ||
 		bign96KeypairGen(privkey3, cvc3->pubkey, params, prngEchoStepR,
-			echo) != ERR_OK ||
+			echo_state) != ERR_OK ||
 		btokCVCCheck(cvc3) != ERR_OK)
 		return FALSE;
 	// выпустить cert3
@@ -269,22 +269,32 @@ SM
 *******************************************************************************
 */
 
+#define btokSMTest_local()\
+/* state_t */		btokSM_keep(),\
+/* state_ct */		btokSM_keep(),\
+/* cmd */			sizeof(apdu_cmd_t) + 257,\
+/* cmd1 */			sizeof(apdu_cmd_t) + 257,\
+/* resp */			sizeof(apdu_resp_t) + 257,\
+/* resp1 */			sizeof(apdu_resp_t) + 257
+
 static bool_t btokSMTest()
 {
-	octet state_t[512];
-	octet state_ct[512];
-	octet stack[4096];
-	apdu_cmd_t* cmd = (apdu_cmd_t*)stack;
-	apdu_cmd_t* cmd1 = (apdu_cmd_t*)(stack + 1024);
-	apdu_resp_t* resp = (apdu_resp_t*)(stack + 2 * 1024);
-	apdu_resp_t* resp1 = (apdu_resp_t*)(stack + 3 * 1024);
+	mem_align_t state[4096 / sizeof(mem_align_t)];
+	octet* state_t;			/* [btokSM_keep()] */
+	octet* state_ct;		/* [btokSM_keep()] */
+	apdu_cmd_t* cmd;		/* sizeof(apdu_cmd_t) + 257 */
+	apdu_cmd_t* cmd1;		/* sizeof(apdu_cmd_t) + 257 */
+	apdu_resp_t* resp;		/* sizeof(apdu_resp_t) + 257 */
+	apdu_resp_t* resp1;		/* sizeof(apdu_resp_t) + 257 */
 	octet apdu[1024];
 	size_t count, count1;
 	size_t size, size1;
-	// подготовить состояния
-	if (sizeof(state_t) < btokSM_keep() ||
-		sizeof(state_ct) < btokSM_keep())
+	// разметить состояние
+	if (sizeof(state) < memSliceSize(btokSMTest_local(), SIZE_MAX))
 		return FALSE;
+	memSlice(state,
+		btokSMTest_local(), SIZE_MAX,
+		&state_t, &state_ct, &cmd, &cmd1, &resp, &resp1);
 	// запустить SM
 	btokSMStart(state_t, beltH());
 	btokSMStart(state_ct, beltH());
@@ -378,7 +388,7 @@ static bool_t btokSMTest()
 				return FALSE;
 			btokSMCtrInc(state_ct);
 			if (btokSMCmdUnwrap(0, &size, apdu, count, state_ct) != ERR_OK ||
-				size > sizeof(stack) / 4 ||
+				size > sizeof(apdu_cmd_t) + 257 ||
 				btokSMCmdUnwrap(cmd1, &size1, apdu, count, state_ct)
 					!= ERR_OK ||
 				size1 != size || !memEq(cmd, cmd1, size))
@@ -392,7 +402,7 @@ static bool_t btokSMTest()
 				return FALSE;
 			btokSMCtrInc(state_t);
 			if (btokSMRespUnwrap(0, &size, apdu, count, state_t) != ERR_OK ||
-				size > sizeof(stack) / 4 ||
+				size > sizeof(apdu_resp_t) + 257 ||
 				btokSMRespUnwrap(resp1, &size1, apdu, count, state_t)
 					!= ERR_OK ||
 				size1 != size || !memEq(resp, resp1, size))
@@ -450,8 +460,8 @@ static err_t bakeTestCertVal(octet* pubkey, const bign_params* params,
 static bool_t btokBAUTHTest() 
 {
 	bign_params params[1];
-	octet echoa[64];
-	octet echob[64];
+	mem_align_t echoa[64 / sizeof(mem_align_t)];
+	mem_align_t echob[64 / sizeof(mem_align_t)];
 	bake_settings settingsa[1];
 	bake_settings settingsb[1];
 	octet da[32];
@@ -462,14 +472,15 @@ static bool_t btokBAUTHTest()
 	bake_cert certb[1];
 	octet keya[32];
 	octet keyb[32];
-	octet statea[20000];
-	octet stateb[20000];
+	mem_align_t statea[16384 / sizeof(mem_align_t)];
+	mem_align_t stateb[16384 / sizeof(mem_align_t)];
 	octet buf[1000];
 	// загрузить долговременные параметры
 	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK)
 		return FALSE;
 	// подготовить память
 	if (sizeof(echoa) < prngEcho_keep() ||
+		sizeof(echob) < prngEcho_keep() ||
 		sizeof(statea) < btokBAuthT_keep(128) ||
 		sizeof(stateb) < btokBAuthCT_keep(128))
 		return FALSE;

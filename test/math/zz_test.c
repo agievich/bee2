@@ -4,7 +4,7 @@
 \brief Tests for multiple-precision unsigned integers
 \project bee2/test
 \created 2014.07.15
-\version 2025.08.26
+\version 2025.09.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -111,8 +111,8 @@ static bool_t zzTestMul()
 	word c1[2 * n];
 	word b1[n + 1];
 	word r1[n];
-	octet combo_state[32];
-	octet stack[2048];
+	mem_align_t combo_state[64 / sizeof(mem_align_t)];
+	mem_align_t stack[2048 / sizeof(mem_align_t)];
 	// подготовить память
 	if (sizeof(combo_state) < prngCOMBO_keep() ||
 		sizeof(stack) < utilMax(4,
@@ -219,8 +219,8 @@ static bool_t zzTestMod()
 	word t[n];
 	word t1[n];
 	word mod[n];
-	octet combo_state[32];
-	octet stack[2048];
+	mem_align_t combo_state[64 / sizeof(mem_align_t)];
+	mem_align_t stack[2048 / sizeof(mem_align_t)];
 	// подготовить память
 	if (sizeof(combo_state) < prngCOMBO_keep() ||
 		sizeof(stack) < utilMax(10,
@@ -364,8 +364,8 @@ static bool_t zzTestGCD()
 	word t1[2 * n];
 	word p[2 * n];
 	word p1[3 * n];
-	octet combo_state[32];
-	octet stack[2048];
+	mem_align_t combo_state[64 / sizeof(mem_align_t)];
+	mem_align_t stack[2048 / sizeof(mem_align_t)];
 	// подготовить память
 	if (sizeof(combo_state) < prngCOMBO_keep() ||
 		sizeof(stack) < utilMax(4,
@@ -417,8 +417,8 @@ static bool_t zzTestRed()
 	word t1[2 * n];
 	word barr_param[n + 2];
 	word mod[n];
-	octet combo_state[32];
-	octet stack[2048];
+	mem_align_t combo_state[64 / sizeof(mem_align_t)];
+	mem_align_t stack[2048 / sizeof(mem_align_t)];
 	// подготовить память
 	if (sizeof(combo_state) < prngCOMBO_keep() ||
 		sizeof(stack) < utilMax(6,
@@ -509,8 +509,8 @@ static bool_t zzTestEtc()
 	word a[n];
 	word b[2 * n];
 	word t[(2 * n + 1) / 2];
-	octet combo_state[32];
-	octet stack[2048];
+	mem_align_t combo_state[64 / sizeof(mem_align_t)];
+	mem_align_t stack[2048 / sizeof(mem_align_t)];
 	// подготовить память
 	if (sizeof(combo_state) < prngCOMBO_keep() ||
 		sizeof(stack) < utilMax(3,

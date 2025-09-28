@@ -4,7 +4,7 @@
 \brief Tests for bign96 signatures
 \project bee2/test
 \created 2021.01.20
-\version 2024.01.25
+\version 2025.09.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -90,7 +90,7 @@ bool_t bign96Test()
 	octet pubkey[48];
 	octet hash[32];
 	octet sig[34];
-	octet brng_state[1024];
+	mem_align_t brng_state[1024 / sizeof(mem_align_t)];
 	// подготовить память
 	if (sizeof(brng_state) < brngCTRX_keep())
 		return FALSE;
@@ -107,8 +107,8 @@ bool_t bign96Test()
 	brngCTRXStart(beltH() + 128, beltH() + 128 + 64,
 		beltH(), 8 * 32, brng_state);	
 	// управление ключами
-	if (bign96KeypairGen(privkey, pubkey, params, brngCTRXStepR, brng_state) != 
-		ERR_OK)
+	if (bign96KeypairGen(privkey, pubkey, params, brngCTRXStepR, 
+			brng_state) != ERR_OK)
 		return FALSE;
 	if (!hexEq(privkey,
 		"B1E1CDDFCF5DD7BA278390F292EEB72B"

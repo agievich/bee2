@@ -4,13 +4,14 @@
 \brief Benchmarks for STB 34.101.77 (bash)
 \project bee2/test
 \created 2014.07.15
-\version 2025.05.12
+\version 2025.09.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
 #include <stdio.h>
+#include <bee2/core/mem.h>
 #include <bee2/core/prng.h>
 #include <bee2/core/tm.h>
 #include <bee2/core/util.h>
@@ -27,9 +28,9 @@ extern const char bash_platform[];
 
 bool_t bashBench()
 {
-	octet belt_state[256];
-	octet bash_state[1024];
-	octet combo_state[256];
+	mem_align_t belt_state[256 / sizeof(mem_align_t)];
+	mem_align_t bash_state[1024 / sizeof(mem_align_t)];
+	mem_align_t combo_state[64 / sizeof(mem_align_t)];
 	octet buf[1024];
 	octet hash[64];
 	size_t l, d;
