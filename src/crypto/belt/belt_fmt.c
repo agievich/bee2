@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): FMT (format preserving encryption)
 \project bee2 [cryptographic library]
 \created 2017.09.28
-\version 2025.09.23
+\version 2025.09.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -73,12 +73,11 @@
 
 static size_t beltFMTCalcB(u32 mod, size_t count)
 {
-	const size_t m = W_OF_B(128);
-	word num[W_OF_B(128)];
-	word den[W_OF_B(128)];
+	enum {m = W_OF_B(128)};
+	word num[m];
+	word den[m];
 	size_t k;
-	mem_align_t stack[(O_OF_W(W_OF_B(128)) * 5 + sizeof(mem_align_t) - 1) / 
-		sizeof(mem_align_t)];
+	mem_align_t stack[O_OF_W(m) * 5 / sizeof(mem_align_t) + 1];
 	word* t0 = (word*)stack;
 	word* t1 = t0 + m;
 	word* t2 = t1 + m;

@@ -4,7 +4,7 @@
 \brief STB 34.101.47 (brng): algorithms of pseudorandom number generation
 \project bee2 [cryptographic library]
 \created 2013.01.31
-\version 2025.09.23
+\version 2025.09.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -23,20 +23,6 @@
 Ускорители: быстрые операции над блоками brng
 *******************************************************************************
 */
-
-static void brngBlockNeg(octet dest[32], const octet src[32])
-{
-	register size_t i = W_OF_O(32);
-	while (i--)
-		((word*)dest)[i] = ~((const word*)src)[i];
-}
-
-static void brngBlockXor2(octet dest[32], const octet src[32])
-{
-	register size_t i = W_OF_O(32);
-	while (i--)
-		((word*)dest)[i] ^= ((const word*)src)[i];
-}
 
 static void brngBlockInc(octet block[32])
 {
@@ -94,7 +80,8 @@ void brngCTRStart(void* state, const octet key[32], const octet iv[32])
 	else
 		memSetZero(s->s, 32);
 	//	r <- ~s
-	brngBlockNeg(s->r, s->s);
+	memCopy(s->r, s->s, 32);
+	memNeg(s->r, 32);
 	// нет выходных данных
 	s->reserved = 0;
 }
@@ -129,7 +116,7 @@ void brngCTRStepR(void* buf, size_t count, void* state)
 		beltHashStepG(buf, s->stack);
 		// next
 		brngBlockInc(s->s);
-		brngBlockXor2(s->r, buf);
+		memXor2(s->r, buf, 32);
 		buf = (octet*)buf + 32;
 		count -= 32;
 	}
@@ -149,7 +136,7 @@ void brngCTRStepR(void* buf, size_t count, void* state)
 		memCopy(buf, s->block, count);
 		// next
 		brngBlockInc(s->s);
-		brngBlockXor2(s->r, s->block);
+		memXor2(s->r, s->block, 32);
 		s->reserved = 32 - count;
 	}
 }

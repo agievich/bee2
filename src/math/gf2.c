@@ -545,7 +545,6 @@ bool_t gf2Create(qr_o* f, const size_t p[4], void* stack)
 		n1 = f->n + (p[0] % B_PER_W == 0);
 		f->no = O_OF_B(p[0]);
 		// сформировать mod
-		f->mod = (word*)f->descr;
 		wwSetZero(f->mod, n1);
 		wwSetBit(f->mod, p[0], 1);
 		wwSetBit(f->mod, p[1], 1);
@@ -555,7 +554,6 @@ bool_t gf2Create(qr_o* f, const size_t p[4], void* stack)
 		// сформировать unity
 		wwSetW(f->unity, f->n, 1);
 		// сформировать params
-		f->params = (size_t*)(f->unity + f->n);
 		t = (gf2_pentanom_st*)f->params;
 		t->m = p[0];
 		t->k = p[1];
