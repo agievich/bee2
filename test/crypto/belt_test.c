@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.31 (belt)
 \project bee2/test
 \created 2012.06.20
-\version 2025.09.28
+\version 2025.09.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -154,7 +154,7 @@ bool_t beltTest()
 		beltHMAC_keep()))
 		return FALSE;
 	// belt-H
-	beltHGen(state);
+	beltHGen((octet*)state);
 	if (!memEq(state, beltH(), 256))
 		return FALSE;
 	// belt-block: тест A.1-1

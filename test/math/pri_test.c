@@ -4,7 +4,7 @@
 \brief Tests for prime numbers
 \project bee2/test
 \created 2014.07.07
-\version 2025.09.28
+\version 2025.09.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -64,7 +64,7 @@ bool_t priTest()
 	// проверить гладкость и просеянность
 	if (sizeof(stack) < utilMax(2,
 			priIsSieved_deep(n),
-			priIsSmooth_deep(n)),
+			priIsSmooth_deep(n)) ||
 		priIsSieved(a, n, i, stack) ||
 		!priIsSmooth(a, n, i, stack))
 		return FALSE;
@@ -148,7 +148,7 @@ bool_t priTest()
 	a[0] = WORD_MAX - 29236;
 	if (sizeof(stack) < utilMax(2,
 			priIsSieved_deep(10),
-			priIsSGPrime_deep(W_OF_B(256))),
+			priIsSGPrime_deep(W_OF_B(256))) ||
 		!priIsSieved(a, W_OF_B(256), 10, stack) ||
 		!priIsSGPrime(a, W_OF_B(256), stack) != 0)
 		return FALSE;
