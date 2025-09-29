@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.79 (btok)
 \project bee2/test
 \created 2022.07.07
-\version 2025.09.28
+\version 2025.09.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -104,7 +104,7 @@ CV-сертификаты
 
 static bool_t btokCVCTest()
 {
-	mem_align_t echo_state[64 / sizeof(mem_align_t)];
+	mem_align_t state[64 / sizeof(mem_align_t)];
 	btok_cvc_t cvc0[1];
 	btok_cvc_t cvc1[1];
 	btok_cvc_t cvc2[1];
@@ -123,7 +123,7 @@ static bool_t btokCVCTest()
 	octet cert3[400];
 	size_t cert3_len, cert3_len1;
 	// запустить ГПСЧ
-	prngEchoStart(echo_state, beltH(), 256);
+	prngEchoStart(state, beltH(), 256);
 	// определить максимальную длину сертификата
 	memSetZero(cvc0, sizeof(btok_cvc_t));
 	strCopy(cvc0->authority, "BYCA00000000");
@@ -137,7 +137,7 @@ static bool_t btokCVCTest()
 		return FALSE;
 	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.3") != ERR_OK ||
 		bignKeypairGen(privkey0, cvc0->pubkey, params, prngEchoStepR,
-			echo_state) != ERR_OK ||
+			state) != ERR_OK ||
 		btokCVCCheck(cvc0) != ERR_OK)
 		return FALSE;
 	if (btokCVCWrap(0, 0, cvc0, privkey0, 64) != ERR_OK)
@@ -177,7 +177,7 @@ static bool_t btokCVCTest()
 	cvc1->pubkey_len = 96;
 	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.2") != ERR_OK ||
 		bignKeypairGen(privkey1, cvc1->pubkey, params, prngEchoStepR,
-			echo_state) != ERR_OK ||
+			state) != ERR_OK ||
 		btokCVCCheck(cvc1) != ERR_OK)
 		return FALSE;
 	// создать pre-cert1 (запрос на выпуск сертификата)
@@ -214,7 +214,7 @@ static bool_t btokCVCTest()
 	cvc2->pubkey_len = 64;
 	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK ||
 		bignKeypairGen(privkey2, cvc2->pubkey, params, prngEchoStepR,
-			echo_state) != ERR_OK ||
+			state) != ERR_OK ||
 		btokCVCCheck(cvc2) != ERR_OK)
 		return FALSE;
 	// выпустить cert2
@@ -238,7 +238,7 @@ static bool_t btokCVCTest()
 	cvc3->pubkey_len = 48;
 	if (bign96ParamsStd(params, "1.2.112.0.2.0.34.101.45.3.0") != ERR_OK ||
 		bign96KeypairGen(privkey3, cvc3->pubkey, params, prngEchoStepR,
-			echo_state) != ERR_OK ||
+			state) != ERR_OK ||
 		btokCVCCheck(cvc3) != ERR_OK)
 		return FALSE;
 	// выпустить cert3
@@ -460,8 +460,6 @@ static err_t bakeTestCertVal(octet* pubkey, const bign_params* params,
 static bool_t btokBAUTHTest() 
 {
 	bign_params params[1];
-	mem_align_t echoa[64 / sizeof(mem_align_t)];
-	mem_align_t echob[64 / sizeof(mem_align_t)];
 	bake_settings settingsa[1];
 	bake_settings settingsb[1];
 	octet da[32];
@@ -472,17 +470,19 @@ static bool_t btokBAUTHTest()
 	bake_cert certb[1];
 	octet keya[32];
 	octet keyb[32];
-	mem_align_t statea[16384 / sizeof(mem_align_t)];
-	mem_align_t stateb[16384 / sizeof(mem_align_t)];
+	mem_align_t echo_statea[64 / sizeof(mem_align_t)];
+	mem_align_t echo_stateb[64 / sizeof(mem_align_t)];
+	mem_align_t bauth_statea[16384 / sizeof(mem_align_t)];
+	mem_align_t bauth_stateb[16384 / sizeof(mem_align_t)];
 	octet buf[1000];
 	// загрузить долговременные параметры
 	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK)
 		return FALSE;
 	// подготовить память
-	if (sizeof(echoa) < prngEcho_keep() ||
-		sizeof(echob) < prngEcho_keep() ||
-		sizeof(statea) < btokBAuthT_keep(128) ||
-		sizeof(stateb) < btokBAuthCT_keep(128))
+	if (sizeof(echo_statea) < prngEcho_keep() ||
+		sizeof(echo_stateb) < prngEcho_keep() ||
+		sizeof(bauth_statea) < btokBAuthT_keep(128) ||
+		sizeof(bauth_stateb) < btokBAuthCT_keep(128))
 		return FALSE;
 	// загрузить личные ключи
 	hexTo(da, _da);
@@ -496,8 +496,8 @@ static bool_t btokBAUTHTest()
 	certb->len = strLen(_certb) / 2;
 	certa->val = certb->val = bakeTestCertVal;
 	// очистка
-	memSetZero(statea, sizeof(statea));
-	memSetZero(stateb, sizeof(stateb));
+	memSetZero(bauth_statea, sizeof(bauth_statea));
+	memSetZero(bauth_stateb, sizeof(bauth_stateb));
 	memSetZero(keya, sizeof(keya));
 	memSetZero(keyb, sizeof(keyb));
 	memSetZero(buf, sizeof(buf));
@@ -507,29 +507,31 @@ static bool_t btokBAUTHTest()
 	settingsa->kca = settingsb->kca = TRUE;
 	settingsa->kcb = settingsb->kcb = TRUE;
 	settingsa->rng = settingsb->rng = prngEchoStepR;
-	settingsa->rng_state = echoa;
-	settingsb->rng_state = echob;
-	prngEchoStart(echoa, beltH(), 128);
-	prngEchoStart(echob, beltH() + 128, 128);
+	settingsa->rng_state = echo_statea;
+	settingsb->rng_state = echo_stateb;
+	prngEchoStart(echo_statea, beltH(), 128);
+	prngEchoStart(echo_stateb, beltH() + 128, 128);
 	// инициализация
-	if (btokBAuthTStart(statea, params, settingsa, da, certa) != ERR_OK ||
-		btokBAuthCTStart(stateb, params, settingsb, db, certb) != ERR_OK)
+	if (btokBAuthTStart(bauth_statea, params, settingsa, da, 
+			certa) != ERR_OK ||
+		btokBAuthCTStart(bauth_stateb, params, settingsb, db, 
+			certb) != ERR_OK)
 		return FALSE;
 	// шаги протокола, с аутентификацией КТ
-	if (btokBAuthCTStep2(buf, certa, stateb) != ERR_OK ||
-		btokBAuthTStep3(buf, buf, statea) != ERR_OK ||
-		btokBAuthCTStep4(buf, buf, stateb) != ERR_OK ||
+	if (btokBAuthCTStep2(buf, certa, bauth_stateb) != ERR_OK ||
+		btokBAuthTStep3(buf, buf, bauth_statea) != ERR_OK ||
+		btokBAuthCTStep4(buf, buf, bauth_stateb) != ERR_OK ||
 		btokBAuthTStep5(buf, 8 + 32 + certb->len,
-			bakeTestCertVal, statea) != ERR_OK)
+			bakeTestCertVal, bauth_statea) != ERR_OK)
 		return FALSE;
 	// извлечение ключей
-	if (btokBAuthCTStepG(keyb, stateb) != ERR_OK ||
-		btokBAuthTStepG(keya, statea) != ERR_OK ||
+	if (btokBAuthCTStepG(keyb, bauth_stateb) != ERR_OK ||
+		btokBAuthTStepG(keya, bauth_statea) != ERR_OK ||
 		!memEq(keya, keyb, 32))
 		return FALSE;
 	// очистка
-	memSetZero(statea, sizeof(statea));
-	memSetZero(stateb, sizeof(stateb));
+	memSetZero(bauth_statea, sizeof(bauth_statea));
+	memSetZero(bauth_stateb, sizeof(bauth_stateb));
 	memSetZero(keya, sizeof(keya));
 	memSetZero(keyb, sizeof(keyb));
 	memSetZero(buf, sizeof(buf));
@@ -539,22 +541,24 @@ static bool_t btokBAUTHTest()
 	settingsa->kca = settingsb->kca = TRUE;
 	settingsa->kcb = settingsb->kcb = FALSE;
 	settingsa->rng = settingsb->rng = prngEchoStepR;
-	settingsa->rng_state = echoa;
-	settingsb->rng_state = echob;
-	prngEchoStart(echoa, beltH(), 128);
-	prngEchoStart(echob, beltH() + 128, 128);
+	settingsa->rng_state = echo_statea;
+	settingsb->rng_state = echo_stateb;
+	prngEchoStart(echo_statea, beltH(), 128);
+	prngEchoStart(echo_stateb, beltH() + 128, 128);
 	// инициализация
-	if (btokBAuthTStart(statea, params, settingsa, da, certa) != ERR_OK ||
-		btokBAuthCTStart(stateb, params, settingsb, db, certb) != ERR_OK)
+	if (btokBAuthTStart(bauth_statea, params, settingsa, da, 
+			certa) != ERR_OK ||
+		btokBAuthCTStart(bauth_stateb, params, settingsb, db, 
+			certb) != ERR_OK)
 		return FALSE;
 	// шаги протокола, без аутентификациии КТ
-	if (btokBAuthCTStep2(buf, certa, stateb) != ERR_OK ||
-		btokBAuthTStep3(buf, buf, statea) != ERR_OK ||
-		btokBAuthCTStep4(buf, buf, stateb) != ERR_OK)
+	if (btokBAuthCTStep2(buf, certa, bauth_stateb) != ERR_OK ||
+		btokBAuthTStep3(buf, buf, bauth_statea) != ERR_OK ||
+		btokBAuthCTStep4(buf, buf, bauth_stateb) != ERR_OK)
 		return FALSE;
 	// извлечение ключей
-	if (btokBAuthCTStepG(keyb, stateb) != ERR_OK ||
-		btokBAuthTStepG(keya, statea) != ERR_OK ||
+	if (btokBAuthCTStepG(keyb, bauth_stateb) != ERR_OK ||
+		btokBAuthTStepG(keya, bauth_statea) != ERR_OK ||
 		!memEq(keya, keyb, 32))
 		return FALSE;
 	// все нормально

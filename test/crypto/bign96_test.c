@@ -4,7 +4,7 @@
 \brief Tests for bign96 signatures
 \project bee2/test
 \created 2021.01.20
-\version 2025.09.28
+\version 2025.09.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -90,9 +90,9 @@ bool_t bign96Test()
 	octet pubkey[48];
 	octet hash[32];
 	octet sig[34];
-	mem_align_t brng_state[1024 / sizeof(mem_align_t)];
+	mem_align_t state[1024 / sizeof(mem_align_t)];
 	// подготовить память
-	if (sizeof(brng_state) < brngCTRX_keep())
+	if (sizeof(state) < brngCTRX_keep())
 		return FALSE;
 	// проверить параметры
 	if (bign96ParamsStd(params, "1.2.112.0.2.0.34.101.45.3.0") != ERR_OK ||
@@ -104,11 +104,9 @@ bool_t bign96Test()
 		!= ERR_OK || oid_len != 11)
 		return FALSE;
 	// инициализировать ГПСЧ
-	brngCTRXStart(beltH() + 128, beltH() + 128 + 64,
-		beltH(), 8 * 32, brng_state);	
+	brngCTRXStart(beltH() + 128, beltH() + 128 + 64, beltH(), 8 * 32, state);	
 	// управление ключами
-	if (bign96KeypairGen(privkey, pubkey, params, brngCTRXStepR, 
-			brng_state) != ERR_OK)
+	if (bign96KeypairGen(privkey, pubkey, params, brngCTRXStepR, state) != ERR_OK)
 		return FALSE;
 	if (!hexEq(privkey,
 		"B1E1CDDFCF5DD7BA278390F292EEB72B"
@@ -132,8 +130,8 @@ bool_t bign96Test()
 	// выработка и проверка подписи
 	if (beltHash(hash, beltH(), 13) != ERR_OK)
 		return FALSE;
-	if (bign96Sign(sig, params, oid_der, oid_len, hash, privkey,
-		brngCTRXStepR, brng_state) != ERR_OK)
+	if (bign96Sign(sig, params, oid_der, oid_len, hash, privkey, 
+			brngCTRXStepR, state) != ERR_OK)
 		return FALSE;
 	if (!hexEq(sig, 
 		"4981BBDD8721C08FA347B89BD16FDDE6"

@@ -4,7 +4,7 @@
 \brief Tests for the arithmetic of binary polynomials
 \project bee2/test
 \created 2023.11.09
-\version 2023.11.10
+\version 2025.09.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -140,20 +140,20 @@ static bool_t ppTestRed()
 	word t[2 * n];
 	word t1[2 * n];
 	word mod[n];
-	mem_align_t combo_state[64 / sizeof(mem_align_t)];
+	mem_align_t state[64 / sizeof(mem_align_t)];
 	mem_align_t stack[2048 / sizeof(mem_align_t)];
 	// подготовить память
-	if (sizeof(combo_state) < prngCOMBO_keep() ||
+	if (sizeof(state) < prngCOMBO_keep() ||
 		sizeof(stack) < ppRed_deep(n))
 		return FALSE;
 	// инициализировать генератор COMBO
-	prngCOMBOStart(combo_state, utilNonce32());
+	prngCOMBOStart(state, utilNonce32());
 	// редукция
 	while (reps--)
 	{
 		size_t m;
 		// генерация
-		prngCOMBOStepR(a, O_OF_W(2 * n), combo_state);
+		prngCOMBOStepR(a, O_OF_W(2 * n), state);
 		// ppRed / ppRedTrinomial[kb233]
 		ASSERT(W_OF_B(233) == W_OF_B(234));
 		m = W_OF_B(233);
@@ -222,6 +222,5 @@ static bool_t ppTestRed()
 
 bool_t ppTest()
 {
-	return ppTestExps16() && 
-		ppTestRed();
+	return ppTestExps16() && ppTestRed();
 }

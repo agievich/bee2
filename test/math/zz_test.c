@@ -31,18 +31,18 @@ static bool_t zzTestAdd()
 	word b[n];
 	word c[n];
 	word c1[n];
-	octet combo_state[32];
+	octet state[32];
 	// подготовить память
-	if (sizeof(combo_state) < prngCOMBO_keep())
+	if (sizeof(state) < prngCOMBO_keep())
 		return FALSE;
 	// инициализировать генератор COMBO
-	prngCOMBOStart(combo_state, utilNonce32());
+	prngCOMBOStart(state, utilNonce32());
 	// сложение / вычитание
 	while (reps--)
 	{
 		word carry;
-		prngCOMBOStepR(a, O_OF_W(n), combo_state);
-		prngCOMBOStepR(b, O_OF_W(n), combo_state);
+		prngCOMBOStepR(a, O_OF_W(n), state);
+		prngCOMBOStepR(b, O_OF_W(n), state);
 		// zzAdd / zzSub / zzIsSumEq
 		carry = zzAdd(c, a, b, n);
 		if (zzSub(c1, c, b, n) != carry || 
@@ -111,10 +111,10 @@ static bool_t zzTestMul()
 	word c1[2 * n];
 	word b1[n + 1];
 	word r1[n];
-	mem_align_t combo_state[64 / sizeof(mem_align_t)];
+	mem_align_t state[64 / sizeof(mem_align_t)];
 	mem_align_t stack[2048 / sizeof(mem_align_t)];
 	// подготовить память
-	if (sizeof(combo_state) < prngCOMBO_keep() ||
+	if (sizeof(state) < prngCOMBO_keep() ||
 		sizeof(stack) < utilMax(4,
 			zzMul_deep(n, n),
 			zzSqr_deep(n),
@@ -122,14 +122,14 @@ static bool_t zzTestMul()
 			zzMod_deep(2 * n, n)))
 		return FALSE;
 	// инициализировать генератор COMBO
-	prngCOMBOStart(combo_state, utilNonce32());
+	prngCOMBOStart(state, utilNonce32());
 	// умножение / деление
 	while (reps--)
 	{
 		size_t na, nb;
 		word w;
-		prngCOMBOStepR(a, O_OF_W(n), combo_state);
-		prngCOMBOStepR(b, O_OF_W(n), combo_state);
+		prngCOMBOStepR(a, O_OF_W(n), state);
+		prngCOMBOStepR(b, O_OF_W(n), state);
 		// zzSqr / zzMul
 		for (na = 1; na <= n; ++na)
 		{
@@ -142,7 +142,7 @@ static bool_t zzTestMul()
 		for (na = 1; na <= n; ++na)
 		{
 			a[na - 1] = a[na - 1] ? a[na - 1] : WORD_1;
-			zzRandMod(r, a, na, prngCOMBOStepR, combo_state);
+			zzRandMod(r, a, na, prngCOMBOStepR, state);
 			for (nb = 1; nb <= n; ++nb)
 			{
 				zzMul(c, a, na, b, nb, stack);
@@ -219,10 +219,10 @@ static bool_t zzTestMod()
 	word t[n];
 	word t1[n];
 	word mod[n];
-	mem_align_t combo_state[64 / sizeof(mem_align_t)];
+	mem_align_t state[64 / sizeof(mem_align_t)];
 	mem_align_t stack[2048 / sizeof(mem_align_t)];
 	// подготовить память
-	if (sizeof(combo_state) < prngCOMBO_keep() ||
+	if (sizeof(state) < prngCOMBO_keep() ||
 		sizeof(stack) < utilMax(10,
 			zzPowerMod_deep(n, 1),
 			zzMulMod_deep(n),
@@ -236,12 +236,12 @@ static bool_t zzTestMod()
 			zzAlmostInvMod_deep(n)))
 		return FALSE;
 	// инициализировать генератор COMBO
-	prngCOMBOStart(combo_state, utilNonce32());
+	prngCOMBOStart(state, utilNonce32());
 	// возведение в степень
 	wwRepW(mod, n, WORD_MAX);
 	if (!zzIsOdd(mod, n) || zzIsEven(mod, n))
 		return FALSE;
-	if (!zzRandMod(a, mod, n, prngCOMBOStepR, combo_state))
+	if (!zzRandMod(a, mod, n, prngCOMBOStepR, state))
 		return FALSE;
 	b[0] = 3;
 	zzPowerMod(t, a, n, b, 1, mod, stack);
@@ -254,9 +254,9 @@ static bool_t zzTestMod()
 	{
 		size_t k;
 		// генерация
-		prngCOMBOStepR(mod, O_OF_W(n), combo_state);
-		prngCOMBOStepR(a, O_OF_W(n), combo_state);
-		prngCOMBOStepR(b, O_OF_W(n), combo_state);
+		prngCOMBOStepR(mod, O_OF_W(n), state);
+		prngCOMBOStepR(a, O_OF_W(n), state);
+		prngCOMBOStepR(b, O_OF_W(n), state);
 		if (mod[n - 1] == 0)
 			mod[n - 1] = WORD_MAX;
 		zzMod(a, a, n, mod, n, stack);
@@ -364,10 +364,10 @@ static bool_t zzTestGCD()
 	word t1[2 * n];
 	word p[2 * n];
 	word p1[3 * n];
-	mem_align_t combo_state[64 / sizeof(mem_align_t)];
+	mem_align_t state[64 / sizeof(mem_align_t)];
 	mem_align_t stack[2048 / sizeof(mem_align_t)];
 	// подготовить память
-	if (sizeof(combo_state) < prngCOMBO_keep() ||
+	if (sizeof(state) < prngCOMBO_keep() ||
 		sizeof(stack) < utilMax(4,
 			zzMul_deep(n, n),
 			zzGCD_deep(n, n),
@@ -375,14 +375,14 @@ static bool_t zzTestGCD()
 			zzExGCD_deep(n, n)))
 		return FALSE;
 	// инициализировать генератор COMBO
-	prngCOMBOStart(combo_state, utilNonce32());
+	prngCOMBOStart(state, utilNonce32());
 	// эксперименты
 	while (reps--)
 	{
 		size_t na, nb;
 		// генерация
-		prngCOMBOStepR(a, O_OF_W(n), combo_state);
-		prngCOMBOStepR(b, O_OF_W(n), combo_state);
+		prngCOMBOStepR(a, O_OF_W(n), state);
+		prngCOMBOStepR(b, O_OF_W(n), state);
 		a[0] = a[0] ? a[0] : 1;
 		b[0] = b[0] ? b[0] : 2;
 		// цикл по длинами
@@ -417,10 +417,10 @@ static bool_t zzTestRed()
 	word t1[2 * n];
 	word barr_param[n + 2];
 	word mod[n];
-	mem_align_t combo_state[64 / sizeof(mem_align_t)];
+	mem_align_t state[64 / sizeof(mem_align_t)];
 	mem_align_t stack[2048 / sizeof(mem_align_t)];
 	// подготовить память
-	if (sizeof(combo_state) < prngCOMBO_keep() ||
+	if (sizeof(state) < prngCOMBO_keep() ||
 		sizeof(stack) < utilMax(6,
 			zzRed_deep(n),
 			zzRedCrand_deep(n),
@@ -430,13 +430,13 @@ static bool_t zzTestRed()
 			zzRedCrandMont_deep(n)))
 		return FALSE;
 	// инициализировать генератор COMBO
-	prngCOMBOStart(combo_state, utilNonce32());
+	prngCOMBOStart(state, utilNonce32());
 	// редукция
 	while (reps--)
 	{
 		// генерация
-		prngCOMBOStepR(mod, O_OF_W(n), combo_state);
-		prngCOMBOStepR(a, O_OF_W(2 * n), combo_state);
+		prngCOMBOStepR(mod, O_OF_W(n), state);
+		prngCOMBOStepR(a, O_OF_W(2 * n), state);
 		mod[n - 1] = mod[n - 1] ? mod[n - 1] : 1;
 		// zzRed / zzRedBarr
 		wwCopy(t, a, 2 * n);
@@ -509,23 +509,23 @@ static bool_t zzTestEtc()
 	word a[n];
 	word b[2 * n];
 	word t[(2 * n + 1) / 2];
-	mem_align_t combo_state[64 / sizeof(mem_align_t)];
+	mem_align_t state[64 / sizeof(mem_align_t)];
 	mem_align_t stack[2048 / sizeof(mem_align_t)];
 	// подготовить память
-	if (sizeof(combo_state) < prngCOMBO_keep() ||
+	if (sizeof(state) < prngCOMBO_keep() ||
 		sizeof(stack) < utilMax(3,
 			zzSqr_deep(n),
 			zzSqrt_deep(n),
 			zzJacobi_deep(2 * n, n)))
 		return FALSE;
 	// инициализировать генератор COMBO
-	prngCOMBOStart(combo_state, utilNonce32());
+	prngCOMBOStart(state, utilNonce32());
 	// символ Якоби
 	while (reps1--)
 	{
-		prngCOMBOStepR(a, O_OF_W(n), combo_state);
+		prngCOMBOStepR(a, O_OF_W(n), state);
 		zzSqr(b, a, n, stack);
-		prngCOMBOStepR(t, O_OF_W(n), combo_state);
+		prngCOMBOStepR(t, O_OF_W(n), state);
 		t[0] |= 1;
 		// (a^2 / t) != -1?
 		if (zzJacobi(b, 2 * n, t, n, stack) == -1)
@@ -534,7 +534,7 @@ static bool_t zzTestEtc()
 	// квадратные корни
 	while (reps2--)
 	{
-		prngCOMBOStepR(a, O_OF_W(n), combo_state);
+		prngCOMBOStepR(a, O_OF_W(n), state);
 		// sqrt(a^2) == a?
 		zzSqr(b, a, n, stack);
 		zzSqrt(t, b, 2 * n, stack);
