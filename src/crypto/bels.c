@@ -4,7 +4,7 @@
 \brief STB 34.101.60 (bels): secret sharing algorithms
 \project bee2 [cryptographic library]
 \created 2013.05.14
-\version 2025.09.26
+\version 2025.09.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -270,25 +270,32 @@ err_t belsGenMid(octet mid[], size_t len, const octet m0[], const octet id[],
 *******************************************************************************
 */
 
+#define belsGenk_state()\
+/* in_state */	MAX2(beltCTR_keep(), beltCompr_deep()),\
+/* iv */		(size_t)32,\
+/* K */			(size_t)(16 * 4) | SIZE_HI,\
+/* key */		(size_t)32
+
 static size_t belsGenk_keep()
 {
-	return MAX2(beltCTR_keep(), beltCompr_deep()) + 32 + 64;
+	return memSliceSize(belsGenk_state(), SIZE_MAX);
 }
 
 static void belsGenkStart(void* state, const octet s[], size_t count,
 	size_t threshold, size_t len)
 {
-	octet* key;
-	octet* iv;
-	u32* K;
+	void* in_state; 	/* [MAX2(beltCTR_keep(), beltCompr_deep())] */
+	octet* iv;			/* [32] */
+	u32* K;				/* [16] (|iv) */
+	octet* key;			/* [32] */
 	// pre
 	ASSERT(memIsValid(state, belsGenk_keep()));
 	ASSERT(len == 16 || len == 24 || len == 32);
 	ASSERT(memIsValid(s, len));
 	// раскладка state
-	key = (octet*)state + MAX2(beltCTR_keep(), beltCompr_deep());
-	iv = key + 32;
-	K = (u32*)iv;
+	memSlice(state,
+		belsGenk_state(), SIZE_MAX,
+		&in_state, &iv, &K, &key);
 	// K <- belt-keyexpand(s)
 	beltKeyExpand2(K, s, len);
 	// key <- belt-compress(~K || K)
