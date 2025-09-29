@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2012.04.19
-\version 2025.09.05
+\version 2025.09.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -383,7 +383,7 @@ typedef struct ec_o
 	ec_dbla_i dbla;			/*!< функция удвоения аффинной точки */
 	ec_tpl_i tpl;			/*!< функция утроения */
 	size_t deep;			/*!< максимальная глубина стека функций */
-	octet descr[];			/*!< память для размещения данных */
+	mem_align_t descr[];	/*!< память для размещения данных */
 } ec_o;
 
 /*

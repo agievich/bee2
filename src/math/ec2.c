@@ -4,7 +4,7 @@
 \brief Elliptic curves over binary fields
 \project bee2 [cryptographic library]
 \created 2012.06.26
-\version 2025.09.26
+\version 2025.09.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -600,6 +600,13 @@ static size_t ec2SubALD_deep(size_t n, size_t f_deep)
 		SIZE_MAX);
 }
 
+#define ec2CreateLD_state(n)\
+/* A */			O_OF_W(n),\
+/* B */			O_OF_W(n),\
+/* base */		O_OF_W(2 * n),\
+/* order */		O_OF_W(n + 1),\
+/* params */	SIZE_0
+
 bool_t ec2CreateLD(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	void* stack)
 {
@@ -609,18 +616,17 @@ bool_t ec2CreateLD(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	ASSERT(memIsValid(B, f->no));
 	// обнулить
 	memSetZero(ec, sizeof(ec_o));
-	// зафикисровать размерности
+	// зафиксировать размерности
 	ec->d = 3;
 	// запомнить базовое поле
 	ec->f = f;
+	// разметить состояние
+	memSlice(ec->descr,
+		ec2CreateLD_state(f->n), SIZE_MAX,
+		&ec->A, &ec->B, &ec->base, &ec->order, &ec->params);
 	// сохранить коэффициенты
-	ec->A = (word*)ec->descr;
-	ec->B = ec->A + f->n;
 	if (!qrFrom(ec->A, A, ec->f, stack) || !qrFrom(ec->B, B, ec->f, stack))
 		return FALSE;
-	// подготовить буферы для описания группы точек
-	ec->base = ec->B + f->n;
-	ec->order = ec->base + 2 * f->n;
 	// настроить интерфейсы
 	ec->froma = ec2FromALD;
 	ec->toa = ec2ToALD;
@@ -641,7 +647,8 @@ bool_t ec2CreateLD(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 		ec2DblLD_deep(f->n, f->deep),
 		ec2DblALD_deep(f->n, f->deep));
 	// настроить заголовок
-	ec->hdr.keep = sizeof(ec_o) + O_OF_W(5 * f->n + 1);
+	ec->hdr.keep = sizeof(ec_o) + 
+		memSliceSize(ec2CreateLD_state(f->n), SIZE_MAX);
 	ec->hdr.p_count = 6;
 	ec->hdr.o_count = 1;
 	// все нормально
@@ -650,7 +657,8 @@ bool_t ec2CreateLD(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 
 size_t ec2CreateLD_keep(size_t n)
 {
-	return sizeof(ec_o) + O_OF_W(5 * n + 1);
+	return sizeof(ec_o) + 
+		memSliceSize(ec2CreateLD_state(n), SIZE_MAX);
 }
 
 size_t ec2CreateLD_deep(size_t n, size_t f_deep)

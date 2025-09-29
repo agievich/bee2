@@ -4,7 +4,7 @@
 \brief Quotient rings
 \project bee2 [cryptographic library]
 \created 2013.08.09
-\version 2015.09.01
+\version 2015.09.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -21,6 +21,7 @@
 #define __BEE2_QR_H
 
 #include "bee2/defs.h"
+#include "bee2/core/mem.h"
 #include "bee2/core/obj.h"
 
 #ifdef __cplusplus
@@ -315,25 +316,25 @@ typedef void (*qr_div_i)(
 */
 typedef struct qr_o
 {
-	obj_hdr_t hdr;		/*!< заголовок */
+	obj_hdr_t hdr;			/*!< заголовок */
 // ptr_table {
-	word* mod;			/*!< модуль */
-	word* unity;		/*!< мультипликативная единица */
-	void* params;		/*!< дополнительные параметры */
+	word* mod;				/*!< модуль */
+	word* unity;			/*!< мультипликативная единица */
+	void* params;			/*!< дополнительные параметры */
 // }
-	size_t n;			/*!< размерность */
-	size_t no;			/*!< длина кодового представления */
-	qr_from_i from;		/*!< функция импорта */
-	qr_to_i to;			/*!< функция экспорта */
-	qr_add_i add;		/*!< функция сложения */
-	qr_sub_i sub;		/*!< функция вычитания */
-	qr_neg_i neg;		/*!< функция аддитивного обращения */
-	qr_mul_i mul;		/*!< функция умножения */
-	qr_sqr_i sqr;		/*!< функция возведения в квадрат */
-	qr_inv_i inv;		/*!< функция мультипликативного обращения */
-	qr_div_i div;		/*!< функция деления */
-	size_t deep;		/*!< максимальная глубина стека функций */
-	octet descr[];		/*!< память для размещения данных */
+	size_t n;				/*!< размерность */
+	size_t no;				/*!< длина кодового представления */
+	qr_from_i from;			/*!< функция импорта */
+	qr_to_i to;				/*!< функция экспорта */
+	qr_add_i add;			/*!< функция сложения */
+	qr_sub_i sub;			/*!< функция вычитания */
+	qr_neg_i neg;			/*!< функция аддитивного обращения */
+	qr_mul_i mul;			/*!< функция умножения */
+	qr_sqr_i sqr;			/*!< функция возведения в квадрат */
+	qr_inv_i inv;			/*!< функция мультипликативного обращения */
+	qr_div_i div;			/*!< функция деления */
+	size_t deep;			/*!< максимальная глубина стека функций */
+	mem_align_t descr[];	/*!< память для размещения данных */
 } qr_o;
 
 /*

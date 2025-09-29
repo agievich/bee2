@@ -4,7 +4,7 @@
 \brief Elliptic curves over prime fields
 \project bee2 [cryptographic library]
 \created 2012.06.26
-\version 2025.09.26
+\version 2025.09.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -904,11 +904,21 @@ static size_t ecpTplJA3_deep(size_t n, size_t f_deep)
 		SIZE_MAX);
 }
 
+#define ecpCreateJ_state(n)\
+/* A */			O_OF_W(n),\
+/* B */			O_OF_W(n),\
+/* base */		O_OF_W(2 * n),\
+/* order */		O_OF_W(n + 1),\
+/* params */	SIZE_0
+
+#define ecpCreateJ_local(n)\
+/* t */			O_OF_W(n)
+
 bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[], 
 	void* stack)
 {
 	register bool_t bA3;
-	word* t;
+	word* t; 			/* [n] */
 	// pre
 	ASSERT(memIsValid(ec, sizeof(ec_o)));
 	ASSERT(gfpIsOperable(f));
@@ -923,21 +933,22 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	ec->d = 3;
 	// запомнить базовое поле
 	ec->f = f;
+	// разметить состояние и стек
+	memSlice(ec->descr,
+		ecpCreateJ_state(f->n), SIZE_MAX,
+		&ec->A, &ec->B, &ec->base, &ec->order, &ec->params);
+	memSlice(stack,
+		ecpCreateJ_local(f->n), SIZE_0, SIZE_MAX,
+		&t, &stack);
 	// сохранить коэффициенты
-	ec->A = (word*)ec->descr;
-	ec->B = ec->A + f->n;
 	if (!qrFrom(ec->A, A, ec->f, stack) || !qrFrom(ec->B, B, ec->f, stack))
 		return FALSE;
 	// t <- -3
-	t = (word*)stack;
 	gfpDouble(t, f->unity, f);
 	zmAdd(t, t, f->unity, f);
 	zmNeg(t, t, f);
 	// bA3 <- A == -3?
 	bA3 = qrCmp(t, ec->A, f) == 0;
-	// подготовить буферы для описания группы точек
-	ec->base = ec->B + f->n;
-	ec->order = ec->base + 2 * f->n;
 	// настроить интерфейсы
 	ec->froma = ecpFromAJ;
 	ec->toa = ecpToAJ;
@@ -959,7 +970,8 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 		ecpDblAJ_deep(f->n, f->deep),
 		bA3 ? ecpTplJA3_deep(f->n, f->deep) : ecpTplJ_deep(f->n, f->deep));
 	// настроить
-	ec->hdr.keep = sizeof(ec_o) + O_OF_W(5 * f->n + 1);
+	ec->hdr.keep = sizeof(ec_o) + 
+		memSliceSize(ecpCreateJ_state(f->n), SIZE_MAX);
 	ec->hdr.p_count = 6;
 	ec->hdr.o_count = 1;
 	// все нормально
@@ -969,23 +981,27 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 
 size_t ecpCreateJ_keep(size_t n)
 {
-	return sizeof(ec_o) + O_OF_W(5 * n + 1);
+	return sizeof(ec_o) + 
+		memSliceSize(ecpCreateJ_state(n), SIZE_MAX);
 }
 
 size_t ecpCreateJ_deep(size_t n, size_t f_deep)
 {
-	return utilMax(11,
-		O_OF_W(n),
-		ecpToAJ_deep(n, f_deep),
-		ecpAddJ_deep(n, f_deep),
-		ecpAddAJ_deep(n, f_deep),
-		ecpSubJ_deep(n, f_deep),
-		ecpSubAJ_deep(n, f_deep),
-		ecpDblJ_deep(n, f_deep),
-		ecpDblJA3_deep(n, f_deep),
-		ecpDblAJ_deep(n, f_deep),
-		ecpTplJ_deep(n, f_deep),
-		ecpTplJA3_deep(n, f_deep));
+	return memSliceSize(
+		ecpCreateJ_local(n),
+		utilMax(11,
+			O_OF_W(n),
+			ecpToAJ_deep(n, f_deep),
+			ecpAddJ_deep(n, f_deep),
+			ecpAddAJ_deep(n, f_deep),
+			ecpSubJ_deep(n, f_deep),
+			ecpSubAJ_deep(n, f_deep),
+			ecpDblJ_deep(n, f_deep),
+			ecpDblJA3_deep(n, f_deep),
+			ecpDblAJ_deep(n, f_deep),
+			ecpTplJ_deep(n, f_deep),
+			ecpTplJA3_deep(n, f_deep)),
+		SIZE_MAX);
 }
 
 /*

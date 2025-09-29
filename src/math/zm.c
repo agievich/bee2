@@ -4,7 +4,7 @@
 \brief Quotient rings of integers modulo m
 \project bee2 [cryptographic library]
 \created 2013.09.14
-\version 2025.09.26
+\version 2025.09.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -140,6 +140,11 @@ static size_t zmDiv_deep(size_t n)
 	return zzDivMod_deep(n);
 }
 
+#define zmCreatePlain_state(n)\
+/* mod */		O_OF_W(n),\
+/* unity */		O_OF_W(n),\
+/* params */	SIZE_0
+
 void zmCreatePlain(qr_o* r, const octet mod[], size_t no, void* stack)
 {
 	ASSERT(memIsValid(r, sizeof(qr_o)));
@@ -148,15 +153,15 @@ void zmCreatePlain(qr_o* r, const octet mod[], size_t no, void* stack)
 	// зафиксировать размерности
 	r->n = W_OF_O(no);
 	r->no = no;
+	// разметить состояние
+	memSlice(r->descr,
+		zmCreatePlain_state(r->n), SIZE_MAX,
+		&r->mod, &r->unity, &r->params);
 	// зафиксировать модуль
-	r->mod = (word*)r->descr;
 	wwFrom(r->mod, mod, no);
 	// подготовить единицу
-	r->unity = r->mod + r->n;
 	r->unity[0] = 1;
 	wwSetZero(r->unity + 1, r->n - 1);
-	// не использовать параметры
-	r->params = 0;
 	// настроить функции
 	r->from = zmFrom;
 	r->to = zmTo;
@@ -173,7 +178,8 @@ void zmCreatePlain(qr_o* r, const octet mod[], size_t no, void* stack)
 		zmInv_deep(r->n),
 		zmDiv_deep(r->n));
 	// настроить заголовок
-	r->hdr.keep = sizeof(qr_o) + O_OF_W(2 * r->n);
+	r->hdr.keep = sizeof(qr_o) + 
+		memSliceSize(zmCreatePlain_state(r->n), SIZE_MAX);
 	r->hdr.p_count = 3;
 	r->hdr.o_count = 0;
 }
@@ -181,7 +187,8 @@ void zmCreatePlain(qr_o* r, const octet mod[], size_t no, void* stack)
 size_t zmCreatePlain_keep(size_t no)
 {
 	const size_t n = W_OF_O(no);
-	return sizeof(qr_o) + O_OF_W(2 * n);
+	return sizeof(qr_o) + 
+		memSliceSize(zmCreatePlain_state(n), SIZE_MAX);
 }
 
 size_t zmCreatePlain_deep(size_t no)
@@ -254,6 +261,11 @@ static size_t zmSqrCrand_deep(size_t n)
 		SIZE_MAX);
 }
 
+#define zmCreateCrand_state(n)\
+/* mod */		O_OF_W(n),\
+/* unity */		O_OF_W(n),\
+/* params */	SIZE_0
+
 void zmCreateCrand(qr_o* r, const octet mod[], size_t no, void* stack)
 {
 	ASSERT(memIsValid(r, sizeof(qr_o)));
@@ -265,15 +277,15 @@ void zmCreateCrand(qr_o* r, const octet mod[], size_t no, void* stack)
 	// зафиксировать размерности
 	r->n = W_OF_O(no);
 	r->no = no;
+	// разметить состояние
+	memSlice(r->descr,
+		zmCreateCrand_state(r->n), SIZE_MAX,
+		&r->mod, &r->unity, &r->params);
 	// зафиксировать модуль
-	r->mod = (word*)r->descr;
 	wwFrom(r->mod, mod, no);
 	// подготовить единицу
-	r->unity = r->mod + r->n;
 	r->unity[0] = 1;
 	wwSetZero(r->unity + 1, r->n - 1);
-	// не использовать параметры
-	r->params = 0;
 	// настроить функции
 	r->from = zmFrom;
 	r->to = zmTo;
@@ -290,7 +302,8 @@ void zmCreateCrand(qr_o* r, const octet mod[], size_t no, void* stack)
 		zmInv_deep(r->n),
 		zmDiv_deep(r->n));
 	// настроить заголовок
-	r->hdr.keep = sizeof(qr_o) + O_OF_W(2 * r->n);
+	r->hdr.keep = sizeof(qr_o) + 
+		memSliceSize(zmCreateCrand_state(r->n), SIZE_MAX);
 	r->hdr.p_count = 3;
 	r->hdr.o_count = 0;
 }
@@ -298,7 +311,8 @@ void zmCreateCrand(qr_o* r, const octet mod[], size_t no, void* stack)
 size_t zmCreateCrand_keep(size_t no)
 {
 	const size_t n = W_OF_O(no);
-	return sizeof(qr_o) + O_OF_W(2 * n);
+	return sizeof(qr_o) + 
+		memSliceSize(zmCreateCrand_state(n), SIZE_MAX);
 }
 
 size_t zmCreateCrand_deep(size_t no)
@@ -371,6 +385,11 @@ static size_t zmSqrBarr_deep(size_t n)
 		SIZE_MAX);
 }
 
+#define zmCreateBarr_state(n)\
+/* mod */		O_OF_W(n),\
+/* unity */		O_OF_W(n),\
+/* params */	O_OF_W(n + 2)
+
 void zmCreateBarr(qr_o* r, const octet mod[], size_t no, void* stack)
 {
 	ASSERT(memIsValid(r, sizeof(qr_o)));
@@ -379,15 +398,16 @@ void zmCreateBarr(qr_o* r, const octet mod[], size_t no, void* stack)
 	// зафиксировать размерности
 	r->n = W_OF_O(no);
 	r->no = no;
+	// разметить состояние
+	memSlice(r->descr,
+		zmCreateBarr_state(r->n), SIZE_MAX,
+		&r->mod, &r->unity, &r->params);
 	// зафиксировать модуль
-	r->mod = (word*)r->descr;
 	wwFrom(r->mod, mod, no);
 	// подготовить единицу
-	r->unity = r->mod + r->n;
 	r->unity[0] = 1;
 	wwSetZero(r->unity + 1, r->n - 1);
 	// подготовить параметры
-	r->params = r->unity + r->n;
 	zzRedBarrStart(r->params, r->mod, r->n, stack);
 	// настроить функции
 	r->from = zmFrom;
@@ -405,7 +425,8 @@ void zmCreateBarr(qr_o* r, const octet mod[], size_t no, void* stack)
 		zmInv_deep(r->n),
 		zmDiv_deep(r->n));
 	// настроить заголовок
-	r->hdr.keep = sizeof(qr_o) + O_OF_W(3 * r->n + 2);
+	r->hdr.keep = sizeof(qr_o) + 
+		memSliceSize(zmCreateBarr_state(r->n), SIZE_MAX);
 	r->hdr.p_count = 3;
 	r->hdr.o_count = 0;
 }
@@ -413,7 +434,8 @@ void zmCreateBarr(qr_o* r, const octet mod[], size_t no, void* stack)
 size_t zmCreateBarr_keep(size_t no)
 {
 	const size_t n = W_OF_O(no);
-	return sizeof(qr_o) + O_OF_W(3 * n + 2);
+	return sizeof(qr_o) + 
+		memSliceSize(zmCreateBarr_state(n), SIZE_MAX);
 }
 
 size_t zmCreateBarr_deep(size_t no)
@@ -600,6 +622,11 @@ static size_t zmDivMont_deep(size_t n)
 		SIZE_MAX);
 }
 
+#define zmCreateMont_state(n)\
+/* mod */		O_OF_W(n),\
+/* unity */		O_OF_W(n),\
+/* params */	O_OF_W(1)
+
 void zmCreateMont(qr_o* r, const octet mod[], size_t no, void* stack)
 {
 	ASSERT(memIsValid(r, sizeof(qr_o)));
@@ -609,16 +636,17 @@ void zmCreateMont(qr_o* r, const octet mod[], size_t no, void* stack)
 	// зафиксировать размерности
 	r->n = W_OF_O(no);
 	r->no = no;
+	// разметить состояние
+	memSlice(r->descr,
+		zmCreateMont_state(r->n), SIZE_MAX,
+		&r->mod, &r->unity, &r->params);
 	// зафиксировать модуль
-	r->mod = (word*)r->descr;
 	wwFrom(r->mod, mod, no);
 	// подготовить единицу
-	r->unity = r->mod + r->n;
 	wwSetZero(r->unity, r->n);
 	zzSub2(r->unity, r->mod, r->n);
 	zzMod(r->unity, r->unity, r->n, r->mod, r->n, stack);
 	// подготовить параметры
-	r->params = r->unity + r->n;
 	*((word*)r->params) = wordNegInv(r->mod[0]);
 	// настроить функции
 	r->from = zmFromMont;
@@ -638,7 +666,8 @@ void zmCreateMont(qr_o* r, const octet mod[], size_t no, void* stack)
 		zmInvMont_deep(r->n),
 		zmDivMont_deep(r->n));
 	// настроить заголовок
-	r->hdr.keep = sizeof(qr_o) + O_OF_W(2 * r->n + 1);
+	r->hdr.keep = sizeof(qr_o) + 
+		memSliceSize(zmCreateMont_state(r->n), SIZE_MAX);
 	r->hdr.p_count = 3;
 	r->hdr.o_count = 0;
 }
@@ -646,7 +675,8 @@ void zmCreateMont(qr_o* r, const octet mod[], size_t no, void* stack)
 size_t zmCreateMont_keep(size_t no)
 {
 	const size_t n = W_OF_O(no);
-	return sizeof(qr_o) + O_OF_W(2 * n + 1);
+	return sizeof(qr_o) + 
+		memSliceSize(zmCreateMont_state(n), SIZE_MAX);
 }
 
 size_t zmCreateMont_deep(size_t no)
@@ -833,6 +863,11 @@ static size_t zmDivMont2_deep(size_t n)
 		zmMulMont2_deep(n));
 }
 
+#define zmMontCreate_state(n)\
+/* mod */		O_OF_W(n),\
+/* unity */		O_OF_W(n),\
+/* params */	sizeof(zm_mont_params_st)
+
 void zmMontCreate(qr_o* r, const octet mod[], size_t no, size_t l, void* stack)
 {
 	ASSERT(memIsValid(r, sizeof(qr_o)));
@@ -842,12 +877,14 @@ void zmMontCreate(qr_o* r, const octet mod[], size_t no, size_t l, void* stack)
 	// зафиксировать размерности
 	r->n = W_OF_O(no);
 	r->no = no;
+	// разметить состояние
+	memSlice(r->descr,
+		zmMontCreate_state(r->n), SIZE_MAX,
+		&r->mod, &r->unity, &r->params);
 	// зафиксировать модуль
-	r->mod = (word*)r->descr;
 	wwFrom(r->mod, mod, no);
 	ASSERT(wwBitSize(r->mod, r->n) <= l && B_OF_W(r->n) >= l);
 	// подготовить единицу: unity <- R \mod mod
-	r->unity = r->mod + r->n;
 	wwSetZero(r->unity, r->n);
 	if (l == B_OF_W(r->n))
 		zzSub2(r->unity, r->mod, r->n);
@@ -855,7 +892,6 @@ void zmMontCreate(qr_o* r, const octet mod[], size_t no, size_t l, void* stack)
 		wwSetBit(r->unity, l, 1);
 	zzMod(r->unity, r->unity, r->n, r->mod, r->n, stack);
 	// подготовить параметры
-	r->params = r->unity + r->n;
 	((zm_mont_params_st*)r->params)->m0 = wordNegInv(r->mod[0]);
 	((zm_mont_params_st*)r->params)->l = l;
 	// настроить функции
@@ -874,7 +910,8 @@ void zmMontCreate(qr_o* r, const octet mod[], size_t no, size_t l, void* stack)
 		zmInvMont2_deep(r->n),
 		zmDivMont2_deep(r->n));
 	// настроить заголовок
-	r->hdr.keep = sizeof(qr_o) + O_OF_W(2 * r->n) + sizeof(zm_mont_params_st);
+	r->hdr.keep = sizeof(qr_o) + 
+		memSliceSize(zmMontCreate_state(r->n), SIZE_MAX);
 	r->hdr.p_count = 3;
 	r->hdr.o_count = 0;
 }
@@ -882,7 +919,8 @@ void zmMontCreate(qr_o* r, const octet mod[], size_t no, size_t l, void* stack)
 size_t zmMontCreate_keep(size_t no)
 {
 	const size_t n = W_OF_O(no);
-	return sizeof(qr_o) + O_OF_W(2 * n) + sizeof(zm_mont_params_st);
+	return sizeof(qr_o) + 
+		memSliceSize(zmMontCreate_state(n), SIZE_MAX);
 }
 
 size_t zmMontCreate_deep(size_t no)
