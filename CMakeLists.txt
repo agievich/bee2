@@ -114,17 +114,19 @@ if(CMAKE_COMPILER_IS_CLANG)
     -fno-strict-aliasing")
   set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -g3")
   set(CMAKE_C_FLAGS_COVERAGE "${CMAKE_C_FLAGS_COVERAGE} -O0 -g3 -coverage")
-  set(CMAKE_C_FLAGS_ASAN "${CMAKE_C_FLAGS_ASAN} -fsanitize=address \
-    -fno-common -fsanitize=undefined -fno-sanitize-recover -O3 \
-    -fno-strict-aliasing")
-  set(CMAKE_C_FLAGS_ASANDBG "${CMAKE_C_FLAGS_ASANDBG} -fsanitize=address \
-    -fno-common -fsanitize=undefined -fno-sanitize-recover -O1 -g3 \
-    -fno-omit-frame-pointer -fno-optimize-sibling-calls")
+  set(CMAKE_C_FLAGS_ASAN "${CMAKE_C_FLAGS_ASAN} -fsanitize=address,undefined\
+    -fno-sanitize=signed-integer-overflow  -fno-sanitize=unsigned-integer-overflow\
+    -fno-sanitize-recover\
+    -fno-common -O3 -fno-strict-aliasing")
+  set(CMAKE_C_FLAGS_ASANDBG "${CMAKE_C_FLAGS_ASANDBG} -fsanitize=address,udefined \
+    -fno-sanitize=signed-integer-overflow  -fno-sanitize=unsigned-integer-overflow\
+    -fno-sanitize-recover\
+    -fno-common -O1 -g3 -fno-omit-frame-pointer -fno-optimize-sibling-calls")
   set(CMAKE_C_FLAGS_MEMSAN "${CMAKE_C_FLAGS_MEMSAN} -fsanitize=memory -O3 \
     -fno-strict-aliasing")
   set(CMAKE_C_FLAGS_MEMSANDBG "${CMAKE_C_FLAGS_MEMSANDBG} -fsanitize=memory \
-    -O1 -g3 -fno-omit-frame-pointer -fno-optimize-sibling-calls \
-    -fsanitize-memory-track-origins=2")
+    -fsanitize-memory-track-origins=2\ 
+    -O1 -g3 -fno-omit-frame-pointer -fno-optimize-sibling-calls")
   set(CMAKE_C_FLAGS_CHECK "${CMAKE_C_FLAGS_CHECK} -Werror -O1 -Wcast-qual")
 endif(CMAKE_COMPILER_IS_CLANG)
 
