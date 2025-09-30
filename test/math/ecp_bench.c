@@ -4,7 +4,7 @@
 \brief Benchmarks for elliptic curves over prime fields
 \project bee2/test
 \created 2013.10.17
-\version 2025.09.15
+\version 2025.09.30
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -30,7 +30,7 @@ bool_t ecpBench()
 	ec_o* ec;
 	void* state;
 	octet* combo_state;		/* [prngCOMBO_keep()] */
-	word* pt;				/* [2n] */
+	word* pt;				/* [2 * n] */
 	word* d;				/* [n] */
 	void* stack;
 	// загрузить параметры
@@ -48,7 +48,10 @@ bool_t ecpBench()
 		SIZE_MAX,
 		&combo_state, &pt, &d, &stack);
 	if (state == 0)
+	{
+		bignEcClose(ec);
 		return FALSE;
+	}
 	// создать генератор COMBO
 	prngCOMBOStart(combo_state, utilNonce32());
 	// оценить число кратных точек в секунду
@@ -69,6 +72,7 @@ bool_t ecpBench()
 			(unsigned)tmSpeed(reps, ticks));
 	}
 	// завершение
+	blobClose(state);
 	bignEcClose(ec);
 	return TRUE;
 }
