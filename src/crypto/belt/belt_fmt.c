@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): FMT (format preserving encryption)
 \project bee2 [cryptographic library]
 \created 2017.09.28
-\version 2025.09.29
+\version 2025.10.01
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -156,7 +156,9 @@ belt-32block
 
 static void belt32BlockEncr(octet block[24], const u32 key[8])
 {
-	u32* t = (u32*)block;
+	u32* t;
+	ASSERT(memIsAligned(block, 4));
+	t = (u32*)block;
 	u32From(t, block, 24);
 	// round #1
 	beltBlockEncr3(t + 2, t + 3, t + 4, t + 5, key);
@@ -177,11 +179,13 @@ static void belt32BlockEncr(octet block[24], const u32 key[8])
 *******************************************************************************
 */
 
-static void beltStr2Bin(octet bin[], size_t b, u32 mod, 
+static void beltStr2Bin(void* bin, size_t b, u32 mod, 
 	const u16 str[], size_t count)
 {
 	word* a;
 	size_t m;
+	// pre
+	memIsAligned(bin, O_PER_W);
 	// подготовить память
 	memSetZero(bin, 8 * b);
 	// особый случай: mod может не уложиться в word
@@ -208,11 +212,13 @@ static void beltStr2Bin(octet bin[], size_t b, u32 mod,
 }
 
 static void beltBin2StrAdd(u32 mod, u16 str[], size_t count, 
-	octet bin[], size_t b)
+	void* bin, size_t b)
 {
 	register u32 t;
 	word* a;
 	size_t m;
+	// pre
+	memIsAligned(bin, O_PER_W);
 	// особый случай: mod может не уложиться в word
 	if (mod == 65536)
 	{
@@ -239,11 +245,13 @@ static void beltBin2StrAdd(u32 mod, u16 str[], size_t count,
 }
 
 static void beltBin2StrSub(word mod, u16 str[], size_t count, 
-	octet bin[], size_t b)
+	void* bin, size_t b)
 {
 	register u32 t;
 	word* a;
 	size_t m;
+	// pre
+	memIsAligned(bin, O_PER_W);
 	// особый случай: mod может не уложиться в word
 	if (mod == 65536)
 	{
@@ -291,7 +299,7 @@ typedef struct
 	size_t b1;				/*< число блоков для обработки левой половинки */
 	size_t b2;				/*< число блоков для обработки правой половинки */
 	octet iv[4 + 16 + 4];	/*< формат || синхропосылка || формат */
-	octet buf[];			/*< вспомогательный буфер */
+	mem_align_t buf[];		/*< вспомогательный буфер */
 } belt_fmt_st;
 
 size_t beltFMT_keep(u32 mod, size_t count)
@@ -315,6 +323,7 @@ void beltFMTStart(void* state, u32 mod, size_t count, const octet key[],
 	st->n2 = count / 2;
 	st->b1 = beltFMTCalcB(mod, st->n1);
 	st->b2 = beltFMTCalcB(mod, st->n2);
+	ASSERT(memIsAligned(st->iv, 2));
 #if (OCTET_ORDER == LITTLE_ENDIAN)
 	((u16*)st->iv)[0] = (u16)mod;
 	((u16*)st->iv)[1] = (u16)count;
@@ -346,9 +355,9 @@ void beltFMTStepE(u16 buf[], const octet iv[16], void* state)
 		memCopy(st->buf + st->b2 * 8, beltH() + 8 * i, 4);
 		memCopy(st->buf + st->b2 * 8 + 4, st->iv + 8 * i, 4);
 		if (st->b2 == 1)
-			beltBlockEncr(st->buf, st->wbl->key);
+			beltBlockEncr((octet*)st->buf, st->wbl->key);
 		else if (st->b2 == 2)
-			belt32BlockEncr(st->buf, st->wbl->key);
+			belt32BlockEncr((octet*)st->buf, st->wbl->key);
 		else
 			beltWBLStepE(st->buf, 8 * st->b2 + 8, st->wbl);
 		beltBin2StrAdd(st->mod, buf, st->n1, st->buf, st->b2 + 1);
@@ -357,9 +366,9 @@ void beltFMTStepE(u16 buf[], const octet iv[16], void* state)
 		memCopy(st->buf + st->b1 * 8, beltH() + 8 * i + 4, 4);
 		memCopy(st->buf + st->b1 * 8 + 4, st->iv + 8 * i + 4, 4);
 		if (st->b1 == 1)
-			beltBlockEncr(st->buf, st->wbl->key);
+			beltBlockEncr((octet*)st->buf, st->wbl->key);
 		else if (st->b1 == 2)
-			belt32BlockEncr(st->buf, st->wbl->key);
+			belt32BlockEncr((octet*)st->buf, st->wbl->key);
 		else
 			beltWBLStepE(st->buf, 8 * st->b1 + 8, st->wbl);
 		beltBin2StrAdd(st->mod, buf + st->n1, st->n2, st->buf, st->b1 + 1);
@@ -387,9 +396,9 @@ void beltFMTStepD(u16 buf[], const octet iv[16], void* state)
 		memCopy(st->buf + st->b1 * 8, beltH() + 8 * i + 4, 4);
 		memCopy(st->buf + st->b1 * 8 + 4, st->iv + 8 * i + 4, 4);
 		if (st->b1 == 1)
-			beltBlockEncr(st->buf, st->wbl->key);
+			beltBlockEncr((octet*)st->buf, st->wbl->key);
 		else if (st->b1 == 2)
-			belt32BlockEncr(st->buf, st->wbl->key);
+			belt32BlockEncr((octet*)st->buf, st->wbl->key);
 		else
 			beltWBLStepE(st->buf, 8 * st->b1 + 8, st->wbl);
 		beltBin2StrSub(st->mod, buf + st->n1, st->n2, st->buf, st->b1 + 1);
@@ -398,9 +407,9 @@ void beltFMTStepD(u16 buf[], const octet iv[16], void* state)
 		memCopy(st->buf + st->b2 * 8, beltH() + 8 * i, 4);
 		memCopy(st->buf + st->b2 * 8 + 4, st->iv + 8 * i, 4);
 		if (st->b2 == 1)
-			beltBlockEncr(st->buf, st->wbl->key);
+			beltBlockEncr((octet*)st->buf, st->wbl->key);
 		else if (st->b2 == 2)
-			belt32BlockEncr(st->buf, st->wbl->key);
+			belt32BlockEncr((octet*)st->buf, st->wbl->key);
 		else
 			beltWBLStepE(st->buf, 8 * st->b2 + 8, st->wbl);
 		beltBin2StrSub(st->mod, buf, st->n1, st->buf, st->b2 + 1);

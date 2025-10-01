@@ -88,6 +88,7 @@ void beltCHEStepE(void* buf, size_t count, void* state)
 	{
 		beltBlockMulC(st->s), st->s[0] ^= 0x00000001;
 		beltBlockCopy(st->block1, st->s);
+		ASSERT(memIsAligned(st->block1, 4));
 		beltBlockEncr2((u32*)st->block1, st->key);
 #if (OCTET_ORDER == BIG_ENDIAN)
 		beltBlockRevU32(st->block1);
@@ -101,6 +102,7 @@ void beltCHEStepE(void* buf, size_t count, void* state)
 	{
 		beltBlockMulC(st->s), st->s[0] ^= 0x00000001;
 		beltBlockCopy(st->block1, st->s);
+		ASSERT(memIsAligned(st->block1, 4));
 		beltBlockEncr2((u32*)st->block1, st->key);
 #if (OCTET_ORDER == BIG_ENDIAN)
 		beltBlockRevU32(st->block1);

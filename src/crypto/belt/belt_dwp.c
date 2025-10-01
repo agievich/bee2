@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): DWP (datawrap = data encryption + authentication)
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.09.23
+\version 2025.10.01
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -50,6 +50,7 @@ void beltDWPStart(void* state, const octet key[], size_t len,
 	beltCTRStart(st->ctr, key, len, iv);
 	// установить r, s
 	beltBlockCopy(st->r, st->ctr->ctr);
+	ASSERT(memIsAligned(st->r, 4));
 	beltBlockEncr2((u32*)st->r, st->ctr->key);
 #if (OCTET_ORDER == BIG_ENDIAN && B_PER_W != 32)
 	beltBlockRevU32(st->r);

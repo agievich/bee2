@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): HMAC message authentication
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.09.23
+\version 2025.10.01
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -71,6 +71,7 @@ void beltHMACStart(void* state, const octet key[], size_t len)
 			beltBlockRevU32(st->block);
 			beltBlockRevU32(st->block + 16);
 #endif
+			ASSERT(memIsAligned(st->block, 4));
 			beltCompr2(st->ls_in + 4, st->h_in, (u32*)st->block, st->stack);
 			key += 32;
 			len -= 32;
@@ -83,6 +84,7 @@ void beltHMACStart(void* state, const octet key[], size_t len)
 			beltBlockRevU32(st->block);
 			beltBlockRevU32(st->block + 16);
 #endif
+			ASSERT(memIsAligned(st->block, 4));
 			beltCompr2(st->ls_in + 4, st->h_in, (u32*)st->block, st->stack);
 		}
 		beltCompr(st->h_in, st->ls_in, st->stack);
@@ -97,6 +99,7 @@ void beltHMACStart(void* state, const octet key[], size_t len)
 	beltBlockAddBitSizeU32(st->ls_in, 32);
 	beltBlockSetZero(st->ls_in + 4);
 	u32From(st->h_in, beltH(), 32);
+	ASSERT(memIsAligned(st->block, 4));
 	beltCompr2(st->ls_in + 4, st->h_in, (u32*)st->block, st->stack);
 	st->filled = 0;
 	// сформировать key ^ opad [0x36 ^ 0x5C == 0x6A]
@@ -107,6 +110,7 @@ void beltHMACStart(void* state, const octet key[], size_t len)
 	beltBlockAddBitSizeU32(st->ls_out, 32 * 2);
 	beltBlockSetZero(st->ls_out + 4);
 	u32From(st->h_out, beltH(), 32);
+	ASSERT(memIsAligned(st->block, 4));
 	beltCompr2(st->ls_out + 4, st->h_out, (u32*)st->block, st->stack);
 }
 
@@ -132,6 +136,7 @@ void beltHMACStepA(const void* buf, size_t count, void* state)
 		beltBlockRevU32(st->block);
 		beltBlockRevU32(st->block + 16);
 #endif
+		ASSERT(memIsAligned(st->block, 4));
 		beltCompr2(st->ls_in + 4, st->h_in, (u32*)st->block, st->stack);
 		st->filled = 0;
 	}
@@ -144,6 +149,7 @@ void beltHMACStepA(const void* buf, size_t count, void* state)
 		beltBlockRevU32(st->block);
 		beltBlockRevU32(st->block + 16);
 #endif
+		ASSERT(memIsAligned(st->block, 4));
 		beltCompr2(st->ls_in + 4, st->h_in, (u32*)st->block, st->stack);
 		buf = (const octet*)buf + 32;
 		count -= 32;
@@ -170,6 +176,7 @@ static void beltHMACStepG_internal(void* state)
 		beltBlockRevU32(st->block);
 		beltBlockRevU32(st->block + 16);
 #endif
+		ASSERT(memIsAligned(st->block, 4));
 		beltCompr2(st->ls_in + 4, st->h1_in, (u32*)st->block, st->stack);
 #if (OCTET_ORDER == BIG_ENDIAN)
 		beltBlockRevU32(st->block + 16);

@@ -83,7 +83,9 @@ belt-32block
 
 static void belt32BlockEncr(octet block[24], const u32 key[8], u32* round)
 {
-	u32* t = (u32*)block;
+	u32* t;
+	ASSERT(memIsAligned(block, 4));
+	t = (u32*)block;
 	u32From(t, block, 24);
 	// round #1
 	beltBlockEncr3(t + 2, t + 3, t + 4, t + 5, key);

@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.45 (bign)
 \project bee2/test
 \created 2012.08.27
-\version 2023.09.29
+\version 2025.09.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************

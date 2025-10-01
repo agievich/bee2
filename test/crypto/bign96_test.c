@@ -4,7 +4,7 @@
 \brief Tests for bign96 signatures
 \project bee2/test
 \created 2021.01.20
-\version 2025.09.29
+\version 2025.10.01
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -26,10 +26,10 @@ brngCTRX: Расширение brngCTR
 */
 typedef struct
 {
-	const octet* X;		/*< дополнительное слово */
-	size_t count;		/*< размер X в октетах */
-	size_t offset;		/*< текущее смещение в X */
-	octet state_ex[];	/*< состояние brngCTR */
+	const octet* X;			/*< дополнительное слово */
+	size_t count;			/*< размер X в октетах */
+	size_t offset;			/*< текущее смещение в X */
+	mem_align_t state_ex[];	/*< состояние brngCTR */
 } brng_ctrx_st;
 
 static size_t brngCTRX_keep()

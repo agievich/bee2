@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): CTR encryption
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2020.03.24
+\version 2025.10.01
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -69,6 +69,7 @@ void beltCTRStepE(void* buf, size_t count, void* state)
 	{
 		beltBlockIncU32(st->ctr);
 		beltBlockCopy(st->block, st->ctr);
+		ASSERT(memIsAligned(st->block, 4));
 		beltBlockEncr2((u32*)st->block, st->key);
 #if (OCTET_ORDER == BIG_ENDIAN)
 		beltBlockRevU32(st->block);
@@ -82,6 +83,7 @@ void beltCTRStepE(void* buf, size_t count, void* state)
 	{
 		beltBlockIncU32(st->ctr);
 		beltBlockCopy(st->block, st->ctr);
+		ASSERT(memIsAligned(st->block, 4));
 		beltBlockEncr2((u32*)st->block, st->key);
 #if (OCTET_ORDER == BIG_ENDIAN)
 		beltBlockRevU32(st->block);

@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): hashing
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.09.22
+\version 2025.10.01
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -75,6 +75,7 @@ void beltHashStepH(const void* buf, size_t count, void* state)
 		beltBlockRevU32(st->block);
 		beltBlockRevU32(st->block + 16);
 #endif
+		ASSERT(memIsAligned(st->block, 4));
 		beltCompr2(st->ls + 4, st->h, (u32*)st->block, st->stack);
 		st->filled = 0;
 	}
@@ -87,6 +88,7 @@ void beltHashStepH(const void* buf, size_t count, void* state)
 		beltBlockRevU32(st->block);
 		beltBlockRevU32(st->block + 16);
 #endif
+		ASSERT(memIsAligned(st->block, 4));
 		beltCompr2(st->ls + 4, st->h, (u32*)st->block, st->stack);
 		buf = (const octet*)buf + 32;
 		count -= 32;
@@ -113,6 +115,7 @@ static void beltHashStepG_internal(void* state)
 		beltBlockRevU32(st->block);
 		beltBlockRevU32(st->block + 16);
 #endif
+		ASSERT(memIsAligned(st->block, 4));
 		beltCompr2(st->ls + 4, st->h1, (u32*)st->block, st->stack);
 #if (OCTET_ORDER == BIG_ENDIAN)
 		beltBlockRevU32(st->block + 16);
