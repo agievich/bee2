@@ -20,6 +20,23 @@
 
 /*
 *******************************************************************************
+Инкремент
+*******************************************************************************
+*/
+
+static void beltBlockInc(u32 block[4])
+{
+	register u32 carry = 1;
+	block[0] += carry, carry = wordLess(block[0], carry);
+	block[1] += carry, carry = wordLess(block[1], carry);
+	block[2] += carry, carry = wordLess(block[2], carry);
+	block[3] += carry, carry = wordLess(block[3], carry);
+	CLEAN(carry);
+}
+
+
+/*
+*******************************************************************************
 Шифрование в режиме CTR
 
 Для ускорения работы счетчик ctr хранится в виде [4]u32. Это позволяет
@@ -67,7 +84,7 @@ void beltCTRStepE(void* buf, size_t count, void* state)
 	// цикл по полным блокам
 	while (count >= 16)
 	{
-		beltBlockIncU32(st->ctr);
+		beltBlockInc(st->ctr);
 		beltBlockCopy(st->block, st->ctr);
 		ASSERT(memIsAligned(st->block, 4));
 		beltBlockEncr2((u32*)st->block, st->key);
@@ -81,7 +98,7 @@ void beltCTRStepE(void* buf, size_t count, void* state)
 	// неполный блок?
 	if (count)
 	{
-		beltBlockIncU32(st->ctr);
+		beltBlockInc(st->ctr);
 		beltBlockCopy(st->block, st->ctr);
 		ASSERT(memIsAligned(st->block, 4));
 		beltBlockEncr2((u32*)st->block, st->key);
