@@ -4,7 +4,7 @@
 \brief Quotient rings of integers modulo m
 \project bee2 [cryptographic library]
 \created 2013.09.14
-\version 2025.09.29
+\version 2025.10.02
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -586,6 +586,7 @@ static void zmInvMont(word b[], const word a[], const qr_o* r, void* stack)
 	// b <- a^{-1} R^2 \mod mod
 	for (; k < 2 * r->n * B_PER_W; ++k)
 		zzDoubleMod(b, b, r->mod, r->n);
+	CLEAN(k);
 }
 
 static size_t zmInvMont_deep(size_t n)
@@ -765,19 +766,25 @@ typedef struct
 	size_t l;			/* размерность */
 } zm_mont_params_st;
 
+#define zmMulMont2_local(n)\
+/* prod */		O_OF_W(2 * n)
+
 static void zmMulMont2(word c[], const word a[], const word b[],
 	const qr_o* r, void* stack)
 {
-	register size_t k;
 	const zm_mont_params_st* params;
-	word* prod = (word*)stack;
+	word* prod; 			/* [2 * n] */
+	size_t k;
 	// pre
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(a, r));
 	ASSERT(zmIsIn(b, r));
-	// настроить указатели
+	// зафиксировать параметры
 	params = (const zm_mont_params_st*)r->params;
-	stack = prod + 2 * r->n;
+	// разметить стек
+	memSlice(stack,
+		zmMulMont2_local(r->n), SIZE_0, SIZE_MAX,
+		&prod, &stack);
 	// c <- a b B^{-n} \mod mod
 	zzMul(prod, a, r->n, b, r->n, stack);
 	zzRedMont(prod, r->mod, r->n, *(word*)r->params, stack);
@@ -789,22 +796,31 @@ static void zmMulMont2(word c[], const word a[], const word b[],
 
 static size_t zmMulMont2_deep(size_t n)
 {
-	return utilMax(2,
-		zzMul_deep(n, n),
-		zzRedMont_deep(n));
+	return memSliceSize(
+		zmMulMont2_local(n),
+		utilMax(2,
+			zzMul_deep(n, n),
+			zzRedMont_deep(n)),
+		SIZE_MAX);	
 }
+
+#define zmSqrMont2_local(n)\
+/* prod */		O_OF_W(2 * n)
 
 static void zmSqrMont2(word b[], const word a[], const qr_o* r, void* stack)
 {
-	register size_t k;
 	const zm_mont_params_st* params;
-	word* prod = (word*)stack;
+	word* prod; 		/* [2 * n] */
+	size_t k;
 	// pre
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(a, r));
-	// настроить указатели
+	// зафиксировать параметры
 	params = (const zm_mont_params_st*)r->params;
-	stack = prod + 2 * r->n;
+	// разметить стек
+	memSlice(stack,
+		zmSqrMont2_local(r->n), SIZE_0, SIZE_MAX,
+		&prod, &stack);
 	// b <- a^2 B^{-n} \mod mod
 	zzSqr(prod, a, r->n, stack);
 	zzRedMont(prod, r->mod, r->n, *(word*)r->params, stack);
@@ -816,17 +832,22 @@ static void zmSqrMont2(word b[], const word a[], const qr_o* r, void* stack)
 
 static size_t zmSqrMont2_deep(size_t n)
 {
-	return utilMax(2,
-		zzSqr_deep(n),
-		zzRedMont_deep(n));
+	return memSliceSize(
+		zmSqrMont2_local(n),
+		utilMax(2,
+			zzSqr_deep(n),
+			zzRedMont_deep(n)),
+		SIZE_MAX);
 }
 
 static void zmInvMont2(word b[], const word a[], const qr_o* r, void* stack)
 {
-	register size_t k;
 	const zm_mont_params_st* params;
+	register size_t k;
+	// pre
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(a, r));
+	// зафиксировать параметры
 	params = (const zm_mont_params_st*)r->params;
 	// b <- a^{-1} 2^k \mod mod
 	k = zzAlmostInvMod(b, a, r->mod, r->n, stack);
@@ -835,6 +856,7 @@ static void zmInvMont2(word b[], const word a[], const qr_o* r, void* stack)
 	// b <- a^{-1} R^2 \mod mod
 	for (; k < 2 * params->l; ++k)
 		zzDoubleMod(b, b, r->mod, r->n);
+	CLEAN(k);
 }
 
 static size_t zmInvMont2_deep(size_t n)
@@ -842,14 +864,21 @@ static size_t zmInvMont2_deep(size_t n)
 	return zzAlmostInvMod_deep(n);
 }
 
+#define zmDivMont2_local(n)\
+/* c */			O_OF_W(n)
+
 static void zmDivMont2(word b[], const word divident[], const word a[],
 	const qr_o* r, void* stack)
 {
-	word* c = (word*)stack;
+	word* c;			/* [n] */
+	// pre
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(divident, r));
 	ASSERT(zmIsIn(a, r));
-	stack = c + r->n;
+	// разметить стек
+	memSlice(stack,
+		zmDivMont2_local(r->n), SIZE_0, SIZE_MAX,
+		&c, &stack);
 	// c <- a^{(-1)} (в кольце Монтгомери)
 	zmInvMont2(c, a, r, stack);
 	// b <- divident * c
@@ -858,9 +887,12 @@ static void zmDivMont2(word b[], const word divident[], const word a[],
 
 static size_t zmDivMont2_deep(size_t n)
 {
-	return utilMax(2,
-		zmInvMont2_deep(n),
-		zmMulMont2_deep(n));
+	return memSliceSize(
+		zmDivMont2_local(n),
+		utilMax(2,
+			zmInvMont2_deep(n),
+			zmMulMont2_deep(n)),
+		SIZE_MAX);
 }
 
 #define zmMontCreate_state(n)\

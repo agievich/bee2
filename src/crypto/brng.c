@@ -4,7 +4,7 @@
 \brief STB 34.101.47 (brng): algorithms of pseudorandom number generation
 \project bee2 [cryptographic library]
 \created 2013.01.31
-\version 2025.09.29
+\version 2025.10.02
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -20,26 +20,30 @@
 
 /*
 *******************************************************************************
-Ускорители: быстрые операции над блоками brng
+Операции над блоками
 *******************************************************************************
 */
 
 static void brngBlockInc(octet block[32])
 {
-	register size_t i = 0;
-	word* w = (word*)block;
-	do
+	enum {n = W_OF_O(32)};
+	register word carry = 1;
+	size_t i;
+	word* b;
+	ASSERT(memIsAligned(block, O_PER_W));
+	b = (word*)block;
+	for (i = 0; i < n - 1; ++i)
 	{
 #if (OCTET_ORDER == BIG_ENDIAN)
-		w[i] = wordRev(w[i]);
-		++w[i];
-		w[i] = wordRev(w[i]);
-#else
-		++w[i];
+		b[i] = wordRev(b[i]);
+#endif
+		b[i] += carry, carry = wordLess(b[i], carry);
+#if (OCTET_ORDER == BIG_ENDIAN)
+		b[i] = wordRev(b[i]);
 #endif
 	}
-	while (w[i] == 0 && i++ < W_OF_O(32));
-	CLEAN(i);
+	b[n - 1] += carry;
+	CLEAN(carry);
 }
 
 /*

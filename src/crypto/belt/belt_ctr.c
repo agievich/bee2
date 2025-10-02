@@ -24,7 +24,7 @@
 *******************************************************************************
 */
 
-static void beltBlockInc(u32 block[4])
+static void beltBlockIncU32(u32 block[4])
 {
 	register u32 carry = 1;
 	block[0] += carry, carry = wordLess(block[0], carry);
@@ -84,7 +84,7 @@ void beltCTRStepE(void* buf, size_t count, void* state)
 	// цикл по полным блокам
 	while (count >= 16)
 	{
-		beltBlockInc(st->ctr);
+		beltBlockIncU32(st->ctr);
 		beltBlockCopy(st->block, st->ctr);
 		ASSERT(memIsAligned(st->block, 4));
 		beltBlockEncr2((u32*)st->block, st->key);
@@ -98,7 +98,7 @@ void beltCTRStepE(void* buf, size_t count, void* state)
 	// неполный блок?
 	if (count)
 	{
-		beltBlockInc(st->ctr);
+		beltBlockIncU32(st->ctr);
 		beltBlockCopy(st->block, st->ctr);
 		ASSERT(memIsAligned(st->block, 4));
 		beltBlockEncr2((u32*)st->block, st->key);
