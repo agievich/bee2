@@ -45,8 +45,13 @@ extern "C" {
 массив word.
 
 \remark Блок не обязательно выровнен на границу word или u32. 
+
 \todo Работу с блоками можно ускорить, если предположить выравнивание (в 
 качестве предусловия).
+
+\remark Функции beltBlockAddBitSizeU32() и beltHalfBlockAddBitSizeW() 
+нерегулярны. Однако регулярность не требуется, поскольку функции используются 
+только для обработки длин сообщений.
 *******************************************************************************
 */
 
@@ -112,6 +117,14 @@ extern "C" {
 	((u32*)(block))[3] = u32Rev(((u32*)(block))[3]);\
 }
 
+/*	\brief block <- block + 8 * count */
+void beltBlockAddBitSizeU32(u32 block[4], size_t count);
+
+/*	\brief block <- block + 8 * count */
+void beltHalfBlockAddBitSizeW(word block[W_OF_B(64)], size_t count);
+
+/*	\brief block(x) <- block(x) * x mod (x^128 + x^7 + x^2 + x + 1) */
+void beltBlockMulCU32(u32 block[4]);
 
 /*
 *******************************************************************************
@@ -141,11 +154,8 @@ typedef struct
 *******************************************************************************
 */
 
-void beltBlockAddBitSizeU32(u32 block[4], size_t count);
-void beltHalfBlockAddBitSizeW(word block[W_OF_B(64)], size_t count);
 void beltPolyMul(word c[], const word a[], const word b[], void* stack);
 size_t beltPolyMul_deep();
-void beltBlockMulC(u32 block[4]);
 
 #ifdef __cplusplus
 } /* extern "C" */

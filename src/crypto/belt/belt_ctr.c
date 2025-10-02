@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): CTR encryption
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.10.01
+\version 2025.10.02
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -30,7 +30,7 @@ static void beltBlockInc(u32 block[4])
 	block[0] += carry, carry = wordLess(block[0], carry);
 	block[1] += carry, carry = wordLess(block[1], carry);
 	block[2] += carry, carry = wordLess(block[2], carry);
-	block[3] += carry, carry = wordLess(block[3], carry);
+	block[3] += carry;
 	CLEAN(carry);
 }
 

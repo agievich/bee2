@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): BDE (Blockwise Disk Encryption)
 \project bee2 [cryptographic library]
 \created 2018.06.28
-\version 2020.03.24
+\version 2025.10.02
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -28,6 +28,7 @@ typedef struct
 	u32 key[8];			/*< форматированный ключ */
 	u32 s[4];			/*< переменная s */
 	octet block[16];	/*< вспомогательный блок */
+	octet block1[16];	/*< второй вспомогательный блок */
 } belt_bde_st;
 
 size_t beltBDE_keep()
@@ -53,11 +54,11 @@ void beltBDEStepE(void* buf, size_t count, void* state)
 	// цикл по блокам
 	while(count >= 16)
 	{
-		beltBlockMulC(st->s);
+		beltBlockMulCU32(st->s);
 		u32To(st->block, 16, st->s);
-		beltBlockXor2(buf, st->block);
-		beltBlockEncr(buf, st->key);
-		beltBlockXor2(buf, st->block);
+		beltBlockXor(st->block1, buf, st->block);
+		beltBlockEncr(st->block1, st->key);
+		beltBlockXor(buf, st->block1, st->block);
 		buf = (octet*)buf + 16;
 		count -= 16;
 	}
@@ -71,11 +72,11 @@ void beltBDEStepD(void* buf, size_t count, void* state)
 	// цикл по блокам
 	while(count >= 16)
 	{
-		beltBlockMulC(st->s);
+		beltBlockMulCU32(st->s);
 		u32To(st->block, 16, st->s);
-		beltBlockXor2(buf, st->block);
-		beltBlockDecr(buf, st->key);
-		beltBlockXor2(buf, st->block);
+		beltBlockXor(st->block1, buf, st->block);
+		beltBlockDecr(st->block1, st->key);
+		beltBlockXor(buf, st->block1, st->block);
 		buf = (octet*)buf + 16;
 		count -= 16;
 	}

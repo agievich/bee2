@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): ECB encryption
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2020.03.24
+\version 2025.10.02
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -15,15 +15,36 @@
 #include "bee2/core/mem.h"
 #include "bee2/core/util.h"
 #include "bee2/crypto/belt.h"
+#include "belt_lcl.h"
 
 /*
 *******************************************************************************
 Шифрование в режиме ECB
+
+\remark Чтобы соблюсти предусловия выравнивания в функциях beltBlockEncr() и 
+beltBlockDecr(), перед обращениями к ним блок данных переписывается в поле 
+block структуры belt_ecb_st. Код будет компактнее и эффективнее, если 
+потребовать, чтобы обрабатываемый буфер buf был выровнен на границу u32. 
+Например вот так будет выглядеть основная часть  beltECBStepE():
+\code
+	while(count >= 16)
+	{
+		beltBlockDecr(buf, st->key);
+		buf = (octet*)buf + 16;
+		count -= 16;
+	}
+	if (count)
+	{
+		memSwap((octet*)buf - 16, buf, count);
+		beltBlockDecr((octet*)buf - 16, st->key);
+	}
+\endcode
 *******************************************************************************
 */
 typedef struct
 {
-	u32 key[8];		/*< форматированный ключ */
+	u32 key[8];			/*< форматированный ключ */
+	octet block[16];	/*< вспомогательный блок */
 } belt_ecb_st;
 
 size_t beltECB_keep()
@@ -46,15 +67,20 @@ void beltECBStepE(void* buf, size_t count, void* state)
 	// цикл по полным блокам
 	while(count >= 16)
 	{
-		beltBlockEncr(buf, st->key);
+		beltBlockCopy(st->block, buf);
+		beltBlockEncr(st->block, st->key);
+		beltBlockCopy(buf, st->block);
 		buf = (octet*)buf + 16;
 		count -= 16;
 	}
 	// неполный блок? кража блока
 	if (count)
 	{
-		memSwap((octet*)buf - 16, buf, count);
-		beltBlockEncr((octet*)buf - 16, st->key);
+		memCopy(st->block, buf, count);
+		memCopy(st->block + count, (octet*)buf - 16 + count, 16 - count);
+		beltBlockEncr(st->block, st->key);
+		memCopy(buf, (octet*)buf - 16, count);
+		beltBlockCopy((octet*)buf - 16, st->block);
 	}
 }
 
@@ -66,15 +92,20 @@ void beltECBStepD(void* buf, size_t count, void* state)
 	// цикл по полным блокам
 	while(count >= 16)
 	{
-		beltBlockDecr(buf, st->key);
+		beltBlockCopy(st->block, buf);
+		beltBlockDecr(st->block, st->key);
+		beltBlockCopy(buf, st->block);
 		buf = (octet*)buf + 16;
 		count -= 16;
 	}
 	// неполный блок? кража блока
 	if (count)
 	{
-		memSwap((octet*)buf - 16, buf, count);
-		beltBlockDecr((octet*)buf - 16, st->key);
+		memCopy(st->block, buf, count);
+		memCopy(st->block + count, (octet*)buf - 16 + count, 16 - count);
+		beltBlockDecr(st->block, st->key);
+		memCopy(buf, (octet*)buf - 16, count);
+		beltBlockCopy((octet*)buf - 16, st->block);
 	}
 }
 

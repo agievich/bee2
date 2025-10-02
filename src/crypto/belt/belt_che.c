@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): CHE (Ctr-Hash-Encrypt) authenticated encryption
 \project bee2 [cryptographic library]
 \created 2020.03.20
-\version 2025.09.22
+\version 2025.10.02
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -86,7 +86,7 @@ void beltCHEStepE(void* buf, size_t count, void* state)
 	// цикл по полным блокам
 	while (count >= 16)
 	{
-		beltBlockMulC(st->s), st->s[0] ^= 0x00000001;
+		beltBlockMulCU32(st->s), st->s[0] ^= 0x00000001;
 		beltBlockCopy(st->block1, st->s);
 		ASSERT(memIsAligned(st->block1, 4));
 		beltBlockEncr2((u32*)st->block1, st->key);
@@ -100,7 +100,7 @@ void beltCHEStepE(void* buf, size_t count, void* state)
 	// неполный блок?
 	if (count)
 	{
-		beltBlockMulC(st->s), st->s[0] ^= 0x00000001;
+		beltBlockMulCU32(st->s), st->s[0] ^= 0x00000001;
 		beltBlockCopy(st->block1, st->s);
 		ASSERT(memIsAligned(st->block1, 4));
 		beltBlockEncr2((u32*)st->block1, st->key);

@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): CBC encryption
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2020.03.24
+\version 2025.10.02
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -20,13 +20,58 @@
 /*
 *******************************************************************************
 Шифрование в режиме CBС
+
+\remark Оптимизированный код при условии выравнивания buf:
+\code
+void beltCBCStepE(void* buf, size_t count, void* state)
+{
+	...
+	while(count >= 16)
+	{
+		beltBlockXor2(st->block, buf);
+		beltBlockEncr(st->block, st->key);
+		beltBlockCopy(buf, st->block);
+		buf = (octet*)buf + 16;
+		count -= 16;
+	}
+	if (count)
+	{
+		memSwap((octet*)buf - 16, buf, count);
+		memXor2((octet*)buf - 16, st->block, count);
+		beltBlockEncr((octet*)buf - 16, st->key);
+	}
+}
+
+void beltCBCStepD(void* buf, size_t count, void* state)
+{
+	...
+	while(count >= 32 || count == 16)
+	{
+		beltBlockCopy(st->block1, buf);
+		beltBlockDecr(buf, st->key);
+		beltBlockXor2(buf, st->block);
+		beltBlockCopy(st->block, st->block1);
+		buf = (octet*)buf + 16;
+		count -= 16;
+	}
+	if (count)
+	{
+		ASSERT(16 < count && count < 32);
+		beltBlockDecr(buf, st->key);
+		memSwap(buf, (octet*)buf + 16, count - 16);
+		memXor2((octet*)buf + 16, buf, count - 16);
+		beltBlockDecr(buf, st->key);
+		beltBlockXor2(buf, st->block);
+	}
+}
+\endcode
 *******************************************************************************
 */
 typedef struct
 {
 	u32 key[8];			/*< форматированный ключ */
 	octet block[16];	/*< вспомогательный блок */
-	octet block2[16];	/*< еще один вспомогательный блок */
+	octet block1[16];	/*< второй вспомогательный блок */
 } belt_cbc_st;
 
 size_t beltCBC_keep()
@@ -60,9 +105,11 @@ void beltCBCStepE(void* buf, size_t count, void* state)
 	// неполный блок? кража блока
 	if (count)
 	{
-		memSwap((octet*)buf - 16, buf, count);
-		memXor2((octet*)buf - 16, st->block, count);
-		beltBlockEncr((octet*)buf - 16, st->key);
+		memXor(st->block1, buf, st->block, count);
+		memCopy(st->block1 + count, (octet*)buf - 16 + count, 16 - count);
+		beltBlockEncr(st->block1, st->key);
+		memCopy(buf, (octet*)buf - 16, count);
+		beltBlockCopy((octet*)buf - 16, st->block1);
 	}
 }
 
@@ -74,10 +121,11 @@ void beltCBCStepD(void* buf, size_t count, void* state)
 	// цикл по полным блокам
 	while(count >= 32 || count == 16)
 	{
-		beltBlockCopy(st->block2, buf);
-		beltBlockDecr(buf, st->key);
-		beltBlockXor2(buf, st->block);
-		beltBlockCopy(st->block, st->block2);
+		beltBlockCopy(st->block1, buf);
+		beltBlockDecr(st->block1, st->key);
+		beltBlockXor2(st->block1, st->block);
+		beltBlockCopy(st->block, buf);
+		beltBlockCopy(buf, st->block1);
 		buf = (octet*)buf + 16;
 		count -= 16;
 	}
@@ -85,11 +133,12 @@ void beltCBCStepD(void* buf, size_t count, void* state)
 	if (count)
 	{
 		ASSERT(16 < count && count < 32);
-		beltBlockDecr(buf, st->key);
-		memSwap(buf, (octet*)buf + 16, count - 16);
-		memXor2((octet*)buf + 16, buf, count - 16);
-		beltBlockDecr(buf, st->key);
-		beltBlockXor2(buf, st->block);
+		beltBlockCopy(st->block1, buf);
+		beltBlockDecr(st->block1, st->key);
+		memSwap(st->block1, (octet*)buf + 16, count - 16);
+		memXor2((octet*)buf + 16, st->block1, count - 16);
+		beltBlockDecr(st->block1, st->key);
+		beltBlockXor(buf, st->block1, st->block);
 	}
 }
 

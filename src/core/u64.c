@@ -176,7 +176,6 @@ void u64From(u64 dest[], const void* src, size_t count)
 void u64To(void* dest, size_t count, const u64 src[])
 {
 	ASSERT(memIsValid(src, (count + 7) / 8 * 8));
-	ASSERT(memIsAligned(src, 8));
 	ASSERT(memIsValid(dest, count));
 	memMove(dest, src, count);
 #if (OCTET_ORDER == BIG_ENDIAN)
