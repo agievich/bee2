@@ -4,7 +4,7 @@
 \brief Experimental Bign signatures of security level 96
 \project bee2 [cryptographic library]
 \created 2021.01.20
-\version 2025.09.26
+\version 2025.10.02
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -84,6 +84,7 @@ belt-32block
 static void belt32BlockEncr(octet block[24], const u32 key[8], u32* round)
 {
 	u32* t;
+	// подготовить память
 	ASSERT(memIsAligned(block, 4));
 	t = (u32*)block;
 	u32From(t, block, 24);
