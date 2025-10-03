@@ -4,7 +4,7 @@
 \brief STB 34.101.77 (bash): bash-f
 \project bee2 [cryptographic library]
 \created 2014.07.15
-\version 2025.06.10
+\version 2025.10.03
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -173,8 +173,10 @@ static void bashF0(u64 s[24])
 
 void bashF(octet block[192], void* stack)
 {
-	u64* s = (u64*)block;
+	u64* s;
 	ASSERT(memIsDisjoint2(block, 192, stack, bashF_deep()));
+	ASSERT(memIsAligned(block, 8));
+	s = (u64*)block;
 #if (OCTET_ORDER == BIG_ENDIAN)
 	u64Rev2(s, 24);
 #endif

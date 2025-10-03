@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): key transport
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.05.07
+\version 2025.09.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -30,64 +30,39 @@
 *******************************************************************************
 */
 
-static size_t bignKeyWrap_deep(size_t n, size_t f_deep, size_t ec_d,
-	size_t ec_deep)
-{
-	return O_OF_W(3 * n) + 32 +
-		utilMax(2,
-			ecMulA_deep(n, ec_d, ec_deep, n),
-			beltKWP_keep());
-}
-
-err_t bignKeyWrap(octet token[], const bign_params* params, const octet key[],
+err_t bignKeyWrapEc(octet token[], const ec_o* ec, const octet key[],
 	size_t len, const octet header[16], const octet pubkey[],
 	gen_i rng, void* rng_state)
 {
-	err_t code;
 	size_t no, n;
-	// состояние
 	void* state;
-	ec_o* ec;				/* описание эллиптической кривой */
 	word* k;				/* [n] одноразовый личный ключ */
-	word* R;				/* [2n] точка R */
+	word* R;				/* [2 * n] точка R */
 	octet* theta;			/* [32] ключ защиты */
-	octet* stack;
-	// проверить params
-	if (!memIsValid(params, sizeof(bign_params)))
+	void* stack;
+	// pre
+	ASSERT(ecIsOperable(ec));
+	// размерности
+	no = ec->f->no, n = ec->f->n;
+	// входной контроль
+	if (!memIsValid(pubkey, 2 * no) || !memIsValid(token, 16 + no + len))
 		return ERR_BAD_INPUT;
-	if (!bignIsOperable(params))
-		return ERR_BAD_PARAMS;
-	// проверить rng
 	if (rng == 0)
 		return ERR_BAD_RNG;
-	// проверить header и key
-	if (len < 16 ||
-		!memIsValid(key, len) ||
-		!memIsNullOrValid(header, 16))
+	if (len < 16 || !memIsValid(key, len) || !memIsNullOrValid(header, 16))
 		return ERR_BAD_INPUT;
 	// создать состояние
-	state = blobCreate(bignStart_keep(params->l, bignKeyWrap_deep));
+	state = blobCreate2(
+		O_OF_W(n),
+		O_OF_W(2 * n),
+		(size_t)32,
+		utilMax(2,
+			ecMulA_deep(n, ec->d, ec->deep, n),
+			beltKWP_keep()),
+		SIZE_MAX,
+		&k, &R, &theta, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	// старт
-	code = bignStart(state, params);
-	ERR_CALL_HANDLE(code, blobClose(state));
-	ec = (ec_o*)state;
-	// размерности
-	no  = ec->f->no;
-	n = ec->f->n;
-	// проверить входные указатели
-	if (!memIsValid(pubkey, 2 * no) ||
-		!memIsValid(token, 16 + no + len))
-	{
-		blobClose(state);
-		return ERR_BAD_INPUT;
-	}
-	// раскладка состояния
-	k = objEnd(ec, word);
-	R = k + n;
-	theta = (octet*)(R + 2 * n);
-	stack = theta + 32;
 	// сгенерировать k
 	if (!zzRandNZMod(k, ec->order, n, rng, rng_state))
 	{
@@ -128,9 +103,24 @@ err_t bignKeyWrap(octet token[], const bign_params* params, const octet key[],
 	beltKWPStepE(token + no, len + 16, stack);
 	// доопределить токен
 	memCopy(token, R, no);
-	// все нормально
+	// завершение
 	blobClose(state);
 	return ERR_OK;
+}
+
+err_t bignKeyWrap(octet token[], const bign_params* params, const octet key[],
+	size_t len, const octet header[16], const octet pubkey[], gen_i rng,
+	void* rng_state)
+{
+	err_t code;
+	ec_o* ec;
+	code = bignParamsCheck(params);
+	ERR_CALL_CHECK(code);
+	code = bignEcCreate(&ec, params);
+	ERR_CALL_CHECK(code);
+	code = bignKeyWrapEc(token, ec, key, len, header, pubkey, rng, rng_state);
+	bignEcClose(ec);
+	return code;
 }
 
 /*
@@ -139,75 +129,44 @@ err_t bignKeyWrap(octet token[], const bign_params* params, const octet key[],
 *******************************************************************************
 */
 
-static size_t bignKeyUnwrap_deep(size_t n, size_t f_deep, size_t ec_d,
-	size_t ec_deep)
-{
-	return MAX2(O_OF_W(5 * n), 32 + 16) +
-		utilMax(3,
-			beltKWP_keep(),
-			qrPower_deep(n, n, f_deep),
-			ecMulA_deep(n, ec_d, ec_deep, n));
-}
-
-err_t bignKeyUnwrap(octet key[], const bign_params* params, const octet token[], 
+err_t bignKeyUnwrapEc(octet key[], const ec_o* ec, const octet token[], 
 	size_t len, const octet header[16], const octet privkey[])
 {
-	err_t code;
 	size_t no, n;
-	// состояние (буферы могут пересекаться)
 	void* state;
-	ec_o* ec;				/* описание эллиптической кривой */
 	word* d;				/* [n] личный ключ */
-	word* R;				/* [2n] точка R */
+	word* R;				/* [2 * n] точка R */
 	word* t1;				/* [n] вспомогательное число */
 	word* t2;				/* [n] вспомогательное число */
 	octet* theta;			/* [32] ключ защиты */
 	octet* header2;			/* [16] заголовок2 */
 	void* stack;			/* граница стека */
-	// проверить params
-	if (!memIsValid(params, sizeof(bign_params)))
-		return ERR_BAD_INPUT;
-	if (!bignIsOperable(params))
-		return ERR_BAD_PARAMS;
-	// проверить token и header
-	if (!memIsValid(token, len) ||
-		!memIsNullOrValid(header, 16))
+	// pre
+	ASSERT(ecIsOperable(ec));
+	// размерности
+	no = ec->f->no, n = ec->f->n;
+	// входной контроль
+	if (len < 32 + no)
+		return ERR_BAD_KEYTOKEN;
+	if (!memIsValid(token, len) || !memIsNullOrValid(header, 16) ||
+		!memIsValid(privkey, no) || !memIsValid(key, len - 16 - no))
 		return ERR_BAD_INPUT;
 	// создать состояние
-	state = blobCreate(bignStart_keep(params->l, bignKeyUnwrap_deep));
+	state = blobCreate2(
+		O_OF_W(n),
+		(size_t)32,
+		O_OF_W(2 * n),
+		O_OF_W(n),
+		O_OF_W(n),
+		(size_t)16,
+		utilMax(3,
+			beltKWP_keep(),
+			qrPower_deep(n, n, ec->f->deep),
+			ecMulA_deep(n, ec->d, ec->deep, n)),
+		SIZE_MAX,
+		&d, &theta, &R, &t1, &t2, &header2, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	// старт
-	code = bignStart(state, params);
-	ERR_CALL_HANDLE(code, blobClose(state));
-	ec = (ec_o*)state;
-	// размерности
-	no  = ec->f->no;
-	n = ec->f->n;
-	// проверить длину токена
-	if (len < 32 + no)
-	{
-		blobClose(state);
-		return ERR_BAD_KEYTOKEN;
-	}
-	// проверить входные указатели
-	if (!memIsValid(privkey, no) ||
-		!memIsValid(key, len - 16 - no))
-	{
-		blobClose(state);
-		return ERR_BAD_INPUT;
-	}
-	// раскладка состояния
-	d = objEnd(ec, word);
-	R = d + n;
-	t1 = R + 2 * n;
-	t2 = t1 + n;
-	theta = (octet*)d;
-	header2 = theta + 32;
-	if (5 * no >= 48)
-		stack = t2 + n;
-	else
-		stack = header2 + 16;
 	// загрузить d
 	wwFrom(d, privkey, no);
 	if (wwIsZero(d, n) || wwCmp(d, ec->order, n) >= 0)
@@ -258,9 +217,23 @@ err_t bignKeyUnwrap(octet key[], const bign_params* params, const octet token[],
 		header == 0 && !memIsZero(header2, 16))
 	{
 		memSetZero(key, len - no - 16);
-		code = ERR_BAD_KEYTOKEN;
+		return ERR_BAD_KEYTOKEN;
 	}
 	// завершение
 	blobClose(state);
+	return ERR_OK;
+}
+
+err_t bignKeyUnwrap(octet key[], const bign_params* params, const octet token[],
+	size_t len, const octet header[16], const octet privkey[])
+{
+	err_t code;
+	ec_o* ec;
+	code = bignParamsCheck(params);
+	ERR_CALL_CHECK(code);
+	code = bignEcCreate(&ec, params);
+	ERR_CALL_CHECK(code);
+	code = bignKeyUnwrapEc(key, ec, token, len, header, privkey);
+	bignEcClose(ec);
 	return code;
 }

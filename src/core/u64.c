@@ -4,7 +4,7 @@
 \brief 64-bit unsigned words
 \project bee2 [cryptographic library]
 \created 2015.10.28
-\version 2025.06.10
+\version 2025.10.03
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -69,7 +69,7 @@ bool_t u64Parity(register u64 w)
 	return (bool_t)(w & U64_1);
 }
 
-size_t SAFE(u64CTZ)(register u64 w)
+size_t u64CTZ(register u64 w)
 {
 	return 64 - u64Weight(w | (U64_0 - w));
 }
@@ -92,7 +92,7 @@ size_t FAST(u64CTZ)(register u64 w)
 	return ((u64)(w << 1)) ? l - 2 : l - (w ? 1 : 0);
 }
 
-size_t SAFE(u64CLZ)(register u64 w)
+size_t u64CLZ(register u64 w)
 {
 	w = w | w >> 1;
 	w = w | w >> 2;
@@ -163,6 +163,7 @@ void u64From(u64 dest[], const void* src, size_t count)
 {
 	ASSERT(memIsValid(src, count));
 	ASSERT(memIsValid(dest, ((count + 7) / 8) * 8));
+	ASSERT(memIsAligned(dest, 8));
 	memMove(dest, src, count);
 	if (count % 8)
 		memSetZero((octet*)dest + count, 8 - count % 8);
@@ -182,11 +183,20 @@ void u64To(void* dest, size_t count, const u64 src[])
 	{
 		size_t t = count / 8;
 		register u64 u = src[t];
-		for (t *= 8; t < count; ++t, u >>= 8)
+		memMove(dest, src, t *= 8);
+		for (; t < count; ++t, u >>= 8)
 			((octet*)dest)[t] = (octet)u;
 		CLEAN(u);
+		count &= ~(size_t)7;
 	}
-	for (count /= 8; count--;)
-		((u64*)dest)[count] = u64Rev(((u64*)dest)[count]);
+	else
+		memMove(dest, src, count);
+	for (; count; count -= 8)
+	{
+		SWAP(((octet*)dest)[count - 8], ((octet*)dest)[count - 1]);
+		SWAP(((octet*)dest)[count - 7], ((octet*)dest)[count - 2]);
+		SWAP(((octet*)dest)[count - 6], ((octet*)dest)[count - 3]);
+		SWAP(((octet*)dest)[count - 5], ((octet*)dest)[count - 4]);
+	}
 #endif // OCTET_ORDER
 }

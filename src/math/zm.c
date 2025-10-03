@@ -4,7 +4,7 @@
 \brief Quotient rings of integers modulo m
 \project bee2 [cryptographic library]
 \created 2013.09.14
-\version 2016.07.04
+\version 2025.10.02
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -60,14 +60,19 @@ static void zmNeg2(word b[], const word a[], const qr_o* r)
 	zzNegMod(b, a, r->mod, r->n);
 }
 
+#define zmMul_local(n)\
+/* prod */	O_OF_W(2 * n)
+
 static void zmMul(word c[], const word a[], const word b[],
 	const qr_o* r, void* stack)
 {
-	word* prod = (word*)stack;
+	word* prod; 			/* [2 * n] */
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(a, r));
 	ASSERT(zmIsIn(b, r));
-	stack = prod + 2 * r->n;
+	memSlice(stack,
+		zmMul_local(r->n), SIZE_0, SIZE_MAX,
+		&prod, &stack);
 	zzMul(prod, a, r->n, b, r->n, stack);
 	zzRed(prod, r->mod, r->n, stack);
 	wwCopy(c, prod, r->n);
@@ -75,17 +80,25 @@ static void zmMul(word c[], const word a[], const word b[],
 
 static size_t zmMul_deep(size_t n)
 {
-	return utilMax(2,
-		zzMul_deep(n, n),
-		zzRed_deep(n));
+	return memSliceSize(
+		O_OF_W(2 * n),
+		utilMax(2,
+			zzMul_deep(n, n),
+			zzRed_deep(n)),
+		SIZE_MAX);
 }
+
+#define zmSqr_local(n)\
+/* prod */	O_OF_W(2 * n)
 
 static void zmSqr(word b[], const word a[], const qr_o* r, void* stack)
 {
-	word* prod = (word*)stack;
+	word* prod; 			/* [2 * n] */
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(a, r));
-	stack = prod + 2 * r->n;
+	memSlice(stack,
+		zmSqr_local(r->n), SIZE_0, SIZE_MAX,
+		&prod, &stack);
 	zzSqr(prod, a, r->n, stack);
 	zzRed(prod, r->mod, r->n, stack);
 	wwCopy(b, prod, r->n);
@@ -93,9 +106,12 @@ static void zmSqr(word b[], const word a[], const qr_o* r, void* stack)
 
 static size_t zmSqr_deep(size_t n)
 {
-	return utilMax(2,
-		zzSqr_deep(n),
-		zzRed_deep(n));
+	return memSliceSize(
+		O_OF_W(2 * n),
+		utilMax(2,
+			zzSqr_deep(n),
+			zzRed_deep(n)),
+		SIZE_MAX);
 }
 
 static void zmInv(word b[], const word a[], const qr_o* r, void* stack)
@@ -124,6 +140,11 @@ static size_t zmDiv_deep(size_t n)
 	return zzDivMod_deep(n);
 }
 
+#define zmCreatePlain_state(n)\
+/* mod */		O_OF_W(n),\
+/* unity */		O_OF_W(n),\
+/* params */	SIZE_0
+
 void zmCreatePlain(qr_o* r, const octet mod[], size_t no, void* stack)
 {
 	ASSERT(memIsValid(r, sizeof(qr_o)));
@@ -132,15 +153,15 @@ void zmCreatePlain(qr_o* r, const octet mod[], size_t no, void* stack)
 	// зафиксировать размерности
 	r->n = W_OF_O(no);
 	r->no = no;
+	// разметить состояние
+	memSlice(r->descr,
+		zmCreatePlain_state(r->n), SIZE_MAX,
+		&r->mod, &r->unity, &r->params);
 	// зафиксировать модуль
-	r->mod = (word*)r->descr;
 	wwFrom(r->mod, mod, no);
 	// подготовить единицу
-	r->unity = r->mod + r->n;
 	r->unity[0] = 1;
 	wwSetZero(r->unity + 1, r->n - 1);
-	// не использовать параметры
-	r->params = 0;
 	// настроить функции
 	r->from = zmFrom;
 	r->to = zmTo;
@@ -157,7 +178,8 @@ void zmCreatePlain(qr_o* r, const octet mod[], size_t no, void* stack)
 		zmInv_deep(r->n),
 		zmDiv_deep(r->n));
 	// настроить заголовок
-	r->hdr.keep = sizeof(qr_o) + O_OF_W(2 * r->n);
+	r->hdr.keep = sizeof(qr_o) + 
+		memSliceSize(zmCreatePlain_state(r->n), SIZE_MAX);
 	r->hdr.p_count = 3;
 	r->hdr.o_count = 0;
 }
@@ -165,7 +187,8 @@ void zmCreatePlain(qr_o* r, const octet mod[], size_t no, void* stack)
 size_t zmCreatePlain_keep(size_t no)
 {
 	const size_t n = W_OF_O(no);
-	return sizeof(qr_o) + O_OF_W(2 * n);
+	return sizeof(qr_o) + 
+		memSliceSize(zmCreatePlain_state(n), SIZE_MAX);
 }
 
 size_t zmCreatePlain_deep(size_t no)
@@ -184,14 +207,19 @@ size_t zmCreatePlain_deep(size_t no)
 *******************************************************************************
 */
 
+#define zmMulCrand_local(n)\
+/* prod */	O_OF_W(2 * n)
+
 static void zmMulCrand(word c[], const word a[], const word b[],
 	const qr_o* r, void* stack)
 {
-	word* prod = (word*)stack;
+	word* prod;				/* [2 * n] */
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(a, r));
 	ASSERT(zmIsIn(b, r));
-	stack = prod + 2 * r->n;
+	memSlice(stack,
+		zmMulCrand_local(r->n), SIZE_0, SIZE_MAX,
+		&prod, &stack);
 	zzMul(prod, a, r->n, b, r->n, stack);
 	zzRedCrand(prod, r->mod, r->n, stack);
 	wwCopy(c, prod, r->n);
@@ -199,17 +227,25 @@ static void zmMulCrand(word c[], const word a[], const word b[],
 
 static size_t zmMulCrand_deep(size_t n)
 {
-	return utilMax(2,
-		zzMul_deep(n, n),
-		zzRedCrand_deep(n));
+	return memSliceSize(
+		zmMulCrand_local(n),
+		utilMax(2,
+			zzMul_deep(n, n),
+			zzRedCrand_deep(n)),
+		SIZE_MAX);
 }
+
+#define zmSqrCrand_local(n)\
+/* prod */	O_OF_W(2 * n)
 
 static void zmSqrCrand(word b[], const word a[], const qr_o* r, void* stack)
 {
-	word* prod = (word*)stack;
+	word* prod;				/* [2 * n] */
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(a, r));
-	stack = prod + 2 * r->n;
+	memSlice(stack,
+		zmSqrCrand_local(r->n), SIZE_0, SIZE_MAX,
+		&prod, &stack);
 	zzSqr(prod, a, r->n, stack);
 	zzRedCrand(prod, r->mod, r->n, stack);
 	wwCopy(b, prod, r->n);
@@ -217,10 +253,18 @@ static void zmSqrCrand(word b[], const word a[], const qr_o* r, void* stack)
 
 static size_t zmSqrCrand_deep(size_t n)
 {
-	return utilMax(2,
-		zzSqr_deep(n),
-		zzRedCrand_deep(n));
+	return memSliceSize(
+		zmSqrCrand_local(n),
+		utilMax(2,
+			zzSqr_deep(n),
+			zzRedCrand_deep(n)),
+		SIZE_MAX);
 }
+
+#define zmCreateCrand_state(n)\
+/* mod */		O_OF_W(n),\
+/* unity */		O_OF_W(n),\
+/* params */	SIZE_0
 
 void zmCreateCrand(qr_o* r, const octet mod[], size_t no, void* stack)
 {
@@ -233,15 +277,15 @@ void zmCreateCrand(qr_o* r, const octet mod[], size_t no, void* stack)
 	// зафиксировать размерности
 	r->n = W_OF_O(no);
 	r->no = no;
+	// разметить состояние
+	memSlice(r->descr,
+		zmCreateCrand_state(r->n), SIZE_MAX,
+		&r->mod, &r->unity, &r->params);
 	// зафиксировать модуль
-	r->mod = (word*)r->descr;
 	wwFrom(r->mod, mod, no);
 	// подготовить единицу
-	r->unity = r->mod + r->n;
 	r->unity[0] = 1;
 	wwSetZero(r->unity + 1, r->n - 1);
-	// не использовать параметры
-	r->params = 0;
 	// настроить функции
 	r->from = zmFrom;
 	r->to = zmTo;
@@ -258,7 +302,8 @@ void zmCreateCrand(qr_o* r, const octet mod[], size_t no, void* stack)
 		zmInv_deep(r->n),
 		zmDiv_deep(r->n));
 	// настроить заголовок
-	r->hdr.keep = sizeof(qr_o) + O_OF_W(2 * r->n);
+	r->hdr.keep = sizeof(qr_o) + 
+		memSliceSize(zmCreateCrand_state(r->n), SIZE_MAX);
 	r->hdr.p_count = 3;
 	r->hdr.o_count = 0;
 }
@@ -266,7 +311,8 @@ void zmCreateCrand(qr_o* r, const octet mod[], size_t no, void* stack)
 size_t zmCreateCrand_keep(size_t no)
 {
 	const size_t n = W_OF_O(no);
-	return sizeof(qr_o) + O_OF_W(2 * n);
+	return sizeof(qr_o) + 
+		memSliceSize(zmCreateCrand_state(n), SIZE_MAX);
 }
 
 size_t zmCreateCrand_deep(size_t no)
@@ -285,14 +331,19 @@ size_t zmCreateCrand_deep(size_t no)
 *******************************************************************************
 */
 
+#define zmMulBarr_local(n)\
+/* prod */	O_OF_W(2 * n)
+
 static void zmMulBarr(word c[], const word a[], const word b[],
 	const qr_o* r, void* stack)
 {
-	word* prod = (word*)stack;
+	word* prod;				/* [2 * n] */
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(a, r));
 	ASSERT(zmIsIn(b, r));
-	stack = prod + 2 * r->n;
+	memSlice(stack,
+		zmMulBarr_local(r->n), SIZE_0, SIZE_MAX,
+		&prod, &stack);
 	zzMul(prod, a, r->n, b, r->n, stack);
 	zzRedBarr(prod, r->mod, r->n, r->params, stack);
 	wwCopy(c, prod, r->n);
@@ -300,17 +351,25 @@ static void zmMulBarr(word c[], const word a[], const word b[],
 
 static size_t zmMulBarr_deep(size_t n)
 {
-	return utilMax(2,
-		zzMul_deep(n, n),
-		zzRedBarr_deep(n));
+	return memSliceSize(
+		zmMulBarr_local(n),
+		utilMax(2,
+			zzMul_deep(n, n),
+			zzRedBarr_deep(n)),
+		SIZE_MAX);
 }
+
+#define zmSqrBarr_local(n)\
+/* prod */	O_OF_W(2 * n)
 
 static void zmSqrBarr(word b[], const word a[], const qr_o* r, void* stack)
 {
-	word* prod = (word*)stack;
+	word* prod;				/* [2 * n] */
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(a, r));
-	stack = prod + 2 * r->n;
+	memSlice(stack,
+		zmSqrBarr_local(r->n), SIZE_0, SIZE_MAX,
+		&prod, &stack);
 	zzSqr(prod, a, r->n, stack);
 	zzRedBarr(prod, r->mod, r->n, r->params, stack);
 	wwCopy(b, prod, r->n);
@@ -318,10 +377,18 @@ static void zmSqrBarr(word b[], const word a[], const qr_o* r, void* stack)
 
 static size_t zmSqrBarr_deep(size_t n)
 {
-	return utilMax(2,
-		zzSqr_deep(n),
-		zzRedBarr_deep(n));
+	return memSliceSize(
+		zmSqrBarr_local(n),
+		utilMax(2,
+			zzSqr_deep(n),
+			zzRedBarr_deep(n)),
+		SIZE_MAX);
 }
+
+#define zmCreateBarr_state(n)\
+/* mod */		O_OF_W(n),\
+/* unity */		O_OF_W(n),\
+/* params */	O_OF_W(n + 2)
 
 void zmCreateBarr(qr_o* r, const octet mod[], size_t no, void* stack)
 {
@@ -331,15 +398,16 @@ void zmCreateBarr(qr_o* r, const octet mod[], size_t no, void* stack)
 	// зафиксировать размерности
 	r->n = W_OF_O(no);
 	r->no = no;
+	// разметить состояние
+	memSlice(r->descr,
+		zmCreateBarr_state(r->n), SIZE_MAX,
+		&r->mod, &r->unity, &r->params);
 	// зафиксировать модуль
-	r->mod = (word*)r->descr;
 	wwFrom(r->mod, mod, no);
 	// подготовить единицу
-	r->unity = r->mod + r->n;
 	r->unity[0] = 1;
 	wwSetZero(r->unity + 1, r->n - 1);
 	// подготовить параметры
-	r->params = r->unity + r->n;
 	zzRedBarrStart(r->params, r->mod, r->n, stack);
 	// настроить функции
 	r->from = zmFrom;
@@ -357,7 +425,8 @@ void zmCreateBarr(qr_o* r, const octet mod[], size_t no, void* stack)
 		zmInv_deep(r->n),
 		zmDiv_deep(r->n));
 	// настроить заголовок
-	r->hdr.keep = sizeof(qr_o) + O_OF_W(3 * r->n + 2);
+	r->hdr.keep = sizeof(qr_o) + 
+		memSliceSize(zmCreateBarr_state(r->n), SIZE_MAX);
 	r->hdr.p_count = 3;
 	r->hdr.o_count = 0;
 }
@@ -365,7 +434,8 @@ void zmCreateBarr(qr_o* r, const octet mod[], size_t no, void* stack)
 size_t zmCreateBarr_keep(size_t no)
 {
 	const size_t n = W_OF_O(no);
-	return sizeof(qr_o) + O_OF_W(3 * n + 2);
+	return sizeof(qr_o) + 
+		memSliceSize(zmCreateBarr_state(n), SIZE_MAX);
 }
 
 size_t zmCreateBarr_deep(size_t no)
@@ -394,12 +464,17 @@ Revisited. IEEE Transactions on Computers, 49(7):763–766, 2000].
 *******************************************************************************
 */
 
+#define zmFromMont_local(n)\
+/* c */		O_OF_W(2 * n)
+
 static bool_t zmFromMont(word b[], const octet a[], const qr_o* r,
 	void* stack)
 {
-	word* c = (word*)stack;
+	word* c;			/* [2 * n] */
 	ASSERT(zmIsOperable(r));
-	stack = c + 2 * r->n;
+	memSlice(stack,
+		zmFromMont_local(r->n), SIZE_0, SIZE_MAX,
+		&c, &stack);
 	// a \in r?, c <- a * R
 	wwFrom(c + r->n, a, r->no);
 	if (!zmIsIn(c + r->n, r))
@@ -412,15 +487,23 @@ static bool_t zmFromMont(word b[], const octet a[], const qr_o* r,
 
 static size_t zmFromMont_deep(size_t n)
 {
-	return O_OF_W(2 * n) + zzMod_deep(2 * n, n);
+	return memSliceSize(
+		zmFromMont_local(n), 
+		zzMod_deep(2 * n, n),
+		SIZE_MAX);
 }
+
+#define zmToMont_local(n)\
+/* c */		O_OF_W(2 * n)
 
 static void zmToMont(octet b[], const word a[], const qr_o* r, void* stack)
 {
-	word* c = (word*)stack;
+	word* c;			/* [2  * n] */
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(a, r));
-	stack = c + 2 * r->n;
+	memSlice(stack,
+		zmFromMont_local(r->n), SIZE_0, SIZE_MAX,
+		&c, &stack);
 	// c <- a * R^{-1} \mod mod
 	wwCopy(c, a, r->n);
 	wwSetZero(c + r->n, r->n);
@@ -431,17 +514,25 @@ static void zmToMont(octet b[], const word a[], const qr_o* r, void* stack)
 
 static size_t zmToMont_deep(size_t n)
 {
-	return O_OF_W(2 * n) + zzRedMont_deep(n);
+	return memSliceSize(
+		zmToMont_local(n), 
+		zzRedMont_deep(n),
+		SIZE_MAX);
 }
+
+#define zmMulMont_local(n)\
+/* prod */	O_OF_W(2 * n)
 
 static void zmMulMont(word c[], const word a[], const word b[],
 	const qr_o* r, void* stack)
 {
-	word* prod = (word*)stack;
+	word* prod;			/* [2 * n] */
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(a, r));
 	ASSERT(zmIsIn(b, r));
-	stack = prod + 2 * r->n;
+	memSlice(stack,
+		zmMulMont_local(r->n), SIZE_0, SIZE_MAX,
+		&prod, &stack);
 	zzMul(prod, a, r->n, b, r->n, stack);
 	zzRedMont(prod, r->mod, r->n, *(word*)r->params, stack);
 	wwCopy(c, prod, r->n);
@@ -449,17 +540,25 @@ static void zmMulMont(word c[], const word a[], const word b[],
 
 static size_t zmMulMont_deep(size_t n)
 {
-	return utilMax(2,
-		zzMul_deep(n, n),
-		zzRedMont_deep(n));
+	return memSliceSize(
+		zmMulMont_local(n),
+		utilMax(2, 
+			zzMul_deep(n, n),
+			zzRedMont_deep(n)),
+		SIZE_MAX);
 }
+
+#define zmSqrMont_local(n)\
+/* prod */	O_OF_W(2 * n)
 
 static void zmSqrMont(word b[], const word a[], const qr_o* r, void* stack)
 {
-	word* prod = (word*)stack;
+	word* prod;			/* [2 * n] */
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(a, r));
-	stack = prod + 2 * r->n;
+	memSlice(stack,
+		zmSqrMont_local(r->n), SIZE_0, SIZE_MAX,
+		&prod, &stack);
 	zzSqr(prod, a, r->n, stack);
 	zzRedMont(prod, r->mod, r->n, *(word*)r->params, stack);
 	wwCopy(b, prod, r->n);
@@ -467,9 +566,12 @@ static void zmSqrMont(word b[], const word a[], const qr_o* r, void* stack)
 
 static size_t zmSqrMont_deep(size_t n)
 {
-	return utilMax(2,
-		zzSqr_deep(n),
-		zzRedMont_deep(n));
+	return memSliceSize(
+		zmMulMont_local(n),
+		utilMax(2, 
+			zzSqr_deep(n),
+			zzRedMont_deep(n)),
+		SIZE_MAX);
 }
 
 static void zmInvMont(word b[], const word a[], const qr_o* r, void* stack)
@@ -484,6 +586,7 @@ static void zmInvMont(word b[], const word a[], const qr_o* r, void* stack)
 	// b <- a^{-1} R^2 \mod mod
 	for (; k < 2 * r->n * B_PER_W; ++k)
 		zzDoubleMod(b, b, r->mod, r->n);
+	CLEAN(k);
 }
 
 static size_t zmInvMont_deep(size_t n)
@@ -491,14 +594,19 @@ static size_t zmInvMont_deep(size_t n)
 	return zzAlmostInvMod_deep(n);
 }
 
+#define zmDivMont_local(n)\
+/* c */		O_OF_W(n)
+
 static void zmDivMont(word b[], const word divident[], const word a[],
 	const qr_o* r, void* stack)
 {
-	word* c = (word*)stack;
+	word* c;			/* [n] */
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(divident, r));
 	ASSERT(zmIsIn(a, r));
-	stack = c + r->n;
+	memSlice(stack,
+		zmDivMont_local(r->n), SIZE_0, SIZE_MAX,
+		&c, &stack);
 	// c <- a^{(-1)} (в кольце Монтгомери)
 	zmInvMont(c, a, r, stack);
 	// b <- divident * c
@@ -507,10 +615,18 @@ static void zmDivMont(word b[], const word divident[], const word a[],
 
 static size_t zmDivMont_deep(size_t n)
 {
-	return utilMax(2,
-		zmInvMont_deep(n),
-		zmMulMont_deep(n));
+	return memSliceSize(
+		zmDivMont_local(n),
+		utilMax(2, 
+			zmInvMont_deep(n),
+			zmMulMont_deep(n)),
+		SIZE_MAX);
 }
+
+#define zmCreateMont_state(n)\
+/* mod */		O_OF_W(n),\
+/* unity */		O_OF_W(n),\
+/* params */	O_OF_W(1)
 
 void zmCreateMont(qr_o* r, const octet mod[], size_t no, void* stack)
 {
@@ -521,16 +637,17 @@ void zmCreateMont(qr_o* r, const octet mod[], size_t no, void* stack)
 	// зафиксировать размерности
 	r->n = W_OF_O(no);
 	r->no = no;
+	// разметить состояние
+	memSlice(r->descr,
+		zmCreateMont_state(r->n), SIZE_MAX,
+		&r->mod, &r->unity, &r->params);
 	// зафиксировать модуль
-	r->mod = (word*)r->descr;
 	wwFrom(r->mod, mod, no);
 	// подготовить единицу
-	r->unity = r->mod + r->n;
 	wwSetZero(r->unity, r->n);
 	zzSub2(r->unity, r->mod, r->n);
 	zzMod(r->unity, r->unity, r->n, r->mod, r->n, stack);
 	// подготовить параметры
-	r->params = r->unity + r->n;
 	*((word*)r->params) = wordNegInv(r->mod[0]);
 	// настроить функции
 	r->from = zmFromMont;
@@ -550,7 +667,8 @@ void zmCreateMont(qr_o* r, const octet mod[], size_t no, void* stack)
 		zmInvMont_deep(r->n),
 		zmDivMont_deep(r->n));
 	// настроить заголовок
-	r->hdr.keep = sizeof(qr_o) + O_OF_W(2 * r->n + 1);
+	r->hdr.keep = sizeof(qr_o) + 
+		memSliceSize(zmCreateMont_state(r->n), SIZE_MAX);
 	r->hdr.p_count = 3;
 	r->hdr.o_count = 0;
 }
@@ -558,7 +676,8 @@ void zmCreateMont(qr_o* r, const octet mod[], size_t no, void* stack)
 size_t zmCreateMont_keep(size_t no)
 {
 	const size_t n = W_OF_O(no);
-	return sizeof(qr_o) + O_OF_W(2 * n + 1);
+	return sizeof(qr_o) + 
+		memSliceSize(zmCreateMont_state(n), SIZE_MAX);
 }
 
 size_t zmCreateMont_deep(size_t no)
@@ -647,19 +766,25 @@ typedef struct
 	size_t l;			/* размерность */
 } zm_mont_params_st;
 
+#define zmMulMont2_local(n)\
+/* prod */		O_OF_W(2 * n)
+
 static void zmMulMont2(word c[], const word a[], const word b[],
 	const qr_o* r, void* stack)
 {
-	register size_t k;
 	const zm_mont_params_st* params;
-	word* prod = (word*)stack;
+	word* prod; 			/* [2 * n] */
+	size_t k;
 	// pre
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(a, r));
 	ASSERT(zmIsIn(b, r));
-	// настроить указатели
+	// зафиксировать параметры
 	params = (const zm_mont_params_st*)r->params;
-	stack = prod + 2 * r->n;
+	// разметить стек
+	memSlice(stack,
+		zmMulMont2_local(r->n), SIZE_0, SIZE_MAX,
+		&prod, &stack);
 	// c <- a b B^{-n} \mod mod
 	zzMul(prod, a, r->n, b, r->n, stack);
 	zzRedMont(prod, r->mod, r->n, *(word*)r->params, stack);
@@ -671,22 +796,31 @@ static void zmMulMont2(word c[], const word a[], const word b[],
 
 static size_t zmMulMont2_deep(size_t n)
 {
-	return utilMax(2,
-		zzMul_deep(n, n),
-		zzRedMont_deep(n));
+	return memSliceSize(
+		zmMulMont2_local(n),
+		utilMax(2,
+			zzMul_deep(n, n),
+			zzRedMont_deep(n)),
+		SIZE_MAX);	
 }
+
+#define zmSqrMont2_local(n)\
+/* prod */		O_OF_W(2 * n)
 
 static void zmSqrMont2(word b[], const word a[], const qr_o* r, void* stack)
 {
-	register size_t k;
 	const zm_mont_params_st* params;
-	word* prod = (word*)stack;
+	word* prod; 		/* [2 * n] */
+	size_t k;
 	// pre
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(a, r));
-	// настроить указатели
+	// зафиксировать параметры
 	params = (const zm_mont_params_st*)r->params;
-	stack = prod + 2 * r->n;
+	// разметить стек
+	memSlice(stack,
+		zmSqrMont2_local(r->n), SIZE_0, SIZE_MAX,
+		&prod, &stack);
 	// b <- a^2 B^{-n} \mod mod
 	zzSqr(prod, a, r->n, stack);
 	zzRedMont(prod, r->mod, r->n, *(word*)r->params, stack);
@@ -698,17 +832,22 @@ static void zmSqrMont2(word b[], const word a[], const qr_o* r, void* stack)
 
 static size_t zmSqrMont2_deep(size_t n)
 {
-	return utilMax(2,
-		zzSqr_deep(n),
-		zzRedMont_deep(n));
+	return memSliceSize(
+		zmSqrMont2_local(n),
+		utilMax(2,
+			zzSqr_deep(n),
+			zzRedMont_deep(n)),
+		SIZE_MAX);
 }
 
 static void zmInvMont2(word b[], const word a[], const qr_o* r, void* stack)
 {
-	register size_t k;
 	const zm_mont_params_st* params;
+	register size_t k;
+	// pre
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(a, r));
+	// зафиксировать параметры
 	params = (const zm_mont_params_st*)r->params;
 	// b <- a^{-1} 2^k \mod mod
 	k = zzAlmostInvMod(b, a, r->mod, r->n, stack);
@@ -717,6 +856,7 @@ static void zmInvMont2(word b[], const word a[], const qr_o* r, void* stack)
 	// b <- a^{-1} R^2 \mod mod
 	for (; k < 2 * params->l; ++k)
 		zzDoubleMod(b, b, r->mod, r->n);
+	CLEAN(k);
 }
 
 static size_t zmInvMont2_deep(size_t n)
@@ -724,14 +864,21 @@ static size_t zmInvMont2_deep(size_t n)
 	return zzAlmostInvMod_deep(n);
 }
 
+#define zmDivMont2_local(n)\
+/* c */			O_OF_W(n)
+
 static void zmDivMont2(word b[], const word divident[], const word a[],
 	const qr_o* r, void* stack)
 {
-	word* c = (word*)stack;
+	word* c;			/* [n] */
+	// pre
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(divident, r));
 	ASSERT(zmIsIn(a, r));
-	stack = c + r->n;
+	// разметить стек
+	memSlice(stack,
+		zmDivMont2_local(r->n), SIZE_0, SIZE_MAX,
+		&c, &stack);
 	// c <- a^{(-1)} (в кольце Монтгомери)
 	zmInvMont2(c, a, r, stack);
 	// b <- divident * c
@@ -740,10 +887,18 @@ static void zmDivMont2(word b[], const word divident[], const word a[],
 
 static size_t zmDivMont2_deep(size_t n)
 {
-	return utilMax(2,
-		zmInvMont2_deep(n),
-		zmMulMont2_deep(n));
+	return memSliceSize(
+		zmDivMont2_local(n),
+		utilMax(2,
+			zmInvMont2_deep(n),
+			zmMulMont2_deep(n)),
+		SIZE_MAX);
 }
+
+#define zmMontCreate_state(n)\
+/* mod */		O_OF_W(n),\
+/* unity */		O_OF_W(n),\
+/* params */	sizeof(zm_mont_params_st)
 
 void zmMontCreate(qr_o* r, const octet mod[], size_t no, size_t l, void* stack)
 {
@@ -754,12 +909,14 @@ void zmMontCreate(qr_o* r, const octet mod[], size_t no, size_t l, void* stack)
 	// зафиксировать размерности
 	r->n = W_OF_O(no);
 	r->no = no;
+	// разметить состояние
+	memSlice(r->descr,
+		zmMontCreate_state(r->n), SIZE_MAX,
+		&r->mod, &r->unity, &r->params);
 	// зафиксировать модуль
-	r->mod = (word*)r->descr;
 	wwFrom(r->mod, mod, no);
 	ASSERT(wwBitSize(r->mod, r->n) <= l && B_OF_W(r->n) >= l);
 	// подготовить единицу: unity <- R \mod mod
-	r->unity = r->mod + r->n;
 	wwSetZero(r->unity, r->n);
 	if (l == B_OF_W(r->n))
 		zzSub2(r->unity, r->mod, r->n);
@@ -767,7 +924,6 @@ void zmMontCreate(qr_o* r, const octet mod[], size_t no, size_t l, void* stack)
 		wwSetBit(r->unity, l, 1);
 	zzMod(r->unity, r->unity, r->n, r->mod, r->n, stack);
 	// подготовить параметры
-	r->params = r->unity + r->n;
 	((zm_mont_params_st*)r->params)->m0 = wordNegInv(r->mod[0]);
 	((zm_mont_params_st*)r->params)->l = l;
 	// настроить функции
@@ -786,7 +942,8 @@ void zmMontCreate(qr_o* r, const octet mod[], size_t no, size_t l, void* stack)
 		zmInvMont2_deep(r->n),
 		zmDivMont2_deep(r->n));
 	// настроить заголовок
-	r->hdr.keep = sizeof(qr_o) + O_OF_W(2 * r->n) + sizeof(zm_mont_params_st);
+	r->hdr.keep = sizeof(qr_o) + 
+		memSliceSize(zmMontCreate_state(r->n), SIZE_MAX);
 	r->hdr.p_count = 3;
 	r->hdr.o_count = 0;
 }
@@ -794,7 +951,8 @@ void zmMontCreate(qr_o* r, const octet mod[], size_t no, size_t l, void* stack)
 size_t zmMontCreate_keep(size_t no)
 {
 	const size_t n = W_OF_O(no);
-	return sizeof(qr_o) + O_OF_W(2 * n) + sizeof(zm_mont_params_st);
+	return sizeof(qr_o) + 
+		memSliceSize(zmMontCreate_state(n), SIZE_MAX);
 }
 
 size_t zmMontCreate_deep(size_t no)

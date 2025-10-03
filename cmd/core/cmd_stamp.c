@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: file stamps
 \project bee2/cmd 
 \created 2025.04.21
-\version 2025.06.09
+\version 2025.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -54,11 +54,11 @@ static err_t cmdFileStamp(
 {
 	const size_t buf_size = 4096;
 	err_t code;
-	octet* stack;
-	octet* buf;			/* [buf_size] */
-	octet* stamp1;		/* [10] */
-	octet* stamp2;		/* [10] */
-	octet* state;		/* [bashHash_keep()] */
+	octet* state;
+	octet* buf;				/* [buf_size] */
+	octet* stamp1;			/* [10] */
+	octet* stamp2;			/* [10] */
+	octet* bash_state;		/* [bashHash_keep()] */
 	file_t file;
 	size_t count;
 	bool_t stamped;
@@ -66,19 +66,21 @@ static err_t cmdFileStamp(
 	ASSERT((suffix == TRUE && stamp == 0) || memIsValid(stamp, 10));
 	ASSERT(strIsValid(name));
 	// выделить и разметить память
-	code = cmdBlobCreate(stack, buf_size + 20 + bashHash_keep());
+	code = cmdBlobCreate2(state, 
+		buf_size,
+		(size_t)10, 
+		(size_t)10,
+		bashHash_keep(),
+		SIZE_MAX,
+		&buf, &stamp1, &stamp2, &bash_state);
 	ERR_CALL_CHECK(code);
-	buf = stack;
-	stamp1 = buf + buf_size;
-	stamp2 = stamp1 + 10;
-	state = stamp2 + 10;
 	// открыть файл
 	code = cmdFileOpen(file, name, "rb");
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// определить размер файла
 	if ((count = fileSize(file)) == SIZE_MAX)
 		code = ERR_FILE_READ;
-	ERR_CALL_HANDLE(code, (cmdFileClose(file), cmdBlobClose(stack)));
+	ERR_CALL_HANDLE(code, (cmdFileClose(file), cmdBlobClose(state)));
 	// штамп в суффиксе?
 	stamped = FALSE;
 	if (suffix && count >= 10)
@@ -87,32 +89,32 @@ static err_t cmdFileStamp(
 			fileRead2(stamp2, 10, file) != 10 ||
 			!fileSeek(file, 0, SEEK_SET))
 			code = ERR_FILE_READ;
-		ERR_CALL_HANDLE(code, (cmdFileClose(file), cmdBlobClose(stack)));
+		ERR_CALL_HANDLE(code, (cmdFileClose(file), cmdBlobClose(state)));
 		memRev(stamp2, 10);
 		stamped = (derOCTDec2(0, stamp2, 10, 8) == 10);
 		memRev(stamp2, 10);
 	}
 	if (stamp == 0 && !stamped)
 		code = ERR_MAX;
-	ERR_CALL_HANDLE(code, (cmdFileClose(file), cmdBlobClose(stack)));
+	ERR_CALL_HANDLE(code, (cmdFileClose(file), cmdBlobClose(state)));
 	// определить объем хэшируемой части файла
 	count = stamped ? count - 10 : count;
 	// хэшировать файл
-	bashHashStart(state, 32);
+	bashHashStart(bash_state, 32);
 	while (count)
 	{
 		size_t c = MIN2(count, buf_size);
 		if (fileRead2(buf, c, file) != c)
 			code = ERR_FILE_READ;
-		ERR_CALL_HANDLE(code, (cmdFileClose(file), cmdBlobClose(stack)));
-		bashHashStepH(buf, c, state);
+		ERR_CALL_HANDLE(code, (cmdFileClose(file), cmdBlobClose(state)));
+		bashHashStepH(buf, c, bash_state);
 		count -= c;
 	}
 	// закрыть файл
 	code = cmdFileClose2(file);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// завершить хэширование и кодировать
-	bashHashStepG(stamp1, 8, state);
+	bashHashStepG(stamp1, 8, bash_state);
 	VERIFY(derOCTEnc(stamp1, stamp1, 8) == 10);
 	memRev(stamp1, 10);
 	// проверить суффикс
@@ -127,7 +129,7 @@ static err_t cmdFileStamp(
 	if (stamp)
 		memCopy(stamp, stamp1, 10);
 	// завершить
-	cmdBlobClose(stack);
+	cmdBlobClose(state);
 	return code;
 }
 
@@ -180,26 +182,28 @@ err_t cmdStampVal(const char* name, const char* stamp_name)
 	// проверить открепленный штамп
 	else
 	{
-		void* stack;
-		octet* stamp;
-		octet* stamp1;
+		void* state;
+		octet* stamp;			/* [10] */
+		octet* stamp1;			/* [10] */
 		size_t count;
 		// выделить и разметить память
-		code = cmdBlobCreate(stack, 20);
+		code = cmdBlobCreate2(state, 
+			(size_t)10,
+			(size_t)10,
+			SIZE_MAX,
+			&stamp, &stamp1);
 		ERR_CALL_CHECK(code);
-		stamp = (octet*)stack;
-		stamp1 = stamp + 10;
 		// вычислить штамп
 		code = cmdFileStamp(stamp, name, FALSE);
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		ERR_CALL_HANDLE(code, cmdBlobClose(state));
 		// прочитать штамп
 		count = 10;
 		code = cmdFileReadAll(stamp1, &count, stamp_name);
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		ERR_CALL_HANDLE(code, cmdBlobClose(state));
 		// сравнить
 		if (!memEq(stamp, stamp1, 10))
 			code = ERR_FILE_STAMP;
-		cmdBlobClose(stack);
+		cmdBlobClose(state);
 	}
 	return code;
 }
@@ -209,22 +213,24 @@ err_t cmdStampSelfVal()
 	const char* ext = ".stamp";
 	err_t code;
 	size_t count;
-	void* stack;
-	octet* stamp;
-	octet* stamp1;
-	char* name;
+	void* state;
+	octet* stamp;			/* [10] */
+	octet* stamp1;			/* [10] */
+	char* name;				/* [count + strLen(ext)] */
 	// определить длину имени исполняемого модуля
 	code = cmdSysModulePath(0, &count);
 	ERR_CALL_CHECK(code);
 	// выделить и разметить память
-	code = cmdBlobCreate(stack, 10 + 10 + count + strLen(ext));
+	code = cmdBlobCreate2(state, 
+		(size_t)10,
+		(size_t)10,
+		count + strLen(ext),
+		SIZE_MAX,
+		&stamp, &stamp1, &name);
 	ERR_CALL_CHECK(code);
-	stamp = (octet*)stack;
-	stamp1 = stamp + 10;
-	name = (char*)(stamp1 + 10);
 	// определить имя исполняемого модуля
 	code = cmdSysModulePath(name, &count);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// проверить присоединенный штамп
 	code = cmdFileStamp(stamp, name, TRUE);
 	// в файле нет штампа?
@@ -234,12 +240,12 @@ err_t cmdStampSelfVal()
 		// прочитать отсоединенный штамп
 		strCopy(name + strLen(name), ext);
 		code = cmdFileReadAll(stamp1, &count, name);
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		ERR_CALL_HANDLE(code, cmdBlobClose(state));
 		// проверить отсоединенный штамп
 		if (!memEq(stamp, stamp1, 10))
 			code = ERR_FILE_STAMP;
 	}
 	// завершить
-	cmdBlobClose(stack);
+	cmdBlobClose(state);
 	return code;
 }

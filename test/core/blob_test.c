@@ -4,7 +4,7 @@
 \brief Tests for blob functions
 \project bee2/test
 \created 2023.03.21
-\version 2023.03.23
+\version 2025.09.01
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -23,6 +23,7 @@ bool_t blobTest()
 {
 	blob_t b1 = 0;
 	blob_t b2 = 0;
+	blob_t b3 = 0;
 	// create / resize
 	b1 = blobCreate(123);		
 	b2 = blobResize(b2, 120);
@@ -54,7 +55,28 @@ bool_t blobTest()
 		blobClose(b2), blobClose(b1);
 		return FALSE;
 	}
+	// slice
+	{
+		void* p;
+		void* p1;
+		void* p2;
+		b3 = blobCreate2(
+			(size_t)11,
+			(size_t)10,
+			(size_t)32 | SIZE_HI,
+			SIZE_MAX,
+			&p, &p1, &p2);
+		if (!b3 || 
+			!memIsAligned(b3, sizeof(mem_align_t)) ||
+			!memIsAligned(p1, sizeof(mem_align_t)) ||
+			b3 != p || p == p1 || p1 != p2)
+		{
+			blobClose(b3);
+			return FALSE;
+		}
+	}
 	// wipe / close
+	blobClose(b3);
 	blobWipe(b2);
 	blobClose(b2);
 	blobClose(b1);

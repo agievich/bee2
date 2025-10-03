@@ -4,7 +4,7 @@
 \brief Tests for prime numbers
 \project bee2/test
 \created 2014.07.07
-\version 2025.04.25
+\version 2025.09.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -31,15 +31,16 @@ bool_t priTest()
 	word a[W_OF_B(521)];
 	word p[W_OF_B(289)];
 	word mods[1024];
-	octet combo_state[32];
-	octet stack[4096];
+	mem_align_t state[64 / sizeof(mem_align_t)];
+	mem_align_t stack[4096 / sizeof(mem_align_t)];
 	// инициализировать генератор COMBO
-	if (sizeof(combo_state) < prngCOMBO_keep())
+	if (sizeof(state) < prngCOMBO_keep())
 		return FALSE;
-	prngCOMBOStart(combo_state, utilNonce32());
+	prngCOMBOStart(state, utilNonce32());
 	// проверить простоту элементов факторной базы
-	if (sizeof(stack) < priIsPrimeW_deep() ||
-		sizeof(stack) < priIsPrime_deep(1))
+	if (sizeof(stack) < utilMax(2,
+			priIsPrimeW_deep(),
+			priIsPrime_deep(1)))
 		return FALSE;
 	for (i = 0; i < priBaseSize(); ++i)
 	{
@@ -61,8 +62,9 @@ bool_t priTest()
 			a[n++] = w;
 	}
 	// проверить гладкость и просеянность
-	if (sizeof(stack) < priIsSieved_deep(n) ||
-		sizeof(stack) < priIsSmooth_deep(n) ||
+	if (sizeof(stack) < utilMax(2,
+			priIsSieved_deep(n),
+			priIsSmooth_deep(n)) ||
 		priIsSieved(a, n, i, stack) ||
 		!priIsSmooth(a, n, i, stack))
 		return FALSE;
@@ -89,7 +91,7 @@ bool_t priTest()
 	priBaseMod(mods, a, W_OF_B(521), i);
 	while (i--)
 		if (mods[i] != zzModW(a, W_OF_B(521), priBasePrime(i)) ||
-			priBasePrime(i) < WORD_BIT_HALF &&
+			priBasePrime(i) < WORD_MID &&
 				mods[i] != zzModW2(a, W_OF_B(521), priBasePrime(i)))
 			return FALSE;
 	// найти 2-битовое нечетное простое число
@@ -132,7 +134,7 @@ bool_t priTest()
 	if (priBaseSize() < 10 ||
 		sizeof(stack) < priExtendPrime_deep(289, W_OF_B(256), 0) ||
 		!priExtendPrime(p, 289, a, W_OF_B(256), SIZE_MAX, 0, prngCOMBOStepR, 
-			combo_state, stack) ||
+			state, stack) ||
 		sizeof(stack) < priIsPrime_deep(W_OF_B(256)) ||
 		!priIsPrime(p, W_OF_B(289), stack))
 		return FALSE;
@@ -144,8 +146,9 @@ bool_t priTest()
 	// проверить, что 2^256 - 29237 является простым Жермен
 	memSet(a, 0xFF, O_OF_B(256));
 	a[0] = WORD_MAX - 29236;
-	if (sizeof(stack) < priIsSieved_deep(10) ||
-		sizeof(stack) < priIsSGPrime_deep(W_OF_B(256)) ||
+	if (sizeof(stack) < utilMax(2,
+			priIsSieved_deep(10),
+			priIsSGPrime_deep(W_OF_B(256))) ||
 		!priIsSieved(a, W_OF_B(256), 10, stack) ||
 		!priIsSGPrime(a, W_OF_B(256), stack) != 0)
 		return FALSE;
@@ -153,7 +156,7 @@ bool_t priTest()
 	a[0] = 11;
 	if (sizeof(stack) < priExtendPrime_deep(5, 1, 10) ||
 		!priExtendPrime(p, 5, a, 1, SIZE_MAX, 0,
-			prngCOMBOStepR, combo_state, stack) ||
+			prngCOMBOStepR, state, stack) ||
 		p[0] != 23)
 		return FALSE;
 	// все нормально

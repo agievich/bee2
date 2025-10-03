@@ -4,7 +4,7 @@
 \brief Binary fields
 \project bee2 [cryptographic library]
 \created 2012.04.17
-\version 2025.06.10
+\version 2025.09.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -227,14 +227,19 @@ static void gf2Neg2(word b[], const word a[], const qr_o* f)
 	wwCopy(b, a, f->n);
 }
 
+#define gf2MulTrinomial0_local(n)\
+/* prod */	O_OF_W(2 * n)
+
 static void gf2MulTrinomial0(word c[], const word a[], const word b[], 
 	const qr_o* f, void* stack)
 {
-	word* prod = (word*)stack;
-	stack = prod + 2 * f->n;
+	word* prod;			/* [2 * n] */
 	ASSERT(gf2IsOperable(f));
 	ASSERT(gf2IsIn(a, f));
 	ASSERT(gf2IsIn(b, f));
+	memSlice(stack,
+		gf2MulTrinomial0_local(f->n), SIZE_0, SIZE_MAX,
+		&prod, &stack);
 	ppMul(prod, a, f->n, b, f->n, stack);
 	gf2RedTrinomial0(prod, f->n, (const gf2_trinom_st*)f->params);
 	wwCopy(c, prod, f->n);
@@ -242,17 +247,25 @@ static void gf2MulTrinomial0(word c[], const word a[], const word b[],
 
 static size_t gf2MulTrinomial0_deep(size_t n)
 {
-	return ppMul_deep(n, n);
+	return memSliceSize(
+		gf2MulTrinomial0_local(n), 
+		ppMul_deep(n, n),
+		SIZE_MAX);
 }
+
+#define gf2MulTrinomial1_local(n)\
+/* prod */	O_OF_W(2 * n)
 
 static void gf2MulTrinomial1(word c[], const word a[], const word b[], 
 	const qr_o* f, void* stack)
 {
-	word* prod = (word*)stack;
-	stack = prod + 2 * f->n;
+	word* prod;			/* [2  * n] */
 	ASSERT(gf2IsOperable(f));
 	ASSERT(gf2IsIn(a, f));
 	ASSERT(gf2IsIn(b, f));
+	memSlice(stack,
+		gf2MulTrinomial1_local(f->n), SIZE_0, SIZE_MAX,
+		&prod, &stack);
 	ppMul(prod, a, f->n, b, f->n, stack);
 	gf2RedTrinomial1(prod, f->n, (const gf2_trinom_st*)f->params);
 	wwCopy(c, prod, f->n);
@@ -260,17 +273,25 @@ static void gf2MulTrinomial1(word c[], const word a[], const word b[],
 
 static size_t gf2MulTrinomial1_deep(size_t n)
 {
-	return ppMul_deep(n, n);
+	return memSliceSize(
+		gf2MulTrinomial1_local(n), 
+		ppMul_deep(n, n),
+		SIZE_MAX);
 }
+
+#define gf2MulPentanomial_local(n)\
+/* prod */	O_OF_W(2 * n)
 
 static void gf2MulPentanomial(word c[], const word a[], const word b[], 
 	const qr_o* f, void* stack)
 {
-	word* prod = (word*)stack;
-	stack = prod + 2 * f->n;
+	word* prod;			/* [2 * n] */
 	ASSERT(gf2IsOperable(f));
 	ASSERT(gf2IsIn(a, f));
 	ASSERT(gf2IsIn(b, f));
+	memSlice(stack,
+		gf2MulPentanomial_local(f->n), SIZE_0, SIZE_MAX,
+		&prod, &stack);
 	ppMul(prod, a, f->n, b, f->n, stack);
 	gf2RedPentanomial(prod, f->n, (const gf2_pentanom_st*)f->params);
 	wwCopy(c, prod, f->n);
@@ -278,16 +299,24 @@ static void gf2MulPentanomial(word c[], const word a[], const word b[],
 
 static size_t gf2MulPentanomial_deep(size_t n)
 {
-	return ppMul_deep(n, n);
+	return memSliceSize(
+		gf2MulPentanomial_local(n), 
+		ppMul_deep(n, n),
+		SIZE_MAX);
 }
+
+#define gf2SqrTrinomial0_local(n)\
+/* prod */	O_OF_W(2 * n)
 
 static void gf2SqrTrinomial0(word b[], const word a[], const qr_o* f, 
 	void* stack)
 {
-	word* prod = (word*)stack;
-	stack = prod + 2 * f->n;
+	word* prod;			/* [2 * n] */
 	ASSERT(gf2IsOperable(f));
 	ASSERT(gf2IsIn(a, f));
+	memSlice(stack,
+		gf2SqrTrinomial0_local(f->n), SIZE_0, SIZE_MAX,
+		&prod, &stack);
 	ppSqr(prod, a, f->n, stack);
 	gf2RedTrinomial0(prod, f->n, (const gf2_trinom_st*)f->params);
 	wwCopy(b, prod, f->n);
@@ -295,16 +324,24 @@ static void gf2SqrTrinomial0(word b[], const word a[], const qr_o* f,
 
 static size_t gf2SqrTrinomial0_deep(size_t n)
 {
-	return ppSqr_deep(n);
+	return memSliceSize(
+		gf2SqrTrinomial0_local(n), 
+		ppSqr_deep(n),
+		SIZE_MAX);
 }
+
+#define gf2SqrTrinomial1_local(n)\
+/* prod */	O_OF_W(2 * n)
 
 static void gf2SqrTrinomial1(word b[], const word a[], const qr_o* f, 
 	void* stack)
 {
-	word* prod = (word*)stack;
-	stack = prod + 2 * f->n;
+	word* prod;			/* [2 * n] */
 	ASSERT(gf2IsOperable(f));
 	ASSERT(gf2IsIn(a, f));
+	memSlice(stack,
+		gf2SqrTrinomial1_local(f->n), SIZE_0, SIZE_MAX,
+		&prod, &stack);
 	ppSqr(prod, a, f->n, stack);
 	gf2RedTrinomial1(prod, f->n, (const gf2_trinom_st*)f->params);
 	wwCopy(b, prod, f->n);
@@ -312,16 +349,24 @@ static void gf2SqrTrinomial1(word b[], const word a[], const qr_o* f,
 
 static size_t gf2SqrTrinomial1_deep(size_t n)
 {
-	return ppSqr_deep(n);
+	return memSliceSize(
+		gf2SqrTrinomial1_local(n), 
+		ppSqr_deep(n),
+		SIZE_MAX);
 }
+
+#define gf2SqrPentanomial_local(n)\
+/* prod */	O_OF_W(2 * n)
 
 static void gf2SqrPentanomial(word b[], const word a[], const qr_o* f, 
 	void* stack)
 {
-	word* prod = (word*)stack;
-	stack = prod + 2 * f->n;
+	word* prod;			/* [2 * n] */
 	ASSERT(gf2IsOperable(f));
 	ASSERT(gf2IsIn(a, f));
+	memSlice(stack,
+		gf2SqrPentanomial_local(f->n), SIZE_0, SIZE_MAX,
+		&prod, &stack);
 	ppSqr(prod, a, f->n, stack);
 	gf2RedPentanomial(prod, f->n, (const gf2_pentanom_st*)f->params);
 	wwCopy(b, prod, f->n);
@@ -329,8 +374,14 @@ static void gf2SqrPentanomial(word b[], const word a[], const qr_o* f,
 
 static size_t gf2SqrPentanomial_deep(size_t n)
 {
-	return ppSqr_deep(n);
+	return memSliceSize(
+		gf2SqrPentanomial_local(n), 
+		ppSqr_deep(n),
+		SIZE_MAX);
 }
+
+#define gf2Inv_local(n)\
+/* c */		O_OF_W(n + 1)
 
 static void gf2Inv(word b[], const word a[], const qr_o* f, void* stack)
 {
@@ -338,8 +389,10 @@ static void gf2Inv(word b[], const word a[], const qr_o* f, void* stack)
 	ASSERT(gf2IsIn(a, f));
 	if (gf2Deg(f) % B_PER_W == 0)
 	{
-		word* c = (word*)stack;
-		stack = c + f->n + 1;
+		word* c;		/* [n + 1] */
+		memSlice(stack,
+			gf2Inv_local(f->n), SIZE_0, SIZE_MAX,
+			&c, &stack);	
 		ppInvMod(c, a, f->mod, f->n + 1, stack);
 		ASSERT(c[f->n] == 0);
 		wwCopy(b, c, f->n);
@@ -350,8 +403,14 @@ static void gf2Inv(word b[], const word a[], const qr_o* f, void* stack)
 
 static size_t gf2Inv_deep(size_t n)
 {
-	return O_OF_W(n + 1) + ppInvMod_deep(n + 1);
+	return memSliceSize(
+		gf2Inv_local(n), 
+		ppInvMod_deep(n + 1),
+		SIZE_MAX);
 }
+
+#define gf2Div_local(n)\
+/* c */		O_OF_W(n + 1)
 
 static void gf2Div(word b[], const word divident[], const word a[], 
 	const qr_o* f, void* stack)
@@ -361,8 +420,10 @@ static void gf2Div(word b[], const word divident[], const word a[],
 	ASSERT(gf2IsIn(a, f));
 	if (gf2Deg(f) % B_PER_W == 0)
 	{
-		word* c = (word*)stack;
-		stack = c + f->n + 1;
+		word* c;		/* [n + 1] */
+		memSlice(stack,
+			gf2Div_local(f->n), SIZE_0, SIZE_MAX,
+			&c, &stack);	
 		ppDivMod(c, divident, a, f->mod, f->n + 1, stack);
 		ASSERT(c[f->n] == 0);
 		wwCopy(b, c, f->n);
@@ -373,7 +434,10 @@ static void gf2Div(word b[], const word divident[], const word a[],
 
 static size_t gf2Div_deep(size_t n)
 {
-	return O_OF_W(n + 1) + ppDivMod_deep(n + 1);
+	return memSliceSize(
+		gf2Div_local(n), 
+		ppInvMod_deep(n + 1),
+		SIZE_MAX);
 }
 
 /*
@@ -382,8 +446,15 @@ static size_t gf2Div_deep(size_t n)
 *******************************************************************************
 */
 
+#define gf2Create_state(n, n1)\
+/* mod */		O_OF_W(n),\
+/* unity */		O_OF_W(n1),\
+/* params */	MAX2(sizeof(gf2_trinom_st), sizeof(gf2_pentanom_st))
+
 bool_t gf2Create(qr_o* f, const size_t p[4], void* stack)
 {
+	size_t n1;
+	// pre
 	ASSERT(memIsValid(f, sizeof(qr_o)));
 	ASSERT(memIsValid(p, 4 * sizeof(size_t)));
 	// нормальный базис?
@@ -395,29 +466,44 @@ bool_t gf2Create(qr_o* f, const size_t p[4], void* stack)
 	// трехчлен?
 	else if (p[2] == 0)
 	{
-		gf2_trinom_st* t;
-		size_t n1;
 		// нарушены соглашения?
 		if (p[3] != 0)
 			return FALSE;
 		// нарушены условия функции ppRedTrinomial?
 		if (p[0] % 8 == 0 || p[1] >= p[0] || p[0] - p[1] < B_PER_W)
 			return FALSE;
-		// зафиксировать размерность
-		f->n = W_OF_B(p[0]);
-		n1 = f->n + (p[0] % B_PER_W == 0);
-		f->no = O_OF_B(p[0]);
+	}
+	// пятичлен?
+	else
+	{
+		// нарушены соглашения?
+		if (p[3] == 0)
+			return FALSE;
+		// нарушены условия функции ppRedPentanomial?
+		if (p[1] >= p[0] || p[2] >= p[1] || p[3] >= p[2] || 
+			p[0] - p[1] < B_PER_W || p[1] >= B_PER_W)
+			return FALSE;
+	}
+	// зафиксировать размерность
+	f->n = W_OF_B(p[0]);
+	n1 = f->n + (p[0] % B_PER_W == 0);
+	f->no = O_OF_B(p[0]);
+	// разметить состояние
+	memSlice(f->descr,
+		gf2Create_state(f->n, n1), SIZE_MAX,
+		&f->mod, &f->unity, &f->params);
+	// трехчлен?
+	if (p[2] == 0)
+	{
+		gf2_trinom_st* t;
 		// сформировать mod
-		f->mod = (word*)f->descr;
 		wwSetZero(f->mod, n1);
 		wwSetBit(f->mod, p[0], 1);
 		wwSetBit(f->mod, p[1], 1);
 		wwSetBit(f->mod, 0, 1);
 		// сформировать unity
-		f->unity = f->mod + n1;
 		wwSetW(f->unity, f->n, 1);
 		// сформировать params
-		f->params = (size_t*)(f->unity + f->n);
 		t = (gf2_trinom_st*)f->params;
 		t->m = p[0];
 		t->k = p[1];
@@ -436,10 +522,6 @@ bool_t gf2Create(qr_o* f, const size_t p[4], void* stack)
 		f->sqr = t->bk == 0 ? gf2SqrTrinomial0 : gf2SqrTrinomial1;
 		f->inv = gf2Inv;
 		f->div = gf2Div;
-		// заголовок
-		f->hdr.keep = sizeof(qr_o) + O_OF_W(n1 + f->n) + sizeof(gf2_trinom_st);
-		f->hdr.p_count = 3;
-		f->hdr.o_count = 0;
 		// глубина стека
 		if (t->bk == 0)
 			f->deep = utilMax(4,
@@ -458,20 +540,11 @@ bool_t gf2Create(qr_o* f, const size_t p[4], void* stack)
 	else
 	{
 		gf2_pentanom_st* t;
-		size_t n1;
-		// нарушены соглашения?
-		if (p[3] == 0)
-			return FALSE;
-		// нарушены условия функции ppRedPentanomial?
-		if (p[1] >= p[0] || p[2] >= p[1] || p[3] >= p[2] || 
-			p[0] - p[1] < B_PER_W || p[1] >= B_PER_W)
-			return FALSE;
 		// зафиксировать размерность
 		f->n = W_OF_B(p[0]);
 		n1 = f->n + (p[0] % B_PER_W == 0);
 		f->no = O_OF_B(p[0]);
 		// сформировать mod
-		f->mod = (word*)f->descr;
 		wwSetZero(f->mod, n1);
 		wwSetBit(f->mod, p[0], 1);
 		wwSetBit(f->mod, p[1], 1);
@@ -479,10 +552,8 @@ bool_t gf2Create(qr_o* f, const size_t p[4], void* stack)
 		wwSetBit(f->mod, p[3], 1);
 		wwSetBit(f->mod, 0, 1);
 		// сформировать unity
-		f->unity = f->mod + n1;
 		wwSetW(f->unity, f->n, 1);
 		// сформировать params
-		f->params = (size_t*)(f->unity + f->n);
 		t = (gf2_pentanom_st*)f->params;
 		t->m = p[0];
 		t->k = p[1];
@@ -506,11 +577,6 @@ bool_t gf2Create(qr_o* f, const size_t p[4], void* stack)
 		f->sqr = gf2SqrPentanomial;
 		f->inv = gf2Inv;
 		f->div = gf2Div;
-		// заголовок
-		f->hdr.keep = sizeof(qr_o) + O_OF_W(n1 + f->n) + 
-			sizeof(gf2_pentanom_st);
-		f->hdr.p_count = 3;
-		f->hdr.o_count = 0;
 		// глубина стека
 		f->deep = utilMax(4,
 			gf2MulPentanomial_deep(f->n),
@@ -518,6 +584,12 @@ bool_t gf2Create(qr_o* f, const size_t p[4], void* stack)
 			gf2Inv_deep(f->n),
 			gf2Div_deep(f->n));
 	}
+	// заголовок
+	f->hdr.keep = sizeof(qr_o) + 
+		memSliceSize(gf2Create_state(f->n, n1), SIZE_MAX);
+	f->hdr.p_count = 3;
+	f->hdr.o_count = 0;
+	// завершение
 	return TRUE;
 }
 
@@ -525,10 +597,8 @@ size_t gf2Create_keep(size_t m)
 {
 	const size_t n = W_OF_B(m);
 	const size_t n1 = n + (m % B_PER_W == 0);
-	return sizeof(qr_o) + O_OF_W(n1 + n) + 
-		utilMax(2, 
-			sizeof(gf2_trinom_st),
-			sizeof(gf2_pentanom_st));
+	return sizeof(qr_o) + 
+		memSliceSize(gf2Create_state(n, n1), SIZE_MAX);
 }
 
 size_t gf2Create_deep(size_t m)
@@ -576,7 +646,7 @@ bool_t gf2IsValid(const qr_o* f, void* stack)
 	{
 		// согласованность
 		const size_t n1 = f->n + (p[0] % B_PER_W == 0);
-		word* mod = (word*)stack;
+		word* mod = (word*)stack;	/* [n1] */
 		wwSetZero(mod, n1);
 		wwSetBit(mod, p[0], 1);
 		wwSetBit(mod, p[1], 1);
@@ -593,7 +663,9 @@ bool_t gf2IsValid(const qr_o* f, void* stack)
 
 size_t gf2IsValid_deep(size_t n)
 {
-	return O_OF_W(n + 1) + ppIsIrred_deep(n + 1);
+	return utilMax(2,
+		O_OF_W(n + 1), 
+		ppIsIrred_deep(n + 1));
 }
 
 size_t gf2Deg(const qr_o* f)
@@ -610,14 +682,20 @@ size_t gf2Deg(const qr_o* f)
 *******************************************************************************
 */
 
+#define gf2Tr_local(n)\
+/* t */		O_OF_W(n)
+
 bool_t gf2Tr(const word a[], const qr_o* f, void* stack)
 {
 	size_t m = gf2Deg(f);
-	word* t = (word*)stack;
-	stack = t + f->n;
+	word* t;			/* [n] */
 	// pre
 	ASSERT(gf2IsOperable(f));
 	ASSERT(gf2IsIn(a, f));
+	// разметить стек
+	memSlice(stack,
+		gf2Tr_local(f->n), SIZE_0, SIZE_MAX,
+		&t, &stack);
 	// t <- sum_{i = 0}^{m - 1} a^{2^i}
 	qrCopy(t, a, f);
 	while (--m)
@@ -635,21 +713,30 @@ bool_t gf2Tr(const word a[], const qr_o* f, void* stack)
 
 size_t gf2Tr_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(n) + f_deep;
+	return memSliceSize(
+		gf2Tr_local(n), 
+		f_deep, 
+		SIZE_MAX);
 }
+
+#define gf2QSolve_local(n)\
+/* t */		O_OF_W(n)
 
 bool_t gf2QSolve(word x[], const word a[], const word b[],
 	const qr_o* f, void* stack)
 {
 	size_t m = gf2Deg(f);
-	word* t = (word*)stack;
-	stack = t + f->n;
+	word* t;			/* [n] */
 	// pre
 	ASSERT(gf2IsOperable(f));
 	ASSERT(gf2IsIn(a, f));
 	ASSERT(gf2IsIn(b, f));
 	ASSERT(x + f->n <= a || x >= a + f->n);
 	ASSERT(m % 2);
+	// разметить стек
+	memSlice(stack,
+		gf2QSolve_local(f->n), SIZE_0, SIZE_MAX,
+		&t, &stack);
 	// a == 0?
 	if (qrIsZero(a, f))
 	{
@@ -688,5 +775,8 @@ bool_t gf2QSolve(word x[], const word a[], const word b[],
 
 size_t gf2QSolve_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(n) + f_deep;
+	return memSliceSize(
+		gf2QSolve_local(n), 
+		f_deep, 
+		SIZE_MAX);
 }

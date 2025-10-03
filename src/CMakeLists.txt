@@ -21,7 +21,10 @@ set(src
   core/u64.c
   core/util.c
   core/word.c
-  crypto/bake.c
+  crypto/bake/bake_bmqv.c
+  crypto/bake/bake_bsts.c
+  crypto/bake/bake_bpace.c
+  crypto/bake/bake_misc.c
   crypto/bash/bash_f.c
   crypto/bash/bash_hash.c
   crypto/bash/bash_prg.c
@@ -45,9 +48,9 @@ set(src
   crypto/belt/belt_kwp.c
   crypto/belt/belt_mac.c
   crypto/belt/belt_pbkdf.c
+  crypto/bign/bign_ec.c
   crypto/bign/bign_ibs.c
   crypto/bign/bign_keyt.c
-  crypto/bign/bign_lcl.c
   crypto/bign/bign_misc.c
   crypto/bign/bign_params.c
   crypto/bign/bign_sign.c
@@ -99,7 +102,7 @@ set_property(TARGET bee2_static PROPERTY POSITION_INDEPENDENT_CODE
   ${BUILD_PIC})
 
 install(TARGETS bee2_static
-  DESTINATION ${LIB_INSTALL_DIR}
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}
   PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE 
     WORLD_READ WORLD_EXECUTE)
 
@@ -124,7 +127,7 @@ if(BUILD_SHARED_LIBS)
   set_target_properties(bee2 PROPERTIES VERSION ${BEE2_VERSION} SOVERSION 2.0)
 
   install(TARGETS bee2
-    DESTINATION ${LIB_INSTALL_DIR}
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE 
       WORLD_READ WORLD_EXECUTE)
 endif()

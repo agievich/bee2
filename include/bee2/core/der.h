@@ -4,7 +4,7 @@
 \brief Distinguished Encoding Rules
 \project bee2 [cryptographic library]
 \created 2014.04.21
-\version 2025.04.22
+\version 2025.08.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -189,7 +189,7 @@ bool_t derIsValid2(
 	  распознаваемый реализацией тег (см. далее), то он корректно декодируется;
 	- если der конструктивен, т.е. содержит вложенные der-поля, то
 	  derIsValid(d, count) == TRUE для каждого такого поля d;
-	- глубина вложенности не превышает 32;
+	- глубина вложенности не превышает 32.
 	\return Признак корректности.
 */
 bool_t derIsValid3(

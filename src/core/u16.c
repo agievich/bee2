@@ -4,7 +4,7 @@
 \brief 16-bit unsigned words
 \project bee2 [cryptographic library]
 \created 2015.10.28
-\version 2025.06.10
+\version 2025.10.03
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -61,7 +61,7 @@ bool_t u16Parity(register u16 w)
 	return (bool_t)(w & U16_1);
 }
 
-size_t SAFE(u16CTZ)(register u16 w)
+size_t u16CTZ(register u16 w)
 {
 	return 16 - u16Weight(w | (U16_0 - w));
 }
@@ -80,7 +80,7 @@ size_t FAST(u16CTZ)(register u16 w)
 	return ((u16)(w << 1)) ? l - 2 : l - (w ? 1 : 0);
 }
 
-size_t SAFE(u16CLZ)(register u16 w)
+size_t u16CLZ(register u16 w)
 {
 	w = w | w >> 1;
 	w = w | w >> 2;
@@ -139,6 +139,7 @@ void u16From(u16 dest[], const void* src, size_t count)
 {
 	ASSERT(memIsValid(src, count));
 	ASSERT(memIsValid(dest, count + count % 2));
+	ASSERT(memIsAligned(dest, 2));
 	memMove(dest, src, count);
 	if (count % 2)
 		((octet*)dest)[count] = 0;
@@ -152,15 +153,19 @@ void u16To(void* dest, size_t count, const u16 src[])
 {
 	ASSERT(memIsValid(src, count + count % 2));
 	ASSERT(memIsValid(dest, count));
-	memMove(dest, src, count);
 #if (OCTET_ORDER == BIG_ENDIAN)
 	if (count % 2)
 	{
 		register u16 u = src[--count / 2];
+		memMove(dest, src, count);
 		((octet*)dest)[count] = (octet)u;
 		CLEAN(u);
 	}
-	for (count /= 2; count--;)
-		((u16*)dest)[count] = u16Rev(((u16*)dest)[count]);
+	else
+		memMove(dest, src, count);
+	for (; count; count -= 2)
+		SWAP(((octet*)dest)[count - 2], ((octet*)dest)[count - 1]);
+#else
+	memMove(dest, src, count);
 #endif // OCTET_ORDER
 }

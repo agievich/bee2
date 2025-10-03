@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: modular arithmetic
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.06.10
+\version 2025.09.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -20,8 +20,8 @@
 *******************************************************************************
 Модулярная арифметика: аддитивные операции
 
-В первом проходе функции SAFE(zzAddMod)() выполняется сложение и 
-одновременно проверяется, не превосходит ли сумма модуль. Во втором проходе 
+В первом проходе регулярной редакции zzAddMod() выполняется сложение
+и одновременно проверяется, не превосходит ли сумма модуль. Во втором проходе 
 выполняется вычитание либо собственно модуля, либо нуля.
 
 Примерно так регуляризированы и другие функции.
@@ -39,7 +39,7 @@ void FAST(zzAddMod)(word c[], const word a[], const word b[], const word mod[],
 		zzSub2(c, mod, n);
 }
 
-void SAFE(zzAddMod)(word c[], const word a[], const word b[], const word mod[],
+void zzAddMod(word c[], const word a[], const word b[], const word mod[],
 	size_t n)
 {
 	register word carry = 0;
@@ -81,8 +81,8 @@ void FAST(zzAddWMod)(word b[], const word a[], register word w,
 	CLEAN(w);
 }
 
-void SAFE(zzAddWMod)(word b[], const word a[], register word w, 
-	const word mod[], size_t n)
+void zzAddWMod(word b[], const word a[], register word w, const word mod[],
+	size_t n)
 {
 	register word mask = 1;
 	size_t i;
@@ -117,7 +117,7 @@ void FAST(zzSubMod)(word c[], const word a[], const word b[], const word mod[],
 		zzAdd2(c, mod, n);
 }
 
-void SAFE(zzSubMod)(word c[], const word a[], const word b[], const word mod[],
+void zzSubMod(word c[], const word a[], const word b[], const word mod[],
 	size_t n)
 {
 	register word mask = 0;
@@ -143,8 +143,8 @@ void FAST(zzSubWMod)(word b[], const word a[], register word w,
 	CLEAN(w);
 }
 
-void SAFE(zzSubWMod)(word b[], const word a[], register word w, 
-	 const word mod[], size_t n)
+void zzSubWMod(word b[], const word a[], register word w, const word mod[],
+	size_t n)
 {
 	register word mask;
 	ASSERT(wwIsSameOrDisjoint(a, b, n));
@@ -168,7 +168,7 @@ void FAST(zzNegMod)(word b[], const word a[], const word mod[], size_t n)
 		wwSetZero(b, n);
 }
 
-void SAFE(zzNegMod)(word b[], const word a[], const word mod[], size_t n)
+void zzNegMod(word b[], const word a[], const word mod[], size_t n)
 {
 	register word mask;
 	ASSERT(wwIsSameOrDisjoint(a, b, n));
@@ -191,35 +191,47 @@ void SAFE(zzNegMod)(word b[], const word a[], const word mod[], size_t n)
 *******************************************************************************
 */
 
+#define zzMulMod_local(n)\
+/* prod */	O_OF_W(2 * n)
+
 void zzMulMod(word c[], const word a[], const word b[], const word mod[],
 	size_t n, void* stack)
 {
-	word* prod = (word*)stack;
-	stack = prod + 2 * n;
+	word* prod; 			/* [2 * n] */
 	ASSERT(wwCmp(a, mod, n) < 0);
 	ASSERT(wwCmp(b, mod, n) < 0);
 	ASSERT(wwIsValid(c, n));
 	ASSERT(n > 0 && mod[n - 1] != 0);
+	memSlice(stack,
+		zzMulMod_local(n), SIZE_0, SIZE_MAX,
+		&prod, &stack);
 	zzMul(prod, a, n, b, n, stack);
 	zzMod(c, prod, 2 * n, mod, n, stack);
 }
 
 size_t zzMulMod_deep(size_t n)
 {
-	return O_OF_W(2 * n) + 
-		utilMax(2, 
-			zzMul_deep(n, n), 
-			zzMod_deep(2 * n, n));
+	return memSliceSize(
+		zzMulMod_local(n), 
+		utilMax(2,
+			zzMul_deep(n, n),
+			zzMod_deep(2 * n, n)),
+		SIZE_MAX);
 }
+
+#define zzMulWMod_local(n)\
+/* prod */	O_OF_W(n + 1)
 
 void zzMulWMod(word b[], const word a[], register word w, const word mod[],
 	size_t n, void* stack)
 {
-	word* prod = (word*)stack;
-	stack = prod + n + 1;
+	word* prod;			/* [n + 1] */
 	ASSERT(wwCmp(a, mod, n) < 0);
 	ASSERT(wwIsValid(b, n));
 	ASSERT(n > 0 && mod[n - 1] != 0);
+	memSlice(stack, 
+		zzMulWMod_local(n), SIZE_0, SIZE_MAX,
+		&prod, &stack);
 	prod[n] = zzMulW(prod, a, n, w);
 	zzMod(b, prod, n + 1, mod, n, stack);
 	CLEAN(w);
@@ -227,42 +239,59 @@ void zzMulWMod(word b[], const word a[], register word w, const word mod[],
 
 size_t zzMulWMod_deep(size_t n)
 {
-	return O_OF_W(n + 1) + 
-		zzMod_deep(n + 1, n);
+	return memSliceSize(
+		zzMulWMod_local(n), 
+		zzMod_deep(n + 1, n),
+		SIZE_MAX);
 }
+
+#define zzSqrMod_local(n)\
+/* sqr */	O_OF_W(2 * n)
 
 void zzSqrMod(word b[], const word a[], const word mod[], size_t n,
 	void* stack)
 {
-	word* sqr = (word*)stack;
-	stack = sqr + 2 * n;
+	word* sqr;			/* [2 * n] */
 	ASSERT(wwCmp(a, mod, n) < 0);
 	ASSERT(wwIsValid(b, n));
 	ASSERT(n > 0 && mod[n - 1] != 0);
+	memSlice(stack,
+		zzSqrMod_local(n), SIZE_0, SIZE_MAX,
+		&sqr, &stack);
 	zzSqr(sqr, a, n, stack);
 	zzMod(b, sqr, 2 * n, mod, n, stack);
 }
 
 size_t zzSqrMod_deep(size_t n)
 {
-	return O_OF_W(2 * n) +
-		utilMax(2, 
-			zzSqr_deep(n), 
-			zzMod_deep(2 * n, n));
+	return memSliceSize(
+		zzSqrMod_local(n), 
+		utilMax(2,
+			zzSqr_deep(n),
+			zzMod_deep(2 * n, n)),
+		SIZE_MAX);
 }
+
+#define zzInvMod_local(n)\
+/* divident */	O_OF_W(n)
 
 void zzInvMod(word b[], const word a[], const word mod[], size_t n,
 	void* stack)
 {
-	word* divident = (word*)stack;
-	stack = divident + n;
+	word* divident;			/* [n] */
+	memSlice(stack,
+		zzInvMod_local(n), SIZE_0, SIZE_MAX,
+		&divident, &stack);
 	wwSetW(divident, n, 1);
 	zzDivMod(b, divident, a, mod, n, stack);
 }
 
 size_t zzInvMod_deep(size_t n)
 {
-	return O_OF_W(n) + zzDivMod_deep(n);
+	return memSliceSize(
+		zzInvMod_local(n), 
+		zzDivMod_deep(n),
+		SIZE_MAX);
 }
 
 void FAST(zzDoubleMod)(word b[], const word a[], const word mod[], size_t n)
@@ -286,7 +315,7 @@ void FAST(zzDoubleMod)(word b[], const word a[], const word mod[], size_t n)
 	CLEAN2(hi, carry);
 }
 
-void SAFE(zzDoubleMod)(word b[], const word a[], const word mod[], size_t n)
+void zzDoubleMod(word b[], const word a[], const word mod[], size_t n)
 {
 	register word carry = 0;
 	register word hi;
@@ -342,7 +371,7 @@ void FAST(zzHalfMod)(word b[], const word a[], const word mod[], size_t n)
 	CLEAN2(lo, carry);
 }
 
-void SAFE(zzHalfMod)(word b[], const word a[], const word mod[], size_t n)
+void zzHalfMod(word b[], const word a[], const word mod[], size_t n)
 {
 	register word carry = 0;
 	register word mask = 0;

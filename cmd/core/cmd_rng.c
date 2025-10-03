@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: random number generation
 \project bee2/cmd 
 \created 2022.06.08
-\version 2025.06.11
+\version 2025.09.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -161,30 +161,33 @@ err_t cmdRngStart(bool_t verbose)
 	// нет, подключить клавиатурный источник
 	else if (code == ERR_NOT_ENOUGH_ENTROPY)
 	{
-		void* stack;
-		tm_ticks_t* data;
-		octet* hash;
 		void* state;
+		tm_ticks_t* data;			/* [128] */
+		octet* hash;				/* [32] (|data) */
+		void* hash_state;			/* [beltHash_keep()] */
+		void* prng_state;			/* [prngEcho_keep()] (|hash_state) */
 		// выделить и разметить память
-		code = cmdBlobCreate(stack, 128 * sizeof(tm_ticks_t) +
-			MAX2(beltHash_keep(), prngEcho_keep()));
+		code = cmdBlobCreate2(state, 
+			128 * sizeof(tm_ticks_t),
+			32 | SIZE_HI,
+			beltHash_keep(), 
+			prngEcho_keep() | SIZE_HI,
+			SIZE_MAX,
+			&data, &hash, &hash_state, &prng_state);
 		ERR_CALL_CHECK(code);
-		data = (tm_ticks_t*)stack;
-		hash = (octet*)data;
-		state = data + 128;
 		// собрать данные от клавиатурного источника
 		code = cmdRngKbRead(data);
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		ERR_CALL_HANDLE(code, cmdBlobClose(state));
 		// хэшировать
-		beltHashStart(state);
-		beltHashStepH(data, 128 * sizeof(tm_ticks_t), state);
-		beltHashStepG(hash, state);
+		beltHashStart(hash_state);
+		beltHashStepH(data, 128 * sizeof(tm_ticks_t), hash_state);
+		beltHashStepG(hash, hash_state);
 		// запустить echo-генератор
-		prngEchoStart(state, hash, 32);
+		prngEchoStart(prng_state, hash, 32);
 		// запустить генератор
-		code = rngCreate(prngEchoRead, state);
+		code = rngCreate(prngEchoRead, prng_state);
 		// освободить память
-		cmdBlobClose(stack);
+		cmdBlobClose(state);
 	}
 	if (verbose)
 		printf("%s\n", errMsg(code));

@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.66 (bake)
 \project bee2/test
 \created 2014.04.23
-\version 2025.04.25
+\version 2025.09.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -302,8 +302,8 @@ bool_t bakeTest()
 	bign_params params[1];
 	octet randa[48];
 	octet randb[48];
-	octet echoa[64];
-	octet echob[64];
+	mem_align_t statea[64 / sizeof(mem_align_t)];
+	mem_align_t stateb[64 / sizeof(mem_align_t)];
 	bake_settings settingsa[1];
 	bake_settings settingsb[1];
 	octet da[32];
@@ -320,7 +320,8 @@ bool_t bakeTest()
 	octet secret[32];
 	octet iv[64];
 	// подготовить память
-	if (sizeof(echoa) < prngEcho_keep())
+	if (sizeof(statea) < prngEcho_keep() ||
+		sizeof(stateb) < prngEcho_keep())
 		return FALSE;
 	// загрузить долговременные параметры
 	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK)
@@ -331,8 +332,8 @@ bool_t bakeTest()
 	settingsa->kca = settingsa->kcb = TRUE;
 	settingsb->kca = settingsb->kcb = TRUE;
 	settingsa->rng = settingsb->rng = prngEchoStepR;
-	settingsa->rng_state = echoa;
-	settingsb->rng_state = echob;
+	settingsa->rng_state = statea;
+	settingsb->rng_state = stateb;
 	// загрузить личные ключи
 	hexTo(da, _da);
 	hexTo(db, _db);
@@ -352,8 +353,8 @@ bool_t bakeTest()
 	{
 		filea->i = filea->offset = 0;
 		fileb->i = fileb->offset = 0;
-		prngEchoStart(echoa, randa, strLen(_bmqv_randb) / 2);
-		prngEchoStart(echob, randb, strLen(_bmqv_randb) / 2);
+		prngEchoStart(statea, randa, strLen(_bmqv_randb) / 2);
+		prngEchoStart(stateb, randb, strLen(_bmqv_randb) / 2);
 		codeb = bakeBMQVRunB(keyb, params, settingsb, db, certb, certa,
 			fileMsgRead, fileMsgWrite, fileb);
 		if (codeb != ERR_OK && codeb != ERR_FILE_NOT_FOUND)
@@ -381,8 +382,8 @@ bool_t bakeTest()
 	{
 		filea->i = filea->offset = 0;
 		fileb->i = fileb->offset = 0;
-		prngEchoStart(echoa, randa, strLen(_bsts_randb) / 2);
-		prngEchoStart(echob, randb, strLen(_bsts_randb) / 2);
+		prngEchoStart(statea, randa, strLen(_bsts_randb) / 2);
+		prngEchoStart(stateb, randb, strLen(_bsts_randb) / 2);
 		codeb = bakeBSTSRunB(keyb, params, settingsb, db, certb,
 			bakeTestCertVal, fileMsgRead, fileMsgWrite, fileb);
 		if (codeb != ERR_OK && codeb != ERR_FILE_NOT_FOUND)
@@ -410,8 +411,8 @@ bool_t bakeTest()
 	{
 		filea->i = filea->offset = 0;
 		fileb->i = fileb->offset = 0;
-		prngEchoStart(echoa, randa, strLen(_bpace_randb) / 2);
-		prngEchoStart(echob, randb, strLen(_bpace_randb) / 2);
+		prngEchoStart(statea, randa, strLen(_bpace_randb) / 2);
+		prngEchoStart(stateb, randb, strLen(_bpace_randb) / 2);
 		codeb = bakeBPACERunB(keyb, params, settingsb, (const octet*)pwd,
 			strLen(pwd), fileMsgRead, fileMsgWrite, fileb);
 		if (codeb != ERR_OK && codeb != ERR_FILE_NOT_FOUND)
@@ -427,7 +428,7 @@ bool_t bakeTest()
 			"DAC4D8F411F9C523D28BBAAB32A5270E"
 			"4DFA1F0F757EF8E0F30AF08FBDE1E7F4"))
 		return FALSE;
-	// тест Б.4: сеанс протокола
+	// тест Б.4: сообщения
 	if (!bakeTestMsgVal(4, _bpace_m1, _bpace_m2, _bpace_m3, _bpace_m4))
 		return FALSE;
 	// тест bakeKDF (по данным из теста Б.4)

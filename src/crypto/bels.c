@@ -4,7 +4,7 @@
 \brief STB 34.101.60 (bels): secret sharing algorithms
 \project bee2 [cryptographic library]
 \created 2013.05.14
-\version 2025.08.28
+\version 2025.09.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -75,7 +75,7 @@ err_t belsValM(const octet m0[], size_t len)
 {
 	size_t n;
 	void* state;
-	word* f0;
+	word* f0;			/* [n + 1] */
 	void* stack;
 	err_t code;
 	// проверить входные данные
@@ -83,12 +83,13 @@ err_t belsValM(const octet m0[], size_t len)
 		return ERR_BAD_INPUT;
 	// создать состояние
 	n = W_OF_O(len);
-	state = blobCreate(O_OF_W(n + 1) + ppIsIrred_deep(n + 1));
+	state = blobCreate2(
+		O_OF_W(n + 1),
+		ppIsIrred_deep(n + 1),
+		SIZE_MAX, 
+		&f0, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка состояния
-	f0 = (word*)state;
-	stack = f0 + n + 1;
 	// загрузить многочлен
 	wwFrom(f0, m0, len);
 	f0[n] = 1;
@@ -110,9 +111,10 @@ B_PER_IMPOSSIBLE.
 
 err_t belsGenM0(octet m0[], size_t len, gen_i ang, void* ang_state)
 {
-	size_t n, reps;
+	size_t n;
+	size_t reps;
 	void* state;
-	word* f0;
+	word* f0;			/* [n + 1] */
 	void* stack;
 	// проверить генератор
 	if (ang == 0)
@@ -123,12 +125,13 @@ err_t belsGenM0(octet m0[], size_t len, gen_i ang, void* ang_state)
 		return ERR_BAD_INPUT;
 	// создать состояние
 	n = W_OF_O(len);
-	state = blobCreate(O_OF_W(n + 1) + ppIsIrred_deep(n + 1));
+	state = blobCreate2(
+		O_OF_W(n + 1),
+		ppIsIrred_deep(n + 1),
+		SIZE_MAX,
+		&f0, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка состояния
-	f0 = (word*)state;
-	stack = f0 + n + 1;
 	// сгенерировать многочлен
 	f0[n] = 1;
 	for (reps = len * 8 * B_PER_IMPOSSIBLE * 3 / 4; reps--;)
@@ -149,12 +152,13 @@ err_t belsGenM0(octet m0[], size_t len, gen_i ang, void* ang_state)
 err_t belsGenMi(octet mi[], size_t len, const octet m0[], gen_i ang, 
 	void* ang_state)
 {
-	size_t n, reps;
+	size_t n;
+	size_t reps;
 	err_t code;
 	void* state;
-	word* f0;
-	word* u;
-	word* f;
+	word* f0;			/* [n + 1] */
+	word* u;			/* [n + 1] */
+	word* f;			/* [n + 1] (|u) */
 	void* stack;
 	// проверить генератор
 	if (ang == 0)
@@ -166,14 +170,15 @@ err_t belsGenMi(octet mi[], size_t len, const octet m0[], gen_i ang,
 	EXPECT(belsValM(m0, len) == ERR_OK);
 	// создать состояние
 	n = W_OF_O(len);
-	state = blobCreate(O_OF_W(2 * n + 2) + ppMinPolyMod_deep(n + 1));
+	state = blobCreate2(
+		O_OF_W(n + 1),
+		O_OF_W(n + 1),
+		O_OF_W(n + 1) | SIZE_HI,
+		ppMinPolyMod_deep(n + 1),
+		SIZE_MAX,
+		&f0, &u, &f, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка состояния
-	f0 = (word*)state;
-	f = f0 + n + 1;
-	u = f;
-	stack = f + n + 1;
 	// загрузить многочлен
 	wwFrom(f0, m0, len);
 	f0[n] = 1;
@@ -205,11 +210,12 @@ err_t belsGenMi(octet mi[], size_t len, const octet m0[], gen_i ang,
 err_t belsGenMid(octet mid[], size_t len, const octet m0[], const octet id[], 
 	size_t id_len)
 {
-	size_t n, reps;
+	size_t n;
+	size_t reps;
 	void* state;
-	word* f0;
-	word* f;
-	word* u;
+	word* f0;			/* [n + 1] */
+	word* f;			/* [n + 1] */
+	word* u;			/* [W_OF_O(32) + 1] */
 	void* stack;
 	// проверить входные данные
 	if ((len != 16 && len != 24 && len != 32) || 
@@ -219,17 +225,17 @@ err_t belsGenMid(octet mid[], size_t len, const octet m0[], const octet id[],
 	EXPECT(belsValM(m0, len) == ERR_OK);
 	// создать состояние
 	n = W_OF_O(len);
-	state = blobCreate(O_OF_W(2 * n + 2) + 32 + O_PER_W +
+	state = blobCreate2(
+		O_OF_W(n + 1),
+		O_OF_W(n + 1),
+		O_OF_W(W_OF_O(32) + 1),
 		utilMax(2, 
 			beltHash_keep(),
-			ppMinPolyMod_deep(n + 1)));
+			ppMinPolyMod_deep(n + 1)),
+		SIZE_MAX,
+		&f0, &f, &u, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка состояния
-	f0 = (word*)state;
-	f = f0 + n + 1;
-	u = f + n + 1;
-	stack = u + W_OF_O(32) + 1;
 	// загрузить многочлен
 	wwFrom(f0, m0, len);
 	f0[n] = 1;
@@ -264,25 +270,32 @@ err_t belsGenMid(octet mid[], size_t len, const octet m0[], const octet id[],
 *******************************************************************************
 */
 
+#define belsGenk_state()\
+/* in_state */	MAX2(beltCTR_keep(), beltCompr_deep()),\
+/* iv */		(size_t)32,\
+/* K */			(size_t)(16 * 4) | SIZE_HI,\
+/* key */		(size_t)32
+
 static size_t belsGenk_keep()
 {
-	return MAX2(beltCTR_keep(), beltCompr_deep()) + 32 + 64;
+	return memSliceSize(belsGenk_state(), SIZE_MAX);
 }
 
 static void belsGenkStart(void* state, const octet s[], size_t count,
 	size_t threshold, size_t len)
 {
-	octet* key;
-	octet* iv;
-	u32* K;
+	void* in_state;		/* [MAX2(beltCTR_keep(), beltCompr_deep())] */
+	octet* iv;			/* [32] */
+	u32* K;				/* [16] (|iv) */
+	octet* key;			/* [32] */
 	// pre
 	ASSERT(memIsValid(state, belsGenk_keep()));
 	ASSERT(len == 16 || len == 24 || len == 32);
 	ASSERT(memIsValid(s, len));
 	// раскладка state
-	key = (octet*)state + MAX2(beltCTR_keep(), beltCompr_deep());
-	iv = key + 32;
-	K = (u32*)iv;
+	memSlice(state,
+		belsGenk_state(), SIZE_MAX,
+		&in_state, &iv, &K, &key);
 	// K <- belt-keyexpand(s)
 	beltKeyExpand2(K, s, len);
 	// key <- belt-compress(~K || K)
@@ -315,11 +328,12 @@ err_t belsShare(octet si[], size_t count, size_t threshold, size_t len,
 	const octet s[], const octet m0[], const octet mi[], 
 	gen_i rng, void* rng_state)
 {
-	size_t n, i;
+	size_t n;
+	size_t i;
 	void* state;
-	word* f;
-	word* k;
-	word* c;
+	word* f;			/* [n + 1] */
+	word* k;			/* [threshold * n - n] */
+	word* c;			/* [threshold * n] */
 	void* stack;
 	// проверить генератор
 	if (rng == 0)
@@ -333,17 +347,17 @@ err_t belsShare(octet si[], size_t count, size_t threshold, size_t len,
 	EXPECT(belsValM(m0, len) == ERR_OK);
 	// создать состояние
 	n = W_OF_O(len);
-	state = blobCreate(O_OF_W(2 * threshold * n + 1) + 
+	state = blobCreate2(
+		O_OF_W(n + 1),
+		O_OF_W(threshold * n - n),
+		O_OF_W(threshold * n),
 		utilMax(2, 
 			ppMul_deep(threshold * n - n, n),
-			ppMod_deep(threshold * n, n + 1)));
+			ppMod_deep(threshold * n, n + 1)),
+		SIZE_MAX,
+		&f, &k, &c, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка состояния
-	f = (word*)state;
-	k = f + n + 1;
-	c = k + threshold * n - n;
-	stack = c + threshold * n;
 	// сгенерировать k
 	rng(k, threshold * len - len, rng_state);
 	wwFrom(k, k, threshold * len - len);
@@ -372,11 +386,12 @@ err_t belsShare(octet si[], size_t count, size_t threshold, size_t len,
 err_t belsShare2(octet si[], size_t count, size_t threshold, size_t len,
 	const octet s[], gen_i rng, void* rng_state)
 {
-	size_t n, i;
+	size_t n;
+	size_t i;
 	void* state;
-	word* f;
-	word* k;
-	word* c;
+	word* f;			/* [n + 1] */
+	word* k;			/* [threshold * n - n] */
+	word* c;			/* [threshold * n] */
 	void* stack;
 	// проверить генератор
 	if (rng == 0)
@@ -388,17 +403,17 @@ err_t belsShare2(octet si[], size_t count, size_t threshold, size_t len,
 		return ERR_BAD_INPUT;
 	// создать состояние
 	n = W_OF_O(len);
-	state = blobCreate(O_OF_W(2 * threshold * n + 1) +
+	state = blobCreate2(
+		O_OF_W(n + 1),
+		O_OF_W(threshold * n - n),
+		O_OF_W(threshold * n),
 		utilMax(2,
 			ppMul_deep(threshold * n - n, n),
-			ppMod_deep(threshold * n, n + 1)));
+			ppMod_deep(threshold * n, n + 1)),
+		SIZE_MAX,
+		&f, &k, &c, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка состояния
-	f = (word*)state;
-	k = f + n + 1;
-	c = k + threshold * n - n;
-	stack = c + threshold * n;
 	// сгенерировать k
 	rng(k, threshold * len - len, rng_state);
 	wwFrom(k, k, threshold * len - len);
@@ -459,15 +474,17 @@ err_t belsShare3(octet si[], size_t count, size_t threshold, size_t len,
 err_t belsRecover(octet s[], size_t count, size_t len, const octet si[], 
 	const octet m0[], const octet mi[])
 {
-	size_t n, i, deep;
+	size_t n;
+	size_t i;
+	size_t deep;
 	void* state;
-	word* f;
-	word* g;
-	word* d;
-	word* u;
-	word* v;
-	word* c;
-	word* t;
+	word* f;			/* [n + 1] */
+	word* g;			/* [count * n + 1] */
+	word* d;			/* [count * n - n + 1] */
+	word* u;			/* [count * n - n + 1] */
+	word* v;			/* [n + 1] */
+	word* c;			/* [(2 * count - 1) * n] */
+	word* t;			/* [MAX2(2 * count - 2, count + 1) * n] */
 	void* stack;
 	// проверить входные данные
 	if ((len != 16 && len != 24 && len != 32) || count == 0 || 
@@ -488,27 +505,20 @@ err_t belsRecover(octet s[], size_t count, size_t len, const octet si[],
 			ppMul_deep(2 * i * n, n),
 			ppMul_deep(2 * n, i * n),
 			ppMod_deep((2 * i + 1) * n, (i + 1) * n + 1));
-	deep += O_OF_W(
-		n + 1 +			
-		count * n + 1 +
-		(count - 1) * n + 1 +
-		(count - 1) * n + 1 +
-		n + 1 +
-		(2 * count - 1) * n + 
-		MAX2((2 * count - 2) * n, (count + 1) * n));
 	// создать состояние
-	state = blobCreate(deep);
+	state = blobCreate2(
+		O_OF_W(n + 1),
+		O_OF_W(count * n + 1),
+		O_OF_W(count * n - n + 1),
+		O_OF_W(count * n - n + 1),
+		O_OF_W(n + 1),
+		O_OF_W((2 * count - 1) * n),
+		O_OF_W(MAX2(2 * count - 2, count + 1) * n),
+		deep,
+		SIZE_MAX,
+		&f, &g, &d, &u, &v, &c, &t, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка состояния
-	f = (word*)state;
-	g = f + n + 1;
-	d = g + count * n + 1;
-	u = d + (count - 1) * n + 1;
-	v = u + (count - 1) * n + 1;
-	c = v + n + 1;
-	t = c + (2 * count - 1) * n;
-	stack = t + MAX2((2 * count - 2) * n, (count + 1) * n);
 	// [n]c(x) <- s1(x)
 	wwFrom(c, si, len);
 	// [n + 1]g(x) <- x^l + m1(x)
@@ -562,15 +572,18 @@ err_t belsRecover(octet s[], size_t count, size_t len, const octet si[],
 
 err_t belsRecover2(octet s[], size_t count, size_t len, const octet si[])
 {
-	size_t n, i, j, deep;
+	size_t n;
+	size_t i;
+	size_t j;
+	size_t deep;
 	void* state;
-	word* f;
-	word* g;
-	word* d;
-	word* u;
-	word* v;
-	word* c;
-	word* t;
+	word* f;			/* [n + 1] */
+	word* g;			/* [count * n + 1] */
+	word* d;			/* [count * n - n + 1] */
+	word* u;			/* [count * n - n + 1] */
+	word* v;			/* [n + 1] */
+	word* c;			/* [(2 * count - 1) * n] */
+	word* t;			/* [MAX2(2 * count - 2, count + 1) * n] */
 	void* stack;
 	// проверить входные данные
 	if ((len != 16 && len != 24 && len != 32) || count == 0 || count > 16 ||
@@ -607,18 +620,19 @@ err_t belsRecover2(octet s[], size_t count, size_t len, const octet si[])
 		(2 * count - 1) * n +
 		MAX2((2 * count - 2) * n, (count + 1) * n));
 	// создать состояние
-	state = blobCreate(deep);
+	state = blobCreate2(
+		O_OF_W(n + 1),
+		O_OF_W(count * n + 1),
+		O_OF_W(count * n - n + 1),
+		O_OF_W(count * n - n + 1),
+		O_OF_W(n + 1),
+		O_OF_W((2 * count - 1) * n),
+		O_OF_W(MAX2(2 * count - 2, count + 1) * n),
+		deep,
+		SIZE_MAX,
+		&f, &g, &d, &u, &v, &c, &t, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка состояния
-	f = (word*)state;
-	g = f + n + 1;
-	d = g + count * n + 1;
-	u = d + (count - 1) * n + 1;
-	v = u + (count - 1) * n + 1;
-	c = v + n + 1;
-	t = c + (2 * count - 1) * n;
-	stack = t + MAX2((2 * count - 2) * n, (count + 1) * n);
 	// [n]c(x) <- s1(x)
 	wwFrom(c, si + 1, len);
 	// [n + 1]g(x) <- x^l + m1(x)

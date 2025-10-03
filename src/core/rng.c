@@ -4,7 +4,7 @@
 \brief Entropy sources and random number generators
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2025.06.10
+\version 2025.10.03
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -34,17 +34,22 @@
 
 bool_t rngTestFIPS1(const octet buf[2500])
 {
-	size_t s = 0;
-	size_t count = W_OF_O(2500);
+	register size_t s;
+	register word w;
+	size_t count;
 	ASSERT(memIsValid(buf, 2500));
-	if (O_OF_W(count) > 2500)
+	for (w = 0, count = 2500; !memIsAligned(buf, O_PER_W); ++buf, --count)
+		w = (w << 8) | *buf;
+	s = wordWeight(w);
+	for (; count >= O_PER_W; buf += O_PER_W, count -= O_PER_W)
 	{
-		ASSERT(B_PER_W == 64);
-		s = u32Weight(*(const u32*)(buf + 2496));
-		--count;
+		ASSERT(memIsAligned(buf, O_PER_W));
+		s += wordWeight(*(const word*)buf);
 	}
-	while (count--)
-		s += wordWeight(((const word*)buf)[count]);
+	for (w = 0; count; ++buf, --count)
+		w = (w << 8) | *buf;
+	s += wordWeight(w);
+	CLEAN(w);
 	return 9725 < s && s < 10275;
 }
 
@@ -263,7 +268,7 @@ static bool_t rngTRNG2IsAvail()
 
 static err_t rngTRNGRead(void* buf, size_t* read, size_t count)
 {
-	u32* rand = (u32*)buf;
+	u32 rand;
 	// pre
 	ASSERT(memIsValid(read, O_PER_S));
 	ASSERT(memIsValid(buf, count));
@@ -271,27 +276,35 @@ static err_t rngTRNGRead(void* buf, size_t* read, size_t count)
 	*read = 0;
 	if (!rngTRNGIsAvail())
 		return ERR_FILE_NOT_FOUND;
-	// короткий буфер?
-	if (count < 4)
-		return ERR_OK;
 	// генерация
-	for (; *read + 4 <= count; *read += 4, ++rand)
-		if (!rngRDStep(rand))
+	while (*read + 4 <= count)
+	{
+		if (!rngRDStep(&rand))
+		{
+			CLEAN(rand);
 			return ERR_BAD_ENTROPY;
+		}
+		memCopy(buf, &rand, 4);
+		buf = (octet*)buf + 4, *read += 4;		
+	}
 	// неполный блок
 	if (*read < count)
 	{
-		rand = (u32*)((octet*)buf + count - 4);
-		if (!rngRDStep(rand))
+		if (!rngRDStep(&rand))
+		{
+			CLEAN(rand);
 			return ERR_BAD_ENTROPY;
+		}
+		memCopy(buf, &rand, count - *read);
 		*read = count;
 	}
+	CLEAN(rand);
 	return ERR_OK;
 }
 
 static err_t rngTRNG2Read(void* buf, size_t* read, size_t count)
 {
-	u32* rand = (u32*)buf;
+	u32 rand;
 	// pre
 	ASSERT(memIsValid(read, O_PER_S));
 	ASSERT(memIsValid(buf, count));
@@ -299,21 +312,29 @@ static err_t rngTRNG2Read(void* buf, size_t* read, size_t count)
 	*read = 0;
 	if (!rngTRNG2IsAvail())
 		return ERR_FILE_NOT_FOUND;
-	// короткий буфер?
-	if (count < 4)
-		return ERR_OK;
 	// генерация
-	for (; *read + 4 <= count; *read += 4, ++rand)
-		if (!rngRDStep2(rand))
+	while (*read + 4 <= count)
+	{
+		if (!rngRDStep2(&rand))
+		{
+			CLEAN(rand);
 			return ERR_BAD_ENTROPY;
+		}
+		memCopy(buf, &rand, 4);
+		buf = (octet*)buf + 4, *read += 4;		
+	}
 	// неполный блок
 	if (*read < count)
 	{
-		rand = (u32*)((octet*)buf + count - 4);
-		if (!rngRDStep2(rand))
+		if (!rngRDStep2(&rand))
+		{
+			CLEAN(rand);
 			return ERR_BAD_ENTROPY;
+		}
+		memCopy(buf, &rand, count - *read);
 		*read = count;
 	}
+	CLEAN(rand);
 	return ERR_OK;
 }
 
@@ -666,7 +687,7 @@ err_t rngESHealth()
 typedef struct 
 {
 	octet block[32];			/*< дополнительные данные brngCTR */
-	octet alg_state[];			/*< [MAX(beltHash_keep(), brngCTR_keep())] */
+	mem_align_t alg_state[];	/*< [MAX(beltHash_keep(), brngCTR_keep())] */
 } rng_state_st;
 
 static size_t _once;			/*< триггер однократности */

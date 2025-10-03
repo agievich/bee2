@@ -4,7 +4,7 @@
 \brief STB 1176.2-99: generation of parameters
 \project bee2 [cryptographic library]
 \created 2023.08.01
-\version 2024.02.29
+\version 2025.09.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -628,14 +628,14 @@ err_t stb99ParamsGen(stb99_params* params, const stb99_seed* seed)
 	size_t base_count;
 	// состояние 
 	void* state;
-	octet* stb_state;
-	word* gi;			/* промежуточные простые при построении g0 */
-	word* fi;			/* промежуточные простые при построении q */
-	word* g0;
-	word* p;
-	word* d;
-	word* a;
-	qr_o* qr;
+	octet* stb_state;	/* [prngSTB_keep()] */
+	word* gi;			/* [gw] промежуточные простые для g0 */
+	word* fi;			/* [gw] промежуточные простые для q (|gi) */
+	word* g0;           /* [gw] (|gi) */
+	word* p;			/* [seed->di[0]] */
+	word* d;			/* [n] */
+	word* a;			/* [n] */
+	qr_o* qr;			/* [zmMontCreate_deep(no)] кольцо Монтгомери */
 	void* stack;
 	// проверить seed
 	code = stb99SeedVal(seed);
@@ -668,9 +668,15 @@ err_t stb99ParamsGen(stb99_params* params, const stb99_seed* seed)
 	m = W_OF_B(params->r), mo = O_OF_B(params->r);
 	ASSERT(n <= gw);
 	// создать состояние
-	state = blobCreate(
-		prngSTB_keep() + O_OF_W(gw) +
-		O_OF_W(W_OF_B(seed->di[0]) + 2 * n) + zmMontCreate_keep(no) +
+	state = blobCreate2(
+		prngSTB_keep(),
+		O_OF_W(gw),
+		O_OF_W(gw) | SIZE_HI,
+		O_OF_W(gw) | SIZE_HI,
+		O_OF_W(W_OF_B(seed->di[0])),
+		O_OF_W(n),
+		O_OF_W(n),
+		zmMontCreate_keep(no),
 		utilMax(6,
 			priNextPrimeW_deep(),
 			priExtendPrime_deep(params->l, W_OF_B(seed->di[1]),
@@ -679,17 +685,11 @@ err_t stb99ParamsGen(stb99_params* params, const stb99_seed* seed)
 				W_OF_B(seed->ri[0]), (params->l + 3) / 4),
 			zmMontCreate_deep(no),
 			zzDiv_deep(n, m),
-			qrPower_deep(n, n, zmMontCreate_deep(no))));
+			qrPower_deep(n, n, zmMontCreate_deep(no))),
+		SIZE_MAX,
+		&stb_state, &fi, &gi, &d, &g0, &p, &a, &qr, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка состояния
-	stb_state = (octet*)state;
-	fi = gi = d = (word*)(stb_state + prngSTB_keep());
-	g0 = gi + gw;
-	p = g0 + W_OF_B(seed->di[0]);
-	a = p + n;
-	qr = (qr_o*)(a + n);
-	stack = (octet*)qr + zmMontCreate_keep(no);
 	// запустить генератор
 	prngSTBStart(stb_state, seed->zi);
 	// построить цепочку gi
@@ -833,12 +833,12 @@ err_t stb99ParamsVal(const stb99_params* params)
 	size_t m, mo;
 	// состояние 
 	void* state;
-	word* p;
-	word* q;
-	word* t;
-	word* d;
-	word* a;
-	qr_o* qr;
+	word* p;			/* [n] */
+	word* q;			/* [n] (|p) */
+	word* t;			/* [n] */
+	word* d;			/* [m] */
+	word* a;			/* [n - m + 1] */
+	qr_o* qr;			/* [zmMontCreate_keep(no)] */
 	void* stack;
 	// проверить указатели
 	if (!memIsValid(params, sizeof(stb99_params)))
@@ -853,22 +853,22 @@ err_t stb99ParamsVal(const stb99_params* params)
 	n = W_OF_B(params->l), no = O_OF_B(params->l);
 	m = W_OF_B(params->r), mo = O_OF_B(params->r);
 	// создать состояние
-	state = blobCreate(
-		O_OF_W(3 * n + 1) + zmMontCreate_keep(no) +  
+	state = blobCreate2(
+		O_OF_W(n),
+		O_OF_W(n) | SIZE_HI,
+		O_OF_W(m),
+		O_OF_W(n - m + 1),
+		O_OF_W(n),
+		zmMontCreate_keep(no),
 		utilMax(4,
 			priIsPrime_deep(n),
 			zzDiv_deep(n, m),
 			zmMontCreate_deep(no),
-			qrPower_deep(n, n - m + 1, zmMontCreate_deep(no))));
+			qrPower_deep(n, n - m + 1, zmMontCreate_deep(no))), 
+		SIZE_MAX,
+		&p, &d, &q, &t, &a, &qr, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка состояния
-	p = d = (word*)state;
-	q = p + n;
-	t = q + m;
-	a = t + n - m + 1;
-	qr = (qr_o*)(a + n);
-	stack = (octet*)qr + zmMontCreate_keep(no);
 	// p -- l-битовое простое?
 	wwFrom(p, params->p, no);
 	if (!memIsZero(params->p + no, sizeof(params->p) - no) ||

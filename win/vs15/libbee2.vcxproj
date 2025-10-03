@@ -373,7 +373,10 @@
     <ClCompile Include="..\..\src\core\u64.c" />
     <ClCompile Include="..\..\src\core\util.c" />
     <ClCompile Include="..\..\src\core\word.c" />
-    <ClCompile Include="..\..\src\crypto\bake.c" />
+    <ClCompile Include="..\..\src\crypto\bake\bake_bmqv.c" />
+    <ClCompile Include="..\..\src\crypto\bake\bake_bpace.c" />
+    <ClCompile Include="..\..\src\crypto\bake\bake_bsts.c" />
+    <ClCompile Include="..\..\src\crypto\bake\bake_misc.c" />
     <ClCompile Include="..\..\src\crypto\bash\bash_prg.c" />
     <ClCompile Include="..\..\src\crypto\bash\bash_f.c" />
     <ClCompile Include="..\..\src\crypto\bash\bash_hash.c" />
@@ -399,7 +402,7 @@
     <ClCompile Include="..\..\src\crypto\bign96.c" />
     <ClCompile Include="..\..\src\crypto\bign\bign_ibs.c" />
     <ClCompile Include="..\..\src\crypto\bign\bign_keyt.c" />
-    <ClCompile Include="..\..\src\crypto\bign\bign_lcl.c" />
+    <ClCompile Include="..\..\src\crypto\bign\bign_ec.c" />
     <ClCompile Include="..\..\src\crypto\bign\bign_misc.c" />
     <ClCompile Include="..\..\src\crypto\bign\bign_params.c" />
     <ClCompile Include="..\..\src\crypto\bign\bign_sign.c" />

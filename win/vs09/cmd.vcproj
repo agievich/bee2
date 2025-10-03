@@ -350,6 +350,14 @@
 					>
 				</File>
 			</Filter>
+			<Filter
+				Name="fmt"
+				>
+				<File
+					RelativePath="..\..\cmd\fmt\fmt.c"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"

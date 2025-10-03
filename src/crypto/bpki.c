@@ -4,7 +4,7 @@
 \brief STB 34.101.78 (bpki): PKI helpers
 \project bee2 [cryptographic library]
 \created 2021.04.03
-\version 2025.05.12
+\version 2025.09.15
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -315,9 +315,11 @@ err_t bpkiPrivkeyWrap(octet epki[], size_t* epki_len, const octet privkey[],
 	size_t privkey_len, const octet pwd[], size_t pwd_len,
 	const octet salt[8], size_t iter)
 {
-	size_t pki_len, edata_len, count;
-	octet* key;
 	err_t code;
+	size_t pki_len;
+	size_t edata_len;
+	size_t count;
+	octet* key;
 	// проверить входные данные
 	if (iter < 10000)
 		return ERR_BAD_INPUT;
@@ -373,12 +375,15 @@ err_t bpkiPrivkeyWrap(octet epki[], size_t* epki_len, const octet privkey[],
 err_t bpkiPrivkeyUnwrap(octet privkey[], size_t* privkey_len,
 	const octet epki[], size_t epki_len, const octet pwd[], size_t pwd_len)
 {
-	size_t edata_len, pki_len, count, iter;
-	void* state;
-	octet* salt;
-	octet* key;
-	octet* edata;
 	err_t code;
+	size_t edata_len;
+	size_t pki_len;
+	size_t count;
+	size_t iter;
+	void* state;
+	octet* salt;			/* [8] */
+	octet* key;				/* [32] */
+	octet* edata;			/* [edata_len] */
 	// проверить входные данные
 	if (epki_len == SIZE_MAX || !memIsValid(epki, epki_len) ||
 		!memIsValid(pwd, pwd_len) ||
@@ -389,12 +394,14 @@ err_t bpkiPrivkeyUnwrap(octet privkey[], size_t* privkey_len,
 	if (count != epki_len)
 		return ERR_BAD_FORMAT;
 	// подготовить буферы для параметров PBKDF2
-	state = blobCreate(8 + 32 + edata_len);
-	if (!state)
+	state = blobCreate2(
+		(size_t)8,
+		(size_t)32,
+		edata_len,
+		SIZE_MAX,
+		&salt, &key, &edata);
+	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	salt = (octet*)state;
-	key = salt + 8;
-	edata = key + 32;
 	// выделить edata
 	VERIFY(bpkiEdataDec(edata, 0, salt, &iter, epki, epki_len) == epki_len);
 	// построить ключ защиты 
@@ -428,9 +435,11 @@ err_t bpkiShareWrap(octet epki[], size_t* epki_len, const octet share[],
 	size_t share_len, const octet pwd[], size_t pwd_len,
 	const octet salt[8], size_t iter)
 {
-	size_t pki_len, edata_len, count;
-	octet* key;
 	err_t code;
+	size_t pki_len;
+	size_t edata_len;
+	size_t count;
+	octet* key;
 	// проверить входные данные
 	if (iter < 10000)
 		return ERR_BAD_INPUT;
@@ -486,12 +495,15 @@ err_t bpkiShareWrap(octet epki[], size_t* epki_len, const octet share[],
 err_t bpkiShareUnwrap(octet share[], size_t* share_len,
 	const octet epki[], size_t epki_len, const octet pwd[], size_t pwd_len)
 {
-	size_t edata_len, pki_len, count, iter;
-	void* state;
-	octet* salt;
-	octet* key;
-	octet* edata;
 	err_t code;
+	size_t edata_len;
+	size_t pki_len;
+	size_t count;
+	size_t iter;
+	void* state;
+	octet* salt;			/* [8] */
+	octet* key;				/* [32] */
+	octet* edata;			/* [edata_len] */
 	// проверить входные данные
 	if (epki_len == SIZE_MAX || !memIsValid(epki, epki_len) ||
 		!memIsValid(pwd, pwd_len) ||
@@ -502,12 +514,14 @@ err_t bpkiShareUnwrap(octet share[], size_t* share_len,
 	if (count != epki_len)
 		return ERR_BAD_FORMAT;
 	// подготовить буферы для параметров PBKDF2
-	state = blobCreate(8 + 32 + edata_len);
-	if (!state)
+	state = blobCreate2(
+		(size_t)8,
+		(size_t)32,
+		edata_len,
+		SIZE_MAX,
+		&salt, &key, &edata);
+	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	salt = (octet*)state;
-	key = salt + 8;
-	edata = key + 32;
 	// выделить edata
 	VERIFY(bpkiEdataDec(edata, 0, salt, &iter, epki, epki_len) == epki_len);
 	// построить ключ защиты 

@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: modular reductions
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.05.07
+\version 2025.09.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -68,7 +68,7 @@ void FAST(zzRedCrand)(word a[], const word mod[], size_t n, void* stack)
 	CLEAN2(prod, carry);
 }
 
-void SAFE(zzRedCrand)(word a[], const word mod[], size_t n, void* stack)
+void zzRedCrand(word a[], const word mod[], size_t n, void* stack)
 {
 	register word carry;
 	register dword prod;
@@ -123,14 +123,20 @@ size_t zzRedCrand_deep(size_t n)
 *******************************************************************************
 */
 
+#define zzRedBarrStart_local(n)\
+/* divident */	O_OF_W(2 * n + 1)
+
 void zzRedBarrStart(word barr_param[], const word mod[], size_t n, 
 	void* stack)
 {
-	word* divident = (word*)stack;
-	stack = divident + 2 * n + 1;
+	word* divident;			/* [2 * n + 1] */
 	// pre
 	ASSERT(wwIsDisjoint2(barr_param, n + 2, mod, n));
 	ASSERT(n > 0 && mod[n - 1] != 0);
+	// разметить стек
+	memSlice(stack,
+		zzRedBarrStart_local(n), SIZE_0, SIZE_MAX,
+		&divident, &stack);
 	// divident <- B^{2n}
 	wwSetZero(divident, 2 * n);
 	divident[2 * n] = 1;
@@ -140,20 +146,29 @@ void zzRedBarrStart(word barr_param[], const word mod[], size_t n,
 
 size_t zzRedBarrStart_deep(size_t n)
 {
-	return O_OF_W(2 * n + 1) + zzDiv_deep(2 * n + 1, n);
+	return memSliceSize(
+		zzRedBarrStart_local(n), 
+		zzDiv_deep(2 * n + 1, n),
+		SIZE_MAX);
 }
+
+#define zzRedBarr_local(n)\
+/* q */		O_OF_W(2 * n + 3),\
+/* qm */	O_OF_W(2 * n + 2)
 
 void FAST(zzRedBarr)(word a[], const word mod[], size_t n, 
 	const word barr_param[], void* stack)
 {
-	// переменные в stack
-	word* q = (word*)stack;
-	word* qm = q + (n + 1) + (n + 2);
-	stack = qm + (n + 2) + n;
+	word* q;			/* [(n + 1) + (n + 2)] */
+	word* qm;			/* [(n + 2) + n] */
 	// pre
 	ASSERT(wwIsDisjoint2(a, 2 * n, mod, n));
 	ASSERT(wwIsDisjoint2(a, 2 * n, barr_param, n + 2));
 	ASSERT(n > 0 && mod[n - 1] != 0);
+	// разметить стек
+	memSlice(stack,
+		zzRedBarr_local(n), SIZE_0, SIZE_MAX,
+		&q, &qm, &stack);
 	// q <- (a \div B^{n - 1}) * barr_param
 	zzMul(q, a + n - 1, n + 1, barr_param, n + 2, stack);
 	// qm <- (q \div B^{n + 1}) * mod
@@ -165,19 +180,21 @@ void FAST(zzRedBarr)(word a[], const word mod[], size_t n,
 		a[n] -= zzSub2(a, mod, n);
 }
 
-void SAFE(zzRedBarr)(word a[], const word mod[], size_t n, 
+void zzRedBarr(word a[], const word mod[], size_t n,
 	const word barr_param[], void* stack)
 {
 	register word w;
 	size_t i;
-	// переменные в stack
-	word* q = (word*)stack;
-	word* qm = q + (n + 1) + (n + 2);
-	stack = qm + (n + 2) + n;
+	word* q;			/* [(n + 1) + (n + 2)] */
+	word* qm;			/* [(n + 2) + n] */
 	// pre
 	ASSERT(wwIsDisjoint2(a, 2 * n, mod, n));
 	ASSERT(wwIsDisjoint2(a, 2 * n, barr_param, n + 2));
 	ASSERT(n > 0 && mod[n - 1] != 0);
+	// разметить стек
+	memSlice(stack,
+		zzRedBarr_local(n), SIZE_0, SIZE_MAX,
+		&q, &qm, &stack);
 	// q <- (a \div B^{n - 1}) * barr_param
 	zzMul(q, a + n - 1, n + 1, barr_param, n + 2, stack);
 	// qm <- (q \div B^{n + 1}) * mod
@@ -206,10 +223,12 @@ void SAFE(zzRedBarr)(word a[], const word mod[], size_t n,
 
 size_t zzRedBarr_deep(size_t n)
 {
-	return O_OF_W(4 * n + 5) + 
-		utilMax(2, 
-			zzMul_deep(n + 1, n + 2), 
-			zzMul_deep(n + 2, n));
+	return memSliceSize(
+		zzRedBarr_local(n), 
+		utilMax(2,
+			zzMul_deep(n + 1, n + 2),
+			zzMul_deep(n + 2, n)),
+		SIZE_MAX);
 }
 
 /*
@@ -257,8 +276,8 @@ void FAST(zzRedMont)(word a[], const word mod[], size_t n,
 	CLEAN2(carry, w);
 }
 
-void SAFE(zzRedMont)(word a[], const word mod[], size_t n, 
-	register word mont_param, void* stack)
+void zzRedMont(word a[], const word mod[], size_t n, register word mont_param,
+	void* stack)
 {
 	register word carry = 0;
 	register word w = 0;
@@ -294,7 +313,7 @@ size_t zzRedMont_deep(size_t n)
 
 /*
 *******************************************************************************
-Редукция Крэндалла-Монтгомери
+Редукция Крендалла-Монтгомери
 
 Редукция Монтгомери для модуля mod = B^n - c, 0 < c < B, n >= 2, упрощается:
 [pretime]    m* <- c^{-1} \bmod B
@@ -350,7 +369,7 @@ void FAST(zzRedCrandMont)(word a[], const word mod[], size_t n,
 	CLEAN(prod), CLEAN3(carry, borrow, w);
 }
 
-void SAFE(zzRedCrandMont)(word a[], const word mod[], size_t n, 
+void zzRedCrandMont(word a[], const word mod[], size_t n,
 	register word mont_param, void* stack)
 {
 	register word carry = 0;

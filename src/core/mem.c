@@ -4,7 +4,7 @@
 \brief Memory management
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.06.10
+\version 2025.10.03
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -23,6 +23,7 @@
 		#include <stdlib.h>
 	#endif
 #endif
+#include <stdarg.h>
 
 #include "bee2/core/mem.h"
 #include "bee2/core/util.h"
@@ -41,9 +42,29 @@ bool_t memIsValid(const void* buf, size_t count)
 	return count == 0 || buf != 0;
 }
 
-bool_t memIsAligned(const void* buf, size_t size)
+/*
+*******************************************************************************
+Выравнивание
+
+\remark В первых редакциях модуля (вплоть до 2025-09-22) буферы памяти 
+по возможности обрабатывались как массивы машинных слов (word). При этом 
+не учитывалось выравнивание буферов на границу машшинного слова. Чтобы учесть
+выравнивание, нужно либо 
+a) перейти к работе с буферами как массивами октетов, либо 
+b) усложнять функции, придавая им довольно громоздкую форму.
+
+Был выбран вариант a). Для быстрой работы с массивами машинных слов можно 
+переключиться на функции модуля ww.
+*******************************************************************************
+*/
+
+#ifndef UINTPTR_MAX
+typedef size_t uintptr_t;
+#endif
+
+bool_t memIsAligned(const void* buf, size_t alignment)
 {
-	return (size_t)buf % size == 0;
+	return (uintptr_t)buf % alignment == 0;
 }
 
 /*
@@ -84,11 +105,6 @@ void memSet(void* buf, octet c, size_t count)
 void memNeg(void* buf, size_t count)
 {
 	ASSERT(memIsValid(buf, count));
-	for (; count >= O_PER_W; count -= O_PER_W)
-	{
-		*(word*)buf = ~*(word*)buf;
-		buf = (word*)buf + 1;
-	}
 	while (count--)
 	{
 		*(octet*)buf = ~*(octet*)buf;
@@ -130,47 +146,18 @@ void memFree(void* buf)
 #endif
 }
 
+
 /*
 *******************************************************************************
-Дополнительные функции
-
-\remark Функция memWipe() повторяет функцию OPENSSL_cleanse()
-из библиотеки OpenSSL:
-\code
-	unsigned char cleanse_ctr = 0;
-	void OPENSSL_cleanse(void *ptr, size_t len)
-	{
-		unsigned char *p = ptr;
-		size_t loop = len, ctr = cleanse_ctr;
-		while(loop--)
-		{
-			*(p++) = (unsigned char)ctr;
-			ctr += (17 + ((size_t)p & 0xF));
-		}
-		p=memchr(ptr, (unsigned char)ctr, len);
-		if(p)
-			ctr += (63 + (size_t)p);
-		cleanse_ctr = (unsigned char)ctr;
-	}
-\endcode
-
-\remark На платформе Windows есть функции SecureZeroMemory()
-и RtlSecureZeroMemory(), которые, как и memWipe(), выполняют
-гарантированную очистку памяти.
+Сравнение буферов памяти
 *******************************************************************************
 */
 
-bool_t SAFE(memEq)(const void* buf1, const void* buf2, size_t count)
+bool_t memEq(const void* buf1, const void* buf2, size_t count)
 {
 	register word diff = 0;
 	ASSERT(memIsValid(buf1, count));
 	ASSERT(memIsValid(buf2, count));
-	for (; count >= O_PER_W; count -= O_PER_W)
-	{
-		diff |= *(const word*)buf1 ^ *(const word*)buf2;
-		buf1 = (const word*)buf1 + 1;
-		buf2 = (const word*)buf2 + 1;
-	}
 	while (count--)
 	{
 		diff |= *(const octet*)buf1 ^ *(const octet*)buf2;
@@ -187,7 +174,7 @@ bool_t FAST(memEq)(const void* buf1, const void* buf2, size_t count)
 	return memcmp(buf1, buf2, count) == 0;
 }
 
-int SAFE(memCmp)(const void* buf1, const void* buf2, size_t count)
+int memCmp(const void* buf1, const void* buf2, size_t count)
 {
 	register word less = 0;
 	register word greater = 0;
@@ -232,34 +219,28 @@ int FAST(memCmp)(const void* buf1, const void* buf2, size_t count)
 	return 0;
 }
 
-int SAFE(memCmpRev)(const void* buf1, const void* buf2, size_t count)
+int memCmpRev(const void* buf1, const void* buf2, size_t count)
 {
 	register word less = 0;
 	register word greater = 0;
-	register word w1;
-	register word w2;
+	register word w1 = 0;
+	register word w2 = 0;
+	size_t filled = 0;
 	ASSERT(memIsValid(buf1, count));
 	ASSERT(memIsValid(buf2, count));
-	if (count % O_PER_W)
-	{
-		w1 = w2 = 0;
-		while (count % O_PER_W)
-		{
-			w1 = w1 << 8 | ((const octet*)buf1)[--count];
-			w2 = w2 << 8 | ((const octet*)buf2)[count];
-		}
-		less |= ~greater & wordLess01(w1, w2);
-		greater |= ~less & wordGreater01(w1, w2);
-	}
-	count /= O_PER_W;
 	while (count--)
 	{
-		w1 = ((const word*)buf1)[count];
-		w2 = ((const word*)buf2)[count];
-#if (OCTET_ORDER == BIG_ENDIAN)
-		w1 = wordRev(w1);
-		w2 = wordRev(w2);
-#endif
+		w1 = w1 << 8 | ((const octet*)buf1)[count];
+		w2 = w2 << 8 | ((const octet*)buf2)[count];
+		if (++filled == O_PER_W)
+		{
+			less |= ~greater & wordLess(w1, w2);
+			greater |= ~less & wordGreater(w1, w2);
+			filled = 0;
+		}
+	}
+	if (filled)
+	{
 		less |= ~greater & wordLess(w1, w2);
 		greater |= ~less & wordGreater(w1, w2);
 	}
@@ -281,6 +262,36 @@ int FAST(memCmpRev)(const void* buf1, const void* buf2, size_t count)
 	return 0;
 }
 
+/*
+*******************************************************************************
+Очистка буфера памяти
+
+\remark Функция memWipe() повторяет функцию OPENSSL_cleanse()
+из библиотеки OpenSSL:
+\code
+	unsigned char cleanse_ctr = 0;
+	void OPENSSL_cleanse(void *ptr, size_t len)
+	{
+		unsigned char *p = ptr;
+		size_t loop = len, ctr = cleanse_ctr;
+		while(loop--)
+		{
+			*(p++) = (unsigned char)ctr;
+			ctr += (17 + ((size_t)p & 0xF));
+		}
+		p=memchr(ptr, (unsigned char)ctr, len);
+		if(p)
+			ctr += (63 + (size_t)p);
+		cleanse_ctr = (unsigned char)ctr;
+	}
+\endcode
+
+\remark На платформе Windows есть функции SecureZeroMemory()
+и RtlSecureZeroMemory(), которые, как и memWipe(), выполняют
+гарантированную очистку памяти.
+*******************************************************************************
+*/
+
 void memWipe(void* buf, size_t count)
 {
 	static octet wipe_ctr = 0;
@@ -297,15 +308,16 @@ void memWipe(void* buf, size_t count)
 	wipe_ctr = (octet)ctr;
 }
 
-bool_t SAFE(memIsZero)(const void* buf, size_t count)
+/*
+*******************************************************************************
+Другие функции
+*******************************************************************************
+*/
+
+bool_t memIsZero(const void* buf, size_t count)
 {
 	register word diff = 0;
 	ASSERT(memIsValid(buf, count));
-	for (; count >= O_PER_W; count -= O_PER_W)
-	{
-		diff |= *(const word*)buf;
-		buf = (const word*)buf + 1;
-	}
 	while (count--)
 	{
 		diff |= *(const octet*)buf;
@@ -317,9 +329,6 @@ bool_t SAFE(memIsZero)(const void* buf, size_t count)
 bool_t FAST(memIsZero)(const void* buf, size_t count)
 {
 	ASSERT(memIsValid(buf, count));
-	for (; count >= O_PER_W; count -= O_PER_W, buf = (const word*)buf + 1)
-		if (*(const word*)buf)
-			return FALSE;
 	for (; count--; buf = (const octet*)buf + 1)
 		if (*(const octet*)buf)
 			return FALSE;
@@ -335,7 +344,7 @@ size_t memNonZeroSize(const void* buf, size_t count)
 	return 0;
 }
 
-bool_t SAFE(memIsRep)(const void* buf, size_t count, octet o)
+bool_t memIsRep(const void* buf, size_t count, octet o)
 {
 	register word diff = 0;
 	ASSERT(memIsValid(buf, count));
@@ -464,13 +473,6 @@ void memXor(void* dest, const void* src1, const void* src2, size_t count)
 {
 	ASSERT(memIsSameOrDisjoint(src1, dest, count));
 	ASSERT(memIsSameOrDisjoint(src2, dest, count));
-	for (; count >= O_PER_W; count -= O_PER_W)
-	{
-		*(word*)dest = *(const word*)src1 ^ *(const word*)src2;
-		src1 = (const word*)src1 + 1;
-		src2 = (const word*)src2 + 1;
-		dest = (word*)dest + 1;
-	}
 	while (count--)
 	{
 		*(octet*)dest = *(const octet*)src1 ^ *(const octet*)src2;
@@ -483,12 +485,6 @@ void memXor(void* dest, const void* src1, const void* src2, size_t count)
 void memXor2(void* dest, const void* src, size_t count)
 {
 	ASSERT(memIsSameOrDisjoint(src, dest, count));
-	for (; count >= O_PER_W; count -= O_PER_W)
-	{
-		*(word*)dest ^= *(const word*)src;
-		src = (const word*)src + 1;
-		dest = (word*)dest + 1;
-	}
 	while (count--)
 	{
 		*(octet*)dest ^= *(const octet*)src;
@@ -500,12 +496,6 @@ void memXor2(void* dest, const void* src, size_t count)
 void memSwap(void* buf1, void* buf2, size_t count)
 {
 	ASSERT(memIsDisjoint(buf1, buf2, count));
-	for (; count >= O_PER_W; count -= O_PER_W)
-	{
-		SWAP(*(word*)buf1, *(word*)buf2);
-		buf1 = (word*)buf1 + 1;
-		buf2 = (word*)buf2 + 1;
-	}
 	while (count--)
 	{
 		SWAP(*(octet*)buf1, *(octet*)buf2);
@@ -513,12 +503,6 @@ void memSwap(void* buf1, void* buf2, size_t count)
 		buf2 = (octet*)buf2 + 1;
 	}
 }
-
-/*
-*******************************************************************************
-Реверс октетов
-*******************************************************************************
-*/
 
 void memRev(void* buf, size_t count)
 {
@@ -530,4 +514,108 @@ void memRev(void* buf, size_t count)
 		((octet*)buf)[count - 1 - i] ^= ((octet*)buf)[i];
 		((octet*)buf)[i] ^= ((octet*)buf)[count - 1 - i];
 	}
+}
+
+/*
+*******************************************************************************
+Разметка памяти
+
+\remark Макрос va_copy поддержан в Visual Studio только в 2013 году.
+\remark Неотрицательное целое n является степенью двойки <=>
+	(n & (n - 1)) == 0.
+*******************************************************************************
+*/
+
+#if defined(_MSC_VER) && (_MSC_VER < 1800)
+	#define va_copy(dest, src) ((dest) = (src))
+#endif
+
+#define memSliceSizeof(c)\
+	(CASSERT((sizeof(mem_align_t) & (sizeof(mem_align_t) - 1)) == 0),\
+		((c + sizeof(mem_align_t) - 1) & ~(sizeof(mem_align_t) - 1)))
+
+size_t memSliceSizeArgs(size_t c1, va_list args)
+{
+	size_t size;
+	size_t s;
+	size_t c;
+	// просмотреть ci
+	for (size = s = 0, c = c1; c != SIZE_MAX;)
+	{
+		if ((c & SIZE_HI) == 0)
+		{
+			s = memSliceSizeof(s);
+			size += s;
+			s = c;
+		}
+		else if ((c &= ~SIZE_HI) > s)
+			s = c;
+		c = va_arg(args, size_t);
+	}
+	return size + s;
+}
+
+void memSliceArgs(const void* buf, size_t c1, va_list args)
+{
+	va_list args1;
+	size_t s;
+	size_t c;
+	// pre
+	ASSERT(memIsAligned(buf, sizeof(mem_align_t)));
+	// найти p1
+	va_copy(args1, args);
+	for (c = c1; c != SIZE_MAX;)
+		c = va_arg(args1, size_t);
+	// просмотреть (ci, pi)
+	for (s = 0, c = c1; c != SIZE_MAX;)
+	{
+		const void** p;
+		if ((c & SIZE_HI) == 0)
+		{
+			s = memSliceSizeof(s);
+			buf = (const octet*)buf + s;
+			s = 0;
+		}
+		p = va_arg(args1, const void**);
+		ASSERT(memIsValid(p, sizeof(const void*)));
+		ASSERT(memIsAligned(buf, sizeof(mem_align_t)));
+		*p = buf;
+		if ((c & SIZE_HI) != 0)
+		{
+			if ((c &= ~SIZE_HI) > s)
+				s = c;
+		}
+		else
+			s = c;
+		c = va_arg(args, size_t);
+	}
+	va_end(args1);
+}
+
+size_t memSliceSize(size_t c1, ...)
+{
+	va_list args;
+	size_t size;	
+	va_start(args, c1);
+	size = memSliceSizeArgs(c1, args);
+	va_end(args);
+	return size;
+}
+
+void memSlice(const void* buf, size_t c1, ...)
+{
+	va_list args;
+	va_start(args, c1);
+	memSliceArgs(buf, c1, args);
+	va_end(args);
+}
+
+void* memSliceNext(void* ptr, size_t count)
+{
+	return (octet*)ptr + memSliceSizeof(count);
+}
+
+const void* memSliceNext2(const void* ptr, size_t count)
+{
+	return (const octet*)ptr + memSliceSizeof(count);
 }

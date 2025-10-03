@@ -4,7 +4,7 @@
 \brief Arbitrary length words
 \project bee2 [cryptographic library]
 \created 2012.04.18
-\version 2025.06.10
+\version 2025.07.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -34,7 +34,7 @@ void wwSwap(word a[], word b[], size_t n)
 		SWAP(a[n], b[n]);
 }
 
-bool_t SAFE(wwEq)(const word a[], const word b[], size_t n)
+bool_t wwEq(const word a[], const word b[], size_t n)
 {
 	register word diff = 0;
 	ASSERT(wwIsValid(a, n) && wwIsValid(b, n));
@@ -52,7 +52,7 @@ bool_t FAST(wwEq)(const word a[], const word b[], size_t n)
 	return TRUE;
 }
 
-int SAFE(wwCmp)(const word a[], const word b[], size_t n)
+int wwCmp(const word a[], const word b[], size_t n)
 {
 	register word less = 0;
 	register word greater = 0;
@@ -76,7 +76,7 @@ int FAST(wwCmp)(const word a[], const word b[], size_t n)
 	return 0;
 }
 
-int SAFE(wwCmp2)(const word a[], size_t n, const word b[], size_t m)
+int wwCmp2(const word a[], size_t n, const word b[], size_t m)
 {
 	register int ret;
 	ASSERT(wwIsValid(a, n) && wwIsValid(b, m));
@@ -109,7 +109,7 @@ int FAST(wwCmp2)(const word a[], size_t n, const word b[], size_t m)
 	return FAST(wwCmp)(a, b, m);
 }
 
-int SAFE(wwCmpW)(const word a[], size_t n, register word w)
+int wwCmpW(const word a[], size_t n, register word w)
 {
 	register int ret;
 	ASSERT(wwIsValid(a, n));
@@ -191,7 +191,7 @@ void wwRepW(word a[], size_t n, register word w)
 	CLEAN(w);
 }
 
-bool_t SAFE(wwIsZero)(const word a[], size_t n)
+bool_t wwIsZero(const word a[], size_t n)
 {
 	register word diff = 0;
 	ASSERT(wwIsValid(a, n));
@@ -209,7 +209,7 @@ bool_t FAST(wwIsZero)(const word a[], size_t n)
 	return TRUE;
 }
 
-bool_t SAFE(wwIsW)(const word a[], size_t n, register word w)
+bool_t wwIsW(const word a[], size_t n, register word w)
 {
 	register bool_t ret;
 	ASSERT(wwIsValid(a, n));
@@ -241,7 +241,7 @@ bool_t FAST(wwIsW)(const word a[], size_t n, register word w)
 	return ret;
 }
 
-bool_t SAFE(wwIsRepW)(const word a[], size_t n, register word w)
+bool_t wwIsRepW(const word a[], size_t n, register word w)
 {
 	register bool_t ret;
 	ASSERT(wwIsValid(a, n));

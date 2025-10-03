@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): KRP (keyrep = key diversification + meshing)
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2020.03.24
+\version 2025.09.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -25,11 +25,11 @@
 */
 
 typedef struct {
-	u32 key[8];			/*< форматированный первоначальный ключ */
-	size_t len;			/*< длина первоначального ключа */
-	u32 block[8];		/*< блок r || level || header */
-	u32 key_new[8];		/*< форматированный преобразованный ключ */
-	octet stack[];		/*< стек beltCompr */
+	u32 key[8];				/*< форматированный первоначальный ключ */
+	size_t len;				/*< длина первоначального ключа */
+	u32 block[8];			/*< блок r || level || header */
+	u32 key_new[8];			/*< форматированный преобразованный ключ */
+	mem_align_t stack[];	/*< стек beltCompr */
 } belt_krp_st;
 
 size_t beltKRP_keep()

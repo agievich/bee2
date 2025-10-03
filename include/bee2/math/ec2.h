@@ -4,7 +4,7 @@
 \brief Elliptic curves over binary fields
 \project bee2 [cryptographic library]
 \created 2012.04.19
-\version 2021.06.30
+\version 2025.09.03
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -60,7 +60,7 @@ O -- бесконечно удаленная точка.
 	\return Признак успеха.
 	\pre gf2IsOperable(f) == TRUE.
 	\post ec->d == 3.
-	\post Буферы ec->order и ec->base подготовлены для ecCreateGroup().
+	\post Буферы ec->order и ec->base подготовлены для ecGroupCreate().
 	\keep{ec} ec2CreateLD_keep(f->n).
 	\deep{stack} ec2CreateLD_deep(f->n, f->deep).
 */
@@ -104,21 +104,21 @@ size_t ec2IsValid_deep(size_t n);
 
 	Проверяется корректность описания группы точек эллиптической кривой ec.
 	Описание корректно, если:
-	-	ecIsOperableGroup(ec) == TRUE;
+	-	ecGroupIsOperable(ec) == TRUE;
 	-	|ec->order * ec->cofactor - (2^m + 1)| <= 2^{m/2 + 1} (границы Хассе);
 	-	точка ec->base лежит на ec.
 	.
 	\pre Описание ec работоспособно.
 	\return Признак корректности.
 	\remark Не проверяется, что порядок ec->base равняется ec->order.
-	\deep{stack} ec2SeemsValidGroup_deep(ec->f->n, ec->f->deep).
+	\deep{stack} ec2GroupSeemsValid_deep(ec->f->n, ec->f->deep).
 */
-bool_t ec2SeemsValidGroup(
+bool_t ec2GroupSeemsValid(
 	const ec_o* ec,		/*!< [in] описание кривой */
 	void* stack			/*!< [in] вспомогательная память */
 );
 
-size_t ec2SeemsValidGroup_deep(size_t n, size_t f_deep);
+size_t ec2GroupSeemsValid_deep(size_t n, size_t f_deep);
 
 /*!	\brief Надежная группа точек эллиптической кривой?
 
@@ -131,15 +131,15 @@ size_t ec2SeemsValidGroup_deep(size_t n, size_t f_deep);
 	\pre Описание ec (включая описание группы точек) работоспособно.
 	\expect Описание ec (включая описание группы точек) корректно.
 	\return Признак успеха проверки.
-	\deep{stack} ec2IsSafeGroup_deep(ec->f->n).
+	\deep{stack} ec2GroupIsSafe_deep(ec->f->n).
 */
-bool_t ec2IsSafeGroup(
+bool_t ec2GroupIsSafe(
 	const ec_o* ec,			/*!< [in] описание кривой */
 	size_t mov_threshold,	/*!< [in] MOV-порог */
 	void* stack				/*!< [in] вспомогательная память */
 );
 
-size_t ec2IsSafeGroup_deep(size_t n);
+size_t ec2GroupIsSafe_deep(size_t n);
 
 /*
 *******************************************************************************

@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.77 (bash)
 \project bee2/test
 \created 2015.09.22
-\version 2025.04.25
+\version 2025.09.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -28,8 +28,8 @@ bool_t bashTest()
 {
 	octet buf[192];
 	octet hash[64];
-	octet state[1024];
-	octet state1[1024];
+	mem_align_t state[1024 / sizeof(mem_align_t)];
+	mem_align_t state1[1024 / sizeof(mem_align_t)];
 	size_t pos;
 	// подготовить память
 	if (sizeof(state) < utilMax(3,

@@ -4,7 +4,7 @@
 \brief Manage CV-certificates
 \project bee2/cmd 
 \created 2022.07.12
-\version 2025.06.09
+\version 2025.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -522,11 +522,11 @@ static err_t cvcIss(int argc, char* argv[])
 	size_t certa_len;
 	size_t req_len;
 	size_t cert_len;
-	void* stack;
-	octet* certa;
-	octet* req;
-	octet* cert;
-	btok_cvc_t* cvc;
+	void* state;
+	octet* certa;			/* [certa_len] */
+	octet* req;				/* [req_len] */
+	octet* cert;			/* [cert_len] */
+	btok_cvc_t* cvc;		/* [1] */
 	// самотестирование
 	code = cmdStDo(CMD_ST_BIGN);
 	ERR_CALL_CHECK(code);
@@ -563,23 +563,24 @@ static err_t cvcIss(int argc, char* argv[])
 	ERR_CALL_HANDLE(code, cmdBlobClose(privkeya));
 	// построить оценку сверху для cert_len: req_len + расширение_подписи
 	cert_len = req_len + (96 - 48);
-	// выделить память и разметить ее
-	code = cmdBlobCreate(stack, certa_len + req_len + cert_len +
-		sizeof(btok_cvc_t));
+	// выделить и разметить память
+	code = cmdBlobCreate2(state, 
+		certa_len,
+		req_len,
+		cert_len,
+		sizeof(btok_cvc_t),
+		SIZE_MAX,
+		&certa, &req, &cert, &cvc);
 	ERR_CALL_HANDLE(code, cmdBlobClose(privkeya));
-	certa = (octet*)stack;
-	req = certa + certa_len;
-	cert = req + req_len;
-	cvc = (btok_cvc_t*)(cert + cert_len);
 	// прочитать сертификат
 	code = cmdFileReadAll(certa, &certa_len, argv[1]);
-	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(stack)));
+	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(state)));
 	// прочитать запрос
 	code = cmdFileReadAll(req, &req_len, argv[2]);
-	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(stack)));
+	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(state)));
 	// разобрать запрос
 	code = btokCVCUnwrap(cvc, req, req_len, cvc->pubkey, 0);
-	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(stack)));
+	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(state)));
 	// перенести в сертификат опции командной строки
 	if (strLen(cvc0->holder))
 		strCopy(cvc->holder, cvc0->holder);
@@ -603,11 +604,11 @@ static err_t cvcIss(int argc, char* argv[])
 	code = btokCVCIss(cert, &cert_len, cvc, certa, certa_len, privkeya,
 		privkeya_len);
 	cmdBlobClose(privkeya);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// записать сертификат
 	code = cmdFileWrite(argv[3], cert, cert_len);
 	// завершить
-	cmdBlobClose(stack);
+	cmdBlobClose(state);
 	return code;
 }
 
@@ -631,10 +632,10 @@ static err_t cvcShorten(int argc, char* argv[])
 	octet* privkeya;
 	size_t certa_len;
 	size_t cert_len;
-	void* stack;
-	octet* certa;
-	octet* cert;
-	btok_cvc_t* cvc;
+	void* state;
+	octet* certa;			/* [certa_len] */
+	octet* cert;			/* [cert_len] */
+	btok_cvc_t* cvc;		/* [1] */
 	// самотестирование
 	code = cmdStDo(CMD_ST_BIGN);
 	ERR_CALL_CHECK(code);
@@ -668,37 +669,39 @@ static err_t cvcShorten(int argc, char* argv[])
 	ERR_CALL_HANDLE(code, cmdBlobClose(privkeya));
 	code = cmdFileReadAll(0, &cert_len, argv[2]);
 	ERR_CALL_HANDLE(code, cmdBlobClose(privkeya));
-	// выделить память и разметить ее
-	code = cmdBlobCreate(stack, certa_len + cert_len + sizeof(btok_cvc_t));
+	// создать состояние
+	code = cmdBlobCreate2(state, 
+		certa_len, 
+		cert_len, 
+		sizeof(btok_cvc_t),
+		SIZE_MAX,
+		&certa, &cert, &cvc);
 	ERR_CALL_HANDLE(code, cmdBlobClose(privkeya));
-	certa = (octet*)stack;
-	cert = certa + certa_len;
-	cvc = (btok_cvc_t*)(cert + cert_len);
 	// прочитать сертификаты
 	code = cmdFileReadAll(certa, &certa_len, argv[1]);
-	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(stack)));
+	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(state)));
 	code = cmdFileReadAll(cert, &cert_len, argv[2]);
-	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(stack)));
+	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(state)));
 	// проверить сертификат
 	code = btokCVCVal(cert, cert_len, certa, certa_len, 0);
-	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(stack)));
+	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(state)));
 	// разобрать сертификат
 	code = btokCVCUnwrap(cvc, cert, cert_len, 0, 0);
-	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(stack)));
+	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(state)));
 	// срок действия действительно сокращается?
 	if (memCmp(cvc->until, cvc0->until, 6) < 0)
 		code = ERR_BAD_DATE;
-	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(stack)));
+	ERR_CALL_HANDLE(code, (cmdBlobClose(privkeya), cmdBlobClose(state)));
 	// перенести в сертификат новую дату окончания
 	memCopy(cvc->until, cvc0->until, 6);
 	// выпустить сертификат
 	code = btokCVCIss(cert, 0, cvc, certa, certa_len, privkeya,	privkeya_len);
 	cmdBlobClose(privkeya);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// записать сертификат
 	code = cmdFileWrite(argv[2], cert, cert_len);
 	// завершить
-	cmdBlobClose(stack);
+	cmdBlobClose(state);
 	return code;
 }
 
@@ -717,15 +720,15 @@ cvc val [options] <certa> <certb> ... <cert>
 
 static err_t cvcVal(int argc, char* argv[])
 {
+	const size_t cert_max_len = 512;
 	err_t code;
 	octet date[6];
 	int readc;
-	const size_t cert_max_len = 512;
 	size_t cert_len;
-	void* stack;
-	octet* cert;
-	btok_cvc_t* cvc;
-	btok_cvc_t* cvc1;
+	void* state;
+	octet* cert;				/* [cert_max_len] */
+	btok_cvc_t* cvc;			/* [1] */
+	btok_cvc_t* cvc1;			/* [1] */
 	// самотестирование
 	code = cmdStDo(CMD_ST_BIGN);
 	ERR_CALL_CHECK(code);
@@ -739,43 +742,45 @@ static err_t cvcVal(int argc, char* argv[])
 	// проверить наличие/отсутствие файлов
 	code = cmdFileValExist(argc, argv);
 	ERR_CALL_CHECK(code);
-	// выделить память и разметить ее
-	code = cmdBlobCreate(stack, cert_max_len + 2 * sizeof(btok_cvc_t));
+	// создать состояние
+	code = cmdBlobCreate2(state, 
+		cert_max_len,
+		sizeof(btok_cvc_t),
+		sizeof(btok_cvc_t),
+		SIZE_MAX,
+		&cert, &cvc, &cvc1);
 	ERR_CALL_CHECK(code);
-	cert = (octet*)stack;
-	cvc = (btok_cvc_t*)(cert + cert_max_len);
-	cvc1 = cvc + 1;
 	// прочитать первый сертификат
 	code = cmdFileReadAll(0, &cert_len, argv[0]);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	code = cert_len <= cert_max_len ? ERR_OK : ERR_BAD_CERT;
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	code = cmdFileReadAll(cert, &cert_len, argv[0]);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// разобрать первый сертификат
 	code = btokCVCUnwrap(cvc, cert, cert_len, 0, 0);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// цикл по сертификатам
 	for (--argc, ++argv; argc--; ++argv)
 	{
 		// прочитать очередной сертификат
 		code = cmdFileReadAll(0, &cert_len, *argv);
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		ERR_CALL_HANDLE(code, cmdBlobClose(state));
 		code = cert_len <= cert_max_len ? ERR_OK : ERR_BAD_CERT;
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		ERR_CALL_HANDLE(code, cmdBlobClose(state));
 		code = cmdFileReadAll(cert, &cert_len, *argv);
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		ERR_CALL_HANDLE(code, cmdBlobClose(state));
 		// проверить очередной сертификат
 		if (argc == 0 && !memIsZero(date, 6))
 			code = btokCVCVal2(cvc1, cert, cert_len, cvc, date);
 		else 
 			code = btokCVCVal2(cvc1, cert, cert_len, cvc, 0);
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		ERR_CALL_HANDLE(code, cmdBlobClose(state));
 		// подготовиться к проверке следующего сертификата
 		memCopy(cvc, cvc1, sizeof(btok_cvc_t));
 	}
 	// завершить
-	cmdBlobClose(stack);
+	cmdBlobClose(state);
 	return code;
 }
 
@@ -848,9 +853,9 @@ static err_t cvcExtr(int argc, char* argv[])
 {
 	err_t code;
 	size_t cert_len;
-	void* stack;
-	octet* cert;
-	btok_cvc_t* cvc;
+	void* state;
+	octet* cert;			/* [cert_len] */
+	btok_cvc_t* cvc;		/* [1] */
 	// обработать опции
 	if (argc != 2)
 		return ERR_CMD_PARAMS;
@@ -862,21 +867,23 @@ static err_t cvcExtr(int argc, char* argv[])
 	// определить длину сертификата
 	code = cmdFileReadAll(0, &cert_len, argv[0]);
 	ERR_CALL_CHECK(code);
-	// выделить память и разметить ее
-	code = cmdBlobCreate(stack, cert_len + sizeof(btok_cvc_t));
+	// создать состояние
+	code = cmdBlobCreate2(state, 
+		cert_len,
+		sizeof(btok_cvc_t),
+		SIZE_MAX,
+		&cert, &cvc);
 	ERR_CALL_CHECK(code);
-	cert = (octet*)stack;
-	cvc = (btok_cvc_t*)(cert + cert_len);
 	// прочитать сертификат
 	code = cmdFileReadAll(cert, &cert_len, argv[0]);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// разобрать сертификат
 	code = btokCVCUnwrap(cvc, cert, cert_len, 0, 0);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// сохранить открытый ключ
 	code = cmdFileWrite(argv[1], cvc->pubkey, cvc->pubkey_len);
 	// завершить
-	cmdBlobClose(stack);
+	cmdBlobClose(state);
 	return code;
 }
 
@@ -891,11 +898,11 @@ cvc print [-{authority|holder|from|until|eid|esign|pubkey|sig}] <cert>
 static err_t cvcPrint(int argc, char* argv[])
 {
 	err_t code;
-	size_t cert_len;
-	void* stack;
-	octet* cert;
-	btok_cvc_t* cvc;
 	const char* scope = 0;
+	size_t cert_len;
+	void* state;
+	octet* cert;			/* [cert_len] */
+	btok_cvc_t* cvc;		/* [1] */
 	// обработать опции
 	if (argc < 1 || argc > 2)
 		return ERR_CMD_PARAMS;
@@ -912,21 +919,23 @@ static err_t cvcPrint(int argc, char* argv[])
 	// определить длину сертификата
 	code = cmdFileReadAll(0, &cert_len, argv[0]);
 	ERR_CALL_CHECK(code);
-	// выделить память и разметить ее
-	code = cmdBlobCreate(stack, cert_len + sizeof(btok_cvc_t));
+	// создать состояние
+	code = cmdBlobCreate2(state, 
+		cert_len,
+		sizeof(btok_cvc_t),
+		SIZE_MAX,
+		&cert, &cvc);
 	ERR_CALL_CHECK(code);
-	cert = (octet*)stack;
-	cvc = (btok_cvc_t*)(cert + cert_len);
 	// прочитать сертификат
 	code = cmdFileReadAll(cert, &cert_len, argv[0]);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// разобрать сертификат
 	code = btokCVCUnwrap(cvc, cert, cert_len, 0, 0);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// печатать содержимое
 	code = cmdCVCPrint(cvc, scope);
 	// завершить
-	cmdBlobClose(stack);
+	cmdBlobClose(state);
 	return code;
 }
 

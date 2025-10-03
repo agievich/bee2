@@ -4,7 +4,7 @@
 \brief Tests for the arithmetic of binary polynomials
 \project bee2/test
 \created 2023.11.09
-\version 2023.11.10
+\version 2025.09.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -78,10 +78,10 @@ static bool_t ppTestExps16()
 	word t[n];
 	u16 s1[65536];
 	u16 s2[65536];
-	octet stack[1024];
+	mem_align_t stack[1024 / sizeof(mem_align_t)];
 	size_t pos;
 	// подготовить память
-	if (sizeof(stack) < utilMax(2,
+	if (sizeof(stack) < utilMax(2, 
 			ppIsIrred_deep(n),
 			ppMulMod_deep(n)))
 		return FALSE;
@@ -140,21 +140,20 @@ static bool_t ppTestRed()
 	word t[2 * n];
 	word t1[2 * n];
 	word mod[n];
-	octet combo_state[32];
-	octet stack[2048];
+	mem_align_t state[64 / sizeof(mem_align_t)];
+	mem_align_t stack[2048 / sizeof(mem_align_t)];
 	// подготовить память
-	if (sizeof(combo_state) < prngCOMBO_keep() ||
-		sizeof(stack) < utilMax(1,
-			ppRed_deep(n)))
+	if (sizeof(state) < prngCOMBO_keep() ||
+		sizeof(stack) < ppRed_deep(n))
 		return FALSE;
 	// инициализировать генератор COMBO
-	prngCOMBOStart(combo_state, utilNonce32());
+	prngCOMBOStart(state, utilNonce32());
 	// редукция
 	while (reps--)
 	{
 		size_t m;
 		// генерация
-		prngCOMBOStepR(a, 2 * O_OF_W(n), combo_state);
+		prngCOMBOStepR(a, O_OF_W(2 * n), state);
 		// ppRed / ppRedTrinomial[kb233]
 		ASSERT(W_OF_B(233) == W_OF_B(234));
 		m = W_OF_B(233);
@@ -223,6 +222,5 @@ static bool_t ppTestRed()
 
 bool_t ppTest()
 {
-	return ppTestExps16() &&
-		ppTestRed();
+	return ppTestExps16() && ppTestRed();
 }

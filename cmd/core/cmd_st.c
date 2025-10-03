@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: self-tests
 \project bee2/cmd 
 \created 2025.04.09
-\version 2025.06.09
+\version 2025.09.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -328,10 +328,10 @@ err_t cmdStCrc(octet crc[32], const char* prefix)
 	const size_t buf_size = 4096;
 	err_t code;
 	size_t count;
-	void* stack;
-	char* name;
-	octet* buf;
 	void* state;
+	char* name;					/* [count] */
+	octet* buf;					/* [buf_size] (|name) */
+	void* hash_state;			/* [beltHash_keep()] */
 	file_t file;
 	// входной контроль
 	if (!memIsValid(crc, 32) || !strIsNullOrValid(prefix))
@@ -340,34 +340,36 @@ err_t cmdStCrc(octet crc[32], const char* prefix)
 	code = cmdSysModulePath(0, &count);
 	ERR_CALL_CHECK(code);
 	// выделить и разметить память	
-	code = cmdBlobCreate(stack, MAX2(buf_size, count) + beltHash_keep());
+	code = cmdBlobCreate2(state, 
+		count,
+		buf_size | SIZE_HI, 
+		beltHash_keep(),
+		SIZE_MAX,
+		&name, &buf, &hash_state);		
 	ERR_CALL_CHECK(code);
-	buf = (octet*)stack;
-	name = (char*)stack;
-	state = buf + MAX2(buf_size, count);
 	// определить имя исполняемого модуля
 	code = cmdSysModulePath(name, &count);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// открыть исполнямый модуль
 	code = cmdFileOpen(file, name, "rb");
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// начать хэширование
-	beltHashStart(state);
+	beltHashStart(hash_state);
 	if (prefix)
-		beltHashStepH(prefix, strLen(prefix), state);
+		beltHashStepH(prefix, strLen(prefix), hash_state);
 	// хэшировать файл
 	do
 	{
 		if ((count = fileRead2(buf, buf_size, file)) == SIZE_MAX)
 			code = ERR_FILE_READ;
-		ERR_CALL_HANDLE(code, (cmdFileClose(file), cmdBlobClose(stack)));
-		beltHashStepH(buf, count, state);
+		ERR_CALL_HANDLE(code, (cmdFileClose(file), cmdBlobClose(state)));
+		beltHashStepH(buf, count, hash_state);
 	} while (count);
 	// закрыть файл
 	code = cmdFileClose2(file);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// завершить
-	beltHashStepG(crc, state);
-	cmdBlobClose(stack);
+	beltHashStepG(crc, hash_state);
+	cmdBlobClose(state);
 	return code;
 }

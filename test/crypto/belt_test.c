@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.31 (belt)
 \project bee2/test
 \created 2012.06.20
-\version 2024.01.25
+\version 2025.10.02
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -131,7 +131,7 @@ bool_t beltTest()
 	u32 key[8];
 	u32 block[4];
 	octet level[12];
-	octet state[1024];
+	mem_align_t state[1024 / sizeof(mem_align_t)];
 	size_t count;
 	// подготовить память
 	if (sizeof(state) < utilMax(17,
@@ -154,7 +154,7 @@ bool_t beltTest()
 		beltHMAC_keep()))
 		return FALSE;
 	// belt-H
-	beltHGen(state);
+	beltHGen((octet*)state);
 	if (!memEq(state, beltH(), 256))
 		return FALSE;
 	// belt-block: тест A.1-1
@@ -246,6 +246,9 @@ bool_t beltTest()
 			return FALSE;
 	}
 	// belt-compr: тест A.8
+	if (!memIsAligned(buf, 4) || !memIsAligned(hash, 4) ||
+		!memIsAligned(hash1, 4))
+		return FALSE;
 	u32From((u32*)buf, beltH(), 32);
 	u32From((u32*)hash, beltH() + 32, 32);
 	memSetZero(hash1, 16);

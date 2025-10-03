@@ -4,7 +4,7 @@
 \brief STB 34.101.47 (brng): algorithms of pseudorandom number generation
 \project bee2 [cryptographic library]
 \created 2013.01.31
-\version 2025.06.11
+\version 2025.10.02
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -20,63 +20,54 @@
 
 /*
 *******************************************************************************
-Ускорители: быстрые операции над блоками brng
+Операции над блоками
 *******************************************************************************
 */
 
-static void brngBlockNeg(octet dest[32], const octet src[32])
-{
-	register size_t i = W_OF_O(32);
-	while (i--)
-		((word*)dest)[i] = ~((const word*)src)[i];
-}
-
-static void brngBlockXor2(octet dest[32], const octet src[32])
-{
-	register size_t i = W_OF_O(32);
-	while (i--)
-		((word*)dest)[i] ^= ((const word*)src)[i];
-}
-
 static void brngBlockInc(octet block[32])
 {
-	register size_t i = 0;
-	word* w = (word*)block;
-	do
+	enum {n = W_OF_O(32)};
+	register word carry = 1;
+	size_t i;
+	word* b;
+	ASSERT(memIsAligned(block, O_PER_W));
+	b = (word*)block;
+	for (i = 0; i < n - 1; ++i)
 	{
 #if (OCTET_ORDER == BIG_ENDIAN)
-		w[i] = wordRev(w[i]);
-		++w[i];
-		w[i] = wordRev(w[i]);
-#else
-		++w[i];
+		b[i] = wordRev(b[i]);
+#endif
+		b[i] += carry, carry = wordLess(b[i], carry);
+#if (OCTET_ORDER == BIG_ENDIAN)
+		b[i] = wordRev(b[i]);
 #endif
 	}
-	while (w[i] == 0 && i++ < W_OF_O(32));
-	CLEAN(i);
+	b[n - 1] += carry;
+	CLEAN(carry);
 }
 
 /*
 *******************************************************************************
 Генерация в режиме CTR
 
-В brng_ctr_st::state_ex размещаются два beltHash-состояния:
+В brng_ctr_st::stack размещаются два состояния beltHash:
 -	вспомогательное состояние;
 -	состояние beltHash(key ||....).
 *******************************************************************************
 */
 typedef struct
 {
-	octet s[32];		/*< переменная s */
-	octet r[32];		/*< переменная r */
-	octet block[32];	/*< блок выходных данных */
-	size_t reserved;	/*< резерв выходных октетов */
-	octet state_ex[];	/*< [2 beltHash_keep()] хэш-состояния */
+	octet s[32];			/*< переменная s */
+	octet r[32];			/*< переменная r */
+	octet block[32];		/*< блок выходных данных */
+	size_t reserved;		/*< резерв выходных октетов */
+	mem_align_t stack[];	/*< 2 состояния beltHash */
 } brng_ctr_st;
 
 size_t brngCTR_keep()
 {
-	return sizeof(brng_ctr_st) + 2 * beltHash_keep();
+	return sizeof(brng_ctr_st) + 
+		memSliceSize(beltHash_keep(), beltHash_keep(), SIZE_MAX);
 }
 
 void brngCTRStart(void* state, const octet key[32], const octet iv[32])
@@ -85,15 +76,16 @@ void brngCTRStart(void* state, const octet key[32], const octet iv[32])
 	ASSERT(memIsDisjoint2(s, brngCTR_keep(), key, 32));
 	ASSERT(iv == 0 || memIsDisjoint2(s, brngCTR_keep(), iv, 32));
 	// обработать key
-	beltHashStart(s->state_ex + beltHash_keep());
-	beltHashStepH(key, 32, s->state_ex + beltHash_keep());
+	beltHashStart(memSliceNext(s->stack, beltHash_keep()));
+	beltHashStepH(key, 32, memSliceNext(s->stack, beltHash_keep()));
 	//	сохранить iv
 	if (iv)
 		memCopy(s->s, iv, 32);
 	else
 		memSetZero(s->s, 32);
 	//	r <- ~s
-	brngBlockNeg(s->r, s->s);
+	memCopy(s->r, s->s, 32);
+	memNeg(s->r, 32);
 	// нет выходных данных
 	s->reserved = 0;
 }
@@ -120,14 +112,15 @@ void brngCTRStepR(void* buf, size_t count, void* state)
 	while (count >= 32)
 	{
 		// Y_t <- belt-hash(key || s || X_t || r)
-		memCopy(s->state_ex, s->state_ex + beltHash_keep(), beltHash_keep());
-		beltHashStepH(s->s, 32, s->state_ex);
-		beltHashStepH(buf, 32, s->state_ex);
-		beltHashStepH(s->r, 32, s->state_ex);
-		beltHashStepG(buf, s->state_ex);
+		memCopy(s->stack, memSliceNext2(s->stack, beltHash_keep()), 
+			beltHash_keep());
+		beltHashStepH(s->s, 32, s->stack);
+		beltHashStepH(buf, 32, s->stack);
+		beltHashStepH(s->r, 32, s->stack);
+		beltHashStepG(buf, s->stack);
 		// next
 		brngBlockInc(s->s);
-		brngBlockXor2(s->r, buf);
+		memXor2(s->r, buf, 32);
 		buf = (octet*)buf + 32;
 		count -= 32;
 	}
@@ -136,17 +129,18 @@ void brngCTRStepR(void* buf, size_t count, void* state)
 	{
 		// block <- beltHash(key || s || zero_pad(X_t) || r)
 		memSetZero(s->block + count, 32 - count);
-		memCopy(s->state_ex, s->state_ex + beltHash_keep(), beltHash_keep());
-		beltHashStepH(s->s, 32, s->state_ex);
-		beltHashStepH(buf, count, s->state_ex);
-		beltHashStepH(s->block + count, 32 - count, s->state_ex);
-		beltHashStepH(s->r, 32, s->state_ex);
-		beltHashStepG(s->block, s->state_ex);
+		memCopy(s->stack, memSliceNext2(s->stack, beltHash_keep()), 
+			beltHash_keep());
+		beltHashStepH(s->s, 32, s->stack);
+		beltHashStepH(buf, count, s->stack);
+		beltHashStepH(s->block + count, 32 - count, s->stack);
+		beltHashStepH(s->r, 32, s->stack);
+		beltHashStepG(s->block, s->stack);
 		// Y_t <- left(block)
 		memCopy(buf, s->block, count);
 		// next
 		brngBlockInc(s->s);
-		brngBlockXor2(s->r, s->block);
+		memXor2(s->r, s->block, 32);
 		s->reserved = 32 - count;
 	}
 }
@@ -183,7 +177,7 @@ err_t brngCTRRand(void* buf, size_t count, const octet key[32], octet iv[32])
 *******************************************************************************
 Генерация в режиме HMAC
 
-В brng_hmac_st::state_ex размещаются два beltHMAC-состояния:
+В brng_hmac_st::stack размещаются два beltHMAC-состояния:
 -	вспомогательное состояние;
 -	состояние beltHMAC(key, ...).
 
@@ -198,12 +192,13 @@ typedef struct
 	octet r[32];				/*< переменная r */
 	octet block[32];			/*< блок выходных данных */
 	size_t reserved;			/*< резерв выходных октетов */
-	octet state_ex[];			/*< [2 * beltHMAC_keep()] hmac-состояния */
+	mem_align_t stack[];		/*< 2 состояния beltHMAC */
 } brng_hmac_st;
 
 size_t brngHMAC_keep()
 {
-	return sizeof(brng_hmac_st) + 2 * beltHMAC_keep();
+	return sizeof(brng_hmac_st) + 
+		memSliceSize(beltHMAC_keep(), beltHMAC_keep(), SIZE_MAX);
 }
 
 void brngHMACStart(void* state, const octet key[], size_t key_len, 
@@ -221,11 +216,12 @@ void brngHMACStart(void* state, const octet key[], size_t key_len,
 	else
 		s->iv = iv;
 	// обработать key
-	beltHMACStart(s->state_ex + beltHMAC_keep(), key, key_len);
+	beltHMACStart(memSliceNext(s->stack, beltHMAC_keep()), key, key_len);
 	// r <- beltHMAC(key, iv)
-	memCopy(s->state_ex, s->state_ex + beltHMAC_keep(), beltHMAC_keep());
-	beltHMACStepA(iv, iv_len, s->state_ex);
-	beltHMACStepG(s->r, s->state_ex);
+	memCopy(s->stack, memSliceNext2(s->stack, beltHMAC_keep()), 
+		beltHMAC_keep());
+	beltHMACStepA(iv, iv_len, s->stack);
+	beltHMACStepG(s->r, s->stack);
 	// нет выходных данных
 	s->reserved = 0;
 }
@@ -252,12 +248,13 @@ void brngHMACStepR(void* buf, size_t count, void* state)
 	while (count >= 32)
 	{
 		// r <- beltHMAC(key, r) 
-		memCopy(s->state_ex, s->state_ex + beltHMAC_keep(), beltHMAC_keep());
-		beltHMACStepA(s->r, 32, s->state_ex);
-		beltHMACStepG(s->r, s->state_ex);
+		memCopy(s->stack, memSliceNext2(s->stack, beltHMAC_keep()), 
+			beltHMAC_keep());
+		beltHMACStepA(s->r, 32, s->stack);
+		beltHMACStepG(s->r, s->stack);
 		// Y_t <- beltHMAC(key, r || iv)
-		beltHMACStepA(s->iv, s->iv_len, s->state_ex);
-		beltHMACStepG(buf, s->state_ex);
+		beltHMACStepA(s->iv, s->iv_len, s->stack);
+		beltHMACStepG(buf, s->stack);
 		// next
 		buf = (octet*)buf + 32;
 		count -= 32;
@@ -266,12 +263,13 @@ void brngHMACStepR(void* buf, size_t count, void* state)
 	if (count)
 	{
 		// r <- beltHMAC(key, r) 
-		memCopy(s->state_ex, s->state_ex + beltHMAC_keep(), beltHMAC_keep());
-		beltHMACStepA(s->r, 32, s->state_ex);
-		beltHMACStepG(s->r, s->state_ex);
+		memCopy(s->stack, memSliceNext(s->stack, beltHMAC_keep()), 
+			beltHMAC_keep());
+		beltHMACStepA(s->r, 32, s->stack);
+		beltHMACStepG(s->r, s->stack);
 		// Y_t <- left(beltHMAC(key, r || iv))
-		beltHMACStepA(s->iv, s->iv_len, s->state_ex);
-		beltHMACStepG(s->block, s->state_ex);
+		beltHMACStepA(s->iv, s->iv_len, s->stack);
+		beltHMACStepG(s->block, s->stack);
 		memCopy(buf, s->block, count);
 		// next
 		s->reserved = 32 - count;

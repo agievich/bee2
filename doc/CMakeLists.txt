@@ -17,4 +17,4 @@ add_custom_command(OUTPUT ${doxy_html_index_file}
 add_custom_target(docbee2 ALL DEPENDS ${doxy_html_index_file})
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/html
-  DESTINATION share/bee2/doc)
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/bee2/doc)

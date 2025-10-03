@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: password management
 \project bee2/cmd 
 \created 2022.06.13
-\version 2025.06.09
+\version 2025.09.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -116,12 +116,12 @@ static err_t cmdPwdGenShare_internal(cmd_pwd_t* pwd, size_t scount,
 	err_t code;
 	const size_t iter = 10000;
 	size_t epki_len;
-	void* stack;
-	octet* pwd_bin;
-	octet* state;
-	octet* share;
-	octet* salt;
-	octet* epki;
+	void* state;
+	octet* pwd_bin;				/* [len] */
+	octet* share;				/* [scount * (len + 1)] */
+	octet* mac_state;			/* [beltMAC_keep()] (|share) */
+	octet* salt;				/* [8] */
+	octet* epki;				/* [epki_len] */
 	// pre
 	ASSERT(memIsValid(pwd, sizeof(cmd_pwd_t)));
 	ASSERT(cmdPwdIsValid(spwd));
@@ -140,29 +140,29 @@ static err_t cmdPwdGenShare_internal(cmd_pwd_t* pwd, size_t scount,
 	// запустить ГСЧ
 	code = cmdRngStart(TRUE);
 	ERR_CALL_CHECK(code);
-	// выделить память и разметить ее
-	code = cmdBlobCreate(stack, len +
-		utilMax(2,
-			beltMAC_keep(),
-			scount * (len + 1) + epki_len + 8));
+	// выделить и разметить память
+	code = cmdBlobCreate2(state, 
+		len,
+		scount * (len + 1),
+		beltMAC_keep() | SIZE_HI,
+		(size_t)8,
+		epki_len,
+		SIZE_MAX,
+		&pwd_bin, &share, &mac_state, &salt, &epki);
 	ERR_CALL_CHECK(code);
-	pwd_bin = (octet*)stack;
-	state = share = pwd_bin + len;
-	salt = share + scount * (len + 1);
-	epki = salt + 8;
 	// генерировать пароль
 	if (crc)
 	{
 		rngStepR(pwd_bin, len - 8, 0);
-		beltMACStart(state, pwd_bin, len - 8);
-		beltMACStepA(pwd_bin, len - 8, state);
-		beltMACStepG(pwd_bin + len - 8, state);
+		beltMACStart(mac_state, pwd_bin, len - 8);
+		beltMACStepA(pwd_bin, len - 8, mac_state);
+		beltMACStepG(pwd_bin + len - 8, mac_state);
 	}
 	else
 		rngStepR(pwd_bin, len, 0);
 	// разделить пароль на частичные секреты
 	code = belsShare2(share, scount, threshold, len, pwd_bin, rngStepR, 0);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// обновить ключ ГСЧ
 	rngRekey();
 	// защитить частичные секреты
@@ -172,17 +172,17 @@ static err_t cmdPwdGenShare_internal(cmd_pwd_t* pwd, size_t scount,
 		rngStepR(salt, 8, 0);
 		code = bpkiShareWrap(epki, 0, share, len + 1, (const octet*)spwd,
 			cmdPwdLen(spwd), salt, iter);
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		ERR_CALL_HANDLE(code, cmdBlobClose(state));
 		// записать в файл
 		code = cmdFileWrite(*shares, epki, epki_len);
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	}
 	// создать выходной (текстовый) пароль
 	*pwd = cmdPwdCreate(2 * len);
 	code = *pwd ? ERR_OK : ERR_OUTOFMEMORY;
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	hexFrom(*pwd, pwd_bin, len);
-	cmdBlobClose(stack);
+	cmdBlobClose(state);
 	return code;
 }
 
@@ -193,11 +193,11 @@ static err_t cmdPwdReadShare_internal(cmd_pwd_t* pwd, size_t scount,
 	size_t epki_len;
 	size_t epki_len_min;
 	size_t epki_len_max;
-	void* stack;
-	octet* share;
-	octet* state;
-	octet* epki;
-	octet* pwd_bin;
+	void* state;
+	octet* share;			/* [scount * (len + 1)] */
+	octet* mac_state;		/* [beltMAC_keep()] */
+	octet* epki;			/* [epki_len_max + 1] */
+	octet* pwd_bin;			/* [len] */
 	size_t pos;
 	// pre
 	ASSERT(memIsValid(pwd, sizeof(cmd_pwd_t)));
@@ -234,51 +234,54 @@ static err_t cmdPwdReadShare_internal(cmd_pwd_t* pwd, size_t scount,
 		code = bpkiShareWrap(0, &epki_len_max, 0, len + 1, 0, 0, 0,	SIZE_MAX);
 		ERR_CALL_CHECK(code);
 	}
-	// выделить память и разметить ее
-	code = cmdBlobCreate(stack, scount * (len + 1) + epki_len_max + 1 + len);
+	// выделить и разметить память
+	code = cmdBlobCreate2(state, 
+		scount * (len + 1),
+		beltMAC_keep() | SIZE_HI,
+		epki_len_max + 1,
+		len,
+		SIZE_MAX,
+		&share, &mac_state, &epki, &pwd_bin);
 	ERR_CALL_HANDLE(code, cmdPwdClose(*pwd));
-	share = state = (octet*)stack;
-	epki = share + scount * (len + 1);
-	pwd_bin = epki + epki_len_max + 1;
 	// прочитать частичные секреты
 	for (pos = 0; pos < scount; ++pos, ++shares)
 	{
 		size_t share_len;
 		// определить длину контейнера
 		code = cmdFileReadAll(0, &epki_len, *shares);
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		ERR_CALL_HANDLE(code, cmdBlobClose(state));
 		// проверить длину
 		code = (epki_len_min <= epki_len && epki_len <= epki_len_max) ?
 			ERR_OK : ERR_BAD_FORMAT;
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		ERR_CALL_HANDLE(code, cmdBlobClose(state));
 		// читать
 		code = cmdFileReadAll(epki, &epki_len, *shares);
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		ERR_CALL_HANDLE(code, cmdBlobClose(state));
 		// декодировать
 		code = bpkiShareUnwrap(share + pos * (len + 1), &share_len,
 			epki, epki_len, (const octet*)spwd, cmdPwdLen(spwd));
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		ERR_CALL_HANDLE(code, cmdBlobClose(state));
 		code = (share_len == len + 1) ? ERR_OK : ERR_BAD_FORMAT;
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	}
 	// собрать пароль
 	code = belsRecover2(pwd_bin, scount, len, share);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// проверить пароль
 	if (crc)
 	{
-		beltMACStart(state, pwd_bin, len - 8);
-		beltMACStepA(pwd_bin, len - 8, state);
-		if (!beltMACStepV(pwd_bin + len - 8, state))
+		beltMACStart(mac_state, pwd_bin, len - 8);
+		beltMACStepA(pwd_bin, len - 8, mac_state);
+		if (!beltMACStepV(pwd_bin + len - 8, mac_state))
 			code = ERR_BAD_CRC;
 	}
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// создать выходной (текстовый) пароль
 	*pwd = cmdPwdCreate(2 * len);
 	code = *pwd ? ERR_OK : ERR_OUTOFMEMORY;
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	hexFrom(*pwd, pwd_bin, len);
-	cmdBlobClose(stack);
+	cmdBlobClose(state);
 	return code;
 }
 

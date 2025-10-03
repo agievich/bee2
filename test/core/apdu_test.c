@@ -4,7 +4,7 @@
 \brief Tests for APDU formats
 \project bee2/test
 \created 2022.10.31
-\version 2025.04.25
+\version 2025.09.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -22,16 +22,28 @@
 *******************************************************************************
 */
 
+#define apduTest_local()\
+/* cmd */		sizeof(apdu_cmd_t) + 257,\
+/* resp */		(sizeof(apdu_resp_t) + 20) | SIZE_HI,\
+/* cmd1 */		sizeof(apdu_cmd_t) + 257,\
+/* resp1 */		(sizeof(apdu_resp_t) + 20) | SIZE_HI
+
 bool_t apduTest()
 {
-	octet stack[2048];
-	apdu_cmd_t* cmd = (apdu_cmd_t*)stack;
-	apdu_cmd_t* cmd1 = (apdu_cmd_t*)(stack + 1024);
-	apdu_resp_t* resp = (apdu_resp_t*)stack;
-	apdu_resp_t* resp1 = (apdu_resp_t*)(stack + 1024);
+	mem_align_t state[2048 / sizeof(mem_align_t)];
+	apdu_cmd_t* cmd; 		/* sizeof(apdu_cmd_t) + 257 */
+	apdu_resp_t* resp; 		/* sizeof(apdu_resp_t) + 20 (|cmd) */
+	apdu_cmd_t* cmd1; 		/* sizeof(apdu_cmd_t) + 257 */
+	apdu_resp_t* resp1; 	/* sizeof(apdu_resp_t) + 20 (|cmd1) */
 	octet apdu[1024];
 	size_t count;
 	size_t count1;
+	// разметить состояние
+	if (sizeof(state) < memSliceSize(apduTest_local(), SIZE_MAX))
+		return FALSE;
+	memSlice(state,
+		apduTest_local(), SIZE_MAX,
+		&cmd, &resp, &cmd1, &resp1);
 	// cmd: точечный тест
 	memSetZero(cmd, sizeof(apdu_cmd_t));
 	cmd->cla = 0x00, cmd->ins = 0xA4, cmd->p1 = 0x04, cmd->p2 = 0x04;
@@ -44,8 +56,7 @@ bool_t apduTest()
 		!hexEq(apdu, "00A40404045465737400"))
 		return FALSE;
 	count1 = apduCmdDec(0, apdu, count);
-	if (count1 > sizeof(stack) / 2 ||
-		count1 != sizeof(apdu_cmd_t) + 4 ||
+	if (count1 != sizeof(apdu_cmd_t) + 4 ||
 		apduCmdDec(cmd1, apdu, count) != count1 || 
 		!memEq(cmd, cmd1, count1))
 		return FALSE;
@@ -60,15 +71,14 @@ bool_t apduTest()
 				apduCmdEnc(apdu, cmd) != count)
 				return FALSE;
 			count1 = apduCmdDec(0, apdu, count);
-			if (count1 > sizeof(stack) / 2 ||
-				apduCmdDec(cmd1, apdu, count) != count1 ||
+			if (apduCmdDec(cmd1, apdu, count) != count1 ||
 				!memEq(cmd, cmd1, count1))
 				return FALSE;
 		}
 	// resp: точечный тест
 	memSetZero(resp, sizeof(apdu_resp_t));
 	resp->sw1 = 0x90, resp->sw2 = 0x00;
-	cmd->rdf_len = 20;
+	resp->rdf_len = 20;
 	hexTo(resp->rdf, "E012C00401FF8010C00402FF8010C00403FF8010");
 	count = apduRespEnc(0, resp);
 	if (count > sizeof(apdu) ||
@@ -77,8 +87,7 @@ bool_t apduTest()
 		!hexEq(apdu, "E012C00401FF8010C00402FF8010C00403FF80109000"))
 		return FALSE;
 	count1 = apduRespDec(0, apdu, count);
-	if (count1 > sizeof(stack) / 2 ||
-		count1 != sizeof(apdu_resp_t) + 20 ||
+	if (count1 != sizeof(apdu_resp_t) + 20 ||
 		apduRespDec(resp1, apdu, count) != count1 ||
 		!memEq(resp, resp1, count1))
 		return FALSE;

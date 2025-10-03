@@ -188,6 +188,7 @@ void beltKeyExpand2(
 
 	Выполняется зашифрование блока данных block на форматированном ключе key.
 	Результат зашифрования возвращается по адресу block.
+	\pre memIsAligned(block, 4) == TRUE.
 */
 void beltBlockEncr(
 	octet block[16],		/*!< [in,out] блок */
@@ -223,6 +224,7 @@ void beltBlockEncr3(
 
 	Выполняется расшифрование блока данных block на форматированном ключе key.
 	Результат расшифрования возвращается по адресу block.
+	\pre memIsAligned(block, 4) == TRUE.
 */
 void beltBlockDecr(
 	octet block[16],		/*!< [in,out] блок */

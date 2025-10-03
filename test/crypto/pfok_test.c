@@ -4,7 +4,7 @@
 \brief Tests for Draft of RD_RB (pfok)
 \project bee2/test
 \created 2014.07.08
-\version 2025.05.07
+\version 2025.09.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -120,14 +120,14 @@ bool_t pfokTest()
 {
 	pfok_params params[1];
 	pfok_seed seed[1];
-	octet combo_state[128];
+	mem_align_t state[64 / sizeof(mem_align_t)];
 	octet ua[O_OF_B(130)];
 	octet xa[O_OF_B(130)];
 	octet vb[O_OF_B(638)];
 	octet yb[O_OF_B(638)];
 	octet key[32];
 	// подготовить память
-	if (sizeof(combo_state) < prngCOMBO_keep())
+	if (sizeof(state) < prngCOMBO_keep())
 		return FALSE;
 	// тест PFOK.GENP.1
 	if (!pfokTestParamsTest())
@@ -160,8 +160,8 @@ bool_t pfokTest()
 	if (pfokParamsStd(params, seed, "test") != ERR_OK)
 		return FALSE;
 	// сгенерировать ключи
-	prngCOMBOStart(combo_state, utilNonce32());
-	if (pfokKeypairGen(ua, vb, params, prngCOMBOStepR, combo_state) != ERR_OK ||
+	prngCOMBOStart(state, utilNonce32());
+	if (pfokKeypairGen(ua, vb, params, prngCOMBOStepR, state) != ERR_OK ||
 		pfokPubkeyVal(params, vb) != ERR_OK ||
 		pfokPubkeyCalc(yb, params, ua) != ERR_OK ||
 		!memEq(vb, yb, O_OF_B(params->l)))

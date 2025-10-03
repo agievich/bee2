@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): CTR encryption
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2020.03.24
+\version 2025.10.02
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -17,6 +17,23 @@
 #include "bee2/core/util.h"
 #include "bee2/crypto/belt.h"
 #include "belt_lcl.h"
+
+/*
+*******************************************************************************
+Инкремент
+*******************************************************************************
+*/
+
+static void beltBlockIncU32(u32 block[4])
+{
+	register u32 carry = 1;
+	block[0] += carry, carry = wordLess(block[0], carry);
+	block[1] += carry, carry = wordLess(block[1], carry);
+	block[2] += carry, carry = wordLess(block[2], carry);
+	block[3] += carry;
+	CLEAN(carry);
+}
+
 
 /*
 *******************************************************************************
@@ -69,6 +86,7 @@ void beltCTRStepE(void* buf, size_t count, void* state)
 	{
 		beltBlockIncU32(st->ctr);
 		beltBlockCopy(st->block, st->ctr);
+		ASSERT(memIsAligned(st->block, 4));
 		beltBlockEncr2((u32*)st->block, st->key);
 #if (OCTET_ORDER == BIG_ENDIAN)
 		beltBlockRevU32(st->block);
@@ -82,6 +100,7 @@ void beltCTRStepE(void* buf, size_t count, void* state)
 	{
 		beltBlockIncU32(st->ctr);
 		beltBlockCopy(st->block, st->ctr);
+		ASSERT(memIsAligned(st->block, 4));
 		beltBlockEncr2((u32*)st->block, st->key);
 #if (OCTET_ORDER == BIG_ENDIAN)
 		beltBlockRevU32(st->block);

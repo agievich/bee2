@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): compression
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.04.25
+\version 2025.09.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -26,8 +26,10 @@ h и X разбиваются на половинки:
 
 void beltCompr(u32 h[8], const u32 X[8], void* stack)
 {
+	u32* buf;
 	// [12]buf = [4]buf0 || [4]buf1 || [4]buf2
-	u32* buf = (u32*)stack;
+	ASSERT(memIsAligned(stack, 4));
+	buf = (u32*)stack;
 	// буферы не пересекаются?
 	ASSERT(memIsDisjoint3(h, 32, X, 32, buf, 48));
 	// buf0, buf1 <- h0 + h1
@@ -54,8 +56,10 @@ void beltCompr(u32 h[8], const u32 X[8], void* stack)
 
 void beltCompr2(u32 s[4], u32 h[8], const u32 X[8], void* stack)
 {
+	u32* buf;
 	// [12]buf = [4]buf0 || [4]buf1 || [4]buf2
-	u32* buf = (u32*)stack;
+	ASSERT(memIsAligned(stack, 4));
+	buf = (u32*)stack;
 	// буферы не пересекаются?
 	ASSERT(memIsDisjoint4(s, 16, h, 32, X, 32, buf, 48));
 	// buf0, buf1 <- h0 + h1

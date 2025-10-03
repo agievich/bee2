@@ -1,10 +1,10 @@
 /*
 *******************************************************************************
 \file bign96.h
-\brief Experimental Bign level 96 signatures
+\brief Experimental Bign signatures of security level 96
 \project bee2 [cryptographic library]
 \created 2021.01.20
-\version 2023.09.22
+\version 2025.09.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************

@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): local definitions
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2020.03.20
+\version 2025.10.02
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -35,169 +35,96 @@ extern "C" {
 
 /*
 *******************************************************************************
-Ускорители
+Операции с блоками
 
-Реализованы быстрые операции над блоками и полублоками belt. Блок
-представляется либо как [16]octet, либо как [4]u32,
-либо как [W_OF_B(128)]word.
+Реализованы операции над блоками и полублоками belt. Блок представляется либо 
+как [16]octet, либо как [4]u32, либо как [W_OF_B(128)]word.
 
 Суффикс U32 в именах макросов и функций означает, что данные интерпретируются
 как массив u32. Суффикс W означает, что данные интерпретируются как
 массив word.
+
+\remark Блок не обязательно выровнен на границу word или u32. 
+
+\todo Работу с блоками можно ускорить, если предположить выравнивание (в 
+качестве предусловия).
+
+\remark Функции beltBlockAddBitSizeU32() и beltHalfBlockAddBitSizeW() 
+нерегулярны. Однако регулярность не требуется, поскольку функции используются 
+только для обработки длин сообщений.
 *******************************************************************************
 */
 
-#if (B_PER_W == 16)
-
 #define beltBlockSetZero(block)\
-	((word*)(block))[0] = 0,\
-	((word*)(block))[1] = 0,\
-	((word*)(block))[2] = 0,\
-	((word*)(block))[3] = 0,\
-	((word*)(block))[4] = 0,\
-	((word*)(block))[5] = 0,\
-	((word*)(block))[6] = 0,\
-	((word*)(block))[7] = 0\
-
-#define beltBlockRevW(block)\
-	((word*)(block))[0] = wordRev(((word*)(block))[0]),\
-	((word*)(block))[1] = wordRev(((word*)(block))[1]),\
-	((word*)(block))[2] = wordRev(((word*)(block))[2]),\
-	((word*)(block))[3] = wordRev(((word*)(block))[3]),\
-	((word*)(block))[4] = wordRev(((word*)(block))[4]),\
-	((word*)(block))[5] = wordRev(((word*)(block))[5]),\
-	((word*)(block))[6] = wordRev(((word*)(block))[6]),\
-	((word*)(block))[7] = wordRev(((word*)(block))[7])\
-
-#define beltHalfBlockIsZero(block)\
-	(((word*)(block))[0] == 0 && ((word*)(block))[1] == 0 &&\
-		((word*)(block))[2] == 0 && ((word*)(block))[3] == 0)
+	memSetZero(block, 16)
 
 #define beltBlockNeg(dest, src)\
-	((word*)(dest))[0] = ~((const word*)(src))[0],\
-	((word*)(dest))[1] = ~((const word*)(src))[1],\
-	((word*)(dest))[2] = ~((const word*)(src))[2],\
-	((word*)(dest))[3] = ~((const word*)(src))[3],\
-	((word*)(dest))[4] = ~((const word*)(src))[4],\
-	((word*)(dest))[5] = ~((const word*)(src))[5],\
-	((word*)(dest))[6] = ~((const word*)(src))[6],\
-	((word*)(dest))[7] = ~((const word*)(src))[7]\
+	(memCopy(dest, src, 16), memNeg(dest, 16))
 
 #define beltBlockXor(dest, src1, src2)\
-	((word*)(dest))[0] = ((const word*)(src1))[0] ^ ((const word*)(src2))[0],\
-	((word*)(dest))[1] = ((const word*)(src1))[1] ^ ((const word*)(src2))[1],\
-	((word*)(dest))[2] = ((const word*)(src1))[2] ^ ((const word*)(src2))[2],\
-	((word*)(dest))[3] = ((const word*)(src1))[3] ^ ((const word*)(src2))[3],\
-	((word*)(dest))[4] = ((const word*)(src1))[4] ^ ((const word*)(src2))[4],\
-	((word*)(dest))[5] = ((const word*)(src1))[5] ^ ((const word*)(src2))[5],\
-	((word*)(dest))[6] = ((const word*)(src1))[6] ^ ((const word*)(src2))[6],\
-	((word*)(dest))[7] = ((const word*)(src1))[7] ^ ((const word*)(src2))[7]\
+	memXor(dest, src1, src2, 16)
 
 #define beltBlockXor2(dest, src)\
-	((word*)(dest))[0] ^= ((const word*)(src))[0],\
-	((word*)(dest))[1] ^= ((const word*)(src))[1],\
-	((word*)(dest))[2] ^= ((const word*)(src))[2],\
-	((word*)(dest))[3] ^= ((const word*)(src))[3],\
-	((word*)(dest))[4] ^= ((const word*)(src))[4],\
-	((word*)(dest))[5] ^= ((const word*)(src))[5],\
-	((word*)(dest))[6] ^= ((const word*)(src))[6],\
-	((word*)(dest))[7] ^= ((const word*)(src))[7]\
+	memXor2(dest, src, 16)
+
+#define beltHalfBlockIsZero(block)\
+	memIsZero(block, 8)
 
 #define beltBlockCopy(dest, src)\
-	((word*)(dest))[0] = ((const word*)(src))[0],\
-	((word*)(dest))[1] = ((const word*)(src))[1],\
-	((word*)(dest))[2] = ((const word*)(src))[2],\
-	((word*)(dest))[3] = ((const word*)(src))[3],\
-	((word*)(dest))[4] = ((const word*)(src))[4],\
-	((word*)(dest))[5] = ((const word*)(src))[5],\
-	((word*)(dest))[6] = ((const word*)(src))[6],\
-	((word*)(dest))[7] = ((const word*)(src))[7]\
+	memCopy(dest, src, 16)
+
+#if (B_PER_W == 16)
+
+#define beltBlockRevW(block) {\
+	ASSERT(memIsAligned(block, O_PER_W));\
+	((word*)(block))[0] = wordRev(((word*)(block))[0]);\
+	((word*)(block))[1] = wordRev(((word*)(block))[1]);\
+	((word*)(block))[2] = wordRev(((word*)(block))[2]);\
+	((word*)(block))[3] = wordRev(((word*)(block))[3]);\
+	((word*)(block))[4] = wordRev(((word*)(block))[4]);\
+	((word*)(block))[5] = wordRev(((word*)(block))[5]);\
+	((word*)(block))[6] = wordRev(((word*)(block))[6]);\
+	((word*)(block))[7] = wordRev(((word*)(block))[7]);\
+}
 
 #elif (B_PER_W == 32)
 
-#define beltBlockSetZero(block)\
-	((word*)(block))[0] = 0,\
-	((word*)(block))[1] = 0,\
-	((word*)(block))[2] = 0,\
-	((word*)(block))[3] = 0\
-
-#define beltBlockRevW(block)\
-	((word*)(block))[0] = wordRev(((word*)(block))[0]),\
-	((word*)(block))[1] = wordRev(((word*)(block))[1]),\
-	((word*)(block))[2] = wordRev(((word*)(block))[2]),\
-	((word*)(block))[3] = wordRev(((word*)(block))[3])\
-
-#define beltHalfBlockIsZero(block)\
-	(((word*)(block))[0] == 0 && ((word*)(block))[1] == 0)\
-
-#define beltBlockNeg(dest, src)\
-	((word*)(dest))[0] = ~((const word*)(src))[0],\
-	((word*)(dest))[1] = ~((const word*)(src))[1],\
-	((word*)(dest))[2] = ~((const word*)(src))[2],\
-	((word*)(dest))[3] = ~((const word*)(src))[3]\
-
-#define beltBlockXor(dest, src1, src2)\
-	((word*)(dest))[0] = ((const word*)(src1))[0] ^ ((const word*)(src2))[0],\
-	((word*)(dest))[1] = ((const word*)(src1))[1] ^ ((const word*)(src2))[1],\
-	((word*)(dest))[2] = ((const word*)(src1))[2] ^ ((const word*)(src2))[2],\
-	((word*)(dest))[3] = ((const word*)(src1))[3] ^ ((const word*)(src2))[3]\
-
-#define beltBlockXor2(dest, src)\
-	((word*)(dest))[0] ^= ((const word*)(src))[0],\
-	((word*)(dest))[1] ^= ((const word*)(src))[1],\
-	((word*)(dest))[2] ^= ((const word*)(src))[2],\
-	((word*)(dest))[3] ^= ((const word*)(src))[3]\
-
-#define beltBlockCopy(dest, src)\
-	((word*)(dest))[0] = ((const word*)(src))[0],\
-	((word*)(dest))[1] = ((const word*)(src))[1],\
-	((word*)(dest))[2] = ((const word*)(src))[2],\
-	((word*)(dest))[3] = ((const word*)(src))[3]\
+#define beltBlockRevW(block) {\
+	ASSERT(memIsAligned(block, O_PER_W));\
+	((word*)(block))[0] = wordRev(((word*)(block))[0]);\
+	((word*)(block))[1] = wordRev(((word*)(block))[1]);\
+	((word*)(block))[2] = wordRev(((word*)(block))[2]);\
+	((word*)(block))[3] = wordRev(((word*)(block))[3]);\
+}
 
 #elif (B_PER_W == 64)
 
-#define beltBlockSetZero(block)\
-	((word*)(block))[0] = 0,\
-	((word*)(block))[1] = 0\
-
-#define beltBlockRevW(block)\
-	((word*)(block))[0] = wordRev(((word*)(block))[0]),\
-	((word*)(block))[1] = wordRev(((word*)(block))[1])\
-
-#define beltHalfBlockIsZero(block)\
-	(((word*)(block))[0] == 0)\
-
-#define beltBlockNeg(dest, src)\
-	((word*)(dest))[0] = ~((const word*)(src))[0],\
-	((word*)(dest))[1] = ~((const word*)(src))[1]\
-
-#define beltBlockXor(dest, src1, src2)\
-	((word*)(dest))[0] = ((const word*)(src1))[0] ^ ((const word*)(src2))[0],\
-	((word*)(dest))[1] = ((const word*)(src1))[1] ^ ((const word*)(src2))[1];\
-
-#define beltBlockXor2(dest, src)\
-	((word*)(dest))[0] ^= ((const word*)(src))[0],\
-	((word*)(dest))[1] ^= ((const word*)(src))[1]\
-
-#define beltBlockCopy(dest, src)\
-	((word*)(dest))[0] = ((const word*)(src))[0],\
-	((word*)(dest))[1] = ((const word*)(src))[1]\
+#define beltBlockRevW(block) {\
+	ASSERT(memIsAligned(block, O_PER_W));\
+	((word*)(block))[0] = wordRev(((word*)(block))[0]);\
+	((word*)(block))[1] = wordRev(((word*)(block))[1]);\
+}
 
 #else
 	#error "Unsupported word size"
 #endif // B_PER_W
 
-#define beltBlockRevU32(block)\
-	((u32*)(block))[0] = u32Rev(((u32*)(block))[0]),\
-	((u32*)(block))[1] = u32Rev(((u32*)(block))[1]),\
-	((u32*)(block))[2] = u32Rev(((u32*)(block))[2]),\
-	((u32*)(block))[3] = u32Rev(((u32*)(block))[3])\
+#define beltBlockRevU32(block) {\
+	ASSERT(memIsAligned(block, 4));\
+	((u32*)(block))[0] = u32Rev(((u32*)(block))[0]);\
+	((u32*)(block))[1] = u32Rev(((u32*)(block))[1]);\
+	((u32*)(block))[2] = u32Rev(((u32*)(block))[2]);\
+	((u32*)(block))[3] = u32Rev(((u32*)(block))[3]);\
+}
 
-#define beltBlockIncU32(block)\
-	if ((((u32*)(block))[0] += 1) == 0 &&\
-		(((u32*)(block))[1] += 1) == 0 &&\
-		(((u32*)(block))[2] += 1) == 0)\
-		((u32*)(block))[3] += 1\
+/*	\brief block <- block + 8 * count */
+void beltBlockAddBitSizeU32(u32 block[4], size_t count);
+
+/*	\brief block <- block + 8 * count */
+void beltHalfBlockAddBitSizeW(word block[W_OF_B(64)], size_t count);
+
+/*	\brief block(x) <- block(x) * x mod (x^128 + x^7 + x^2 + x + 1) */
+void beltBlockMulCU32(u32 block[4]);
 
 /*
 *******************************************************************************
@@ -227,13 +154,8 @@ typedef struct
 *******************************************************************************
 */
 
-void beltBlockAddBitSizeU32(u32 block[4], size_t count);
-void beltHalfBlockAddBitSizeW(word block[W_OF_B(64)], size_t count);
 void beltPolyMul(word c[], const word a[], const word b[], void* stack);
 size_t beltPolyMul_deep();
-void beltBlockMulC(u32 block[4]);
-
-
 
 #ifdef __cplusplus
 } /* extern "C" */

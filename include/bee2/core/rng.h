@@ -4,7 +4,7 @@
 \brief Entropy sources and random number generators
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2023.12.19
+\version 2025.10.03
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -141,9 +141,6 @@ bool_t rngTestFIPS4(
 	меньшее count и возможно нулевое) и источник сохранил работоспособность,
 	ERR_BAD_ENTROPY, если получено меньше чем count октетов и источник
 	отказал, или другой код ошибки.
-	\warning Если при работе с источниками "trng", "trng2" длина выходного
-	буфера меньше 4, то функция возвратит ERR_OK, но ни	одного октета данных
-	сгенерировано не будет.
 	\remark Ошибкой не считается ситуация, когда сгенерировано меньше
 	чем count октетов. Данная ситуация может быть связана с ожиданием
 	накопления наблюдений.

@@ -4,7 +4,7 @@
 \brief Basic definitions
 \project bee2 [cryptographic library]
 \created 2012.04.01
-\version 2025.06.09
+\version 2025.09.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -404,6 +404,8 @@ T == octet.
 	#error "Unsupported size_t size"
 #endif
 
+#define SIZE_HI (SIZE_1 << (B_PER_S - 1))
+
 /*
 *******************************************************************************
 Макросы конвертации
@@ -411,22 +413,22 @@ T == octet.
 */
 
 /*!	\brief Число октетов для размещения nb битов */
-#define O_OF_B(nb) (((nb) + 7) / 8)
+#define O_OF_B(nb) ((size_t)(((nb) + 7) / 8))
 
 /*!	\brief Число машинных слов для размещения nb битов */
-#define W_OF_B(nb) (((nb) + B_PER_W - 1) / B_PER_W)
+#define W_OF_B(nb) ((size_t)(((nb) + B_PER_W - 1) / B_PER_W))
 
 /*!	\brief Число битов для размещения no октетов */
-#define B_OF_O(no) ((no) * 8)
+#define B_OF_O(no) ((size_t)((no) * 8))
 
 /*!	\brief Число машинных слов для размещения no октетов */
-#define W_OF_O(no) (((no) + O_PER_W - 1) / O_PER_W)
+#define W_OF_O(no) ((size_t)(((no) + O_PER_W - 1) / O_PER_W))
 
 /*!	\brief Число октетов для размещения nw машинных слов */
-#define O_OF_W(nw) ((nw) * O_PER_W)
+#define O_OF_W(nw) ((size_t)((nw) * O_PER_W))
 
 /*!	\brief Число битов для размещения nw машинных слов */
-#define B_OF_W(nw) ((nw) * B_PER_W)
+#define B_OF_W(nw) ((size_t)((nw) * B_PER_W))
 
 /*
 *******************************************************************************
@@ -478,7 +480,7 @@ typedef u32 err_t;
 *******************************************************************************
 */
 
-#define B_PER_IMPOSSIBLE 64
+#define B_PER_IMPOSSIBLE ((size_t)64)
 
 /*!
 *******************************************************************************

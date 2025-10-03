@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: main
 \project bee2/cmd
 \created 2022.06.07
-\version 2025.06.09
+\version 2025.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -93,6 +93,7 @@ extern err_t cvcInit();
 extern err_t cvrInit();
 extern err_t sigInit();
 extern err_t csrInit();
+extern err_t fmtInit();
 extern err_t stampInit();
 extern err_t esInit();
 extern err_t stInit();
@@ -116,6 +117,8 @@ static err_t cmdInit()
 	code = sigInit();
 	ERR_CALL_CHECK(code);
 	code = csrInit();
+	ERR_CALL_CHECK(code);
+	code = fmtInit();
 	ERR_CALL_CHECK(code);
 	code = stampInit();
 	ERR_CALL_CHECK(code);
@@ -200,7 +203,7 @@ int main(int argc, char* argv[])
 	// обработка команды
 	for (pos = 0; pos < _count; ++pos)
 		if (strEq(argv[1], _cmds[pos].name))
-			return _cmds[pos].fn(argc - 1,  argv + 1);
+			return _cmds[pos].fn(argc - 1, argv + 1);
 	printf("bee2cmd: %s\n", errMsg(ERR_CMD_NOT_FOUND));
 	return -1;
 }

@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2014.03.04
-\version 2025.06.10
+\version 2025.09.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -50,7 +50,7 @@ bool_t ecIsOperable(const ec_o* ec)
 		ec->deep >= ec->f->deep;
 }
 
-bool_t ecCreateGroup(ec_o* ec, const octet xbase[], const octet ybase[], 
+bool_t ecGroupCreate(ec_o* ec, const octet xbase[], const octet ybase[], 
 	const octet order[], size_t order_len, u32 cofactor, void* stack)
 {
 	ASSERT(ecIsOperable(ec));
@@ -82,12 +82,12 @@ bool_t ecCreateGroup(ec_o* ec, const octet xbase[], const octet ybase[],
 	return TRUE;
 }
 
-size_t ecCreateGroup_deep(size_t f_deep)
+size_t ecGroupCreate_deep(size_t f_deep)
 {
 	return f_deep;
 }
 
-bool_t ecIsOperableGroup(const ec_o* ec)
+bool_t ecGroupIsOperable(const ec_o* ec)
 {
 	ASSERT(ecIsOperable(ec));
 	return wwIsValid(ec->base, 2 * ec->f->n) &&
@@ -163,6 +163,11 @@ static size_t ecNAFWidth(size_t l)
 	return 3;
 }
 
+#define ecMulA_local(n, ec_d, m, naf_count)\
+/* naf */	O_OF_W(2 * m + 1),\
+/* t */		O_OF_W(ec_d * n),\
+/* pre */	O_OF_W(naf_count * ec_d * n)
+
 bool_t ecMulA(word b[], const word a[], const ec_o* ec, const word d[],
 	size_t m, void* stack)
 {
@@ -173,17 +178,15 @@ bool_t ecMulA(word b[], const word a[], const ec_o* ec, const word d[],
 	register size_t naf_size;
 	register size_t i;
 	register word w;
-	// переменные в stack
-	word* naf;			/* NAF */
-	word* t;			/* вспомогательная точка */
-	word* pre;			/* pre[i] = (2i + 1)a (naf_count элементов) */
+	word* naf;			/* [2 * m + 1] NAF */
+	word* t;			/* [ec->d * n] вспомогательная точка */
+	word* pre;			/* [naf_count * ec->d * n] pre[i] = (2i + 1)a */
 	// pre
 	ASSERT(ecIsOperable(ec));
-	// раскладка stack
-	naf = (word*)stack;
-	t = naf + 2 * m + 1;
-	pre = t + ec->d * n;
-	stack = pre + naf_count * ec->d * n;
+	// разметить стек
+	memSlice(stack,
+		ecMulA_local(n, ec->d, m, naf_count), SIZE_0, SIZE_MAX,
+		&naf, &t, &pre, &stack);
 	// расчет NAF
 	ASSERT(naf_width >= 3);
 	naf_size = wwNAF(naf, d, m, naf_width);
@@ -236,10 +239,10 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 {
 	const size_t naf_width = ecNAFWidth(B_OF_W(m));
 	const size_t naf_count = SIZE_1 << (naf_width - 2);
-	return O_OF_W(2 * m + 1) + 
-		O_OF_W(ec_d * n) + 
-		O_OF_W(ec_d * n * naf_count) + 
-		ec_deep;
+	return memSliceSize(
+		ecMulA_local(n, ec_d, m, naf_count), 
+		ec_deep,
+		SIZE_MAX);
 }
 
 /*
@@ -248,20 +251,28 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 *******************************************************************************
 */
 
+#define ecHasOrderA_local(n, ec_d)\
+/* b */		O_OF_W(ec_d * n)
+
 bool_t ecHasOrderA(const word a[], const ec_o* ec, const word q[], size_t m,
 	void* stack)
 {
 	const size_t n = ec->f->n;
-	// переменные в stack
-	word* b = (word*)stack;
-	stack = b + ec->d * n;
+	word* b;			/* [ec->d * n] */
+	// разметить стек
+	memSlice(stack,
+		ecHasOrderA_local(n, ec->d), SIZE_0, SIZE_MAX,
+		&b, &stack);
 	// q a == O?
 	return !ecMulA(b, a, ec, q, m, stack);
 }
 
 size_t ecHasOrderA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 {
-	return O_OF_W(ec_d * n) + ecMulA_deep(n, ec_d, ec_deep, m);
+	return memSliceSize(
+		ecHasOrderA_local(n, ec_d), 
+		ecMulA_deep(n, ec_d, ec_deep, m),
+		SIZE_MAX);
 }
 
 /*
@@ -279,59 +290,62 @@ Elliptic Curve Cryptography, Springer, 2004] (interleaving with NAF).
 *******************************************************************************
 */
 
+#define ecAddMulA_local(n, ec_d)\
+/* t */			O_OF_W(ec_d * n),\
+/* m */			O_PER_S * k,\
+/* naf_width */	O_PER_S * k,\
+/* naf_size */	O_PER_S * k,\
+/* naf_pos */	O_PER_S * k,\
+/* naf */		sizeof(word*) * k,\
+/* pre */		sizeof(word*) * k
+
 bool_t ecAddMulA(word b[], const ec_o* ec, void* stack, size_t k, ...)
 {
 	const size_t n = ec->f->n;
 	register word w;
 	size_t i, naf_max_size = 0;
-	va_list marker;
-	// переменные в stack
-	word* t;			/* проективная точка */
-	size_t* m;			/* длины d[i] */
-	size_t* naf_width;	/* размеры NAF-окон */
-	size_t* naf_size;	/* длины NAF */
-	size_t* naf_pos;	/* позиция в NAF-представлении */
-	word** naf;			/* NAF */
-	word** pre;			/* предвычисленные точки */
+	va_list args;
+	word* t;			/* [ec->d * n] проективная точка */
+	size_t* m;			/* [k] длины d[i] */
+	size_t* naf_width;	/* [k] размеры NAF-окон */
+	size_t* naf_size;	/* [k] длины NAF */
+	size_t* naf_pos;	/* [k] позиция в NAF-представлении */
+	word** naf;			/* [k] NAF */
+	word** pre;			/* [k] предвычисленные точки */
 	// pre
 	ASSERT(ecIsOperable(ec));
 	ASSERT(k > 0);
-	// раскладка stack
-	t = (word*)stack;
-	m = (size_t*)(t + ec->d * n);
-	naf_width = m + k;
-	naf_size = naf_width + k;
-	naf_pos = naf_size + k;
-	naf = (word**)(naf_pos + k);
-	pre = naf + k;
-	stack = pre + k;
+	// разметить стек
+	memSlice(stack,
+		ecAddMulA_local(n, ec->d), SIZE_0, SIZE_MAX,
+		&t, &m, &naf_width, &naf_size, &naf_pos, &naf, &pre, &stack);
 	// обработать параметры (a[i], d[i], m[i])
-	va_start(marker, k);
+	va_start(args, k);
 	for (i = 0; i < k; ++i)
 	{
 		const word* a;
 		const word* d;
 		size_t naf_count, j;
 		// a <- a[i]
-		a = va_arg(marker, const word*);
+		a = va_arg(args, const word*);
 		// d <- d[i]
-		d = va_arg(marker, const word*);
+		d = va_arg(args, const word*);
 		// прочитать m[i]
-		m[i] = va_arg(marker, size_t);
+		m[i] = va_arg(args, size_t);
 		// подправить m[i]
 		m[i] = wwWordSize(d, m[i]);
-		// расчет naf[i]
+		// зарезервировать память для naf[i] и pre[i]
 		naf_width[i] = ecNAFWidth(B_OF_W(m[i]));
 		naf_count = SIZE_1 << (naf_width[i] - 2);
-		naf[i] = (word*)stack;
-		stack = naf[i] + 2 * m[i] + 1;
+		memSlice(stack,
+			O_OF_W(2 * m[i] + 1), O_OF_W(ec->d * n * naf_count), SIZE_0,
+			SIZE_MAX,
+			naf + i, pre + i, &stack);
+		// расчет naf[i]
 		naf_size[i] = wwNAF(naf[i], d, m[i], naf_width[i]);
 		if (naf_size[i] > naf_max_size)
 			naf_max_size = naf_size[i];
 		naf_pos[i] = 0;
-		// резервируем память для pre[i]
-		pre[i] = (word*)stack;
-		stack = pre[i] + ec->d * n * naf_count;
 		// pre[i][0] <- a[i]
 		ecFromA(pre[i], a, ec, stack);
 		// расчет pre[i][j]: t <- 2a[i], pre[i][j] <- t + pre[i][j - 1]
@@ -342,7 +356,7 @@ bool_t ecAddMulA(word b[], const ec_o* ec, void* stack, size_t k, ...)
 			ecAdd(pre[i] + j * ec->d * n, t, pre[i] + (j - 1) * ec->d * n, ec,
 				stack);
 	}
-	va_end(marker);
+	va_end(args);
 	// t <- O
 	ecSetO(t, ec);
 	// основной цикл
@@ -389,20 +403,21 @@ bool_t ecAddMulA(word b[], const ec_o* ec, void* stack, size_t k, ...)
 size_t ecAddMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t k, ...)
 {
 	size_t i, ret;
-	va_list marker;
-	ret = O_OF_W(ec_d * n);
-	ret += 4 * sizeof(size_t) * k;
-	ret += 2 * sizeof(word**) * k;
-	va_start(marker, k);
+	va_list args;
+	ret = memSliceSize(
+		ecAddMulA_local(n, ec_d), SIZE_0, SIZE_MAX);
+	va_start(args, k);
 	for (i = 0; i < k; ++i)
 	{
-		size_t m = va_arg(marker, size_t);
+		size_t m = va_arg(args, size_t);
 		size_t naf_width = ecNAFWidth(B_OF_W(m));
 		size_t naf_count = SIZE_1 << (naf_width - 2);
-		ret += O_OF_W(2 * m + 1);
-		ret += O_OF_W(ec_d * n * naf_count);
+		ret += memSliceSize(
+			O_OF_W(2 * m + 1),
+			O_OF_W(ec_d * n * naf_count),
+			SIZE_0,	SIZE_MAX);
 	}
-	va_end(marker);
+	va_end(args);
 	ret += ec_deep;
 	return ret;
 }

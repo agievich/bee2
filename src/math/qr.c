@@ -4,12 +4,13 @@
 \brief Quotient rings
 \project bee2 [cryptographic library]
 \created 2013.09.14
-\version 2025.06.10
+\version 2025.09.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
+#include "bee2/core/mem.h"
 #include "bee2/core/util.h"
 #include "bee2/math/qr.h"
 #include "bee2/math/ww.h"
@@ -94,6 +95,10 @@ static size_t qrCalcSlideWidth(size_t m)
 	return 7;
 }
 
+#define qrPower_local(n, powers_count)\
+/* power */		O_OF_W(n),\
+/* powers */	O_OF_W(n * powers_count)
+
 void qrPower(word c[], const word a[], const word b[], size_t m, 
 	const qr_o* r, void* stack)
 {
@@ -102,18 +107,17 @@ void qrPower(word c[], const word a[], const word b[], size_t m,
 	register word slide;
 	register size_t slide_size;
 	size_t pos;
-	// переменные в stack
-	word* power;
-	word* powers;
+	word* power;			/* [n] */
+	word* powers;			/* [n * powers_count] */
 	// pre
 	ASSERT(qrIsOperable(r));
 	ASSERT(wwIsValid(a, r->n));
 	ASSERT(wwIsValid(b, m));
 	ASSERT(wwIsValid(c, r->n));
-	// раскладка stack
-	power = (word*)stack;
-	powers = power + r->n;
-	stack = powers + r->n * powers_count;
+	// разметить стек
+	memSlice(stack,
+		qrPower_local(r->n, powers_count), SIZE_0, SIZE_MAX,
+		&power, &powers, &stack);
 	// b == 0? => с <- unity
 	if (wwIsZero(b, m))
 	{
@@ -179,5 +183,8 @@ void qrPower(word c[], const word a[], const word b[], size_t m,
 size_t qrPower_deep(size_t n, size_t m, size_t r_deep)
 {
 	const size_t powers_count = SIZE_1 << (qrCalcSlideWidth(m) - 1);
-	return O_OF_W(n + n * powers_count) + r_deep;
+	return memSliceSize(
+		qrPower_local(n, powers_count), 
+		r_deep,
+		SIZE_MAX);
 }

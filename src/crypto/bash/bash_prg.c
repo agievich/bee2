@@ -4,7 +4,7 @@
 \brief STB 34.101.77 (bash): programmable algorithms
 \project bee2 [cryptographic library]
 \created 2018.10.30
-\version 2025.04.25
+\version 2025.09.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -54,13 +54,13 @@
 #define BASH_PRG_OUT		0x11	/* 000100 01 */
 
 typedef struct {
-	size_t l;			/*< уровень стойкости */
-	size_t d;			/*< емкость */
-	octet s[192];		/*< состояние */
-	size_t buf_len;		/*< длина буфера */
-	size_t pos;			/*< позиция в буфере */
-	octet t[192];		/*< копия состояния (для ratchet) */
-	octet stack[];		/*< [bashF_deep()] стек bashF */
+	size_t l;				/*< уровень стойкости */
+	size_t d;				/*< емкость */
+	octet s[192];			/*< состояние */
+	size_t buf_len;			/*< длина буфера */
+	size_t pos;				/*< позиция в буфере */
+	octet t[192];			/*< копия состояния (для ratchet) */
+	mem_align_t stack[];	/*< стек bashF */
 } bash_prg_st;
 
 size_t bashPrg_keep()

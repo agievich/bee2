@@ -19,6 +19,7 @@ add_executable(bee2cmd
   cvc/cvc.c
   cvr/cvr.c
   es/es.c
+  fmt/fmt.c
   kg/kg.c
   pwd/pwd.c
   sig/sig.c
@@ -33,7 +34,7 @@ include_directories(include)
 target_link_libraries(bee2cmd bee2_static)
 
 install(TARGETS bee2cmd
-  DESTINATION ${BIN_INSTALL_DIR}
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
   PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE 
     WORLD_READ WORLD_EXECUTE
 ) 

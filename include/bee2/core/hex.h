@@ -4,7 +4,7 @@
 \brief Hexadecimal strings
 \project bee2 [cryptographic library]
 \created 2015.10.29
-\version 2025.05.07
+\version 2025.07.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -106,7 +106,6 @@ bool_t hexEq(
 	const char* hex		/*!< [in] шестнадцатеричная строка */
 );
 
-bool_t SAFE(hexEq)(const void* buf, const char* hex);
 bool_t FAST(hexEq)(const void* buf, const char* hex);
 
 /*!	\brief Совпадает с префиксом шестнадцатеричной строки?
@@ -125,7 +124,6 @@ bool_t hexEq2(
 	size_t len			/*!< [in] длина префикса */
 );
 
-bool_t SAFE(hexEq2)(const void* buf, const char* hex, size_t len);
 bool_t FAST(hexEq2)(const void* buf, const char* hex, size_t len);
 
 /*!	\brief Реверсивно совпадает с шестнадцатеричной строкой?
@@ -150,7 +148,6 @@ bool_t hexEqRev(
 	const char* hex		/*!< [in] шестнадцатеричная строка */
 );
 
-bool_t SAFE(hexEqRev)(const void* buf, const char* hex);
 bool_t FAST(hexEqRev)(const void* buf, const char* hex);
 
 /*!	\brief Реверсивно совпадает с префиксом шестнадцатеричной строки?
@@ -166,10 +163,9 @@ bool_t FAST(hexEqRev)(const void* buf, const char* hex);
 bool_t hexEqRev2(
 	const void* buf,	/*!< [in] буфер */
 	const char* hex,	/*!< [in] шестнадцатеричная строка */
-	size_t				/*!< [in] длина префикса */
+	size_t len			/*!< [in] длина префикса */
 );
 
-bool_t SAFE(hexEqRev2)(const void* buf, const char* hex, size_t len);
 bool_t FAST(hexEqRev2)(const void* buf, const char* hex, size_t len);
 
 /*!	\brief Кодирование шестнадцатеричной строкой

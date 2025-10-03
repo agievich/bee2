@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: additive operations
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.06.10
+\version 2025.07.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -130,7 +130,7 @@ word zzAddW2(word a[], size_t n, register word w)
 	return w;
 }
 
-bool_t SAFE(zzIsSumEq)(const word c[], const word a[], const word b[], 
+bool_t zzIsSumEq(const word c[], const word a[], const word b[], 
 	size_t n)
 {
 	register word diff = 0;
@@ -176,7 +176,7 @@ bool_t FAST(zzIsSumEq)(const word c[], const word a[], const word b[],
 	return carry == 0;
 }
 
-bool_t SAFE(zzIsSumWEq)(const word b[], const word a[], size_t n, 
+bool_t zzIsSumWEq(const word b[], const word a[], size_t n, 
 	register word w)
 {
 	register word diff = 0;

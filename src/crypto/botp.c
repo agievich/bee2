@@ -4,7 +4,7 @@
 \brief STB 34.101.47/botp: OTP algorithms
 \project bee2 [cryptographic library]
 \created 2015.11.02
-\version 2025.08.28
+\version 2025.09.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -106,17 +106,18 @@ void botpCtrNext(octet ctr[8])
 
 typedef struct
 {
-	size_t digit;		/*< число цифр в пароле */
-	octet ctr[8];		/*< счетчик */
-	octet ctr1[8];		/*< копия счетчика */
-	octet mac[32];		/*< имитовставка */
-	char otp[10];		/*< текущий пароль */
-	octet stack[];		/*< [2 * beltHMAC_deep()] */
+	size_t digit;			/*< число цифр в пароле */
+	octet ctr[8];			/*< счетчик */
+	octet ctr1[8];			/*< копия счетчика */
+	octet mac[32];			/*< имитовставка */
+	char otp[10];			/*< текущий пароль */
+	mem_align_t stack[];	/*< 2 состояния beltHMAC */
 } botp_hotp_st;
 
 size_t botpHOTP_keep()
 {
-	return sizeof(botp_hotp_st) + 2 * beltHMAC_keep();
+	return sizeof(botp_hotp_st) + 
+		memSliceSize(beltHMAC_keep(), beltHMAC_keep(), SIZE_MAX);
 }
 
 void botpHOTPStart(void* state, size_t digit, const octet key[], 
@@ -126,7 +127,7 @@ void botpHOTPStart(void* state, size_t digit, const octet key[],
 	ASSERT(6 <= digit && digit <= 8);
 	ASSERT(memIsDisjoint2(key, key_len, state, botpHOTP_keep()));
 	st->digit = digit;
-	beltHMACStart(st->stack + beltHMAC_keep(), key, key_len);
+	beltHMACStart(memSliceNext(st->stack, beltHMAC_keep()), key, key_len);
 }
 
 void botpHOTPStepS(void* state, const octet ctr[8])
@@ -143,7 +144,8 @@ void botpHOTPStepR(char* otp, void* state)
 	ASSERT(memIsDisjoint2(otp, st->digit + 1, state, botpHOTP_keep()) || 
 		otp == st->otp);
 	// вычислить имитовставку
-	memCopy(st->stack, st->stack + beltHMAC_keep(), beltHMAC_keep());
+	memCopy(st->stack, memSliceNext2(st->stack, beltHMAC_keep()), 
+		beltHMAC_keep());
 	beltHMACStepA(st->ctr, 8, st->stack);
 	beltHMACStepG(st->mac, st->stack);
 	// построить пароль
@@ -231,16 +233,17 @@ err_t botpHOTPVerify(const char* otp, const octet key[], size_t key_len,
 
 typedef struct
 {
-	size_t digit;		/*< число цифр в пароле */
-	octet t[8];			/*< округленная отметка времени */
-	octet mac[32];		/*< имитовставка */
-	char otp[10];		/*< текущий пароль */
-	octet stack[];		/*< [2 * beltHMAC_deep()] */
+	size_t digit;			/*< число цифр в пароле */
+	octet t[8];				/*< округленная отметка времени */
+	octet mac[32];			/*< имитовставка */
+	char otp[10];			/*< текущий пароль */
+	mem_align_t stack[];	/*< 2 состояния beltHMAC */
 } botp_totp_st;
 
 size_t botpTOTP_keep()
 {
-	return sizeof(botp_totp_st) + 2 * beltHMAC_keep();
+	return sizeof(botp_totp_st) + 
+		memSliceSize( beltHMAC_keep(), beltHMAC_keep(), SIZE_MAX);
 }
 
 void botpTOTPStart(void* state, size_t digit, const octet key[], 
@@ -250,7 +253,7 @@ void botpTOTPStart(void* state, size_t digit, const octet key[],
 	ASSERT(6 <= digit && digit <= 8);
 	ASSERT(memIsDisjoint2(key, key_len, state, botpTOTP_keep()));
 	st->digit = digit;
-	beltHMACStart(st->stack + beltHMAC_keep(), key, key_len);
+	beltHMACStart(memSliceNext(st->stack, beltHMAC_keep()), key, key_len);
 }
 
 void botpTOTPStepR(char* otp, tm_time_t t, void* state)
@@ -261,7 +264,8 @@ void botpTOTPStepR(char* otp, tm_time_t t, void* state)
 	ASSERT(memIsDisjoint2(otp, st->digit + 1, state, botpHOTP_keep()) || 
 		otp == st->otp);
 	// вычислить имитовставку
-	memCopy(st->stack, st->stack + beltHMAC_keep(), beltHMAC_keep());
+	memCopy(st->stack, memSliceNext2(st->stack, beltHMAC_keep()), 
+		beltHMAC_keep());
 	botpTimeToCtr(st->t, t);
 	beltHMACStepA(st->t, 8, st->stack);
 	beltHMACStepG(st->mac, st->stack);
@@ -337,27 +341,28 @@ err_t botpTOTPVerify(const char* otp, const octet key[], size_t key_len,
 
 typedef struct botp_ocra_st
 {
-	size_t digit;		/*< число цифр в пароле */
-	octet ctr[8];		/*< счетчик */
-	octet ctr1[8];		/*< копия счетчика */
-	size_t ctr_len;		/*< длина счетчика */
-	octet q[128];		/*< запрос */
-	char q_type;		/*< тип запроса (A, N, H) */
-	size_t q_max;		/*< максимальная длина одиночного запроса */
-	octet p[64];		/*< хэш-значение статического пароля */
-	size_t p_len;		/*< длина p */
-	octet s[512];		/*< идентификатор сеанса */
-	size_t s_len;		/*< длина идентификатора */
-	octet t[8];			/*< отметка времени */
-	tm_time_t ts;		/*< шаг времени */
-	octet mac[32];		/*< имитовставка */
-	char otp[10];		/*< текущий пароль */
-	octet stack[];		/*< [2 * beltHMAC_deep()] */
+	size_t digit;			/*< число цифр в пароле */
+	octet ctr[8];			/*< счетчик */
+	octet ctr1[8];			/*< копия счетчика */
+	size_t ctr_len;			/*< длина счетчика */
+	octet q[128];			/*< запрос */
+	char q_type;			/*< тип запроса (A, N, H) */
+	size_t q_max;			/*< максимальная длина одиночного запроса */
+	octet p[64];			/*< хэш-значение статического пароля */
+	size_t p_len;			/*< длина p */
+	octet s[512];			/*< идентификатор сеанса */
+	size_t s_len;			/*< длина идентификатора */
+	octet t[8];				/*< отметка времени */
+	tm_time_t ts;			/*< шаг времени */
+	octet mac[32];			/*< имитовставка */
+	char otp[10];			/*< текущий пароль */
+	mem_align_t stack[];	/*< 2 состояния beltHMAC */
 } botp_ocra_st;
 
 size_t botpOCRA_keep()
 {
-	return sizeof(botp_ocra_st) + 2 * beltHMAC_keep();
+	return sizeof(botp_ocra_st) + 
+		memSliceSize( beltHMAC_keep(), beltHMAC_keep(), SIZE_MAX);
 }
 
 static const char ocra_prefix[] = "OCRA-1:HOTP-";
@@ -496,9 +501,9 @@ bool_t botpOCRAStart(void* state, const char* suite, const octet key[],
 	if (*suite)
 		return FALSE;
 	// запуск HMAC 
-	beltHMACStart(st->stack + beltHMAC_keep(), key, key_len);
+	beltHMACStart(memSliceNext(st->stack, beltHMAC_keep()), key, key_len);
 	beltHMACStepA(suite_save, strLen(suite_save) + 1,
-		st->stack + beltHMAC_keep());
+		memSliceNext(st->stack, beltHMAC_keep()));
 	return TRUE;
 }
 
@@ -539,7 +544,8 @@ void botpOCRAStepR(char* otp, const octet q[], size_t q_len, tm_time_t t,
 	ASSERT(memIsDisjoint2(q, q_len, state, botpOCRA_keep() || q == st->q));
 	ASSERT(t != TIME_ERR);
 	// вычислить имитовставку
-	memCopy(st->stack, st->stack + beltHMAC_keep(), beltHMAC_keep());
+	memCopy(st->stack, memSliceNext2(st->stack, beltHMAC_keep()), 
+		beltHMAC_keep());
 	if (st->ctr_len)
 		beltHMACStepA(st->ctr, 8, st->stack), botpCtrNext(st->ctr);
 	memMove(st->q, q, q_len);

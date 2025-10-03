@@ -4,7 +4,7 @@
 \brief Draft of RD_RB: key establishment protocols in finite fields
 \project bee2 [cryptographic library]
 \created 2014.07.01
-\version 2025.06.11
+\version 2025.09.15
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -588,11 +588,11 @@ err_t pfokParamsGen(pfok_params* params, const pfok_seed* seed,
 	size_t base_count;
 	// состояние 
 	void* state;
-	octet* stb_state;
-	word* qi;
-	word* p;
-	word* g;
-	qr_o* qr;
+	octet* stb_state;	/* [prngSTB_keep()] */
+	word* qi;			/* [qw] */
+	word* p;			/* [n] */
+	word* g;			/* [n] */
+	qr_o* qr;			/* [zmMontCreate_keep(no)] кольцо Монтгомери */
 	void* stack;
 	// проверить seed
 	code = pfokSeedVal(seed);
@@ -617,8 +617,12 @@ err_t pfokParamsGen(pfok_params* params, const pfok_seed* seed,
 	n = W_OF_B(params->l), no = O_OF_B(params->l);
 	ASSERT(W_OF_B(seed->li[0]) == n);
 	// создать состояние
-	state = blobCreate(
-		prngSTB_keep() + O_OF_W(qw + 2 * n) + zmMontCreate_keep(no) +
+	state = blobCreate2(
+		prngSTB_keep(),
+		O_OF_W(qw),
+		O_OF_W(n),
+		O_OF_W(n),
+		zmMontCreate_keep(no),
 		utilMax(6,
 			priNextPrimeW_deep(),
 			priExtendPrime_deep(params->l, W_OF_B(seed->li[1]),
@@ -626,16 +630,11 @@ err_t pfokParamsGen(pfok_params* params, const pfok_seed* seed,
 			priIsSieved_deep((seed->li[0] + 3) / 4),
 			priIsSGPrime_deep(n),
 			zmMontCreate_deep(no), 
-			qrPower_deep(n, n, zmMontCreate_deep(no))));
+			qrPower_deep(n, n, zmMontCreate_deep(no))),
+		SIZE_MAX,
+		&stb_state, &qi, &p, &g, &qr, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка состояния
-	stb_state = (octet*)state;
-	qi = (word*)(stb_state + prngSTB_keep());
-	p = qi + qw;
-	g = p + n;
-	qr = (qr_o*)(g + n);
-	stack = (octet*)qr + zmMontCreate_keep(no);
 	// запустить генератор
 	prngSTBStart(stb_state, seed->zi);
 	// основной цикл
@@ -723,10 +722,10 @@ err_t pfokParamsVal(const pfok_params* params)
 	size_t n, no;
 	// состояние 
 	void* state;
-	word* p;
-	word* q;
-	word* g;
-	qr_o* qr;
+	word* p;			/* [n] */
+	word* q;			/* [n] */
+	word* g;			/* [n] */
+	qr_o* qr;			/* [zmMontCreate_keep(no)] */
 	void* stack;
 	// проверить указатели
 	if (!memIsValid(params, sizeof(pfok_params)))
@@ -737,19 +736,18 @@ err_t pfokParamsVal(const pfok_params* params)
 	// размерности
 	no = O_OF_B(params->l), n = W_OF_B(params->l);
 	// создать состояние
-	state = blobCreate(
-		O_OF_W(2 * n) + zmMontCreate_keep(no) +  
-		utilMax(3,
+	state = blobCreate2(
+		O_OF_W(n),
+		O_OF_W(n),
+		zmMontCreate_keep(no),
+		utilMax(3, 
 			priIsPrime_deep(n),
 			zmMontCreate_deep(no),
-			qrPower_deep(n, n, zmMontCreate_deep(no))));
+			qrPower_deep(n, n, zmMontCreate_deep(no))),
+		SIZE_MAX,
+		&p, &g, &qr, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка состояния
-	p = (word*)state;
-	g = p + n;
-	qr = (qr_o*)(g + n);
-	stack = (octet*)qr + zmMontCreate_keep(no);
 	// p -- простое?
 	wwFrom(p, params->p, no);
 	if (!priIsPrime(p, n, stack))
@@ -795,7 +793,7 @@ err_t pfokKeypairGen(octet privkey[], octet pubkey[],
 	void* state;
 	word* x;				/* [m] личный ключ */
 	word* y;				/* [n] открытый ключ */
-	qr_o* qr;				/* описание кольца Монтгомери */
+	qr_o* qr;				/* [zmMontCreate_keep(no)] */
 	void* stack;
 	// проверить params
 	if (!memIsValid(params, sizeof(pfok_params)))
@@ -810,18 +808,17 @@ err_t pfokKeypairGen(octet privkey[], octet pubkey[],
 	if (!memIsValid(privkey, mo) || !memIsValid(pubkey, no) || rng == 0)
 		return ERR_BAD_INPUT;
 	// создать состояние
-	state = blobCreate(
-		O_OF_W(n) + O_OF_W(m) + zmMontCreate_keep(no) +  
+	state = blobCreate2(
+		O_OF_W(m),
+		O_OF_W(n),
+		zmMontCreate_keep(no),
 		utilMax(2,
 			zmMontCreate_deep(no),
-			qrPower_deep(n, n, zmMontCreate_deep(no))));
+			qrPower_deep(n, n, zmMontCreate_deep(no))),
+		SIZE_MAX,
+		&x, &y, &qr, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка состояния
-	x = (word*)state;
-	y = x + m;
-	qr = (qr_o*)(y + n);
-	stack = (octet*)qr + zmMontCreate_keep(no);
 	// построить кольцо Монтгомери
 	zmMontCreate(qr, params->p, no, params->l + 2, stack);
 	// x <-R {0, 1,..., 2^r - 1}
@@ -869,7 +866,7 @@ err_t pfokPubkeyCalc(octet pubkey[], const pfok_params* params,
 	void* state;
 	word* x;				/* [m] личный ключ */
 	word* y;				/* [n] открытый ключ */
-	qr_o* qr;				/* описание кольца Монтгомери */
+	qr_o* qr;				/* [zmMontCreate_keep(no)] */
 	void* stack;
 	// проверить params
 	if (!memIsValid(params, sizeof(pfok_params)))
@@ -884,18 +881,17 @@ err_t pfokPubkeyCalc(octet pubkey[], const pfok_params* params,
 	if (!memIsValid(privkey, mo) || !memIsValid(pubkey, no))
 		return ERR_BAD_INPUT;
 	// создать состояние
-	state = blobCreate(
-		O_OF_W(n) + O_OF_W(m) + zmMontCreate_keep(no) +  
+	state = blobCreate2(
+		O_OF_W(m),
+		O_OF_W(n),
+		zmMontCreate_keep(no),
 		utilMax(2,
 			zmMontCreate_deep(no),
-			qrPower_deep(n, n, zmMontCreate_deep(no))));
+			qrPower_deep(n, n, zmMontCreate_deep(no))),
+		SIZE_MAX,
+		&x, &y, &qr, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка состояния
-	x = (word*)state;
-	y = x + m;
-	qr = (qr_o*)(y + n);
-	stack = (octet*)qr + zmMontCreate_keep(no);
 	// построить кольцо Монтгомери
 	zmMontCreate(qr, params->p, no, params->l + 2, stack);
 	// x <- privkey
@@ -930,7 +926,7 @@ err_t pfokDH(octet sharekey[], const pfok_params* params,
 	void* state;
 	word* x;				/* [m] личный ключ */
 	word* y;				/* [n] открытый ключ визави */
-	qr_o* qr;				/* описание кольца Монтгомери */
+	qr_o* qr;				/* [zmMontCreate_keep(no)] */
 	void* stack;
 	// проверить params
 	if (!memIsValid(params, sizeof(pfok_params)))
@@ -947,18 +943,17 @@ err_t pfokDH(octet sharekey[], const pfok_params* params,
 		!memIsValid(sharekey, O_OF_B(params->n)))
 		return ERR_BAD_INPUT;
 	// создать состояние
-	state = blobCreate(
-		O_OF_W(n) + O_OF_W(m) + zmMontCreate_keep(no) +  
+	state = blobCreate2(
+		O_OF_W(m),
+		O_OF_W(n),
+		zmMontCreate_keep(no),
 		utilMax(2,
 			zmMontCreate_deep(no),
-			qrPower_deep(n, n, zmMontCreate_deep(no))));
+			qrPower_deep(n, n, zmMontCreate_deep(no))),
+		SIZE_MAX,
+		&x, &y, &qr, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка состояния
-	x = (word*)state;
-	y = x + m;
-	qr = (qr_o*)(y + n);
-	stack = (octet*)qr + zmMontCreate_keep(no);
 	// построить кольцо Монтгомери
 	zmMontCreate(qr, params->p, no, params->l + 2, stack);
 	// x <- privkey
@@ -998,7 +993,7 @@ err_t pfokMTI(octet sharekey[], const pfok_params* params,
 	word* u;				/* [m] одноразовый личный ключ */
 	word* y;				/* [n] открытый ключ визави */
 	word* v;				/* [n] одноразовый открытый ключ визави */
-	qr_o* qr;				/* описание кольца Монтгомери */
+	qr_o* qr;				/* [zmMontCreate_keep(no)] */
 	void* stack;
 	// проверить params
 	if (!memIsValid(params, sizeof(pfok_params)))
@@ -1017,20 +1012,19 @@ err_t pfokMTI(octet sharekey[], const pfok_params* params,
 		!memIsValid(sharekey, O_OF_B(params->n)))
 		return ERR_BAD_INPUT;
 	// создать состояние
-	state = blobCreate(
-		2 * O_OF_W(n) + 2 * O_OF_W(m) + zmMontCreate_keep(no) +  
+	state = blobCreate2(
+		O_OF_W(m),
+		O_OF_W(m),
+		O_OF_W(n),
+		O_OF_W(n),
+	    zmMontCreate_keep(no),
 		utilMax(2,
 			zmMontCreate_deep(no),
-			qrPower_deep(n, n, zmMontCreate_deep(no))));
+			qrPower_deep(n, n, zmMontCreate_deep(no))),
+		SIZE_MAX,
+		&x, &u, &y, &v, &qr, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-	// раскладка состояния
-	x = (word*)state;
-	u = x + m;
-	y = u + m;
-	v = y + n;
-	qr = (qr_o*)(v + n);
-	stack = (octet*)qr + zmMontCreate_keep(no);
 	// построить кольцо Монтгомери
 	zmMontCreate(qr, params->p, no, params->l + 2, stack);
 	// x <- privkey, u <- privkey1

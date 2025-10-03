@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.47 (brng)
 \project bee2/test
 \created 2013.04.01
-\version 2025.04.25
+\version 2025.09.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -35,7 +35,7 @@ bool_t brngTest()
 	octet buf1[256];
 	octet iv[128];
 	octet iv1[32];
-	octet state[1024];
+	mem_align_t state[1024 / sizeof(mem_align_t)];
 	// подготовить память
 	if (sizeof(state) < brngCTR_keep() ||
 		sizeof(state) < brngHMAC_keep())

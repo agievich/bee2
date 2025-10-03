@@ -4,7 +4,7 @@
 \brief Quotient rings of integers modulo m
 \project bee2 [cryptographic library]
 \created 2013.09.14
-\version 2023.02.02
+\version 2025.09.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -86,18 +86,18 @@ c <- a * b * R^{-1} \mod mod,
 	кольца Z / (mod). При вычислениях в кольце используется обычная редукция.
 	\pre no > 0 && mod[no - 1] > 0.
 	\post r->no == no и r->n == W_OF_O(no).
-	\keep{r} zmCreatePlain_keep(no).
-	\deep{stack} zmCreatePlain_deep(no).
+	\keep{r} zmPlainCreate_keep(no).
+	\deep{stack} zmPlainCreate_deep(no).
 */
-void zmCreatePlain(
+void zmPlainCreate(
 	qr_o* r,			/*!< [out] описание кольца */
 	const octet mod[],	/*!< [in] модуль */
 	size_t no,			/*!< [in] длина mod в октетах */
 	void* stack			/*!< [in] вспомогательная память */
 );
 
-size_t zmCreatePlain_keep(size_t no);
-size_t zmCreatePlain_deep(size_t no);
+size_t zmPlainCreate_keep(size_t no);
+size_t zmPlainCreate_deep(size_t no);
 
 /*!	\brief Создание описания кольца вычетов целых чисел с редукцией Крэндалла
 

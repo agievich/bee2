@@ -4,7 +4,7 @@
 \brief Binary polynomials: multiplicative operations
 \project bee2 [cryptographic library]
 \created 2012.03.01
-\version 2025.06.10
+\version 2025.09.14
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -1221,23 +1221,32 @@ size_t ppSqr_deep(size_t n)
 *******************************************************************************
 */
 
+#define ppDiv_local(n, m)\
+/* divident */	O_OF_W(n + 1),\
+/* divisor */	O_OF_W(m),\
+/* w1 */		O_OF_W(16),\
+/* w1 */		O_OF_W(16)
+
 void ppDiv(word q[], word r[], const word a[], size_t n, const word b[],
 	size_t m, void* stack)
 {
 	register word dividentHi;
 	register size_t shift;
 	size_t i;
-	// переменные в stack
-	word* divident;		/* нормализованное делимое (n + 1 слово) */
-	word* divisor;		/* нормализованный делитель (m слов) */
-	word* w1;			/* таблица частных (16 слов) */
-	word* w2;			/* таблица умножения (16 слов) */
+	word* divident;		/* [n + 1] нормализованное делимое */
+	word* divisor;		/* [m] нормализованный делитель */
+	word* w1;			/* [16] таблица частных */
+	word* w2;			/* [16] таблица умножения */
 	// pre
 	ASSERT(n >= m);
 	ASSERT(wwIsValid(a, n) && wwIsValid(b, m));
 	ASSERT(m > 0 && b[m - 1] > 0);
 	ASSERT(wwIsDisjoint2(q, n + 1 - m, r, m));
 	ASSERT(a == r || wwIsDisjoint2(a, n, r, m));
+	// разметить стек
+	memSlice(stack,
+		ppDiv_local(n, m), SIZE_0, SIZE_MAX,
+		&divident, &divisor, &w1, &w2, &stack);
 	// deg(a) < deg(b)?
 	if (wwBitSize(a, n) < wwBitSize(b, m))
 	{
@@ -1246,12 +1255,6 @@ void ppDiv(word q[], word r[], const word a[], size_t n, const word b[],
 		wwCopy(r, a, m);
 		return;
 	}
-	// резервируем переменные в stack
-	divident = (word*)stack;
-	divisor = divident + n + 1;
-	w1 = divisor + m;
-	w2 = w1 + 16;
-	stack = w2 + 16;
 	// divident <- a
 	wwCopy(divident, a, n);
 	divident[n] = 0;
@@ -1294,8 +1297,17 @@ void ppDiv(word q[], word r[], const word a[], size_t n, const word b[],
 
 size_t ppDiv_deep(size_t n, size_t m)
 {
-	return O_OF_W(n + 1 + m + 16 + 16) + ppAddMulW_deep(m);
+	return memSliceSize(
+		ppDiv_local(n, m), 
+		ppAddMulW_deep(m),
+		SIZE_MAX);
 }
+
+#define ppMod_local(n, m)\
+/* divident */	O_OF_W(n + 1),\
+/* divisor */	O_OF_W(m),\
+/* w1 */		O_OF_W(16),\
+/* w1 */		O_OF_W(16)
 
 void ppMod(word r[], const word a[], size_t n, const word b[], size_t m,
 	void* stack)
@@ -1304,15 +1316,18 @@ void ppMod(word r[], const word a[], size_t n, const word b[], size_t m,
 	register word tmp;
 	register size_t shift;
 	size_t i;
-	// переменные в stack
-	word* divident;		/* нормализованное делимое (n + 1 слово) */
-	word* divisor;		/* нормализованный делитель (m слов) */
-	word* w1;			/* таблица частных (16 слов) */
-	word* w2;			/* таблица умножения (16 слов) */
+	word* divident;		/* [n + 1] нормализованное делимое */
+	word* divisor;		/* [m] нормализованный делитель */
+	word* w1;			/* [16] таблица частных */
+	word* w2;			/* [16] таблица умножения */
 	// pre
 	ASSERT(wwIsValid(a, n) && wwIsValid(b, m));
 	ASSERT(m > 0 && b[m - 1] > 0);
 	ASSERT(a == r || wwIsDisjoint2(a, n, r, m));
+	// разметить стек
+	memSlice(stack,
+		ppMod_local(n, m), SIZE_0, SIZE_MAX,
+		&divident, &divisor, &w1, &w2, &stack);
 	// deg(a) < deg(b)?
 	if (wwBitSize(a, n) < wwBitSize(b, m))
 	{
@@ -1322,12 +1337,6 @@ void ppMod(word r[], const word a[], size_t n, const word b[], size_t m,
 		wwCopy(r, a, m);
 		return;
 	}
-	// резервируем переменные в stack
-	divident = (word*)stack;
-	divisor = divident + n + 1;
-	w1 = divisor + m;
-	w2 = w1 + 16;
-	stack = w2 + 16;
 	// divident <- a
 	wwCopy(divident, a, n);
 	divident[n] = 0;
@@ -1370,7 +1379,10 @@ void ppMod(word r[], const word a[], size_t n, const word b[], size_t m,
 
 size_t ppMod_deep(size_t n, size_t m)
 {
-	return O_OF_W(n + 1 + m + 16 + 16) + ppAddMulW_deep(m);
+	return memSliceSize(
+		ppMod_local(n, m), 
+		ppAddMulW_deep(m),
+		SIZE_MAX);
 }
 
 /*	снять подавление предупреждения C4146 */

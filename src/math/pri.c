@@ -4,7 +4,7 @@
 \brief Prime numbers
 \project bee2 [cryptographic library]
 \created 2012.08.13
-\version 2025.06.10
+\version 2025.09.14
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -410,23 +410,27 @@ void priBaseMod(word mods[], const word a[], size_t n, size_t count)
 *******************************************************************************
 */
 
+#define priIsSieved_local(base_count)\
+/* mods */	O_OF_W(base_count)
+
 bool_t priIsSieved(const word a[], size_t n, size_t base_count, void* stack)
 {
-	// переменные в stack
-	word* mods;
+	word* mods;		/* [base_count] */
 	// pre
 	ASSERT(base_count <= priBaseSize());
 	// четное?
 	n = wwWordSize(a, n);
 	if (zzIsEven(a, n))
 		return FALSE;
+	// разметить стек
+	memSlice(stack,
+		priIsSieved_local(base_count), SIZE_MAX,
+		&mods);
 	// малое a?
 	if (n == 1)
 		// при необходимости скорректировать факторную базу
 		while (base_count > 0 && priBasePrime(base_count - 1) > a[0])
 			--base_count;
-	// раскладка stack
-	mods = (word*)stack;
 	// найти остатки
 	priBaseMod(mods, a, n, base_count);
 	// есть нулевые остатки?
@@ -439,17 +443,25 @@ bool_t priIsSieved(const word a[], size_t n, size_t base_count, void* stack)
 
 size_t priIsSieved_deep(size_t base_count)
 {
-	return O_OF_W(base_count);
+	return memSliceSize(
+		priIsSieved_local(base_count), 
+		SIZE_MAX);
 }
+
+#define priIsSmooth_local(n)\
+/* t */		O_OF_W(n)
 
 bool_t priIsSmooth(const word a[], size_t n, size_t base_count, void* stack)
 {
 	register size_t i;
 	register word mod;
-	// переменные в stack
-	word* t = (word*)stack;
+	word* t;			/* [n] */
 	// pre
 	ASSERT(base_count <= priBaseSize());
+	// разметить стек
+	memSlice(stack,
+		priIsSmooth_local(n), SIZE_MAX,
+		&t);
 	// t <- a 
 	wwCopy(t, a, n);
 	// разделить t на степень 2
@@ -464,7 +476,7 @@ bool_t priIsSmooth(const word a[], size_t n, size_t base_count, void* stack)
 	// цикл по простым из факторной базы
 	for (i = 0; i < base_count;)
 	{
-		mod = _base[i] < WORD_BIT_HALF ? 
+		mod = _base[i] < WORD_MID ? 
 			zzModW2(t, n, _base[i]) : zzModW(t, n, _base[i]);
 		// делится на простое?
 		if (mod == 0)
@@ -487,7 +499,9 @@ bool_t priIsSmooth(const word a[], size_t n, size_t base_count, void* stack)
 
 size_t priIsSmooth_deep(size_t n)
 {
-	return O_OF_W(n);
+	return memSliceSize(
+		priIsSmooth_local(n), 
+		SIZE_MAX);
 }
 
 /*
@@ -598,19 +612,27 @@ B_PER_IMPOSSLIBLE / log_2(24) <= B_PER_IMPOSSLIBLE / 4.5.
 *******************************************************************************
 */
 
+#define priRMTest_local(n)\
+/* r */				O_OF_W(n),\
+/* base */			O_OF_W(n),\
+/* qr */			zmCreate_keep(O_OF_W(n)),\
+/* combo_state */	prngCOMBO_keep()
+
 bool_t priRMTest(const word a[], size_t n, size_t iter, void* stack)
 {
 	register size_t s;
 	register size_t m;
 	register size_t i;
-	// переменные в stack
-	word* r = (word*)stack;
-	word* base = r + n;
-	qr_o* qr = (qr_o*)(base + n);
-	octet* combo_state = (octet*)qr + zmCreate_keep(O_OF_W(n));
-	stack = combo_state + prngCOMBO_keep();
+	word* r;			/* [n] */
+	word* base;			/* [n] */
+	qr_o* qr;			/* [zmCreate_keep(O_OF_W(n))] */
+	octet* combo_state;	/* prngCOMBO_keep() */
 	// pre
 	ASSERT(wwIsValid(a, n));
+	// разметить стек
+	memSlice(stack,
+		priRMTest_local(n), SIZE_0, SIZE_MAX,
+		&r, &base, &qr, &combo_state, &stack);
 	// нормализация
 	n = wwWordSize(a, n);
 	// четное?
@@ -674,10 +696,12 @@ bool_t priRMTest(const word a[], size_t n, size_t iter, void* stack)
 size_t priRMTest_deep(size_t n)
 {
 	size_t qr_deep = zmCreate_deep(O_OF_W(n));
-	return O_OF_W(2 * n) + zmCreate_keep(O_OF_W(n)) + prngCOMBO_keep() +
+	return memSliceSize(
+		priRMTest_local(n), 
 		utilMax(2,
 			qr_deep,
-			qrPower_deep(n, n, qr_deep));
+			qrPower_deep(n, n, qr_deep)),
+		SIZE_MAX);
 }
 
 bool_t priIsPrime(const word a[], size_t n, void* stack)
@@ -700,18 +724,21 @@ q -- нечетное простое => p = 2q + 1 -- простое <=> [тео
 *******************************************************************************
 */
 
+#define priIsSGPrime_local(n, no)\
+/* p */		O_OF_W(n + 1),\
+/* qr */	zmCreate_keep(no)
+
 bool_t priIsSGPrime(const word q[], size_t n, void* stack)
 {
 	size_t no = O_OF_W(n + 1);
-	// переменные в stack
-	word* p;
-	qr_o* qr;
+	word* p;			/* [n + 1] */
+	qr_o* qr;			/* [zmCreate_keep(no)] */
 	// pre
 	ASSERT(zzIsOdd(q, n) && wwCmpW(q, n, 1) > 0);
-	// раскладка стек
-	p = (word*)stack;
-	qr = (qr_o*)(p + n + 1);
-	stack = (octet*)qr + zmCreate_keep(no);
+	// разметить стек
+	memSlice(stack,
+		priIsSGPrime_local(n, no), SIZE_0, SIZE_MAX,
+		&p, &qr, &stack);
 	// p <- 2q + 1
 	wwCopy(p, q, n);
 	p[n] = 0;
@@ -733,10 +760,12 @@ size_t priIsSGPrime_deep(size_t n)
 {
 	const size_t no = O_OF_W(n + 1);
 	const size_t qr_deep = zmCreate_deep(no);
-	return no + zmCreate_keep(no) +
+	return memSliceSize(
+		priIsSGPrime_local(n, no),
 		utilMax(2,
 			qr_deep,
-			qrPower_deep(n + 1, n, qr_deep));
+			qrPower_deep(n + 1, n, qr_deep)),
+		SIZE_MAX);
 }
 
 /*
@@ -774,20 +803,23 @@ size_t priNextPrimeW_deep()
 	return priIsPrimeW_deep();
 }
 
+#define priNextPrime_local(base_count)\
+/* mods */	O_OF_W(base_count)
+
 bool_t priNextPrime(word p[], const word a[], size_t n, size_t trials,
 	size_t base_count, size_t iter, void* stack)
 {
 	size_t l;
 	size_t i;
 	bool_t base_success;
-	// переменные в stack
-	word* mods;
+	word* mods;			/* [base_count] */
 	// pre
 	ASSERT(wwIsSameOrDisjoint(a, p, n));
 	ASSERT(base_count <= priBaseSize());
-	// раскладка stack
-	mods = (word*)stack;
-	stack = mods + base_count;
+	// разметить стек
+	memSlice(stack,
+		priNextPrime_local(base_count), SIZE_0, SIZE_MAX,
+		&mods, &stack);
 	// l <- битовая длина a
 	l = wwBitSize(a, n);
 	// 0-битовых и 1-битовых простых не существует
@@ -833,7 +865,10 @@ bool_t priNextPrime(word p[], const word a[], size_t n, size_t trials,
 
 size_t priNextPrime_deep(size_t n, size_t base_count)
 {
-	return base_count * O_PER_W + priRMTest_deep(n);
+	return memSliceSize(
+		priNextPrime_local(base_count),
+		priRMTest_deep(n),
+		SIZE_MAX);
 }
 
 /*
@@ -879,6 +914,15 @@ size_t priNextPrime_deep(size_t n, size_t base_count)
 *******************************************************************************
 */
 
+#define priExtendPrime2_local(n, m, np, npo, base_count)\
+/* qa */		O_OF_W(n + m),\
+/* t */			O_OF_W(np + 2),\
+/* r */			O_OF_W(np - n - m + 3),\
+/* four */		O_OF_W(np),\
+/* mods */		O_OF_W(base_count),\
+/* mods1 */		O_OF_W(base_count),\
+/* qr */		zmCreate_keep(npo)
+
 bool_t priExtendPrime2(word p[], size_t l, const word q[], size_t n,
 	const word a[], size_t m, size_t trials, size_t base_count, gen_i rng, 
 	void* rng_state, void* stack)
@@ -887,14 +931,13 @@ bool_t priExtendPrime2(word p[], size_t l, const word q[], size_t n,
 	const size_t npo = O_OF_B(l);
 	size_t i;
 	size_t nqa;
-	// переменные в stack
-	word* qa;		/* [n + m] */
-	word* t;		/* [np + 2] */
-	word* r;		/* [np - n - m + 3] */
-	word* four;		/* [np] */
-	word* mods;		/* base_count */
-	word* mods1;	/* base_count */
-	qr_o* qr;
+	word* qa;			/* [n + m] */
+	word* t;			/* [np + 2] */
+	word* r;			/* [np - n - m + 3] */
+	word* four;			/* [np] */
+	word* mods;			/* [base_count] */
+	word* mods1;		/* [base_count] */
+	qr_o* qr;			/* [zmCreate_keep(npo)] */
 	// pre
 	ASSERT(wwIsDisjoint2(p, np, q, n));
 	ASSERT(wwIsValid(a, m));
@@ -904,15 +947,10 @@ bool_t priExtendPrime2(word p[], size_t l, const word q[], size_t n,
 	ASSERT(l <= 2 * wwBitSize(q, n));
 	ASSERT(base_count <= priBaseSize());
 	ASSERT(rng != 0);
-	// раскладка stack
-	qa = (word*)stack;
-	t = qa + n + m;
-	r = t + np + 2;
-	four = r + np - n - m + 3;
-	mods = four + np;
-	mods1 = mods + base_count;
-	qr = (qr_o*)(mods1 + base_count);
-	stack = (octet*)qr + zmCreate_keep(npo);
+	// разметить стек
+	memSlice(stack,
+		priExtendPrime2_local(n, m, np, npo, base_count), SIZE_0, SIZE_MAX,
+		&qa, &t, &r, &four, &mods, &mods1, &qr, &stack);
 	// малое p?
 	if (l < B_PER_W)
 		// при необходимости уменьшить факторную базу
@@ -1002,15 +1040,19 @@ size_t priExtendPrime2_deep(size_t l, size_t n, size_t m, size_t base_count)
 	const size_t qr_deep = zmCreate_deep(npo);
 	ASSERT(np >= n);
 	ASSERT(np + 3 >= n + m);
-	return O_OF_W(3 * np + 5 + 2 * base_count) + 
-		zmCreate_keep(npo) +
+	return memSliceSize(
+		priExtendPrime2_local(n, m, np, npo, base_count),
 		utilMax(5,
 			zzMul_deep(n, m),
 			zzDiv_deep(np, n + m),
 			zzMul_deep(n + m, np - n - m + 3),
 			qr_deep,
-			qrPower_deep(np, np, qr_deep));
+			qrPower_deep(np, np, qr_deep)),
+		SIZE_MAX);
 }
+
+#define priExtendPrime_local()\
+/* a */		O_OF_W(1)
 
 bool_t priExtendPrime(word p[], size_t l, const word q[], size_t n,
 	size_t trials, size_t base_count, gen_i rng, void* rng_state, void* stack)
@@ -1018,15 +1060,21 @@ bool_t priExtendPrime(word p[], size_t l, const word q[], size_t n,
 	word* a;
 	// pre
 	ASSERT(memIsValid(stack, O_OF_W(1)));
+	// разметить стек
+	memSlice(stack,
+		priExtendPrime_local(), SIZE_0, SIZE_MAX,
+		&a, &stack);
 	// a <- 1
-	a = (word*)stack;
 	a[0] = 1;
 	// расширить
 	return priExtendPrime2(p, l, q, n, a, 1, trials, base_count, 
-		rng, rng_state, a + 1);
+		rng, rng_state, stack);
 }
 
 size_t priExtendPrime_deep(size_t l, size_t n, size_t base_count)
 {
-	return  O_OF_W(1) + priExtendPrime2_deep(l, n, 1, base_count);
+	return memSliceSize(
+		priExtendPrime_local(),
+		priExtendPrime2_deep(l, n, 1, base_count),
+		SIZE_MAX);
 }

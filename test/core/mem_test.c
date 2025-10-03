@@ -4,7 +4,7 @@
 \brief Tests for memory functions
 \project bee2/test
 \created 2014.02.01
-\version 2023.03.06
+\version 2025.09.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -32,8 +32,11 @@ bool_t memTest()
 	octet buf[16];
 	octet buf1[16];
 	octet buf2[16];
+	mem_align_t buf3[3];
 	void* p;
 	void* p1;
+	void* p2;
+	void* p3;
 	size_t i;
 	// pre
 	CASSERT(sizeof(buf) == sizeof(buf1));
@@ -76,44 +79,44 @@ bool_t memTest()
 	// сравнение
 	hexTo(buf,  "000102030405060708090A0B0C0D0E0F");
 	hexTo(buf1, "F00102030405060708090A0B0C0D0EFF");
-	if (SAFE(memIsZero)(buf, 15) ||
+	if (memIsZero(buf, 15) ||
 		FAST(memIsZero)(buf, 15) ||
 		FAST(memIsZero)(buf, 3) ||
-		SAFE(memEq)(buf + 1, buf1 + 1, 15) ||
+		memEq(buf + 1, buf1 + 1, 15) ||
 		FAST(memEq)(buf + 1, buf1 + 1, 15) ||
-		SAFE(memEq)(buf + 8, buf1 + 8, 8) ||
+		memEq(buf + 8, buf1 + 8, 8) ||
 		FAST(memEq)(buf + 8, buf1 + 8, 8) ||
-		!SAFE(memEq)(buf + 1, buf1 + 1, 8) ||
+		!memEq(buf + 1, buf1 + 1, 8) ||
 		!FAST(memEq)(buf + 1, buf1 + 1, 8) ||
-		!SAFE(memEq)(buf + 1, buf1 + 1, 14) ||
+		!memEq(buf + 1, buf1 + 1, 14) ||
 		!FAST(memEq)(buf + 1, buf1 + 1, 14) ||
-		SAFE(memCmp)(buf, buf1, 7) != -1 ||
+		memCmp(buf, buf1, 7) != -1 ||
 		FAST(memCmp)(buf, buf1, 7) != -1 ||
-		SAFE(memCmpRev)(buf, buf1, 7) != -1 ||
+		memCmpRev(buf, buf1, 7) != -1 ||
 		FAST(memCmpRev)(buf, buf1, 7) != -1 ||
-		SAFE(memCmp)(buf, buf1, 15) != -1 ||
+		memCmp(buf, buf1, 15) != -1 ||
 		FAST(memCmp)(buf, buf1, 15) != -1 ||
-		SAFE(memCmpRev)(buf, buf1, 15) != -1 ||
+		memCmpRev(buf, buf1, 15) != -1 ||
 		FAST(memCmpRev)(buf, buf1, 15) != -1 ||
-		SAFE(memCmp)(buf1, buf, 15) != 1 ||
+		memCmp(buf1, buf, 15) != 1 ||
 		FAST(memCmp)(buf1, buf, 15) != 1 ||
-		SAFE(memCmpRev)(buf1, buf, 15) != 1 ||
+		memCmpRev(buf1, buf, 15) != 1 ||
 		FAST(memCmpRev)(buf1, buf, 15) != 1 ||
-		SAFE(memCmp)(buf, buf1, 8) != -1 ||
+		memCmp(buf, buf1, 8) != -1 ||
 		FAST(memCmp)(buf, buf1, 8) != -1 ||
-		SAFE(memCmpRev)(buf, buf1, 8) != -1 ||
+		memCmpRev(buf, buf1, 8) != -1 ||
 		FAST(memCmpRev)(buf, buf1, 8) != -1 ||
-		SAFE(memCmp)(buf1, buf, 8) != 1 ||
+		memCmp(buf1, buf, 8) != 1 ||
 		FAST(memCmp)(buf1, buf, 8) != 1 ||
-		SAFE(memCmpRev)(buf1, buf, 8) != 1 ||
+		memCmpRev(buf1, buf, 8) != 1 ||
 		FAST(memCmpRev)(buf1, buf, 8) != 1 ||
-		SAFE(memCmp)(buf + 1, buf1 + 1, 8) != 0 ||
+		memCmp(buf + 1, buf1 + 1, 8) != 0 ||
 		FAST(memCmp)(buf + 1, buf1 + 1, 8) != 0 ||
-		SAFE(memCmp)(buf + 1, buf1 + 1, 14) != 0 ||
+		memCmp(buf + 1, buf1 + 1, 14) != 0 ||
 		FAST(memCmp)(buf + 1, buf1 + 1, 14) != 0 ||
-		SAFE(memCmpRev)(buf + 1, buf1 + 1, 8) != 0 ||
+		memCmpRev(buf + 1, buf1 + 1, 8) != 0 ||
 		FAST(memCmpRev)(buf + 1, buf1 + 1, 8) != 0 ||
-		SAFE(memCmpRev)(buf + 1, buf1 + 1, 14) != 0 ||
+		memCmpRev(buf + 1, buf1 + 1, 14) != 0 ||
 		FAST(memCmpRev)(buf + 1, buf1 + 1, 14) != 0)
 		return FALSE;
 	memRev(buf, 15);
@@ -121,23 +124,23 @@ bool_t memTest()
 		return FALSE;
 	hexTo(buf,  "F001020304050607");
 	hexTo(buf1, "00010203040506F7");
-	if (SAFE(memCmp)(buf, buf1, 8) != 1 ||
+	if (memCmp(buf, buf1, 8) != 1 ||
 		FAST(memCmp)(buf, buf1, 8) != 1 ||
-		SAFE(memCmp)(buf1, buf, 8) != -1 ||
+		memCmp(buf1, buf, 8) != -1 ||
 		FAST(memCmp)(buf1, buf, 8) != -1 ||
-		SAFE(memCmpRev)(buf, buf1, 8) != -1 ||
+		memCmpRev(buf, buf1, 8) != -1 ||
 		FAST(memCmpRev)(buf, buf1, 8) != -1 ||
-		SAFE(memCmpRev)(buf1, buf, 8) != 1 ||
+		memCmpRev(buf1, buf, 8) != 1 ||
 		FAST(memCmpRev)(buf1, buf, 8) != 1)
 		return FALSE;
 	hexTo(buf, "01010101010101010102");
-	if (SAFE(memIsRep)(buf, 7, 0x01) != TRUE ||
+	if (memIsRep(buf, 7, 0x01) != TRUE ||
 		FAST(memIsRep)(buf, 7, 0x01) != TRUE ||
-		SAFE(memIsRep)(buf, 8, 0x01) != TRUE ||
+		memIsRep(buf, 8, 0x01) != TRUE ||
 		FAST(memIsRep)(buf, 8, 0x01) != TRUE ||
-		SAFE(memIsRep)(buf, 9, 0x01) != TRUE ||
+		memIsRep(buf, 9, 0x01) != TRUE ||
 		FAST(memIsRep)(buf, 9, 0x01) != TRUE ||
-		SAFE(memIsRep)(buf, 10, 0x01) == TRUE ||
+		memIsRep(buf, 10, 0x01) == TRUE ||
 		FAST(memIsRep)(buf, 10, 0x01) == TRUE)
 		return FALSE;
 	// join
@@ -166,6 +169,36 @@ bool_t memTest()
 	memXor2(buf2, buf1, 9);
 	memXor2(buf2, buf, 8);
 	if (!memIsRep(buf2, 8, 0) || buf2[8] != 0x08)
+		return FALSE;
+	// разметка #1
+	if (memSliceSize(
+		SIZE_1, SIZE_1 | SIZE_HI, SIZE_1, SIZE_1, SIZE_MAX) !=
+		2 * sizeof(mem_align_t) + 1)
+		return FALSE;
+	memSlice(buf3,
+		SIZE_1, SIZE_1 | SIZE_HI, SIZE_0, SIZE_0, SIZE_MAX,
+		&p, &p1, &p2, &p3);
+	if (p != buf3 || p1 != p || p2 == p1 || p3 != p2 ||
+		p2 != memSliceNext(p1, SIZE_1) || p2 != memSliceNext2(p1, SIZE_1))
+		return FALSE;
+	// разметка #2
+	if (memSliceSize(
+		SIZE_1 | SIZE_HI, SIZE_1 | SIZE_HI, SIZE_MAX) != 1)
+		return FALSE;
+	memSlice(buf3,
+		SIZE_1 | SIZE_HI, SIZE_1 | SIZE_HI, SIZE_MAX,
+		&p, &p1);
+	if (p != buf3 || p1 != p)
+		return FALSE;
+	// разметка #3
+	if (memSliceSize(
+		SIZE_1, SIZE_1 | SIZE_HI, SIZE_1 | SIZE_HI, SIZE_1, SIZE_MAX,
+		&p, &p1, &p2, &p3) != sizeof(mem_align_t) + 1)
+		return FALSE;
+	memSlice(buf3,
+		SIZE_1, SIZE_1 | SIZE_HI, SIZE_1 | SIZE_HI, SIZE_1, SIZE_MAX,
+		&p, &p1, &p2, &p3);
+	if (p != buf3 || p1 != p || p2 != p || p3 == p2)
 		return FALSE;
 	// все нормально
 	return TRUE;

@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: managing CV-certificates
 \project bee2/cmd
 \created 2022.08.20
-\version 2025.06.09
+\version 2025.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -227,14 +227,16 @@ err_t cmdCVCsFind(size_t* offset, const octet* certs, size_t certs_len,
 err_t cmdCVCsCheck(const octet* certs, size_t certs_len)
 {
 	err_t code;
-	void* stack;
-	btok_cvc_t* cvc;
+	void* state;
+	btok_cvc_t* cvc;		/* [1] */
 	// pre
 	ASSERT(memIsValid(certs, certs_len));
 	// выделить и разметить память
-	code = cmdBlobCreate(stack, sizeof(btok_cvc_t));
+	code = cmdBlobCreate2(state, 
+		sizeof(btok_cvc_t),
+		SIZE_MAX,
+		&cvc);
 	ERR_CALL_CHECK(code);
-	cvc = (btok_cvc_t*)stack;
 	// цикл по сертификатам
 	while (certs_len)
 	{
@@ -244,22 +246,22 @@ err_t cmdCVCsCheck(const octet* certs, size_t certs_len)
 			code = ERR_BAD_CERTRING;
 		else
 			code = btokCVCUnwrap(cvc, certs, len, 0, 0);
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		ERR_CALL_HANDLE(code, cmdBlobClose(state));
 		// к следующему
 		certs += len, certs_len -= len;
 	}
 	// завершить
-	cmdBlobClose(stack);
+	cmdBlobClose(state);
 	return code;
 }
 
 err_t cmdCVCsVal(const octet* certs, size_t certs_len, const octet date[6])
 {
 	err_t code;
-	void* stack;
 	size_t len;
-	btok_cvc_t* cvca;
-	btok_cvc_t* cvc;
+	void* state;	
+	btok_cvc_t* cvca;			/* [1] */
+	btok_cvc_t* cvc;			/* [1] */
 	// pre
 	ASSERT(memIsValid(certs, certs_len));
 	ASSERT(memIsNullOrValid(date, 6));
@@ -267,17 +269,19 @@ err_t cmdCVCsVal(const octet* certs, size_t certs_len, const octet date[6])
 	if (!certs_len)
 		return ERR_OK;
 	// выделить и разметить память
-	code = cmdBlobCreate(stack, 2 * sizeof(btok_cvc_t));
+	code = cmdBlobCreate2(state, 
+		sizeof(btok_cvc_t), 
+		sizeof(btok_cvc_t), 
+		SIZE_MAX,
+		&cvca, &cvc);
 	ERR_CALL_CHECK(code);
-	cvca = (btok_cvc_t*)stack;
-	cvc = cvca + 1;
 	// найти и разобрать первый сертификат
 	len = btokCVCLen(certs, certs_len);
 	if (len == SIZE_MAX)
 		code = ERR_BAD_CERT;
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	code = btokCVCUnwrap(cvca, certs, len, 0, 0);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	certs_len -= len, certs += len;
 	// цикл по остальным сертификатам
 	while (certs_len)
@@ -286,34 +290,36 @@ err_t cmdCVCsVal(const octet* certs, size_t certs_len, const octet date[6])
 		len = btokCVCLen(certs, certs_len);
 		if (len == SIZE_MAX)
 			code = ERR_BAD_CERT;
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		ERR_CALL_HANDLE(code, cmdBlobClose(state));
 		// проверить сертификат
 		if (len == certs_len && date && !memIsZero(date, 6))
 			code = btokCVCVal2(cvc, certs, len, cvca, date);
 		else
 			code = btokCVCVal2(cvc, certs, len, cvca, 0);
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		ERR_CALL_HANDLE(code, cmdBlobClose(state));
 		// к следующему сертификату
 		certs_len -= len, certs += len;
 		// издатель <- эмитент
 		memCopy(cvca, cvc, sizeof(btok_cvc_t));
 	}
 	// завершить
-	cmdBlobClose(stack);
+	cmdBlobClose(state);
 	return code;
 }
 
 err_t cmdCVCsPrint(const octet* certs, size_t certs_len)
 {
 	err_t code;
-	void* stack;
-	btok_cvc_t* cvc;
+	void* state;
+	btok_cvc_t* cvc;		/* [1] */
 	// pre
 	ASSERT(memIsValid(certs, certs_len));
 	// выделить и разметить память
-	code = cmdBlobCreate(stack, sizeof(btok_cvc_t));
+	code = cmdBlobCreate2(state, 
+		sizeof(btok_cvc_t),
+		SIZE_MAX,
+		&cvc);
 	ERR_CALL_CHECK(code);
-	cvc = (btok_cvc_t*)stack;
 	// цикл по сертификатам
 	while (certs_len)
 	{
@@ -323,20 +329,20 @@ err_t cmdCVCsPrint(const octet* certs, size_t certs_len)
 			code = ERR_BAD_CERTRING;
 		else
 			code = btokCVCUnwrap(cvc, certs, len, 0, 0);
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		ERR_CALL_HANDLE(code, cmdBlobClose(state));
 		// печатать
 		printf("  %s (%u bits, issued by %s, ",
 			cvc->holder, (unsigned)cvc->pubkey_len * 2, cvc->authority);
 		code = cmdPrintDate(cvc->from);
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		ERR_CALL_HANDLE(code, cmdBlobClose(state));
 		printf("-");
 		code = cmdPrintDate(cvc->until);
-		ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+		ERR_CALL_HANDLE(code, cmdBlobClose(state));
 		printf(")\n");
 		// к следующему
 		certs += len, certs_len -= len;
 	}
 	// завершить
-	cmdBlobClose(stack);
+	cmdBlobClose(state);
 	return code;
 }

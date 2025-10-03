@@ -4,7 +4,7 @@
 \brief Elliptic curves over prime fields
 \project bee2 [cryptographic library]
 \created 2012.06.26
-\version 2025.06.10
+\version 2025.09.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -146,18 +146,24 @@ static bool_t ecpFromAJ(word b[], const word a[], const ec_o* ec, void* stack)
 	return TRUE;
 }
 
+#define ecpToAJ_local(n)\
+/* t1 */	O_OF_W(n),\
+/* t2 */	O_OF_W(n)
+
 // [2n]b <- [3n]a (A <- P)
 static bool_t ecpToAJ(word b[], const word a[], const ec_o* ec, void* stack)
 {
 	const size_t n = ec->f->n;
-	// переменные в stack
-	word* t1 = (word*)stack;
-	word* t2 = t1 + n;
-	stack = t2 + n;
+	word* t1;			/* [n] */
+	word* t2;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ecpSeemsOn3(a, ec));
 	ASSERT(a == b || wwIsDisjoint2(a, 3 * n, b, 2 * n));
+	// разметить стек
+	memSlice(stack,
+		ecpToAJ_local(n), SIZE_0, SIZE_MAX,
+		&t1, &t2, &stack);
 	// a == O => b <- O
 	if (qrIsZero(ecZ(a, n), ec->f))
 		return FALSE;
@@ -177,7 +183,10 @@ static bool_t ecpToAJ(word b[], const word a[], const ec_o* ec, void* stack)
 
 static size_t ecpToAJ_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(2 * n) + f_deep;
+	return memSliceSize(
+		ecpToAJ_local(n), 
+		f_deep,
+		SIZE_MAX);
 }
 
 // [3n]b <- -[3n]a (P <- -P)
@@ -196,18 +205,24 @@ static void ecpNegJ(word b[], const word a[], const ec_o* ec, void* stack)
 	qrCopy(ecZ(b, n), ecZ(a, n), ec->f);
 }
 
+#define ecpDblJ_local(n)\
+/* t1 */	O_OF_W(n),\
+/* t2 */	O_OF_W(n)
+
 // [3n]b <- 2[3n]a (P <- 2P)
 static void ecpDblJ(word b[], const word a[], const ec_o* ec, void* stack)
 {
 	const size_t n = ec->f->n;
-	// переменные в stack
-	word* t1 = (word*)stack;
-	word* t2 = t1 + n;
-	stack = t2 + n;
+	word* t1;			/* [n] */
+	word* t2;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ecpSeemsOn3(a, ec));
 	ASSERT(wwIsSameOrDisjoint(a, b, 3 * n));
+	// разметить стек
+	memSlice(stack,
+		ecpDblJ_local(n), SIZE_0, SIZE_MAX,
+		&t1, &t2, &stack);
 	// za == 0 или ya == 0? => b <- O
 	if (qrIsZero(ecZ(a, n), ec->f) || qrIsZero(ecY(a, n), ec->f))
 	{
@@ -258,21 +273,30 @@ static void ecpDblJ(word b[], const word a[], const ec_o* ec, void* stack)
 
 static size_t ecpDblJ_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(2 * n) + f_deep;
+	return memSliceSize(
+		ecpDblJ_local(n), 
+		f_deep,
+		SIZE_MAX);
 }
+
+#define ecpDblJA3_local(n)\
+/* t1 */	O_OF_W(n),\
+/* t2 */	O_OF_W(n)
 
 // [3n]b <- 2[3n]a (P <- 2P, A = -3)
 static void ecpDblJA3(word b[], const word a[], const ec_o* ec, void* stack)
 {
 	const size_t n = ec->f->n;
-	// переменные в stack
-	word* t1 = (word*)stack;
-	word* t2 = t1 + n;
-	stack = t2 + n;
+	word* t1;			/* [n] */
+	word* t2;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ecpSeemsOn3(a, ec));
 	ASSERT(wwIsSameOrDisjoint(a, b, 3 * n));
+	// разметить стек
+	memSlice(stack,
+		ecpDblJA3_local(n), SIZE_0, SIZE_MAX,
+		&t1, &t2, &stack);
 	// za == 0 или ya == 0? => b <- O
 	if (qrIsZero(ecZ(a, n), ec->f) || qrIsZero(ecY(a, n), ec->f))
 	{
@@ -321,23 +345,34 @@ static void ecpDblJA3(word b[], const word a[], const ec_o* ec, void* stack)
 
 static size_t ecpDblJA3_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(2 * n) + f_deep;
+	return memSliceSize(
+		ecpDblJA3_local(n), 
+		f_deep,
+		SIZE_MAX);
 }
+
+#define ecpDblAJ_local(n)\
+/* t1 */	O_OF_W(n),\
+/* t2 */	O_OF_W(n),\
+/* t3 */	O_OF_W(n),\
+/* t4 */	O_OF_W(n)
 
 // [3n]b <- 2[2n]a (P <- 2A)
 static void ecpDblAJ(word b[], const word a[], const ec_o* ec, void* stack)
 {
 	const size_t n = ec->f->n;
-	// переменные в stack
-	word* t1 = (word*)stack;
-	word* t2 = t1 + n;
-	word* t3 = t2 + n;
-	word* t4 = t3 + n;
-	stack = t4 + n;
+	word* t1;			/* [n] */
+	word* t2;			/* [n] */
+	word* t3;			/* [n] */
+	word* t4;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ecpSeemsOnA(a, ec));
 	ASSERT(a == b || wwIsDisjoint2(a, 2 * n, b, 3 * n));
+	// разметить стек
+	memSlice(stack,
+		ecpDblAJ_local(n), SIZE_0, SIZE_MAX,
+		&t1, &t2, &t3, &t4, &stack);
 	// ya == 0? => b <- O
 	if (qrIsZero(ecY(a, n), ec->f))
 	{
@@ -390,26 +425,37 @@ static void ecpDblAJ(word b[], const word a[], const ec_o* ec, void* stack)
 
 static size_t ecpDblAJ_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(4 * n) + f_deep;
+	return memSliceSize(
+		ecpDblAJ_local(n), 
+		f_deep,
+		SIZE_MAX);
 }
+
+#define ecpAddJ_local(n)\
+/* t1 */	O_OF_W(n),\
+/* t2 */	O_OF_W(n),\
+/* t3 */	O_OF_W(n),\
+/* t4 */	O_OF_W(n)
 
 // [3n]c <- [3n]a + [3n]b (P <- P + P)
 static void ecpAddJ(word c[], const word a[], const word b[], const ec_o* ec,
 	void* stack)
 {
 	const size_t n = ec->f->n;
-	// переменные в stack
-	word* t1 = (word*)stack;
-	word* t2 = t1 + n;
-	word* t3 = t2 + n;
-	word* t4 = t3 + n;
-	stack = t4 + n;
+	word* t1;			/* [n] */
+	word* t2;			/* [n] */
+	word* t3;			/* [n] */
+	word* t4;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ecpSeemsOn3(a, ec));
 	ASSERT(ecpSeemsOn3(b, ec));
 	ASSERT(wwIsSameOrDisjoint(a, c, 3 * n));
 	ASSERT(wwIsSameOrDisjoint(b, c, 3 * n));
+	// разметить стек
+	memSlice(stack,
+		ecpAddJ_local(n), SIZE_0, SIZE_MAX,
+		&t1, &t2, &t3, &t4, &stack);
 	// a == O => c <- b
 	if (qrIsZero(ecZ(a, n), ec->f))
 	{
@@ -495,29 +541,39 @@ static void ecpAddJ(word c[], const word a[], const word b[], const ec_o* ec,
 
 static size_t ecpAddJ_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(4 * n) + 
+	return memSliceSize(
+		ecpAddJ_local(n), 
 		utilMax(2,
 			f_deep,
-			ecpDblJ_deep(n, f_deep));
+			ecpDblJ_deep(n, f_deep)),
+		SIZE_MAX);
 }
+
+#define ecpAddAJ_local(n)\
+/* t1 */	O_OF_W(n),\
+/* t2 */	O_OF_W(n),\
+/* t3 */	O_OF_W(n),\
+/* t4 */	O_OF_W(n)
 
 // [3n]c <- [3n]a + [2n]b (P <- P + A)
 static void ecpAddAJ(word c[], const word a[], const word b[], const ec_o* ec,
 	void* stack)
 {
 	const size_t n = ec->f->n;
-	// переменные в stack
-	word* t1 = (word*)stack;
-	word* t2 = t1 + n;
-	word* t3 = t2 + n;
-	word* t4 = t3 + n;
-	stack = t4 + n;
+	word* t1;			/* [n] */
+	word* t2;			/* [n] */
+	word* t3;			/* [n] */
+	word* t4;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ecpSeemsOn3(a, ec));
 	ASSERT(ecpSeemsOnA(b, ec));
 	ASSERT(wwIsSameOrDisjoint(a,  c, 3 * n));
 	ASSERT(b == c || wwIsDisjoint2(b, 2 * n, c, 3 * n));
+	// разметить стек
+	memSlice(stack,
+		ecpAddAJ_local(n), SIZE_0, SIZE_MAX,
+		&t1, &t2, &t3, &t4, &stack);
 	// a == O => c <- (xb : yb : 1)
 	if (qrIsZero(ecZ(a, n), ec->f))
 	{
@@ -577,26 +633,33 @@ static void ecpAddAJ(word c[], const word a[], const word b[], const ec_o* ec,
 
 static size_t ecpAddAJ_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(4 * n) +
+	return memSliceSize(
+		ecpAddAJ_local(n), 
 		utilMax(2,
 			f_deep,
-			ecpDblAJ_deep(n, f_deep));
+			ecpDblJ_deep(n, f_deep)),
+		SIZE_MAX);
 }
+
+#define ecpSubJ_local(n)\
+/* t */		O_OF_W(3 * n)
 
 // [3n]c <- [3n]a - [3n]b (P <- P - P)
 static void ecpSubJ(word c[], const word a[], const word b[], const ec_o* ec,
 	void* stack)
 {
 	const size_t n = ec->f->n;
-	// переменные в stack
-	word* t = (word*)stack;
-	stack = t + 3 * n;
+	word* t;			/* [3n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ecpSeemsOn3(a, ec));
 	ASSERT(ecpSeemsOn3(b, ec));
 	ASSERT(wwIsSameOrDisjoint(a, c, 3 * n));
 	ASSERT(wwIsSameOrDisjoint(b, c, 3 * n));
+	// разметить стек
+	memSlice(stack,
+		ecpSubJ_local(n), SIZE_0, SIZE_MAX,
+		&t, &stack);
 	// t <- -b
 	qrCopy(ecX(t), ecX(b), ec->f);
 	zmNeg(ecY(t, n), ecY(b, n), ec->f);
@@ -607,23 +670,31 @@ static void ecpSubJ(word c[], const word a[], const word b[], const ec_o* ec,
 
 static size_t ecpSubJ_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(3 * n) + ecpAddJ_deep(n, f_deep);
+	return memSliceSize(
+		ecpSubJ_local(n), 
+		ecpAddJ_deep(n, f_deep),
+		SIZE_MAX);
 }
+
+#define ecpSubAJ_local(n)\
+/* t */		O_OF_W(2 * n)
 
 // [3n]c <- [3n]a - [2n]b (P <- P - A)
 static void ecpSubAJ(word c[], const word a[], const word b[], const ec_o* ec,
 	void* stack)
 {
 	const size_t n = ec->f->n;
-	// переменные в stack
-	word* t = (word*)stack;
-	stack = t + 2 * n;
+	word* t;			/* [3n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ecpSeemsOn3(a, ec));
 	ASSERT(ecpSeemsOnA(b, ec));
 	ASSERT(wwIsSameOrDisjoint(a,  c, 3 * n));
 	ASSERT(b == c || wwIsDisjoint2(b, 2 * n, c, 3 * n));
+	// разметить стек
+	memSlice(stack,
+		ecpSubAJ_local(n), SIZE_0, SIZE_MAX,
+		&t, &stack);
 	// t <- -b
 	qrCopy(ecX(t), ecX(b), ec->f);
 	zmNeg(ecY(t, n), ecY(b, n), ec->f);
@@ -633,27 +704,42 @@ static void ecpSubAJ(word c[], const word a[], const word b[], const ec_o* ec,
 
 static size_t ecpSubAJ_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(2 * n) + ecpAddAJ_deep(n, f_deep);
+	return memSliceSize(
+		ecpSubAJ_local(n), 
+		ecpAddAJ_deep(n, f_deep),
+		SIZE_MAX);
 }
+
+#define ecpTplJ_local(n)\
+/* t0 */	O_OF_W(n),\
+/* t1 */	O_OF_W(n),\
+/* t2 */	O_OF_W(n),\
+/* t3 */	O_OF_W(n),\
+/* t4 */	O_OF_W(n),\
+/* t5 */	O_OF_W(n),\
+/* t6 */	O_OF_W(n),\
+/* t7 */	O_OF_W(n)
 
 // [3n]b <- 3[3n]a (P <- 3P)
 static void ecpTplJ(word b[], const word a[], const ec_o* ec, void* stack)
 {
 	const size_t n = ec->f->n;
-	// переменные в stack
-	word* t0 = (word*)stack;
-	word* t1 = t0 + n;
-	word* t2 = t1 + n;
-	word* t3 = t2 + n;
-	word* t4 = t3 + n;
-	word* t5 = t4 + n;
-	word* t6 = t5 + n;
-	word* t7 = t6 + n;
-	stack = t7 + n;
+	word* t0;			/* [n] */
+	word* t1;			/* [n] */
+	word* t2;			/* [n] */
+	word* t3;			/* [n] */
+	word* t4;			/* [n] */
+	word* t5;			/* [n] */
+	word* t6;			/* [n] */
+	word* t7;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ecpSeemsOn3(a, ec));
 	ASSERT(wwIsSameOrDisjoint(a, b, 3 * n));
+	// разметить стек
+	memSlice(stack,
+		ecpTplJ_local(n), SIZE_0, SIZE_MAX,
+		&t0, &t1, &t2, &t3, &t4, &t5, &t6, &t7, &stack);
 	// t0 <- xa^2 [XX]
 	qrSqr(t0, ecX(a), ec->f, stack);
 	// t1 <- ya^2 [YY]
@@ -718,26 +804,40 @@ static void ecpTplJ(word b[], const word a[], const ec_o* ec, void* stack)
 
 static size_t ecpTplJ_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(8 * n) + f_deep;
+	return memSliceSize(
+		ecpTplJ_local(n), 
+		f_deep,
+		SIZE_MAX);
 }
+
+#define ecpTplJA3_local(n)\
+/* t1 */	O_OF_W(n),\
+/* t2 */	O_OF_W(n),\
+/* t3 */	O_OF_W(n),\
+/* t4 */	O_OF_W(n),\
+/* t5 */	O_OF_W(n),\
+/* t6 */	O_OF_W(n),\
+/* t7 */	O_OF_W(n)
 
 // [3n]b <- 3[3n]a (P <- 3P)
 static void ecpTplJA3(word b[], const word a[], const ec_o* ec, void* stack)
 {
 	const size_t n = ec->f->n;
-	// переменные в stack
-	word* t1 = (word*)stack;
-	word* t2 = t1 + n;
-	word* t3 = t2 + n;
-	word* t4 = t3 + n;
-	word* t5 = t4 + n;
-	word* t6 = t5 + n;
-	word* t7 = t6 + n;
-	stack = t7 + n;
+	word* t1;			/* [n] */
+	word* t2;			/* [n] */
+	word* t3;			/* [n] */
+	word* t4;			/* [n] */
+	word* t5;			/* [n] */
+	word* t6;			/* [n] */
+	word* t7;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ecpSeemsOn3(a, ec));
 	ASSERT(wwIsSameOrDisjoint(a, b, 3 * n));
+	// разметить стек
+	memSlice(stack,
+		ecpTplJA3_local(n), SIZE_0, SIZE_MAX,
+		&t1, &t2, &t3, &t4, &t5, &t6, &t7, &stack);
 	// t1 <- ya^2 [YY]
 	qrSqr(t1, ecY(a, n), ec->f, stack);
 	// t2 <- za^2 [ZZ]
@@ -798,14 +898,27 @@ static void ecpTplJA3(word b[], const word a[], const ec_o* ec, void* stack)
 
 static size_t ecpTplJA3_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(7 * n) + f_deep;
+	return memSliceSize(
+		ecpTplJA3_local(n), 
+		f_deep,
+		SIZE_MAX);
 }
+
+#define ecpCreateJ_state(n)\
+/* A */			O_OF_W(n),\
+/* B */			O_OF_W(n),\
+/* base */		O_OF_W(2 * n),\
+/* order */		O_OF_W(n + 1),\
+/* params */	SIZE_0
+
+#define ecpCreateJ_local(n)\
+/* t */			O_OF_W(n)
 
 bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[], 
 	void* stack)
 {
 	register bool_t bA3;
-	word* t;
+	word* t; 			/* [n] */
 	// pre
 	ASSERT(memIsValid(ec, sizeof(ec_o)));
 	ASSERT(gfpIsOperable(f));
@@ -816,25 +929,26 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 		return FALSE;
 	// обнулить
 	memSetZero(ec, sizeof(ec_o));
-	// зафикисровать размерности
+	// зафиксировать размерности
 	ec->d = 3;
 	// запомнить базовое поле
 	ec->f = f;
+	// разметить состояние и стек
+	memSlice(ec->descr,
+		ecpCreateJ_state(f->n), SIZE_MAX,
+		&ec->A, &ec->B, &ec->base, &ec->order, &ec->params);
+	memSlice(stack,
+		ecpCreateJ_local(f->n), SIZE_0, SIZE_MAX,
+		&t, &stack);
 	// сохранить коэффициенты
-	ec->A = (word*)ec->descr;
-	ec->B = ec->A + f->n;
 	if (!qrFrom(ec->A, A, ec->f, stack) || !qrFrom(ec->B, B, ec->f, stack))
 		return FALSE;
 	// t <- -3
-	t = (word*)stack;
 	gfpDouble(t, f->unity, f);
 	zmAdd(t, t, f->unity, f);
 	zmNeg(t, t, f);
 	// bA3 <- A == -3?
 	bA3 = qrCmp(t, ec->A, f) == 0;
-	// подготовить буферы для описания группы точек
-	ec->base = ec->B + f->n;
-	ec->order = ec->base + 2 * f->n;
 	// настроить интерфейсы
 	ec->froma = ecpFromAJ;
 	ec->toa = ecpToAJ;
@@ -856,7 +970,8 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 		ecpDblAJ_deep(f->n, f->deep),
 		bA3 ? ecpTplJA3_deep(f->n, f->deep) : ecpTplJ_deep(f->n, f->deep));
 	// настроить
-	ec->hdr.keep = sizeof(ec_o) + O_OF_W(5 * f->n + 1);
+	ec->hdr.keep = sizeof(ec_o) + 
+		memSliceSize(ecpCreateJ_state(f->n), SIZE_MAX);
 	ec->hdr.p_count = 6;
 	ec->hdr.o_count = 1;
 	// все нормально
@@ -866,23 +981,27 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 
 size_t ecpCreateJ_keep(size_t n)
 {
-	return sizeof(ec_o) + O_OF_W(5 * n + 1);
+	return sizeof(ec_o) + 
+		memSliceSize(ecpCreateJ_state(n), SIZE_MAX);
 }
 
 size_t ecpCreateJ_deep(size_t n, size_t f_deep)
 {
-	return utilMax(11,
-		O_OF_W(n),
-		ecpToAJ_deep(n, f_deep),
-		ecpAddJ_deep(n, f_deep),
-		ecpAddAJ_deep(n, f_deep),
-		ecpSubJ_deep(n, f_deep),
-		ecpSubAJ_deep(n, f_deep),
-		ecpDblJ_deep(n, f_deep),
-		ecpDblJA3_deep(n, f_deep),
-		ecpDblAJ_deep(n, f_deep),
-		ecpTplJ_deep(n, f_deep),
-		ecpTplJA3_deep(n, f_deep));
+	return memSliceSize(
+		ecpCreateJ_local(n),
+		utilMax(11,
+			O_OF_W(n),
+			ecpToAJ_deep(n, f_deep),
+			ecpAddJ_deep(n, f_deep),
+			ecpAddAJ_deep(n, f_deep),
+			ecpSubJ_deep(n, f_deep),
+			ecpSubAJ_deep(n, f_deep),
+			ecpDblJ_deep(n, f_deep),
+			ecpDblJA3_deep(n, f_deep),
+			ecpDblAJ_deep(n, f_deep),
+			ecpTplJ_deep(n, f_deep),
+			ecpTplJA3_deep(n, f_deep)),
+		SIZE_MAX);
 }
 
 /*
@@ -891,14 +1010,21 @@ size_t ecpCreateJ_deep(size_t n, size_t f_deep)
 *******************************************************************************
 */
 
+#define ecpIsValid_local(n)\
+/* t1 */	O_OF_W(n),\
+/* t2 */	O_OF_W(n),\
+/* t3 */	O_OF_W(n)
+
 bool_t ecpIsValid(const ec_o* ec, void* stack)
 {
 	size_t n = ec->f->n;
-	// переменные в stack
-	word* t1 = (word*)stack;
-	word* t2 = t1 + n;
-	word* t3 = t2 + n;
-	stack = t3 + n;
+	word* t1;			/* [n] */
+	word* t2;			/* [n] */
+	word* t3;			/* [n] */
+	// разметить стек
+	memSlice(stack,
+		ecpIsValid_local(n), SIZE_0, SIZE_MAX,
+		&t1, &t2, &t3, &stack);
 	// кривая работоспособна?
 	// поле ec->f корректно?
 	// f->mod > 3?
@@ -932,26 +1058,35 @@ bool_t ecpIsValid(const ec_o* ec, void* stack)
 
 size_t ecpIsValid_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(3 * n) + 
+	return memSliceSize(
+		ecpIsValid_local(n), 
 		utilMax(2,
 			f_deep,
-			gfpIsValid_deep(n));
+			gfpIsValid_deep(n)),
+		SIZE_MAX);
 }
 
-bool_t ecpSeemsValidGroup(const ec_o* ec, void* stack)
+#define ecpGroupSeemsValid_local(n)\
+/* t1 */	O_OF_W(n + 1),\
+/* t2 */	O_OF_W(n + 2),\
+/* t3 */	O_OF_W(2 * n)
+
+bool_t ecpGroupSeemsValid(const ec_o* ec, void* stack)
 {
 	size_t n = ec->f->n;
 	int cmp;
 	word w;
-	// переменные в stack
-	word* t1 = (word*)stack;
-	word* t2 = t1 + n + 1;
-	word* t3 = t2 + n + 2;
-	stack = t3 + 2 * n;
+	word* t1;			/* [n + 1] */
+	word* t2;			/* [n + 2] */
+	word* t3;			/* [2 * n] */
 	// pre
 	ASSERT(ecIsOperable(ec));
-	// ecIsOperableGroup(ec) == TRUE? base \in ec?
-	if (!ecIsOperableGroup(ec) ||
+	// разметить стек
+	memSlice(stack,
+		ecpGroupSeemsValid_local(n), SIZE_0, SIZE_MAX,
+		&t1, &t2, &t3, &stack);
+	// ecGroupIsOperable(ec) == TRUE? base \in ec?
+	if (!ecGroupIsOperable(ec) ||
 		!ecpIsOnA(ec->base, ec, stack))
 		return FALSE;
 	// [n + 2]t1 <- order * cofactor
@@ -980,24 +1115,32 @@ bool_t ecpSeemsValidGroup(const ec_o* ec, void* stack)
 	return TRUE;
 }
 
-size_t ecpSeemsValidGroup_deep(size_t n, size_t f_deep)
+size_t ecpGroupSeemsValid_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(4 * n + 3) + 
-		utilMax(2, 
+	return memSliceSize(
+		ecpGroupSeemsValid_local(n), 
+		utilMax(2,
 			ecpIsOnA_deep(n, f_deep),
-			zzSqr_deep(n));
+			zzSqr_deep(n)),
+		SIZE_MAX);
 }
 
-bool_t ecpIsSafeGroup(const ec_o* ec, size_t mov_threshold, void* stack)
+#define ecpGroupIsSafe_local(n1)\
+/* t1 */	O_OF_W(n1),\
+/* t2 */	O_OF_W(n1)
+
+bool_t ecpGroupIsSafe(const ec_o* ec, size_t mov_threshold, void* stack)
 {
 	size_t n1 = ec->f->n + 1;
-	// переменные в stack
-	word* t1 = (word*)stack;
-	word* t2 = t1 + n1;
-	stack = t2 + n1;
+	word* t1;			/* [n1] */
+	word* t2;			/* [n1] */
 	// pre
 	ASSERT(ecIsOperable(ec));
-	ASSERT(ecIsOperableGroup(ec));
+	ASSERT(ecGroupIsOperable(ec));
+	// разметить стек
+	memSlice(stack,
+		ecpGroupIsSafe_local(n1), SIZE_0, SIZE_MAX,
+		&t1, &t2, &stack);
 	// order -- простое?
 	n1 = wwWordSize(ec->order, n1);
 	if (!priIsPrime(ec->order, n1, stack))
@@ -1023,14 +1166,16 @@ bool_t ecpIsSafeGroup(const ec_o* ec, size_t mov_threshold, void* stack)
 	return TRUE;
 }
 
-size_t ecpIsSafeGroup_deep(size_t n)
+size_t ecpGroupIsSafe_deep(size_t n)
 {
 	const size_t n1 = n + 1;
-	return O_OF_W(2 * n1) +
-		utilMax(3,
+	return memSliceSize(
+		ecpGroupIsSafe_local(n1), 
+		utilMax(2,
 			priIsPrime_deep(n1),
 			zzMod_deep(n, n1),
-			zzMulMod_deep(n1));
+			zzMulMod_deep(n1)),
+		SIZE_MAX);
 }
 
 /*
@@ -1045,15 +1190,21 @@ size_t ecpIsSafeGroup_deep(size_t n)
 *******************************************************************************
 */
 
+#define ecpIsOnA_local(n)\
+/* t1 */	O_OF_W(n),\
+/* t2 */	O_OF_W(n)
+
 bool_t ecpIsOnA(const word a[], const ec_o* ec, void* stack)
 {
 	const size_t n = ec->f->n;
-	// переменные в stack
-	word* t1 = (word*)stack;
-	word* t2 = t1 + n;
-	stack = t2 + n;
+	word* t1;			/* [n] */
+	word* t2;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec));
+	// разметить стек
+	memSlice(stack,
+		ecpIsOnA_local(n), SIZE_0, SIZE_MAX,
+		&t1, &t2, &stack);
 	// xa, ya \in ec->f?
 	if (!zmIsIn(ecX(a), ec->f) || !zmIsIn(ecY(a, n), ec->f))
 		return FALSE;
@@ -1070,7 +1221,10 @@ bool_t ecpIsOnA(const word a[], const ec_o* ec, void* stack)
 
 size_t ecpIsOnA_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(2 * n) + f_deep;
+	return memSliceSize(
+		ecpIsOnA_local(n),
+		f_deep,
+		SIZE_MAX);
 }
 
 void ecpNegA(word b[], const word a[], const ec_o* ec)
@@ -1085,19 +1239,26 @@ void ecpNegA(word b[], const word a[], const ec_o* ec)
 	zmNeg(ecY(b, n), ecY(a, n), ec->f);
 }
 
+#define ecpAddAA_local(n)\
+/* t1 */	O_OF_W(n),\
+/* t2 */	O_OF_W(n),\
+/* t3 */	O_OF_W(n)
+
 bool_t ecpAddAA(word c[], const word a[], const word b[], const ec_o* ec,
 	void* stack)
 {
 	const size_t n = ec->f->n;
-	// переменные в stack
-	word* t1 = (word*)stack;
-	word* t2 = t1 + n;
-	word* t3 = t2 + n;
-	stack = t3 + n;
+	word* t1;			/* [n] */
+	word* t2;			/* [n] */
+	word* t3;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec));
 	ASSERT(ecpSeemsOnA(a, ec));
 	ASSERT(ecpSeemsOnA(b, ec));
+	// разметить стек
+	memSlice(stack,
+		ecpAddAA_local(n), SIZE_0, SIZE_MAX,
+		&t1, &t2, &t3, &stack);
 	// xa != xb?
 	if (qrCmp(ecX(a), ecX(b), ec->f) != 0)
 	{
@@ -1139,22 +1300,32 @@ bool_t ecpAddAA(word c[], const word a[], const word b[], const ec_o* ec,
 
 size_t ecpAddAA_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(3 * n) + f_deep;
+	return memSliceSize(
+		ecpAddAA_local(n),
+		f_deep,
+		SIZE_MAX);
 }
+
+#define ecpSubAA_local(n)\
+/* t1 */	O_OF_W(n),\
+/* t2 */	O_OF_W(n),\
+/* t3 */	O_OF_W(n)
 
 bool_t ecpSubAA(word c[], const word a[], const word b[], const ec_o* ec,
 	void* stack)
 {
 	const size_t n = ec->f->n;
-	// переменные в stack
-	word* t1 = (word*)stack;
-	word* t2 = t1 + n;
-	word* t3 = t2 + n;
-	stack = t3 + n;
+	word* t1;			/* [n] */
+	word* t2;			/* [n] */
+	word* t3;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec));
 	ASSERT(ecpSeemsOnA(a, ec));
 	ASSERT(ecpSeemsOnA(b, ec));
+	// разметить стек
+	memSlice(stack,
+		ecpSubAA_local(n), SIZE_0, SIZE_MAX,
+		&t1, &t2, &t3, &stack);
 	// xa != xb?
 	if (qrCmp(ecX(a), ecX(b), ec->f) != 0)
 	{
@@ -1196,7 +1367,10 @@ bool_t ecpSubAA(word c[], const word a[], const word b[], const ec_o* ec,
 
 size_t ecpSubAA_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(3 * n) + f_deep;
+	return memSliceSize(
+		ecpSubAA_local(n),
+		f_deep,
+		SIZE_MAX);
 }
 
 /*
@@ -1207,22 +1381,31 @@ size_t ecpSubAA_deep(size_t n, size_t f_deep)
 *******************************************************************************
 */
 
+#define ecpSWU_local(n)\
+/* t */		O_OF_W(n),\
+/* x1 */	O_OF_W(n),\
+/* x2 */	O_OF_W(n),\
+/* y */		O_OF_W(n),\
+/* s */		O_OF_W(n)
+
 void ecpSWU(word b[], const word a[], const ec_o* ec, void* stack)
 {
 	const size_t n = ec->f->n;
 	register size_t mask;
-	// переменные в stack [x2 после x1, s после y!]
-	word* t = (word*)stack;
-	word* x1 = t + n;
-	word* x2 = x1 + n;
-	word* y = x2 + n;
-	word* s = y + n; 
-	stack = s + n;
+	word* t;			/* [n] */
+	word* x1;			/* [n] */
+	word* x2;			/* [n] */
+	word* y;			/* [n] */
+	word* s;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec));
 	ASSERT(zmIsIn(a, ec->f));
 	ASSERT(wwGetBits(ec->f->mod, 0, 2) == 3);
 	ASSERT(!qrIsZero(ec->A, ec->f) && !qrIsZero(ec->B, ec->f));
+	// разметить стек
+	memSlice(stack,
+		ecpSWU_local(n), SIZE_0, SIZE_MAX,
+		&t, &x1, &x2, &y, &s, &stack);
 	// t <- -a^2
 	qrSqr(t, a, ec->f, stack);
 	zmNeg(t, t, ec->f);
@@ -1268,8 +1451,10 @@ void ecpSWU(word b[], const word a[], const ec_o* ec, void* stack)
 
 size_t ecpSWU_deep(size_t n, size_t f_deep)
 {
-	return O_OF_W(5 * n) + 
+	return memSliceSize(
+		ecpSWU_local(n),
 		utilMax(2,
 			f_deep,
-			qrPower_deep(n, n, f_deep));
+			qrPower_deep(n, n, f_deep)),
+		SIZE_MAX);
 }

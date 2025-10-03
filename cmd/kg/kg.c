@@ -4,7 +4,7 @@
 \brief Generate and manage private keys
 \project bee2/cmd 
 \created 2022.06.08
-\version 2025.06.09
+\version 2025.09.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -106,9 +106,9 @@ static err_t kgGen(int argc, char* argv[])
 	size_t len = 0;
 	cmd_pwd_t pwd = 0;
 	bign_params params[1];
-	void* stack = 0;
-	octet* privkey;
-	octet* pubkey;
+	void* state = 0;
+	octet* privkey;				/* [len] */
+	octet* pubkey;				/* [2 len] */
 	// самотестирование
 	code = cmdStDo(CMD_ST_BELS | CMD_ST_BELT | CMD_ST_BIGN | CMD_ST_BRNG);
 	ERR_CALL_CHECK(code);
@@ -171,20 +171,22 @@ static err_t kgGen(int argc, char* argv[])
 	// запустить ГСЧ
 	code = cmdRngStart(TRUE);
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
-	// выделить память
-	code = cmdBlobCreate(stack, 3 * len);
+	// выделить и разметить память
+	code = cmdBlobCreate2(state, 
+		len, 
+		2 * len,
+		SIZE_MAX,
+		&privkey, &pubkey);
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	// генерировать ключ
-	privkey = (octet*)stack;
-	pubkey = privkey + len;
 	code = len == 24 ? bign96KeypairGen(privkey, pubkey, params, rngStepR, 0) :
 		bignKeypairGen(privkey, pubkey, params, rngStepR, 0);
-	ERR_CALL_HANDLE(code, (cmdBlobClose(stack), cmdPwdClose(pwd)));
+	ERR_CALL_HANDLE(code, (cmdBlobClose(state), cmdPwdClose(pwd)));
 	// обновить ключ ГСЧ
 	rngRekey();
 	// сохранить ключ
 	code = cmdPrivkeyWrite(privkey, len, argv[0], pwd);
-	cmdBlobClose(stack);
+	cmdBlobClose(state);
 	cmdPwdClose(pwd);
 	return code;
 }
@@ -354,10 +356,10 @@ static err_t kgExtr(int argc, char* argv[])
 	err_t code = ERR_OK;
 	cmd_pwd_t pwd = 0;
 	bign_params params[1];
-	void* stack;
 	size_t len = 0;
-	octet* privkey;
-	octet* pubkey;
+	void* state;
+	octet* privkey;			/* [len] */
+	octet* pubkey;			/* [2 len] */
 	// самотестирование
 	code = cmdStDo(CMD_ST_BELS | CMD_ST_BELT | CMD_ST_BIGN);
 	ERR_CALL_CHECK(code);
@@ -401,25 +403,27 @@ static err_t kgExtr(int argc, char* argv[])
 	// определить длину личного ключа
 	code = cmdPrivkeyRead(0, &len, argv[0], pwd);
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
-	// выделить память и разметить ее
-	code = cmdBlobCreate(stack, len + 2 * len);
+	// выделить и разметить память
+	code = cmdBlobCreate2(state, 
+		len, 
+		2 * len,
+		SIZE_MAX,
+		&privkey, &pubkey);
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
-	privkey = (octet*)stack;
-	pubkey = privkey + len;
 	// определить личный ключ
 	code = cmdPrivkeyRead(privkey, &len, argv[0], pwd);
 	cmdPwdClose(pwd);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// определить открытый ключ
 	code = kgParamsStd(params, len);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	code = len == 24 ? bign96PubkeyCalc(pubkey, params, privkey) : 
 		bignPubkeyCalc(pubkey, params, privkey);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// записать открытый ключ
 	code = cmdFileWrite(argv[1], pubkey, len * 2);
 	// завершить
-	cmdBlobClose(stack);
+	cmdBlobClose(state);
 	return code;
 }
 
@@ -436,11 +440,11 @@ static err_t kgPrint(int argc, char* argv[])
 	err_t code = ERR_OK;
 	cmd_pwd_t pwd = 0;
 	bign_params params[1];
-	void* stack;
 	size_t len = 0;
-	octet* privkey;
-	octet* pubkey;
-	char* hex;
+	void* state;
+	octet* privkey;				/* [len] */
+	octet* pubkey;				/* [2 len] */
+	char* hex;					/* [4 len + 1] */
 	// самотестирование
 	code = cmdStDo(CMD_ST_BELS | CMD_ST_BELT);
 	ERR_CALL_CHECK(code);
@@ -482,26 +486,28 @@ static err_t kgPrint(int argc, char* argv[])
 	code = cmdPrivkeyRead(0, &len, argv[0], pwd);
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
 	// выделить память и разметить ее
-	code = cmdBlobCreate(stack, len + 2 * len + 4 * len + 1);
+	code = cmdBlobCreate2(state, 
+		len,
+		2 * len,
+		4 * len + 1,
+		SIZE_MAX,
+		&privkey, &pubkey, &hex);
 	ERR_CALL_HANDLE(code, cmdPwdClose(pwd));
-	privkey = (octet*)stack;
-	pubkey = privkey + len;
-	hex = (char*)(pubkey + 2 * len);
 	// определить личный ключ
 	code = cmdPrivkeyRead(privkey, &len, argv[0], pwd);
 	cmdPwdClose(pwd);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// определить открытый ключ
 	code = kgParamsStd(params, len);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	code = len == 24 ? bign96PubkeyCalc(pubkey, params, privkey) :
 		bignPubkeyCalc(pubkey, params, privkey);
-	ERR_CALL_HANDLE(code, cmdBlobClose(stack));
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// печатать открытый ключ
 	hexFrom(hex, pubkey, len * 2);
 	printf("%s\n", hex);
 	// завершить
-	cmdBlobClose(stack);
+	cmdBlobClose(state);
 	return code;
 }
 

@@ -1,11 +1,10 @@
 cmake_minimum_required(VERSION 3.5...3.31)
-project(BEE2 C)
+project(BEE2
+  VERSION 2.1.9
+  LANGUAGES C
+)
 
-set(BEE2_VERSION_MAJOR "2")
-set(BEE2_VERSION_MINOR "1")
-set(BEE2_VERSION_PATCH "8")
-set(BEE2_VERSION 
-  "${BEE2_VERSION_MAJOR}.${BEE2_VERSION_MINOR}.${BEE2_VERSION_PATCH}")
+include(GNUInstallDirs)
 
 # \remark Set BUILD_PIC even for static libraries if they are linked 
 # into shared libraries
@@ -115,17 +114,19 @@ if(CMAKE_COMPILER_IS_CLANG)
     -fno-strict-aliasing")
   set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -g3")
   set(CMAKE_C_FLAGS_COVERAGE "${CMAKE_C_FLAGS_COVERAGE} -O0 -g3 -coverage")
-  set(CMAKE_C_FLAGS_ASAN "${CMAKE_C_FLAGS_ASAN} -fsanitize=address \
-    -fno-common -fsanitize=undefined -fno-sanitize-recover -O3 \
-    -fno-strict-aliasing")
-  set(CMAKE_C_FLAGS_ASANDBG "${CMAKE_C_FLAGS_ASANDBG} -fsanitize=address \
-    -fno-common -fsanitize=undefined -fno-sanitize-recover -O1 -g3 \
-    -fno-omit-frame-pointer -fno-optimize-sibling-calls")
+  set(CMAKE_C_FLAGS_ASAN "${CMAKE_C_FLAGS_ASAN} -fsanitize=address,undefined\
+    -fno-sanitize=signed-integer-overflow  -fno-sanitize=unsigned-integer-overflow\
+    -fno-sanitize-recover\
+    -fno-common -O3 -fno-strict-aliasing")
+  set(CMAKE_C_FLAGS_ASANDBG "${CMAKE_C_FLAGS_ASANDBG} -fsanitize=address,udefined \
+    -fno-sanitize=signed-integer-overflow  -fno-sanitize=unsigned-integer-overflow\
+    -fno-sanitize-recover\
+    -fno-common -O1 -g3 -fno-omit-frame-pointer -fno-optimize-sibling-calls")
   set(CMAKE_C_FLAGS_MEMSAN "${CMAKE_C_FLAGS_MEMSAN} -fsanitize=memory -O3 \
     -fno-strict-aliasing")
   set(CMAKE_C_FLAGS_MEMSANDBG "${CMAKE_C_FLAGS_MEMSANDBG} -fsanitize=memory \
-    -O1 -g3 -fno-omit-frame-pointer -fno-optimize-sibling-calls \
-    -fsanitize-memory-track-origins=2")
+    -fsanitize-memory-track-origins=2\ 
+    -O1 -g3 -fno-omit-frame-pointer -fno-optimize-sibling-calls")
   set(CMAKE_C_FLAGS_CHECK "${CMAKE_C_FLAGS_CHECK} -Werror -O1 -Wcast-qual")
 endif(CMAKE_COMPILER_IS_CLANG)
 
@@ -143,14 +144,6 @@ endif(CMAKE_COMPILER_IS_MSVC)
 
 if(BUILD_FAST)
   add_definitions(-DSAFE_FAST)
-endif()
-
-if(NOT LIB_INSTALL_DIR)
-  set(LIB_INSTALL_DIR lib)
-endif()
-
-if(NOT BIN_INSTALL_DIR)
-  set(BIN_INSTALL_DIR bin)
 endif()
 
 include_directories(include)

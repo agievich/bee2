@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): block encryption
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.04.25
+\version 2025.10.02
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -80,9 +80,8 @@ void beltKeyExpand(octet key_[32], const octet key[], size_t len)
 		memCopy(key_ + 16, key_, 16);
 	else if (len == 24)
 	{
-		u32* w = (u32*)key_;
-		w[6] = w[0] ^ w[1] ^ w[2];
-		w[7] = w[3] ^ w[4] ^ w[5];
+		memXor(key_ + 24, key + 0, key + 8, 8);
+		memXor2(key_ + 24, key + 16, 8);
 	}
 }
 
@@ -294,8 +293,10 @@ a <-> b, c <-> d, a <-> d.
 */
 void beltBlockEncr(octet block[16], const u32 key[8])
 {
-	u32* t = (u32*)block;
+	u32* t;
+	ASSERT(memIsAligned(block, 4));
 	ASSERT(memIsDisjoint2(block, 16, key, 32));
+	t = (u32*)block;
 #if (OCTET_ORDER == BIG_ENDIAN)
 	t[0] = u32Rev(t[0]);
 	t[1] = u32Rev(t[1]);
@@ -328,8 +329,10 @@ void beltBlockEncr3(u32* a, u32* b, u32* c, u32* d, const u32 key[8])
 */
 void beltBlockDecr(octet block[16], const u32 key[8])
 {
-	u32* t = (u32*)block;
+	u32* t;
+	ASSERT(memIsAligned(block, 4));
 	ASSERT(memIsDisjoint2(block, 16, key, 32));
+	t = (u32*)block;
 #if (OCTET_ORDER == BIG_ENDIAN)
 	t[0] = u32Rev(t[0]);
 	t[1] = u32Rev(t[1]);

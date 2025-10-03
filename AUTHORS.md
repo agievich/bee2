@@ -45,6 +45,7 @@ Contributors*
   - license issues
   - bign/params
   - code review
+  - memory alignment
 - Alexander Zhirkevich
   - cmd/sig, cmd/rng, cmd/test
 - Vladimir Komisarenko
