@@ -4,7 +4,7 @@
 \brief Memory management
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.09.23
+\version 2025.10.03
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -589,6 +589,7 @@ void memSliceArgs(const void* buf, size_t c1, va_list args)
 			s = c;
 		c = va_arg(args, size_t);
 	}
+	va_end(args1);
 }
 
 size_t memSliceSize(size_t c1, ...)
