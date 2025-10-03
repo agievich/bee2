@@ -4,7 +4,7 @@
 \brief 64-bit unsigned words
 \project bee2 [cryptographic library]
 \created 2015.10.28
-\version 2025.09.23
+\version 2025.10.03
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -183,11 +183,20 @@ void u64To(void* dest, size_t count, const u64 src[])
 	{
 		size_t t = count / 8;
 		register u64 u = src[t];
-		for (t *= 8; t < count; ++t, u >>= 8)
+		memMove(dest, src, t *= 8);
+		for (; t < count; ++t, u >>= 8)
 			((octet*)dest)[t] = (octet)u;
 		CLEAN(u);
+		count &= ~(size_t)7;
 	}
-	for (count /= 8; count--;)
-		((u64*)dest)[count] = u64Rev(((u64*)dest)[count]);
+	else
+		memMove(dest, src, count);
+	for (; count; count -= 8)
+	{
+		SWAP(((octet*)dest)[count - 8], ((octet*)dest)[count - 1]);
+		SWAP(((octet*)dest)[count - 7], ((octet*)dest)[count - 2]);
+		SWAP(((octet*)dest)[count - 6], ((octet*)dest)[count - 3]);
+		SWAP(((octet*)dest)[count - 5], ((octet*)dest)[count - 4]);
+	}
 #endif // OCTET_ORDER
 }

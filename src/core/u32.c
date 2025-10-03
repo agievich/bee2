@@ -4,7 +4,7 @@
 \brief 32-bit unsigned words
 \project bee2 [cryptographic library]
 \created 2015.10.28
-\version 2025.10.02
+\version 2025.10.03
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -248,17 +248,25 @@ void u32To(void* dest, size_t count, const u32 src[])
 {
 	ASSERT(memIsValid(src, (count + 3) / 4 * 4));
 	ASSERT(memIsValid(dest, count));
-	memMove(dest, src, count);
 #if (OCTET_ORDER == BIG_ENDIAN)
-	if (count % 4)
+ 	if (count % 4)
 	{
 		size_t t = count / 4;
 		register u32 u = src[t];
-		for (t *= 4; t < count; ++t, u >>= 8)
+		memMove(dest, src, t *= 4);
+		for (; t < count; ++t, u >>= 8)
 			((octet*)dest)[t] = (octet)u;
 		CLEAN(u);
+		count &= ~(size_t)3;
 	}
-	for (count /= 4; count--;)
-		((u32*)dest)[count] = u32Rev(((u32*)dest)[count]);
+	else
+		memMove(dest, src, count);
+	for (; count; count -= 4)
+	{
+		SWAP(((octet*)dest)[count - 4], ((octet*)dest)[count - 1]);
+		SWAP(((octet*)dest)[count - 3], ((octet*)dest)[count - 2]);
+	}
+#else
+	memMove(dest, src, count);
 #endif // OCTET_ORDER
 }
