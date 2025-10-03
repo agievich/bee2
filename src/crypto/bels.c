@@ -284,7 +284,7 @@ static size_t belsGenk_keep()
 static void belsGenkStart(void* state, const octet s[], size_t count,
 	size_t threshold, size_t len)
 {
-	void* in_state; 	/* [MAX2(beltCTR_keep(), beltCompr_deep())] */
+	void* in_state;		/* [MAX2(beltCTR_keep(), beltCompr_deep())] */
 	octet* iv;			/* [32] */
 	u32* K;				/* [16] (|iv) */
 	octet* key;			/* [32] */
