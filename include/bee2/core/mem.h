@@ -4,7 +4,7 @@
 \brief Memory management
 \project bee2 [cryptographic library]
 \created 2012.07.16
-\version 2025.10.03
+\version 2025.10.06
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -61,15 +61,13 @@ extern "C" {
 */
 
 /* \brief Фундаментальный блок
-	\warning Выравнивание на границу dword не гарантируется. Если гарантии
-	нужны, то в mem_align_t следует включить поле типа dword.
 	\remark Указатели void* и void(*)() приводятся отдельно, поскольку
 	равенство sizeof(void*) == sizeof(void(*)()) может нарушаться
 	(см. https://stackoverflow.com/questions/12358843/).
 */
 typedef union 
 {
-	word w;
+	dword dw;
 	size_t s;
     void *p;
     void (*fp)();

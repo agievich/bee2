@@ -5,7 +5,7 @@
 \remark AVX512 is interpreted here only as AVX512F
 \project bee2 [cryptographic library]
 \created 2019.04.03
-\version 2023.02.02
+\version 2025.10.06
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -203,7 +203,7 @@ Bash-s
 
 /*
 *******************************************************************************
-Алгоритм bash-f
+Bash-f
 *******************************************************************************
 */
 
@@ -237,7 +237,6 @@ void bashF(octet block[192], void* stack)
 {
 	register __m512i U0, U1, U2;
 	register __m512i W0, W1, W2;
-
 	ASSERT(memIsValid(block, 192));
 	W0 = LOADU(block + 0);
 	W1 = LOADU(block + 64);
@@ -256,23 +255,11 @@ size_t bashF_deep()
 
 /*
 *******************************************************************************
-Алгоритм bash-f на выровненной памяти
+Удобное выравнивание:
+	memIsAligned(block, 64) == TRUE.
+
+Bash-f на выровненной памяти:
+- заменить LOADU на LOAD;
+- заменить STOREU на STORE.
 *******************************************************************************
 */
-
-void bashF2(octet block[192])
-{
-	register __m512i U0, U1, U2;
-	register __m512i W0, W1, W2;
-		
-	ASSERT(memIsValid(block, 192));
-	ASSERT(memIsAligned(block, 64));
-	W0 = LOAD(block + 0);
-	W1 = LOAD(block + 64);
-	W2 = LOAD(block + 128);
-	bashF0;
-	STORE(block + 0, W0);
-	STORE(block + 64, W1);
-	STORE(block + 128, W2);
-	ZEROALL;
-}

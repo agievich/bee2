@@ -4,7 +4,7 @@
 \brief STB 34.101.77 (bash): bash-f optimized for AVX2
 \project bee2 [cryptographic library]
 \created 2019.04.03
-\version 2023.02.02
+\version 2025.10.06
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -313,7 +313,6 @@ void bashF(octet block[192], void* stack)
 {
 	register __m256i Z1, Z2, T0, T1, T2, U0, U1, U2;
 	register __m256i W0, W1, W2, W3, W4, W5;
-
 	ASSERT(memIsValid(block, 192));
 	W0 = LOADU(block + 0);
 	W1 = LOADU(block + 32);
@@ -338,29 +337,11 @@ size_t bashF_deep()
 
 /*
 *******************************************************************************
-Bash-f на выровненной памяти
+Удобное выравнивание:
+	memIsAligned(block, 32) == TRUE.
+
+Bash-f на выровненной памяти:
+- заменить LOADU на LOAD;
+- заменить STOREU на STORE.
 *******************************************************************************
 */
-
-void bashF2(octet block[192])
-{
-	register __m256i Z1, Z2, T0, T1, T2, U0, U1, U2;
-	register __m256i W0, W1, W2, W3, W4, W5;
-
-	ASSERT(memIsValid(block, 192));
-	ASSERT(memIsAligned(block, 32));
-	W0 = LOAD(block +   0);
-	W1 = LOAD(block +  32);
-	W2 = LOAD(block +  64);
-	W3 = LOAD(block +  96);
-	W4 = LOAD(block + 128);
-	W5 = LOAD(block + 160);
-	bashF0;
-	STORE(block +   0, W0);
-	STORE(block +  32, W1);
-	STORE(block +  64, W2);
-	STORE(block +  96, W3);
-	STORE(block + 128, W4);
-	STORE(block + 160, W5);
-	ZEROALL;
-}

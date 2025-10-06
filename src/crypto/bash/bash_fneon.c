@@ -4,7 +4,7 @@
 \brief STB 34.101.77 (bash): bash-f optimized for ARM NEON
 \project bee2 [cryptographic library]
 \created 2020.10.26
-\version 2023.02.02
+\version 2025.10.06
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -301,15 +301,14 @@ Bash-f
 
 /*
 *******************************************************************************
-Bash-f на памяти, выровненной на границу 8 байт, stack не используется
+Bash-f
 *******************************************************************************
 */
 
-static void bashF2(octet block[192], void* stack)
+static void bashF(octet block[192], void* stack)
 {
 	register uint64x2_t Z1, Z2, T0, T1, T2, U0, U1, U2;
 	register uint64x2_t W0, W1, W2, W3, W4, W5, W6, W7, W8, W9, W10, W11;
-
 	ASSERT(memIsValid(block, 192));
 	ASSERT(memIsAligned(block, 8));
 	W0 = LOAD(block + 0);
@@ -339,17 +338,7 @@ static void bashF2(octet block[192], void* stack)
 	STORE(block + 176, W11);
 }
 
-void bashF(octet block_unaligned[192], void* stack)
-{
-	octet *block_aligned = (octet*)((((uintptr_t)stack) + 7) & ~((uintptr_t)7));
-
-	ASSERT(memIsDisjoint2(block_unaligned, 192, stack, bashF_deep()));
-	memCopy(block_aligned, block_unaligned, 192);
-	bashF2(block_aligned, (octet*)stack + bashF_deep());
-	memCopy(block_unaligned, block_aligned, 192);
-}
-
 size_t bashF_deep()
 {
-	return 192 + 8;
+	return 0;
 }
