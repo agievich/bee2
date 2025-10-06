@@ -305,7 +305,7 @@ Bash-f
 *******************************************************************************
 */
 
-static void bashF(octet block[192], void* stack)
+void bashF(octet block[192], void* stack)
 {
 	register uint64x2_t Z1, Z2, T0, T1, T2, U0, U1, U2;
 	register uint64x2_t W0, W1, W2, W3, W4, W5, W6, W7, W8, W9, W10, W11;
