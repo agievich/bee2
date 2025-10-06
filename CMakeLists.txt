@@ -88,9 +88,11 @@ if(CMAKE_COMPILER_IS_GNUCC)
     -fno-strict-aliasing")
   set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -g3")
   set(CMAKE_C_FLAGS_COVERAGE "${CMAKE_C_FLAGS_COVERAGE} -O0 -g3 -coverage")
-  set(CMAKE_C_FLAGS_ASAN "${CMAKE_C_FLAGS_ASAN} -fsanitize=address \
+  set(CMAKE_C_FLAGS_ASAN "${CMAKE_C_FLAGS_ASAN} -fsanitize=address,undefined \
+    -fno-sanitize=signed-integer-overflow -fno-sanitize-recover=all\
     -fno-common -O3 -fno-strict-aliasing")
-  set(CMAKE_C_FLAGS_ASANDBG "${CMAKE_C_FLAGS_ASANDBG} -fsanitize=address \
+  set(CMAKE_C_FLAGS_ASANDBG "${CMAKE_C_FLAGS_ASANDBG} -fsanitize=address,undefined \
+    -fno-sanitize=signed-integer-overflow -fno-sanitize-recover=all\
     -fno-common -O1 -g3 -fno-omit-frame-pointer -fno-optimize-sibling-calls")
   set(CMAKE_C_FLAGS_CHECK "${CMAKE_C_FLAGS_CHECK} -Werror -O1 \
     -Wcast-qual -fanalyzer")
@@ -115,12 +117,12 @@ if(CMAKE_COMPILER_IS_CLANG)
   set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -g3")
   set(CMAKE_C_FLAGS_COVERAGE "${CMAKE_C_FLAGS_COVERAGE} -O0 -g3 -coverage")
   set(CMAKE_C_FLAGS_ASAN "${CMAKE_C_FLAGS_ASAN} -fsanitize=address,undefined\
-    -fno-sanitize=signed-integer-overflow  -fno-sanitize=unsigned-integer-overflow\
-    -fno-sanitize-recover\
+    -fno-sanitize=signed-integer-overflow -fno-sanitize=unsigned-integer-overflow\
+    -fno-sanitize-recover=all\
     -fno-common -O3 -fno-strict-aliasing")
   set(CMAKE_C_FLAGS_ASANDBG "${CMAKE_C_FLAGS_ASANDBG} -fsanitize=address,udefined \
-    -fno-sanitize=signed-integer-overflow  -fno-sanitize=unsigned-integer-overflow\
-    -fno-sanitize-recover\
+    -fno-sanitize=signed-integer-overflow -fno-sanitize=unsigned-integer-overflow\
+    -fno-sanitize-recover=all\
     -fno-common -O1 -g3 -fno-omit-frame-pointer -fno-optimize-sibling-calls")
   set(CMAKE_C_FLAGS_MEMSAN "${CMAKE_C_FLAGS_MEMSAN} -fsanitize=memory -O3 \
     -fno-strict-aliasing")
