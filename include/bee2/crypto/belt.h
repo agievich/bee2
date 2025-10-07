@@ -291,7 +291,7 @@ void beltWBLStart(
 	\expect beltWBLStart() < beltWBLStepE()*.
 */
 void beltWBLStepE(
-	void* buf,			/*!< [in,out] открытый текст / шифртекст  */
+	void* buf,			/*!< [in,out] открытый текст / шифртекст */
 	size_t count,		/*!< [in] число октетов текста */
 	void* state			/*!< [in,out] состояние */
 );
@@ -342,7 +342,7 @@ void beltWBLStepD2(
 	одноразового ключа в СТБ 34.101.45. Поэтому функции назначен суффикс R.
 */
 void beltWBLStepR(
-	void* buf,			/*!< [in,out] открытый текст / шифртекст  */
+	void* buf,			/*!< [in,out] открытый текст / шифртекст */
 	size_t count,		/*!< [in] число октетов текста */
 	void* state			/*!< [in,out] состояние */
 );
@@ -1588,7 +1588,7 @@ void beltFMTStart(
 	\remark При нулевом указателе iv используется нулевая синхропосылка.
 */
 void beltFMTStepE(
-	u16 buf[],				/*!< [in,out] открытый текст / шифртекст  */
+	u16 buf[],				/*!< [in,out] открытый текст / шифртекст */
 	const octet iv[16],		/*!< [in] синхропосылка */
 	void* state				/*!< [in,out] состояние */
 );

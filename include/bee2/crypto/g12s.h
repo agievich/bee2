@@ -229,4 +229,4 @@ err_t g12sVerify(
 } /* extern "C" */
 #endif
 
-#endif  /* __BEE2_G12S_H */
+#endif /* __BEE2_G12S_H */

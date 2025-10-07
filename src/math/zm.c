@@ -498,7 +498,7 @@ static size_t zmFromMont_deep(size_t n)
 
 static void zmToMont(octet b[], const word a[], const qr_o* r, void* stack)
 {
-	word* c;			/* [2  * n] */
+	word* c;			/* [2 * n] */
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(a, r));
 	memSlice(stack,

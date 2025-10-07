@@ -568,7 +568,7 @@ static void ecpAddAJ(word c[], const word a[], const word b[], const ec_o* ec,
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ecpSeemsOn3(a, ec));
 	ASSERT(ecpSeemsOnA(b, ec));
-	ASSERT(wwIsSameOrDisjoint(a,  c, 3 * n));
+	ASSERT(wwIsSameOrDisjoint(a, c, 3 * n));
 	ASSERT(b == c || wwIsDisjoint2(b, 2 * n, c, 3 * n));
 	// разметить стек
 	memSlice(stack,
@@ -689,7 +689,7 @@ static void ecpSubAJ(word c[], const word a[], const word b[], const ec_o* ec,
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ecpSeemsOn3(a, ec));
 	ASSERT(ecpSeemsOnA(b, ec));
-	ASSERT(wwIsSameOrDisjoint(a,  c, 3 * n));
+	ASSERT(wwIsSameOrDisjoint(a, c, 3 * n));
 	ASSERT(b == c || wwIsDisjoint2(b, 2 * n, c, 3 * n));
 	// разметить стек
 	memSlice(stack,

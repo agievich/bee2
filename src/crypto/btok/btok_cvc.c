@@ -186,7 +186,7 @@ static err_t btokVerify(const void* buf, size_t count, const octet sig[],
 		&hash, &hash_state);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
-   	// хэшировать
+	// хэшировать
 	if (pubkey_len <= 64)
 	{
 		beltHashStart(hash_state);

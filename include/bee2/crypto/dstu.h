@@ -283,4 +283,4 @@ err_t dstuVerify(
 } /* extern "C" */
 #endif
 
-#endif  /* __BEE2_DSTU_H */
+#endif /* __BEE2_DSTU_H */

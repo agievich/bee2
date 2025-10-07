@@ -143,7 +143,7 @@ T == octet.
 #if defined(__BYTE_ORDER) && (__BYTE_ORDER == __LITTLE_ENDIAN) ||\
 	defined(__LITTLE_ENDIAN__) ||\
 	defined(__M_IX86) || defined(_X86_) || defined(i386) ||\
-	defined(__i386__) || defined(_M_I86)  || defined(_M_IX86) ||\
+	defined(__i386__) || defined(_M_I86) || defined(_M_IX86) ||\
 	defined(_M_IA64) || defined(__ia64__) || defined(_M_X64) ||\
 	defined(_M_AMD64) || defined(__amd64__) || defined(__amd64) ||\
 	defined(__x86_64__) ||\
@@ -214,7 +214,7 @@ T == octet.
 #undef OS_IPHONE
 
 #if defined(_WIN32) || defined(_WIN64) || defined(__WINNT) ||\
-	defined(__WIN32__) || defined(__WIN64__)  || defined(__WINNT__)
+	defined(__WIN32__) || defined(__WIN64__) || defined(__WINNT__)
 	#define OS_WIN
 #elif defined(__unix) || defined(__unix__) || defined(__APPLE__)
 	#define OS_UNIX

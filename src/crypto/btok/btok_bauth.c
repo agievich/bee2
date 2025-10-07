@@ -394,7 +394,7 @@ err_t btokBAuthTStep3(octet out[], const octet in[], void* state)
 	beltHashStepH(Rct, no / 2, stack);
 	if (s->settings->kcb)
 	{
-  		// Rt <-R {0, 1}^128
+		// Rt <-R {0, 1}^128
 		s->settings->rng(s->R, 16, s->settings->rng_state);
 		beltHashStepH(s->R, 16, stack);
 	}
@@ -484,7 +484,7 @@ err_t btokBAuthCTStep4(octet out[], const octet in[], void* state)
 	beltHashStart(stack);
 	beltHashStepH(s->R, no / 2, stack);
 	if (s->settings->kcb)
-  	beltHashStepH(in + 8, no / 2, stack);
+	beltHashStepH(in + 8, no / 2, stack);
 	if (s->settings->helloa)
 		beltHashStepH(s->settings->helloa, s->settings->helloa_len, stack);
 	if (s->settings->hellob)
@@ -524,7 +524,7 @@ err_t btokBAuthCTStep4(octet out[], const octet in[], void* state)
 		sct[n + n / 2] = zzAdd2(sct + n / 2, s->d, n);
 		zzMod(sct, sct, n + n / 2 + 1, s->ec->order, n, stack);
 		zzSubMod(sct, s->u, sct, s->ec->order, n);
-  		// out ||.. <- sct || cert_ct
+		// out ||.. <- sct || cert_ct
 		wwTo(out, no, sct);
 		memCopy(out + no, s->cert->data, s->cert->len);
 		// out ||.. <- beltCFBEncr(sct || cert_ct, K2, 0^128)

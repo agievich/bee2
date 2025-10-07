@@ -149,7 +149,7 @@ static err_t cmdInit()
 это "stamp".
 
 \remark Штамп либо присоединяется к исполнимому модулю, либо размещается в 
-файле  
+файле
 	path/to/bee2cmd.stamp
 (см. описание функции cmdStampSelfVal()).
 

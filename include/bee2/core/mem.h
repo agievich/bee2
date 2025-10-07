@@ -69,8 +69,8 @@ typedef union
 {
 	dword dw;
 	size_t s;
-    void *p;
-    void (*fp)();
+	void *p;
+	void (*fp)();
 } mem_align_t;
 
 /*
@@ -306,7 +306,7 @@ bool_t FAST(memIsRep)(const void* buf, size_t count, octet o);
 
 	В dest записывается блок [count1]src1 || [count2]src2.
 	\pre По адресам src1, src2, dest зарезервировано count1, count2 и
-	count1 +  count2 октетов памяти соответственно.
+	count1 + count2 октетов памяти соответственно.
 	\remark Буферы src1, src2 и dest могут пересекаться.
 */
 void memJoin(

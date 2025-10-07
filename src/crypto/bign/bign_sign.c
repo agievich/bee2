@@ -52,7 +52,7 @@ err_t bignSignEc(octet sig[], const ec_o* ec, const octet oid_der[],
 		!memIsValid(sig, no + no / 2) ||
 		!memIsDisjoint2(hash, no, sig, no + no / 2))
 		return ERR_BAD_INPUT;
-	if (oid_len == SIZE_MAX || oidFromDER(0, oid_der, oid_len)  == SIZE_MAX)
+	if (oid_len == SIZE_MAX || oidFromDER(0, oid_der, oid_len) == SIZE_MAX)
 		return ERR_BAD_OID;
 	if (rng == 0)
 		return ERR_BAD_RNG;
@@ -160,7 +160,7 @@ err_t bignSign2Ec(octet sig[], const ec_o* ec, const octet oid_der[],
 		!memIsValid(sig, no + no / 2) ||
 		!memIsDisjoint2(hash, no, sig, no + no / 2))
 		return ERR_BAD_INPUT;
-	if (oid_len == SIZE_MAX || oidFromDER(0, oid_der, oid_len)  == SIZE_MAX)
+	if (oid_len == SIZE_MAX || oidFromDER(0, oid_der, oid_len) == SIZE_MAX)
 		return ERR_BAD_OID;
 	if (!memIsNullOrValid(t, t_len))
 		return ERR_BAD_INPUT;
@@ -286,7 +286,7 @@ err_t bignVerifyEc(const ec_o* ec, const octet oid_der[], size_t oid_len,
 	if (!memIsValid(hash, no) || !memIsValid(sig, no + no / 2) ||
 		!memIsValid(pubkey, 2 * no))
 		return ERR_BAD_INPUT;
-	if (oid_len == SIZE_MAX || oidFromDER(0, oid_der, oid_len)  == SIZE_MAX)
+	if (oid_len == SIZE_MAX || oidFromDER(0, oid_der, oid_len) == SIZE_MAX)
 		return ERR_BAD_OID;
 	// создать состояние
 	state = blobCreate2(

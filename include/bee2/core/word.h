@@ -126,7 +126,7 @@ extern "C" {
 \def wordEq01
 \brief Машинные слова a и b равны (WORD_0 / WORD_1)? 
 \def wordEq0M
-\brief Машинные слова a и b равны  (WORD_0 / WORD_MAX)?
+\brief Машинные слова a и b равны (WORD_0 / WORD_MAX)?
 
 \def wordNeq 
 \brief Машинные слова a и b не равны?
@@ -145,9 +145,9 @@ extern "C" {
 \def wordLeq
 \brief Машинное слово a не больше машинного слова b?
 \def wordLeq01
-\brief Машинное слово a не больше машинного слова b  (WORD_0 / WORD_1)?
+\brief Машинное слово a не больше машинного слова b (WORD_0 / WORD_1)?
 \def wordLeq0M
-\brief Машинное слово a не больше машинного слова b  (WORD_0 / WORD_MAX)?
+\brief Машинное слово a не больше машинного слова b (WORD_0 / WORD_MAX)?
 
 \def wordGreater
 \brief Машинное слово a больше машинного слова b?
@@ -159,9 +159,9 @@ extern "C" {
 \def wordGeq
 \brief Машинное слово a не меньше машинного слова b?
 \def wordGeq01
-\brief Машинное слово a не меньше машинного слова b  (WORD_0 / WORD_1)?
+\brief Машинное слово a не меньше машинного слова b (WORD_0 / WORD_1)?
 \def wordGeq0M
-\brief Машинное слово a не меньше машинного слова b  (WORD_0 / WORD_MAX)?
+\brief Машинное слово a не меньше машинного слова b (WORD_0 / WORD_MAX)?
 *******************************************************************************
 */
 

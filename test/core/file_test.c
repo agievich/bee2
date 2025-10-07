@@ -64,7 +64,7 @@ bool_t fileTest()
 	hexFrom(str, buf, 10);
 	if (!filePuts(file, str) || fileTell(file) != 35 + 20 ||
 		!fileSeek(file, 35, SEEK_SET) ||
-		!fileGets(str1, 5, file)  ||
+		!fileGets(str1, 5, file) ||
 		!strStartsWith(str, str1) ||
 		!fileSeek(file, 35, SEEK_SET) ||
 		!fileGets(str1, sizeof(str1), file) ||

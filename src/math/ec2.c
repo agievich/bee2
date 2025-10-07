@@ -450,7 +450,7 @@ static void ec2AddALD(word c[], const word a[], const word b[],
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ec2SeemsOn3(a, ec));
 	ASSERT(ec2SeemsOnA(b, ec));
-	ASSERT(wwIsSameOrDisjoint(a,  c, 3 * n));
+	ASSERT(wwIsSameOrDisjoint(a, c, 3 * n));
 	ASSERT(b == c || wwIsDisjoint2(b, 2 * n, c, 3 * n));
 	// разметить стек
 	memSlice(stack,
@@ -579,7 +579,7 @@ static void ec2SubALD(word c[], const word a[], const word b[],
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ec2SeemsOn3(a, ec));
 	ASSERT(ec2SeemsOnA(b, ec));
-	ASSERT(wwIsSameOrDisjoint(a,  c, 3 * n));
+	ASSERT(wwIsSameOrDisjoint(a, c, 3 * n));
 	ASSERT(b == c || wwIsDisjoint2(b, 2 * n, c, 3 * n));
 	// разметить стек
 	memSlice(stack,

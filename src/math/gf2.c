@@ -259,7 +259,7 @@ static size_t gf2MulTrinomial0_deep(size_t n)
 static void gf2MulTrinomial1(word c[], const word a[], const word b[], 
 	const qr_o* f, void* stack)
 {
-	word* prod;			/* [2  * n] */
+	word* prod;			/* [2 * n] */
 	ASSERT(gf2IsOperable(f));
 	ASSERT(gf2IsIn(a, f));
 	ASSERT(gf2IsIn(b, f));

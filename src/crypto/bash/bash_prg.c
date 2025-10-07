@@ -128,7 +128,7 @@ void bashPrgStart(void* state, size_t l, size_t d, const octet ann[],
 	// s[pos..) <- 0
 	memSetZero(st->s + st->pos, 192 - st->pos);
 	// s[1472..) <- <l / 4 + d>_{64}
-	st->s[192 - 8] = (octet)(l / 4  + d);
+	st->s[192 - 8] = (octet)(l / 4 + d);
 	// длина буфера
 	st->buf_len = key_len ? (192 - l * (2 + d) / 16) : (192 - d * l / 4);
 	// сохранить параметры
@@ -162,7 +162,7 @@ void bashPrgRestart(const octet ann[], size_t ann_len,
 		bashPrgCommit(BASH_PRG_NULL, state);
 	// pos <- 8 + |ann| + |key|
 	st->pos = 1 + ann_len + key_len;
-	// s[0..pos) <- s[0..pos) ^ <|ann|/2 + |key|/32>_8  || ann || key
+	// s[0..pos) <- s[0..pos) ^ <|ann|/2 + |key|/32>_8 || ann || key
 	st->s[0] ^= (octet)(ann_len * 4 + key_len / 4);
 	memXor2(st->s + 1, ann, ann_len); 
 	memXor2(st->s + 1 + ann_len, key, key_len);

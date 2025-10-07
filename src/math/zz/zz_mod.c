@@ -94,7 +94,7 @@ void zzAddWMod(word b[], const word a[], register word w, const word mod[],
 	{
 		b[i] = a[i] + w;
 		w = wordLess01(b[i], w);
-		// mask <-  mod[i] < b[i] | mask & mod[i] == b[i];
+		// mask <- mod[i] < b[i] | mask & mod[i] == b[i];
 		mask &= wordEq01(mod[i], b[i]);
 		mask |= wordLess01(mod[i], b[i]);
 	}
@@ -127,7 +127,7 @@ void zzSubMod(word c[], const word a[], const word b[], const word mod[],
 	ASSERT(wwCmp(a, mod, n) < 0 && wwCmp(b, mod, n) < 0);
 	// mask <- a < b ? WORD_MAX : WORD_0
 	mask = WORD_0 - zzSub(c, a, b, n);
-	zzAddAndW(c, mod,  n, mask);
+	zzAddAndW(c, mod, n, mask);
 	CLEAN(mask);
 }
 
@@ -152,7 +152,7 @@ void zzSubWMod(word b[], const word a[], register word w, const word mod[],
 	ASSERT(wwCmp(a, mod, n) < 0 && wwCmpW(mod, n, w) > 0);
 	// mask <- a < w ? WORD_MAX : WORD_0
 	mask = WORD_0 - zzSubW(b, a, n, w);
-	zzAddAndW(b, mod,  n, mask);
+	zzAddAndW(b, mod, n, mask);
 	CLEAN2(w, mask);
 }
 
@@ -415,7 +415,7 @@ bool_t zzRandMod(word a[], const word mod[], size_t n, gen_i rng,
 	ASSERT(n > 0 && mod[n - 1] != 0);
 	// генерировать
 	l = wwBitSize(mod, n);
-	i =  B_PER_IMPOSSIBLE;
+	i = B_PER_IMPOSSIBLE;
 	do
 	{
 		rng(a, O_OF_B(l), rng_state);

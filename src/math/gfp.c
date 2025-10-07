@@ -30,9 +30,9 @@ IEEE Trans. on Computers 35 No5 (1986), 478–482] и цитируемый в с
 с [Algorithm 11.9 Prime field inversion, CohenFrey, p. 207]:
 	t <- a mod p, b <- 1
 	while t != 1
-	  q <- - (p div t)
-	  t <- p + q t
-	  b <- (q b) mod p
+		q <- - (p div t)
+		t <- p + q t
+		b <- (q b) mod p
 	return b
 *******************************************************************************
 */

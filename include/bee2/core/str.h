@@ -45,7 +45,7 @@ extern "C" {
 	\return Длина строки
 */
 size_t strLen(
-  const char* str		/*< [in] строка */
+	const char* str		/*< [in] строка */
 );
 
 /*!	\brief Корректная строка?

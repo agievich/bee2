@@ -4,7 +4,7 @@
 \brief The Base64 encoding
 \project bee2 [cryptographic library]
 \created 2016.06.16
-\version 2025.06.10
+\version 2025.10.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -98,7 +98,7 @@ void b64From(char* dest, const void* src, size_t count)
 	ASSERT(memIsDisjoint2(src, count, dest, 4 * ((count + 2) / 3) + 1));
 	for (; count >= 3; count -= 3)
 	{
-		block  = ((const octet*)src)[0], block <<= 8;
+		block = ((const octet*)src)[0], block <<= 8;
 		block |= ((const octet*)src)[1], block <<= 8;
 		block |= ((const octet*)src)[2];
 		dest[3] = b64_alphabet[block & 63], block >>= 6;
@@ -110,7 +110,7 @@ void b64From(char* dest, const void* src, size_t count)
 	}
 	if (count == 2)
 	{
-		block  = ((const octet*)src)[0], block <<= 8;
+		block = ((const octet*)src)[0], block <<= 8;
 		block |= ((const octet*)src)[1], block <<= 2;
 		dest[3] = '=';
 		dest[2] = b64_alphabet[block & 63], block >>= 6;
@@ -120,7 +120,7 @@ void b64From(char* dest, const void* src, size_t count)
 	}
 	else if (count == 1)
 	{
-		block  = ((const octet*)src)[0], block <<= 4;
+		block = ((const octet*)src)[0], block <<= 4;
 		dest[3] = dest[2] = '=';
 		dest[1] = b64_alphabet[block & 63], block >>= 6;
 		dest[0] = b64_alphabet[block];
@@ -149,7 +149,7 @@ void b64To(void* dest, size_t* count, const char* src)
 	ASSERT(memIsDisjoint2(src, strLen(src) + 1, dest, *count));
 	for (; len >= 4; len -= 4)
 	{
-		block  = b64_dec_table[(octet)src[0]], block <<= 6;
+		block = b64_dec_table[(octet)src[0]], block <<= 6;
 		block |= b64_dec_table[(octet)src[1]], block <<= 6;
 		block |= b64_dec_table[(octet)src[2]], block <<= 6;
 		block |= b64_dec_table[(octet)src[3]];
@@ -161,7 +161,7 @@ void b64To(void* dest, size_t* count, const char* src)
 	}
 	if (len == 3)
 	{
-		block  = b64_dec_table[(octet)src[0]], block <<= 6;
+		block = b64_dec_table[(octet)src[0]], block <<= 6;
 		block |= b64_dec_table[(octet)src[1]], block <<= 6;
 		block |= b64_dec_table[(octet)src[2]], block >>= 2;
 		((octet*)dest)[1] = block & 255, block >>= 8;
@@ -169,7 +169,7 @@ void b64To(void* dest, size_t* count, const char* src)
 	}
 	else if (len == 2)
 	{
-		block  = b64_dec_table[(octet)src[0]], block <<= 6;
+		block = b64_dec_table[(octet)src[0]], block <<= 6;
 		block |= b64_dec_table[(octet)src[1]], block >>= 4;
 		((octet*)dest)[0] = block;
 	}

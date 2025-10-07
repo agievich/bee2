@@ -50,7 +50,7 @@ err_t bignIdExtractEc(octet id_privkey[], octet id_pubkey[],
 		!memIsValid(pubkey, 2 * no) || !memIsValid(id_privkey, no) ||
 		!memIsValid(id_pubkey, 2 * no))
 		return ERR_BAD_INPUT;
-	if (oid_len == SIZE_MAX || oidFromDER(0, oid_der, oid_len)  == SIZE_MAX)
+	if (oid_len == SIZE_MAX || oidFromDER(0, oid_der, oid_len) == SIZE_MAX)
 		return ERR_BAD_OID;
 	// создать состояние
 	state = blobCreate2(
@@ -160,7 +160,7 @@ err_t bignIdSignEc(octet id_sig[], const ec_o* ec, const octet oid_der[],
 	if (!memIsValid(id_hash, no) || !memIsValid(hash, no) ||
 		!memIsValid(id_privkey, no) || !memIsValid(id_sig, no + no / 2))
 		return ERR_BAD_INPUT;
-	if (oid_len == SIZE_MAX || oidFromDER(0, oid_der, oid_len)  == SIZE_MAX)
+	if (oid_len == SIZE_MAX || oidFromDER(0, oid_der, oid_len) == SIZE_MAX)
 		return ERR_BAD_OID;
 	if (rng == 0)
 		return ERR_BAD_RNG;
@@ -268,7 +268,7 @@ err_t bignIdSign2Ec(octet id_sig[], const ec_o* ec, const octet oid_der[],
 	if (!memIsValid(id_hash, no) || !memIsValid(hash, no) ||
 		!memIsValid(id_privkey, no) || !memIsValid(id_sig, no + no / 2))
 		return ERR_BAD_INPUT;
-	if (oid_len == SIZE_MAX || oidFromDER(0, oid_der, oid_len)  == SIZE_MAX)
+	if (oid_len == SIZE_MAX || oidFromDER(0, oid_der, oid_len) == SIZE_MAX)
 		return ERR_BAD_OID;
 	if (!memIsNullOrValid(t, t_len))
 		return ERR_BAD_INPUT;
@@ -400,7 +400,7 @@ err_t bignIdVerifyEc(const ec_o* ec, const octet oid_der[], size_t oid_len,
 		!memIsValid(id_sig, no + no / 2) || !memIsValid(id_pubkey, 2 * no) ||
 		!memIsValid(pubkey, 2 * no))
 		return ERR_BAD_INPUT;
-	if (oid_len == SIZE_MAX || oidFromDER(0, oid_der, oid_len)  == SIZE_MAX)
+	if (oid_len == SIZE_MAX || oidFromDER(0, oid_der, oid_len) == SIZE_MAX)
 		return ERR_BAD_OID;
 	// создать состояние
 	state = blobCreate2(

@@ -67,7 +67,7 @@ bool_t ecpBench()
 		}
 		ticks = tmTicks() - ticks;
 		// печать результатов
-		printf("ecpBench: %u cycles/mulpoint [%u mulpoints/sec]\n",  
+		printf("ecpBench: %u cycles/mulpoint [%u mulpoints/sec]\n",
 			(unsigned)(ticks / reps),
 			(unsigned)tmSpeed(reps, ticks));
 	}

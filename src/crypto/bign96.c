@@ -353,7 +353,7 @@ err_t bign96Sign2Ec(octet sig[34], const ec_o* ec, const octet oid_der[],
 	if (!memIsValid(hash, 24) || !memIsValid(privkey, 24) ||
 		!memIsValid(sig, 34) || !memIsDisjoint2(hash, 24, sig, 34))
 		return ERR_BAD_INPUT;
-	if (oid_len == SIZE_MAX || oidFromDER(0, oid_der, oid_len)  == SIZE_MAX)
+	if (oid_len == SIZE_MAX || oidFromDER(0, oid_der, oid_len) == SIZE_MAX)
 		return ERR_BAD_OID;
 	if (!memIsNullOrValid(t, t_len))
 		return ERR_BAD_INPUT;

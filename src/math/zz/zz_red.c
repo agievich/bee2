@@ -91,7 +91,7 @@ void zzRedCrand(word a[], const word mod[], size_t n, void* stack)
 	{
 		a[i] += carry;
 		carry = wordLess01(a[i], carry);
-		// mask <-  mod[i] < a[i] | mask & mod[i] == a[i];
+		// mask <- mod[i] < a[i] | mask & mod[i] == a[i];
 		mask &= wordEq01(mod[i], a[i]);
 		mask |= wordLess01(mod[i], a[i]);
 	}
@@ -341,7 +341,7 @@ void FAST(zzRedCrandMont)(word a[], const word mod[], size_t n,
 	size_t i;
 	// pre
 	ASSERT(wwIsDisjoint2(a, 2 * n, mod, n));
-	ASSERT(n >= 2 && mod[0] % 2  && wwIsRepW(mod + 1, n - 1, WORD_MAX));
+	ASSERT(n >= 2 && mod[0] % 2 && wwIsRepW(mod + 1, n - 1, WORD_MAX));
 	ASSERT((word)(mod[0] * mont_param + 1) == 0);
 	// редукция
 	for (i = 0; i < n; ++i)
@@ -379,7 +379,7 @@ void zzRedCrandMont(word a[], const word mod[], size_t n,
 	size_t i;
 	// pre
 	ASSERT(wwIsDisjoint2(a, 2 * n, mod, n));
-	ASSERT(n >= 2 && mod[0] % 2  && wwIsRepW(mod + 1, n - 1, WORD_MAX));
+	ASSERT(n >= 2 && mod[0] % 2 && wwIsRepW(mod + 1, n - 1, WORD_MAX));
 	ASSERT((word)(mod[0] * mont_param + 1) == 0);
 	// редукция
 	for (i = 0; i < n; ++i)
