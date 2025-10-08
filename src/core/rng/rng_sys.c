@@ -173,7 +173,7 @@ err_t rngSys2Read(void* buf, size_t* read, size_t count)
 
 #include <CommonCrypto/CommonRandom.h>
 
-static err_t rngSys2Read(void* buf, size_t* read, size_t count)
+err_t rngSys2Read(void* buf, size_t* read, size_t count)
 {
 	ASSERT(memIsValid(read, O_PER_S));
 	ASSERT(memIsValid(buf, count));
