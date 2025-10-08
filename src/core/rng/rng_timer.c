@@ -23,7 +23,7 @@
 
 Реализовано предложение [Jessie Walker, Seeding Random Number Generator]:
 наблюдением является разность между показаниями высокоточного таймера
-(регистра RDTSC) при приостановке потока на 0 мс, т.е. при передаче
+(например, регистра RDTSC) при приостановке потока на 0 мс, т.е. при передаче
 управления ядру.
 
 Оценка энтропии при использовании RDTSC [Jessie Walker]:
@@ -32,11 +32,6 @@
 Реализация:
 -	таймер может быть источником случайности, если он обновляется не реже
 	10^9 раз в секунду (1 ГГц);
--	если частота обновления таймера ниже разрешенной, то вместо него может 
-	использоваться таймер-счетчик с частотой обновления не ниже 10^8 раз 
-	в секунду (100 MГц). Снижение порога частоты мотивируется тем, что 
-	таймер-счетчик по принципу своей работы привносит случайные флуктуации 
-	промежутков времени между отсчетами; 
 -	для формирования одного выходного бита используется сумма битов четности
 	8-ми разностей между показаниями таймера.
 
@@ -96,18 +91,14 @@ err_t rngTimerRead(void* buf, size_t* read, size_t count)
 
 /*
 *******************************************************************************
-Таймер-счетчик
+Таймер-счетчик (экспериментальный)
 
-Таймер-счетчик может использоваться вместо стандартного таймера, если частота
-обновления последнего недостаточно высока. Таймер-счетчик -- это отдельный 
-поток, в котором выполняется исключительно инкремент счетчика. Частота 
-обновления счетчика проверяется при создании таймера. Таймер не создается,
-если частота обновления ниже 10^8 раз в секунду (100 МГц).
+Таймер-счетчик -- это отдельный поток, в котором выполняется исключительно 
+инкремент счетчика. Таймер-счетчик может использоваться вместо стандартного 
+в тех случаях, когда разрешающая способность последнего недостаточно высока.
 
-\remark Синхронизация не нужна, поскольку функции таймера-счетчика вызываются
-только в сихнронизированных участках кода.
-
-\thanks Подсмотрено в https://github.com/smuellerDD/jitterentropy-library.
+\expect Функции таймера-счетчика вызываются только в сихнронизированных 
+участках кода. Поэтому синхронизация не нужна.
 *******************************************************************************
 */
 
@@ -209,45 +200,79 @@ static tm_ticks_t tmCtrTicks()
 
 static bool_t tmCtrStart()
 {
-	tm_ticks_t start;
-	tm_ticks_t overhead;
-	tm_ticks_t freq;
 	// таймер уже создан?
 	if (tmCtrIsValid())
 		return TRUE;
 	// создать
 	if (!tmCtrCreate())
 		return FALSE;
-	// оценить частоту
-	start = tmCtrTicks();
-	overhead = tmCtrTicks() - start;
-	start = tmCtrTicks();
-	mtSleep(100);
-	freq = tmCtrTicks();
-	freq = (freq - start - overhead) * 10;
-	// проверить частоту
-	if (freq < 100000000u)
-	{
-		tmCtrClose();
-		return FALSE;
-	}
 	// зарегистрировать закрытие
 	if (!utilOnExit(tmCtrClose))
 	{
 		tmCtrClose();
 		return FALSE;
 	}
-
 	return TRUE;
 }
+
+/*
+*******************************************************************************
+Источник-джиттер (экспериментальный)
+
+Реализована идея [Stephan M\"uller, CPU Time Jitter Based Non-Physical True
+Random Number Generator]: наблюдением является разность между показаниями 
+таймера-счетчика до и после выполнения определенного набора инструкций 
+процессора. Время выполнения которого предположительно флуктуирует.
+
+Реализация:
+-	целевой набор инструкций оформлен в виде функции rngJitterDo();
+-	для формирования одного выходного бита используется сумма битов четности
+	256-и разностей между показаниями таймера.
+
+\warning Пока функция rngJitterDo() и постобработка разностей носят 
+экспериментальный характер.
+
+\remark Дополнительная информация / другие реализации идеи:
+* https://www.chronox.de/jent/CPU-Jitter-NPTRNG-v2.2.0.pdf;
+* https://github.com/smuellerDD/jitterentropy-library;
+* https://www.issihosts.com/haveged/;
+* https://www.irisa.fr/caps/projects/hipsor/publications/havege-tomacs.pdf;
+* https://static.lwn.net/images/conf/rtlws11/random-hardware.pdf
+
+\todo Уточнить rngJitterDo() и способ постобработки.
+*******************************************************************************
+*/
 
 static bool_t rngJitterIsAvail()
 {
 	return tmCtrStart();
 }
 
-static void rngJitterSleep()
+static size_t _jitter_pos;
+static octet _jitter_table[4096];
+
+static void rngJitterDo()
 {
+	register size_t pos = _jitter_pos;
+	register octet o = _jitter_table[pos];
+	switch (pos & 3)
+	{
+		case 0:
+			pos += 12;
+			break;
+		case 1:
+			pos += 189;
+			break;
+		case 2:
+			pos += 3017;
+			break;
+		case 3:
+			pos += 127;
+			break;
+	}
+	pos %= sizeof(_jitter_table);
+	_jitter_table[_jitter_pos] = _jitter_table[pos];
+	_jitter_table[_jitter_pos = pos] = o; 
 }
 
 err_t rngJitterRead(void* buf, size_t* read, size_t count)
@@ -270,9 +295,9 @@ err_t rngJitterRead(void* buf, size_t* read, size_t count)
 		for (j = 0; j < 8; ++j)
 		{
 			w = 0;
-			for (reps = 0; reps < 8; ++reps)
+			for (reps = 0; reps < 256; ++reps)
 			{
-				rngJitterSleep();
+				rngJitterDo();
 				t = tmCtrTicks();
 				w ^= (word)(t - ticks);
 				ticks = t;

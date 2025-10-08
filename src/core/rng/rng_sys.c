@@ -103,7 +103,7 @@ err_t rngSys2Read(void* buf, size_t* read, size_t count)
 	ASSERT((size_t)(ULONG)count == count);
 	// получить случайные данные
 	*read = 0;
-	if (!RtlGenRandom((octet*)buf, (ULONG)count))
+	if (!RtlGenRandom(buf, (ULONG)count))
 		return ERR_BAD_ENTROPY;
 	// завершение
 	*read = count;
@@ -118,7 +118,7 @@ err_t rngSys2Read(void* buf, size_t* read, size_t count)
 err_t rngSysRead(void* buf, size_t* read, size_t count)
 {
 	file_t file;
-	ASSERT(memIsValid(read, sizeof(size_t)));
+	ASSERT(memIsValid(read, O_PER_S));
 	ASSERT(memIsValid(buf, count));
 	file = fileOpen("/dev/urandom", "rb");
 	if (!file)
@@ -146,7 +146,7 @@ err_t rngSys2Read(void* buf, size_t* read, size_t count)
 	void* lib;
 	int(*rand_bytes)(octet*, int) = 0;
 	// pre
-	ASSERT(memIsValid(read, sizeof(size_t)));
+	ASSERT(memIsValid(read, O_PER_S));
 	ASSERT(memIsValid(buf, count));
 	ASSERT((size_t)(int)count == count);
 	// пробежать имена
@@ -169,11 +169,26 @@ err_t rngSys2Read(void* buf, size_t* read, size_t count)
 	return ERR_OK;
 }
 
+#elif defined(OS_APPLE)
+
+#include <CommonCrypto/CommonRandom.h>
+
+static err_t rngSys2Read(void* buf, size_t* read, size_t count)
+{
+	ASSERT(memIsValid(read, O_PER_S));
+	ASSERT(memIsValid(buf, count));
+	*read = 0;
+	if (CCRandomGenerateBytes(buf, count) != kCCSuccess)
+		return ERR_FILE_NOT_FOUND;
+	*read = count;
+	return ERR_OK;
+}
+
 #else
 
 err_t rngSys2Read(void* buf, size_t* read, size_t count)
 {
-	ASSERT(memIsValid(read, sizeof(size_t)));
+	ASSERT(memIsValid(read, O_PER_S));
 	ASSERT(memIsValid(buf, count));
 	return ERR_FILE_NOT_FOUND;
 }
@@ -184,14 +199,14 @@ err_t rngSys2Read(void* buf, size_t* read, size_t count)
 
 err_t rngSysRead(void* buf, size_t* read, size_t count)
 {
-	ASSERT(memIsValid(read, sizeof(size_t)));
+	ASSERT(memIsValid(read, O_PER_S));
 	ASSERT(memIsValid(buf, count));
 	return ERR_FILE_NOT_FOUND;
 }
 
 err_t rngSys2Read(void* buf, size_t* read, size_t count)
 {
-	ASSERT(memIsValid(read, sizeof(size_t)));
+	ASSERT(memIsValid(read, O_PER_S));
 	ASSERT(memIsValid(buf, count));
 	return ERR_FILE_NOT_FOUND;
 }
