@@ -4,7 +4,7 @@
 \brief Version and build information
 \project bee2/cmd 
 \created 2022.06.22
-\version 2025.06.09
+\version 2025.10.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -73,8 +73,12 @@ static const char* verOS()
 #if defined(OS_WIN)
 	return "Windows";
 #elif defined(OS_UNIX)
-	#if defined(OS_LINUX)	
+	#if defined(OS_ANDROID)
+		return "Android";
+	#elif defined(OS_LINUX)
 		return "Linux";
+	#elif defined(OS_IPHONE)
+		return "Apple/iPhone";
 	#elif defined(OS_APPLE)
 		return "Apple";
 	#else
@@ -176,6 +180,7 @@ static void verPrint()
 		"    B_PER_S: %u\n"
 		"    B_PER_W: %u\n"
 		"    endianness: %s\n"
+		"    freq: %u kHz\n"
 		"  build tools:\n"
 		"    compiler: %s\n"
 		"  build options:\n"
@@ -187,6 +192,7 @@ static void verPrint()
 		(unsigned)B_PER_S,
 		(unsigned)B_PER_W,
 		verEndianness(),
+		(unsigned)(tmFreq() / 1000u),
 		verCompiler(),
 		verNDebug(),
 		verSafe(),
