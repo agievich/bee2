@@ -4,7 +4,7 @@
 \brief Tests for random number generators
 \project bee2/test
 \created 2014.10.10
-\version 2025.04.25
+\version 2025.10.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -23,7 +23,10 @@
 
 bool_t rngTest()
 {
-	const char* sources[] = { "trng", "trng2", "sys", "sys2", "timer" };
+	const char* sources[] = 
+	{ 
+		"trng", "trng2", "sys", "sys2", "timer", "jitter" 
+	};
 	octet buf[2500];
 	char hex[33];
 	size_t read;
@@ -35,7 +38,7 @@ bool_t rngTest()
 		{
 			if (read == 2500)
 				hexFrom(hex, buf, 16),
-				printf("rngSource[%5s]: %s... [FIPS: 1%c 2%c 3%c 4%c]\n",
+				printf("rngSource[%6s]: %s... [FIPS: 1%c 2%c 3%c 4%c]\n",
 					sources[pos],
 					hex,
 					rngTestFIPS1(buf) ? '+' : '-',
@@ -58,7 +61,7 @@ bool_t rngTest()
 		return FALSE;
 	rngStepR(buf, 2500, 0);
 	hexFrom(hex, buf, 16);
-	printf("rngStepR:         %s... [FIPS: 1%c 2%c 3%c 4%c]\n",
+	printf("rngStepR:          %s... [FIPS: 1%c 2%c 3%c 4%c]\n",
 		hex,
 		rngTestFIPS1(buf) ? '+' : '-',
 		rngTestFIPS2(buf) ? '+' : '-',
@@ -67,7 +70,7 @@ bool_t rngTest()
 	rngRekey();
 	rngStepR2(buf, 2500, 0);
 	hexFrom(hex, buf, 16);
-	printf("rngStepR2:        %s... [FIPS: 1%c 2%c 3%c 4%c]\n",
+	printf("rngStepR2:         %s... [FIPS: 1%c 2%c 3%c 4%c]\n",
 		hex,
 		rngTestFIPS1(buf) ? '+' : '-',
 		rngTestFIPS2(buf) ? '+' : '-',

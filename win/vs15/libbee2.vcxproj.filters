@@ -52,6 +52,9 @@
     <Filter Include="Source Files\crypto\bake">
       <UniqueIdentifier>{0b5a3a20-08c0-4130-8991-a0a96f8c4c7f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\core\rng">
+      <UniqueIdentifier>{d79259c8-57bc-4d08-8356-012f773be234}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\math\ecp.c">
@@ -121,9 +124,6 @@
       <Filter>Source Files\core</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\core\prng.c">
-      <Filter>Source Files\core</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\core\rng.c">
       <Filter>Source Files\core</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\core\tm.c">
@@ -317,6 +317,21 @@
     </ClCompile>
     <ClCompile Include="..\..\src\crypto\bake\bake_misc.c">
       <Filter>Source Files\crypto\bake</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\core\rng\rng_main.c">
+      <Filter>Source Files\core\rng</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\core\rng\rng_sys.c">
+      <Filter>Source Files\core\rng</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\core\rng\rng_test.c">
+      <Filter>Source Files\core\rng</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\core\rng\rng_timer.c">
+      <Filter>Source Files\core\rng</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\core\rng\rng_trng.c">
+      <Filter>Source Files\core\rng</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

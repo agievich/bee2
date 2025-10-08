@@ -365,7 +365,11 @@
     <ClCompile Include="..\..\src\core\obj.c" />
     <ClCompile Include="..\..\src\core\oid.c" />
     <ClCompile Include="..\..\src\core\prng.c" />
-    <ClCompile Include="..\..\src\core\rng.c" />
+    <ClCompile Include="..\..\src\core\rng\rng_main.c" />
+    <ClCompile Include="..\..\src\core\rng\rng_sys.c" />
+    <ClCompile Include="..\..\src\core\rng\rng_test.c" />
+    <ClCompile Include="..\..\src\core\rng\rng_timer.c" />
+    <ClCompile Include="..\..\src\core\rng\rng_trng.c" />
     <ClCompile Include="..\..\src\core\str.c" />
     <ClCompile Include="..\..\src\core\tm.c" />
     <ClCompile Include="..\..\src\core\u16.c" />

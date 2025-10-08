@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.31 (belt)
 \project bee2/test
 \created 2012.06.20
-\version 2025.10.07
+\version 2025.10.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -120,7 +120,7 @@ static bool_t beltTestZerosum()
 *******************************************************************************
 */
 
-#define beltTest_local(deep)\
+#define beltTest_local()\
 /* buf */	128,\
 /* buf1 */	128,\
 /* mac */	8,\
@@ -129,12 +129,10 @@ static bool_t beltTestZerosum()
 /* hash1 */	32,\
 /* key */	32,\
 /* block */	16,\
-/* level */	12,\
-/* stack */	deep
+/* level */	12
 
 bool_t beltTest()
 {
-	size_t deep;
 	mem_align_t state[1024 / sizeof(mem_align_t)];
 	octet* buf;			/* [128] */
 	octet* buf1;		/* [128] */
@@ -145,32 +143,33 @@ bool_t beltTest()
 	u32* key; 			/* [8] */
 	u32* block; 		/* [4] */
 	octet* level;	 	/* [12] */
-	void* stack;		/* [deep] */
+	void* stack;
 	size_t count;
-	// глубина стека
-	deep = utilMax(17,
-		256,
-		beltWBL_keep(),
-		beltCompr_deep(),
-		beltECB_keep(),
-		beltCBC_keep(),
-		beltCFB_keep(),
-		beltCTR_keep(),
-		beltMAC_keep(),
-		beltDWP_keep(),
-		beltCHE_keep(),
-		beltKWP_keep(),
-		beltHash_keep(),
-		beltBDE_keep(),
-		beltSDE_keep(),
-		beltFMT_keep(65536, 17),
-		beltKRP_keep(),
-		beltHMAC_keep());
 	// разметить состояние
-	if (sizeof(state) < memSliceSize(beltTest_local(deep), SIZE_MAX))
+	if (sizeof(state) < memSliceSize(
+			beltTest_local(),
+			utilMax(17,
+				256,
+				beltWBL_keep(),
+				beltCompr_deep(),
+				beltECB_keep(),
+				beltCBC_keep(),
+				beltCFB_keep(),
+				beltCTR_keep(),
+				beltMAC_keep(),
+				beltDWP_keep(),
+				beltCHE_keep(),
+				beltKWP_keep(),
+				beltHash_keep(),
+				beltBDE_keep(),
+				beltSDE_keep(),
+				beltFMT_keep(65536, 17),
+				beltKRP_keep(),
+				beltHMAC_keep()),
+			SIZE_MAX))
 		return FALSE;
 	memSlice(state,
-		beltTest_local(deep), SIZE_MAX,
+		beltTest_local(), SIZE_0, SIZE_MAX,
 		&buf, &buf1, &mac, &mac1, &hash, &hash1, &key, &block, &level, &stack);
 	// belt-H
 	beltHGen((octet*)stack);

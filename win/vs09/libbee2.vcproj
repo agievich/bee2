@@ -433,10 +433,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\src\core\rng.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\src\core\str.c"
 					>
 				</File>
@@ -464,6 +460,30 @@
 					RelativePath="..\..\src\core\word.c"
 					>
 				</File>
+				<Filter
+					Name="rng"
+					>
+					<File
+						RelativePath="..\..\src\core\rng\rng_main.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\core\rng\rng_sys.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\core\rng\rng_test.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\core\rng\rng_timer.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\core\rng\rng_trng.c"
+						>
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="math"

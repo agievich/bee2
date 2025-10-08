@@ -4,7 +4,7 @@
 \brief Dealing with entropy sources
 \project bee2/cmd 
 \created 2021.04.20
-\version 2025.06.10
+\version 2025.10.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -51,7 +51,7 @@ static int esUsage()
 		"    list available entropy sources and determine their health\n"
 		"  es read <source> <count> <file>\n"
 		"    read <count> Kbytes from <source> and store them in <file>\n"
-		"  <source> in {trng, trng2, sys, sys2, timer, timerNN}\n"
+		"  <source> in {trng, trng2, sys, sys2, timer, timerNNN, jitter}\n"
 		"    timerNNN -- use NNN sleep delays to produce one output bit\n"
 		,
 		_name, _descr
@@ -108,7 +108,8 @@ static err_t rngReadSourceEx(size_t* read, void* buf, size_t count,
 {
 	if (strEq(source_name, "trng") || strEq(source_name, "trng2") ||
 		strEq(source_name, "sys") ||
-		strEq(source_name, "timer") && par == 0)
+		strEq(source_name, "timer") && par == 0 ||
+		strEq(source_name, "jitter"))
 		return rngESRead(read, buf, count, source_name);
 	// эксперименты с источником timer
 	{
@@ -147,7 +148,7 @@ static err_t rngReadSourceEx(size_t* read, void* buf, size_t count,
 static err_t esRead(int argc, char *argv[])
 {
 	err_t code;
-	char source[6];
+	char source[7];
 	size_t par = 0;
 	size_t count;
 	file_t file;
@@ -164,6 +165,8 @@ static err_t esRead(int argc, char *argv[])
 		strCopy(source, "sys");
 	else if (strEq(argv[0], "timer"))
 		strCopy(source, "timer");
+	else if (strEq(argv[0], "jitter"))
+		strCopy(source, "jitter");
 	else if (strStartsWith(argv[0], "timer"))
 	{
 		strCopy(source, "timer");

@@ -13,7 +13,11 @@ set(src
   core/obj.c
   core/oid.c
   core/prng.c
-  core/rng.c
+  core/rng/rng_main.c
+  core/rng/rng_sys.c
+  core/rng/rng_test.c
+  core/rng/rng_timer.c
+  core/rng/rng_trng.c
   core/str.c
   core/tm.c
   core/u16.c

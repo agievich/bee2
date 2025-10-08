@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: random number generation
 \project bee2/cmd 
 \created 2022.06.08
-\version 2025.09.26
+\version 2025.10.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -144,7 +144,8 @@ err_t cmdRngStart(bool_t verbose)
 	// печать информации об источниках
 	if (verbose)
 	{
-		const char* sources[] = { "trng", "trng2", "sys", "sys2", "timer" };
+		const char* sources[] = { 
+			"trng", "trng2", "sys", "sys2", "timer", "jitter"};
 		size_t pos;
 		size_t count;
 		size_t read;
