@@ -4,12 +4,7 @@
 
 We need Docker with support for multi-platform images. This support is provided
 by the `buildx` plugin included by default in `docker-desktop` and available 
-from `docker-ce` and `moby-engine`.
-
-Install on Debian: 
-```
-apt install moby-engine moby-buildx moby-compose moby-cli
-```
+for `docker-ce` and `moby-engine`.
 
 Install on Ubuntu: 
 [https://docs.docker.com/engine/install/ubuntu/](https://docs.docker.com/engine/install/ubuntu/).
@@ -25,7 +20,7 @@ docker buildx use mybuilder
 
 Next times:
 ```
-docker run --privileged --rm tonistiigi/binfmt --install all 
+docker run --privileged --rm tonistiigi/binfmt:master --install all 
 ``` 
 
 ## Update Docker images
