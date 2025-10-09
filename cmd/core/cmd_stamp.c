@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: file stamps
 \project bee2/cmd 
 \created 2025.04.21
-\version 2025.09.22
+\version 2025.10.09
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -208,7 +208,7 @@ err_t cmdStampVal(const char* name, const char* stamp_name)
 	return code;
 }
 
-err_t cmdStampSelfVal()
+err_t cmdStampSelfVal(const char* stamp_name)
 {
 	const char* ext = ".stamp";
 	err_t code;
@@ -231,21 +231,28 @@ err_t cmdStampSelfVal()
 	// определить имя исполняемого модуля
 	code = cmdSysModulePath(name, &count);
 	ERR_CALL_HANDLE(code, cmdBlobClose(state));
-	// проверить присоединенный штамп
-	code = cmdFileStamp(stamp, name, TRUE);
-	// в файле нет штампа?
-	if (code == ERR_MAX)
+	// проверить штамп из stamp_name
+	if (stamp_name)
+		code = cmdStampVal(name, stamp_name);
+	else
 	{
-		count = 10;
-		// прочитать отсоединенный штамп
-		strCopy(name + strLen(name), ext);
-		code = cmdFileReadAll(stamp1, &count, name);
-		ERR_CALL_HANDLE(code, cmdBlobClose(state));
-		// проверить отсоединенный штамп
-		if (!memEq(stamp, stamp1, 10))
-			code = ERR_FILE_STAMP;
+		// проверить присоединенный штамп
+		code = cmdFileStamp(stamp, name, TRUE);
+		// в файле нет штампа?
+		if (code == ERR_MAX)
+		{
+			count = 10;
+			// прочитать отсоединенный штамп
+			strCopy(name + strLen(name), ext);
+			code = cmdFileReadAll(stamp1, &count, name);
+			ERR_CALL_HANDLE(code, cmdBlobClose(state));
+			// проверить отсоединенный штамп
+			if (!memEq(stamp, stamp1, 10))
+				code = ERR_FILE_STAMP;
+		}
 	}
 	// завершить
 	cmdBlobClose(state);
 	return code;
 }
+

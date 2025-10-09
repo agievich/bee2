@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2
 \project bee2/cmd
 \created 2022.06.09
-\version 2025.09.22
+\version 2025.10.09
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -1079,11 +1079,14 @@ err_t cmdStampVal(
 /*!	\brief Самопроверка штампа
 
 	Проверяется штамп исполняемого модуля, в котором вызывается данная функция.
-	Штамп прочитывается из суффикса модуля или, если суффикс отсутствует или не 
+	Штамп прочитывается из файла stamp_name или, если stamp_name == 0, из
+	суффикса модуля или, если stamp_name == 0 и суффикс отсутствует или не 
 	содержит штамп, из файла name.stamp, где name -- имя исполняемого модуля.
 	\return ERR_OK в случае успеха и код ошибки в противном случае.
 */
-err_t cmdStampSelfVal();
+err_t cmdStampSelfVal(
+	const char* stamp_name		/*!< [in] имя файла штампа */
+);
 
 #ifdef __cplusplus
 } /* extern "C" */

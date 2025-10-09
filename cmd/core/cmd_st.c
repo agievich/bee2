@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: self-tests
 \project bee2/cmd 
 \created 2025.04.09
-\version 2025.09.26
+\version 2025.10.09
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -311,7 +311,7 @@ err_t cmdStDo(u32 tests)
 	// stamp?
 	if (tests & CMD_ST_STAMP)
 	{
-		code = cmdStampSelfVal();
+		code = cmdStampSelfVal(0);
 		ERR_CALL_CHECK(code);
 	}
 	return code;
