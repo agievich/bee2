@@ -68,3 +68,5 @@ clear.cmd
 build_*
 .vscode/
 .idea/
+.DS_Store
+.build
