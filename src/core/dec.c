@@ -4,7 +4,7 @@
 \brief Decimal strings
 \project bee2 [cryptographic library]
 \created 2015.11.09
-\version 2015.11.11
+\version 2025.10.09
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -85,7 +85,7 @@ u64 decToU64(const char* dec)
 	register u64 num = 0;
 	ASSERT(decIsValid(dec));
 	while (*dec)
-		num *= 10, num += *dec - '0', ++dec;
+		num *= 10, num += (u64)(*dec - '0'), ++dec;
 	return num;
 }
 

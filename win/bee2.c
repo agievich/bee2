@@ -4,7 +4,7 @@
 \brief Bee2 DLL entry points
 \project bee2 [cryptographic library]
 \created 2013.02.25
-\version 2025.04.25
+\version 2025.10.09
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -50,7 +50,7 @@ static err_t beeSprintf(blob_t* str, const char* format,...)
 		return ERR_OUTOFMEMORY;
 	// печать в строку
 	va_start(args, format);
-	vsprintf_s((char*)*str + offset, count + 1, format, args);
+	vsprintf_s((char*)*str + offset, (size_t)count + 1, format, args);
 	va_end(args);
 	// выйти
 	return ERR_OK;
