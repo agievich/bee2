@@ -4,7 +4,7 @@
 \brief Machine words
 \project bee2 [cryptographic library]
 \created 2014.07.18
-\version 2025.08.26
+\version 2025.10.09
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -120,6 +120,9 @@ extern "C" {
 
 Макросы с суффиксом 0M меняют WORD_1 на WORD_MAX. Возвращаемые значения 
 можно использовать как маски при организации регулярных вычислений.
+
+[1]	Уоррен Генри Мл. Алгоритмические трюки для программистов,
+	М.: Издательский дом <<Вильямс>>, 2003.
 
 \def wordEq 
 \brief Машинные слова a и b равны?
