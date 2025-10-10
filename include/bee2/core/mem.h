@@ -64,6 +64,10 @@ extern "C" {
 	
 	\warning Выравнивание на границу dword не гарантируется. Пока в таких
 	гарантиях нет необходимости.
+	\warning Даже при включении в mem_align_t поля типа dword MS Visual Studio 
+	для x86 не гарантирует выравнивание на границу 8 октетов: 
+	https://learn.microsoft.com/en-us/cpp/build/
+	x64-software-conventions?view=msvc-160#conflicts-with-the-x86-compiler.
 	\remark Указатели void* и void(*)() приводятся отдельно, поскольку
 	равенство sizeof(void*) == sizeof(void(*)()) может нарушаться
 	(см. https://stackoverflow.com/questions/12358843/).
