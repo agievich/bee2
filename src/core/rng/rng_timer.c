@@ -4,7 +4,7 @@
 \brief Random number generation: entropy sources based on timers
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2025.10.09
+\version 2025.10.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -115,7 +115,7 @@ static volatile tm_ticks_t _tm_ctr_ticks2;	/*< предыдущее показа
 
 #ifdef OS_WIN
 
-static DWORD tmCtrLoop(void* args)
+static DWORD WINAPI tmCtrLoop(void* args)
 {
 	while (_tm_ctr_loop)
 		_tm_ctr_ticks++;
