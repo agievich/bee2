@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: signing files
 \project bee2/cmd
 \created 2022.08.20
-\version 2025.09.22
+\version 2025.10.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -627,7 +627,8 @@ err_t cmdSigVerify2(const char* name, const char* sig_name,
 *******************************************************************************
 */
 
-err_t cmdSigSelfVerify(const octet pubkey[], size_t pubkey_len)
+err_t cmdSigSelfVerify(const octet pubkey[], size_t pubkey_len, 
+	const char* sig_name)
 {
 	err_t code;
 	size_t count;
@@ -640,13 +641,14 @@ err_t cmdSigSelfVerify(const octet pubkey[], size_t pubkey_len)
 	code = cmdSysModulePath(buf, &count);
 	ERR_CALL_HANDLE(code, cmdBlobClose(buf));
 	// проверить подпись
-	code = cmdSigVerify(buf, buf, pubkey, pubkey_len);
+	code = cmdSigVerify(buf, sig_name ? sig_name : buf, pubkey, pubkey_len);
 	// завершить
 	cmdBlobClose(buf);
 	return code;
 }
 
-err_t cmdSigSelfVerify2(const octet anchor[], size_t anchor_len)
+err_t cmdSigSelfVerify2(const octet anchor[], size_t anchor_len, 
+	const char* sig_name)
 {
 	err_t code;
 	size_t count;
@@ -659,7 +661,7 @@ err_t cmdSigSelfVerify2(const octet anchor[], size_t anchor_len)
 	code = cmdSysModulePath(buf, &count);
 	ERR_CALL_HANDLE(code, cmdBlobClose(buf));
 	// проверить подпись
-	code = cmdSigVerify2(buf, buf, anchor, anchor_len);
+	code = cmdSigVerify2(buf, sig_name ? sig_name : buf, anchor, anchor_len);
 	// завершить
 	cmdBlobClose(buf);
 	return code;

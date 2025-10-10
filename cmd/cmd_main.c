@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: main
 \project bee2/cmd
 \created 2022.06.07
-\version 2025.09.22
+\version 2025.10.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -142,13 +142,13 @@ static err_t cmdInit()
 *******************************************************************************
 Главная функция
 
-При запуске bee2cmd проверяется штамп исполнимого модуля. Чтобы 
+При запуске bee2cmd проверяется штамп исполняемого модуля. Чтобы 
 сохранить возможность добавления штампов с помощью команды 
   bee2cmd stamp gen path/to/bee2cmd,
 проверка штампа не выполняется в тех случаях, когда первая лексема команды --
 это "stamp".
 
-\remark Штамп либо присоединяется к исполнимому модулю, либо размещается в 
+\remark Штамп либо присоединяется к исполняемому модулю, либо размещается в 
 файле
 	path/to/bee2cmd.stamp
 (см. описание функции cmdStampSelfVal()).
@@ -170,7 +170,7 @@ static err_t cmdSelfCheck()
 		0x5D, 0x83, 0xD6, 0x51, 0xA3, 0xC9, 0xE4, 0x5C,
 		0x9F, 0xD6, 0x16, 0xFB, 0x3C, 0xFC, 0xF7, 0x6B,
 	};
-	return cmdSigSelfVerify(pubkey, sizeof(pubkey));
+	return cmdSigSelfVerify(pubkey, sizeof(pubkey), 0);
 }
 \endcode
 

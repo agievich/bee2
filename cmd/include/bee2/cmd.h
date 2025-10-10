@@ -981,26 +981,29 @@ err_t cmdSigVerify2(
 /*!	\brief Самопроверка подписи на открытом ключе
 
 	Подпись исполняемого модуля, в котором вызывается данная функция,
-	прочитывается из конца этого же модуля и проверяется на открытом ключе
-	[pubkey_len]pubkey через обращение к cmdSigVerify(pubkey, pubkey_len).
+	прочитывается из файла sig_name или, если sig_name == 0, из конца этого 
+	же модуля и проверяется на открытом ключе [pubkey_len]pubkey через 
+	обращение к cmdSigVerify(pubkey, pubkey_len).
 	\return ERR_OK, если подпись корректна, и код ошибки в противном случае.
 */
 err_t cmdSigSelfVerify(
 	const octet pubkey[],		/*!< [in] открытый ключ */
-	size_t pubkey_len			/*!< [in] длина открытого ключа */
+	size_t pubkey_len,			/*!< [in] длина открытого ключа */
+	const char* sig_name		/*!< [in] имя файла подписи */
 );
 
 /*!	\brief Самопроверка подписи на доверенном сертификате
 
 	Подпись исполняемого модуля, в котором вызывается данная функция,
-	прочитывается из конца этого же модуля и проверяется на доверенном
-	сертификате [anchor_len]anchor через обращение к
-	cmdSigVerify2(anchor, anchor_len).
+	прочитывается из файла sig_name или, если sig_name == 0, из конца этого 
+	же модуля и проверяется на доверенном сертификате [anchor_len]anchor 
+	через обращение к cmdSigVerify2(anchor, anchor_len).
 	\return ERR_OK, если подпись корректна, и код ошибки в противном случае.
 */
 err_t cmdSigSelfVerify2(
 	const octet anchor[],		/*!< [in] доверенный сертификат */
-	size_t anchor_len			/*!< [in] длина anchor */
+	size_t anchor_len,			/*!< [in] длина anchor */
+	const char* sig_name		/*!< [in] имя файла подписи */
 );
 
 /*!	\brief Извлечение объекта из подписи
