@@ -4,7 +4,7 @@
 \brief 32-bit unsigned words
 \project bee2 [cryptographic library]
 \created 2015.10.28
-\version 2025.10.03
+\version 2025.10.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -234,7 +234,6 @@ void u32From(u32 dest[], const void* src, size_t count)
 {
 	ASSERT(memIsValid(src, count));
 	ASSERT(memIsValid(dest, ((count + 3) / 4) * 4));
-	ASSERT(memIsAligned(dest, 4));
 	memMove(dest, src, count);
 	if (count % 4)
 		memSetZero((octet*)dest + count, 4 - count % 4);

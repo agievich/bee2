@@ -4,7 +4,7 @@
 \brief 64-bit unsigned words
 \project bee2 [cryptographic library]
 \created 2015.10.28
-\version 2025.10.03
+\version 2025.10.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -163,7 +163,6 @@ void u64From(u64 dest[], const void* src, size_t count)
 {
 	ASSERT(memIsValid(src, count));
 	ASSERT(memIsValid(dest, ((count + 7) / 8) * 8));
-	ASSERT(memIsAligned(dest, 8));
 	memMove(dest, src, count);
 	if (count % 8)
 		memSetZero((octet*)dest + count, 8 - count % 8);
