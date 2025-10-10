@@ -4,7 +4,7 @@
 \brief STB 34.101.77 (bash): sponge-based algorithms
 \project bee2 [cryptographic library]
 \created 2014.07.15
-\version 2025.10.05
+\version 2025.10.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -131,8 +131,7 @@ size_t bashF_deep();
 	Буфер block преобразуется с помощью sponge-функции bash-f.
 	\pre Буфер block корректен.
 	\pre Если BASH_PLATFORM == BASH_32, то memIsAligned(block, 4) == TRUE.
-	\pre Если BASH_PLATFORM == BASH_64 или BASH_PLATFORM == BASH_NEON, то 
-	memIsAligned(block, 8) == TRUE.
+	\pre Если BASH_PLATFORM == BASH_64, то memIsAligned(block, 8) == TRUE.
 */
 void bashF(
 	octet block[192],	/*!< [in,out] прообраз/образ */

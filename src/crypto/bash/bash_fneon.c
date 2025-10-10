@@ -4,7 +4,7 @@
 \brief STB 34.101.77 (bash): bash-f optimized for ARM NEON
 \project bee2 [cryptographic library]
 \created 2020.10.26
-\version 2025.10.06
+\version 2025.10.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -301,11 +301,11 @@ Bash-f
 
 /*
 *******************************************************************************
-Bash-f
+Bash-f на выровненной памяти (stack не используется)
 *******************************************************************************
 */
 
-void bashF(octet block[192], void* stack)
+static void bashF2(octet block[192], void* stack)
 {
 	register uint64x2_t Z1, Z2, T0, T1, T2, U0, U1, U2;
 	register uint64x2_t W0, W1, W2, W3, W4, W5, W6, W7, W8, W9, W10, W11;
@@ -338,7 +338,25 @@ void bashF(octet block[192], void* stack)
 	STORE(block + 176, W11);
 }
 
+/*
+*******************************************************************************
+Bash-f
+*******************************************************************************
+*/
+
+#ifndef UINTPTR_MAX
+typedef size_t uintptr_t;
+#endif
+
+void bashF(octet block[192], void* stack)
+{
+	octet* block2 = (octet*)((((uintptr_t)stack) + 7) & ~((uintptr_t)7));
+	memCopy(block2, block, 192);
+	bashF2(block2, 0);
+	memCopy(block, block2, 192);
+}
+
 size_t bashF_deep()
 {
-	return 0;
+	return 192 + 8;
 }
