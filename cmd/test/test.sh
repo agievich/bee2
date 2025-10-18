@@ -3,8 +3,8 @@
 # \brief Testing command-line interface
 # \project bee2evp/cmd
 # \created 2022.06.24
-# \version 2025.05.05
-# \pre The working directory contains zed.cert, zed.csr, zed,sk
+# \version 2025.10.18
+# \pre The working directory contains "zed.cert", "zed.csr", "zed.sk"
 # =============================================================================
 
 bee2cmd="${BEE2CMD:-./bee2cmd}"
@@ -16,6 +16,7 @@ if [ ! -f "${bee2cmd}" ]; then
     exit 1
   fi
 fi
+
 this=$(realpath $BASH_SOURCE)
 
 function pause() {
@@ -35,22 +36,22 @@ test_ver() {
 
 test_bsum() {
   rm -rf -- check32 check256 -c \
-    || return 2
+    || return 1
   $bee2cmd bsum \
     && return 1
-  $bee2cmd bsum -bash31 $bee2cmd \
+  $bee2cmd bsum -bash31 $this \
     && return 1
-  $bee2cmd bsum -bash32 $bee2cmd $this > check32 \
+  $bee2cmd bsum -bash32 $this > check32 \
     || return 1
   $bee2cmd bsum -bash32 -c check32 \
     || return 1
-  $bee2cmd bsum $bee2cmd $this > check256 \
+  $bee2cmd bsum $this $this > check256 \
     || return 1
   $bee2cmd bsum -belt-hash -c check256 \
     || return 1
   $bee2cmd bsum -c check32 \
     && return 1
-  $bee2cmd bsum -bash-prg-hash2561 $bee2cmd $this > -c \
+  $bee2cmd bsum -bash-prg-hash2561 $this $this > -c \
     || return 1
   $bee2cmd bsum -bash-prg-hash2561 -c \
     && return 1
@@ -73,7 +74,7 @@ test_bsum() {
 
 test_pwd() {
   rm -rf s1 s2 s3 s4 s5 ss1 ss2 ss3 \
-    || return 2
+    || return 1
   # logo
   $bee2cmd pwd \
     && return 1
@@ -91,11 +92,11 @@ test_pwd() {
   $bee2cmd pwd gen env:BEE2_CMD_TEST \
     && return 1
   unset BEE2_CMD_TEST \
-    || return 2
+    || return 1
   $bee2cmd pwd val env:BEE2_CMD_TEST \
     && return 1
   export BEE2_CMD_TEST=zed \
-    || return 2
+    || return 1
   $bee2cmd pwd val env:BEE2_CMD_TEST \
     || return 1
   if [ $($bee2cmd pwd print env:BEE2_CMD_TEST) != "zed" ]; then
@@ -163,7 +164,7 @@ test_pwd() {
 
 test_kg() {
   rm -rf privkey0 privkey1 privkey2 privkey3 pubkey1 pubkey2 pubkey3 \
-    || return 2
+    || return 1
 
   $bee2cmd kg \
     && return 1
@@ -210,7 +211,7 @@ test_kg() {
 
 test_cvc() {
   rm -rf cert0 req1 cert1 pubkey1 req2 req21 cert2 req3 cert3 \
-    || return 2
+    || return 1
 
   $bee2cmd cvc \
     && return 1
@@ -309,7 +310,7 @@ test_cvc() {
 
 test_sig(){
   rm -rf ss ff cert01 cert11 cert21 body sig\
-    || return 2
+    || return 1
 
   echo test> ff
   echo sig> ss
@@ -430,7 +431,7 @@ test_sig(){
 
 test_cvr(){
   rm -rf ring2 cert21 cert31 \
-    || return 2
+    || return 1
 
   $bee2cmd cvr \
     && return 1
@@ -481,7 +482,7 @@ test_cvr(){
 
 test_csr(){
   rm -rf zed.sk1 zed.csr1 \
-    || return 2
+    || return 1
 
   $bee2cmd csr \
     && return 1
@@ -500,7 +501,7 @@ test_csr(){
 
 test_stamp() {
   rm -rf body stamp \
-    || return 2
+    || return 1
 
   echo body> body
 
@@ -534,7 +535,7 @@ test_stamp() {
 
 test_es() {
   rm -rf dd\
-    || return 2
+    || return 1
 
   $bee2cmd es \
     && return 1
@@ -570,7 +571,7 @@ test_st(){
 
 test_affix(){
   rm -rf body body1 stamp p1 p10 s0 \
-    || return 2
+    || return 1
 
   echo body> body
   echo body> body1
@@ -623,16 +624,18 @@ test_affix(){
 }
 
 run_test() {
-  echo -n "Testing $1... "
-  (test_$1 > /dev/null 2>&1)
-  if [ $? -eq 0 ]; then 
-    echo "Success"
-  else 
-    echo "Failed"
-  fi
+  local res=0
+  for arg in "$@"; do
+    echo -n "Testing $arg... "
+    (test_$arg > /dev/null 2>&1)
+    if [ $? -eq 0 ]; then 
+      echo "Success"
+    else 
+      echo "Failed"
+      res=1
+    fi
+  done
+  return $res
 } 
 
-run_test ver && run_test bsum && run_test pwd && run_test kg && run_test cvc \
-  && run_test sig && run_test cvr && run_test csr && run_test stamp \
-  && run_test es && run_test st && run_test affix
-
+run_test ver bsum pwd kg cvc sig cvr csr stamp es st affix

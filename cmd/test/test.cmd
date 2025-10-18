@@ -3,8 +3,8 @@ rem ===========================================================================
 rem \brief Testing command-line interface
 rem \project bee2evp/cmd
 rem \created 2022.06.24
-rem \version 2025.05.05
-rem \pre The working directory contains zed.cert, zed.csr, zed,sk
+rem \version 2025.10.18
+rem \pre The working directory contains "zed.cert", "zed.csr", "zed.sk"
 rem ===========================================================================
 
 for /F "tokens=*" %%a in ('where /R . bee2cmd') do set bee2cmd=%%a
