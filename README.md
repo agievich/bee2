@@ -45,19 +45,13 @@ make
 [make install]
 ```
 
-> **Note**. To build on Windows you need to specify compiler and use the
-compiler-specific `make` command. The following example is for the MinGW
-compiler:
+> **Note**. One can select a generator of makefiles with the `-G` flag in 
+`cmake` and then use a build tool specific to this generator instead of `make`. 
+The following example shows how to build on Windows using MinGW: 
 > ```
-> mkdir build
-> cd build
-> cmake [-DCMAKE_BUILD_TYPE={Release|Debug|Coverage|ASan|ASanDbg|MemSan|MemSanDbg|Check}]\
->       [-DBASH_PLATFORM={BASH_32|BASH_64|BASH_AVX2|BASH_AVX512|BASH_NEON}]\
->       -G "MinGW Makefiles"\
->       ..
+> mkdir build && cd build
+> cmake -G "MinGW Makefiles" ..
 > mingw32-make
-> [mingw32-make test]
-> [mingw32-make install]
 > ```
 
 Build types (`Release` by default):
