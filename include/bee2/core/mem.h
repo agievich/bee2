@@ -4,7 +4,7 @@
 \brief Memory management
 \project bee2 [cryptographic library]
 \created 2012.07.16
-\version 2025.10.10
+\version 2025.10.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -60,7 +60,7 @@ extern "C" {
 *******************************************************************************
 */
 
-/* \brief Фундаментальный блок
+/*! \brief Фундаментальный блок
 	
 	\warning Выравнивание на границу dword не гарантируется. Пока в таких
 	гарантиях нет необходимости.
