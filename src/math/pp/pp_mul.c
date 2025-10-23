@@ -4,7 +4,7 @@
 \brief Binary polynomials: multiplicative operations
 \project bee2 [cryptographic library]
 \created 2012.03.01
-\version 2025.09.14
+\version 2025.10.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -1225,7 +1225,7 @@ size_t ppSqr_deep(size_t n)
 /* divident */	O_OF_W(n + 1),\
 /* divisor */	O_OF_W(m),\
 /* w1 */		O_OF_W(16),\
-/* w1 */		O_OF_W(16)
+/* w2 */		O_OF_W(16)
 
 void ppDiv(word q[], word r[], const word a[], size_t n, const word b[],
 	size_t m, void* stack)
@@ -1307,7 +1307,7 @@ size_t ppDiv_deep(size_t n, size_t m)
 /* divident */	O_OF_W(n + 1),\
 /* divisor */	O_OF_W(m),\
 /* w1 */		O_OF_W(16),\
-/* w1 */		O_OF_W(16)
+/* w2 */		O_OF_W(16)
 
 void ppMod(word r[], const word a[], size_t n, const word b[], size_t m,
 	void* stack)

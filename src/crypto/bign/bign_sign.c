@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): digital signature
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.09.26
+\version 2025.10.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -37,10 +37,10 @@ err_t bignSignEc(octet sig[], const ec_o* ec, const octet oid_der[],
 	size_t no, n;
 	void* state;			
 	word* d;				/* [n] личный ключ */
-	word* k;				/* [n] одноразовый личный ключ (|d) */
+	word* k;				/* [n] одноразовый личный ключ */
 	word* R;				/* [2 * n] точка R */
 	word* s0;				/* [n/2] первая часть подписи */
-	word* s1;				/* [n] вторая часть подписи */
+	word* s1;				/* [n] вторая часть подписи (|d) */
 	void* stack;
 	// pre
 	ASSERT(ecIsOperable(ec));
@@ -144,10 +144,10 @@ err_t bignSign2Ec(octet sig[], const ec_o* ec, const octet oid_der[],
 	size_t no, n;
 	void* state;
 	word* d;				/* [n] личный ключ */
-	word* k;				/* [n] одноразовый личный ключ (|d) */
+	word* k;				/* [n] одноразовый личный ключ */
 	word* R;				/* [2 * n] точка R */
-	word* s0;				/* [n/2] первая часть подписи */
-	word* s1;				/* [n] вторая часть подписи */
+	word* s0;				/* [n / 2] первая часть подписи */
+	word* s1;				/* [n] вторая часть подписи (|d) */
 	octet* hash_state;		/* [beltHash_keep] состояние хэширования */
 	void* stack;
 	// pre
@@ -293,7 +293,7 @@ err_t bignVerifyEc(const ec_o* ec, const octet oid_der[], size_t oid_len,
 		O_OF_W(2 * n),
 		O_OF_W(2 * n) | SIZE_HI,
 		O_OF_W(n),
-		O_OF_W(n) | SIZE_HI,
+		O_OF_W(n / 2 + 1) | SIZE_HI,
 		O_OF_W(n),
 		utilMax(2,
 			beltHash_keep(),

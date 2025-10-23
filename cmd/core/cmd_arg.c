@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: parsing arguments
 \project bee2/cmd 
 \created 2022.06.08
-\version 2025.09.01
+\version 2025.10.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -128,7 +128,7 @@ err_t cmdArgCreate(int* argc, char*** argv, const char* args)
 	}
 	// выделить и разметить память
 	state = blobCreate2( 
-		(size_t)*argc * sizeof(char*),
+		(size_t)*argc * sizeof(char**),
 		size,
 		SIZE_MAX,
 		argv, &strs);

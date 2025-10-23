@@ -4,7 +4,7 @@
 \brief Binary polynomials: modular arithmetic
 \project bee2 [cryptographic library]
 \created 2012.03.01
-\version 2025.09.13
+\version 2025.10.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -67,7 +67,7 @@ size_t ppMulMod_deep(size_t n)
 void ppSqrMod(word b[], const word a[], const word mod[], size_t n,
 	void* stack)
 {
-	word* sqr;
+	word* sqr;			/* [2 * n] */
 	// pre
 	ASSERT(wwCmp(a, mod, n) < 0);
 	ASSERT(n > 0 && mod[n - 1] != 0);
@@ -178,7 +178,7 @@ size_t ppDivMod_deep(size_t n)
 }
 
 #define ppInvMod_local(n)\
-/* u */		O_OF_W(n)
+/* divident */	O_OF_W(n)
 
 void ppInvMod(word b[], const word a[], const word mod[], size_t n,
 	void* stack)

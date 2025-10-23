@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): identity-based signature
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.09.26
+\version 2025.10.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -146,10 +146,10 @@ err_t bignIdSignEc(octet id_sig[], const ec_o* ec, const octet oid_der[],
 	size_t no, n;
 	void* state;
 	word* e;				/* [n] личный ключ */
-	word* k;				/* [n] одноразовый личный ключ ||e */
+	word* k;				/* [n] одноразовый личный ключ */
 	word* V;				/* [2 * n] точка V */
 	word* s0;				/* [n / 2] первая часть подписи */
-	word* s1;				/* [n] вторая часть подписи */
+	word* s1;				/* [n] вторая часть подписи (|e) */
 	void* stack;
 	// pre
 	ASSERT(ecIsOperable(ec));
@@ -253,10 +253,10 @@ err_t bignIdSign2Ec(octet id_sig[], const ec_o* ec, const octet oid_der[],
 	size_t no, n;
 	void* state;
 	word* e;				/* [n] личный ключ */
-	word* k;				/* [n] одноразовый личный ключ (|e) */
+	word* k;				/* [n] одноразовый личный ключ */
 	word* V;				/* [2 * n] точка V */
 	word* s0;				/* [n / 2] первая часть подписи */
-	word* s1;				/* [n] вторая часть подписи */
+	word* s1;				/* [n] вторая часть подписи (|e) */
 	octet* hash_state;		/* [beltHash_keep] состояние хэширования */
 	void* stack;
 	// pre

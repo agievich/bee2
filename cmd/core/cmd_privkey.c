@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: managing private keys
 \project bee2/cmd 
 \created 2022.06.20
-\version 2025.09.22
+\version 2025.10.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -44,7 +44,7 @@ err_t cmdPrivkeyWrite(const octet privkey[], size_t privkey_len,
 	ERR_CALL_CHECK(code);
 	// выделить и разметить память
 	code = cmdBlobCreate2(state, 
-		8,
+		(size_t)8,
 		epki_len, 
 		SIZE_MAX,
 		&salt, &epki);

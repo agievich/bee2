@@ -4,7 +4,7 @@
 \brief Elliptic curves over binary fields
 \project bee2 [cryptographic library]
 \created 2012.06.26
-\version 2025.09.29
+\version 2025.10.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -536,7 +536,7 @@ static void ec2SubLD(word c[], const word a[], const word b[],
 	const ec_o* ec, void* stack)
 {
 	const size_t n = ec->f->n;
-	word* t;			/* [3n] */
+	word* t;			/* [3 * n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ec2SeemsOn3(a, ec));

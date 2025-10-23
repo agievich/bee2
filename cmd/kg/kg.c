@@ -4,7 +4,7 @@
 \brief Generate and manage private keys
 \project bee2/cmd 
 \created 2022.06.08
-\version 2025.09.22
+\version 2025.10.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -108,7 +108,7 @@ static err_t kgGen(int argc, char* argv[])
 	bign_params params[1];
 	void* state = 0;
 	octet* privkey;				/* [len] */
-	octet* pubkey;				/* [2 len] */
+	octet* pubkey;				/* [2 * len] */
 	// самотестирование
 	code = cmdStDo(CMD_ST_BELS | CMD_ST_BELT | CMD_ST_BIGN | CMD_ST_BRNG);
 	ERR_CALL_CHECK(code);
@@ -359,7 +359,7 @@ static err_t kgExtr(int argc, char* argv[])
 	size_t len = 0;
 	void* state;
 	octet* privkey;			/* [len] */
-	octet* pubkey;			/* [2 len] */
+	octet* pubkey;			/* [2 * len] */
 	// самотестирование
 	code = cmdStDo(CMD_ST_BELS | CMD_ST_BELT | CMD_ST_BIGN);
 	ERR_CALL_CHECK(code);
@@ -443,8 +443,8 @@ static err_t kgPrint(int argc, char* argv[])
 	size_t len = 0;
 	void* state;
 	octet* privkey;				/* [len] */
-	octet* pubkey;				/* [2 len] */
-	char* hex;					/* [4 len + 1] */
+	octet* pubkey;				/* [2 * len] */
+	char* hex;					/* [4 * len + 1] */
 	// самотестирование
 	code = cmdStDo(CMD_ST_BELS | CMD_ST_BELT);
 	ERR_CALL_CHECK(code);

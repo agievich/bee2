@@ -4,7 +4,7 @@
 \brief Prime numbers
 \project bee2 [cryptographic library]
 \created 2012.08.13
-\version 2025.09.14
+\version 2025.10.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -1057,7 +1057,7 @@ size_t priExtendPrime2_deep(size_t l, size_t n, size_t m, size_t base_count)
 bool_t priExtendPrime(word p[], size_t l, const word q[], size_t n,
 	size_t trials, size_t base_count, gen_i rng, void* rng_state, void* stack)
 {
-	word* a;
+	word* a;		/* [1] */
 	// pre
 	ASSERT(memIsValid(stack, O_OF_W(1)));
 	// разметить стек

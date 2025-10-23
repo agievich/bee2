@@ -4,7 +4,7 @@
 \brief Draft of RD_RB: key establishment protocols in finite fields
 \project bee2 [cryptographic library]
 \created 2014.07.01
-\version 2025.09.15
+\version 2025.10.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -723,10 +723,10 @@ err_t pfokParamsVal(const pfok_params* params)
 	// состояние 
 	void* state;
 	word* p;			/* [n] */
-	word* q;			/* [n] */
 	word* g;			/* [n] */
 	qr_o* qr;			/* [zmMontCreate_keep(no)] */
 	void* stack;
+	word* q;
 	// проверить указатели
 	if (!memIsValid(params, sizeof(pfok_params)))
 		return ERR_BAD_INPUT;

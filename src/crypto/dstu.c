@@ -4,7 +4,7 @@
 \brief DSTU 4145-2002 (Ukraine): digital signature algorithms
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.09.26
+\version 2025.10.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -409,7 +409,7 @@ static err_t dstuEcCreate(
 )
 {
 	size_t m;
-	size_t n;
+	size_t n, no;
 	size_t f_deep;
 	// состояние
 	void* state;	
@@ -428,7 +428,7 @@ static err_t dstuEcCreate(
 		params->A > 1)
 		return ERR_BAD_PARAMS;
 	// размерности
-	n = W_OF_B(m);
+	n = W_OF_B(m), no = O_OF_W(n);
 	f_deep = gf2Create_deep(m);
 	// создать состояние
 	state = blobCreate2(
@@ -441,7 +441,7 @@ static err_t dstuEcCreate(
 	// создать второе состояние
 	state1 = blobCreate2(
 		sizeof(size_t) * 4,
-		O_OF_B(n) | SIZE_HI,
+		no | SIZE_HI,
 		utilMax(3,
 			gf2Create_deep(m),
 			ec2CreateLD_deep(n, f_deep),

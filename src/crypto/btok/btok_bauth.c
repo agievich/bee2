@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): BAUTH protocol
 \project bee2 [cryptographic library]
 \created 2022.02.22
-\version 2025.09.28
+\version 2025.10.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -358,7 +358,7 @@ err_t btokBAuthTStep3(octet out[], const octet in[], void* state)
 	btok_bauth_t_st* s = (btok_bauth_t_st*)state;
 	size_t n, no;
 	word* K;		/* [2 * n] общий ключ */
-	octet* Rct;		/* [l/8] одноразовый секретный ключ (|K) */
+	octet* Rct;		/* [no] одноразовый секретный ключ (|K) */
 	octet* Y;		/* [32] (|Y) */
 	octet* block0;	/* [16] */
 	octet* block1;	/* [16] */

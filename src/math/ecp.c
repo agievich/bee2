@@ -4,7 +4,7 @@
 \brief Elliptic curves over prime fields
 \project bee2 [cryptographic library]
 \created 2012.06.26
-\version 2025.09.29
+\version 2025.10.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -649,7 +649,7 @@ static void ecpSubJ(word c[], const word a[], const word b[], const ec_o* ec,
 	void* stack)
 {
 	const size_t n = ec->f->n;
-	word* t;			/* [3n] */
+	word* t;			/* [3 * n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ecpSeemsOn3(a, ec));
@@ -684,7 +684,7 @@ static void ecpSubAJ(word c[], const word a[], const word b[], const ec_o* ec,
 	void* stack)
 {
 	const size_t n = ec->f->n;
-	word* t;			/* [3n] */
+	word* t;			/* [2 * n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ecpSeemsOn3(a, ec));

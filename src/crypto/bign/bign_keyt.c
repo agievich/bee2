@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): key transport
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.09.26
+\version 2025.10.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -154,17 +154,17 @@ err_t bignKeyUnwrapEc(octet key[], const ec_o* ec, const octet token[],
 	// создать состояние
 	state = blobCreate2(
 		O_OF_W(n),
-		(size_t)32,
 		O_OF_W(2 * n),
 		O_OF_W(n),
 		O_OF_W(n),
+		(size_t)32,
 		(size_t)16,
 		utilMax(3,
 			beltKWP_keep(),
 			qrPower_deep(n, n, ec->f->deep),
 			ecMulA_deep(n, ec->d, ec->deep, n)),
 		SIZE_MAX,
-		&d, &theta, &R, &t1, &t2, &header2, &stack);
+		&d, &R, &t1, &t2, &theta, &header2, &stack);
 	if (state == 0)
 		return ERR_OUTOFMEMORY;
 	// загрузить d

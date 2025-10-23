@@ -4,7 +4,7 @@
 \brief Manage certificate signing requests
 \project bee2/cmd 
 \created 2023.12.19
-\version 2025.09.22
+\version 2025.10.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -152,7 +152,7 @@ static err_t csrVal(int argc, char* argv[])
 	err_t code = ERR_OK;
 	size_t csr_len;
 	void* state;
-	octet* csr;
+	octet* csr;			/* [csr_len] */
 	// самотестирование
 	code = cmdStDo(CMD_ST_BIGN);
 	ERR_CALL_CHECK(code);

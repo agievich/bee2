@@ -4,7 +4,7 @@
 \brief STB 34.101.66 (bake): the BPACE protocol
 \project bee2 [cryptographic library]
 \created 2014.04.14
-\version 2025.09.26
+\version 2025.10.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -555,7 +555,7 @@ err_t bakeBPACERunB(octet key[32], const bign_params* params,
 	blob_t blob;
 	octet* in;			/* [5 * l / 8] */
 	octet* out;			/* [l / 2 + 8] */
-	void* state;		/* [bakeBPACE_keep()] */
+	void* state;		/* [bakeBPACE_keep(l)] */
 	// проверить key
 	if (!memIsValid(key, 32))
 		return ERR_BAD_INPUT;
@@ -609,7 +609,7 @@ err_t bakeBPACERunA(octet key[32], const bign_params* params,
 	blob_t blob;
 	octet* in;			/* [l / 2 + 8] */
 	octet* out;			/* [5 * l / 8] */
-	void* state;		/* [bakeBPACE_keep()] */
+	void* state;		/* [bakeBPACE_keep(l)] */
 	// проверить key
 	if (!memIsValid(key, 32))
 		return ERR_BAD_INPUT;

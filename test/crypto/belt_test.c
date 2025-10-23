@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.31 (belt)
 \project bee2/test
 \created 2012.06.20
-\version 2025.10.08
+\version 2025.10.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -140,8 +140,8 @@ bool_t beltTest()
 	octet* mac1; 		/* [8] */
 	octet* hash; 		/* [32] */
 	octet* hash1; 		/* [32] */
-	u32* key; 			/* [8] */
-	u32* block; 		/* [4] */
+	u32* key; 			/* [32] */
+	u32* block; 		/* [16] */
 	octet* level;	 	/* [12] */
 	void* stack;
 	size_t count;

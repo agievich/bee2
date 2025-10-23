@@ -26,6 +26,7 @@ Contributors*
   - static analysis
 - Nastya Kozlovskaya
   - logo
+  - code checks
 - Alexander Usikov
   - code review
 - Mikhail Novik

@@ -4,7 +4,7 @@
 \brief STB 34.101.66 (bake): the BSTS protocol
 \project bee2 [cryptographic library]
 \created 2014.04.14
-\version 2025.09.27
+\version 2025.10.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -135,9 +135,6 @@ static size_t bakeBSTSStart_deep(size_t n, size_t f_deep)
 		SIZE_MAX);
 }
 
-
-#define bakeBSTSStep2_local(n)\
-/* Vb */		O_OF_W(2 * n)
 
 err_t bakeBSTSStep2(octet out[], void* state)
 {
