@@ -4,7 +4,7 @@
 \brief 16-bit unsigned words
 \project bee2 [cryptographic library]
 \created 2015.10.28
-\version 2025.10.10
+\version 2025.10.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -125,14 +125,13 @@ u16 u16Deshuffle(register u16 w)
 
 u16 u16NegInv(register u16 w)
 {
-	register u16 ret = w;
+	register u16 t = w;
 	ASSERT(w & 1);
-	ret = ret * (w * ret + 2);
-	ret = ret * (w * ret + 2);
-	ret = ret * (w * ret + 2);
-	ret = ret * (w * ret + 2);
-	CLEAN(w);
-	return ret;
+	w = w * (2 - w * t);
+	w = w * (2 - w * t);
+	w = w * (w * t - 2);
+	CLEAN(t);
+	return w;
 }
 
 void u16From(u16 dest[], const void* src, size_t count)

@@ -4,7 +4,7 @@
 \brief 32-bit unsigned words
 \project bee2 [cryptographic library]
 \created 2015.10.28
-\version 2025.10.10
+\version 2025.10.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -198,30 +198,29 @@ u32 u32Deshuffle(register u32 w)
 
 Используется тот факт, что разрядность является степенью двойки: 
 	32 = 2^k, k = 5. 
-Корректность алгоритма, реализованного в u32NegInv(), обосновывается следующим 
-образом:
-	если c_i = - m^{-1} \mod 2^{2^i} и
-		c_{i+1} = c_i(c_i m + 2) \mod 2^{2^{i+1}},
-	то
-		с_{i+1} m = c_i m (c_i m + 2) =
-			(2^{2^i}r - 1)(2^{2^i}r + 1) =
-			2^{2^{i+1}}r^2 - 1 =>
-				c_{i+1} = m^{-1}2^{2^{i+1}}
+Корректность алгоритма, реализованного в u32NegInv(), основана на двух фактах:
+1. Если c_{i-1} = m^{-1} \mod 2^{2^{i-1}} и
+		c_i = c_{i-1}(2 - c_{i-1} m) \mod 2^{2^i},
+	то с_i m = c_{i-1} m (2 - c_{i-1} m) =
+		(1 + 2^{2^{i-1}}r)(1 - 2^{2^{i-1}}r) = 1 - 2^{2^i} r^2
+	и, следовательно,
+		c_i = m^{-1} \mod 2^{2^i}.
+2. Для любого нечетного m: m^{-1} = m mod 4, т.е. c_1 = m mod 4.
 *******************************************************************************
 */
 
 u32 u32NegInv(register u32 w)
 {
-	register u32 ret = w;
+	register u32 t = w;
 	ASSERT(w & 1);
-	// для t = 1,...,k: ret <- ret * (w * ret + 2)
-	ret = ret * (w * ret + 2);
-	ret = ret * (w * ret + 2);
-	ret = ret * (w * ret + 2);
-	ret = ret * (w * ret + 2);
-	ret = ret * (w * ret + 2);
-	CLEAN(w);
-	return ret;
+	// c_i <- c_{i-1} (2 - c_{i-1} m), i = 2,..., k-1
+	w = w * (2 - w * t);
+	w = w * (2 - w * t);
+	w = w * (2 - w * t);
+	// c_k <- - c_{k-1} (2 - c_{k-1} m)
+	w = w * (w * t - 2);
+	CLEAN(t);
+	return w;
 }
 
 /*
