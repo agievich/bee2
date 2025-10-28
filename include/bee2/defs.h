@@ -226,7 +226,7 @@ T == octet.
 	#elif defined(__APPLE__)
 		#include <TargetConditionals.h>
 		#define OS_APPLE
-		#if defined(TARGET_OS_IPHONE)
+		#if (TARGET_OS_IPHONE)
 			#define OS_IPHONE
 		#endif
 	#endif
