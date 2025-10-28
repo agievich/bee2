@@ -4,7 +4,7 @@
 \brief Version and build information
 \project bee2/cmd 
 \created 2022.06.22
-\version 2025.10.08
+\version 2025.10.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -67,6 +67,42 @@ static int verUsage()
 \endcode
 *******************************************************************************
 */
+
+static const char* verArch()
+{
+#if defined(__M_IX86) || defined(_X86_) || defined(i386) ||\
+	defined(__i386__) || defined(_M_I86) || defined(_M_IX86)
+	return "x86";
+#elif defined(_M_IA64) || defined(__ia64__) || defined(_M_X64) ||\
+	defined(_M_AMD64) || defined(__amd64__) || defined(__amd64) ||\
+	defined(__x86_64__)
+	return "x64";
+#elif defined(_MIPSEL) || defined (__MIPSEL) || defined (__MIPSEL__) ||\
+	defined(_MIPSEB) || defined (__MIPSEB) || defined (__MIPSEB__)
+	return "MIPS";
+#elif defined(__arm__) || defined(__ARMEL__) || defined(__ARMEB__) ||\
+	defined(_M_ARM)
+	return "ARM";
+#elif defined(__AARCH64EL__) || defined(__AARCH64EB__) || defined(_M_ARM64)
+	return "ARM64";
+#elif defined(_M_ALPHA) || defined(__alpha__) || defined(__alpha)
+	return "ALPHA";
+#elif defined(__EMSCRIPTEN__)
+	return "EMSCRIPTEN";
+#elif defined(__s390__)
+	return "s390";
+#elif defined(__s390x__)
+	return "s390x";
+#elif defined(__powerpc__) || defined(__ppc__) || defined(__PPC__)
+	return "POWERPC";
+#elif defined(__powerpc64__) || defined(__ppc64__) || defined(__PPC64__)
+	return "POWERPC64";
+#elif defined(sparc) || defined(__sparc)
+	return "SPARC";
+#else
+	return "unknown";
+#endif
+}
 
 static const char* verOS()
 {
@@ -176,6 +212,7 @@ static void verPrint()
 		"Bee2: a cryptographic library\n"
 		"  version: %s [%s]\n"
 		"  platform:\n"
+		"    arch: %s\n"
 		"    os: %s\n"
 		"    B_PER_S: %u\n"
 		"    B_PER_W: %u\n"
@@ -188,6 +225,7 @@ static void verPrint()
 		"    safe (constant-time): %s\n"
 		"    bash_platform: %s\n",
 		utilVersion(), __DATE__,
+		verArch(),
 		verOS(),
 		(unsigned)B_PER_S,
 		(unsigned)B_PER_W,

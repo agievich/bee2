@@ -4,7 +4,7 @@
 \brief Basic definitions
 \project bee2 [cryptographic library]
 \created 2012.04.01
-\version 2025.09.05
+\version 2025.09.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -150,7 +150,7 @@ T == octet.
 	defined(_MIPSEL) || defined (__MIPSEL) || defined (__MIPSEL__) ||\
 	defined(__arm__) || defined(__ARMEL__) || defined(__AARCH64EL__) ||\
 	defined(_M_ARM) || defined(_M_ARM64) ||\
-	defined (__THUMBEB__) ||\
+	defined (__THUMBEL__) ||\
 	defined(_M_ALPHA) || defined(__alpha__) || defined(__alpha) ||\
 	defined(__OS2__) || defined(sun386) || defined(vax) ||\
 	defined(vms) || defined(VMS) || defined(__VMS) ||\
