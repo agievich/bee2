@@ -4,7 +4,7 @@
 \brief Random number generation: system entropy sources
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2025.10.08
+\version 2025.11.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -112,9 +112,6 @@ err_t rngSys2Read(void* buf, size_t* read, size_t count)
 
 #elif defined OS_UNIX
 
-#include <stdio.h>
-#include <dlfcn.h>
-
 err_t rngSysRead(void* buf, size_t* read, size_t count)
 {
 	file_t file;
@@ -127,49 +124,8 @@ err_t rngSysRead(void* buf, size_t* read, size_t count)
 	fclose(file);
 	return ERR_OK;
 }
-
-// http://clang.llvm.org/docs/MemorySanitizer.html#has-feature-memory-sanitizer
-#if defined(__has_feature) 
-#if __has_feature(memory_sanitizer)
-#define MEMORY_SANITIZER
-#endif
-#endif
-
-#if defined(OS_LINUX) && !defined(MEMORY_SANITIZER) 
-
-err_t rngSys2Read(void* buf, size_t* read, size_t count)
-{
-	const char* names[] = {
-		"libcrypto.so", "libcrypto.so.3", "libcrypto.so.1.1",
-		"libcrypto.so.1.1.1" };
-	size_t pos;
-	void* lib;
-	int(*rand_bytes)(octet*, int) = 0;
-	// pre
-	ASSERT(memIsValid(read, O_PER_S));
-	ASSERT(memIsValid(buf, count));
-	ASSERT((size_t)(int)count == count);
-	// пробежать имена
-	for (pos = 0; pos < COUNT_OF(names); ++pos)
-		if (lib = dlopen(names[pos], RTLD_NOW))
-			break;
-	if (pos == COUNT_OF(names))
-		return ERR_FILE_NOT_FOUND;
-	// прочитать случайные данные
-	*read = 0;
-	rand_bytes = dlsym(lib, "RAND_bytes");
-	if (!rand_bytes || rand_bytes(buf, (int)count) != 1)
-	{
-		dlclose(lib);
-		return ERR_NOT_FOUND;
-	}
-	// завершение
-	dlclose(lib);
-	*read = count;
-	return ERR_OK;
-}
-
-#elif defined(OS_APPLE)
+	
+#if defined(OS_APPLE)
 
 #include <CommonCrypto/CommonRandom.h>
 
