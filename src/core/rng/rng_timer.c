@@ -4,7 +4,7 @@
 \brief Random number generation: entropy sources based on timers
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2025.10.10
+\version 2025.11.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -164,7 +164,6 @@ static bool_t tmCtrCreate()
 		return TRUE;
 	_tm_ctr_loop = TRUE;
 	if (pthread_create(&_tm_ctr_tid, 0, tmCtrLoop, 0) != 0)
-	if (!_tm_ctr_tid)
 		return _tm_ctr_loop = FALSE;
 	return TRUE;
 }
