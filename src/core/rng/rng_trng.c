@@ -4,7 +4,7 @@
 \brief Random number generation: physical entropy sources
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2025.10.08
+\version 2025.12.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -19,22 +19,33 @@
 *******************************************************************************
 Физические источники
 
-Поддержан ГСЧ Intel
+Поддержан ГСЧ Intel/AMD
 
-Реализация:
--	по материалам https://software.intel.com/en-us/articles/
-	intel-digital-random-number-generator-drng-software-implementation-guide.
+В соответствии с документами:
+[1] Intel 64 and IA-32 Architectures Software Developer’s Manual. Volume 1:
+	Basic Architecture, September 2016.
+	https://www.intel.com/content/dam/www/public/us/en/documents/manuals/
+	64-ia-32-architectures-software-developer-vol-1-manual.pdf.
+[2] Intel Digital Random Number Generator (DRNG) Software Implementation Guide.
+    Technical Paper. Revision 2.2, September 2025.
+	https://www.intel.com/content/www/us/en/content-details/864722/
+	intel-digital-random-number-generator-software-implementation-guide.html.
 
 Используются инструкции:
--	rdseed -- без криптографической постобработки, т.е. прямая работа с
+-	RDSEED -- без криптографической постобработки, т.е. прямая работа с
 	источником случайности;
--	rdrand -- с криптографической постобработкой.
+-	RDRAND -- с криптографической постобработкой.
 
-Инструкция rdseed напрямую ("честнее") работает с источником случайности,
-инструкция rdrand поддержана более широко.
+Инструкция rdseed используется в основном источнике "trng", инструкция rdrand --
+во вспомогательном источнике "trng2".
 
-Инструкция rdseed используется в основном источнике "trng",
-инструкция rdrand -- во вспомогательном источнике "trng2".
+Если инструкция RDRAND не выдала случайное число, то предпринимаются повторные
+попытки, вплоть до 10. Если случайное число не выдала инструкция RDSEED,
+то число  попыток увеличивается до 100 и между попытками вызывается инструкция
+PAUSE. Данная логика соответствует рекомендациям в [2].
+
+\warning RDSEED Failure on AMD “Zen 5” Processors:
+https://www.amd.com/en/resources/product-security/bulletin/amd-sb-7055.html
 *******************************************************************************
 */
 
@@ -43,84 +54,138 @@
 #include <intrin.h>
 #include <immintrin.h>
 
-#define rngCPUID(info, id) __cpuidex((int*)info, id, 0)
-#define rngRDStep(val) _rdseed32_step(val)
-#define rngRDStep2(val) _rdrand32_step(val)
+#if defined(_M_IX86) 
+typedef u32 trng_val_t;
+#else
+typedef u64 trng_val_t;
+#endif
+
+#define rngCPUID(info, id) __cpuid(info, id)
+
+static int rngRDStep(trng_val_t* val)
+{
+	size_t retries = 100;
+	while (retries--)
+	{
+#if defined(_M_IX86) 
+		if (_rdseed32_step(val))
+#else
+		if (_rdseed64_step(val))
+#endif
+			return 1;
+		_mm_pause();
+	}
+	return 0;
+}
+
+static int rngRDStep2(trng_val_t* val)
+{
+	size_t retries = 10;
+	while (retries--)
+	{
+#if defined(_M_IX86) 
+		if (_rdrand32_step(val))
+#else
+		if (_rdrand64_step(val))
+#endif
+			return 1;
+	}
+	return 0;
+}
 
 #elif defined(_MSC_VER) && defined(_M_IX86)
 
-#define cpuid		__asm _emit 0x0F __asm _emit 0xA2
-#define rdseed_eax	__asm _emit 0x0F __asm _emit 0xC7 __asm _emit 0xF8
-#define rdrand_eax	__asm _emit 0x0F __asm _emit 0xC7 __asm _emit 0xF0
+#include <intrin.h>
 
-static void rngCPUID(u32 info[4], u32 id)
-{
-	u32 a, b, c, d;
-	__asm {
-		mov eax, id
-		xor ecx, ecx
-		cpuid
-		mov a, eax
-		mov b, ebx
-		mov c, ecx
-		mov d, edx
-	}
-	info[0] = a, info[1] = b, info[2] = c, info[3] = d; 
-}
+typedef u32 trng_val_t;
 
-static int rngRDStep(u32* val)
+#define rngCPUID(info, id) __cpuid(info, id)
+#define pause __asm _emit 0xF3 __asm _emit 0x90
+#define rdseed_eax __asm _emit 0x0F __asm _emit 0xC7 __asm _emit 0xF8
+#define rdrand_eax __asm _emit 0x0F __asm _emit 0xC7 __asm _emit 0xF0
+
+static int rngRDStep(trng_val_t* val)
 {
-	__asm {
-		xor eax, eax
-		xor edx, edx
-		rdseed_eax
-		jnc err
-		mov edx, val
-		mov [edx], eax
+	size_t retries = 100;
+	while (retries--)
+	{
+		__asm {
+			xor eax, eax
+			rdseed_eax
+			jnc err
+			mov edx, val
+			mov[edx], eax
+		}
+		return 1;
+	err:
+		_asm pause;
 	}
-	return 1;
-err:
 	return 0;
 }
 
-static int rngRDStep2(u32* val)
+static int rngRDStep2(trng_val_t* val)
 {
-	__asm {
-		xor eax, eax
-		xor edx, edx
-		rdrand_eax
-		jnc err
-		mov edx, val
-		mov [edx], eax
+	size_t retries = 10;
+	while (retries--)
+	{
+		__asm {
+			xor eax, eax
+			rdrand_eax
+			jnc err
+			mov edx, val
+			mov[edx], eax
+		}
+		return 1;
+	err:
+		continue;
 	}
-	return 1;
-err:
 	return 0;
 }
 
-#elif (defined(__GNUC__) || defined(__clang__)) && \
+#elif (defined(__GNUC__) || defined(__clang__)) &&\
 	(defined(__i386__) || defined(__x86_64__))
 
 #include <cpuid.h>
 
-#define rngCPUID(info, id) \
+#if defined(__i386__)
+typedef u32 trng_val_t;
+#else
+typedef u64 trng_val_t;
+#endif
+
+#define rngCPUID(info, id)\
 	__cpuid_count(id, 0, info[0], info[1], info[2], info[3])
 
-static int rngRDStep(u32* val)
+static int rngRDStep(trng_val_t* val)
 {
-	octet ok = 0;
-	asm ("rdseed %0; setc %1" : "=r" (*val), "=qm" (ok));
-	return ok;
+	size_t retries = 100;
+	while (retries--)
+	{
+		octet ok = 0;
+		asm("rdseed %0; setc %1" : "=r" (*val), "=qm" (ok));
+		if (ok)
+			return 1;
+		asm("pause");
+	}
+	return 0;
 }
 
-static int rngRDStep2(u32* val)
+static int rngRDStep2(trng_val_t* val)
 {
-	octet ok = 0;
-	asm ("rdrand %0; setc %1" : "=r" (*val), "=qm" (ok));
-	return ok;
+	size_t retries = 100;
+	while (retries--)
+	{
+		octet ok = 0;
+		asm("rdrand %0; setc %1" : "=r" (*val), "=qm" (ok));
+		if (ok)
+			return 1;
+	}
+	return 0;
 }
 
 #else
+
+typedef u32 trng_val_t;
 
 #define rngCPUID(info, id) memSetZero(info, 16)
 #define rngRDStep(val) 0
@@ -165,7 +230,7 @@ static bool_t rngTRNG2IsAvail()
 
 err_t rngTRNGRead(void* buf, size_t* read, size_t count)
 {
-	u32 rand;
+	trng_val_t rand;
 	// pre
 	ASSERT(memIsValid(read, O_PER_S));
 	ASSERT(memIsValid(buf, count));
@@ -174,15 +239,16 @@ err_t rngTRNGRead(void* buf, size_t* read, size_t count)
 	if (!rngTRNGIsAvail())
 		return ERR_FILE_NOT_FOUND;
 	// генерация
-	while (*read + 4 <= count)
+	while (*read + sizeof(trng_val_t) <= count)
 	{
 		if (!rngRDStep(&rand))
 		{
 			CLEAN(rand);
 			return ERR_BAD_ENTROPY;
 		}
-		memCopy(buf, &rand, 4);
-		buf = (octet*)buf + 4, *read += 4;		
+		memCopy(buf, &rand, sizeof(trng_val_t));
+		buf = (octet*)buf + sizeof(trng_val_t);
+		*read += sizeof(trng_val_t);
 	}
 	// неполный блок
 	if (*read < count)
@@ -201,7 +267,7 @@ err_t rngTRNGRead(void* buf, size_t* read, size_t count)
 
 err_t rngTRNG2Read(void* buf, size_t* read, size_t count)
 {
-	u32 rand;
+	trng_val_t rand;
 	// pre
 	ASSERT(memIsValid(read, O_PER_S));
 	ASSERT(memIsValid(buf, count));
@@ -210,15 +276,16 @@ err_t rngTRNG2Read(void* buf, size_t* read, size_t count)
 	if (!rngTRNG2IsAvail())
 		return ERR_FILE_NOT_FOUND;
 	// генерация
-	while (*read + 4 <= count)
+	while (*read + sizeof(trng_val_t) <= count)
 	{
 		if (!rngRDStep2(&rand))
 		{
 			CLEAN(rand);
 			return ERR_BAD_ENTROPY;
 		}
-		memCopy(buf, &rand, 4);
-		buf = (octet*)buf + 4, *read += 4;		
+		memCopy(buf, &rand, sizeof(trng_val_t));
+		buf = (octet*)buf + sizeof(trng_val_t);
+		*read += sizeof(trng_val_t);
 	}
 	// неполный блок
 	if (*read < count)
