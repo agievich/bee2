@@ -4,7 +4,7 @@
 \brief Random number generation: system entropy sources
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2025.11.08
+\version 2025.12.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -69,7 +69,6 @@ CryptAcquireContextW() снижает риск ошибочного заверш
 
 #include <windows.h>
 #include <wincrypt.h>
-#include <ntsecapi.h>
 
 err_t rngSysRead(void* buf, size_t* read, size_t count)
 {
@@ -82,7 +81,7 @@ err_t rngSysRead(void* buf, size_t* read, size_t count)
 	if (!CryptAcquireContextW(&hprov, 0, 0, PROV_RSA_FULL,
 		CRYPT_VERIFYCONTEXT | CRYPT_SILENT))
 		return ERR_FILE_NOT_FOUND;
-	// получить данные
+	// получить случайные данные
 	*read = 0;
 	if (!CryptGenRandom(hprov, (DWORD)count, (octet*)buf))
 	{
@@ -95,9 +94,32 @@ err_t rngSysRead(void* buf, size_t* read, size_t count)
 	return ERR_OK;
 }
 
+#if defined(_MSC_VER) && _MSC_VER > 1500 &&\
+	defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0600
+
+#include <bcrypt.h>
+#pragma comment (lib, "bcrypt.lib")
+
 err_t rngSys2Read(void* buf, size_t* read, size_t count)
 {
-	// pre
+	ASSERT(memIsValid(read, O_PER_S));
+	ASSERT(memIsValid(buf, count));
+	ASSERT((size_t)(ULONG)count == count);
+	// получить случайные данные
+	*read = 0;
+	if (BCryptGenRandom(NULL, buf, (ULONG)count,
+			BCRYPT_USE_SYSTEM_PREFERRED_RNG) != 0)
+		return ERR_BAD_ENTROPY;
+	*read = count;
+	return ERR_OK;
+}
+
+#else
+
+#include <ntsecapi.h>
+
+err_t rngSys2Read(void* buf, size_t* read, size_t count)
+{
 	ASSERT(memIsValid(read, O_PER_S));
 	ASSERT(memIsValid(buf, count));
 	ASSERT((size_t)(ULONG)count == count);
@@ -105,10 +127,11 @@ err_t rngSys2Read(void* buf, size_t* read, size_t count)
 	*read = 0;
 	if (!RtlGenRandom(buf, (ULONG)count))
 		return ERR_BAD_ENTROPY;
-	// завершение
 	*read = count;
 	return ERR_OK;
 }
+
+#endif
 
 #elif defined OS_UNIX
 
