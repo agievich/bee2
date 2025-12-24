@@ -4,7 +4,7 @@
 \brief Random number generation: physical entropy sources
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2025.12.23
+\version 2025.12.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -19,30 +19,38 @@
 *******************************************************************************
 Физические источники
 
-Поддержан ГСЧ Intel/AMD
+ГСЧ Intel/AMD
 
-В соответствии с документами:
-[1] Intel 64 and IA-32 Architectures Software Developer’s Manual. Volume 1:
+Инструкции для работы с ГСЧ:
+-	RDSEED -- выдает данные от источника случайности после их
+	криптографической постобработки с помощью AES-CBC-MAC;
+-	RDRAND -- выдает данные генератора псевдослучайных чисел AES-CTR-DRBG.
+	Затравочное значение генератора (seed) строится по данным от источника
+	случайности и периодически обновляется (в соответствии с [1]: не реже
+	чем после 1022 обращений к RDRAND).
+
+Инструкция RDSEED используется в основном источнике "trng", инструкция
+RDRAND -- во вспомогательном источнике "trng2".
+
+Архитектура ГСЧ / описание инструкций:
+[1] Intel Digital Random Number Generator (DRNG) Software Implementation Guide.
+	Technical Paper. Revision 2.2, September 2025.
+	https://www.intel.com/content/www/us/en/content-details/864722/
+	intel-digital-random-number-generator-software-implementation-guide.html.
+[2] AMD Random Number Generator, 6/27/17.
+    https://www.amd.com/content/dam/amd/en/documents/processor-tech-docs/
+	white-papers/amd-random-number-generator.pdf.
+[3] Intel 64 and IA-32 Architectures Software Developer’s Manual. Volume 1:
 	Basic Architecture, September 2016.
 	https://www.intel.com/content/dam/www/public/us/en/documents/manuals/
 	64-ia-32-architectures-software-developer-vol-1-manual.pdf.
-[2] Intel Digital Random Number Generator (DRNG) Software Implementation Guide.
-    Technical Paper. Revision 2.2, September 2025.
-	https://www.intel.com/content/www/us/en/content-details/864722/
-	intel-digital-random-number-generator-software-implementation-guide.html.
 
-Используются инструкции:
--	RDSEED -- без криптографической постобработки, т.е. прямая работа с
-	источником случайности;
--	RDRAND -- с криптографической постобработкой.
-
-Инструкция rdseed используется в основном источнике "trng", инструкция rdrand --
-во вспомогательном источнике "trng2".
-
-Если инструкция RDRAND не выдала случайное число, то предпринимаются повторные
-попытки, вплоть до 10. Если случайное число не выдала инструкция RDSEED,
-то число  попыток увеличивается до 100 и между попытками вызывается инструкция
-PAUSE. Данная логика соответствует рекомендациям в [2].
+Работа с ГСЧ реализована в соответствии с рекомендациями в [1]. Детали
+реализации:
+1. Если инструкция RDRAND завершена с ошибкой, т.е. случайное число не было
+   сгенерировано, то предпринимаются повторные попытки генерации, вплоть до 10.
+2. В случае ошибки при вызове RDSEED число  попыток увеличивается до 100 и между
+   попытками вызывается инструкция PAUSE.
 
 \warning RDSEED Failure on AMD “Zen 5” Processors:
 https://www.amd.com/en/resources/product-security/bulletin/amd-sb-7055.html
