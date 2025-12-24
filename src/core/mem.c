@@ -4,7 +4,7 @@
 \brief Memory management
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.10.03
+\version 2025.12.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -266,32 +266,21 @@ int FAST(memCmpRev)(const void* buf1, const void* buf2, size_t count)
 *******************************************************************************
 Очистка буфера памяти
 
-\remark Функция memWipe() повторяет функцию OPENSSL_cleanse()
-из библиотеки OpenSSL:
+Методы очистки памяти с защитой от оптимизаторов:
+
+[1] Yang Z., Johannesmeyer B., Trier Olesen A., Lerner S., Levchenko K.
+    Dead Store Elimination (Still) Considered Harmfuf. USENIX Security 2017:
+	26th USENIX Security Symposium, pp. 1025–1040, 2017.
+	https://www.usenix.org/system/files/conference/usenixsecurity17/
+	sec17-yang.pdf
+
+Реализован метод "Volatile Function Pointer". Он используется также в OpenSSL
+версии 1.0.2 и выше. В [1] подтверждается безопасность метода при использовании
+GCC, Clang и Microsoft Visual Studio.
+
+\remark В предыдущей редакции memWipe() был реализован метод
+"Complicated Computation":
 \code
-	unsigned char cleanse_ctr = 0;
-	void OPENSSL_cleanse(void *ptr, size_t len)
-	{
-		unsigned char *p = ptr;
-		size_t loop = len, ctr = cleanse_ctr;
-		while(loop--)
-		{
-			*(p++) = (unsigned char)ctr;
-			ctr += (17 + ((size_t)p & 0xF));
-		}
-		p=memchr(ptr, (unsigned char)ctr, len);
-		if(p)
-			ctr += (63 + (size_t)p);
-		cleanse_ctr = (unsigned char)ctr;
-	}
-\endcode
-
-\remark На платформе Windows есть функции SecureZeroMemory()
-и RtlSecureZeroMemory(), которые, как и memWipe(), выполняют
-гарантированную очистку памяти.
-*******************************************************************************
-*/
-
 void memWipe(void* buf, size_t count)
 {
 	static octet wipe_ctr = 0;
@@ -306,6 +295,18 @@ void memWipe(void* buf, size_t count)
 	if (p)
 		ctr += (63 + (size_t)p);
 	wipe_ctr = (octet)ctr;
+}
+\endcode
+Заимствован код функции OPENSSL_cleanse() библиотеки OpenSSL версии < 1.0.2.
+*******************************************************************************
+*/
+
+typedef void (*memset_i)(void*, octet, size_t);
+static volatile memset_i memSet_volatile = memSet;
+
+void memWipe(void *buf, size_t count)
+{
+	memSet_volatile(buf, 0, count);
 }
 
 /*
