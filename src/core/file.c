@@ -4,13 +4,13 @@
 \brief File management
 \project bee2 [cryptographic library]
 \created 2025.04.11
-\version 2025.06.10
+\version 2025.12.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
 	#include <io.h>
 #else
 	#include <unistd.h>
@@ -179,7 +179,7 @@ size_t fileSize(file_t file)
 bool_t fileTrunc(file_t file, size_t size)
 {
 	ASSERT(fileIsValid(file));
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
 	return (size_t)(__int64)size == size &&
 		_chsize_s(_fileno(file), (__int64)size) == 0;
 #else

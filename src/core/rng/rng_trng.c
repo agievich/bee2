@@ -57,7 +57,8 @@ https://www.amd.com/en/resources/product-security/bulletin/amd-sb-7055.html
 *******************************************************************************
 */
 
-#if (_MSC_VER >= 1600) && (defined(_M_IX86) || defined(_M_X64))
+#if defined(_MSC_VER) && _MSC_VER >= 1600 &&\
+	(defined(_M_IX86) || defined(_M_X64))
 
 #include <intrin.h>
 #include <immintrin.h>

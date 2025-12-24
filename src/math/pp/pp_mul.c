@@ -4,7 +4,7 @@
 \brief Binary polynomials: multiplicative operations
 \project bee2 [cryptographic library]
 \created 2012.03.01
-\version 2025.10.22
+\version 2025.12.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -18,7 +18,7 @@
 	[см. макросы _MUL_REPAIR_XX]
 */
 
-#if (_MSC_VER >= 1200)
+#if defined(_MSC_VER) && _MSC_VER >= 1200
 	#pragma warning(push)
 	#pragma warning(disable:4146)
 #endif
@@ -1386,6 +1386,6 @@ size_t ppMod_deep(size_t n, size_t m)
 }
 
 /*	снять подавление предупреждения C4146 */
-#if (_MSC_VER >= 1200)
+#if defined(_MSC_VER) && _MSC_VER >= 1200
 	#pragma warning(pop)
 #endif
