@@ -4,7 +4,7 @@
 \brief Elliptic curves over prime fields
 \project bee2 [cryptographic library]
 \created 2012.06.26
-\version 2025.10.22
+\version 2025.12.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -56,7 +56,7 @@ http://www.hyperelliptic.org/efd. Там же можно найти соглаш
 
 /*
 *******************************************************************************
-Якобиановы координаты:
+Якобиевы координаты:
 	x = X / Z^2, y = Y / Z^3,
 	-(X : Y : Z) = (X : -Y : Z).
 
