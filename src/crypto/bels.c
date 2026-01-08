@@ -4,7 +4,7 @@
 \brief STB 34.101.60 (bels): secret sharing algorithms
 \project bee2 [cryptographic library]
 \created 2013.05.14
-\version 2025.09.29
+\version 2026.01.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -82,6 +82,7 @@ err_t belsValM(const octet m0[], size_t len)
 	if ((len != 16 && len != 24 && len != 32) || !memIsValid(m0, len))
 		return ERR_BAD_INPUT;
 	// создать состояние
+	ASSERT(len % O_PER_W == 0);
 	n = W_OF_O(len);
 	state = blobCreate2(
 		O_OF_W(n + 1),
@@ -124,6 +125,7 @@ err_t belsGenM0(octet m0[], size_t len, gen_i ang, void* ang_state)
 		!memIsValid(m0, len))
 		return ERR_BAD_INPUT;
 	// создать состояние
+	ASSERT(len % O_PER_W == 0);
 	n = W_OF_O(len);
 	state = blobCreate2(
 		O_OF_W(n + 1),
@@ -169,6 +171,7 @@ err_t belsGenMi(octet mi[], size_t len, const octet m0[], gen_i ang,
 		return ERR_BAD_INPUT;
 	EXPECT(belsValM(m0, len) == ERR_OK);
 	// создать состояние
+	ASSERT(len % O_PER_W == 0);
 	n = W_OF_O(len);
 	state = blobCreate2(
 		O_OF_W(n + 1),
@@ -215,7 +218,7 @@ err_t belsGenMid(octet mid[], size_t len, const octet m0[], const octet id[],
 	void* state;
 	word* f0;			/* [n + 1] */
 	word* f;			/* [n + 1] */
-	word* u;			/* [W_OF_O(32) + 1] */
+	word* u;			/* [n + 1] */
 	void* stack;
 	// проверить входные данные
 	if ((len != 16 && len != 24 && len != 32) || 
@@ -224,11 +227,12 @@ err_t belsGenMid(octet mid[], size_t len, const octet m0[], const octet id[],
 		return ERR_BAD_INPUT;
 	EXPECT(belsValM(m0, len) == ERR_OK);
 	// создать состояние
+	ASSERT(len % O_PER_W == 0);
 	n = W_OF_O(len);
 	state = blobCreate2(
 		O_OF_W(n + 1),
 		O_OF_W(n + 1),
-		O_OF_W(W_OF_O(32) + 1),
+		O_OF_W(n + 1),
 		utilMax(2, 
 			beltHash_keep(),
 			ppMinPolyMod_deep(n + 1)),
@@ -242,8 +246,8 @@ err_t belsGenMid(octet mid[], size_t len, const octet m0[], const octet id[],
 	// хэшировать
 	beltHashStart(stack);
 	beltHashStepH(id, id_len, stack);
-	beltHashStepG((octet*)u, stack);
-	wwFrom(u, u, 32);
+	beltHashStepG2((octet*)u, len, stack);
+	wwFrom(u, u, len);
 	u[n] = 0;
 	// попытки генерации
 	for (reps = MAX2(3, B_PER_IMPOSSIBLE * 2 / len / 8); reps--;)
@@ -346,6 +350,7 @@ err_t belsShare(octet si[], size_t count, size_t threshold, size_t len,
 		return ERR_BAD_INPUT;
 	EXPECT(belsValM(m0, len) == ERR_OK);
 	// создать состояние
+	ASSERT(len % O_PER_W == 0);
 	n = W_OF_O(len);
 	state = blobCreate2(
 		O_OF_W(n + 1),
@@ -402,6 +407,7 @@ err_t belsShare2(octet si[], size_t count, size_t threshold, size_t len,
 		!memIsValid(s, len) || !memIsValid(si, count * (len + 1)))
 		return ERR_BAD_INPUT;
 	// создать состояние
+	ASSERT(len % O_PER_W == 0);
 	n = W_OF_O(len);
 	state = blobCreate2(
 		O_OF_W(n + 1),
@@ -493,6 +499,7 @@ err_t belsRecover(octet s[], size_t count, size_t len, const octet si[],
 		return ERR_BAD_INPUT;
 	EXPECT(belsValM(m0, len) == ERR_OK);
 	// расчет глубины стека
+	ASSERT(len % O_PER_W == 0);
 	n = W_OF_O(len);
 	deep = utilMax(2, 
 		ppMul_deep(n, n), 
@@ -599,6 +606,7 @@ err_t belsRecover2(octet s[], size_t count, size_t len, const octet si[])
 				return ERR_BAD_PUBKEY;
 	}
 	// расчет глубины стека
+	ASSERT(len % O_PER_W == 0);
 	n = W_OF_O(len);
 	deep = utilMax(2,
 		ppMul_deep(n, n),
