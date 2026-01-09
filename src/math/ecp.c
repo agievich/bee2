@@ -4,7 +4,7 @@
 \brief Elliptic curves over prime fields
 \project bee2 [cryptographic library]
 \created 2012.06.26
-\version 2025.12.29
+\version 2026.01.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -51,8 +51,9 @@ http://www.hyperelliptic.org/efd. Там же можно найти соглаш
 #define ecpSeemsOnA(a, ec)\
 	(zmIsIn(ecX(a), (ec)->f) && zmIsIn(ecY(a, (ec)->f->n), (ec)->f))
 
-#define ecpSeemsOn3(a, ec)\
-	(ecpSeemsOnA(a, ec) && zmIsIn(ecZ(a, (ec)->f->n), (ec)->f))
+#define ecpSeemsOnJ(a, ec)\
+	(ecIsO(a, ec) ||\
+		(ecpSeemsOnA(a, ec) && zmIsIn(ecZ(a, (ec)->f->n), (ec)->f)))
 
 /*
 *******************************************************************************
@@ -158,7 +159,7 @@ static bool_t ecpToAJ(word b[], const word a[], const ec_o* ec, void* stack)
 	word* t2;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
-	ASSERT(ecpSeemsOn3(a, ec));
+	ASSERT(ecpSeemsOnJ(a, ec));
 	ASSERT(a == b || wwIsDisjoint2(a, 3 * n, b, 2 * n));
 	// разметить стек
 	memSlice(stack,
@@ -195,7 +196,7 @@ static void ecpNegJ(word b[], const word a[], const ec_o* ec, void* stack)
 	const size_t n = ec->f->n;
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
-	ASSERT(ecpSeemsOn3(a, ec));
+	ASSERT(ecpSeemsOnJ(a, ec));
 	ASSERT(wwIsSameOrDisjoint(a, b, 3 * n));
 	// xb <- xa
 	qrCopy(ecX(b), ecX(a), ec->f);
@@ -217,7 +218,7 @@ static void ecpDblJ(word b[], const word a[], const ec_o* ec, void* stack)
 	word* t2;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
-	ASSERT(ecpSeemsOn3(a, ec));
+	ASSERT(ecpSeemsOnJ(a, ec));
 	ASSERT(wwIsSameOrDisjoint(a, b, 3 * n));
 	// разметить стек
 	memSlice(stack,
@@ -291,7 +292,7 @@ static void ecpDblJA3(word b[], const word a[], const ec_o* ec, void* stack)
 	word* t2;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
-	ASSERT(ecpSeemsOn3(a, ec));
+	ASSERT(ecpSeemsOnJ(a, ec));
 	ASSERT(wwIsSameOrDisjoint(a, b, 3 * n));
 	// разметить стек
 	memSlice(stack,
@@ -448,8 +449,8 @@ static void ecpAddJ(word c[], const word a[], const word b[], const ec_o* ec,
 	word* t4;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
-	ASSERT(ecpSeemsOn3(a, ec));
-	ASSERT(ecpSeemsOn3(b, ec));
+	ASSERT(ecpSeemsOnJ(a, ec));
+	ASSERT(ecpSeemsOnJ(b, ec));
 	ASSERT(wwIsSameOrDisjoint(a, c, 3 * n));
 	ASSERT(wwIsSameOrDisjoint(b, c, 3 * n));
 	// разметить стек
@@ -566,7 +567,7 @@ static void ecpAddAJ(word c[], const word a[], const word b[], const ec_o* ec,
 	word* t4;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
-	ASSERT(ecpSeemsOn3(a, ec));
+	ASSERT(ecpSeemsOnJ(a, ec));
 	ASSERT(ecpSeemsOnA(b, ec));
 	ASSERT(wwIsSameOrDisjoint(a, c, 3 * n));
 	ASSERT(b == c || wwIsDisjoint2(b, 2 * n, c, 3 * n));
@@ -652,8 +653,8 @@ static void ecpSubJ(word c[], const word a[], const word b[], const ec_o* ec,
 	word* t;			/* [3 * n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
-	ASSERT(ecpSeemsOn3(a, ec));
-	ASSERT(ecpSeemsOn3(b, ec));
+	ASSERT(ecpSeemsOnJ(a, ec));
+	ASSERT(ecpSeemsOnJ(b, ec));
 	ASSERT(wwIsSameOrDisjoint(a, c, 3 * n));
 	ASSERT(wwIsSameOrDisjoint(b, c, 3 * n));
 	// разметить стек
@@ -687,7 +688,7 @@ static void ecpSubAJ(word c[], const word a[], const word b[], const ec_o* ec,
 	word* t;			/* [2 * n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
-	ASSERT(ecpSeemsOn3(a, ec));
+	ASSERT(ecpSeemsOnJ(a, ec));
 	ASSERT(ecpSeemsOnA(b, ec));
 	ASSERT(wwIsSameOrDisjoint(a, c, 3 * n));
 	ASSERT(b == c || wwIsDisjoint2(b, 2 * n, c, 3 * n));
@@ -734,7 +735,7 @@ static void ecpTplJ(word b[], const word a[], const ec_o* ec, void* stack)
 	word* t7;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
-	ASSERT(ecpSeemsOn3(a, ec));
+	ASSERT(ecpSeemsOnJ(a, ec));
 	ASSERT(wwIsSameOrDisjoint(a, b, 3 * n));
 	// разметить стек
 	memSlice(stack,
@@ -832,7 +833,7 @@ static void ecpTplJA3(word b[], const word a[], const ec_o* ec, void* stack)
 	word* t7;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
-	ASSERT(ecpSeemsOn3(a, ec));
+	ASSERT(ecpSeemsOnJ(a, ec));
 	ASSERT(wwIsSameOrDisjoint(a, b, 3 * n));
 	// разметить стек
 	memSlice(stack,
@@ -1086,8 +1087,7 @@ bool_t ecpGroupSeemsValid(const ec_o* ec, void* stack)
 		ecpGroupSeemsValid_local(n), SIZE_0, SIZE_MAX,
 		&t1, &t2, &t3, &stack);
 	// ecGroupIsOperable(ec) == TRUE? base \in ec?
-	if (!ecGroupIsOperable(ec) ||
-		!ecpIsOnA(ec->base, ec, stack))
+	if (!ecGroupIsOperable(ec) || !ecpIsOnA(ec->base, ec, stack))
 		return FALSE;
 	// [n + 2]t1 <- order * cofactor
 	t1[n + 1] = zzMulW(t1, ec->order, n + 1, ec->cofactor);

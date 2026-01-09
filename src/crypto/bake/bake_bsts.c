@@ -4,7 +4,7 @@
 \brief STB 34.101.66 (bake): the BSTS protocol
 \project bee2 [cryptographic library]
 \created 2014.04.14
-\version 2025.10.22
+\version 2026.01.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -499,8 +499,8 @@ err_t bakeBSTSStep5(const octet in[], size_t in_len, bake_certval_i valb,
 		ERR_CALL_CHECK(code);
 	}
 	// sb G + (2^l + t)Qa == Vb?
-	if (!ecAddMulA(Qb, s->ec, stack, 2, s->ec->base, sb, n,
-		Qb, s->t, n / 2 + 1))
+	if (!ecAddMulA(Qb, s->ec, stack, 2, s->ec->base, sb, n, Qb, s->t, 
+			n / 2 + 1))
 		return ERR_BAD_PARAMS;
 	if (!wwEq(Qb, s->Vb, 2 * n))
 		return ERR_AUTH;

@@ -4,7 +4,7 @@
 \brief Elliptic curves over binary fields
 \project bee2 [cryptographic library]
 \created 2012.04.19
-\version 2025.09.03
+\version 2026.01.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -110,7 +110,8 @@ size_t ec2IsValid_deep(size_t n);
 	.
 	\pre Описание ec работоспособно.
 	\return Признак корректности.
-	\remark Не проверяется, что порядок ec->base равняется ec->order.
+	\remark Не проверяется, что порядок базовой точки в ec->base равняется
+	ec->order.
 	\deep{stack} ec2GroupSeemsValid_deep(ec->f->n, ec->f->deep).
 */
 bool_t ec2GroupSeemsValid(
