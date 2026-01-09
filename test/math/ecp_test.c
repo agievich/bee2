@@ -4,7 +4,7 @@
 \brief Tests for elliptic curves over prime fields
 \project bee2/test
 \created 2017.05.29
-\version 2025.09.15
+\version 2026.01.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -38,7 +38,7 @@ static char xbase[] =
 	"0000000000000000000000000000000000000000000000000000000000000000";
 static char ybase[] = 
 	"B0E9804939D7C2E931D4CE052CCC6B6B692514CCADBA44940484EEA5F52D9268";
-static u32 cofactor = 1;
+static size_t cofactor = 1;
 
 /*
 *******************************************************************************

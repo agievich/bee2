@@ -4,7 +4,7 @@
 \brief STB 34.101.66 (bake): the BMQV protocol
 \project bee2 [cryptographic library]
 \created 2014.04.14
-\version 2025.09.26
+\version 2026.01.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************

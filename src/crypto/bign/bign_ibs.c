@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): identity-based signature
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.10.23
+\version 2026.01.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -473,8 +473,8 @@ err_t bignIdVerifyEc(const ec_o* ec, const octet oid_der[], size_t oid_len,
 	zzMod(t1, t1, n + 1, ec->order, n, stack);
 	zzNegMod(t1, t1, ec->order, n);
 	// V <- s1 G + (s0 + 2^l) R + t Q
-	if (!ecAddMulA(V, ec, stack,
-		3, ec->base, s1, n, R, s0, n / 2 + 1, Q, t1, n))
+	if (!ecAddMulA(V, ec, stack, 3, ec->base, s1, n, R, s0, n / 2 + 1, 
+			Q, t1, n))
 	{
 		blobClose(state);
 		return ERR_BAD_SIG;

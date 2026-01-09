@@ -4,7 +4,7 @@
 \brief Elliptic curves over prime fields
 \project bee2 [cryptographic library]
 \created 2012.06.24
-\version 2025.12.29
+\version 2026.01.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -112,7 +112,8 @@ size_t ecpIsValid_deep(size_t n, size_t f_deep);
 	.
 	\pre Описание ec работоспособно.
 	\return Признак корректности.
-	\remark Не проверяется, что порядок ec->base равняется ec->order.
+	\remark Не проверяется, что порядок базовой точки в ec->base равняется
+	ec->order.
 	\deep{stack} ecpGroupSeemsValid_deep(ec->f->n, ec->f->deep).
 */
 bool_t ecpGroupSeemsValid(

@@ -4,7 +4,7 @@
 \brief Elliptic curves over binary fields
 \project bee2 [cryptographic library]
 \created 2012.06.26
-\version 2025.10.22
+\version 2025.01.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -57,8 +57,9 @@ http://www.hyperelliptic.org/efd. Там же можно найти соглаш
 #define ec2SeemsOnA(a, ec)\
 	(gf2IsIn(ecX(a), (ec)->f) && gf2IsIn(ecY(a, (ec)->f->n), (ec)->f))
 
-#define ec2SeemsOn3(a, ec)\
-	(ec2SeemsOnA(a, ec) && gf2IsIn(ecZ(a, (ec)->f->n), (ec)->f))
+#define ec2SeemsOnLD(a, ec)\
+	(ecIsO(a, ec) ||\
+		(ec2SeemsOnA(a, ec) && gf2IsIn(ecZ(a, (ec)->f->n), (ec)->f)))
 
 /*
 *******************************************************************************
@@ -145,7 +146,7 @@ static bool_t ec2ToALD(word b[], const word a[], const ec_o* ec, void* stack)
 	word* t1;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
-	ASSERT(ec2SeemsOn3(a, ec));
+	ASSERT(ec2SeemsOnLD(a, ec));
 	ASSERT(a == b || wwIsDisjoint2(a, 3 * n, b, 2 * n));
 	// разметить стек
 	memSlice(stack,
@@ -184,7 +185,7 @@ static void ec2NegLD(word b[], const word a[], const ec_o* ec, void* stack)
 	word* t1;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
-	ASSERT(ec2SeemsOn3(a, ec));
+	ASSERT(ec2SeemsOnLD(a, ec));
 	ASSERT(wwIsSameOrDisjoint(a, b, 3 * n));
 	// разметить стек
 	memSlice(stack,
@@ -217,7 +218,7 @@ static void ec2DblLD(word b[], const word a[], const ec_o* ec, void* stack)
 	word* t2;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
-	ASSERT(ec2SeemsOn3(a, ec));
+	ASSERT(ec2SeemsOnLD(a, ec));
 	ASSERT(wwIsSameOrDisjoint(a, b, 3 * n));
 	// разметить стек
 	memSlice(stack,
@@ -344,8 +345,8 @@ static void ec2AddLD(word c[], const word a[], const word b[],
 	word* t6;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
-	ASSERT(ec2SeemsOn3(a, ec));
-	ASSERT(ec2SeemsOn3(b, ec));
+	ASSERT(ec2SeemsOnLD(a, ec));
+	ASSERT(ec2SeemsOnLD(b, ec));
 	ASSERT(wwIsSameOrDisjoint(a, c, 3 * n));
 	ASSERT(wwIsSameOrDisjoint(b, c, 3 * n));
 	// разметить стек
@@ -448,7 +449,7 @@ static void ec2AddALD(word c[], const word a[], const word b[],
 	word* t4;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
-	ASSERT(ec2SeemsOn3(a, ec));
+	ASSERT(ec2SeemsOnLD(a, ec));
 	ASSERT(ec2SeemsOnA(b, ec));
 	ASSERT(wwIsSameOrDisjoint(a, c, 3 * n));
 	ASSERT(b == c || wwIsDisjoint2(b, 2 * n, c, 3 * n));
@@ -539,8 +540,8 @@ static void ec2SubLD(word c[], const word a[], const word b[],
 	word* t;			/* [3 * n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
-	ASSERT(ec2SeemsOn3(a, ec));
-	ASSERT(ec2SeemsOn3(b, ec));
+	ASSERT(ec2SeemsOnLD(a, ec));
+	ASSERT(ec2SeemsOnLD(b, ec));
 	ASSERT(wwIsSameOrDisjoint(a, c, 3 * n));
 	ASSERT(wwIsSameOrDisjoint(b, c, 3 * n));
 	// разметить стек
@@ -577,7 +578,7 @@ static void ec2SubALD(word c[], const word a[], const word b[],
 	word* t;			/* [2 * n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
-	ASSERT(ec2SeemsOn3(a, ec));
+	ASSERT(ec2SeemsOnLD(a, ec));
 	ASSERT(ec2SeemsOnA(b, ec));
 	ASSERT(wwIsSameOrDisjoint(a, c, 3 * n));
 	ASSERT(b == c || wwIsDisjoint2(b, 2 * n, c, 3 * n));
@@ -716,8 +717,7 @@ bool_t ec2GroupSeemsValid(const ec_o* ec, void* stack)
 		ec2GroupSeemsValid_local(n), SIZE_0, SIZE_MAX,
 		&t1, &t2, &t3, &stack);
 	// ecGroupIsOperable(ec)? base \in ec?
-	if (!ecGroupIsOperable(ec) ||
-		!ec2IsOnA(ec->base, ec, stack))
+	if (!ecGroupIsOperable(ec) || !ec2IsOnA(ec->base, ec, stack))
 		return FALSE;
 	// [n + 1]t1 <- 2^m
 	wwSetZero(t1, n + 1);
