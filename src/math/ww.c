@@ -4,7 +4,7 @@
 \brief Arbitrary length words
 \project bee2 [cryptographic library]
 \created 2012.04.18
-\version 2025.07.24
+\version 2026.01.12
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -315,16 +315,23 @@ bool_t wwTestBit(const word a[], size_t pos)
 word wwGetBits(const word a[], size_t pos, size_t width)
 {
 	register word ret;
-	size_t n = pos / B_PER_W;
+	size_t n;
+	// pre
 	ASSERT(wwIsValid(a, W_OF_B(pos + width)));
-	pos %= B_PER_W;
-	// биты a[n]
-	ret = a[n] >> pos;
-	// биты a[n + 1]
-	if (pos + width > B_PER_W)
-		ret |= a[n + 1] << (B_PER_W - pos);
-	// только width битов
 	ASSERT(width <= B_PER_W);
+	// уточнить позицию
+	n = pos / B_PER_W;
+	pos %= B_PER_W;
+	// определить биты
+	if (pos)
+	{
+		ret = a[n] >> pos;
+		if (pos + width > B_PER_W)
+			ret |= a[n + 1] << (B_PER_W - pos);
+	}
+	else
+		ret = a[n];
+	// только width битов
 	if (width < B_PER_W)
 		ret &= WORD_BIT_POS(width) - 1;
 	return ret;
@@ -409,21 +416,23 @@ size_t wwNAF(word naf[], const word a[], size_t n, size_t w)
 	const word mask = hi_bit - 1;
 	register word window;
 	register word digit;
-	register size_t naf_len = 0;
-	register size_t naf_size = 0;
-	register size_t a_len = wwBitSize(a, n);
+	register size_t naf_len;
+	register size_t naf_size;
+	register size_t a_len;
 	size_t i;
 	// pre
 	ASSERT(wwIsDisjoint2(a, n, naf, 2 * n + 1));
 	ASSERT(2 <= w && w < B_PER_W);
 	// naf <- 0
 	wwSetZero(naf, 2 * n + 1);
+	naf_len = naf_size = 0;
 	// a == 0?
 	if (wwIsZero(a, n))
 		return 0;
 	// window <- a mod 2^w
 	window = wwGetBits(a, 0, w);
 	// расчет NAF
+	a_len = wwBitSize(a, n);
 	for (i = w; window || i < a_len; ++i)
 	{
 		// ненулевой символ?

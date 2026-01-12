@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-\file u64_test.c
+\file ww_test.c
 \brief Tests for operations on arbitrary length words
 \project bee2/test
 \created 2023.03.31
@@ -104,6 +104,12 @@ bool_t wwTest()
 			!wwIsRepW(a + 2, 4, 0x5C >> 1) ||
 		(wwShLo(a + 2, 4, 2 * B_PER_W - 1), FALSE) ||
 			!wwIsRepW(a + 2, 2, 0x5C))
+		return FALSE;
+	// NAF
+	a[0] = 255;
+	if (wwNAF(b, a, 1, 2) != 9 || b[0] != 0x0601 ||
+		wwNAF(b, a, 1, 3) != 9 || b[0] != 0x1401 ||
+		wwNAF(b, a, 1, 4) != 9 || b[0] != 0x4801)
 		return FALSE;
 	// все нормально
 	return TRUE;

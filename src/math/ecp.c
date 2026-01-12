@@ -4,7 +4,7 @@
 \brief Elliptic curves over prime fields
 \project bee2 [cryptographic library]
 \created 2012.06.26
-\version 2026.01.08
+\version 2026.01.12
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -642,75 +642,6 @@ static size_t ecpAddAJ_deep(size_t n, size_t f_deep)
 		SIZE_MAX);
 }
 
-#define ecpSubJ_local(n)\
-/* t */		O_OF_W(3 * n)
-
-// [3n]c <- [3n]a - [3n]b (P <- P - P)
-static void ecpSubJ(word c[], const word a[], const word b[], const ec_o* ec,
-	void* stack)
-{
-	const size_t n = ec->f->n;
-	word* t;			/* [3 * n] */
-	// pre
-	ASSERT(ecIsOperable(ec) && ec->d == 3);
-	ASSERT(ecpSeemsOnJ(a, ec));
-	ASSERT(ecpSeemsOnJ(b, ec));
-	ASSERT(wwIsSameOrDisjoint(a, c, 3 * n));
-	ASSERT(wwIsSameOrDisjoint(b, c, 3 * n));
-	// разметить стек
-	memSlice(stack,
-		ecpSubJ_local(n), SIZE_0, SIZE_MAX,
-		&t, &stack);
-	// t <- -b
-	qrCopy(ecX(t), ecX(b), ec->f);
-	zmNeg(ecY(t, n), ecY(b, n), ec->f);
-	qrCopy(ecZ(t, n), ecZ(b, n), ec->f);
-	// c <- a + t
-	ecpAddJ(c, a, t, ec, stack);
-}
-
-static size_t ecpSubJ_deep(size_t n, size_t f_deep)
-{
-	return memSliceSize(
-		ecpSubJ_local(n), 
-		ecpAddJ_deep(n, f_deep),
-		SIZE_MAX);
-}
-
-#define ecpSubAJ_local(n)\
-/* t */		O_OF_W(2 * n)
-
-// [3n]c <- [3n]a - [2n]b (P <- P - A)
-static void ecpSubAJ(word c[], const word a[], const word b[], const ec_o* ec,
-	void* stack)
-{
-	const size_t n = ec->f->n;
-	word* t;			/* [2 * n] */
-	// pre
-	ASSERT(ecIsOperable(ec) && ec->d == 3);
-	ASSERT(ecpSeemsOnJ(a, ec));
-	ASSERT(ecpSeemsOnA(b, ec));
-	ASSERT(wwIsSameOrDisjoint(a, c, 3 * n));
-	ASSERT(b == c || wwIsDisjoint2(b, 2 * n, c, 3 * n));
-	// разметить стек
-	memSlice(stack,
-		ecpSubAJ_local(n), SIZE_0, SIZE_MAX,
-		&t, &stack);
-	// t <- -b
-	qrCopy(ecX(t), ecX(b), ec->f);
-	zmNeg(ecY(t, n), ecY(b, n), ec->f);
-	// c <- a + t
-	ecpAddAJ(c, a, t, ec, stack);
-}
-
-static size_t ecpSubAJ_deep(size_t n, size_t f_deep)
-{
-	return memSliceSize(
-		ecpSubAJ_local(n), 
-		ecpAddAJ_deep(n, f_deep),
-		SIZE_MAX);
-}
-
 #define ecpTplJ_local(n)\
 /* t0 */	O_OF_W(n),\
 /* t1 */	O_OF_W(n),\
@@ -956,17 +887,13 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	ec->neg = ecpNegJ;
 	ec->add = ecpAddJ;
 	ec->adda = ecpAddAJ;
-	ec->sub = ecpSubJ;
-	ec->suba = ecpSubAJ;
 	ec->dbl = bA3 ? ecpDblJA3 : ecpDblJ;
 	ec->dbla = ecpDblAJ;
 	ec->tpl = bA3 ? ecpTplJA3 : ecpTplJ;
-	ec->deep = utilMax(8,
+	ec->deep = utilMax(6,
 		ecpToAJ_deep(f->n, f->deep),
 		ecpAddJ_deep(f->n, f->deep),
 		ecpAddAJ_deep(f->n, f->deep),
-		ecpSubJ_deep(f->n, f->deep),
-		ecpSubAJ_deep(f->n, f->deep),
 		bA3 ? ecpDblJA3_deep(f->n, f->deep) : ecpDblJ_deep(f->n, f->deep),
 		ecpDblAJ_deep(f->n, f->deep),
 		bA3 ? ecpTplJA3_deep(f->n, f->deep) : ecpTplJ_deep(f->n, f->deep));
@@ -990,13 +917,11 @@ size_t ecpCreateJ_deep(size_t n, size_t f_deep)
 {
 	return memSliceSize(
 		ecpCreateJ_local(n),
-		utilMax(11,
+		utilMax(9,
 			O_OF_W(n),
 			ecpToAJ_deep(n, f_deep),
 			ecpAddJ_deep(n, f_deep),
 			ecpAddAJ_deep(n, f_deep),
-			ecpSubJ_deep(n, f_deep),
-			ecpSubAJ_deep(n, f_deep),
 			ecpDblJ_deep(n, f_deep),
 			ecpDblJA3_deep(n, f_deep),
 			ecpDblAJ_deep(n, f_deep),
