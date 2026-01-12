@@ -4,7 +4,7 @@
 \brief Elliptic curves over binary fields
 \project bee2 [cryptographic library]
 \created 2012.06.26
-\version 2025.01.08
+\version 2025.01.12
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -529,78 +529,6 @@ static size_t ec2AddALD_deep(size_t n, size_t f_deep)
 		SIZE_MAX);
 }
 
-#define ec2SubLD_local(n)\
-/* t */		O_OF_W(3 * n)
-
-// [3n]c <- [3n]a - [3n]b (P <- P - P)
-static void ec2SubLD(word c[], const word a[], const word b[],
-	const ec_o* ec, void* stack)
-{
-	const size_t n = ec->f->n;
-	word* t;			/* [3 * n] */
-	// pre
-	ASSERT(ecIsOperable(ec) && ec->d == 3);
-	ASSERT(ec2SeemsOnLD(a, ec));
-	ASSERT(ec2SeemsOnLD(b, ec));
-	ASSERT(wwIsSameOrDisjoint(a, c, 3 * n));
-	ASSERT(wwIsSameOrDisjoint(b, c, 3 * n));
-	// разметить стек
-	memSlice(stack,
-		ec2SubLD_local(n), SIZE_0, SIZE_MAX,
-		&t, &stack);
-	// t <- -b
-	qrMul(ecY(t, n), ecX(b), ecZ(b, n), ec->f, stack);
-	gf2Add2(ecY(t, n), ecY(b, n), ec->f);
-	qrCopy(ecX(t), ecX(b), ec->f);
-	qrCopy(ecZ(t, n), ecZ(b, n), ec->f);
-	// c <- a + t
-	ec2AddLD(c, a, t, ec, stack);
-}
-
-static size_t ec2SubLD_deep(size_t n, size_t f_deep)
-{
-	return memSliceSize(
-		ec2SubLD_local(n), 
-		utilMax(2,
-			f_deep,
-			ec2AddLD_deep(n, f_deep)),
-		SIZE_MAX);
-}
-
-#define ec2SubALD_local(n)\
-/* t */		O_OF_W(2 * n)
-
-// [3n]c <- [3n]a - [2n]b (P <- P - A)
-static void ec2SubALD(word c[], const word a[], const word b[],
-	const ec_o* ec, void* stack)
-{
-	const size_t n = ec->f->n;
-	word* t;			/* [2 * n] */
-	// pre
-	ASSERT(ecIsOperable(ec) && ec->d == 3);
-	ASSERT(ec2SeemsOnLD(a, ec));
-	ASSERT(ec2SeemsOnA(b, ec));
-	ASSERT(wwIsSameOrDisjoint(a, c, 3 * n));
-	ASSERT(b == c || wwIsDisjoint2(b, 2 * n, c, 3 * n));
-	// разметить стек
-	memSlice(stack,
-		ec2SubALD_local(n), SIZE_0, SIZE_MAX,
-		&t, &stack);
-	// t <- -b
-	wwCopy(t, b, 2 * n);
-	gf2Add2(ecY(t, n), ecX(t), ec->f);
-	// c <- a + t
-	ec2AddALD(c, a, t, ec, stack);
-}
-
-static size_t ec2SubALD_deep(size_t n, size_t f_deep)
-{
-	return memSliceSize(
-		ec2SubALD_local(n), 
-		ec2AddALD_deep(n, f_deep),
-		SIZE_MAX);
-}
-
 #define ec2CreateLD_state(n)\
 /* A */			O_OF_W(n),\
 /* B */			O_OF_W(n),\
@@ -634,17 +562,13 @@ bool_t ec2CreateLD(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	ec->neg = ec2NegLD;
 	ec->add = ec2AddLD;
 	ec->adda = ec2AddALD;
-	ec->sub = ec2SubLD;
-	ec->suba = ec2SubALD;
 	ec->dbl = ec2DblLD;
 	ec->dbla = ec2DblALD;
-	ec->deep = utilMax(8,
+	ec->deep = utilMax(6,
 		ec2ToALD_deep(f->n, f->deep),
 		ec2NegLD_deep(f->n, f->deep),
 		ec2AddLD_deep(f->n, f->deep),
 		ec2AddALD_deep(f->n, f->deep),
-		ec2SubLD_deep(f->n, f->deep),
-		ec2SubALD_deep(f->n, f->deep),
 		ec2DblLD_deep(f->n, f->deep),
 		ec2DblALD_deep(f->n, f->deep));
 	// настроить заголовок
@@ -664,13 +588,11 @@ size_t ec2CreateLD_keep(size_t n)
 
 size_t ec2CreateLD_deep(size_t n, size_t f_deep)
 {
-	return utilMax(8,
+	return utilMax(6,
 		ec2ToALD_deep(n, f_deep),
 		ec2NegLD_deep(n, f_deep),
 		ec2AddLD_deep(n, f_deep),
 		ec2AddALD_deep(n, f_deep),
-		ec2SubLD_deep(n, f_deep),
-		ec2SubALD_deep(n, f_deep),
 		ec2DblLD_deep(n, f_deep),
 		ec2DblALD_deep(n, f_deep));
 }

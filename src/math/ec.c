@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2014.03.04
-\version 2026.01.08
+\version 2026.01.12
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -35,8 +35,6 @@ bool_t ecIsOperable2(const ec_o* ec)
 		ec->neg != 0 &&	
 		ec->add != 0 &&	
 		ec->adda != 0 &&	
-		ec->sub != 0 &&	
-		ec->suba != 0 &&	
 		ec->dbl != 0 &&	
 		ec->dbla != 0;
 }
@@ -101,13 +99,20 @@ bool_t ecGroupIsOperable(const ec_o* ec)
 /*
 *******************************************************************************
 Малые нечетные кратные
+
+Простейшая реализация интерфейса ec_smul_i:
+	t <- 2a, b[0] <- a, b[i] <-  t + b[i - 1], i = 1,..., 2^(w-1) - 1.
+
+Сложение t + b[0] выполняется по схеме P <- P + A. Остальные сложения -- по
+схеме P <- P + P.
 *******************************************************************************
 */
 
 #define ecSmul_local(n, ec_d)\
 /* t */		O_OF_W(ec_d * n)
 
-void ecSmul(word b[], const word a[], size_t w, const ec_o* ec, void* stack)
+static void ecSmul(word b[], const word a[], size_t w, const ec_o* ec,
+	void* stack)
 {
 	word* t;			/* [ec->d * ec->f->n] */
 	// pre
@@ -136,7 +141,7 @@ void ecSmul(word b[], const word a[], size_t w, const ec_o* ec, void* stack)
 	ecFromA(b, a, ec, stack);
 }
 
-size_t ecSmul_deep(size_t n, size_t ec_d, size_t ec_deep)
+static size_t ecSmul_deep(size_t n, size_t ec_d, size_t ec_deep)
 {
 	return memSliceSize(
 		ecSmul_local(n, ec_d),
@@ -149,57 +154,30 @@ size_t ecSmul_deep(size_t n, size_t ec_d, size_t ec_deep)
 Кратная точка: NAF
 
 Для определения b = da (d-кратное точки a) используется оконный NAF с
-длиной окна w. В функции ecMulNAF() реализован алгоритм 3.35 из 
-[Hankerson D., Menezes A., Vanstone S. Guide to Elliptic Curve Cryptography, 
-Springer, 2004].
+длиной окна w > 2. В функции ecMul0() реализован алгоритм 3.36 из [1].
 
-Предварительно рассчитываются малые нечетные кратные a:
+Используются малые нечетные кратные a:
 	b[i] = (2i + 1)a,  i = 0, 1, ..., 2^{w-2} - 1.
-Схема расчета по умолчанию:
-	t <- 2a, b[0] <- a, b[i] <- b[i-1] + t, i = 1, 2,...
-Схема реализована в функции ecSmul(). 
+Они вычисляются с помощью функции интерфейса ec_smul_i, указанной в описании
+кривой. Если искомая функция не задана в описании, то используется функция
+по умолчанию ecSmul().
 
-При использовании проективных координат имеются три стратегии:
-1)	w = 2 и малые кратные вообще не рассчитываются;
-2)	w > 2 и малые кратные рассчитываются в аффинных координатах;
-3)	w > 2 и малые кратные рассчитываются в проективных координатах.
-
-Средняя общая сложность нахождения кратной точки (l = wwBitSize(d), схема расчета
-малых кратных по умолчанию):
-1)	c1(l) = l/3(P <- P + A);
-2)	c2(l, w) = 1(A <- 2A) + (2^{w-2} - 1)(A <- A + A) + l/(w + 1)(P <- P + A);
-3)	c3(l, w) = 1(P <- 2A) + (2^{w-2} - 1)(P <- P + P) + l/(w + 1)(P <- P + P),
-без учета общего во всех стратегиях слагаемого l(P <- 2P).
+Пусть l = wwBitSize(d). Если расчет малых кратных выполняется с помощью
+функции ecSmul(), то средняя сложность нахождения кратной точки:
+	c(l, w) = 1(P <- 2A) + 1(P <- P + A) + (2^{w-2} - 2)(P <- P + P) +
+	          l/(w + 1)(P <- P + P) + l(P <- 2P).
 
 Здесь 
-- (P <- P + A) -- время работы функций ec->adda / ec->suba;
-- (A <- 2A) -- время работы каскада (ec->dbla, ec->toa)*;
-- (A <- A + A) -- время работы каскада (ec->adda, ec->toa)*;
 - (P <- 2A) -- время работы функции ec->dbla;
+- (P <- P + A) -- время работы функций ec->adda / ec->suba;
 - (P <- P + P) -- время работы функции ec->add / ec->sub;
 - (P <- 2P) -- время работы функции ec->dbl.
------------------------------------------------------
-* [или прямых вычислений в аффинных координатах]
 
-В практических диапазонах размерностей при использовании наиболее эффективных
-координат (якобиевых для кривых над GF(p) и Лопеса -- Дахаба для кривых над
-GF(2^m)) первые две стратегии являются проигрышными. Реализована только третья
-стратегия.
+Длина окна w выбирается как решение следующей оптимизационной задачи:
+	(2^{w - 2} - 2) + l / (w + 1) -> min.
 
-Оптимальная длина окна выбирается как решение следующей оптимизационной 
-задачи:
-	(2^{w - 2} - 1) + l / (w + 1) -> min.
-
-\todo Усилить вторую стратегию. Рассчитать малые кратные в проективных 
-координатах, а затем быстро перейти к аффинным координатам с помощью 
-трюка Монтгомери [Algorithm 11.15 Simultaneous inversion, CohenFrey, p. 209]:
-	U_1 <- Z_1
-	for t = 2,..., T: U_t <- U_{t-1} Z_t
-	V <- U_T^{-1}
-	for t = T,..., 2: 
-		Z_t^{-1} <- V U_{t-1}
-		V <- V Z_t
-	Z_1^{-1} <- V
+[1] Hankerson D., Menezes A., Vanstone S. Guide to Elliptic Curve Cryptography,
+Springer, 2004.
 *******************************************************************************
 */
 
@@ -214,17 +192,17 @@ static size_t ecNAFWidth(size_t l)
 	return 3;
 }
 
-#define ecMulNAF_local(n, ec_d, m, naf_count)\
+#define ecMulNAF_local(n, ec_d, m, pre_count)\
 /* naf */	O_OF_W(2 * m + 1),\
 /* t */		O_OF_W(ec_d * n),\
-/* pre */	O_OF_W(naf_count * ec_d * n)
+/* pre */	O_OF_W(pre_count * ec_d * n)
 
-bool_t ecMulNAF(word b[], const word a[], const ec_o* ec, const word d[],
+bool_t ecMul0(word b[], const word a[], const ec_o* ec, const word d[],
 	size_t m, void* stack)
 {
 	const size_t naf_width = ecNAFWidth(B_OF_W(m));
-	const size_t naf_count = SIZE_1 << (naf_width - 2);
-	const word naf_hi = WORD_1 << (naf_width - 1);
+	const word naf_hi = WORD_BIT_POS(naf_width - 1);
+	const size_t pre_count = SIZE_1 << (naf_width - 1);
 	register size_t naf_size;
 	register size_t i;
 	register word w;
@@ -235,7 +213,7 @@ bool_t ecMulNAF(word b[], const word a[], const ec_o* ec, const word d[],
 	ASSERT(ecIsOperable(ec));
 	// разметить стек
 	memSlice(stack,
-		ecMulNAF_local(ec->f->n, ec->d, m, naf_count), SIZE_0, SIZE_MAX,
+		ecMulNAF_local(ec->f->n, ec->d, m, pre_count), SIZE_0, SIZE_MAX,
 		&naf, &t, &pre, &stack);
 	// расчет NAF
 	ASSERT(naf_width >= 3);
@@ -248,6 +226,10 @@ bool_t ecMulNAF(word b[], const word a[], const ec_o* ec, const word d[],
 		ec->smul(pre, a, naf_width - 1, ec, stack);
 	else
 		ecSmul(pre, a, naf_width - 1, ec, stack);
+	// отрицательные малые кратные
+	for (i = 0; i < pre_count / 2; ++i)
+		ec->neg(pre + (pre_count / 2 + i) * ec->d * ec->f->n,
+			pre + i * ec->d * ec->f->n, ec, stack);
 	// t <- a[naf[l - 1]]
 	w = wwGetBits(naf, 0, naf_width);
 	ASSERT((w & 1) == 1 && (w & naf_hi) == 0);
@@ -256,26 +238,23 @@ bool_t ecMulNAF(word b[], const word a[], const ec_o* ec, const word d[],
 	i = naf_width;
 	while (--naf_size)
 	{
+		// t <- 2 t
+		ecDbl(t, t, ec, stack);
+		// обработать цифру naf
 		w = wwGetBits(naf, i, naf_width);
 		if (w & 1)
 		{
-			// t <- 2 t
-			ecDbl(t, t, ec, stack);
-			// t <- t \pm pre[naf[w]]
-			if (w == 1)
-				ecAddA(t, t, pre, ec, stack);
-			else if (w == (naf_hi ^ 1))
-				ecSubA(t, t, pre, ec, stack);
-			else if (w & naf_hi)
-				ecSub(t, t, pre + ((w ^ naf_hi) >> 1) * ec->d * ec->f->n,
-					ec, stack);
+			// t <- t + pre[w / 2]
+			if (w == 1 || w == (naf_hi ^ 1))
+				ecAddA(t, t, pre + (w >> 1) * ec->d * ec->f->n, ec, stack);
 			else
 				ecAdd(t, t, pre + (w >> 1) * ec->d * ec->f->n, ec, stack);
-			// к следующему разряду naf
+			// к следующей цифре
 			i += naf_width;
 		}
 		else
-			ecDbl(t, t, ec, stack), ++i;
+			// к следующей цифре
+			++i;
 	}
 	// очистка
 	CLEAN2(w, i);
@@ -283,13 +262,13 @@ bool_t ecMulNAF(word b[], const word a[], const ec_o* ec, const word d[],
 	return ecToA(b, t, ec, stack);
 }
 
-size_t ecMulNAF_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
+size_t ecMul0_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 {
 	const size_t naf_width = ecNAFWidth(B_OF_W(m));
-	const size_t naf_count = SIZE_1 << (naf_width - 2);
+	const size_t pre_count = SIZE_1 << (naf_width - 1);
 	return memSliceSize(
-		ecMulNAF_local(n, ec_d, m, naf_count), 
-		ec_deep,
+		ecMulNAF_local(n, ec_d, m, pre_count),
+		ecSmul_deep(n, ec_d, ec_deep),
 		SIZE_MAX);
 }
 
@@ -326,8 +305,7 @@ size_t ecHasOrderA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 *******************************************************************************
 Сумма кратных точек
 
-Реализован алгоритм 3.51 [Hankerson D., Menezes A., Vanstone S. Guide to
-Elliptic Curve Cryptography, Springer, 2004] (interleaving with NAF).
+Реализован алгоритм 3.51 (interleaving with NAF) из [1].
 
 Для каждого d[i] строится naf[i] длиной l[i] с шириной окна w[i].
 
@@ -337,7 +315,7 @@ Elliptic Curve Cryptography, Springer, 2004] (interleaving with NAF).
 *******************************************************************************
 */
 
-#define ecAddMulA_local(n, ec_d)\
+#define ecAddMulA_local(n, ec_d, k)\
 /* t */			O_OF_W(ec_d * n),\
 /* m */			O_PER_S * k,\
 /* naf_width */	O_PER_S * k,\
@@ -348,8 +326,9 @@ Elliptic Curve Cryptography, Springer, 2004] (interleaving with NAF).
 
 bool_t ecAddMulA(word b[], const ec_o* ec, void* stack, size_t k, ...)
 {
+	register size_t naf_max_size;
 	register word w;
-	size_t i, naf_max_size = 0;
+	size_t i;
 	va_list args;
 	word* t;			/* [ec->d * ec->f->n] проективная точка */
 	size_t* m;			/* [k] длины d[i] */
@@ -363,15 +342,17 @@ bool_t ecAddMulA(word b[], const ec_o* ec, void* stack, size_t k, ...)
 	ASSERT(k > 0);
 	// разметить стек
 	memSlice(stack,
-		ecAddMulA_local(ec->f->n, ec->d), SIZE_0, SIZE_MAX,
+		ecAddMulA_local(ec->f->n, ec->d, k), SIZE_0, SIZE_MAX,
 		&t, &m, &naf_width, &naf_size, &naf_pos, &naf, &pre, &stack);
 	// обработать параметры (a[i], d[i], m[i])
 	va_start(args, k);
+	naf_max_size = 0;
 	for (i = 0; i < k; ++i)
 	{
 		const word* a;
 		const word* d;
-		size_t naf_count;
+		size_t pre_count;
+		size_t j;
 		// a <- a[i]
 		a = va_arg(args, const word*);
 		// d <- d[i]
@@ -382,9 +363,9 @@ bool_t ecAddMulA(word b[], const ec_o* ec, void* stack, size_t k, ...)
 		m[i] = wwWordSize(d, m[i]);
 		// зарезервировать память для naf[i] и pre[i]
 		naf_width[i] = ecNAFWidth(B_OF_W(m[i]));
-		naf_count = SIZE_1 << (naf_width[i] - 2);
+		pre_count = SIZE_1 << (naf_width[i] - 1);
 		memSlice(stack,
-			O_OF_W(2 * m[i] + 1), O_OF_W(ec->d * ec->f->n * naf_count), SIZE_0,
+			O_OF_W(2 * m[i] + 1), O_OF_W(ec->d * ec->f->n * pre_count), SIZE_0,
 			SIZE_MAX,
 			naf + i, pre + i, &stack);
 		// расчет naf[i]
@@ -397,6 +378,10 @@ bool_t ecAddMulA(word b[], const ec_o* ec, void* stack, size_t k, ...)
 			ec->smul(pre[i], a, naf_width[i] - 1, ec, stack);
 		else
 			ecSmul(pre[i], a, naf_width[i] - 1, ec, stack);
+		// отрицательные малые кратные
+		for (j = 0; j < pre_count / 2; ++j)
+			ec->neg(pre[i] + (pre_count / 2 + j) * ec->d * ec->f->n,
+				pre[i] + j * ec->d * ec->f->n, ec, stack);
 	}
 	va_end(args);
 	// t <- O
@@ -410,36 +395,32 @@ bool_t ecAddMulA(word b[], const ec_o* ec, void* stack, size_t k, ...)
 		for (i = 0; i < k; ++i)
 		{
 			word naf_hi;
-			// символы naf[i] не начались?
+			// цифры naf[i] не начались?
 			if (naf_size[i] < naf_max_size)
 				continue;
-			// прочитать очередной символ naf[i]
+			// прочитать очередную цифру naf[i]
 			w = wwGetBits(naf[i], naf_pos[i], naf_width[i]);
-			// обработать символ
-			naf_hi = WORD_1 << (naf_width[i] - 1);
+			// обработать цифру
+			naf_hi = WORD_BIT_POS(naf_width[i] - 1);
 			if (w & 1)
 			{
-				// t <- t \pm pre[i][naf[i][w]]
-				if (w == 1)
-					ecAddA(t, t, pre[i], ec, stack);
-				else if (w == (naf_hi ^ 1))
-					ecSubA(t, t, pre[i], ec, stack);
-				else if (w & naf_hi)
-					w ^= naf_hi,
-					ecSub(t, t, pre[i] + (w >> 1) * ec->d * ec->f->n,
-						ec, stack);
+				// t <- t + pre[i][w / 2]
+				if (w == 1 || w == (naf_hi ^ 1))
+					ecAddA(t, t, pre[i] + (w >> 1) * ec->d * ec->f->n, ec,
+						stack);
 				else
-					ecAdd(t, t, pre[i] + (w >> 1) * ec->d * ec->f->n,
-						ec, stack);
-				// к следующему символу naf[i]
+					ecAdd(t, t, pre[i] + (w >> 1) * ec->d * ec->f->n, ec,
+						stack);
+				// к следующей цифре naf[i]
 				naf_pos[i] += naf_width[i];
 			}
 			else
+				// к следующей цифре
 				++naf_pos[i];
 		}
 	}
 	// очистка
-	CLEAN(w);
+	CLEAN2(naf_max_size, w);
 	// к аффинным координатам
 	return ecToA(b, t, ec, stack);
 }
@@ -449,19 +430,20 @@ size_t ecAddMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t k, ...)
 	size_t i, ret;
 	va_list args;
 	ret = memSliceSize(
-		ecAddMulA_local(n, ec_d), SIZE_0, SIZE_MAX);
+		ecAddMulA_local(n, ec_d, k),
+		ecSmul_deep(n, ec_d, ec_deep),
+		SIZE_MAX);
 	va_start(args, k);
 	for (i = 0; i < k; ++i)
 	{
 		size_t m = va_arg(args, size_t);
 		size_t naf_width = ecNAFWidth(B_OF_W(m));
-		size_t naf_count = SIZE_1 << (naf_width - 2);
+		size_t pre_count = SIZE_1 << (naf_width - 1);
 		ret += memSliceSize(
 			O_OF_W(2 * m + 1),
-			O_OF_W(ec_d * n * naf_count),
+			O_OF_W(ec_d * n * pre_count),
 			SIZE_0,	SIZE_MAX);
 	}
 	va_end(args);
-	ret += ec_deep;
 	return ret;
 }
