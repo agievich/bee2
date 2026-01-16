@@ -57,7 +57,7 @@ http://www.hyperelliptic.org/efd. Там же можно найти соглаш
 
 /*
 *******************************************************************************
-Якобиевы координаты:
+Якобиевы (Jacobian, J) координаты:
 	x = X / Z^2, y = Y / Z^3,
 	-(X : Y : Z) = (X : -Y : Z).
 
@@ -92,6 +92,12 @@ add-2007-bl [Bernstein-Lange, 2007]. Сложность алгоритма:
 \todo Сравнить add-2007-bl с add-1998-cmo-2, сложность которого
 	12M + 4S + 6add + 1*2.
 
+\todo При выполнении функции ecpAddAJ() может выясниться, что
+складываются одинаковые точки. В этом случае вызывается функция
+ecpDblAJ(). Подумать, как "помочь" этой функции, передав уже
+рассчитанные значения, например, za^2. Аналогичное замечание касается
+функции ecpAddJ().
+
 В функции ecpAddAJ() выполняется сложение P <- P + A.
 Реализован алгоритм madd-2004-hmv [Hankerson D., Menezes A., Vanstone S.
 Guide to Elliptic Curve Cryptography, Springer, 2004].
@@ -102,31 +108,13 @@ Guide to Elliptic Curve Cryptography, Springer, 2004].
 tpl-2007-bl [Bernstein-Lange, 2007]. Сложность алгоритма
 	5M + 10S + 1*A + 15add + 2*4 + 1*6 + 1*8 + 1*16 + 1*3 \approx 15M.
 
-В функции ecpTplJA3() выполняется утроение P <- 3P для случая A = -3. 
-Реализован алгоритм tpl-2007-bl-2 [Bernstein-Lange, 2007]. 
-Сложность алгоритма
-	7M + 7S + 13add + 2*4 + 1*8 + 1*12 + 1*16 + 1*3 \approx 14M.
-
-Целевые функции ci(l), определенные в описании реализации ecMul() в ec.c, 
-принимают следующий вид:
-	c1(l) = l/3 11;
-	c2(l, w) = 103 + (2^{w-2} - 2)102 + l/(w + 1) 11;
-	c3(l, w) = 6 + (2^{w-2} - 2)16 + l/(w + 1) 16.
-
-Расчеты показывают, что
-	с1(l) <= min_w c3(l), l <= 81,
-	min_w c3(l, w) <= m	in_w c2(l, w), l <= 899.
-Поэтому для практически используемых размерностей l (192 <= l <= 571)
-первые две стратегии являются проигрышными. Реализована только стратегия 3.
-
 \todo Сравнить madd-2004-hmv с madd-2007-bl, сложность которого
 	7M + 4S + 9add + 1*4 + 3*2.
 
-\todo При выполнении функции ecpAddAJ() может выясниться, что
-складываются одинаковые точки. В этом случае вызывается функция
-ecpDblAJ(). Подумать, как "помочь" этой функции, передав уже
-рассчитанные значения, например, za^2. Аналогичное замечание касается
-функции ecpAddJ().
+В функции ecpTplJA3() выполняется утроение P <- 3P для случая A = -3.
+Реализован алгоритм tpl-2007-bl-2 [Bernstein-Lange, 2007]. 
+Сложность алгоритма
+	7M + 7S + 13add + 2*4 + 1*8 + 1*12 + 1*16 + 1*3 \approx 14M.
 *******************************************************************************
 */
 
@@ -836,6 +824,140 @@ static size_t ecpTplJA3_deep(size_t n, size_t f_deep)
 		SIZE_MAX);
 }
 
+/*
+*******************************************************************************
+Малые кратные
+*******************************************************************************
+*/
+
+/*
+*******************************************************************************
+Сложение с настройкой знака суммы
+
+Использованы полные (complete) формулы сложения / удвоения из работы
+
+[RCB15] Renes J., Costello C., Batina L. Complete addition formulas for prime
+order elliptic curves. 2015. https://eprint.iacr.org/2015/1060.pdf.
+
+В формулах используются однородные (Homogenious, H) координаты:
+	x = X / Z, y = Y / Z.
+
+Преобразование H <- J:
+	(X Z : Y : Z^3) <- (X : Y : Z).
+*******************************************************************************
+*/
+
+#define ecpPmAAdd_local(n)\
+/* pt1 */	O_OF_W(3 * n),\
+/* pt2 */	O_OF_W(3 * n),\
+/* pt3 */	O_OF_W(3 * n),\
+/* B3 */	O_OF_W(n),\
+/* t0 */	O_OF_W(n),\
+/* t1 */	O_OF_W(n),\
+/* t2 */	O_OF_W(n),\
+/* t3 */	O_OF_W(n),\
+/* t4 */	O_OF_W(n),\
+/* t5 */	O_OF_W(n)
+
+// [2n]с <- (-1)^neg ([3n]a + [3n]b) (A <- J + J)
+static void ecpPmAAdd(word c[], const word a[], const word b[],
+	register word neg, const ec_o* ec, void* stack)
+{
+	const size_t n = ec->f->n;
+	word* pt1;			/* [3 * n] */
+	word* pt2;			/* [3 * n] */
+	word* pt3;			/* [3 * n] */
+	word* B3;			/* [n] */
+	word* t0;			/* [n] */
+	word* t1;			/* [n] */
+	word* t2;			/* [n] */
+	word* t3;			/* [n] */
+	word* t4;			/* [n] */
+	word* t5;			/* [n] */
+	// pre
+	ASSERT(ecIsOperable(ec) && ec->d == 3);
+	ASSERT(ecpSeemsOnJ(a, ec));
+	ASSERT(ecpSeemsOnJ(b, ec));
+	// разметить стек
+	memSlice(stack,
+		ecpPmAAdd_local(n), SIZE_0, SIZE_MAX,
+		&pt1, &pt2, &pt3, &B3, &t0, &t1, &t2, &t3, &t4, &t5, &stack);
+	// pt1 <- a (H <- J)
+	qrMul(ecX(pt1), ecX(a), ecZ(a, n), ec->f, stack);
+	wwCopy(ecY(pt1, n), ecY(a, n), n);
+	qrSqr(ecZ(pt1, n), ecZ(a, n), ec->f, stack);
+	qrMul(ecZ(pt1, n), ecZ(pt1, n), ecZ(a, n), ec->f, stack);
+	// pt2 <- b (H <- J)
+	qrMul(ecX(pt2), ecX(b), ecZ(b, n), ec->f, stack);
+	wwCopy(ecY(pt2, n), ecY(b, n), n);
+	qrSqr(ecZ(pt2, n), ecZ(b, n), ec->f, stack);
+	qrMul(ecZ(pt2, n), ecZ(pt2, n), ecZ(b, n), ec->f, stack);
+	// B3 <- 3B
+	qrAdd(B3, ec->B, ec->B, ec->f);
+	qrAdd(B3, B3, ec->B, ec->f);
+	// [RCB15; algorithm 1]
+	qrMul(t0, ecX(pt1), ecX(pt2), ec->f, stack);
+	qrMul(t1, ecY(pt1, n), ecY(pt2, n), ec->f, stack);
+	qrMul(t2, ecZ(pt1, n), ecZ(pt2, n), ec->f, stack);
+	qrAdd(t3, ecX(pt1), ecY(pt1, n), ec->f);
+	qrAdd(t4, ecX(pt2), ecY(pt2, n), ec->f);
+	qrMul(t3, t3, t4, ec->f, stack);
+	qrAdd(t4, t0, t1, ec->f);
+	qrSub(t3, t3, t4, ec->f);
+	qrAdd(t4, ecX(pt1), ecZ(pt1, n), ec->f);
+	qrAdd(t5, ecX(pt2), ecZ(pt2, n), ec->f);
+	qrMul(t4, t4, t5, ec->f, stack);
+	qrAdd(t5, t0, t2, ec->f);
+	qrSub(t4, t4, t5, ec->f);
+	qrAdd(t5, ecY(pt1, n), ecZ(pt1, n), ec->f);
+	qrAdd(ecX(pt3), ecY(pt2, n), ecZ(pt2, n), ec->f);
+	qrMul(t5, t5, ecX(pt3), ec->f, stack);
+	qrAdd(ecX(pt3), t1, t2, ec->f);
+	qrSub(t5, t5, ecX(pt3), ec->f);
+	qrMul(ecZ(pt3, n), ec->A, t4, ec->f, stack);
+	qrMul(ecX(pt3), B3, t2, ec->f, stack);
+	qrAdd(ecZ(pt3, n), ecX(pt3), ecZ(pt3, n), ec->f);
+	qrSub(ecX(pt3), t1, ecZ(pt3, n), ec->f);
+	qrAdd(ecZ(pt3, n), t1, ecZ(pt3, n), ec->f);
+	qrMul(ecY(pt3, n), ecX(pt3), ecZ(pt3, n), ec->f, stack);
+	qrAdd(t1, t0, t0, ec->f);
+	qrAdd(t1, t1, t0, ec->f);
+	qrMul(t2, ec->A, t2, ec->f, stack);
+	qrMul(t4, B3, t4, ec->f, stack);
+	qrAdd(t1, t1, t2, ec->f);
+	qrSub(t2, t0, t2, ec->f);
+	qrMul(t2, ec->A, t2, ec->f, stack);
+	qrAdd(t4, t4, t2, ec->f);
+	qrMul(t0, t1, t4, ec->f, stack);
+	qrAdd(ecY(pt3, n), ecY(pt3, n), t0, ec->f);
+	qrMul(t0, t5, t4, ec->f, stack);
+	qrMul(ecX(pt3), t3, ecX(pt3), ec->f, stack);
+	qrSub(ecX(pt3), ecX(pt3), t0, ec->f);
+	qrMul(t0, t3, t1, ec->f, stack);
+	qrMul(ecZ(pt3, n), t5, ecZ(pt3, n), ec->f, stack);
+	qrAdd(ecZ(pt3, n), ecZ(pt3, n), t0, ec->f);
+	// c <- pt3 (A <- H)
+	qrInv(t0, ecZ(pt3, n), ec->f, stack);
+	qrMul(ecX(c), ecX(pt3), t0, ec->f, stack);
+	qrMul(ecY(c, n), ecY(pt3, n), t0, ec->f, stack);
+	// c <- (-1)^neg c
+	zzPmMod(ecY(c, n), ecY(c, n), ec->f->mod, n, neg);
+}
+
+static size_t ecpPmAAdd_deep(size_t n, size_t f_deep)
+{
+	return memSliceSize(
+		ecpPmAAdd_local(n),
+		f_deep,
+		SIZE_MAX);
+}
+
+/*
+*******************************************************************************
+Создание кривой
+*******************************************************************************
+*/
+
 #define ecpCreateJ_state(n)\
 /* A */			O_OF_W(n),\
 /* B */			O_OF_W(n),\
@@ -890,13 +1012,15 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	ec->dbl = bA3 ? ecpDblJA3 : ecpDblJ;
 	ec->dbla = ecpDblAJ;
 	ec->tpl = bA3 ? ecpTplJA3 : ecpTplJ;
-	ec->deep = utilMax(6,
+	ec->pmaadd = ecpPmAAdd;
+	ec->deep = utilMax(7,
 		ecpToAJ_deep(f->n, f->deep),
 		ecpAddJ_deep(f->n, f->deep),
 		ecpAddAJ_deep(f->n, f->deep),
 		bA3 ? ecpDblJA3_deep(f->n, f->deep) : ecpDblJ_deep(f->n, f->deep),
 		ecpDblAJ_deep(f->n, f->deep),
-		bA3 ? ecpTplJA3_deep(f->n, f->deep) : ecpTplJ_deep(f->n, f->deep));
+		bA3 ? ecpTplJA3_deep(f->n, f->deep) : ecpTplJ_deep(f->n, f->deep),
+		ecpPmAAdd_deep(f->n, f->deep));
 	// настроить
 	ec->hdr.keep = sizeof(ec_o) + 
 		memSliceSize(ecpCreateJ_state(f->n), SIZE_MAX);
@@ -917,7 +1041,7 @@ size_t ecpCreateJ_deep(size_t n, size_t f_deep)
 {
 	return memSliceSize(
 		ecpCreateJ_local(n),
-		utilMax(9,
+		utilMax(10,
 			O_OF_W(n),
 			ecpToAJ_deep(n, f_deep),
 			ecpAddJ_deep(n, f_deep),
@@ -926,7 +1050,8 @@ size_t ecpCreateJ_deep(size_t n, size_t f_deep)
 			ecpDblJA3_deep(n, f_deep),
 			ecpDblAJ_deep(n, f_deep),
 			ecpTplJ_deep(n, f_deep),
-			ecpTplJA3_deep(n, f_deep)),
+			ecpTplJA3_deep(n, f_deep),
+			ecpPmAAdd_deep(n, f_deep)),
 		SIZE_MAX);
 }
 
