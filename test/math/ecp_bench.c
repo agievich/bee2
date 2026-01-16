@@ -4,7 +4,7 @@
 \brief Benchmarks for elliptic curves over prime fields
 \project bee2/test
 \created 2013.10.17
-\version 2025.09.30
+\version 2026.01.16
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -17,6 +17,18 @@
 #include <bee2/core/util.h>
 #include <bee2/math/ec.h>
 #include <crypto/bign/bign_lcl.h>
+
+/*
+*******************************************************************************
+Композиционные элементы ecMulA()
+*******************************************************************************
+*/
+
+extern bool_t ecMulNAF(word b[], const word a[], const ec_o* ec, const word d[],
+	size_t m, void* stack);
+
+extern bool_t ecMulSNZ(word b[], const word a[], const ec_o* ec, const word d[],
+	size_t m, void* stack);
 
 /*
 *******************************************************************************
@@ -56,18 +68,27 @@ bool_t ecpBench()
 	prngCOMBOStart(combo_state, utilNonce32());
 	// оценить число кратных точек в секунду
 	{
-		const size_t reps = 1000;
+		const size_t reps = 500;
 		size_t i;
 		tm_ticks_t ticks;
-		// эксперимент
+		// эксперимент: ecMulNAF()
 		for (i = 0, ticks = tmTicks(); i < reps; ++i)
 		{
 			prngCOMBOStepR(d, ec->f->no, combo_state);
 			ecMulA(pt, ec->base, ec, d, ec->f->n, stack);
 		}
 		ticks = tmTicks() - ticks;
-		// печать результатов
-		printf("ecpBench: %u cycles/mulpoint [%u mulpoints/sec]\n",
+		printf("ecpBench::ecMulNAF: %u cycles/mulpoint [%u mulpoints/sec]\n",
+			(unsigned)(ticks / reps),
+			(unsigned)tmSpeed(reps, ticks));
+		// эксперимент: ecMulSNZ()
+		for (i = 0, ticks = tmTicks(); i < reps; ++i)
+		{
+			prngCOMBOStepR(d, ec->f->no, combo_state);
+			ecMulA(pt, ec->base, ec, d, ec->f->n, stack);
+		}
+		ticks = tmTicks() - ticks;
+		printf("ecpBench::ecMulSNZ: %u cycles/mulpoint [%u mulpoints/sec]\n",
 			(unsigned)(ticks / reps),
 			(unsigned)tmSpeed(reps, ticks));
 	}

@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.07.24
+\version 2026.01.15
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -733,7 +733,7 @@ void zzSubWMod(
 void FAST(zzSubWMod)(word b[], const word a[], register word w,
 	const word mod[], size_t n);
 
-/*!	\brief Аддитивное обращение чисел по модулю
+/*!	\brief Аддитивное обращение числа по модулю
 
 	Определяется число [n]b, аддитивно обратное к [n]a по модулю [n]mod:
 	\code
@@ -753,6 +753,29 @@ void zzNegMod(
 );
 
 void FAST(zzNegMod)(word b[], const word a[], const word mod[], size_t n);
+
+/*!	\brief Настройка знака числа по модулю
+
+	Определяется число [n]b, которое совпадает с [n]a при neg == 0 и аддитивно
+	обратно к [n]a по модулю [n]mod при	neg == 1:
+	\code
+		b <- (-1)^neg a \mod mod.
+	\endcode
+	\pre n > 0 && mod[n - 1] != 0.
+	\pre a < mod.
+	\pre Буфер b либо не пересекается, либо совпадает с буфером a.
+	\pre Буфер b не пересекается с буфером mod.
+	\pre neg == 0 || neg == 1.
+	\remark Функция используется при регуляризации.
+
+*/
+void zzPmMod(
+	word b[],			/*!< [in,out] +- число */
+	const word a[],		/*!< [in] число */
+	const word mod[],	/*!< [in] модуль */
+	size_t n,			/*!< [in] длина чисел в машинных словах */
+	register word neg	/*!< [in] флаг изменения знака */
+);
 
 /*!	\brief Умножение чисел по модулю
 
