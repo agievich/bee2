@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: modular arithmetic
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.09.26
+\version 2026.01.15
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -34,7 +34,7 @@ void FAST(zzAddMod)(word c[], const word a[], const word b[], const word mod[],
 	ASSERT(wwIsSameOrDisjoint(a, c, n));
 	ASSERT(wwIsSameOrDisjoint(b, c, n));
 	ASSERT(wwIsDisjoint(c, mod, n));
-	ASSERT(wwCmp(a, mod, n) < 0 && wwCmp(b, mod, n) < 0);
+	ASSERT(FAST(wwCmp)(a, mod, n) < 0 && FAST(wwCmp)(b, mod, n) < 0);
 	if (zzAdd(c, a, b, n) || FAST(wwCmp)(c, mod, n) >= 0)
 		zzSub2(c, mod, n);
 }
@@ -74,7 +74,7 @@ void FAST(zzAddWMod)(word b[], const word a[], register word w,
 {
 	ASSERT(wwIsSameOrDisjoint(a, b, n));
 	ASSERT(wwIsDisjoint(b, mod, n));
-	ASSERT(wwCmp(a, mod, n) < 0 && wwCmpW(mod, n, w) > 0);
+	ASSERT(FAST(wwCmp)(a, mod, n) < 0 && FAST(wwCmpW)(mod, n, w) > 0);
 	// a + w >= mod => a + w - mod < mod
 	if (zzAddW(b, a, n, w) || wwCmp(b, mod, n) > 0)
 		zzSub2(b, mod, n);
@@ -111,7 +111,7 @@ void FAST(zzSubMod)(word c[], const word a[], const word b[], const word mod[],
 	ASSERT(wwIsSameOrDisjoint(a, c, n));
 	ASSERT(wwIsSameOrDisjoint(b, c, n));
 	ASSERT(wwIsDisjoint(c, mod, n));
-	ASSERT(wwCmp(a, mod, n) < 0 && wwCmp(b, mod, n) < 0);
+	ASSERT(FAST(wwCmp)(a, mod, n) < 0 && FAST(wwCmp)(b, mod, n) < 0);
 	// a < b => a - b + mod < mod
 	if (zzSub(c, a, b, n))
 		zzAdd2(c, mod, n);
@@ -136,7 +136,7 @@ void FAST(zzSubWMod)(word b[], const word a[], register word w,
 {
 	ASSERT(wwIsSameOrDisjoint(a, b, n));
 	ASSERT(wwIsDisjoint(b, mod, n));
-	ASSERT(wwCmp(a, mod, n) < 0 && wwCmpW(mod, n, w) > 0);
+	ASSERT(FAST(wwCmp)(a, mod, n) < 0 && FAST(wwCmpW)(mod, n, w) > 0);
 	// a < w => a - w + mod < mod
 	if (zzSubW(b, a, n, w))
 		zzAdd2(b, mod, n);
@@ -181,6 +181,26 @@ void zzNegMod(word b[], const word a[], const word mod[], size_t n)
 	// b <- b - mod & mask
 	zzSubAndW(b, mod, n, mask);
 	CLEAN(mask);
+}
+
+void zzPmMod(word b[], const word a[], const word mod[], size_t n,
+	register word neg)
+{
+	register word mask;
+	size_t i;
+	ASSERT(wwIsSameOrDisjoint(a, b, n));
+	ASSERT(wwIsDisjoint(b, mod, n));
+	ASSERT(wwCmp(a, mod, n) < 0);
+	ASSERT(neg == WORD_0 || neg == WORD_1);
+	// b <- neg ? -a : a
+	mask = WORD_0 - neg;
+	for (i = 0; i < n; ++i)
+		b[i] = a[i] ^ mask;
+	zzAddW2(b, n, neg);
+	// b <- (neg && b != 0) ? b + mod : b
+	mask &= (word)wwIsZero(b, n) - WORD_1;
+	zzAddAndW(b, mod, n, mask);
+	CLEAN2(neg, mask);
 }
 
 /*
@@ -351,7 +371,7 @@ void FAST(zzHalfMod)(word b[], const word a[], const word mod[], size_t n)
 	ASSERT(wwIsSameOrDisjoint(a, b, n));
 	ASSERT(wwIsDisjoint(mod, b, n));
 	ASSERT(zzIsOdd(mod, n) && mod[n - 1] != 0);
-	ASSERT(wwCmp(a, mod, n) < 0);
+	ASSERT(FAST(wwCmp)(a, mod, n) < 0);
 	// a -- нечетное? => b <- (a + mod) / 2
 	if (zzIsOdd(a, n))
 	{

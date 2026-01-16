@@ -4,7 +4,7 @@
 \brief Arbitrary length words
 \project bee2 [cryptographic library]
 \created 2012.04.18
-\version 2026.01.12
+\version 2026.01.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -349,17 +349,19 @@ void wwSetBit(word a[], size_t pos, register bool_t val)
 
 void wwSetBits(word a[], size_t pos, size_t width, register word val)
 {
-	word mask = WORD_MAX;
-	size_t n = pos / B_PER_W;
+	word mask;
+	size_t n;
 	ASSERT(wwIsValid(a, W_OF_B(pos + width)));
 	ASSERT(width <= B_PER_W);
 	// маска
+	mask = WORD_MAX;
 	if (width < B_PER_W)
 	{
 		mask <<= B_PER_W - width;
 		mask >>= B_PER_W - width;
 	}
 	// биты a[n]
+	n = pos / B_PER_W;
 	pos %= B_PER_W;
 	a[n] &= ~(mask << pos);
 	a[n] ^= (val & mask) << pos;
@@ -392,10 +394,10 @@ size_t wwLoZeroBits(const word a[], size_t n)
 
 size_t wwHiZeroBits(const word a[], size_t n)
 {
-	register size_t i = n;
+	register size_t i;
 	ASSERT(wwIsValid(a, n));
 	// поиск старшего ненулевого машинного слова
-	while (i-- && a[i] == 0);
+	for (i = n; i-- && a[i] == 0;);
 	// нулевое слово?
 	if (i == SIZE_MAX)
 		return n * B_PER_W;

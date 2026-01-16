@@ -4,7 +4,7 @@
 \brief Tests for multiple-precision unsigned integers
 \project bee2/test
 \created 2014.07.15
-\version 2025.09.28
+\version 2026.01.15
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -287,12 +287,24 @@ static bool_t zzTestMod()
 		FAST(zzSubWMod)(t1, t, b[0], mod, n);
 		if (!FAST(wwEq)(t1, a, n))
 			return FALSE;
-		// zzNegMod
+		// zzNegMod / zzPmMod
 		zzNegMod(t, a, mod, n);
+		zzPmMod(t1, a, mod, n, 1);
+		if (!wwEq(t, t1, n))
+			return FALSE;
 		zzAddMod(t1, t, a, mod, n);
 		if (!wwIsZero(t1, n))
 			return FALSE;
+		zzPmMod(t, a, mod, n, 0);
+		if (!wwEq(t, a, n))
+			return FALSE;
 		zzNegMod(t1, t1, mod, n);
+		if (!wwIsZero(t1, n))
+			return FALSE;
+		zzPmMod(t1, t1, mod, n, 0);
+		if (!wwIsZero(t1, n))
+			return FALSE;
+		zzPmMod(t1, t1, mod, n, 1);
 		if (!wwIsZero(t1, n))
 			return FALSE;
 		// FAST(zzNegMod)
