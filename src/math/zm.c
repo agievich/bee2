@@ -118,7 +118,8 @@ static void zmInv(word b[], const word a[], const qr_o* r, void* stack)
 {
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(a, r));
-	zzInvMod(b, a, r->mod, r->n, stack);
+	wwIsZero(a, r->n) ? wwSetZero(b, r->n) : 
+		zzInvMod(b, a, r->mod, r->n, stack);
 }
 
 static size_t zmInv_deep(size_t n)
@@ -132,7 +133,8 @@ static void zmDiv(word b[], const word divident[], const word a[],
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(divident, r));
 	ASSERT(zmIsIn(a, r));
-	zzDivMod(b, divident, a, r->mod, r->n, stack);
+	wwIsZero(a, r->n) ? wwSetZero(b, r->n) : 
+		zzDivMod(b, divident, a, r->mod, r->n, stack);
 }
 
 static size_t zmDiv_deep(size_t n)

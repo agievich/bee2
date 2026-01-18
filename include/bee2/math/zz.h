@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2026.01.15
+\version 2026.01.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -871,7 +871,8 @@ size_t zzInvMod_deep(size_t n);
 		b <- divident * a^{-1} \mod mod.
 	\endcode
 	\pre mod -- нечетное && mod[n - 1] != 0.
-	\pre a, divident < mod.
+	\pre divident < mod.
+	\pre 0 < a && a < mod.
 	\pre Буфер b не пересекается с буфером mod.
 	\expect \gcd(a, mod) = 1.
 	\remark Если \gcd(a, mod) != 1, то b <- 0.

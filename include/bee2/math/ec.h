@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2012.04.19
-\version 2026.01.16
+\version 2026.01.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -348,13 +348,14 @@ typedef void (*ec_smul_i)(
 	\pre neg == 0 || neg == 1.
 	\expect Описание ec корректно.
 	\expect Точки a и b лежат на кривой.
-	\expect a + b != O.
-	\expect Используется полная (complete) формула сложения, которая одинаково
-	работает с a == b и a != b.
-	\remark Функции интерфейса ec_pmaadd_i используются в регулярных алгоритмах
-	вычисления кратной точки.
+	\return TRUE, если сумма является аффинной точкой, и FALSE, если бесконечно
+	удаленной (a + b == O).
+	\remark Функции интерфейса ec_pmaadd_i предназначены для использования 
+	в регулярных алгоритмах вычисления кратной точки. Предполагается, что 
+	сложение a + b выполняется по полным (complete) формулам, одними и теми же
+	для случаев a == b, a == -b и a != \pm b.
 */
-typedef void(*ec_pmaadd_i)(
+typedef bool_t(*ec_pmaadd_i)(
 	word c[],				/*!< [out] сумма */
 	const word a[],			/*!< [in] первое слагаемое */
 	const word b[],			/*!< [in] второе слагаемое */
@@ -378,13 +379,16 @@ typedef void(*ec_pmaadd_i)(
 	\pre neg == 0 || neg == 1.
 	\expect Описание ec корректно.
 	\expect Точки a и b лежат на кривой.
-	\expect a + b != O.
 	\expect Используется полная (complete) формула сложения, которая одинаково
 	работает с a == b и a != b.
-	\remark Функции интерфейса ec_pmaadda_i используются в регулярных
-	алгоритмах вычисления кратной точки.
+	\return TRUE, если сумма является аффинной точкой, и FALSE, если бесконечно
+	удаленной (a + b == O).
+	\remark Функции интерфейса ec_pmaadda_i предназначены для использования 
+	в регулярных алгоритмах вычисления кратной точки. Предполагается, что 
+	сложение a + b выполняется по полным (complete) формулам, одними и теми же 
+	для случаев a == b, a == -b и a != \pm b.
 */
-typedef void(*ec_pmaadda_i)(
+typedef bool_t(*ec_pmaadda_i)(
 	word c[],				/*!< [out] сумма */
 	const word a[],			/*!< [in] первое слагаемое */
 	const word b[],			/*!< [in] второе слагаемое */
@@ -616,6 +620,39 @@ bool_t ecMulA(
 );
 
 size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
+
+/*!	\brief Кратная точка с регуляризацией
+
+	Определяется аффинная точка [2 * ec->f->n]b эллиптической кривой ec, 
+	которая является [m]d-кратной аффинной точки [2 * ec->f->n]a:
+	\code
+		b <- d a.
+	\endcode
+	\pre Описание ec работоспособно.
+	\pre Описание группы точек в ec работоспособно.
+	\pre Длина ec->order в машинных словах равняется m.
+	\pre m > 1.
+	\pre d < ec->order.
+	\pre Координаты a лежат в базовом поле.
+	\expect Описание ec корректно.
+	\expect Точка a лежит на ec.
+	\return TRUE, если кратная точка отличается от O, и FALSE в противном
+	случае.
+	\deep{stack} ecMulA2_deep(ec->f->n, ec->d, ec->deep, m).
+	\safe Функция регулярна по [m]d при выполнении следующих условий:
+	-	ec->pmaadd != 0;
+	-	функции ec->add, ec->dbl и ec->pmaadd регулярны.
+*/
+bool_t ecMulA2(
+	word b[],			/*!< [out] кратная точка */
+	const word a[],		/*!< [in] базовая точка */
+	const ec_o* ec,		/*!< [in] описание кривой */
+	const word d[],		/*!< [in] кратность */
+	size_t m,			/*!< [in] длина d в машинных словах */
+	void* stack			/*!< [in] вспомогательная память */
+);
+
+size_t ecMulA2_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 
 /*!	\brief Имеет порядок?
 

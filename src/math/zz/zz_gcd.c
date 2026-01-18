@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: Euclidian gcd algorithms
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.09.23
+\version 2026.01.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -364,7 +364,7 @@ void zzDivMod(word b[], const word divident[], const word a[],
 	word* da;			/* [n] */
 	word* da1;			/* [n] */
 	// pre
-	ASSERT(wwCmp(a, mod, n) < 0);
+	ASSERT(!wwIsZero(a, n) && wwCmp(a, mod, n) < 0);
 	ASSERT(wwCmp(divident, mod, n) < 0);
 	ASSERT(wwIsDisjoint(b, mod, n));
 	ASSERT(zzIsOdd(mod, n) && mod[n - 1] != 0);

@@ -4,7 +4,7 @@
 \brief Tests for elliptic curves over prime fields
 \project bee2/test
 \created 2017.05.29
-\version 2026.01.08
+\version 2026.01.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -18,6 +18,7 @@
 #include <bee2/math/gfp.h>
 #include <bee2/math/ecp.h>
 #include <bee2/math/ww.h>
+#include <bee2/math/zz.h>
 
 /*
 *******************************************************************************
@@ -59,13 +60,17 @@ bool_t ecpTest()
 	ec_o* ec;		/* [ec_keep] */
 	qr_o* f;		/* [f_keep] */
 	octet* t;		/* [5 * no] */
+	word* pts;		/* [4 * n] */
+	word* d;		/* [n] */
 	void* stack;
 	// создать состояние
 	state = blobCreate2(
 		ec_keep,
 		f_keep,
 		5 * no,
-		utilMax(12,
+		O_OF_W(4 * n),
+		O_OF_W(n),
+		utilMax(13,
 			gfpCreate_deep(no),
 			ecpCreateJ_deep(n, f_deep),
 			ecGroupCreate_deep(f_deep),
@@ -77,9 +82,10 @@ bool_t ecpTest()
 			ecpIsOnA_deep(n, f_deep),
 			ecpAddAA_deep(n, f_deep),
 			ecpSubAA_deep(n, f_deep),
-			ecMulA_deep(n, 3, ec_deep, 1)),
+			ecMulA_deep(n, 3, ec_deep, n),
+			ecMulA2_deep(n, 3, ec_deep, n)),
 		SIZE_MAX,
-		&ec, &f, &t, &stack);
+		&ec, &f, &t, &pts, &d, &stack);
 	if (state == 0)
 		return FALSE;
 	// создать f = GF(p)
@@ -116,8 +122,8 @@ bool_t ecpTest()
 	}
 	// утроить базовую точку разными способами
 	{
-		word* pts = (word*)t;
-		word d = 3;
+		// d <- 3
+		d[0] = 3;
 		// удвоить и сложить
 		if (!ecpIsOnA(ec->base, ec, stack) ||
 			!ecpAddAA(pts, ec->base, ec->base, ec, stack) ||
@@ -130,7 +136,7 @@ bool_t ecpTest()
 			(ecpNegA(pts + 2 * n, pts + 2 * n, ec),
 				ecpAddAA(pts + 2 * n, pts, pts + 2 * n, ec, stack)) ||
 		// вычислить кратную точку
-			!ecMulA(pts + 2 * n, ec->base, ec, &d, 1, stack) ||
+			!ecMulA(pts + 2 * n, ec->base, ec, d, 1, stack) ||
 			!memEq(pts, pts + 2 * n, 2 * n) ||
 		// утроить напрямую
 			!ec->froma || !ec->tpl || !ec->toa ||
@@ -142,6 +148,22 @@ bool_t ecpTest()
 			blobClose(state);
 			return FALSE;
 		}
+	}
+	// ecMulA() vs ecMulA2()
+	{
+		wwCopy(d, ec->order, n);
+		zzSubW2(d, n, 1);
+		while (!wwIsZero(d, n))
+		{
+			if (!ecMulA2(pts, ec->base, ec, d, n, stack) ||
+				!ecMulA(pts + 2 * n, ec->base, ec, d, n, stack) ||
+				!wwEq(pts, pts + 2 * n, 2 * n))
+				return FALSE;
+			wwShLo(d, n, 1);
+		}
+		if (ecMulA(pts, ec->base, ec, d, n, stack) ||
+			ecMulA2(pts + 2 * n, ec->base, ec, d, n, stack))
+			return FALSE;
 	}
 	// вывести f = GF(p) за пределы ec
 	objCopy(f, objPtr(ec, 0, qr_o));
@@ -161,7 +183,8 @@ bool_t ecpTest()
 	// утроить базовую точку разными способами
 	{
 		word* pts = (word*)t;
-		word d = 3;
+		// d <- 3
+		d[0] = 3;
 		// удвоить и сложить
 		if (!ecpIsOnA(ec->base, ec, stack) ||
 			!ecpAddAA(pts, ec->base, ec->base, ec, stack) ||
@@ -174,7 +197,7 @@ bool_t ecpTest()
 			(ecpNegA(pts + 2 * n, pts + 2 * n, ec),
 				ecpAddAA(pts + 2 * n, pts, pts + 2 * n, ec, stack)) ||
 		// вычислить кратную точку
-			!ecMulA(pts + 2 * n, ec->base, ec, &d, 1, stack) ||
+			!ecMulA(pts + 2 * n, ec->base, ec, d, 1, stack) ||
 			!memEq(pts, pts + 2 * n, 2 * n) ||
 			(ec->froma(pts + 2 * n, ec->base, ec, stack),
 				ec->tpl(pts + 2 * n, pts + 2 * n, ec, stack),
