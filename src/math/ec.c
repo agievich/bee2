@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2014.03.04
-\version 2026.01.16
+\version 2026.01.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -17,6 +17,7 @@
 #include "bee2/math/ec.h"
 #include "bee2/math/ww.h"
 #include "bee2/math/zz.h"
+#include "math/zz/zz_lcl.h"
 
 /*
 *******************************************************************************
@@ -165,7 +166,7 @@ static size_t ecSmul_deep(size_t n, size_t ec_d, size_t ec_deep)
 #define ecPmAAdd_local(n, ec_d)\
 /* t */		O_OF_W(ec_d * n)
 
-static void ecPmAAdd(word c[], const word a[], const word b[],
+static bool_t ecPmAAdd(word c[], const word a[], const word b[],
 	register word neg, const ec_o* ec, void* stack)
 {
 	word* t;			/* [ec->d * ec->f->n] */
@@ -176,7 +177,7 @@ static void ecPmAAdd(word c[], const word a[], const word b[],
 	ecAdd(t, a, b, ec, stack);
 	if (neg)
 		ecNeg(t, t, ec, stack);
-	(void)ecToA(c, t, ec, stack);
+	return ecToA(c, t, ec, stack);
 }
 
 static size_t ecPmAAdd_deep(size_t n, size_t ec_d, size_t ec_deep)
@@ -190,7 +191,7 @@ static size_t ecPmAAdd_deep(size_t n, size_t ec_d, size_t ec_deep)
 #define ecPmAAddA_local(n, ec_d)\
 /* t */		O_OF_W(ec_d * n)
 
-/* static */ void ecPmAAddA(word c[], const word a[], const word b[],
+static bool_t ecPmAAddA(word c[], const word a[], const word b[],
 	register word neg, const ec_o* ec, void* stack)
 {
 	word* t;			/* [ec->d * ec->f->n] */
@@ -201,10 +202,10 @@ static size_t ecPmAAdd_deep(size_t n, size_t ec_d, size_t ec_deep)
 	ecAddA(t, a, b, ec, stack);
 	if (neg)
 		ecNeg(t, t, ec, stack);
-	(void)ecToA(c, t, ec, stack);
+	return ecToA(c, t, ec, stack);
 }
 
-/* static */ size_t ecPmAAddA_deep(size_t n, size_t ec_d, size_t ec_deep)
+static size_t ecPmAAddA_deep(size_t n, size_t ec_d, size_t ec_deep)
 {
 	return memSliceSize(
 		ecPmAAddA_local(n, ec_d),
@@ -216,8 +217,8 @@ static size_t ecPmAAdd_deep(size_t n, size_t ec_d, size_t ec_deep)
 *******************************************************************************
 Кратная точка: NAF (Non-Adjacent Form)
 
-В функции ecMulNAF() для определения b = da (d-кратного точки a) применяется
-оконный NAF с длиной окна w > 2. Реализован алгоритм 3.36 из [1]. 
+В функции ecMulA() для определения b = da (d-кратного точки a) применяется
+оконный NAF с длиной окна w > 2. Реализован алгоритм 3.36 из [HMV04].
 
 Используются малые нечетные кратные a:
 	b[i] = (2i + 1)a,  i = 0, 1, ..., 2^{w-2} - 1.
@@ -236,8 +237,8 @@ static size_t ecPmAAdd_deep(size_t n, size_t ec_d, size_t ec_deep)
 Длина окна w выбирается как решение следующей оптимизационной задачи:
 	(2^{w - 2} - 2) + l / (w + 1) -> min.
 
-[1] Hankerson D., Menezes A., Vanstone S. Guide to Elliptic Curve Cryptography,
-Springer, 2004.
+[HMV04] Hankerson D., Menezes A., Vanstone S. Guide to Elliptic Curve 
+        Cryptography, Springer, 2004.
 *******************************************************************************
 */
 
@@ -252,12 +253,12 @@ static size_t ecNAFWidth(size_t l)
 	return 3;
 }
 
-#define ecMulNAF_local(n, ec_d, m, pre_count)\
+#define ecMulA_local(n, ec_d, m, pre_count)\
 /* naf */	O_OF_W(2 * m + 1),\
 /* t */		O_OF_W(ec_d * n),\
 /* pre */	O_OF_W(pre_count * ec_d * n)
 
-bool_t ecMulNAF(word b[], const word a[], const ec_o* ec,
+bool_t ecMulA(word b[], const word a[], const ec_o* ec,
 	const word d[], size_t m, void* stack)
 {
 	const size_t naf_width = ecNAFWidth(B_OF_W(m));
@@ -273,12 +274,14 @@ bool_t ecMulNAF(word b[], const word a[], const ec_o* ec,
 	ASSERT(ecIsOperable(ec));
 	// разметить стек
 	memSlice(stack,
-		ecMulNAF_local(ec->f->n, ec->d, m, pre_count), SIZE_0, SIZE_MAX,
+		ecMulA_local(ec->f->n, ec->d, m, pre_count), SIZE_0, SIZE_MAX,
 		&naf, &t, &pre, &stack);
 	// расчет NAF
 	ASSERT(naf_width >= 3);
 	naf_size = wwNAF(naf, d, m, naf_width);
-	ASSERT(naf_size > 0);
+	// d == O => b <- O
+	if (naf_size == 0)
+		return FALSE;
 	// малые кратные: a, 3a, ..., (2^w - 1)a
 	if (ec->smul)
 		ec->smul(pre, a, naf_width - 1, ec, stack);
@@ -321,12 +324,12 @@ bool_t ecMulNAF(word b[], const word a[], const ec_o* ec,
 	return ecToA(b, t, ec, stack);
 }
 
-static size_t ecMulNAF_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
+size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 {
 	const size_t naf_width = ecNAFWidth(B_OF_W(m));
 	const size_t pre_count = SIZE_1 << (naf_width - 1);
 	return memSliceSize(
-		ecMulNAF_local(n, ec_d, m, pre_count),
+		ecMulA_local(n, ec_d, m, pre_count),
 		ecSmul_deep(n, ec_d, ec_deep),
 		SIZE_MAX);
 }
@@ -335,15 +338,19 @@ static size_t ecMulNAF_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 *******************************************************************************
 Кратная точка: SNZ (Signed Non-Zero)
 
-В функции ecMulSNZ() для определения b = da при нечетной кратности d
-используется ее представление в виде
-	d_0 + d_1 (2^w) + ... + d_{k-1} (2^w)^{k-1},
-где d_i \in {\pm 1, \pm 3, ..., \pm (2^w - 1)} -- ненулевые (нечетные) цифры
+В функции ecMulA2() для определения кратной точки b = da при нечетной 
+кратности d используется ее представление в виде
+	d_0 + d_1 (2^w) + ... + d_{k-1} (2^w)^{k-1}.
+Здесь d_i \in {\pm 1, \pm 3, ..., \pm (2^w - 1)} -- ненулевые (нечетные) цифры
 со знаком. Предполагается, что точка a лежит в группе нечетного порядка order,
-(2^w)^{k-1} < order < (2^w)^k. Если кратность d четная, то она предварительно
-меняется на order - d.
+(2^w)^{k-1} < order < (2^w)^k. 
 
-Реализован следующий алгоритм (см. [2; p. 9-11, algorithm 1], а также [3]):
+Если кратность d четная, то она предварительно меняется на order - d.
+Для этого используется функция zzPmMod2(). Она отличается от zzPmMod() только
+тем, что d = 0 меняется на order. 
+
+Реализован следующий алгоритм (см. [BCL+14; p. 9-11, algorithm 1], 
+а также [APS22]):
 1. Для i = 0, 1, ..., (2^{w-1} - 1):
 	1) pre[i] <- (2i - 1)a;				// ec_smult_i
 	2) pre[-i] <- -pre[i].				// ec_neg_i
@@ -363,15 +370,33 @@ static size_t ecMulNAF_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 к удвоению. Регулярность функция ec_aadd_i означает, что сложение и удвоение
 будут выполняться по одним формулам.
 
-[2] Bos J.W., Costello C., Longa P., Naehrig M. Selecting Elliptic Curves
-for Cryptography: An Efficiency and Security Analysis, 2014,
-https://eprint.iacr.org/2014/130.pdf.
-
-[3] Agievich S., Poruchnik S., Semenov V. Small scalar multiplication on
-Weierstrass curves using division polynomials. Mat. Vopr. Kriptogr.,
-13:2, 2022, https://doi.org/10.4213/mvk406.
+[BCL+14] Bos J.W., Costello C., Longa P., Naehrig M. Selecting Elliptic Curves
+         for Cryptography: An Efficiency and Security Analysis, 2014,
+         https://eprint.iacr.org/2014/130.pdf.
+[APS22]  Agievich S., Poruchnik S., Semenov V. Small scalar multiplication on
+         Weierstrass curves using division polynomials. Mat. Vopr. Kriptogr.,
+         13:2, 2022, https://doi.org/10.4213/mvk406.
 *******************************************************************************
 */
+
+static zzPmMod2(word b[], const word a[], const word mod[], size_t n,
+	register word neg)
+{
+	register word mask;
+	size_t i;
+	ASSERT(wwIsSameOrDisjoint(a, b, n));
+	ASSERT(wwIsDisjoint(b, mod, n));
+	ASSERT(wwCmp(a, mod, n) < 0);
+	ASSERT(neg == WORD_0 || neg == WORD_1);
+	// b <- neg ? -a : a
+	mask = WORD_0 - neg;
+	for (i = 0; i < n; ++i)
+		b[i] = a[i] ^ mask;
+	zzAddW2(b, n, neg);
+	// b <- neg ? b + mod : b
+	zzAddAndW(b, mod, n, mask);
+	CLEAN2(neg, mask);
+}
 
 static size_t ecSNZWidth(size_t l)
 {
@@ -380,17 +405,18 @@ static size_t ecSNZWidth(size_t l)
 	return 6;
 }
 
-#define ecMulSNZ_local(n, ec_d, m, pre_count)\
+#define ecMulA2_local(n, ec_d, m, pre_count)\
 /* dd */	O_OF_W(m),\
 /* t */		O_OF_W(ec_d * n),\
 /* pre */	O_OF_W(pre_count * ec_d * n)
 
-bool_t ecMulSNZ(word b[], const word a[], const ec_o* ec,
+bool_t ecMulA2(word b[], const word a[], const ec_o* ec,
 	const word d[], size_t m, void* stack)
 {
 	register word neg;
 	register word digit;
 	register word hi;
+	register bool_t ret;
 	size_t mb;
 	size_t snz_width;
 	size_t pre_count;
@@ -404,7 +430,7 @@ bool_t ecMulSNZ(word b[], const word a[], const ec_o* ec,
 	ASSERT(ecGroupIsOperable(ec));
 	ASSERT(wwWordSize(ec->order, ec->f->n + 1) == m);
 	ASSERT(zzIsOdd(ec->order, m) && m > 1);
-	ASSERT(!wwIsZero(d, m) && wwCmp(d, ec->order, m) < 0);
+	ASSERT(wwCmp(d, ec->order, m) < 0);
 	// размерности
 	mb = wwBitSize(ec->order, m);
 	snz_width = ecSNZWidth(mb);
@@ -412,11 +438,11 @@ bool_t ecMulSNZ(word b[], const word a[], const ec_o* ec,
 	pre_count = SIZE_1 << snz_width;
 	// разметить стек
 	memSlice(stack,
-		ecMulSNZ_local(ec->f->n, ec->d, m, pre_count), SIZE_0, SIZE_MAX,
+		ecMulA2_local(ec->f->n, ec->d, m, pre_count), SIZE_0, SIZE_MAX,
 		&dd, &t, &pre, &stack);
 	// dd <- (d & 1) ? d : ec->order - d
 	neg = WORD_1 - (d[0] & 1);
-	zzPmMod(dd, d, ec->order, m, neg);
+	zzPmMod2(dd, d, ec->order, m, neg);
 	ASSERT(zzIsOdd(dd, m));
 	// малые кратные: a, 3a, ..., (2^w - 1)a
 	if (ec->smul)
@@ -449,52 +475,26 @@ bool_t ecMulSNZ(word b[], const word a[], const ec_o* ec,
 		ecDbl(t, t, ec, stack);
 	digit = wwGetBits(dd, 0, snz_width);
 	ASSERT(digit & 1);
-	if (ec->pmaadd)
+	ret = (ec->pmaadd) ?
 		ec->pmaadd(b, t, pre + (hi | (digit >> 1)) * ec->d * ec->f->n,
-			neg, ec, stack);
-	else
+			neg, ec, stack) :
 		ecPmAAdd(b, t, pre + (hi | (digit >> 1)) * ec->d * ec->f->n,
 			neg, ec, stack);
 	// очистка и возврат
 	CLEAN3(neg, digit, hi);
-	return TRUE;
+	return ret;
 }
 
-size_t ecMulSNZ_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
+size_t ecMulA2_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 {
 	const size_t snz_width = ecSNZWidth(B_OF_W(m));
 	const size_t pre_count = SIZE_1 << snz_width;
 	return memSliceSize(
-		ecMulSNZ_local(n, ec_d, m, pre_count),
+		ecMulA2_local(n, ec_d, m, pre_count),
 		utilMax(2,
 			ecSmul_deep(n, ec_d, ec_deep),
 			ecPmAAdd_deep(n, ec_d, ec_deep)),
 		SIZE_MAX);
-}
-
-/*
-*******************************************************************************
-Кратная точка: общий случай
-*******************************************************************************
-*/
-
-bool_t ecMulA(word b[], const word a[], const ec_o* ec, const word d[],
-	size_t m, void* stack)
-{
-	ASSERT(ecIsOperable(ec));
-	if (ecGroupIsOperable(ec) &&
-		wwWordSize(ec->order, ec->f->n + 1) == m && 
-		zzIsOdd(ec->order, m) && m > 1 &&
-		!wwIsZero(d, m) && wwCmp(d, ec->order, m) < 0)
-		return ecMulSNZ(b, a, ec, d, m, stack);
-	return ecMulNAF(b, a, ec, d, m, stack);
-}
-
-size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
-{
-	return utilMax(2,
-		ecMulNAF_deep(n, ec_d, ec_deep, m),
-		ecMulSNZ_deep(n, ec_d, ec_deep, m));
 }
 
 /*
@@ -515,14 +515,14 @@ bool_t ecHasOrderA(const word a[], const ec_o* ec, const word q[], size_t m,
 		ecHasOrderA_local(ec->f->n, ec->d), SIZE_0, SIZE_MAX,
 		&t, &stack);
 	// q a == O?
-	return !ecMulNAF(t, a, ec, q, m, stack);
+	return !ecMulA(t, a, ec, q, m, stack);
 }
 
 size_t ecHasOrderA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 {
 	return memSliceSize(
 		ecHasOrderA_local(n, ec_d), 
-		ecMulNAF_deep(n, ec_d, ec_deep, m),
+		ecMulA_deep(n, ec_d, ec_deep, m),
 		SIZE_MAX);
 }
 
@@ -530,7 +530,7 @@ size_t ecHasOrderA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 *******************************************************************************
 Сумма кратных точек
 
-Реализован алгоритм 3.51 (interleaving with NAF) из [1].
+Реализован алгоритм 3.51 (interleaving with NAF) из [HMV04].
 
 Для каждого d[i] строится naf[i] длиной l[i] с шириной окна w[i].
 

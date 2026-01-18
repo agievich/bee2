@@ -4,7 +4,7 @@
 \brief Benchmarks for elliptic curves over prime fields
 \project bee2/test
 \created 2013.10.17
-\version 2026.01.16
+\version 2026.01.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -17,18 +17,6 @@
 #include <bee2/core/util.h>
 #include <bee2/math/ec.h>
 #include <crypto/bign/bign_lcl.h>
-
-/*
-*******************************************************************************
-Композиционные элементы ecMulA()
-*******************************************************************************
-*/
-
-extern bool_t ecMulNAF(word b[], const word a[], const ec_o* ec, const word d[],
-	size_t m, void* stack);
-
-extern bool_t ecMulSNZ(word b[], const word a[], const ec_o* ec, const word d[],
-	size_t m, void* stack);
 
 /*
 *******************************************************************************
@@ -56,7 +44,9 @@ bool_t ecpBench()
 		prngCOMBO_keep(),
 		O_OF_W(2 * ec->f->n),
 		O_OF_W(ec->f->n),
-		ecMulA_deep(ec->f->n, ec->d, ec->deep, ec->f->n),
+		utilMax(2,
+			ecMulA_deep(ec->f->n, ec->d, ec->deep, ec->f->n),
+			ecMulA2_deep(ec->f->n, ec->d, ec->deep, ec->f->n)),
 		SIZE_MAX,
 		&combo_state, &pt, &d, &stack);
 	if (state == 0)
@@ -78,17 +68,17 @@ bool_t ecpBench()
 			ecMulA(pt, ec->base, ec, d, ec->f->n, stack);
 		}
 		ticks = tmTicks() - ticks;
-		printf("ecpBench::ecMulNAF: %u cycles/mulpoint [%u mulpoints/sec]\n",
+		printf("ecpBench::ecMulA: %u cycles/mulpoint [%u mulpoints/sec]\n",
 			(unsigned)(ticks / reps),
 			(unsigned)tmSpeed(reps, ticks));
 		// эксперимент: ecMulSNZ()
 		for (i = 0, ticks = tmTicks(); i < reps; ++i)
 		{
 			prngCOMBOStepR(d, ec->f->no, combo_state);
-			ecMulA(pt, ec->base, ec, d, ec->f->n, stack);
+			ecMulA2(pt, ec->base, ec, d, ec->f->n, stack);
 		}
 		ticks = tmTicks() - ticks;
-		printf("ecpBench::ecMulSNZ: %u cycles/mulpoint [%u mulpoints/sec]\n",
+		printf("ecpBench::ecMulA2: %u cycles/mulpoint [%u mulpoints/sec]\n",
 			(unsigned)(ticks / reps),
 			(unsigned)tmSpeed(reps, ticks));
 	}
