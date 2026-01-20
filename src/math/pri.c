@@ -4,7 +4,7 @@
 \brief Prime numbers
 \project bee2 [cryptographic library]
 \created 2012.08.13
-\version 2025.10.22
+\version 2026.01.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -510,18 +510,19 @@ size_t priIsSmooth_deep(size_t n)
 
 Применяется тест Рабина -- Миллера со специально подобранными основаниями.
 Успешное завершение теста на всех основаниях из списка _base16 гарантирует
-простоту чисел вплоть до 1373653 [1], из списка _base32 --- вплоть
-до 4759123141 [2], из списка _base64 --- для всех 64-разрядных чисел
-(Sinclair, unpublished, see [3] and [4]).
+простоту чисел вплоть до 1373653 [PSW80], из списка _base32 --- вплоть
+до 4759123141 [Jae93], из списка _base64 --- для всех 64-разрядных чисел
+(Sinclair, unpublished, см. [ForJan15] и [Izy24]).
 
-[1]	Pomerance C., Selfridge J., Wagstaff S. Jr. The pseudoprimes to 25 * 10^9.
-	Mathematics of Computation. 35(151): 1003–1026.
-[2]	Jaeschke G. On strong pseudoprimes to several bases. Mathematics
-	of Computation. 61(204): 915-925.
-[3]	Forisek M., Jancina, J. Fast Primality Testing for Integers That Fit into
-	a Machine Word. 2015. https://ceur-ws.org/Vol-1326/020-Forisek.pdf.
-[4]	 Izykowski, W.: The best known SPRP bases sets. 2024-02-28.
-	https://miller-rabin.appspot.com/.
+[PSW80]	   Pomerance C., Selfridge J., Wagstaff S. Jr. The pseudoprimes
+           to 25 * 10^9. Mathematics of Computation. 1980, 35(151): 1003–1026.
+[Jae93]    Jaeschke G. On strong pseudoprimes to several bases. Mathematics
+	       of Computation. 1993, 61(204): 915-925.
+[ForJan15] Forisek M., Jancina, J. Fast Primality Testing for Integers That
+           Fit into a Machine Word. 2015.
+		   https://ceur-ws.org/Vol-1326/020-Forisek.pdf.
+[Izy24]    Izykowski, W.: The best known SPRP bases sets. 2024-02-28.
+           https://miller-rabin.appspot.com/.
 *******************************************************************************
 */
 

@@ -4,7 +4,7 @@
 \brief Tests for multiple-precision unsigned integers
 \project bee2/test
 \created 2014.07.15
-\version 2026.01.15
+\version 2026.01.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -94,6 +94,13 @@ static bool_t zzTestAdd()
 		zzNeg(b, a, n);
 		if (zzAdd(c, a, b, n) != 1 ||
 			!wwIsZero(c, n))
+			return FALSE;
+		// zzSub / zzSubIf
+		if (wwCmp(a, b, n) < 0)
+			wwSwap(a, b, n);
+		zzSubIf(c, a, b, n, 1);
+		if (zzSub(c1, a, b, n) ||
+			!wwEq(c, c1, n))
 			return FALSE;
 	}
 	// все нормально
@@ -287,24 +294,24 @@ static bool_t zzTestMod()
 		FAST(zzSubWMod)(t1, t, b[0], mod, n);
 		if (!FAST(wwEq)(t1, a, n))
 			return FALSE;
-		// zzNegMod / zzPmMod
+		// zzNegMod / zzNegModIf
 		zzNegMod(t, a, mod, n);
-		zzPmMod(t1, a, mod, n, 1);
+		zzNegModIf(t1, a, mod, n, 1);
 		if (!wwEq(t, t1, n))
 			return FALSE;
 		zzAddMod(t1, t, a, mod, n);
 		if (!wwIsZero(t1, n))
 			return FALSE;
-		zzPmMod(t, a, mod, n, 0);
+		zzNegModIf(t, a, mod, n, 0);
 		if (!wwEq(t, a, n))
 			return FALSE;
 		zzNegMod(t1, t1, mod, n);
 		if (!wwIsZero(t1, n))
 			return FALSE;
-		zzPmMod(t1, t1, mod, n, 0);
+		zzNegModIf(t1, t1, mod, n, 0);
 		if (!wwIsZero(t1, n))
 			return FALSE;
-		zzPmMod(t1, t1, mod, n, 1);
+		zzNegModIf(t1, t1, mod, n, 1);
 		if (!wwIsZero(t1, n))
 			return FALSE;
 		// FAST(zzNegMod)
@@ -333,7 +340,15 @@ static bool_t zzTestMod()
 			return FALSE;
 		if (zzJacobi(t1, n, mod, n, stack) == -1)
 			return FALSE;
+		// zzMulWMod / zzMulMod
+		wwSetZero(b + 1, n - 1);
+		zzMulWMod(t, a, b[0], mod, n, stack);
+		zzMulMod(t1, a, b, mod, n, stack);
+		if (!wwEq(t, t1, n))
+			return FALSE;
 		// zzMulMod / zzDivMod / zzInvMod
+		if (wwIsZero(a, n))
+			continue;
 		zzGCD(t, a, n, mod, n, stack);
 		if (wwCmpW(t, n, 1) != 0)
 			continue;
@@ -347,12 +362,6 @@ static bool_t zzTestMod()
 		zzMulMod(t1, t1, a, mod, n, stack);
 		if (!wwEq(t1, b, n))
 			return FALSE;
-		// zzMulWMod / zzMulMod
-		wwSetZero(b + 1, n - 1);
-		zzMulWMod(t, a, b[0], mod, n, stack);
-		zzMulMod(t1, a, b, mod, n, stack);
-		if (!wwEq(t, t1, n))
-			return FALSE;
 		// zzAlmostInvMod
 		k = zzAlmostInvMod(t, a, mod, n, stack);
 		while (k--)
@@ -360,7 +369,17 @@ static bool_t zzTestMod()
 		zzInvMod(t1, a, mod, n, stack);
 		if (!wwEq(t, t1, n))
 			return FALSE;
-
+		// zzInvMod, zzDivMod: исключительные случаи
+		wwSetZero(b, n);
+		zzInvMod(t, b, mod, n, stack);
+		if (!wwIsZero(t, n))
+			return FALSE;
+		zzDivMod(t, b, a, mod, n, stack);
+		if (!wwIsZero(t, n))
+			return FALSE;
+		zzDivMod(t, b, b, mod, n, stack);
+		if (!wwIsZero(t, n))
+			return FALSE;
 	}
 	// все нормально
 	return TRUE;

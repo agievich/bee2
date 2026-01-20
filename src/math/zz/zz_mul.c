@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: multiplicative operations
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.09.13
+\version 2026.01.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -286,8 +286,7 @@ b = b[m - 1]...b[0] предварительно нормализуются:
 
 \opt Сокращать длину a при нулевом a[n]. Экономится одно деление 2by1.
 
-Деление выполняется по алгоритму 14.20 из [Menezes A., van Oorschot P.,
-Vanstone S. Handbook of Applied Cryptography]:
+Деление выполняется по алгоритму 14.20 из [MOV96]:
 	for i = n, n - 1, ...., m:
 		if a[i] == b[m - 1]											(#)
 			q[i - m] <- B - 1
@@ -304,6 +303,9 @@ Vanstone S. Handbook of Applied Cryptography]:
 	заменить на
 		while (q[i - m] * b[m - 2] > d * B + a[i - 2])
 			q[i - m]--, d += b[m - 1]
+
+[MOV96] Menezes A., van Oorschot P., Vanstone S. Handbook of Applied
+		Cryptography. CRC Press, 1996.
 *******************************************************************************
 */
 

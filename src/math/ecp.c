@@ -4,7 +4,7 @@
 \brief Elliptic curves over prime fields
 \project bee2 [cryptographic library]
 \created 2012.06.26
-\version 2026.01.18
+\version 2026.01.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -106,6 +106,17 @@ tpl-2007-bl из [BerLan07]. Сложность алгоритма:
 В функции ecpTplJA3() выполняется утроение P <- 3P для случая A = -3.
 Реализован алгоритм tpl-2007-bl-2 из [BerLan07]. Сложность алгоритма:
 	7M + 7S + 13add + 2*4 + 1*8 + 1*12 + 1*16 + 1*3 \approx 14M.
+
+\remark Целевые функции ci(l), определенные в описании реализации ecMulA()
+в ec.c, принимают следующий вид:
+	c1(l) = l/3 11;
+	c2(l, w) = 103 + (2^{w-2} - 2)102 + l/(w + 1) 11;
+	c3(l, w) = 6 + (2^{w-2} - 2)16 + l/(w + 1) 16.
+Расчеты показывают, что
+	с1(l) <= min_w c3(l), l <= 81,
+	min_w c3(l, w) <= min_w c2(l, w), l <= 899.
+Поэтому для практически используемых размерностей l (192 <= l <= 571)
+первые две стратегии являются проигрышными.
 
 [BerLan07] Bernstein D., Lange T. Faster addition and doubling on elliptic 
            curves. Advances in Cryptology -- ASIACRYPT 2007.
@@ -851,7 +862,7 @@ static size_t ecpTplJA3_deep(size_t n, size_t f_deep)
 *******************************************************************************
 */
 
-#define ecpPmAAdd_local(n)\
+#define ecpNegAAdd_local(n)\
 /* pt1 */	O_OF_W(3 * n),\
 /* pt2 */	O_OF_W(3 * n),\
 /* pt3 */	O_OF_W(3 * n),\
@@ -864,7 +875,7 @@ static size_t ecpTplJA3_deep(size_t n, size_t f_deep)
 /* t5 */	O_OF_W(n)
 
 // [2n]с <- (-1)^neg ([3n]a + [3n]b) (A <- J + J)
-static bool_t ecpPmAAdd(word c[], const word a[], const word b[],
+static bool_t ecpNegAAdd(word c[], const word a[], const word b[],
 	register word neg, const ec_o* ec, void* stack)
 {
 	size_t n;
@@ -886,7 +897,7 @@ static bool_t ecpPmAAdd(word c[], const word a[], const word b[],
 	// разметить стек
 	n = ec->f->n;
 	memSlice(stack,
-		ecpPmAAdd_local(n), SIZE_0, SIZE_MAX,
+		ecpNegAAdd_local(n), SIZE_0, SIZE_MAX,
 		&pt1, &pt2, &pt3, &B3, &t0, &t1, &t2, &t3, &t4, &t5, &stack);
 	// pt1 <- a (H <- J)
 	qrMul(ecX(pt1), ecX(a), ecZ(a, n), ec->f, stack);
@@ -948,14 +959,14 @@ static bool_t ecpPmAAdd(word c[], const word a[], const word b[],
 	qrMul(ecX(c), ecX(pt3), t0, ec->f, stack);
 	qrMul(ecY(c, n), ecY(pt3, n), t0, ec->f, stack);
 	// c <- (-1)^neg c
-	zzPmMod(ecY(c, n), ecY(c, n), ec->f->mod, n, neg);
+	zzNegModIf(ecY(c, n), ecY(c, n), ec->f->mod, n, neg);
 	return ret;
 }
 
-static size_t ecpPmAAdd_deep(size_t n, size_t f_deep)
+static size_t ecpNegAAdd_deep(size_t n, size_t f_deep)
 {
 	return memSliceSize(
-		ecpPmAAdd_local(n),
+		ecpNegAAdd_local(n),
 		f_deep,
 		SIZE_MAX);
 }
@@ -1020,7 +1031,7 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	ec->dbl = bA3 ? ecpDblJA3 : ecpDblJ;
 	ec->dbla = ecpDblAJ;
 	ec->tpl = bA3 ? ecpTplJA3 : ecpTplJ;
-	ec->pmaadd = ecpPmAAdd;
+	ec->negaadd = ecpNegAAdd;
 	ec->deep = utilMax(7,
 		ecpToAJ_deep(f->n, f->deep),
 		ecpAddJ_deep(f->n, f->deep),
@@ -1028,7 +1039,7 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 		bA3 ? ecpDblJA3_deep(f->n, f->deep) : ecpDblJ_deep(f->n, f->deep),
 		ecpDblAJ_deep(f->n, f->deep),
 		bA3 ? ecpTplJA3_deep(f->n, f->deep) : ecpTplJ_deep(f->n, f->deep),
-		ecpPmAAdd_deep(f->n, f->deep));
+		ecpNegAAdd_deep(f->n, f->deep));
 	// настроить
 	ec->hdr.keep = sizeof(ec_o) + 
 		memSliceSize(ecpCreateJ_state(f->n), SIZE_MAX);
@@ -1059,7 +1070,7 @@ size_t ecpCreateJ_deep(size_t n, size_t f_deep)
 			ecpDblAJ_deep(n, f_deep),
 			ecpTplJ_deep(n, f_deep),
 			ecpTplJA3_deep(n, f_deep),
-			ecpPmAAdd_deep(n, f_deep)),
+			ecpNegAAdd_deep(n, f_deep)),
 		SIZE_MAX);
 }
 

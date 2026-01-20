@@ -4,7 +4,7 @@
 \brief Elliptic curves over binary fields
 \project bee2 [cryptographic library]
 \created 2012.06.26
-\version 2025.01.12
+\version 2026.01.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -41,8 +41,7 @@ http://www.hyperelliptic.org/efd. Там же можно найти соглаш
 \warning Соотношение 1D = 24M получено экспериментальным путем
 на платформе x86 и возможно требует пересмотра.
 На упомянутом сайте http://www.hyperelliptic.org/efd используется другое
-соотношение: 1D = 10M. Считаем его слишком оптимистичным
-(по отношению к D).
+соотношение: 1D = 10M. Считаем его слишком оптимистичным (по отношению к D).
 
 Используются обозначения:
 	A <- A + A -- сложение аффинных точек,
@@ -63,58 +62,67 @@ http://www.hyperelliptic.org/efd. Там же можно найти соглаш
 
 /*
 *******************************************************************************
-Кривая в проективных координатах Лопеса -- Дахаба (LD):
+Кривая в проективных координатах Лопеса -- Дахаба (LD, [LopDah98]):
 	x = X / Z, y = Y / Z^2,
 	O = (1 : 0 : 0),
 	-(X : Y : Z) = (X : ZX + Y : Z).
 
-\warning Ошибка в книге [Hankerson D., Menezes A., Vanstone S. Guide to
-Elliptic Curve Cryptography, Springer, 2004] при определении обратной
-точки в LD-координатах.
+\warning Ошибка в книге [HMV04] при определении обратной точки
+в LD-координатах.
 
 В функции ec2DblLD() выполняется удвоение P <- 2P. Реализован алгоритм
-dbl-2005-l [Lange, 2005]. Сложность алгоритма:
+dbl-2005-dl [DocLan05;LopDah98]. Сложность алгоритма:
 	4M + 4S + 1*A + 5add \approx 5M,
 причем умножение на A не выполняется, если A \in {0, 1}.
 
 \todo Ссравнить с алгоритмом dbl-2005-dl.
 
-В функции ec2DblALD() выполняется удвоение P <- 2A (Z-координата
-проективной точки равняется 1). Реализован алгоритм
-mdbl-2005-dl [Doche-Lange, 2005]. Сложность алгоритма:
-	1M + 3S + 1*A + 1*B + 4add \approx 3M.
+В функции ec2DblALD() выполняется удвоение P <- 2A (Z-координата проективной
+точки равняется 1). Реализован алгоритм mdbl-2005-dl [DocLan05]. Сложность
+алгоритма:
+	1M + 3S + 1*A + 1*B + 4add \approx 3M,
 причем умножение на A не выполняется, если A \in {0, 1}.
 
-В функции ec2AddLD() выполняется сложение P <- P + P.
-Реализован алгоритм add-2005-dl [Doche-Lange-Takagi, 2005].
-Сложность алгоритма:
+В функции ec2AddLD() выполняется сложение P <- P + P. Реализован алгоритм
+add-2005-dl [DocLan05; HigTak00]). Сложность алгоритма:
 	13M + 4S + 9add \approx 13M.
 
 В функции ec2AddALD() выполняется сложение P <- P + A (Z-координата
-второго слагаемого равняется 1).
-Реализован алгоритм madd-2005-dl [Doche, Lange, Al-Daoude, 2005].
-Сложность алгоритма:
+второго слагаемого равняется 1). Реализован алгоритм madd-2005-dl
+[DocLan05;AMR+02]). Сложность алгоритма:
 		8M + 5S + 1*A + 9add \approx 9M,
 причем умножение на A не выполняется, если A \in {0, 1}.
 
-Целевые функции ci(l), определенные в описании реализации ecMul() в ec.c,
-принимают следующий вид (считаем, что коэффициент A \in {0, 1}):
+\remark Целевые функции ci(l), определенные в описании реализации ecMulA()
+в ec.c, принимают следующий вид (считаем, что коэффициент A \in {0, 1}):
 	c1(l) = l/3 8;
 	c2(l, w) = 26 + (2^{w-2} - 2)26 + l/(w + 1) 8;
 	c3(l, w) = 2 + (2^{w-2} - 2)13 + l/(w + 1) 13.
-
 Расчеты показывают, что
 	с1(l) <= min_w c2(l), l <= 39,
 	min_w c2(l, w) <= min_w c3(l, w).
 Поэтому для практически используемых размерностей l (39 <= l)
 первая и третья стратегии являются проигрышными. Реализована только стратегия 2.
 
-\todo Реализовать быстрые формулы для особенных B:
-B = 1 (кривые Коблица),	известен \sqrt{B}.
+\todo Реализовать быстрые формулы для особенных B: B = 1 (кривые Коблица),
+известен \sqrt{B}.
 
 \todo Реализовать редакции функций с A \in {0, 1}.
 
 \todo Исследовать расширенные LD-координаты (дополнительно поддерживается Z^2).
+
+[AMR+02]   A new addition formula for elliptic curves over GF(2n), IEEE Trans.
+           on Computers 51 No 8 (2002), 972–975.
+[DocLan05] Doche C., Lange T. Arithmetic of Elliptic Curves. In: Handbook of
+           Elliptic and Hyperelliptic Curve Cryptography, Chapman & Hall/CRC,
+		   2005.
+[HMV04]    Hankerson D., Menezes A., Vanstone S. Guide to Elliptic Curve
+		   Cryptography, Springer, 2004.
+[HigTak00] Higuchi A., Takagi N. A fast addition algorithm for elliptic curve
+           arithmetic in GF(2^n) using projective coordinates, Inform.
+		   Process. Lett. 76 (2000), 101–103.
+[LopDah98] Lopez J., Dahab R. Improved algorithms for elliptic curve arithmetic
+		   in GF(2^n), Tech. Report IC-98-39, Relatorio Tecnico, October 1998.
 *******************************************************************************
 */
 
@@ -122,17 +130,16 @@ B = 1 (кривые Коблица),	известен \sqrt{B}.
 static bool_t ec2FromALD(word b[], const word a[], const ec_o* ec,
 	void* stack)
 {
-	const size_t n = ec->f->n;
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ec2SeemsOnA(a, ec));
-	ASSERT(a == b || wwIsDisjoint2(a, 2 * n, b, 3 * n));
+	ASSERT(a == b || wwIsDisjoint2(a, 2 * ec->f->n, b, 3 * ec->f->n));
 	// xb <- xa
 	qrCopy(ecX(b), ecX(a), ec->f);
 	// yb <- ya
-	qrCopy(ecY(b, n), ecY(a, n), ec->f);
+	qrCopy(ecY(b, ec->f->n), ecY(a, ec->f->n), ec->f);
 	// zb <- 1
-	qrSetUnity(ecZ(b, n), ec->f);
+	qrSetUnity(ecZ(b, ec->f->n), ec->f);
 	return TRUE;
 }
 
@@ -142,13 +149,14 @@ static bool_t ec2FromALD(word b[], const word a[], const ec_o* ec,
 // [2n]b <- [3n]a (A <- P)
 static bool_t ec2ToALD(word b[], const word a[], const ec_o* ec, void* stack)
 {
-	const size_t n = ec->f->n;
+	size_t n;
 	word* t1;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ec2SeemsOnLD(a, ec));
-	ASSERT(a == b || wwIsDisjoint2(a, 3 * n, b, 2 * n));
+	ASSERT(a == b || wwIsDisjoint2(a, 3 * ec->f->n, b, 2 * ec->f->n));
 	// разметить стек
+	n = ec->f->n;
 	memSlice(stack,
 		ec2ToALD_local(n), SIZE_0, SIZE_MAX,
 		&t1, &stack);
@@ -181,13 +189,14 @@ static size_t ec2ToALD_deep(size_t n, size_t f_deep)
 // [3n]b <- -[3n]a (P <- -P)
 static void ec2NegLD(word b[], const word a[], const ec_o* ec, void* stack)
 {
-	const size_t n = ec->f->n;
+	size_t n;
 	word* t1;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ec2SeemsOnLD(a, ec));
-	ASSERT(wwIsSameOrDisjoint(a, b, 3 * n));
+	ASSERT(wwIsSameOrDisjoint(a, b, 3 * ec->f->n));
 	// разметить стек
+	n = ec->f->n;
 	memSlice(stack,
 		ec2NegLD_local(n), SIZE_0, SIZE_MAX,
 		&t1, &stack);
@@ -213,14 +222,15 @@ static size_t ec2NegLD_deep(size_t n, size_t f_deep)
 // [3n]b <- 2[3n]a (P <- 2P)
 static void ec2DblLD(word b[], const word a[], const ec_o* ec, void* stack)
 {
-	const size_t n = ec->f->n;
+	size_t n;
 	word* t1;			/* [n] */
 	word* t2;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ec2SeemsOnLD(a, ec));
-	ASSERT(wwIsSameOrDisjoint(a, b, 3 * n));
+	ASSERT(wwIsSameOrDisjoint(a, b, 3 * ec->f->n));
 	// разметить стек
+	n = ec->f->n;
 	memSlice(stack,
 		ec2DblLD_local(n), SIZE_0, SIZE_MAX,
 		&t1, &t2, &stack);
@@ -276,13 +286,14 @@ static size_t ec2DblLD_deep(size_t n, size_t f_deep)
 // [3n]b <- 2[2n]a (P <- 2A)
 static void ec2DblALD(word b[], const word a[], const ec_o* ec, void* stack)
 {
-	const size_t n = ec->f->n;
+	size_t n;
 	word* t1;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ec2SeemsOnA(a, ec));
-	ASSERT(a == b || wwIsDisjoint2(a, 2 * n, b, 3 * n));
+	ASSERT(a == b || wwIsDisjoint2(a, 2 * ec->f->n, b, 3 * ec->f->n));
 	// разметить стек
+	n = ec->f->n;
 	memSlice(stack,
 		ec2DblALD_local(n), SIZE_0, SIZE_MAX,
 		&t1, &stack);
@@ -336,7 +347,7 @@ static size_t ec2DblALD_deep(size_t n, size_t f_deep)
 static void ec2AddLD(word c[], const word a[], const word b[],
 	const ec_o* ec, void* stack)
 {
-	const size_t n = ec->f->n;
+	size_t n;
 	word* t1;			/* [n] */
 	word* t2; 			/* [n] */
 	word* t3;			/* [n] */
@@ -347,9 +358,10 @@ static void ec2AddLD(word c[], const word a[], const word b[],
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ec2SeemsOnLD(a, ec));
 	ASSERT(ec2SeemsOnLD(b, ec));
-	ASSERT(wwIsSameOrDisjoint(a, c, 3 * n));
-	ASSERT(wwIsSameOrDisjoint(b, c, 3 * n));
+	ASSERT(wwIsSameOrDisjoint(a, c, 3 * ec->f->n));
+	ASSERT(wwIsSameOrDisjoint(b, c, 3 * ec->f->n));
 	// разметить стек
+	n = ec->f->n;
 	memSlice(stack,
 		ec2AddLD_local(n), SIZE_0, SIZE_MAX,
 		&t1, &t2, &t3, &t4, &t5, &t6, &stack);
@@ -442,7 +454,7 @@ static size_t ec2AddLD_deep(size_t n, size_t f_deep)
 static void ec2AddALD(word c[], const word a[], const word b[],
 	const ec_o* ec, void* stack)
 {
-	const size_t n = ec->f->n;
+	size_t n;
 	word* t1;			/* [n] */
 	word* t2; 			/* [n] */
 	word* t3;			/* [n] */
@@ -451,9 +463,10 @@ static void ec2AddALD(word c[], const word a[], const word b[],
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ec2SeemsOnLD(a, ec));
 	ASSERT(ec2SeemsOnA(b, ec));
-	ASSERT(wwIsSameOrDisjoint(a, c, 3 * n));
-	ASSERT(b == c || wwIsDisjoint2(b, 2 * n, c, 3 * n));
+	ASSERT(wwIsSameOrDisjoint(a, c, 3 * ec->f->n));
+	ASSERT(b == c || wwIsDisjoint2(b, 2 * ec->f->n, c, 3 * ec->f->n));
 	// разметить стек
+	n = ec->f->n;
 	memSlice(stack,
 		ec2AddALD_local(n), SIZE_0, SIZE_MAX,
 		&t1, &t2, &t3, &t4, &stack);
@@ -628,13 +641,14 @@ size_t ec2IsValid_deep(size_t n)
 
 bool_t ec2GroupSeemsValid(const ec_o* ec, void* stack)
 {
-	size_t n = ec->f->n;
+	size_t n;
 	word* t1;			/* [n + 1] */
 	word* t2; 			/* [n + 2] */
 	word* t3; 			/* [2 * n] */
 	// pre
 	ASSERT(ecIsOperable(ec));
 	// разметить стек
+	n = ec->f->n;
 	memSlice(stack,
 		ec2GroupSeemsValid_local(n), SIZE_0, SIZE_MAX,
 		&t1, &t2, &t3, &stack);
@@ -683,13 +697,14 @@ size_t ec2GroupSeemsValid_deep(size_t n, size_t f_deep)
 
 bool_t ec2GroupIsSafe(const ec_o* ec, size_t mov_threshold, void* stack)
 {
-	size_t n1 = ec->f->n + 1;
+	size_t n1;
 	word* t1;			/* [n1] */
 	word* t2;			/* [n1] */
 	// pre
 	ASSERT(ecIsOperable(ec));
 	ASSERT(ecGroupIsOperable(ec));
 	// разметить стек
+	n1 = ec->f->n + 1;
 	memSlice(stack,
 		ec2GroupIsSafe_local(n1), SIZE_0, SIZE_MAX,
 		&t1, &t2, &stack);
@@ -751,12 +766,13 @@ size_t ec2GroupIsSafe_deep(size_t n)
 
 bool_t ec2IsOnA(const word a[], const ec_o* ec, void* stack)
 {
-	const size_t n = ec->f->n;
+	size_t n;
 	word* t1;			/* [n] */
 	word* t2;			/* [n] */
 	// pre
 	ASSERT(ecIsOperable(ec));
 	// разметить стек
+	n = ec->f->n;
 	memSlice(stack,
 		ec2IsOnA_local(n), SIZE_0, SIZE_MAX,
 		&t1, &t2, &stack);
@@ -785,14 +801,12 @@ size_t ec2IsOnA_deep(size_t n, size_t f_deep)
 
 void ec2NegA(word b[], const word a[], const ec_o* ec)
 {
-	const size_t n = ec->f->n;
-	// pre
 	ASSERT(ecIsOperable(ec));
 	ASSERT(ec2SeemsOnA(a, ec));
-	ASSERT(wwIsSameOrDisjoint(a, b, 3 * n));
+	ASSERT(wwIsSameOrDisjoint(a, b, 3 * ec->f->n));
 	// b <- (xa, ya + xa)
 	qrCopy(ecX(b), ecX(a), ec->f);
-	gf2Add(ecY(b, n), ecX(a), ecY(a, n), ec->f);
+	gf2Add(ecY(b, ec->f->n), ecX(a), ecY(a, ec->f->n), ec->f);
 }
 
 #define ec2AddAA_local(n)\
@@ -803,7 +817,7 @@ void ec2NegA(word b[], const word a[], const ec_o* ec)
 bool_t ec2AddAA(word c[], const word a[], const word b[], const ec_o* ec,
 	void* stack)
 {
-	const size_t n = ec->f->n;
+	size_t n;
 	word* t1;			/* [n] */
 	word* t2;			/* [n] */
 	word* t3;			/* [n] */
@@ -811,8 +825,9 @@ bool_t ec2AddAA(word c[], const word a[], const word b[], const ec_o* ec,
 	ASSERT(ecIsOperable(ec));
 	ASSERT(ec2SeemsOnA(a, ec));
 	ASSERT(ec2SeemsOnA(b, ec));
-	ASSERT(wwIsDisjoint(a, c, 2 * n));
+	ASSERT(wwIsDisjoint(a, c, 2 * ec->f->n));
 	// разметить стек
+	n = ec->f->n;
 	memSlice(stack,
 		ec2AddAA_local(n), SIZE_0, SIZE_MAX,
 		&t1, &t2, &t3, &stack);
@@ -882,9 +897,10 @@ size_t ec2AddAA_deep(size_t n, size_t f_deep)
 bool_t ec2SubAA(word c[], const word a[], const word b[], const ec_o* ec,
 	void* stack)
 {
-	const size_t n = ec->f->n;
+	size_t n;
 	word* t;			/* [2 * n] */
 	// разметить стек
+	n = ec->f->n;
 	memSlice(stack,
 		ec2SubAA_local(n), SIZE_0, SIZE_MAX,
 		&t, &stack);

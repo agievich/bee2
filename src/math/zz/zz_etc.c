@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: other functions
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.09.13
+\version 2026.01.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -86,10 +86,12 @@ word zzSubAndW(word b[], const word a[], size_t n, register word w)
 *******************************************************************************
 Квадратичные вычеты
 
-Реализован алгоритм 2.148 из [Menezes A., van Oorschot P., Vanstone S.
-Handbook of Applied Cryptography] в редакции CТБ 34.101.45 (приложение Ж).
+Реализован алгоритм 2.148 из [MOV96] в редакции CТБ 34.101.45 (приложение Ж).
 
-В некоторых приложениях область определения символа Якоби расширяется
+[MOV96] Menezes A., van Oorschot P., Vanstone S. Handbook of Applied
+        Cryptography. CRC Press, 1996.
+
+\remark В некоторых приложениях область определения символа Якоби расширяется
 до любых b по следующим правилам:
 	(a / 2) = 0, если a четное,
 	(a / 2) = (-1)^{(a^2 - 1) / 8}, если a нечетное.

@@ -4,7 +4,7 @@
 \brief Memory management
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.12.24
+\version 2026.01.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -268,15 +268,15 @@ int FAST(memCmpRev)(const void* buf1, const void* buf2, size_t count)
 
 Методы очистки памяти с защитой от оптимизаторов:
 
-[1] Yang Z., Johannesmeyer B., Trier Olesen A., Lerner S., Levchenko K.
-    Dead Store Elimination (Still) Considered Harmfuf. USENIX Security 2017:
-	26th USENIX Security Symposium, pp. 1025–1040, 2017.
-	https://www.usenix.org/system/files/conference/usenixsecurity17/
-	sec17-yang.pdf
+[YJO+17] Yang Z., Johannesmeyer B., Olesen A., Lerner S., Levchenko K.
+         Dead Store Elimination (Still) Considered Harmful. USENIX Security
+		 2017: 26th USENIX Security Symposium, pp. 1025–1040, 2017.
+		 https://www.usenix.org/system/files/conference/usenixsecurity17/
+	     sec17-yang.pdf
 
 Реализован метод "Volatile Function Pointer". Он используется также в OpenSSL
-версии 1.0.2 и выше. В [1] подтверждается безопасность метода при использовании
-GCC, Clang и Microsoft Visual Studio.
+версии 1.0.2 и выше. В [YJO+17] подтверждается безопасность метода при
+использовании GCC, Clang и Microsoft Visual Studio.
 
 \remark В предыдущей редакции memWipe() был реализован метод
 "Complicated Computation":

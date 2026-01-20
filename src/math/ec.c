@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2014.03.04
-\version 2026.01.18
+\version 2026.01.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -17,7 +17,6 @@
 #include "bee2/math/ec.h"
 #include "bee2/math/ww.h"
 #include "bee2/math/zz.h"
-#include "math/zz/zz_lcl.h"
 
 /*
 *******************************************************************************
@@ -159,20 +158,20 @@ static size_t ecSmul_deep(size_t n, size_t ec_d, size_t ec_deep)
 *******************************************************************************
 Сложение с настройкой знака
 
-Прямые нерегулярные реализации интерфейсов ec_pmaadd_i и ec_pmaadda_i.
+Прямые нерегулярные реализации интерфейсов ec_negaadd_i и ec_negaadda_i.
 *******************************************************************************
 */
 
-#define ecPmAAdd_local(n, ec_d)\
+#define ecNegAAdd_local(n, ec_d)\
 /* t */		O_OF_W(ec_d * n)
 
-static bool_t ecPmAAdd(word c[], const word a[], const word b[],
+static bool_t ecNegAAdd(word c[], const word a[], const word b[],
 	register word neg, const ec_o* ec, void* stack)
 {
 	word* t;			/* [ec->d * ec->f->n] */
 	ASSERT(ecIsOperable(ec));
 	memSlice(stack,
-		ecPmAAdd_local(ec->f->n, ec->d), SIZE_0, SIZE_MAX,
+		ecNegAAdd_local(ec->f->n, ec->d), SIZE_0, SIZE_MAX,
 		&t, &stack);
 	ecAdd(t, a, b, ec, stack);
 	if (neg)
@@ -180,24 +179,24 @@ static bool_t ecPmAAdd(word c[], const word a[], const word b[],
 	return ecToA(c, t, ec, stack);
 }
 
-static size_t ecPmAAdd_deep(size_t n, size_t ec_d, size_t ec_deep)
+static size_t ecNegAAdd_deep(size_t n, size_t ec_d, size_t ec_deep)
 {
 	return memSliceSize(
-		ecPmAAdd_local(n, ec_d),
+		ecNegAAdd_local(n, ec_d),
 		ec_deep,
 		SIZE_MAX);
 }
 
-#define ecPmAAddA_local(n, ec_d)\
+#define ecNegAAddA_local(n, ec_d)\
 /* t */		O_OF_W(ec_d * n)
 
-static bool_t ecPmAAddA(word c[], const word a[], const word b[],
+static bool_t ecNegAAddA(word c[], const word a[], const word b[],
 	register word neg, const ec_o* ec, void* stack)
 {
 	word* t;			/* [ec->d * ec->f->n] */
 	ASSERT(ecIsOperable(ec));
 	memSlice(stack,
-		ecPmAAddA_local(ec->f->n, ec->d), SIZE_0, SIZE_MAX,
+		ecNegAAddA_local(ec->f->n, ec->d), SIZE_0, SIZE_MAX,
 		&t, &stack);
 	ecAddA(t, a, b, ec, stack);
 	if (neg)
@@ -205,10 +204,10 @@ static bool_t ecPmAAddA(word c[], const word a[], const word b[],
 	return ecToA(c, t, ec, stack);
 }
 
-static size_t ecPmAAddA_deep(size_t n, size_t ec_d, size_t ec_deep)
+static size_t ecNegAAddA_deep(size_t n, size_t ec_d, size_t ec_deep)
 {
 	return memSliceSize(
-		ecPmAAddA_local(n, ec_d),
+		ecNegAAddA_local(n, ec_d),
 		ec_deep,
 		SIZE_MAX);
 }
@@ -222,22 +221,54 @@ static size_t ecPmAAddA_deep(size_t n, size_t ec_d, size_t ec_deep)
 
 Используются малые нечетные кратные a:
 	b[i] = (2i + 1)a,  i = 0, 1, ..., 2^{w-2} - 1.
-Они вычисляются с помощью функции интерфейса ec_smul_i, указанной в описании
-кривой. Если функция не задана в описании, то используется функция по
-умолчанию ecSmul().
 
-Пусть l = wwBitSize(d). Если расчет малых кратных выполняется с помощью
-функции ecSmul(), то средняя сложность нахождения кратной точки:
-	c(l, w) = 1(P <- 2A) + 1(P <- P + A) + (2^{w-2} - 2)(P <- P + P) +
-	          l/(w + 1)(P <- P + P) + l(P <- 2P).
+Имеются три стратегии:
+1)	w = 2 и малые кратные вообще не рассчитываются;
+2)	w > 2 и малые кратные рассчитываются в аффинных координатах;
+3)	w > 2 и малые кратные рассчитываются в проективных координатах.
 
-Здесь 
+Если малые кратные рассчитываются по схеме "последовательно складывать
+с удвоенной исходной точкой", то средняя общая сложность нахождения
+кратной точки (l = wwBitSize(d)):
+1)	c1(l) = l/3(P <- P + A);
+2)	c2(l, w) = 1(A <- 2A) + 1(P <- P + A) +
+		(2^{w-2} - 2)(A <- A + A) + l/(w + 1)(P <- P + A);
+3)	c3(l, w) = 1(P <- 2A) + 1(P <- P + A) +
+		(2^{w-2} - 2)(P <- P + P) + l/(w + 1)(P <- P + P),
+без учета общего во всех стратегиях слагаемого l(P <- 2P).
+
+Здесь
+- (A <- 2A) -- время работы каскада (ec->dbla, ec->toa)*;
+- (A <- A + A) -- время работы каскада (ec->adda, ec->toa)*;
 - (P <- 2P) -- время работы функции ec->dbl.
+-----------------------------------------------------
+* [или прямых вычислений в аффинных координатах]
+
+Реализована третья стратегия. Она является выигрышной для кривых над GF(p)
+в практических диапазонах размерностей при использовании наиболее эффективных
+(якобиевых) координат.
 
 Длина окна w выбирается как решение следующей оптимизационной задачи:
 	(2^{w - 2} - 2) + l / (w + 1) -> min.
 
-[HMV04] Hankerson D., Menezes A., Vanstone S. Guide to Elliptic Curve 
+Малые кратные вычисляются с помощью функции интерфейса ec_smul_i, указанной
+в описании кривой. Если функция не задана в описании, то используется функция
+по умолчанию ecSmul().
+
+\todo Усилить вторую стратегию. Рассчитать малые кратные в проективных
+координатах, а затем быстро перейти к аффинным координатам с помощью
+трюка Монтгомери [Doc05; algorithm 11.15 -- simultaneous inversion, p. 209]:
+	U_1 <- Z_1
+	for t = 2,..., T: U_t <- U_{t-1} Z_t
+	V <- U_T^{-1}
+	for t = T,..., 2:
+		Z_t^{-1} <- V U_{t-1}
+		V <- V Z_t
+	Z_1^{-1} <- V
+
+[Doc05] Doche C. Finite Field Arithmetic. In: Handbook of Elliptic and
+        Hyperelliptic Curve Cryptography. Chapman & Hall/CRC, 2005.
+[HMV04] Hankerson D., Menezes A., Vanstone S. Guide to Elliptic Curve
         Cryptography, Springer, 2004.
 *******************************************************************************
 */
@@ -339,15 +370,15 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 Кратная точка: SNZ (Signed Non-Zero)
 
 В функции ecMulA2() для определения кратной точки b = da при нечетной 
-кратности d используется ее представление в виде
+кратности d используется ее представление в форме
 	d_0 + d_1 (2^w) + ... + d_{k-1} (2^w)^{k-1}.
 Здесь d_i \in {\pm 1, \pm 3, ..., \pm (2^w - 1)} -- ненулевые (нечетные) цифры
-со знаком. Предполагается, что точка a лежит в группе нечетного порядка order,
-(2^w)^{k-1} < order < (2^w)^k. 
+со знаком (signed non-zero). Предполагается, что точка a лежит в группе
+нечетного порядка order, (2^w)^{k-1} < order < (2^w)^k. Представление SNZ
+предложено в [OkeTak03].
 
 Если кратность d четная, то она предварительно меняется на order - d.
-Для этого используется функция zzPmMod2(). Она отличается от zzPmMod() только
-тем, что d = 0 меняется на order. 
+Для этого используется функция zzSubIf().
 
 Реализован следующий алгоритм (см. [BCL+14; p. 9-11, algorithm 1], 
 а также [APS22]):
@@ -370,33 +401,18 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 к удвоению. Регулярность функция ec_aadd_i означает, что сложение и удвоение
 будут выполняться по одним формулам.
 
-[BCL+14] Bos J.W., Costello C., Longa P., Naehrig M. Selecting Elliptic Curves
-         for Cryptography: An Efficiency and Security Analysis, 2014,
-         https://eprint.iacr.org/2014/130.pdf.
-[APS22]  Agievich S., Poruchnik S., Semenov V. Small scalar multiplication on
-         Weierstrass curves using division polynomials. Mat. Vopr. Kriptogr.,
-         13:2, 2022, https://doi.org/10.4213/mvk406.
+[OkeTak03] Okeya K., Takagi T. The width-w NAF method provides small memory and
+           fast elliptic scalar multiplications secure against side channel
+		   attacks. In Cryptographers’ Track at the RSA Conference, 2003,
+		   pp. 328-343. Springer Berlin Heidelberg.
+[BCL+14]   Bos J.W., Costello C., Longa P., Naehrig M. Selecting Elliptic
+		   Curves for Cryptography: An Efficiency and Security Analysis, 2014,
+		   https://eprint.iacr.org/2014/130.pdf.
+[APS22]    Agievich S., Poruchnik S., Semenov V. Small scalar multiplication
+		   on Weierstrass curves using division polynomials. Mat. Vopr.
+		   Kriptogr., 13:2, 2022, https://doi.org/10.4213/mvk406.
 *******************************************************************************
 */
-
-static zzPmMod2(word b[], const word a[], const word mod[], size_t n,
-	register word neg)
-{
-	register word mask;
-	size_t i;
-	ASSERT(wwIsSameOrDisjoint(a, b, n));
-	ASSERT(wwIsDisjoint(b, mod, n));
-	ASSERT(wwCmp(a, mod, n) < 0);
-	ASSERT(neg == WORD_0 || neg == WORD_1);
-	// b <- neg ? -a : a
-	mask = WORD_0 - neg;
-	for (i = 0; i < n; ++i)
-		b[i] = a[i] ^ mask;
-	zzAddW2(b, n, neg);
-	// b <- neg ? b + mod : b
-	zzAddAndW(b, mod, n, mask);
-	CLEAN2(neg, mask);
-}
 
 static size_t ecSNZWidth(size_t l)
 {
@@ -442,7 +458,7 @@ bool_t ecMulA2(word b[], const word a[], const ec_o* ec,
 		&dd, &t, &pre, &stack);
 	// dd <- (d & 1) ? d : ec->order - d
 	neg = WORD_1 - (d[0] & 1);
-	zzPmMod2(dd, d, ec->order, m, neg);
+	zzSubIf(dd, ec->order, d, m, neg);
 	ASSERT(zzIsOdd(dd, m));
 	// малые кратные: a, 3a, ..., (2^w - 1)a
 	if (ec->smul)
@@ -475,10 +491,10 @@ bool_t ecMulA2(word b[], const word a[], const ec_o* ec,
 		ecDbl(t, t, ec, stack);
 	digit = wwGetBits(dd, 0, snz_width);
 	ASSERT(digit & 1);
-	ret = (ec->pmaadd) ?
-		ec->pmaadd(b, t, pre + (hi | (digit >> 1)) * ec->d * ec->f->n,
+	ret = (ec->negaadd) ?
+		ec->negaadd(b, t, pre + (hi | (digit >> 1)) * ec->d * ec->f->n,
 			neg, ec, stack) :
-		ecPmAAdd(b, t, pre + (hi | (digit >> 1)) * ec->d * ec->f->n,
+		ecNegAAdd(b, t, pre + (hi | (digit >> 1)) * ec->d * ec->f->n,
 			neg, ec, stack);
 	// очистка и возврат
 	CLEAN3(neg, digit, hi);
@@ -493,7 +509,7 @@ size_t ecMulA2_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 		ecMulA2_local(n, ec_d, m, pre_count),
 		utilMax(2,
 			ecSmul_deep(n, ec_d, ec_deep),
-			ecPmAAdd_deep(n, ec_d, ec_deep)),
+			ecNegAAdd_deep(n, ec_d, ec_deep)),
 		SIZE_MAX);
 }
 

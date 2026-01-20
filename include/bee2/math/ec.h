@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2012.04.19
-\version 2026.01.18
+\version 2026.01.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -350,12 +350,12 @@ typedef void (*ec_smul_i)(
 	\expect Точки a и b лежат на кривой.
 	\return TRUE, если сумма является аффинной точкой, и FALSE, если бесконечно
 	удаленной (a + b == O).
-	\remark Функции интерфейса ec_pmaadd_i предназначены для использования 
+	\remark Функции интерфейса ec_negaadd_i предназначены для использования 
 	в регулярных алгоритмах вычисления кратной точки. Предполагается, что 
 	сложение a + b выполняется по полным (complete) формулам, одними и теми же
 	для случаев a == b, a == -b и a != \pm b.
 */
-typedef bool_t(*ec_pmaadd_i)(
+typedef bool_t(*ec_negaadd_i)(
 	word c[],				/*!< [out] сумма */
 	const word a[],			/*!< [in] первое слагаемое */
 	const word b[],			/*!< [in] второе слагаемое */
@@ -383,12 +383,12 @@ typedef bool_t(*ec_pmaadd_i)(
 	работает с a == b и a != b.
 	\return TRUE, если сумма является аффинной точкой, и FALSE, если бесконечно
 	удаленной (a + b == O).
-	\remark Функции интерфейса ec_pmaadda_i предназначены для использования 
+	\remark Функции интерфейса ec_negaadda_i предназначены для использования 
 	в регулярных алгоритмах вычисления кратной точки. Предполагается, что 
 	сложение a + b выполняется по полным (complete) формулам, одними и теми же 
 	для случаев a == b, a == -b и a != \pm b.
 */
-typedef bool_t(*ec_pmaadda_i)(
+typedef bool_t(*ec_negaadda_i)(
 	word c[],				/*!< [out] сумма */
 	const word a[],			/*!< [in] первое слагаемое */
 	const word b[],			/*!< [in] второе слагаемое */
@@ -426,8 +426,8 @@ typedef struct ec_o
 	ec_dbla_i dbla;			/*!< функция удвоения аффинной точки */
 	ec_tpl_i tpl;			/*!< функция утроения */
 	ec_smul_i smul;			/*!< функция расчета малых кратных */
-	ec_pmaadd_i pmaadd;		/*!< функция сложения c настройкой знака суммы */
-	ec_pmaadda_i pmaadda;	/*!< функция сложения с афф. т. с настр. знака */
+	ec_negaadd_i negaadd;	/*!< функция сложения c настройкой знака суммы */
+	ec_negaadda_i negaadda;	/*!< функция сложения с афф. т. с настр. знака */
 	size_t deep;			/*!< максимальная глубина стека функций */
 	mem_align_t descr[];	/*!< память для размещения данных */
 } ec_o;
