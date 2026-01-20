@@ -60,7 +60,7 @@ bool_t ecpTest()
 	ec_o* ec;		/* [ec_keep] */
 	qr_o* f;		/* [f_keep] */
 	octet* t;		/* [5 * no] */
-	word* pts;		/* [4 * n] */
+	word* pts;		/* [4 * 3 * n] */
 	word* d;		/* [n] */
 	void* stack;
 	// создать состояние
@@ -68,7 +68,7 @@ bool_t ecpTest()
 		ec_keep,
 		f_keep,
 		5 * no,
-		O_OF_W(4 * n),
+		O_OF_W(4 * 3 * n) | SIZE_HI,
 		O_OF_W(n),
 		utilMax(13,
 			gfpCreate_deep(no),
@@ -132,18 +132,18 @@ bool_t ecpTest()
 			!ecpAddAA(pts + 2 * n, ec->base, ec->base, ec, stack) ||
 			!ecpAddAA(pts + 2 * n, pts + 2 * n, pts + 2 * n, ec, stack) ||
 			!ecpSubAA(pts + 2 * n, pts + 2 * n, ec->base, ec, stack) ||
-			!memEq(pts, pts + 2 * n, 2 * n) ||
+			!wwEq(pts, pts + 2 * n, 2 * n) ||
 			(ecpNegA(pts + 2 * n, pts + 2 * n, ec),
 				ecpAddAA(pts + 2 * n, pts, pts + 2 * n, ec, stack)) ||
 		// вычислить кратную точку
 			!ecMulA(pts + 2 * n, ec->base, ec, d, 1, stack) ||
-			!memEq(pts, pts + 2 * n, 2 * n) ||
+			!wwEq(pts, pts + 2 * n, 2 * n) ||
 		// утроить напрямую
 			!ec->froma || !ec->tpl || !ec->toa ||
 			(ec->froma(pts + 2 * n, ec->base, ec, stack),
 				ec->tpl(pts + 2 * n, pts + 2 * n, ec, stack),
 				ec->toa(pts + 2 * n, pts + 2 * n, ec, stack),
-				!memEq(pts, pts + 2 * n, 2 * n)))
+				!wwEq(pts, pts + 2 * n, 2 * n)))
 		{
 			blobClose(state);
 			return FALSE;
@@ -182,7 +182,6 @@ bool_t ecpTest()
 	ASSERT(wwIsZero(ec->base, n));
 	// утроить базовую точку разными способами
 	{
-		word* pts = (word*)t;
 		// d <- 3
 		d[0] = 3;
 		// удвоить и сложить
@@ -193,19 +192,59 @@ bool_t ecpTest()
 			!ecpAddAA(pts + 2 * n, ec->base, ec->base, ec, stack) ||
 			!ecpAddAA(pts + 2 * n, pts + 2 * n, pts + 2 * n, ec, stack) ||
 			!ecpSubAA(pts + 2 * n, pts + 2 * n, ec->base, ec, stack) ||
-			!memEq(pts, pts + 2 * n, 2 * n) ||
+			!wwEq(pts, pts + 2 * n, 2 * n) ||
 			(ecpNegA(pts + 2 * n, pts + 2 * n, ec),
 				ecpAddAA(pts + 2 * n, pts, pts + 2 * n, ec, stack)) ||
 		// вычислить кратную точку
 			!ecMulA(pts + 2 * n, ec->base, ec, d, 1, stack) ||
-			!memEq(pts, pts + 2 * n, 2 * n) ||
+			!wwEq(pts, pts + 2 * n, 2 * n) ||
 			(ec->froma(pts + 2 * n, ec->base, ec, stack),
 				ec->tpl(pts + 2 * n, pts + 2 * n, ec, stack),
 				ec->toa(pts + 2 * n, pts + 2 * n, ec, stack),
-				!memEq(pts, pts + 2 * n, 2 * n)))
+				!wwEq(pts, pts + 2 * n, 2 * n)))
 		{
 			blobClose(state);
 			return FALSE;
+		}
+	}
+	// малые кратные разными способами
+	if (ec->smul)
+	{
+		// (pts[0], ..., pts[3]) <- (base, 3 base, 5 base, 7 base)
+		ec->smul(pts, ec->base, 3, ec, stack);
+		// pts[2] <- 7 base
+		d[0] = 7;
+		ecMulA(pts + 2 * 3 * n, ec->base, ec, d, 1, stack);
+		// pts[2] ==? pts[3]
+		ec->toa(pts + 3 * 3 * n, pts + 3 * 3 * n, ec, stack);
+		if (!wwEq(pts + 2 * 3 * n, pts + 3 * 3 * n, 2 * n))
+		{
+			blobClose(state);
+			return FALSE;
+		}
+		if (ec->negaadd)
+		{
+			// pts[2] <- 4 base
+			d[0] = 4;
+			ecMulA(pts + 2 * 3 * n, ec->base, ec, d, 1, stack);
+			// pts[3] <- pts[0] + prs[1] = 4 base
+			ec->negaadd(pts + 3 * 3 * n, pts, pts + 1 * 3 * n, 0, ec, stack);
+			// pts[2] ==? pts[3]
+			if (!wwEq(pts + 2 * 3 * n, pts + 3 * 3 * n, 2 * n))
+			{
+				blobClose(state);
+				return FALSE;
+			}
+			// pts[2] <- -4 base
+			ec->neg(pts + 2 * 3 * n, pts + 2 * 3 * n, ec, stack);
+			// pts[3] <- -(pts[0] + prs[1]) = -4 base
+			ec->negaadd(pts + 3 * 3 * n, pts, pts + 1 * 3 * n, 1, ec, stack);
+			// pts[2] ==? pts[3]
+			if (!wwEq(pts + 2 * 3 * n, pts + 3 * 3 * n, 2 * n))
+			{
+				blobClose(state);
+				return FALSE;
+			}
 		}
 	}
 	// все хорошо
