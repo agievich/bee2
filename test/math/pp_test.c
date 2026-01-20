@@ -4,7 +4,7 @@
 \brief Tests for the arithmetic of binary polynomials
 \project bee2/test
 \created 2023.11.09
-\version 2025.09.28
+\version 2026.01.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -13,6 +13,7 @@
 #include <bee2/core/mem.h>
 #include <bee2/core/prng.h>
 #include <bee2/core/util.h>
+#include <bee2/core/word.h>
 #include <bee2/math/pp.h>
 #include <bee2/core/u16.h>
 #include <bee2/math/ww.h>
@@ -110,6 +111,70 @@ static bool_t ppTestExps16()
 	exps16Create(s2, poly, alpha);
 	if (!memEq(s1, s2, sizeof(s1)))
 		return FALSE;
+	// все нормально
+	return TRUE;
+}
+
+static bool_t ppTestMod()
+{
+	enum { n = 8 };
+	size_t reps = 500;
+	word a[n];
+	word b[n];
+	word t[n];
+	word t1[n];
+	word mod[n];
+	mem_align_t state[64 / sizeof(mem_align_t)];
+	mem_align_t stack[2048 / sizeof(mem_align_t)];
+	// подготовить память
+	if (sizeof(state) < prngCOMBO_keep() ||
+		sizeof(stack) < utilMax(6,
+			ppMulMod_deep(n),
+			ppSqrMod_deep(n),
+			ppMod_deep(n, n),
+			ppGCD_deep(n, n),
+			ppDivMod_deep(n),
+			ppInvMod_deep(n)))
+		return FALSE;
+	// инициализировать генератор COMBO
+	prngCOMBOStart(state, utilNonce32());
+	// сложение / вычитание
+	while (reps--)
+	{
+		// генерация
+		prngCOMBOStepR(mod, O_OF_W(n), state);
+		prngCOMBOStepR(a, O_OF_W(n), state);
+		prngCOMBOStepR(b, O_OF_W(n), state);
+		if (mod[n - 1] == 0)
+			mod[n - 1] = WORD_MAX;
+		ppMod(a, a, n, mod, n, stack);
+		ppMod(b, b, n, mod, n, stack);
+		// zzMulMod / zzDivMod / zzInvMod
+		if (wwIsZero(a, n))
+			continue;
+		ppGCD(t, a, n, mod, n, stack);
+		if (wwCmpW(t, n, 1) != 0)
+			continue;
+		ppInvMod(t, a, mod, n, stack);
+		ppMulMod(t, t, b, mod, n, stack);
+		ppDivMod(t1, b, a, mod, n, stack);
+		if (!wwEq(t, t1, n))
+			return FALSE;
+		ppMulMod(t1, t1, a, mod, n, stack);
+		if (!wwEq(t1, b, n))
+			return FALSE;
+		// ppInvMod, ppDivMod: исключительные случаи
+		wwSetZero(b, n);
+		ppInvMod(t, b, mod, n, stack);
+		if (!wwIsZero(t, n))
+			return FALSE;
+		ppDivMod(t, b, a, mod, n, stack);
+		if (!wwIsZero(t, n))
+			return FALSE;
+		ppDivMod(t, b, b, mod, n, stack);
+		if (!wwIsZero(t, n))
+			return FALSE;
+	}
 	// все нормально
 	return TRUE;
 }
@@ -222,5 +287,5 @@ static bool_t ppTestRed()
 
 bool_t ppTest()
 {
-	return ppTestExps16() && ppTestRed();
+	return ppTestExps16() && ppTestMod() && ppTestRed();
 }
