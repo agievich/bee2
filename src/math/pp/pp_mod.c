@@ -111,6 +111,12 @@ void ppDivMod(word b[], const word divident[], const word a[],
 	ASSERT(wwCmp(divident, mod, n) < 0);
 	ASSERT(n > 0 && mod[n - 1] != 0 && wwTestBit(mod, 0));
 	ASSERT(wwIsValid(b, n));
+	// деление на 0?
+	if (wwIsZero(a, n))
+	{
+		wwSetZero(b, n);
+		return;
+	}
 	// разметить стек
 	memSlice(stack,
 		ppDivMod_local(n), SIZE_MAX,
@@ -120,8 +126,8 @@ void ppDivMod(word b[], const word divident[], const word a[],
 	wwSetZero(da, n);
 	// u <- a, v <- mod
 	wwCopy(u, a, n);
-	nu = wwWordSize(u, n);
 	wwCopy(v, mod, n);
+	nu = wwWordSize(u, n);
 	nv = n;
 	// итерации со следующими инвариантами:
 	//	da0 * a \equiv divident * u \mod mod
@@ -162,7 +168,6 @@ void ppDivMod(word b[], const word divident[], const word a[],
 		}
 	}
 	// здесь v == \gcd(a, mod)
-	EXPECT(wwIsW(v, nv, 1));
 	// \gcd(a, mod) == 1 ? b <- da : b <- 0
 	if (wwIsW(v, nv, 1))
 		wwCopy(b, da, n);

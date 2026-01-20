@@ -4,7 +4,7 @@
 \brief Quotient rings of integers modulo m
 \project bee2 [cryptographic library]
 \created 2013.09.14
-\version 2025.10.02
+\version 2026.01.19
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -118,8 +118,7 @@ static void zmInv(word b[], const word a[], const qr_o* r, void* stack)
 {
 	ASSERT(zmIsOperable(r));
 	ASSERT(zmIsIn(a, r));
-	wwIsZero(a, r->n) ? wwSetZero(b, r->n) : 
-		zzInvMod(b, a, r->mod, r->n, stack);
+	zzInvMod(b, a, r->mod, r->n, stack);
 }
 
 static size_t zmInv_deep(size_t n)

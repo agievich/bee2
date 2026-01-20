@@ -4,7 +4,7 @@
 \brief Binary polynomials: other functions
 \project bee2 [cryptographic library]
 \created 2012.03.01
-\version 2025.09.26
+\version 2026.01.19
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -29,13 +29,9 @@ size_t ppDeg(const word a[], size_t n)
 *******************************************************************************
 Неприводимость
 
-Реализован алгоритм Бен-Ора [Ben-Or M. Probabilistic algorithms in
-finite fields. In Proc. 22nd IEEE Symp. Foundations Computer Science,
-1981, 394--398]. По оценкам [Gao S., Panario D. Test and Construction of
-Irreducible Polynomials over Finite Fields] этот алгоритм обрабатывает
-случайные многочлены значительно быстрее, чем алгоритм Рабина
-[Rabin M. Probabilistic algorithms in finite fields. SIAM J. Comp. 9,
-1980, 273--280].
+Реализован алгоритм Бен-Ора [Ben81]. По оценкам [GaoPan97] этот алгоритм
+обрабатывает случайные многочлены значительно быстрее, чем алгоритм Рабина
+[Rab80].
 
 Алгоритм Рабина (m = deg(a)):
 	для (i = 1,..., m)
@@ -50,6 +46,15 @@ Irreducible Polynomials over Finite Fields] этот алгоритм обраб
 		если (a, x^{2^i} - x) != 1
 			возвратить 0
 	возвратить 1
+
+[Ben81]    Ben-Or M. Probabilistic algorithms in finite fields. In Proc. 22nd
+           IEEE Symp. Foundations Computer Science, 1981, 394--398.
+[GaoPan97] Gao S., Panario D. Test and Construction of Irreducible Polynomials
+           over Finite Fields. In: Cucker, F., Shub, M. (eds) Foundations
+		   of Computational Mathematics. Springer, 1997.
+		   https://doi.org/10.1007/978-3-642-60539-0_27.
+[Rab80]    Probabilistic algorithms in finite fields. SIAM J. Comp. 9, 1980,
+           273--280.
 *******************************************************************************
 */
 
@@ -105,7 +110,7 @@ size_t ppIsIrred_deep(size_t n)
 *******************************************************************************
 Минимальные многочлены
 
-Реализован следующий алгоритм определения минимального многочлена
+В ppMinPoly() реализован следующий алгоритм определения минимального многочлена
 последовательности:
 	aa <- a
 	bb <- x^{2l}
@@ -118,12 +123,17 @@ size_t ppIsIrred_deep(size_t n)
 		(bb, aa) <- (aa, r)
 	}
 	вернуть da
-Алгоритм формально определен в [Atti N.B., Diaz-Toca G.M., Lombardi H.
-The Berlekamp-Massey Algorithm Revisited, AAECC (2006) 17: 75–82] и
-неформально в [Shoup V. A Computational Introduction to Number Theory
-and Algebra]. В последней работе можно найти обоснование алгоритма:
-теорема 17.8, п. 17.5.1, рассуждения после теоремы 18.2.
-Из этого обоснования, в частности, следует, что \deg da, \deg db <= l.
+Алгоритм формально определен в [ADL06] и неформально в [Sho08]. В последней
+работе можно найти обоснование алгоритма: теорема 17.8, п. 17.5.1, рассуждения
+после теоремы 18.2. Из этого обоснования, в частности, следует, что
+\deg da, \deg db <= l.
+
+В ppMinPoly() использована теория, изложенная в [Sho08; версия 2, глава 18].
+
+[ADL06] Atti N.B., Diaz-Toca G.M., Lombardi H. The Berlekamp-Massey Algorithm
+        Revisited, AAECC (2006) 17: 75–82.
+[Sho08] Теория изложена в [Shoup V. A Computational Introduction to Number
+        Theory and Algebra, http://www.shoup.net/ntb/, 2008.
 *******************************************************************************
 */
 

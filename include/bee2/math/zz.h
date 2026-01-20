@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2026.01.18
+\version 2026.01.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -264,7 +264,7 @@ word zzSubW(
 	register word w		/*!< [in] вычитаемое */
 );
 
-/*!	\brief Уменьшение числа на слова
+/*!	\brief Уменьшение числа на слово
 
 	Число [n]a уменьшается на слово w:
 	\code
@@ -276,6 +276,27 @@ word zzSubW2(
 	word a[],			/*!< [in,out] уменьшаемое / разность */
 	size_t n,			/*!< [in] длина a в машинных словах */
 	register word w		/*!< [in] вычитаемое */
+);
+
+/*!	\brief Условное вычитание
+
+	Определяется число [n]с, которое представляет собой разность
+	[n]a - [n]b при sub == 1 и совпадает с [n]b при sub == 0:
+	\code
+		c <- sub ? a - b : b.
+	\endcode
+	\pre a >= b.
+	\pre Буфер c либо не пересекается, либо совпадает с буфером a.
+	\pre Буфер c не пересекается с буфером a.
+	\pre sub == 0 || sub == 1.
+	\remark Функция используется при регуляризации.
+*/
+void zzSubIf(
+	word с[],			/*!< [out] результат */
+	const word a[],		/*!< [in] потенциальное уменьшаемое */
+	const word b[],		/*!< [in] потенциальное вычитаемое */
+	size_t n,			/*!< [in] длина чисел в машинных словах */
+	register word neg	/*!< [in] флаг вычитания */
 );
 
 /*!	\brief Минус
@@ -754,7 +775,7 @@ void zzNegMod(
 
 void FAST(zzNegMod)(word b[], const word a[], const word mod[], size_t n);
 
-/*!	\brief Настройка знака числа по модулю
+/*!	\brief Условное аддитивное обращение числа по модулю
 
 	Определяется число [n]b, которое совпадает с [n]a при neg == 0 и аддитивно
 	обратно к [n]a по модулю [n]mod при	neg == 1:
@@ -767,10 +788,9 @@ void FAST(zzNegMod)(word b[], const word a[], const word mod[], size_t n);
 	\pre Буфер b не пересекается с буфером mod.
 	\pre neg == 0 || neg == 1.
 	\remark Функция используется при регуляризации.
-
 */
-void zzPmMod(
-	word b[],			/*!< [in,out] +- число */
+void zzNegModIf(
+	word b[],			/*!< [in,out] результат */
 	const word a[],		/*!< [in] число */
 	const word mod[],	/*!< [in] модуль */
 	size_t n,			/*!< [in] длина чисел в машинных словах */
@@ -848,8 +868,7 @@ size_t zzSqrMod_deep(size_t n);
 	\pre mod -- нечетное && mod[n - 1] != 0.
 	\pre a < mod.
 	\pre Буфер b не пересекается с буфером mod.
-	\expect \gcd(a, mod) == 1.
-	\remark Если \gcd(a, mod) != 1, то b <- 0.
+	\remark Если a == 0 или \gcd(a, mod) != 1, то b <- 0.
 	\deep{stack} zzInvMod_deep(n).
 	\safe Функция нерегулярна.
 */
@@ -870,12 +889,10 @@ size_t zzInvMod_deep(size_t n);
 	\code
 		b <- divident * a^{-1} \mod mod.
 	\endcode
-	\pre mod -- нечетное && mod[n - 1] != 0.
-	\pre divident < mod.
-	\pre 0 < a && a < mod.
+	\pre n > 0 && mod[n - 1] != 0 && mod -- нечетное число.
+	\pre a, divident < mod.
 	\pre Буфер b не пересекается с буфером mod.
-	\expect \gcd(a, mod) = 1.
-	\remark Если \gcd(a, mod) != 1, то b <- 0.
+	\remark Если a == 0 или \gcd(a, mod) != 1, то b <- 0.
 	\deep{stack} zzDivMod_deep(n).
 	\safe Функция нерегулярна.
 */

@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: modular arithmetic
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2026.01.15
+\version 2026.01.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -183,7 +183,7 @@ void zzNegMod(word b[], const word a[], const word mod[], size_t n)
 	CLEAN(mask);
 }
 
-void zzPmMod(word b[], const word a[], const word mod[], size_t n,
+void zzNegModIf(word b[], const word a[], const word mod[], size_t n,
 	register word neg)
 {
 	register word mask;
@@ -205,9 +205,7 @@ void zzPmMod(word b[], const word a[], const word mod[], size_t n,
 
 /*
 *******************************************************************************
-Модулярная арифметика: мультипликативные операции
-
-\remark Функции zzDivMod(), zzAlmostDivMod() реализованы в zz_gcd.c.
+Модулярная арифметика: умножение
 *******************************************************************************
 */
 
@@ -289,28 +287,6 @@ size_t zzSqrMod_deep(size_t n)
 		utilMax(2,
 			zzSqr_deep(n),
 			zzMod_deep(2 * n, n)),
-		SIZE_MAX);
-}
-
-#define zzInvMod_local(n)\
-/* divident */	O_OF_W(n)
-
-void zzInvMod(word b[], const word a[], const word mod[], size_t n,
-	void* stack)
-{
-	word* divident;			/* [n] */
-	memSlice(stack,
-		zzInvMod_local(n), SIZE_0, SIZE_MAX,
-		&divident, &stack);
-	wwSetW(divident, n, 1);
-	zzDivMod(b, divident, a, mod, n, stack);
-}
-
-size_t zzInvMod_deep(size_t n)
-{
-	return memSliceSize(
-		zzInvMod_local(n), 
-		zzDivMod_deep(n),
 		SIZE_MAX);
 }
 
@@ -409,7 +385,7 @@ void zzHalfMod(word b[], const word a[], const word mod[], size_t n)
 	b[0] = a[0] + w;
 	carry = wordLess01(b[0], w);
 	b[0] >>= 1;
-	for(i = 1; i < n; ++i)
+	for (i = 1; i < n; ++i)
 	{
 		b[i] = a[i];
 		b[i] += carry;
@@ -425,7 +401,43 @@ void zzHalfMod(word b[], const word a[], const word mod[], size_t n)
 	CLEAN3(carry, mask, w);
 }
 
-bool_t zzRandMod(word a[], const word mod[], size_t n, gen_i rng, 
+/*
+*******************************************************************************
+Модулярная арифметика: обращение
+
+Функция zzDivMod() реализована в модуле zz_gcd.c.
+*******************************************************************************
+*/
+
+#define zzInvMod_local(n)\
+/* divident */	O_OF_W(n)
+
+void zzInvMod(word b[], const word a[], const word mod[], size_t n,
+	void* stack)
+{
+	word* divident;			/* [n] */
+	memSlice(stack,
+		zzInvMod_local(n), SIZE_0, SIZE_MAX,
+		&divident, &stack);
+	wwSetW(divident, n, 1);
+	zzDivMod(b, divident, a, mod, n, stack);
+}
+
+size_t zzInvMod_deep(size_t n)
+{
+	return memSliceSize(
+		zzInvMod_local(n), 
+		zzDivMod_deep(n),
+		SIZE_MAX);
+}
+
+/*
+*******************************************************************************
+Модулярная арифметика: генерация вычетов
+*******************************************************************************
+*/
+
+bool_t zzRandMod(word a[], const word mod[], size_t n, gen_i rng,
 	void* rng_state)
 {
 	register size_t l;

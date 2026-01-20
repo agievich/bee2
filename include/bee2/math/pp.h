@@ -4,7 +4,7 @@
 \brief Binary polynomials
 \project bee2 [cryptographic library]
 \created 2012.03.01
-\version 2023.02.02
+\version 2026.01.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -321,15 +321,17 @@ size_t ppSqrMod_deep(size_t n);
 
 /*! \brief Обращение по модулю
 
-	Определяется многочлен [n]b, мультипликативно обратный к [n]a по модулю [n]mod:
+	Определяется многочлен [n]b, мультипликативно обратный к [n]a по модулю
+	[n]mod:
 	\code
 		b <- a^{-1} \mod mod.
 	\endcode
-	\pre n > 0 && mod[n - 1] != 0 && mod -- нечетное.
+	\pre n > 0 && mod[n - 1] != 0 && mod имеет свободный член.
 	\pre a < mod.
 	\expect \gcd(a, mod) == 1. 
 	\remark Если \gcd(a, mod) != 1, то b <- 0.
 	\deep{stack} ppInvMod_deep(n).
+	\safe Функция нерегулярна.
 */
 void ppInvMod(
 	word b[],			/*!< [out] обратный многочлен */
@@ -350,9 +352,9 @@ size_t ppInvMod_deep(size_t n);
 	\endcode
 	\pre n > 0 && mod[n - 1] != 0 && mod имеет свободный член.
 	\pre a, divident < mod.
-	\expect \gcd(a, mod) == 1.
-	\remark Если \gcd(a, mod) != 1, то b <- 0.
+	\remark Если a == 0 или \gcd(a, mod) != 1, то b <- 0.
 	\deep{stack} ppDivMod_deep(n).
+	\safe Функция нерегулярна.
 */
 void ppDivMod(
 	word b[],				/*!< [out] частное */
@@ -535,9 +537,6 @@ size_t ppMinPoly_deep(size_t l);
 	\remark Если \deg(mod) кратно B_PER_W, то a умещается в n - 1 
 	машинное слово. Тем не менее, все равно используется дополнительное
 	нулевое старшее слово.
-	\remark Теория изложена в [Shoup V. A Computational Introduction 
-	to Number Theory and Algebra, http://www.shoup.net/ntb/, 2008] 
-	(версия 2, глава 18).
 	\remark Если mod --- неприводим и a != 0, то b будет неприводимым.
 	Этот факт можно использовать для построения одного неприводимого 
 	многочлена по другому.

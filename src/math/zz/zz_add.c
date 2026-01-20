@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: additive operations
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2025.07.24
+\version 2026.01.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -14,6 +14,7 @@
 #include "bee2/core/word.h"
 #include "bee2/math/ww.h"
 #include "bee2/math/zz.h"
+#include "zz_lcl.h"
 
 /*
 *******************************************************************************
@@ -288,6 +289,25 @@ word zzSubW2(word a[], size_t n, register word w)
 	return w;
 }
 
+void zzSubIf(word c[], const word a[], const word b[], size_t n,
+	register word sub)
+{
+	register word mask;
+	size_t i;
+	ASSERT(wwIsDisjoint(c, a, n));
+	ASSERT(wwIsSameOrDisjoint(c, b, n));
+	ASSERT(wwCmp(a, b, n) >= 0);
+	ASSERT(sub == WORD_0 || sub == WORD_1);
+	// c <- sub ? -b : b
+	mask = WORD_0 - sub;
+	for (i = 0; i < n; ++i)
+		c[i] = b[i] ^ mask;
+	zzAddW2(c, n, sub);
+	// c <- sub ? a + c : c
+	zzAddAndW(c, a, n, mask);
+	CLEAN2(sub, mask);
+}
+
 void zzNeg(word b[], const word a[], size_t n)
 {
 	size_t i;
@@ -296,4 +316,3 @@ void zzNeg(word b[], const word a[], size_t n)
 		b[i] = ~a[i];
 	zzAddW2(b, n, 1);
 }
-
