@@ -4,7 +4,7 @@
 \brief Tests for the arithmetic of binary polynomials
 \project bee2/test
 \created 2023.11.09
-\version 2026.01.20
+\version 2026.01.21
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -147,6 +147,7 @@ static bool_t ppTestMod()
 		prngCOMBOStepR(b, O_OF_W(n), state);
 		if (mod[n - 1] == 0)
 			mod[n - 1] = WORD_MAX;
+		mod[0] |= 1;
 		ppMod(a, a, n, mod, n, stack);
 		ppMod(b, b, n, mod, n, stack);
 		// zzMulMod / zzDivMod / zzInvMod
