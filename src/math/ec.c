@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2014.03.04
-\version 2026.01.20
+\version 2026.01.21
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -162,16 +162,16 @@ static size_t ecSmul_deep(size_t n, size_t ec_d, size_t ec_deep)
 *******************************************************************************
 */
 
-#define ecNegAAdd_local(n, ec_d)\
+#define ecFinAdd_local(n, ec_d)\
 /* t */		O_OF_W(ec_d * n)
 
-static bool_t ecNegAAdd(word c[], const word a[], const word b[],
+static bool_t ecFinAdd(word c[], const word a[], const word b[],
 	register word neg, const ec_o* ec, void* stack)
 {
 	word* t;			/* [ec->d * ec->f->n] */
 	ASSERT(ecIsOperable(ec));
 	memSlice(stack,
-		ecNegAAdd_local(ec->f->n, ec->d), SIZE_0, SIZE_MAX,
+		ecFinAdd_local(ec->f->n, ec->d), SIZE_0, SIZE_MAX,
 		&t, &stack);
 	ecAdd(t, a, b, ec, stack);
 	if (neg)
@@ -179,24 +179,24 @@ static bool_t ecNegAAdd(word c[], const word a[], const word b[],
 	return ecToA(c, t, ec, stack);
 }
 
-static size_t ecNegAAdd_deep(size_t n, size_t ec_d, size_t ec_deep)
+static size_t ecFinAdd_deep(size_t n, size_t ec_d, size_t ec_deep)
 {
 	return memSliceSize(
-		ecNegAAdd_local(n, ec_d),
+		ecFinAdd_local(n, ec_d),
 		ec_deep,
 		SIZE_MAX);
 }
 
-#define ecNegAAddA_local(n, ec_d)\
+#define ecFinAddA_local(n, ec_d)\
 /* t */		O_OF_W(ec_d * n)
 
-static bool_t ecNegAAddA(word c[], const word a[], const word b[],
+static bool_t ecFinAddA(word c[], const word a[], const word b[],
 	register word neg, const ec_o* ec, void* stack)
 {
 	word* t;			/* [ec->d * ec->f->n] */
 	ASSERT(ecIsOperable(ec));
 	memSlice(stack,
-		ecNegAAddA_local(ec->f->n, ec->d), SIZE_0, SIZE_MAX,
+		ecFinAddA_local(ec->f->n, ec->d), SIZE_0, SIZE_MAX,
 		&t, &stack);
 	ecAddA(t, a, b, ec, stack);
 	if (neg)
@@ -204,10 +204,10 @@ static bool_t ecNegAAddA(word c[], const word a[], const word b[],
 	return ecToA(c, t, ec, stack);
 }
 
-static size_t ecNegAAddA_deep(size_t n, size_t ec_d, size_t ec_deep)
+static size_t ecFinAddA_deep(size_t n, size_t ec_d, size_t ec_deep)
 {
 	return memSliceSize(
-		ecNegAAddA_local(n, ec_d),
+		ecFinAddA_local(n, ec_d),
 		ec_deep,
 		SIZE_MAX);
 }
@@ -331,23 +331,20 @@ bool_t ecMulA(word b[], const word a[], const ec_o* ec,
 	i = naf_width;
 	while (--naf_size)
 	{
-		// t <- 2 t
-		ecDbl(t, t, ec, stack);
-		// обработать цифру
 		digit = wwGetBits(naf, i, naf_width);
-		if (digit & 1)
-		{
-			// t <- t + pre[digit / 2]
-			if (digit == 1 || digit == (naf_hi ^ 1))
-				ecAddA(t, t, pre + (digit >> 1) * ec->d * ec->f->n, ec, stack);
-			else
-				ecAdd(t, t, pre + (digit >> 1) * ec->d * ec->f->n, ec, stack);
-			// к следующей цифре
-			i += naf_width;
-		}
+		// t <- 2t + pre[digit / 2]
+		if (digit == 1 || digit == (naf_hi ^ 1))
+			ecDblAddA(t, t, pre + (digit >> 1) * ec->d * ec->f->n, ec, stack);
 		else
-			// к следующей цифре
-			++i;
+		{
+			// t <- 2t
+			ecDbl(t, t, ec, stack);
+			if (digit & 1)
+				// t <- t + pre[digit / 2]
+				ecAdd(t, t, pre + (digit >> 1) * ec->d * ec->f->n, ec, stack);
+		}
+		// к следующей цифре
+		i += (digit & 1) ? naf_width : 1;
 	}
 	// очистка
 	CLEAN2(digit, i);
@@ -491,10 +488,10 @@ bool_t ecMulA2(word b[], const word a[], const ec_o* ec,
 		ecDbl(t, t, ec, stack);
 	digit = wwGetBits(dd, 0, snz_width);
 	ASSERT(digit & 1);
-	ret = (ec->negaadd) ?
-		ec->negaadd(b, t, pre + (hi | (digit >> 1)) * ec->d * ec->f->n,
+	ret = (ec->finadd) ?
+		ec->finadd(b, t, pre + (hi | (digit >> 1)) * ec->d * ec->f->n,
 			neg, ec, stack) :
-		ecNegAAdd(b, t, pre + (hi | (digit >> 1)) * ec->d * ec->f->n,
+		ecFinAdd(b, t, pre + (hi | (digit >> 1)) * ec->d * ec->f->n,
 			neg, ec, stack);
 	// очистка и возврат
 	CLEAN3(neg, digit, hi);
@@ -509,7 +506,7 @@ size_t ecMulA2_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 		ecMulA2_local(n, ec_d, m, pre_count),
 		utilMax(2,
 			ecSmul_deep(n, ec_d, ec_deep),
-			ecNegAAdd_deep(n, ec_d, ec_deep)),
+			ecFinAdd_deep(n, ec_d, ec_deep)),
 		SIZE_MAX);
 }
 

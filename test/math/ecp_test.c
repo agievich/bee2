@@ -4,7 +4,7 @@
 \brief Tests for elliptic curves over prime fields
 \project bee2/test
 \created 2017.05.29
-\version 2026.01.18
+\version 2026.01.21
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -59,16 +59,16 @@ bool_t ecpTest()
 	void* state;
 	ec_o* ec;		/* [ec_keep] */
 	qr_o* f;		/* [f_keep] */
-	octet* t;		/* [5 * no] */
-	word* pts;		/* [4 * 3 * n] */
+	octet* t;		/* [3 * no] */
+	word* pts;		/* [6 * 3 * n] */
 	word* d;		/* [n] */
 	void* stack;
 	// создать состояние
 	state = blobCreate2(
 		ec_keep,
 		f_keep,
-		5 * no,
-		O_OF_W(4 * 3 * n) | SIZE_HI,
+		3 * no,
+		O_OF_W(6 * 3 * n) | SIZE_HI,
 		O_OF_W(n),
 		utilMax(13,
 			gfpCreate_deep(no),
@@ -165,6 +165,130 @@ bool_t ecpTest()
 			ecMulA2(pts + 2 * n, ec->base, ec, d, n, stack))
 			return FALSE;
 	}
+	// финишное сложение
+	if (ec->finadd)
+	{
+		// (pts[1], pts[2], pts[3], pts[4]) <- (base, 2 base, 3 base, 4 base)
+		ecFromA(pts + 1 * 3 * n, ec->base, ec, stack);
+		ecAddA(pts + 2 * 3 * n, pts + 1 * 3 * n, ec->base, ec, stack);
+		ecAddA(pts + 3 * 3 * n, pts + 2 * 3 * n, ec->base, ec, stack);
+		ecAddA(pts + 4 * 3 * n, pts + 3 * 3 * n, ec->base, ec, stack);
+		// pts[0] <- pts[1] + pts[2] = 3 base, pts[0] ==? pts[3]
+		ec->finadd(pts, pts + 1 * 3 * n, pts + 2 * 3 * n, 0, ec, stack);
+		ecToA(pts + 5 * 3 * n, pts + 3 * 3 * n, ec, stack);
+		if (!wwEq(pts, pts + 5 * 3 * n, 2 * n))
+		{
+			blobClose(state);
+			return FALSE;
+		}
+		// pts[0] <- -(pts[1] + pts[3]) == -4 base, pts[0] ==? -pts[4]
+		ec->finadd(pts, pts + 1 * 3 * n, pts + 3 * 3 * n, 1, ec, stack);
+		ecNeg(pts + 5 * 3 * n, pts + 4 * 3 * n, ec, stack);
+		ecToA(pts + 5 * 3 * n, pts + 5 * 3 * n, ec, stack);
+		if (!wwEq(pts, pts + 5 * 3 * n, 2 * n))
+		{
+			blobClose(state);
+			return FALSE;
+		}
+		// pts[0] <- -(pts[2] + pts[2]) == -4 base, pts[0] ==? -pts[4]
+		ec->finadd(pts, pts + 2 * 3 * n, pts + 2 * 3 * n, 1, ec, stack);
+		if (!wwEq(pts, pts + 5 * 3 * n, 2 * n))
+		{
+			blobClose(state);
+			return FALSE;
+		}
+		// pts[0] <- pts[1] + pts[1] == 2 base, pts[0] ==? pts[2]
+		ec->finadd(pts, pts + 1 * 3 * n, pts + 1 * 3 * n, 0, ec, stack);
+		ecToA(pts + 5 * 3 * n, pts + 2 * 3 * n, ec, stack);
+		if (!wwEq(pts, pts + 5 * 3 * n, 2 * n))
+		{
+			blobClose(state);
+			return FALSE;
+		}
+	}
+	// финишное сложение с аффинной точкой
+	if (ec->finadda)
+	{
+		// (pts[1], pts[2], pts[3], pts[4]) <- (base, 2 base, 3 base, 4 base)
+		ecFromA(pts + 1 * 3 * n, ec->base, ec, stack);
+		ecAddA(pts + 2 * 3 * n, pts + 1 * 3 * n, ec->base, ec, stack);
+		ecAddA(pts + 3 * 3 * n, pts + 2 * 3 * n, ec->base, ec, stack);
+		ecAddA(pts + 4 * 3 * n, pts + 3 * 3 * n, ec->base, ec, stack);
+		// pts[0] <- pts[1] + pts[2] = 3 base, pts[0] ==? pts[3]
+		ecToA(pts + 5 * 3 * n, pts + 2 * 3 * n, ec, stack);
+		ec->finadda(pts, pts + 1 * 3 * n, pts + 5 * 3 * n, 0, ec, stack);
+		ecToA(pts + 5 * 3 * n, pts + 3 * 3 * n, ec, stack);
+		if (!wwEq(pts, pts + 5 * 3 * n, 2 * n))
+		{
+			blobClose(state);
+			return FALSE;
+		}
+		// pts[0] <- -(pts[1] + pts[3]) == -4 base, pts[0] ==? -pts[4]
+		ecToA(pts + 5 * 3 * n, pts + 3 * 3 * n, ec, stack);
+		ec->finadda(pts, pts + 1 * 3 * n, pts + 5 * 3 * n, 1, ec, stack);
+		ecNeg(pts + 5 * 3 * n, pts + 4 * 3 * n, ec, stack);
+		ecToA(pts + 5 * 3 * n, pts + 5 * 3 * n, ec, stack);
+		if (!wwEq(pts, pts + 5 * 3 * n, 2 * n))
+		{
+			blobClose(state);
+			return FALSE;
+		}
+		// pts[0] <- -(pts[2] + pts[2]) == -4 base, pts[0] ==? -pts[4]
+		ecToA(pts + 5 * 3 * n, pts + 2 * 3 * n, ec, stack);
+		ec->finadda(pts, pts + 2 * 3 * n, pts + 5 * 3 * n, 1, ec, stack);
+		ecNeg(pts + 5 * 3 * n, pts + 4 * 3 * n, ec, stack);
+		ecToA(pts + 5 * 3 * n, pts + 5 * 3 * n, ec, stack);
+		if (!wwEq(pts, pts + 5 * 3 * n, 2 * n))
+		{
+			blobClose(state);
+			return FALSE;
+		}
+		// pts[0] <- pts[1] + pts[1] == 2 base, pts[0] ==? pts[2]
+		ec->finadda(pts, pts + 1 * 3 * n, ec->base, 0, ec, stack);
+		ecToA(pts + 5 * 3 * n, pts + 2 * 3 * n, ec, stack);
+		if (!wwEq(pts, pts + 5 * 3 * n, 2 * n))
+		{
+			blobClose(state);
+			return FALSE;
+		}
+	}
+	// малые кратные
+	if (ec->smul)
+	{
+		// (pts[0], ..., pts[3]) <- (base, 3 base, 5 base, 7 base)
+		ec->smul(pts, ec->base, 3, ec, stack);
+		// pts[0] ==? base?
+		ecToA(pts + 4 * 3 * n, pts + 0 * 3 * n, ec, stack);
+		if (!wwEq(pts + 4 * 3 * n, ec->base, 2 * n))
+		{
+			blobClose(state);
+			return FALSE;
+		}
+		// pts[0] ==? 3 base?
+		d[0] = 3, ecMulA(pts + 5 * 3 * n, ec->base, ec, d, 1, stack);
+		ecToA(pts + 4 * 3 * n, pts + 1 * 3 * n, ec, stack);
+		if (!wwEq(pts + 4 * 3 * n, pts + 5 * 3 * n, 2 * n))
+		{
+			blobClose(state);
+			return FALSE;
+		}
+		// pts[0] ==? 5 base?
+		d[0] = 5, ecMulA(pts + 5 * 3 * n, ec->base, ec, d, 1, stack);
+		ecToA(pts + 4 * 3 * n, pts + 2 * 3 * n, ec, stack);
+		if (!wwEq(pts + 4 * 3 * n, pts + 5 * 3 * n, 2 * n))
+		{
+			blobClose(state);
+			return FALSE;
+		}
+		// pts[0] ==? 7 base?
+		d[0] = 7, ecMulA(pts + 5 * 3 * n, ec->base, ec, d, 1, stack);
+		ecToA(pts + 4 * 3 * n, pts + 3 * 3 * n, ec, stack);
+		if (!wwEq(pts + 4 * 3 * n, pts + 5 * 3 * n, 2 * n))
+		{
+			blobClose(state);
+			return FALSE;
+		}
+	}
 	// вывести f = GF(p) за пределы ec
 	objCopy(f, objPtr(ec, 0, qr_o));
 	// создать ec = EC_{a-1, b}(f)
@@ -205,46 +329,6 @@ bool_t ecpTest()
 		{
 			blobClose(state);
 			return FALSE;
-		}
-	}
-	// малые кратные разными способами
-	if (ec->smul)
-	{
-		// (pts[0], ..., pts[3]) <- (base, 3 base, 5 base, 7 base)
-		ec->smul(pts, ec->base, 3, ec, stack);
-		// pts[2] <- 7 base
-		d[0] = 7;
-		ecMulA(pts + 2 * 3 * n, ec->base, ec, d, 1, stack);
-		// pts[2] ==? pts[3]
-		ec->toa(pts + 3 * 3 * n, pts + 3 * 3 * n, ec, stack);
-		if (!wwEq(pts + 2 * 3 * n, pts + 3 * 3 * n, 2 * n))
-		{
-			blobClose(state);
-			return FALSE;
-		}
-		if (ec->negaadd)
-		{
-			// pts[2] <- 4 base
-			d[0] = 4;
-			ecMulA(pts + 2 * 3 * n, ec->base, ec, d, 1, stack);
-			// pts[3] <- pts[0] + prs[1] = 4 base
-			ec->negaadd(pts + 3 * 3 * n, pts, pts + 1 * 3 * n, 0, ec, stack);
-			// pts[2] ==? pts[3]
-			if (!wwEq(pts + 2 * 3 * n, pts + 3 * 3 * n, 2 * n))
-			{
-				blobClose(state);
-				return FALSE;
-			}
-			// pts[2] <- -4 base
-			ec->neg(pts + 2 * 3 * n, pts + 2 * 3 * n, ec, stack);
-			// pts[3] <- -(pts[0] + prs[1]) = -4 base
-			ec->negaadd(pts + 3 * 3 * n, pts, pts + 1 * 3 * n, 1, ec, stack);
-			// pts[2] ==? pts[3]
-			if (!wwEq(pts + 2 * 3 * n, pts + 3 * 3 * n, 2 * n))
-			{
-				blobClose(state);
-				return FALSE;
-			}
 		}
 	}
 	// все хорошо
