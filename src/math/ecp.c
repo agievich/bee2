@@ -4,7 +4,7 @@
 \brief Elliptic curves over prime fields
 \project bee2 [cryptographic library]
 \created 2012.06.26
-\version 2026.01.21
+\version 2026.01.22
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -642,173 +642,6 @@ static size_t ecpAddAJ_deep(size_t n, size_t f_deep)
 
 /*
 *******************************************************************************
-Удвоение и сложение
-
-В функции ecpDblAddAJ() выполняется удвоение и сложение J <- 2J + A.
-Реализован алгоритм из [LonMir08; приложение А.3]. Время работы алгоритма:
-	11M + 7S + 27add.
-
-\warning В [LonMir08] вычисление 2a + b выполняется за два сложения:
-	c <- a + b, c <- c + a.
-При первом сложении не обрабатывается исключение a + b == O, что может привести
-к неверному результату.
-
-\warning В [LonMir08] имеется неточность: шаг 36 необходимо выполнять после
-шага 38, так как на шаге 38 значение переменной t5 предполагается равным
-theta^3. Это значение устанавливается на шаге 33 и перезаписывается на
-шаге 36.
-
-[LonMir08] Longa P., Miri A. New Multibase Non-Adjacent Form Scalar
-		   Multiplication and its Application to Elliptic Curve Cryptosystems
-		   (extended version). Cryptology ePrint Archive, Report 2008/052.
-		   https://eprint.iacr.org/2008/052.
-******************************************************************************
-*/
-
-#define ecpDblAddAJ_local(n)\
-/* pt */	O_OF_W(3 * n),\
-/* t4 */	O_OF_W(n),\
-/* t5 */	O_OF_W(n),\
-/* t6 */	O_OF_W(n)
-
-// [3n]c <- 2[3n]a + [2n]b (J <- 2J + A)
-void ecpDblAddAJ(word c[], const word a[], const word b[], const ec_o* ec,
-	void* stack)
-{
-	size_t n;
-	word* pt;			/* [3 * n] */
-	word* t1;			/*   [n] */
-	word* t2;			/*   [n] */
-	word* t3;			/*   [n] */
-	word* t4;			/* [n] */
-	word* t5;			/* [n] */
-	word* t6;			/* [n] */
-	// pre
-	ASSERT(ecIsOperable(ec) && ec->d == 3);
-	ASSERT(ecpSeemsOnJ(a, ec));
-	ASSERT(ecpSeemsOnA(b, ec));
-	ASSERT(wwIsSameOrDisjoint(a, c, 3 * ec->f->n));
-	ASSERT(wwIsDisjoint2(b, 2 * ec->f->n, c, 3 * ec->f->n));
-	// разметить стек
-	n = ec->f->n;
-	memSlice(stack,
-		ecpDblAddAJ_local(n), SIZE_0, SIZE_MAX,
-		&pt, &t4, &t5, &t6, &stack);
-	t1 = pt, t2 = t1 + n, t3 = t2 + n;
-	// a == O => c <- b
-	if (qrIsZero(ecZ(a, n), ec->f))
-	{
-		ecFromA(c, b, ec, stack);
-		return;
-	}
-	// pt = (t1 : t2 : t3) <- a
-	wwCopy(pt, a, 3 * n);
-	// 3: t4 <- t3^2
-	qrSqr(t4, t3, ec->f, stack);
-	// 4: t5 <- xb * t4
-	qrMul(t5, ecX(b), t4, ec->f, stack);
-	// 5: t5 <- t5 - t1 [beta]
-	qrSub(t5, t5, t1, ec->f);
-	// a + b == O?
-	if (qrIsZero(t5, ec->f))
-	{
-		wwCopy(c, a, 3 * n);
-		return;
-	}
-	// 6: t6 <- t3 + t5
-	qrAdd(t6, t3, t5, ec->f);
-	// 7: t6 <- t6^2
-	qrSqr(t6, t6, ec->f, stack);
-	// 8: t6 <- t6 - t4
-	qrSub(t6, t6, t4, ec->f);
-	// 9: t4 <- t3 * t4
-	qrMul(t4, t3, t4, ec->f, stack);
-	// 10: t4 <- yb * t4
-	qrMul(t4, ecY(b, n), t4, ec->f, stack);
-	// 11: t4 <- t4 - t2
-	qrSub(t4, t4, t2, ec->f);
-	// 12: t3 <- t5^2
-	qrSqr(t3, t5, ec->f, stack);
-	// 13: t6 <- t6 - t3
-	qrSub(t6, t6, t3, ec->f);
-	// 14: t1 <- t1 * t3
-	qrMul(t1, t1, t3, ec->f, stack);
-	// 15: t1 <- 4 t1
-	gfpDouble(t1, t1, ec->f);
-	gfpDouble(t1, t1, ec->f);
-	// 16: t3 <- t3 * t5
-	qrMul(t3, t3, t5, ec->f, stack);
-	// 17: t2 <- t2 * t3
-	qrMul(t2, t2, t3, ec->f, stack);
-	// 18: t2 <- 8 t2
-	gfpDouble(t2, t2, ec->f);
-	gfpDouble(t2, t2, ec->f);
-	gfpDouble(t2, t2, ec->f);
-	// 19: t5 <- t4^2
-	qrSqr(t5, t4, ec->f, stack);
-	// 20: t3 <- t5 - t3
-	qrSub(t3, t5, t3, ec->f);
-	// 21: t3 <- 4 t3
-	gfpDouble(t3, t3, ec->f);
-	gfpDouble(t3, t3, ec->f);
-	// 22: t3 <- t3 - t1
-	qrSub(t3, t3, t1, ec->f);
-	// 23: t3 <- t3 - t1
-	qrSub(t3, t3, t1, ec->f);
-	// 24: t3 <- t3 - t1
-	qrSub(t3, t3, t1, ec->f);
-	// 25: t4 <- t3 + t4
-	qrAdd(t4, t3, t4, ec->f);
-	// 26: t4 <- t4^2
-	qrSqr(t4, t4, ec->f, stack);
-	// 27: t4 <- t5 - t4
-	qrSub(t4, t5, t4, ec->f);
-	// 28: t4 <- t4 - t2
-	qrSub(t4, t4, t2, ec->f);
-	// 29: t4 <- t4 - t2
-	qrSub(t4, t4, t2, ec->f);
-	// 30: t5 <- t3^2
-	qrSqr(t5, t3, ec->f, stack);
-	// 31: t4 <- t4 + t5
-	qrAdd(t4, t4, t5, ec->f);
-	// 32: t1 <- t1 * t5
-	qrMul(t1, t1, t5, ec->f, stack);
-	// 33: t5 <- t3 * t5
-	qrMul(t5, t3, t5, ec->f, stack);
-	// 34: t3 <- t3 * t6
-	qrMul(t3, t3, t6, ec->f, stack);
-	// 35: t2 <- t2 * t5
-	qrMul(t2, t2, t5, ec->f, stack);
-	// шаг 36 будет после шага 38
-	// 37: t6 <- t4^2
-	qrSqr(t6, t4, ec->f, stack);
-	// 38: t6 <- t6 - t5
-	qrSub(t6, t6, t5, ec->f);
-	// 36: t5 <- 3 t1
-	gfpDouble(t5, t1, ec->f);
-	qrAdd(t5, t5, t1, ec->f);
-	// 39: t5 <- t5 - t6
-	qrSub(t5, t5, t6, ec->f);
-	// 40: t4 <- t4 * t5
-	qrMul(t4, t4, t5, ec->f, stack);
-	// 41: t2 <- t4 - t2
-	qrSub(t2, t4, t2, ec->f);
-	// 42: t1 <- t1 - t5
-	qrSub(t1, t1, t5, ec->f);
-	// c <- pt = (t1 : t2 : t3)
-	wwCopy(c, pt, 3 * n);
-}
-
-size_t ecpDblAddAJ_deep(size_t n, size_t f_deep)
-{
-	return memSliceSize(
-		ecpDblAddAJ_local(n),
-		f_deep,
-		SIZE_MAX);
-}
-
-/*
-*******************************************************************************
 Утроение
 
 В функции ecpTplJ() выполняется утроение J <- 3J. Реализован алгоритм
@@ -1014,6 +847,180 @@ static size_t ecpTplJA3_deep(size_t n, size_t f_deep)
 	return memSliceSize(
 		ecpTplJA3_local(n), 
 		f_deep,
+		SIZE_MAX);
+}
+
+/*
+*******************************************************************************
+Удвоение и сложение
+
+В функции ecpDblAddAJ() выполняется удвоение и сложение J <- 2J + A.
+Реализован алгоритм из [LonMir08; приложение А.3]. Время работы алгоритма:
+	11M + 7S + 27add.
+
+\warning В [LonMir08] вычисление 2a + b структурно выполняется за два сложения:
+	c <- a + b, c <- c + a.
+При первом сложении не обрабатываются исключения a == \pm b, что может привести
+к неверному результату.
+
+\warning В [LonMir08] имеется неточность: шаг 36 необходимо выполнять после
+шага 38, так как на шаге 38 значение переменной t5 предполагается равным
+theta^3. Это значение устанавливается на шаге 33 и перезаписывается на
+шаге 36.
+
+[LonMir08] Longa P., Miri A. New Multibase Non-Adjacent Form Scalar
+		   Multiplication and its Application to Elliptic Curve Cryptosystems
+		   (extended version). Cryptology ePrint Archive, Report 2008/052.
+		   https://eprint.iacr.org/2008/052.
+******************************************************************************
+*/
+
+#define ecpDblAddAJ_local(n)\
+/* pt */	O_OF_W(3 * n),\
+/* t4 */	O_OF_W(n),\
+/* t5 */	O_OF_W(n),\
+/* t6 */	O_OF_W(n)
+
+// [3n]c <- 2[3n]a + [2n]b (J <- 2J + A)
+void ecpDblAddAJ(word c[], const word a[], const word b[], const ec_o* ec,
+	void* stack)
+{
+	size_t n;
+	word* pt;			/* [3 * n] */
+	word* t1;			/*   [n] */
+	word* t2;			/*   [n] */
+	word* t3;			/*   [n] */
+	word* t4;			/* [n] */
+	word* t5;			/* [n] */
+	word* t6;			/* [n] */
+	// pre
+	ASSERT(ecIsOperable(ec) && ec->d == 3);
+	ASSERT(ecpSeemsOnJ(a, ec));
+	ASSERT(ecpSeemsOnA(b, ec));
+	ASSERT(wwIsSameOrDisjoint(a, c, 3 * ec->f->n));
+	ASSERT(wwIsDisjoint2(b, 2 * ec->f->n, c, 3 * ec->f->n));
+	// разметить стек
+	n = ec->f->n;
+	memSlice(stack,
+		ecpDblAddAJ_local(n), SIZE_0, SIZE_MAX,
+		&pt, &t4, &t5, &t6, &stack);
+	t1 = pt, t2 = t1 + n, t3 = t2 + n;
+	// a == O => c <- b
+	if (qrIsZero(ecZ(a, n), ec->f))
+	{
+		ecFromA(c, b, ec, stack);
+		return;
+	}
+	// pt = (t1 : t2 : t3) <- a
+	wwCopy(pt, a, 3 * n);
+	// 3: t4 <- t3^2
+	qrSqr(t4, t3, ec->f, stack);
+	// 4: t5 <- xb * t4
+	qrMul(t5, ecX(b), t4, ec->f, stack);
+	// 5: t5 <- t5 - t1 [beta]
+	qrSub(t5, t5, t1, ec->f);
+	// 6: t6 <- t3 + t5
+	qrAdd(t6, t3, t5, ec->f);
+	// 7: t6 <- t6^2
+	qrSqr(t6, t6, ec->f, stack);
+	// 8: t6 <- t6 - t4
+	qrSub(t6, t6, t4, ec->f);
+	// 9: t4 <- t3 * t4
+	qrMul(t4, t3, t4, ec->f, stack);
+	// 10: t4 <- yb * t4
+	qrMul(t4, ecY(b, n), t4, ec->f, stack);
+	// 11: t4 <- t4 - t2 [alpha]
+	qrSub(t4, t4, t2, ec->f);
+	// beta == 0  => a == \pm b
+	//   alpha == 0 => a == b => 2a + b == 3a
+	//   alpha != 0 => a == -b => 2a + b == a
+	if (qrIsZero(t5, ec->f))
+	{
+		if (qrIsZero(t4, ec->f))
+			ecpTplJ(c, a, ec, stack);
+		else
+			wwCopy(c, a, 3 * n);
+		return;
+	}
+	// 12: t3 <- t5^2
+	qrSqr(t3, t5, ec->f, stack);
+	// 13: t6 <- t6 - t3
+	qrSub(t6, t6, t3, ec->f);
+	// 14: t1 <- t1 * t3
+	qrMul(t1, t1, t3, ec->f, stack);
+	// 15: t1 <- 4 t1
+	gfpDouble(t1, t1, ec->f);
+	gfpDouble(t1, t1, ec->f);
+	// 16: t3 <- t3 * t5
+	qrMul(t3, t3, t5, ec->f, stack);
+	// 17: t2 <- t2 * t3
+	qrMul(t2, t2, t3, ec->f, stack);
+	// 18: t2 <- 8 t2
+	gfpDouble(t2, t2, ec->f);
+	gfpDouble(t2, t2, ec->f);
+	gfpDouble(t2, t2, ec->f);
+	// 19: t5 <- t4^2
+	qrSqr(t5, t4, ec->f, stack);
+	// 20: t3 <- t5 - t3
+	qrSub(t3, t5, t3, ec->f);
+	// 21: t3 <- 4 t3
+	gfpDouble(t3, t3, ec->f);
+	gfpDouble(t3, t3, ec->f);
+	// 22: t3 <- t3 - t1
+	qrSub(t3, t3, t1, ec->f);
+	// 23: t3 <- t3 - t1
+	qrSub(t3, t3, t1, ec->f);
+	// 24: t3 <- t3 - t1
+	qrSub(t3, t3, t1, ec->f);
+	// 25: t4 <- t3 + t4
+	qrAdd(t4, t3, t4, ec->f);
+	// 26: t4 <- t4^2
+	qrSqr(t4, t4, ec->f, stack);
+	// 27: t4 <- t5 - t4
+	qrSub(t4, t5, t4, ec->f);
+	// 28: t4 <- t4 - t2
+	qrSub(t4, t4, t2, ec->f);
+	// 29: t4 <- t4 - t2
+	qrSub(t4, t4, t2, ec->f);
+	// 30: t5 <- t3^2
+	qrSqr(t5, t3, ec->f, stack);
+	// 31: t4 <- t4 + t5
+	qrAdd(t4, t4, t5, ec->f);
+	// 32: t1 <- t1 * t5
+	qrMul(t1, t1, t5, ec->f, stack);
+	// 33: t5 <- t3 * t5
+	qrMul(t5, t3, t5, ec->f, stack);
+	// 34: t3 <- t3 * t6
+	qrMul(t3, t3, t6, ec->f, stack);
+	// 35: t2 <- t2 * t5
+	qrMul(t2, t2, t5, ec->f, stack);
+	// шаг 36 будет после шага 38
+	// 37: t6 <- t4^2
+	qrSqr(t6, t4, ec->f, stack);
+	// 38: t6 <- t6 - t5
+	qrSub(t6, t6, t5, ec->f);
+	// 36: t5 <- 3 t1
+	gfpDouble(t5, t1, ec->f);
+	qrAdd(t5, t5, t1, ec->f);
+	// 39: t5 <- t5 - t6
+	qrSub(t5, t5, t6, ec->f);
+	// 40: t4 <- t4 * t5
+	qrMul(t4, t4, t5, ec->f, stack);
+	// 41: t2 <- t4 - t2
+	qrSub(t2, t4, t2, ec->f);
+	// 42: t1 <- t1 - t5
+	qrSub(t1, t1, t5, ec->f);
+	// c <- pt = (t1 : t2 : t3)
+	wwCopy(c, pt, 3 * n);
+}
+
+size_t ecpDblAddAJ_deep(size_t n, size_t f_deep)
+{
+	return memSliceSize(
+		ecpDblAddAJ_local(n),
+		utilMax(2,
+			f_deep,
+			ecpTplJ_deep(n, f_deep)),
 		SIZE_MAX);
 }
 

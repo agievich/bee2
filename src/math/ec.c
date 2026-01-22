@@ -20,6 +20,14 @@
 
 /*
 *******************************************************************************
+Вспомогательные определения
+*******************************************************************************
+*/
+
+#define ecPt(pts, pos, ec) ((pts) + (pos) * (ec)->d * (ec)->f->n)
+
+/*
+*******************************************************************************
 Управление описанием кривой
 *******************************************************************************
 */
@@ -320,13 +328,12 @@ bool_t ecMulA(word b[], const word a[], const ec_o* ec,
 		ecSmul(pre, a, naf_width - 1, ec, stack);
 	// отрицательные малые кратные: -a, -3a, ..., -(2^w - 1)a
 	for (i = 0; i < pre_count / 2; ++i)
-		ecNeg(pre + (pre_count / 2 + i) * ec->d * ec->f->n,
-			pre + i * ec->d * ec->f->n, ec, stack);
+		ecNeg(ecPt(pre, pre_count / 2 + i, ec), ecPt(pre, i, ec), ec, stack);
 	// старшая цифра NAF
 	digit = wwGetBits(naf, 0, naf_width);
 	ASSERT((digit & 1) == 1 && (digit & naf_hi) == 0);
 	// t <- pre[digit / 2]
-	wwCopy(t, pre + (digit >> 1) * ec->d * ec->f->n, ec->d * ec->f->n);
+	wwCopy(t, ecPt(pre, digit >> 1, ec), ec->d * ec->f->n);
 	// цикл по цифрам NAF
 	i = naf_width;
 	while (--naf_size)
@@ -334,14 +341,14 @@ bool_t ecMulA(word b[], const word a[], const ec_o* ec,
 		digit = wwGetBits(naf, i, naf_width);
 		// t <- 2t + pre[digit / 2]
 		if (digit == 1 || digit == (naf_hi ^ 1))
-			ecDblAddA(t, t, pre + (digit >> 1) * ec->d * ec->f->n, ec, stack);
+			ecDblAddA(t, t, ecPt(pre, digit >> 1, ec), ec, stack);
 		else
 		{
 			// t <- 2t
 			ecDbl(t, t, ec, stack);
 			if (digit & 1)
 				// t <- t + pre[digit / 2]
-				ecAdd(t, t, pre + (digit >> 1) * ec->d * ec->f->n, ec, stack);
+				ecAdd(t, t, ecPt(pre, digit >> 1, ec), ec, stack);
 		}
 		// к следующей цифре
 		i += (digit & 1) ? naf_width : 1;
@@ -380,23 +387,21 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 Реализован следующий алгоритм (см. [BCL+14; p. 9-11, algorithm 1], 
 а также [APS22]):
 1. Для i = 0, 1, ..., (2^{w-1} - 1):
-	1) pre[i] <- (2i - 1)a;				// ec_smult_i
+	1) pre[i] <- (2i - 1)a;				// ec_smul_i
 	2) pre[-i] <- -pre[i].				// ec_neg_i
 2. t <- pre[d_{k-1} / 2]
 3. Для i = k - 2, ..., 1:
-	1) t <- t + pre[d_i / 2];			// ec_add_i
-	2) t <- 2^w t.						// ec_dbl_i
-4. t <- t + pre[d_0].					// ec_aadd_i
-5. Возвратить t.
-
-Реализация регулярна при условии, что на шаге 4 используется регулярная
-функция интерфейса ec_aadd_i.
+	1) t <- 2^w t;						// ec_dbl_i
+	1) t <- t + pre[d_i / 2].			// ec_add_i
+4. t <- 2^w t.
+5. t <- t + pre[d_0].					// ec_finadd_i
+6. Возвратить t.
 
 \remark сложение t + pre[d_0] вынесено за рамки основного цикла на шаге 3,
 потому что при этом (и только при этом) сложении может произойти исключительная
 ситуация -- совпадение операндов t и pre[d_0] с переключением от сложения
-к удвоению. Регулярность функция ec_aadd_i означает, что сложение и удвоение
-будут выполняться по одним формулам.
+к удвоению. Предполагается, что функция ec_finadd_i регулярна, и тогда сложение
+и удвоение будут выполняться по одним и тем же формулам.
 
 [OkeTak03] Okeya K., Takagi T. The width-w NAF method provides small memory and
            fast elliptic scalar multiplications secure against side channel
@@ -464,15 +469,14 @@ bool_t ecMulA2(word b[], const word a[], const ec_o* ec,
 		ecSmul(pre, a, snz_width, ec, stack);
 	// отрицательные малые кратные: -(2^w - 1)a, ..., -3a, -a
 	for (i = 0; i < pre_count / 2; ++i)
-		ecNeg(pre + (pre_count - 1 - i) * ec->d * ec->f->n,
-			pre + i * ec->d * ec->f->n, ec, stack);
+		ecNeg(ecPt(pre, pre_count - 1 - i, ec), ecPt(pre, i, ec), ec, stack);
 	// число цифр SNZ
 	k = (mb + snz_width - 1) / snz_width;
 	ASSERT(k > 1);
 	// старшая цифра
 	--k;
 	digit = wwGetBits(dd, k * snz_width, mb - k * snz_width);
-	wwCopy(t, pre + (digit >> 1) * ec->d * ec->f->n, ec->d * ec->f->n);
+	wwCopy(t, ecPt(pre, digit >> 1, ec), ec->d * ec->f->n);
 	hi = WORD_1 - (digit & 1), hi <<= snz_width - 1;
 	// обработать остальные цифры
 	while (--k)
@@ -480,19 +484,17 @@ bool_t ecMulA2(word b[], const word a[], const ec_o* ec,
 		for (i = snz_width; i--;)
 			ecDbl(t, t, ec, stack);
 		digit = wwGetBits(dd, k * snz_width, snz_width);
-		ecAdd(t, t, pre + (hi | (digit >> 1)) * ec->d * ec->f->n, ec, stack);
+		ecAdd(t, t, ecPt(pre, hi | (digit >> 1), ec), ec, stack);
 		hi = WORD_1 - (digit & 1), hi <<= snz_width - 1;
 	}
-	// завершающие удвоения и сложение с настройкой знака
+	// завершающие удвоения и финишное сложение
 	for (i = snz_width; i--;)
 		ecDbl(t, t, ec, stack);
 	digit = wwGetBits(dd, 0, snz_width);
 	ASSERT(digit & 1);
 	ret = (ec->finadd) ?
-		ec->finadd(b, t, pre + (hi | (digit >> 1)) * ec->d * ec->f->n,
-			neg, ec, stack) :
-		ecFinAdd(b, t, pre + (hi | (digit >> 1)) * ec->d * ec->f->n,
-			neg, ec, stack);
+		ec->finadd(b, t, ecPt(pre, hi | (digit >> 1), ec), neg, ec, stack) :
+		ecFinAdd(b, t, ecPt(pre, hi | (digit >> 1), ec), neg, ec, stack);
 	// очистка и возврат
 	CLEAN3(neg, digit, hi);
 	return ret;
