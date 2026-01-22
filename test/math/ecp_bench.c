@@ -61,7 +61,7 @@ bool_t ecpBench()
 		const size_t reps = 500;
 		size_t i;
 		tm_ticks_t ticks;
-		// эксперимент: ecMulNAF()
+		// эксперимент: ecMulA()
 		for (i = 0, ticks = tmTicks(); i < reps; ++i)
 		{
 			prngCOMBOStepR(d, ec->f->no, combo_state);
@@ -71,7 +71,7 @@ bool_t ecpBench()
 		printf("ecpBench::ecMulA: %u cycles/mulpoint [%u mulpoints/sec]\n",
 			(unsigned)(ticks / reps),
 			(unsigned)tmSpeed(reps, ticks));
-		// эксперимент: ecMulSNZ()
+		// эксперимент: ecMulA2()
 		for (i = 0, ticks = tmTicks(); i < reps; ++i)
 		{
 			prngCOMBOStepR(d, ec->f->no, combo_state);
