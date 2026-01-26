@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2014.03.04
-\version 2026.01.21
+\version 2026.01.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -105,12 +105,12 @@ bool_t ecGroupIsOperable(const ec_o* ec)
 
 /*
 *******************************************************************************
-Малые нечетные кратные
+Предвычисления
 
-Прямая реализация интерфейса ec_smul_i:
-	t <- 2a, b[0] <- a, b[i] <-  t + b[i - 1], i = 1,..., 2^(w-1) - 1.
+Прямая реализация схемы SNZ:
+	t <- 2a, pre[0] <- a, pre[i] <-  t + pre[i - 1], i = 1,..., 2^(w-1) - 1.
 
-Сложение t + b[0] выполняется по схеме P <- P + A. Остальные сложения -- по
+Сложение t + pre[0] выполняется по схеме P <- P + A. Остальные сложения -- по
 схеме P <- P + P. Итоговая сложность:
 	1(P <- 2A) + 1(P <- P + A) + (2^{w-1} - 2)(P <- P + P).
 
@@ -166,7 +166,7 @@ static size_t ecSmul_deep(size_t n, size_t ec_d, size_t ec_deep)
 *******************************************************************************
 Сложение с настройкой знака
 
-Прямые нерегулярные реализации интерфейсов ec_negaadd_i и ec_negaadda_i.
+Прямые нерегулярные реализации интерфейсов ec_finadd_i и ec_finadda_i.
 *******************************************************************************
 */
 
@@ -259,9 +259,7 @@ static size_t ecFinAddA_deep(size_t n, size_t ec_d, size_t ec_deep)
 Длина окна w выбирается как решение следующей оптимизационной задачи:
 	(2^{w - 2} - 2) + l / (w + 1) -> min.
 
-Малые кратные вычисляются с помощью функции интерфейса ec_smul_i, указанной
-в описании кривой. Если функция не задана в описании, то используется функция
-по умолчанию ecSmul().
+Предвычисления выполняются с помощью функции ecSmul().
 
 \todo Усилить вторую стратегию. Рассчитать малые кратные в проективных
 координатах, а затем быстро перейти к аффинным координатам с помощью
@@ -322,10 +320,7 @@ bool_t ecMulA(word b[], const word a[], const ec_o* ec,
 	if (naf_size == 0)
 		return FALSE;
 	// малые кратные: a, 3a, ..., (2^w - 1)a
-	if (ec->smul)
-		ec->smul(pre, a, naf_width - 1, ec, stack);
-	else
-		ecSmul(pre, a, naf_width - 1, ec, stack);
+	ecSmul(pre, a, naf_width - 1, ec, stack);
 	// отрицательные малые кратные: -a, -3a, ..., -(2^w - 1)a
 	for (i = 0; i < pre_count / 2; ++i)
 		ecNeg(ecPt(pre, pre_count / 2 + i, ec), ecPt(pre, i, ec), ec, stack);
@@ -387,7 +382,7 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 Реализован следующий алгоритм (см. [BCL+14; p. 9-11, algorithm 1], 
 а также [APS22]):
 1. Для i = 0, 1, ..., (2^{w-1} - 1):
-	1) pre[i] <- (2i - 1)a;				// ec_smul_i
+	1) pre[i] <- (2i - 1)a;				// ecSmul
 	2) pre[-i] <- -pre[i].				// ec_neg_i
 2. t <- pre[d_{k-1} / 2]
 3. Для i = k - 2, ..., 1:
@@ -463,10 +458,7 @@ bool_t ecMulA2(word b[], const word a[], const ec_o* ec,
 	zzSubIf(dd, ec->order, d, m, neg);
 	ASSERT(zzIsOdd(dd, m));
 	// малые кратные: a, 3a, ..., (2^w - 1)a
-	if (ec->smul)
-		ec->smul(pre, a, snz_width, ec, stack);
-	else
-		ecSmul(pre, a, snz_width, ec, stack);
+	ecSmul(pre, a, snz_width, ec, stack);
 	// отрицательные малые кратные: -(2^w - 1)a, ..., -3a, -a
 	for (i = 0; i < pre_count / 2; ++i)
 		ecNeg(ecPt(pre, pre_count - 1 - i, ec), ecPt(pre, i, ec), ec, stack);
@@ -614,10 +606,7 @@ bool_t ecAddMulA(word b[], const ec_o* ec, void* stack, size_t k, ...)
 			naf_max_size = naf_size[i];
 		naf_pos[i] = 0;
 		// малые кратные
-		if (ec->smul)
-			ec->smul(pre[i], a, naf_width[i] - 1, ec, stack);
-		else
-			ecSmul(pre[i], a, naf_width[i] - 1, ec, stack);
+		ecSmul(pre[i], a, naf_width[i] - 1, ec, stack);
 		// отрицательные малые кратные
 		for (j = 0; j < pre_count / 2; ++j)
 			ec->neg(pre[i] + (pre_count / 2 + j) * ec->d * ec->f->n,

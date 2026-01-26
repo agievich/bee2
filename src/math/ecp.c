@@ -4,7 +4,7 @@
 \brief Elliptic curves over prime fields
 \project bee2 [cryptographic library]
 \created 2012.06.26
-\version 2026.01.22
+\version 2026.01.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -1256,7 +1256,7 @@ static size_t ecpFinAddA_deep(size_t n, size_t f_deep)
 /* B */			O_OF_W(n),\
 /* base */		O_OF_W(2 * n),\
 /* order */		O_OF_W(n + 1),\
-/* params */	SIZE_0
+/* pre */		SIZE_0
 
 #define ecpCreateJ_local(n)\
 /* t */			O_OF_W(n)
@@ -1283,7 +1283,7 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	// разметить состояние и стек
 	memSlice(ec->descr,
 		ecpCreateJ_state(f->n), SIZE_MAX,
-		&ec->A, &ec->B, &ec->base, &ec->order, &ec->params);
+		&ec->A, &ec->B, &ec->base, &ec->order, &ec->pre);
 	memSlice(stack,
 		ecpCreateJ_local(f->n), SIZE_0, SIZE_MAX,
 		&t, &stack);

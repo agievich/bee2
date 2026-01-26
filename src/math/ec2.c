@@ -4,7 +4,7 @@
 \brief Elliptic curves over binary fields
 \project bee2 [cryptographic library]
 \created 2012.06.26
-\version 2026.01.21
+\version 2026.01.26
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -549,7 +549,7 @@ static size_t ec2AddALD_deep(size_t n, size_t f_deep)
 /* B */			O_OF_W(n),\
 /* base */		O_OF_W(2 * n),\
 /* order */		O_OF_W(n + 1),\
-/* params */	SIZE_0
+/* pre */		SIZE_0
 
 bool_t ec2CreateLD(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	void* stack)
@@ -567,7 +567,7 @@ bool_t ec2CreateLD(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	// разметить состояние
 	memSlice(ec->descr,
 		ec2CreateLD_state(f->n), SIZE_MAX,
-		&ec->A, &ec->B, &ec->base, &ec->order, &ec->params);
+		&ec->A, &ec->B, &ec->base, &ec->order, &ec->pre);
 	// сохранить коэффициенты
 	if (!qrFrom(ec->A, A, ec->f, stack) || !qrFrom(ec->B, B, ec->f, stack))
 		return FALSE;
