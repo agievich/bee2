@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2014.03.04
-\version 2026.01.26
+\version 2026.01.27
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -20,11 +20,21 @@
 
 /*
 *******************************************************************************
-Вспомогательные определения
+Вспомогательные функции и определения
 *******************************************************************************
 */
 
-#define ecPt(pts, pos, ec) ((pts) + (pos) * (ec)->d * (ec)->f->n)
+static ecPreIsValid(const ec_pre_t* pre)
+{
+	return memIsValid(pre, sizeof(pre)) &&
+		(pre->type == ec_pre_snz || pre->type == ec_pre_snza ||
+			pre->type == ec_pre_comb) &&
+		pre->w > 0 && pre->w < B_PER_W &&
+		(pre->type == ec_pre_comb && pre->h > 0 ||
+			pre->type != ec_pre_comb && pre->h == 0);
+}
+
+#define ecPrePt(pre, pos, ec) ((pre)->pts + (pos) * (ec)->d * (ec)->f->n)
 
 /*
 *******************************************************************************
@@ -108,63 +118,72 @@ bool_t ecGroupIsOperable(const ec_o* ec)
 Предвычисления
 
 Прямая реализация схемы SNZ:
-	t <- 2a, pre[0] <- a, pre[i] <-  t + pre[i - 1], i = 1,..., 2^(w-1) - 1.
+- t <- 2a;
+- pt[0] <- a;
+- pt[i] <-  t + pt[i - 1], i = 1, 2, ..., 2^(w-1) - 1;
+- pt[2^w - 1 - i] = -pt[i], i = 0, 1, ..., 2^(w-1) - 1.
 
-Сложение t + pre[0] выполняется по схеме P <- P + A. Остальные сложения -- по
+Сложение t + pt[0] выполняется по схеме P <- P + A. Остальные сложения -- по
 схеме P <- P + P. Итоговая сложность:
 	1(P <- 2A) + 1(P <- P + A) + (2^{w-1} - 2)(P <- P + P).
 
-Здесь и далее
+Здесь и далее:
 - (P <- 2A) -- время работы функции ec->dbla;
 - (P <- P + A) -- время работы функций ec->adda;
 - (P <- P + P) -- время работы функции ec->add.
 *******************************************************************************
 */
 
-#define ecSmul_local(n, ec_d)\
+#define ecPreSNZ_local(n, ec_d)\
 /* t */		O_OF_W(ec_d * n)
 
-static void ecSmul(word b[], const word a[], size_t w, const ec_o* ec,
+static void ecPreSNZ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	void* stack)
 {
 	word* t;			/* [ec->d * ec->f->n] */
+	size_t i;
 	// pre
 	ASSERT(ecIsOperable(ec));
 	ASSERT(w > 0);
-	ASSERT(wwIsDisjoint2(b, ec->d * ec->f->n * (SIZE_1 << (w - 1)),
-		a, 2 * ec->f->n) || a == b);
+	ASSERT(memIsDisjoint2(a, O_OF_W(2 * ec->f->n),
+		pre, sizeof(ec_pre_t) + O_OF_W(ec->d * ec->f->n * (SIZE_1 << w))));
 	// разметить стек
 	memSlice(stack,
-		ecSmul_local(ec->f->n, ec->d), SIZE_0, SIZE_MAX,
+		ecPreSNZ_local(ec->f->n, ec->d), SIZE_0, SIZE_MAX,
 		&t, &stack);
+	// pt[0] <- a
+	ecFromA(ecPrePt(pre, 0, ec), a, ec, stack);
 	// вычислить малые кратные
 	if (w > 1)
 	{
-		size_t i;
 		// t <- 2 a
 		ecDblA(t, a, ec, stack);
-		// b[1] <- t + a
-		ecAddA(b + ec->d * ec->f->n, t, a, ec, stack);
-		// b[i] <- t + b[i - 1]
+		// pt[1] <- t + a
+		ecAddA(ecPrePt(pre, 1, ec), t, a, ec, stack);
+		// pt[i] <- t + pt[i - 1]
 		for (i = 2; i < SIZE_1 << (w - 1); ++i)
-			ecAdd(b + i * ec->d * ec->f->n, t, b + (i - 1) * ec->d * ec->f->n,
-				ec, stack);
+			ecAdd(ecPrePt(pre, i, ec), t, ecPrePt(pre, i - 1, ec), ec, stack);
 	}
-	// b[0] <- a
-	ecFromA(b, a, ec, stack);
+	// pt[pre_count - i] <- -pt[i]
+	for (i = 0; i < SIZE_1 << (w - 1); ++i)
+		ecNeg(ecPrePt(pre, (SIZE_1 << w) - 1 - i, ec), ecPrePt(pre, i, ec),
+			ec, stack);
+	// заполнить остальные поля
+	pre->type = ec_pre_snz;
+	pre->w = w, pre->h = 0;
 }
 
-static size_t ecSmul_deep(size_t n, size_t ec_d, size_t ec_deep)
+static size_t ecPreSNZ_deep(size_t n, size_t ec_d, size_t ec_deep)
 {
 	return memSliceSize(
-		ecSmul_local(n, ec_d),
+		ecPreSNZ_local(n, ec_d),
 		ec_deep,
 		SIZE_MAX);
 }
 
 /*
 *******************************************************************************
-Сложение с настройкой знака
+Финишные сложения
 
 Прямые нерегулярные реализации интерфейсов ec_finadd_i и ec_finadda_i.
 *******************************************************************************
@@ -222,13 +241,13 @@ static size_t ecFinAddA_deep(size_t n, size_t ec_d, size_t ec_deep)
 
 /*
 *******************************************************************************
-Кратная точка: NAF (Non-Adjacent Form)
+Кратная точка: метод NAF (Non-Adjacent Form)
 
-В функции ecMulA() для определения b = da (d-кратного точки a) применяется
-оконный NAF с длиной окна w > 2. Реализован алгоритм 3.36 из [HMV04].
+В функции ecMulPreNAF() для определения b = da (d-кратного точки a) применяется
+оконный NAF с длиной окна w >= 2. Реализован алгоритм 3.36 из [HMV04].
 
-Используются малые нечетные кратные a:
-	b[i] = (2i + 1)a,  i = 0, 1, ..., 2^{w-2} - 1.
+Используются малые нечетные кратные a вида:
+	\pm (2i + 1)a,  i = 0, 1, ..., 2^{w-2} - 1.
 
 Имеются три стратегии:
 1)	w = 2 и малые кратные вообще не рассчитываются;
@@ -272,10 +291,10 @@ static size_t ecFinAddA_deep(size_t n, size_t ec_d, size_t ec_deep)
 		V <- V Z_t
 	Z_1^{-1} <- V
 
-[Doc05] Doche C. Finite Field Arithmetic. In: Handbook of Elliptic and
-        Hyperelliptic Curve Cryptography. Chapman & Hall/CRC, 2005.
 [HMV04] Hankerson D., Menezes A., Vanstone S. Guide to Elliptic Curve
         Cryptography, Springer, 2004.
+[Doc05] Doche C. Finite Field Arithmetic. In: Handbook of Elliptic and
+		Hyperelliptic Curve Cryptography. Chapman & Hall/CRC, 2005.
 *******************************************************************************
 */
 
@@ -290,68 +309,95 @@ static size_t ecNAFWidth(size_t l)
 	return 3;
 }
 
-#define ecMulA_local(n, ec_d, m, pre_count)\
+#define ecMulPreNAF_local(n, ec_d, m)\
 /* naf */	O_OF_W(2 * m + 1),\
-/* t */		O_OF_W(ec_d * n),\
-/* pre */	O_OF_W(pre_count * ec_d * n)
+/* t */		O_OF_W(ec_d * n)
 
-bool_t ecMulA(word b[], const word a[], const ec_o* ec,
+static bool_t ecMulPreNAF(word b[], const ec_pre_t* pre, const ec_o* ec,
 	const word d[], size_t m, void* stack)
 {
-	const size_t naf_width = ecNAFWidth(B_OF_W(m));
-	const word naf_hi = WORD_BIT_POS(naf_width - 1);
-	const size_t pre_count = SIZE_1 << (naf_width - 1);
+	register size_t naf_width;
 	register size_t naf_size;
 	register size_t i;
 	register word digit;
 	word* naf;			/* [2 * m + 1] NAF */
 	word* t;			/* [ec->d * ec->f->n] */
-	word* pre;			/* [pre_count * ec->d * ec->f->n] */
 	// pre
 	ASSERT(ecIsOperable(ec));
+	ASSERT(ecPreIsValid(pre));
+	ASSERT(pre->type == ec_pre_snz);
 	// разметить стек
 	memSlice(stack,
-		ecMulA_local(ec->f->n, ec->d, m, pre_count), SIZE_0, SIZE_MAX,
-		&naf, &t, &pre, &stack);
+		ecMulPreNAF_local(ec->f->n, ec->d, m), SIZE_0, SIZE_MAX,
+		&naf, &t, &stack);
 	// расчет NAF
-	ASSERT(naf_width >= 3);
+	naf_width = pre->w + 1;
 	naf_size = wwNAF(naf, d, m, naf_width);
 	// d == O => b <- O
 	if (naf_size == 0)
 		return FALSE;
-	// малые кратные: a, 3a, ..., (2^w - 1)a
-	ecSmul(pre, a, naf_width - 1, ec, stack);
-	// отрицательные малые кратные: -a, -3a, ..., -(2^w - 1)a
-	for (i = 0; i < pre_count / 2; ++i)
-		ecNeg(ecPt(pre, pre_count / 2 + i, ec), ecPt(pre, i, ec), ec, stack);
 	// старшая цифра NAF
 	digit = wwGetBits(naf, 0, naf_width);
-	ASSERT((digit & 1) == 1 && (digit & naf_hi) == 0);
-	// t <- pre[digit / 2]
-	wwCopy(t, ecPt(pre, digit >> 1, ec), ec->d * ec->f->n);
+	ASSERT((digit & 1) == 1 && (digit >> (naf_width - 1)) == 0);
+	// t <- pt[digit / 2]
+	wwCopy(t, ecPrePt(pre, digit >> 1, ec), ec->d * ec->f->n);
 	// цикл по цифрам NAF
 	i = naf_width;
 	while (--naf_size)
 	{
+		// t <- 2t
+		ecDbl(t, t, ec, stack);
+		// обработать цифру
 		digit = wwGetBits(naf, i, naf_width);
-		// t <- 2t + pre[digit / 2]
-		if (digit == 1 || digit == (naf_hi ^ 1))
-			ecDblAddA(t, t, ecPt(pre, digit >> 1, ec), ec, stack);
-		else
+		if (digit & 1)
 		{
-			// t <- 2t
-			ecDbl(t, t, ec, stack);
-			if (digit & 1)
-				// t <- t + pre[digit / 2]
-				ecAdd(t, t, ecPt(pre, digit >> 1, ec), ec, stack);
+			// t <- t + pt[digit / 2]
+			ecAdd(t, t, ecPrePt(pre, digit >> 1, ec), ec, stack);
+			// к следующей цифре
+			i += naf_width - 1;
 		}
-		// к следующей цифре
-		i += (digit & 1) ? naf_width : 1;
+		++i;
 	}
 	// очистка
-	CLEAN2(digit, i);
+	CLEAN3(naf_width, digit, i);
 	// к аффинным координатам
 	return ecToA(b, t, ec, stack);
+}
+
+size_t ecMulPreNAF_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
+{
+	return memSliceSize(
+		ecMulPreNAF_local(n, ec_d, m),
+		ec_deep,
+		SIZE_MAX);
+}
+
+#define ecMulA_local(n, ec_d, pre_count)\
+/* pre */	sizeof(ec_pre_t) + O_OF_W(pre_count * ec_d * n)
+
+bool_t ecMulA(word b[], const word a[], const ec_o* ec,
+	const word d[], size_t m, void* stack)
+{
+	size_t naf_width;
+	size_t pre_count;
+	ec_pre_t* pre;			/* [pre_count проективных точек] */
+	// pre
+	ASSERT(ecIsOperable(ec));
+	ASSERT(wwIsValid(d, m));
+	// размерности
+	m = wwWordSize(d, m);
+	if (m == 0)
+		return FALSE;
+	naf_width = ecNAFWidth(B_OF_W(m));
+	pre_count = SIZE_1 << (naf_width - 1);
+	// разметить стек
+	memSlice(stack,
+		ecMulA_local(ec->f->n, ec->d, pre_count), SIZE_0, SIZE_MAX,
+		&pre, &stack);
+	// предвычисления
+	ecPreSNZ(pre, a, naf_width - 1, ec, stack);
+	// кратная точка по методу NAF
+	return ecMulPreNAF(b, pre, ec, d, m, stack);
 }
 
 size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
@@ -359,8 +405,10 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 	const size_t naf_width = ecNAFWidth(B_OF_W(m));
 	const size_t pre_count = SIZE_1 << (naf_width - 1);
 	return memSliceSize(
-		ecMulA_local(n, ec_d, m, pre_count),
-		ecSmul_deep(n, ec_d, ec_deep),
+		ecMulA_local(n, ec_d, pre_count),
+		utilMax(2,
+			ecPreSNZ_deep(m, ec_d, ec_deep),
+			ecMulPreNAF_deep(n, ec_d, ec_deep, m)),
 		SIZE_MAX);
 }
 
@@ -382,19 +430,18 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 Реализован следующий алгоритм (см. [BCL+14; p. 9-11, algorithm 1], 
 а также [APS22]):
 1. Для i = 0, 1, ..., (2^{w-1} - 1):
-	1) pre[i] <- (2i - 1)a;				// ecSmul
-	2) pre[-i] <- -pre[i].				// ec_neg_i
-2. t <- pre[d_{k-1} / 2]
+	1) pt[i] <- (2i - 1)a, pt[-i] <- -pt[i].	// предвычисления
+2. t <- p[d_{k-1} / 2].
 3. Для i = k - 2, ..., 1:
-	1) t <- 2^w t;						// ec_dbl_i
-	1) t <- t + pre[d_i / 2].			// ec_add_i
+	1) t <- 2^w t;								// ec_dbl_i
+	1) t <- t + pt[d_i / 2].					// ec_add_i
 4. t <- 2^w t.
-5. t <- t + pre[d_0].					// ec_finadd_i
+5. t <- t + pt[d_0].							// ec_finadd_i
 6. Возвратить t.
 
-\remark сложение t + pre[d_0] вынесено за рамки основного цикла на шаге 3,
+\remark сложение t + pt[d_0] вынесено за рамки основного цикла на шаге 3,
 потому что при этом (и только при этом) сложении может произойти исключительная
-ситуация -- совпадение операндов t и pre[d_0] с переключением от сложения
+ситуация -- совпадение операндов t и pt[d_0] с переключением от сложения
 к удвоению. Предполагается, что функция ec_finadd_i регулярна, и тогда сложение
 и удвоение будут выполняться по одним и тем же формулам.
 
@@ -418,12 +465,11 @@ static size_t ecSNZWidth(size_t l)
 	return 6;
 }
 
-#define ecMulA2_local(n, ec_d, m, pre_count)\
+#define ecMulPreSNZ_local(n, ec_d, m)\
 /* dd */	O_OF_W(m),\
-/* t */		O_OF_W(ec_d * n),\
-/* pre */	O_OF_W(pre_count * ec_d * n)
+/* t */		O_OF_W(ec_d * n)\
 
-bool_t ecMulA2(word b[], const word a[], const ec_o* ec,
+static bool_t ecMulPreSNZ(word b[], const ec_pre_t* pre, const ec_o* ec,
 	const word d[], size_t m, void* stack)
 {
 	register word neg;
@@ -432,12 +478,77 @@ bool_t ecMulA2(word b[], const word a[], const ec_o* ec,
 	register bool_t ret;
 	size_t mb;
 	size_t snz_width;
-	size_t pre_count;
 	size_t k;
 	size_t i;
 	word* dd;			/* [m] */
 	word* t;			/* [ec->d * ec->f->n] */
-	word* pre;			/* [pre_count * ec->d * ec->f->n] */
+	// pre
+	ASSERT(ecIsOperable(ec));
+	ASSERT(ecGroupIsOperable(ec));
+	ASSERT(ecPreIsValid(pre));
+	ASSERT(pre->w == ec_pre_snz);
+	ASSERT(wwWordSize(ec->order, ec->f->n + 1) == m);
+	ASSERT(zzIsOdd(ec->order, m) && m > 1);
+	ASSERT(wwCmp(d, ec->order, m) < 0);
+	// размерности
+	mb = wwBitSize(ec->order, m);
+	snz_width = pre->w;
+	// разметить стек
+	memSlice(stack,
+		ecMulPreSNZ_local(ec->f->n, ec->d, m), SIZE_0, SIZE_MAX,
+		&dd, &t, &stack);
+	// dd <- (d & 1) ? d : ec->order - d
+	neg = WORD_1 - (d[0] & 1);
+	zzSubIf(dd, ec->order, d, m, neg);
+	ASSERT(zzIsOdd(dd, m));
+	// число цифр SNZ
+	k = (mb + snz_width - 1) / snz_width;
+	ASSERT(k > 1);
+	// старшая цифра
+	--k;
+	digit = wwGetBits(dd, k * snz_width, mb - k * snz_width);
+	wwCopy(t, ecPrePt(pre, digit >> 1, ec), ec->d * ec->f->n);
+	hi = WORD_1 - (digit & 1), hi <<= snz_width - 1;
+	// обработать остальные цифры
+	while (--k)
+	{
+		for (i = snz_width; i--;)
+			ecDbl(t, t, ec, stack);
+		digit = wwGetBits(dd, k * snz_width, snz_width);
+		ecAdd(t, t, ecPrePt(pre, hi | (digit >> 1), ec), ec, stack);
+		hi = WORD_1 - (digit & 1), hi <<= snz_width - 1;
+	}
+	// завершающие удвоения и финишное сложение
+	for (i = snz_width; i--;)
+		ecDbl(t, t, ec, stack);
+	digit = wwGetBits(dd, 0, snz_width);
+	ASSERT(digit & 1);
+	ret = (ec->finadd) ?
+		ec->finadd(b, t, ecPrePt(pre, hi | (digit >> 1), ec), neg, ec, stack) :
+		ecFinAdd(b, t, ecPrePt(pre, hi | (digit >> 1), ec), neg, ec, stack);
+	// очистка и возврат
+	CLEAN3(neg, digit, hi);
+	return ret;
+}
+
+size_t ecMulPreSNZ_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
+{
+	return memSliceSize(
+		ecMulPreSNZ_local(n, ec_d, m),
+		ecFinAdd_deep(n, ec_d, ec_deep),
+		SIZE_MAX);
+}
+
+#define ecMulA2_local(n, ec_d, pre_count)\
+/* pre */	sizeof(ec_pre_t) + O_OF_W(pre_count * ec_d * n)
+
+bool_t ecMulA2(word b[], const word a[], const ec_o* ec,
+	const word d[], size_t m, void* stack)
+{
+	size_t mb;
+	size_t snz_width;
+	size_t pre_count;
+	ec_pre_t* pre;			/* [pre_count проективных точек] */
 	// pre
 	ASSERT(ecIsOperable(ec));
 	ASSERT(ecGroupIsOperable(ec));
@@ -447,49 +558,15 @@ bool_t ecMulA2(word b[], const word a[], const ec_o* ec,
 	// размерности
 	mb = wwBitSize(ec->order, m);
 	snz_width = ecSNZWidth(mb);
-	ASSERT(3 <= snz_width && snz_width < B_PER_W);
 	pre_count = SIZE_1 << snz_width;
 	// разметить стек
 	memSlice(stack,
-		ecMulA2_local(ec->f->n, ec->d, m, pre_count), SIZE_0, SIZE_MAX,
-		&dd, &t, &pre, &stack);
-	// dd <- (d & 1) ? d : ec->order - d
-	neg = WORD_1 - (d[0] & 1);
-	zzSubIf(dd, ec->order, d, m, neg);
-	ASSERT(zzIsOdd(dd, m));
-	// малые кратные: a, 3a, ..., (2^w - 1)a
-	ecSmul(pre, a, snz_width, ec, stack);
-	// отрицательные малые кратные: -(2^w - 1)a, ..., -3a, -a
-	for (i = 0; i < pre_count / 2; ++i)
-		ecNeg(ecPt(pre, pre_count - 1 - i, ec), ecPt(pre, i, ec), ec, stack);
-	// число цифр SNZ
-	k = (mb + snz_width - 1) / snz_width;
-	ASSERT(k > 1);
-	// старшая цифра
-	--k;
-	digit = wwGetBits(dd, k * snz_width, mb - k * snz_width);
-	wwCopy(t, ecPt(pre, digit >> 1, ec), ec->d * ec->f->n);
-	hi = WORD_1 - (digit & 1), hi <<= snz_width - 1;
-	// обработать остальные цифры
-	while (--k)
-	{
-		for (i = snz_width; i--;)
-			ecDbl(t, t, ec, stack);
-		digit = wwGetBits(dd, k * snz_width, snz_width);
-		ecAdd(t, t, ecPt(pre, hi | (digit >> 1), ec), ec, stack);
-		hi = WORD_1 - (digit & 1), hi <<= snz_width - 1;
-	}
-	// завершающие удвоения и финишное сложение
-	for (i = snz_width; i--;)
-		ecDbl(t, t, ec, stack);
-	digit = wwGetBits(dd, 0, snz_width);
-	ASSERT(digit & 1);
-	ret = (ec->finadd) ?
-		ec->finadd(b, t, ecPt(pre, hi | (digit >> 1), ec), neg, ec, stack) :
-		ecFinAdd(b, t, ecPt(pre, hi | (digit >> 1), ec), neg, ec, stack);
-	// очистка и возврат
-	CLEAN3(neg, digit, hi);
-	return ret;
+		ecMulA2_local(ec->f->n, ec->d, pre_count), SIZE_0, SIZE_MAX,
+		&pre, &stack);
+	// предвычисления
+	ecPreSNZ(pre, a, snz_width, ec, stack);
+	// кратная точка по методу SNZ
+	return ecMulPreSNZ(b, pre, ec, d, m, stack);
 }
 
 size_t ecMulA2_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
@@ -497,9 +574,9 @@ size_t ecMulA2_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 	const size_t snz_width = ecSNZWidth(B_OF_W(m));
 	const size_t pre_count = SIZE_1 << snz_width;
 	return memSliceSize(
-		ecMulA2_local(n, ec_d, m, pre_count),
+		ecMulA2_local(n, ec_d, pre_count),
 		utilMax(2,
-			ecSmul_deep(n, ec_d, ec_deep),
+			ecPreSNZ_deep(n, ec_d, ec_deep),
 			ecFinAdd_deep(n, ec_d, ec_deep)),
 		SIZE_MAX);
 }
@@ -554,7 +631,7 @@ size_t ecHasOrderA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 /* naf_size */	O_PER_S * k,\
 /* naf_pos */	O_PER_S * k,\
 /* naf */		sizeof(word*) * k,\
-/* pre */		sizeof(word*) * k
+/* pre */		sizeof(ec_pre_t*) * k
 
 bool_t ecAddMulA(word b[], const ec_o* ec, void* stack, size_t k, ...)
 {
@@ -568,7 +645,7 @@ bool_t ecAddMulA(word b[], const ec_o* ec, void* stack, size_t k, ...)
 	size_t* naf_size;	/* [k] длины NAF */
 	size_t* naf_pos;	/* [k] позиция в NAF-представлении */
 	word** naf;			/* [k] NAF */
-	word** pre;			/* [k] предвычисленные точки */
+	ec_pre_t** pre;		/* [k] предвычисленные точки */
 	// pre
 	ASSERT(ecIsOperable(ec));
 	ASSERT(k > 0);
@@ -584,7 +661,6 @@ bool_t ecAddMulA(word b[], const ec_o* ec, void* stack, size_t k, ...)
 		const word* a;
 		const word* d;
 		size_t pre_count;
-		size_t j;
 		// a <- a[i]
 		a = va_arg(args, const word*);
 		// d <- d[i]
@@ -597,7 +673,9 @@ bool_t ecAddMulA(word b[], const ec_o* ec, void* stack, size_t k, ...)
 		naf_width[i] = ecNAFWidth(B_OF_W(m[i]));
 		pre_count = SIZE_1 << (naf_width[i] - 1);
 		memSlice(stack,
-			O_OF_W(2 * m[i] + 1), O_OF_W(ec->d * ec->f->n * pre_count), SIZE_0,
+			O_OF_W(2 * m[i] + 1),
+			sizeof(ec_pre_t) + O_OF_W(pre_count + ec->d * ec->f->n),
+			SIZE_0,
 			SIZE_MAX,
 			naf + i, pre + i, &stack);
 		// расчет naf[i]
@@ -605,12 +683,8 @@ bool_t ecAddMulA(word b[], const ec_o* ec, void* stack, size_t k, ...)
 		if (naf_size[i] > naf_max_size)
 			naf_max_size = naf_size[i];
 		naf_pos[i] = 0;
-		// малые кратные
-		ecSmul(pre[i], a, naf_width[i] - 1, ec, stack);
-		// отрицательные малые кратные
-		for (j = 0; j < pre_count / 2; ++j)
-			ec->neg(pre[i] + (pre_count / 2 + j) * ec->d * ec->f->n,
-				pre[i] + j * ec->d * ec->f->n, ec, stack);
+		// предвычисления
+		ecPreSNZ(pre[i], a, naf_width[i] - 1, ec, stack);
 	}
 	va_end(args);
 	// t <- O
@@ -633,13 +707,8 @@ bool_t ecAddMulA(word b[], const ec_o* ec, void* stack, size_t k, ...)
 			naf_hi = WORD_BIT_POS(naf_width[i] - 1);
 			if (digit & 1)
 			{
-				// t <- t + pre[i][digit / 2]
-				if (digit == 1 || digit == (naf_hi ^ 1))
-					ecAddA(t, t, pre[i] + (digit / 2) * ec->d * ec->f->n, ec,
-						stack);
-				else
-					ecAdd(t, t, pre[i] + (digit / 2) * ec->d * ec->f->n, ec,
-						stack);
+				// t <- t + pre[i].pt[digit / 2]
+				ecAdd(t, t, ecPrePt(pre[i], digit / 2, ec), ec, stack);
 				// к следующей цифре naf[i]
 				naf_pos[i] += naf_width[i];
 			}
@@ -660,7 +729,7 @@ size_t ecAddMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t k, ...)
 	va_list args;
 	ret = memSliceSize(
 		ecAddMulA_local(n, ec_d, k),
-		ecSmul_deep(n, ec_d, ec_deep),
+		ecPreSNZ_deep(n, ec_d, ec_deep),
 		SIZE_MAX);
 	va_start(args, k);
 	for (i = 0; i < k; ++i)
@@ -670,7 +739,7 @@ size_t ecAddMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t k, ...)
 		size_t pre_count = SIZE_1 << (naf_width - 1);
 		ret += memSliceSize(
 			O_OF_W(2 * m + 1),
-			O_OF_W(ec_d * n * pre_count),
+			sizeof(ec_pre_t) + O_OF_W(ec_d * n * pre_count),
 			SIZE_0,	SIZE_MAX);
 	}
 	va_end(args);
