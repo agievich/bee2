@@ -4,7 +4,7 @@
 \brief Tests for operations on arbitrary length words
 \project bee2/test
 \created 2023.03.31
-\version 2025.07.24
+\version 2025.07.27
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -108,8 +108,8 @@ bool_t wwTest()
 	// NAF
 	a[0] = 255;
 	if (wwNAF(b, a, 1, 2) != 9 || b[0] != 0x0601 ||
-		wwNAF(b, a, 1, 3) != 9 || b[0] != 0x1401 ||
-		wwNAF(b, a, 1, 4) != 9 || b[0] != 0x4801)
+		wwNAF(b, a, 1, 3) != 9 || b[0] != 0x1C01 ||
+		wwNAF(b, a, 1, 4) != 9 || b[0] != 0x7801)
 		return FALSE;
 	// все нормально
 	return TRUE;

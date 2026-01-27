@@ -305,7 +305,7 @@ bool_t ecpTest()
 			return FALSE;
 		}
 	}
-	// малые кратные
+	// предвычисления по схеме SNZ
 	if (FALSE)
 	{
 		// (pt0, pt1, pt2, pt3) <- (base, 3 base, 5 base, 7 base)
