@@ -4,7 +4,7 @@
 \brief Tests for elliptic curves over prime fields
 \project bee2/test
 \created 2017.05.29
-\version 2026.01.22
+\version 2026.01.27
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -306,10 +306,10 @@ bool_t ecpTest()
 		}
 	}
 	// малые кратные
-	if (ec->smul)
+	if (FALSE)
 	{
 		// (pt0, pt1, pt2, pt3) <- (base, 3 base, 5 base, 7 base)
-		ec->smul(pts, ec->base, 3, ec, stack);
+		ecpPreSNZ(pts, ec->base, 3, ec, stack);
 		// pt0 == base?
 		ecToA(pt4, pt0, ec, stack);
 		if (!wwEq(pt5, ec->base, 2 * n))

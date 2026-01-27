@@ -4,7 +4,7 @@
 \brief Arbitrary length words
 \project bee2 [cryptographic library]
 \created 2012.04.18
-\version 2026.01.13
+\version 2026.01.27
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -297,7 +297,7 @@ size_t wwOctetSize(const word a[], size_t n)
 
 /*
 *******************************************************************************
-Операции с отдельными битами, кодирование
+Операции с отдельными битами
 
 \remark В wwSetBit() использован трюк из работы
 	Andersen S.A. Bit Twidding Hacks. Avail. at:
@@ -411,6 +411,21 @@ size_t wwBitSize(const word a[], size_t n)
 	return n * B_PER_W - wwHiZeroBits(a, n);
 }
 
+/*
+*******************************************************************************
+NAF
+
+\remark Если старшие цифры NAF имеют вид
+	1, 0, ..., 0, \alpha, ....
+где w - 1 нулей и цифра \alpha < 0, то выполняется замена этих цифр на
+	1, 0, ..., 0, \beta, ....
+где w - 2 нулей и \beta = 2^{w - 1} + \alpha > 0.
+Замена корректна, так как:
+	2^w + \alpha = 2^{w - 1} + \beta.
+Число цифр сокращается на единицу, NAF становится более экономичной.
+*******************************************************************************
+*/
+
 size_t wwNAF(word naf[], const word a[], size_t n, size_t w)
 {
 	const word next_bit = WORD_BIT_POS(w);
@@ -418,67 +433,56 @@ size_t wwNAF(word naf[], const word a[], size_t n, size_t w)
 	const word mask = hi_bit - 1;
 	register word window;
 	register word digit;
-	register size_t naf_len;
-	register size_t naf_size;
-	register size_t a_len;
+	register size_t len;
+	register size_t size;
+	register size_t nb;
 	size_t i;
 	// pre
 	ASSERT(wwIsDisjoint2(a, n, naf, 2 * n + 1));
 	ASSERT(2 <= w && w < B_PER_W);
 	// naf <- 0
 	wwSetZero(naf, 2 * n + 1);
-	naf_len = naf_size = 0;
+	len = size = 0;
 	// a == 0?
-	if (wwIsZero(a, n))
+	nb = wwBitSize(a, n);
+	if (nb == 0)
 		return 0;
-	// window <- a mod 2^w
-	window = wwGetBits(a, 0, w);
 	// расчет NAF
-	a_len = wwBitSize(a, n);
-	for (i = w; window || i < a_len; ++i)
+	window = wwGetBits(a, 0, w);
+	for (i = w; window || i < nb; ++i)
 	{
-		// ненулевой символ?
+		// ненулевая цифра?
 		if (window & 1)
 		{
-			// кодирование отрицательного символа
+			// отрицательная цифра?
 			if (window & hi_bit)
 			{
-				// модифицировать отрицательный символ суффикса NAF...
-				if (i >= a_len)
-					// ...сделать его положительным
-					digit = window & mask,
-					// window <- window - digit
-					window = hi_bit;
+				// среди старших цифр?
+				if (i >= nb)
+					// сделать цифру положительной
+					digit = window & mask, window = hi_bit;
 				else
-					// digit <- |window|
-					digit = (0 - window) & mask,
-					// digit <- 1||digit
-					digit ^= hi_bit,
-					// window <- window - digit
-					window = next_bit;
+					digit = window, window = next_bit;
 			}
 			else
-				// кодирование положительного символа
-				digit = window,
-				// window <- window - digit
-				window = 0;
-			// запись ненулевого символа
-			wwShHi(naf, W_OF_B(naf_len + w), w);
+				digit = window, window = 0;
+			// записать цифру
+			wwShHi(naf, W_OF_B(len + w), w);
 			wwSetBits(naf, 0, w, digit);
-			naf_len += w;
+			len += w;
 		}
 		else
-			// кодирование нулевого символа
-			wwShHi(naf, W_OF_B(++naf_len), 1);
+			// записать нулевую цифру
+			wwShHi(naf, W_OF_B(++len), 1);
 		// увеличить размер naf
-		++naf_size;
+		++size;
 		// сдвиг окна
 		window >>= 1;
-		if (i < a_len)
+		if (i < nb)
 			window += hi_bit * wwTestBit(a, i);
 	}
-	CLEAN2(digit, window), CLEAN2(naf_len, a_len);
-	return naf_size;
+	CLEAN2(digit, window), CLEAN2(len, nb);
+	return size;
 }
 
 /*

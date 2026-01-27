@@ -1815,3 +1815,14 @@ size_t ecpSWU_deep(size_t n, size_t f_deep)
 			qrPower_deep(n, n, f_deep)),
 		SIZE_MAX);
 }
+
+/*
+*******************************************************************************
+Предвычисления
+*******************************************************************************
+*/
+
+void ecpPreSNZ(word pre[], const word a[], size_t w, const struct ec_o* ec,
+	void* stack)
+{
+}
