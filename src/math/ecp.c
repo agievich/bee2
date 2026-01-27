@@ -4,7 +4,7 @@
 \brief Elliptic curves over prime fields
 \project bee2 [cryptographic library]
 \created 2012.06.26
-\version 2026.01.26
+\version 2026.01.27
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -197,6 +197,12 @@ static void ecpNegJ(word b[], const word a[], const ec_o* ec, void* stack)
 	zmNeg(ecY(b, ec->f->n), ecY(a, ec->f->n), ec->f);
 	// zb <- za
 	qrCopy(ecZ(b, ec->f->n), ecZ(a, ec->f->n), ec->f);
+}
+
+// [2n]b <- -[2n]a (A <- -A)
+static void ecpNegAJ(word b[], const word a[], const ec_o* ec, void* stack)
+{
+	ecpNegA(b, a, ec);
 }
 
 #define ecpDblJ_local(n)\
@@ -1300,6 +1306,7 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	ec->froma = ecpFromAJ;
 	ec->toa = ecpToAJ;
 	ec->neg = ecpNegJ;
+	ec->nega = ecpNegAJ;
 	ec->add = ecpAddJ;
 	ec->adda = ecpAddAJ;
 	ec->dbl = bA3 ? ecpDblJA3 : ecpDblJ;
@@ -1587,7 +1594,7 @@ void ecpNegA(word b[], const word a[], const ec_o* ec)
 	// pre
 	ASSERT(ecIsOperable(ec));
 	ASSERT(ecpSeemsOnA(a, ec));
-	ASSERT(wwIsSameOrDisjoint(a, b, 3 * n));
+	ASSERT(wwIsSameOrDisjoint(a, b, 2 * n));
 	// (xb, yb) <- (xa, -ya)
 	qrCopy(ecX(b), ecX(a), ec->f);
 	zmNeg(ecY(b, n), ecY(a, n), ec->f);

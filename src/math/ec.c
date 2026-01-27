@@ -15,6 +15,7 @@
 #include "bee2/core/util.h"
 #include "bee2/core/word.h"
 #include "bee2/math/ec.h"
+#include "bee2/math/qr.h"
 #include "bee2/math/ww.h"
 #include "bee2/math/zz.h"
 
@@ -23,18 +24,6 @@
 Вспомогательные функции и определения
 *******************************************************************************
 */
-
-static ecPreIsValid(const ec_pre_t* pre)
-{
-	return memIsValid(pre, sizeof(pre)) &&
-		(pre->type == ec_pre_snz || pre->type == ec_pre_snza ||
-			pre->type == ec_pre_comb) &&
-		pre->w > 0 && pre->w < B_PER_W &&
-		(pre->type == ec_pre_comb && pre->h > 0 ||
-			pre->type != ec_pre_comb && pre->h == 0);
-}
-
-#define ecPrePt(pre, pos, ec) ((pre)->pts + (pos) * (ec)->d * (ec)->f->n)
 
 /*
 *******************************************************************************
@@ -52,6 +41,7 @@ bool_t ecIsOperable2(const ec_o* ec)
 		ec->froma != 0 &&	
 		ec->toa != 0 &&	
 		ec->neg != 0 &&	
+		ec->nega != 0 &&	
 		ec->add != 0 &&	
 		ec->adda != 0 &&	
 		ec->dbl != 0 &&	
@@ -117,27 +107,67 @@ bool_t ecGroupIsOperable(const ec_o* ec)
 *******************************************************************************
 Предвычисления
 
-Прямая реализация схемы SNZ:
-- t <- 2a;
+В функции ecPreSNZ() реализованы предвычисления по схеме SNZ. Используется 
+следуюший алгоритм:
+- t <- 2a;													// P <- 2A
 - pt[0] <- a;
-- pt[i] <-  t + pt[i - 1], i = 1, 2, ..., 2^(w-1) - 1;
-- pt[2^w - 1 - i] = -pt[i], i = 0, 1, ..., 2^(w-1) - 1.
+- pt[1] <- t + pt[0];										// P <- P + A
+- pt[i] <- t + pt[i - 1], i = 2, 3, ..., 2^{w-1} - 1;		// P <- P + P
+- pt[2^w - 1 - i] = -pt[i], i = 0, 1, ..., 2^{w-1} - 1.
 
-Сложение t + pt[0] выполняется по схеме P <- P + A. Остальные сложения -- по
-схеме P <- P + P. Итоговая сложность:
+Итоговая сложность:
 	1(P <- 2A) + 1(P <- P + A) + (2^{w-1} - 2)(P <- P + P).
 
-Здесь и далее:
+В функции ecPreSNZA() реализованы предвычисления по схеме SNZA. Используется 
+тот же алгоритм, только операция P <- 2A в нем меняется на A <- 2A, а операции
+P <- P + A и P <- P + P меняются на A <- A + A.
+
+Итоговая сложность:
+	1(P <- 2A) + (2^{w-1} - 1)(A <- A + A).
+
+Перечень операций (здесь и далее):
 - (P <- 2A) -- время работы функции ec->dbla;
 - (P <- P + A) -- время работы функций ec->adda;
 - (P <- P + P) -- время работы функции ec->add.
+- (A <- 2A) -- время работы каскада (ec->dbla, ec->toa)*;
+- (A <- A + A) -- время работы каскада (ec->adda, ec->toa)*;
+- (P <- 2P) -- время работы функции ec->dbl.
+-----------------------------------------------------
+* [или прямых вычислений в аффинных координатах]
+
+\remark Функция ecPreSNZ() и особенно ecPreSNZA() не оптимальны. Например, для 
+ускорения второй функции можно рассчитать малые кратные в проективных 
+координатах, а затем быстро перейти к аффинным координатам с помощью трюка 
+Монтгомери [Doc05; algorithm 11.15 -- simultaneous inversion, p. 209]:
+	U_1 <- Z_1
+	for t = 2,..., T: U_t <- U_{t-1} Z_t
+	V <- U_T^{-1}
+	for t = T,..., 2:
+		Z_t^{-1} <- V U_{t-1}
+		V <- V Z_t
+	Z_1^{-1} <- V
+
+[Doc05] Doche C. Finite Field Arithmetic. In: Handbook of Elliptic and
+		Hyperelliptic Curve Cryptography. Chapman & Hall/CRC, 2005.
 *******************************************************************************
 */
+
+bool_t ecPreIsOperable(const ec_pre_t* pre)
+{
+	return memIsValid(pre, sizeof(pre)) &&
+		(pre->type == ec_pre_snz || pre->type == ec_pre_snza ||
+			pre->type == ec_pre_comb) &&
+		pre->w > 0 && pre->w < B_PER_W &&
+		(pre->type == ec_pre_comb && pre->h > 0 ||
+			pre->type != ec_pre_comb && pre->h == 0);
+}
+
+#define ecPrePt(pre, pos, ec) ((pre)->pts + (pos) * (ec)->d * (ec)->f->n)
 
 #define ecPreSNZ_local(n, ec_d)\
 /* t */		O_OF_W(ec_d * n)
 
-static void ecPreSNZ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
+void ecPreSNZ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	void* stack)
 {
 	word* t;			/* [ec->d * ec->f->n] */
@@ -173,10 +203,62 @@ static void ecPreSNZ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	pre->w = w, pre->h = 0;
 }
 
-static size_t ecPreSNZ_deep(size_t n, size_t ec_d, size_t ec_deep)
+size_t ecPreSNZ_deep(size_t n, size_t ec_d, size_t ec_deep)
 {
 	return memSliceSize(
 		ecPreSNZ_local(n, ec_d),
+		ec_deep,
+		SIZE_MAX);
+}
+
+#define ecPreSNZA_local(n, ec_d)\
+/* t1 */	O_OF_W(ec_d * n),\
+/* t2 */	O_OF_W(ec_d * n)
+
+bool_t ecPreSNZA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
+	void* stack)
+{
+	word* t1;			/* [ec->d * ec->f->n] */
+	word* t2;			/* [ec->d * ec->f->n] */
+	size_t i;
+	// pre
+	ASSERT(ecIsOperable(ec));
+	ASSERT(w > 0);
+	ASSERT(memIsDisjoint2(a, O_OF_W(2 * ec->f->n),
+		pre, sizeof(ec_pre_t) + O_OF_W(2 * ec->f->n * (SIZE_1 << w))));
+	// разметить стек
+	memSlice(stack,
+		ecPreSNZA_local(ec->f->n, ec->d), SIZE_0, SIZE_MAX,
+		&t1, &t2, &stack);
+	// pt[0] <- a
+	wwCopy(ecPrePt(pre, 0, ec), a, 2 * ec->f->n);
+	// вычислить малые кратные
+	if (w > 1)
+	{
+		// t1 <- 2 a
+		ecDblA(t1, a, ec, stack);
+		// pt[i] <- t1 + pt[i - 1]
+		for (i = 1; i < SIZE_1 << (w - 1); ++i)
+		{
+			ecAddA(t2, t1, ecPrePt(pre, i - 1, ec), ec, stack);
+			if (!ecToA(ecPrePt(pre, i, ec), t2, ec, stack))
+				return FALSE;
+		}
+	}
+	// pt[pre_count - i] <- -pt[i]
+	for (i = 0; i < SIZE_1 << (w - 1); ++i)
+		ecNegA(ecPrePt(pre, (SIZE_1 << w) - 1 - i, ec), ecPrePt(pre, i, ec),
+			ec, stack);
+	// заполнить остальные поля
+	pre->type = ec_pre_snza;
+	pre->w = w, pre->h = 0;
+	return TRUE;
+}
+
+size_t ecPreSNZA_deep(size_t n, size_t ec_d, size_t ec_deep)
+{
+	return memSliceSize(
+		ecPreSNZA_local(n, ec_d),
 		ec_deep,
 		SIZE_MAX);
 }
@@ -251,25 +333,18 @@ static size_t ecFinAddA_deep(size_t n, size_t ec_d, size_t ec_deep)
 
 Имеются три стратегии:
 1)	w = 2 и малые кратные вообще не рассчитываются;
-2)	w > 2 и малые кратные рассчитываются в аффинных координатах;
-3)	w > 2 и малые кратные рассчитываются в проективных координатах.
+2)	w > 2 и малые кратные рассчитываются в аффинных координатах (схема SNZA);
+3)	w > 2 и малые кратные рассчитываются в проективных координатах (схема SNZ).
 
 Если малые кратные рассчитываются по схеме "последовательно складывать
 с удвоенной исходной точкой", то средняя общая сложность нахождения
 кратной точки (l = wwBitSize(d)):
 1)	c1(l) = l/3(P <- P + A);
-2)	c2(l, w) = 1(A <- 2A) + 1(P <- P + A) +
-		(2^{w-2} - 2)(A <- A + A) + l/(w + 1)(P <- P + A);
-3)	c3(l, w) = 1(P <- 2A) + 1(P <- P + A) +
-		(2^{w-2} - 2)(P <- P + P) + l/(w + 1)(P <- P + P),
+2)	c2(l, w) = 1(A <- 2A) + (2^{w-2} - 1)(A <- A + A) + 
+		l/(w + 1)(P <- P + A);
+3)	c3(l, w) = 1(P <- 2A) + 1(P <- P + A) +	(2^{w-2} - 2)(P <- P + P) + 
+		l/(w + 1)(P <- P + P),
 без учета общего во всех стратегиях слагаемого l(P <- 2P).
-
-Здесь
-- (A <- 2A) -- время работы каскада (ec->dbla, ec->toa)*;
-- (A <- A + A) -- время работы каскада (ec->adda, ec->toa)*;
-- (P <- 2P) -- время работы функции ec->dbl.
------------------------------------------------------
-* [или прямых вычислений в аффинных координатах]
 
 Реализована третья стратегия. Она является выигрышной для кривых над GF(p)
 в практических диапазонах размерностей при использовании наиболее эффективных
@@ -278,23 +353,11 @@ static size_t ecFinAddA_deep(size_t n, size_t ec_d, size_t ec_deep)
 Длина окна w выбирается как решение следующей оптимизационной задачи:
 	(2^{w - 2} - 2) + l / (w + 1) -> min.
 
-Предвычисления выполняются с помощью функции ecSmul().
-
-\todo Усилить вторую стратегию. Рассчитать малые кратные в проективных
-координатах, а затем быстро перейти к аффинным координатам с помощью
-трюка Монтгомери [Doc05; algorithm 11.15 -- simultaneous inversion, p. 209]:
-	U_1 <- Z_1
-	for t = 2,..., T: U_t <- U_{t-1} Z_t
-	V <- U_T^{-1}
-	for t = T,..., 2:
-		Z_t^{-1} <- V U_{t-1}
-		V <- V Z_t
-	Z_1^{-1} <- V
+В функции ecMulA() реализована композиция функций ecPreSNZ() (предвычисления)
+и ecMulPreSNZ(). 
 
 [HMV04] Hankerson D., Menezes A., Vanstone S. Guide to Elliptic Curve
         Cryptography, Springer, 2004.
-[Doc05] Doche C. Finite Field Arithmetic. In: Handbook of Elliptic and
-		Hyperelliptic Curve Cryptography. Chapman & Hall/CRC, 2005.
 *******************************************************************************
 */
 
@@ -324,7 +387,7 @@ static bool_t ecMulPreNAF(word b[], const ec_pre_t* pre, const ec_o* ec,
 	word* t;			/* [ec->d * ec->f->n] */
 	// pre
 	ASSERT(ecIsOperable(ec));
-	ASSERT(ecPreIsValid(pre));
+	ASSERT(ecPreIsOperable(pre));
 	ASSERT(pre->type == ec_pre_snz);
 	// разметить стек
 	memSlice(stack,
@@ -414,9 +477,9 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 
 /*
 *******************************************************************************
-Кратная точка: SNZ (Signed Non-Zero)
+Кратная точка: метод SNZ (Signed Non-Zero)
 
-В функции ecMulA2() для определения кратной точки b = da при нечетной 
+В функции ecMulPreSNZ() для определения кратной точки b = da при нечетной 
 кратности d используется ее представление в форме
 	d_0 + d_1 (2^w) + ... + d_{k-1} (2^w)^{k-1}.
 Здесь d_i \in {\pm 1, \pm 3, ..., \pm (2^w - 1)} -- ненулевые (нечетные) цифры
@@ -430,20 +493,22 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 Реализован следующий алгоритм (см. [BCL+14; p. 9-11, algorithm 1], 
 а также [APS22]):
 1. Для i = 0, 1, ..., (2^{w-1} - 1):
-	1) pt[i] <- (2i - 1)a, pt[-i] <- -pt[i].	// предвычисления
+	1) pt[i] <- (2i - 1)a, pt[-i] <- -pt[i].	// предвычисления, схема SNZ
 2. t <- p[d_{k-1} / 2].
 3. Для i = k - 2, ..., 1:
-	1) t <- 2^w t;								// ec_dbl_i
-	1) t <- t + pt[d_i / 2].					// ec_add_i
+	1) t <- 2^w t;								// P <- 2P
+	1) t <- t + pt[d_i / 2].					// P <- P + P
 4. t <- 2^w t.
-5. t <- t + pt[d_0].							// ec_finadd_i
+5. t <- t + pt[d_0].							// A <- P + P
 6. Возвратить t.
 
-\remark сложение t + pt[d_0] вынесено за рамки основного цикла на шаге 3,
+\remark Сложение t + pt[d_0] вынесено за рамки основного цикла на шаге 3,
 потому что при этом (и только при этом) сложении может произойти исключительная
 ситуация -- совпадение операндов t и pt[d_0] с переключением от сложения
-к удвоению. Предполагается, что функция ec_finadd_i регулярна, и тогда сложение
-и удвоение будут выполняться по одним и тем же формулам.
+к удвоению. Завершающее сложение выполняется с помощью функции интерфейса 
+ec_finadd_i, если таковая указана в описании кривой. Предполагается, что функция 
+ec_finadd_i регулярна, и тогда сложение и удвоение будут выполняться по одним и 
+тем же формулам.
 
 [OkeTak03] Okeya K., Takagi T. The width-w NAF method provides small memory and
            fast elliptic scalar multiplications secure against side channel
@@ -469,7 +534,7 @@ static size_t ecSNZWidth(size_t l)
 /* dd */	O_OF_W(m),\
 /* t */		O_OF_W(ec_d * n)\
 
-static bool_t ecMulPreSNZ(word b[], const ec_pre_t* pre, const ec_o* ec,
+bool_t ecMulPreSNZ(word b[], const ec_pre_t* pre, const ec_o* ec,
 	const word d[], size_t m, void* stack)
 {
 	register word neg;
@@ -485,8 +550,8 @@ static bool_t ecMulPreSNZ(word b[], const ec_pre_t* pre, const ec_o* ec,
 	// pre
 	ASSERT(ecIsOperable(ec));
 	ASSERT(ecGroupIsOperable(ec));
-	ASSERT(ecPreIsValid(pre));
-	ASSERT(pre->w == ec_pre_snz);
+	ASSERT(ecPreIsOperable(pre));
+	ASSERT(pre->type == ec_pre_snz);
 	ASSERT(wwWordSize(ec->order, ec->f->n + 1) == m);
 	ASSERT(zzIsOdd(ec->order, m) && m > 1);
 	ASSERT(wwCmp(d, ec->order, m) < 0);
@@ -576,7 +641,7 @@ size_t ecMulA2_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 	return memSliceSize(
 		ecMulA2_local(n, ec_d, pre_count),
 		utilMax(2,
-			ecPreSNZ_deep(n, ec_d, ec_deep),
+			ecMulPreSNZ_deep(n, ec_d, ec_deep, m),
 			ecFinAdd_deep(n, ec_d, ec_deep)),
 		SIZE_MAX);
 }
@@ -674,7 +739,7 @@ bool_t ecAddMulA(word b[], const ec_o* ec, void* stack, size_t k, ...)
 		pre_count = SIZE_1 << (naf_width[i] - 1);
 		memSlice(stack,
 			O_OF_W(2 * m[i] + 1),
-			sizeof(ec_pre_t) + O_OF_W(pre_count + ec->d * ec->f->n),
+			sizeof(ec_pre_t) + O_OF_W(pre_count * ec->d * ec->f->n),
 			SIZE_0,
 			SIZE_MAX,
 			naf + i, pre + i, &stack);
@@ -697,14 +762,12 @@ bool_t ecAddMulA(word b[], const ec_o* ec, void* stack, size_t k, ...)
 		// цикл по (a[i], naf[i])
 		for (i = 0; i < k; ++i)
 		{
-			word naf_hi;
 			// цифры naf[i] не начались?
 			if (naf_size[i] < naf_max_size)
 				continue;
 			// прочитать очередную цифру naf[i]
 			digit = wwGetBits(naf[i], naf_pos[i], naf_width[i]);
 			// обработать цифру
-			naf_hi = WORD_BIT_POS(naf_width[i] - 1);
 			if (digit & 1)
 			{
 				// t <- t + pre[i].pt[digit / 2]

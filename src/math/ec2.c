@@ -4,7 +4,7 @@
 \brief Elliptic curves over binary fields
 \project bee2 [cryptographic library]
 \created 2012.06.26
-\version 2026.01.26
+\version 2026.01.27
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -215,6 +215,12 @@ static size_t ec2NegLD_deep(size_t n, size_t f_deep)
 		ec2NegLD_local(n), 
 		f_deep,
 		SIZE_MAX);
+}
+
+// [2n]b <- -[2n]a (A <- -A)
+static void ec2NegALD(word b[], const word a[], const ec_o* ec, void* stack)
+{
+	ec2NegA(b, a, ec);
 }
 
 #define ec2DblLD_local(n)\
@@ -575,6 +581,7 @@ bool_t ec2CreateLD(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	ec->froma = ec2FromALD;
 	ec->toa = ec2ToALD;
 	ec->neg = ec2NegLD;
+	ec->nega = ec2NegALD;
 	ec->add = ec2AddLD;
 	ec->adda = ec2AddALD;
 	ec->dbl = ec2DblLD;
@@ -805,7 +812,7 @@ void ec2NegA(word b[], const word a[], const ec_o* ec)
 {
 	ASSERT(ecIsOperable(ec));
 	ASSERT(ec2SeemsOnA(a, ec));
-	ASSERT(wwIsSameOrDisjoint(a, b, 3 * ec->f->n));
+	ASSERT(wwIsSameOrDisjoint(a, b, 2 * ec->f->n));
 	// b <- (xa, ya + xa)
 	qrCopy(ecX(b), ecX(a), ec->f);
 	gf2Add(ecY(b, ec->f->n), ecX(a), ecY(a, ec->f->n), ec->f);
