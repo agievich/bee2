@@ -4,7 +4,7 @@
 \brief Tests for elliptic curves over prime fields
 \project bee2/test
 \created 2017.05.29
-\version 2026.01.27
+\version 2026.01.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -76,7 +76,7 @@ bool_t ecpTest()
 		3 * no,
 		O_OF_W(6 * 3 * n) | SIZE_HI,
 		O_OF_W(n),
-		utilMax(13,
+		utilMax(16,
 			gfpCreate_deep(no),
 			ecpCreateJ_deep(n, f_deep),
 			ecGroupCreate_deep(f_deep),
@@ -89,7 +89,10 @@ bool_t ecpTest()
 			ecpAddAA_deep(n, f_deep),
 			ecpSubAA_deep(n, f_deep),
 			ecMulA_deep(n, 3, ec_deep, n),
-			ecMulA2_deep(n, 3, ec_deep, n)),
+			ecPreSNZ_deep(n, 3, ec_deep),
+			ecMulPreSNZ_deep(n, 3, ec_deep, n),
+			ecPreSNZA_deep(n, 3, ec_deep),
+			ecMulPreSNZA_deep(n, 3, ec_deep, n)),
 		SIZE_MAX,
 		&ec, &f, &t, &pts, &d, &stack);
 	if (state == 0)
@@ -157,6 +160,7 @@ bool_t ecpTest()
 		}
 	}
 	// ecMulA() vs ecMulA2()
+/*
 	{
 		wwCopy(d, ec->order, n);
 		zzSubW2(d, n, 1);
@@ -172,6 +176,7 @@ bool_t ecpTest()
 			ecMulA2(pt1, ec->base, ec, d, n, stack))
 			return FALSE;
 	}
+*/
 	// финишное сложение
 	if (ec->finadd)
 	{

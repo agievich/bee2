@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2014.03.04
-\version 2026.01.27
+\version 2026.01.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -135,10 +135,11 @@ P <- P + A и P <- P + P меняются на A <- A + A.
 -----------------------------------------------------
 * [или прямых вычислений в аффинных координатах]
 
-\remark Функция ecPreSNZ() и особенно ecPreSNZA() не оптимальны. Например, для 
+\remark Функция ecPreSNZ() и особенно ecPreSNZA() не оптимальны. Для 
 ускорения второй функции можно рассчитать малые кратные в проективных 
-координатах, а затем быстро перейти к аффинным координатам с помощью трюка 
-Монтгомери [Doc05; algorithm 11.15 -- simultaneous inversion, p. 209]:
+координатах, а затем быстро перейти к аффинным координатам с помощью
+одновременного обращения сразу нескольких элементов поля. Одновременное
+обращение известно как трюк Монтгомери [Doc05; algorithm 11.15, p. 209]:
 	U_1 <- Z_1
 	for t = 2,..., T: U_t <- U_{t-1} Z_t
 	V <- U_T^{-1}
@@ -146,6 +147,8 @@ P <- P + A и P <- P + P меняются на A <- A + A.
 		Z_t^{-1} <- V U_{t-1}
 		V <- V Z_t
 	Z_1^{-1} <- V
+Трюк не применяется, поскольку на данном уровне описания кривой структура
+проективных координат не определена.
 
 [Doc05] Doche C. Finite Field Arithmetic. In: Handbook of Elliptic and
 		Hyperelliptic Curve Cryptography. Chapman & Hall/CRC, 2005.
@@ -162,8 +165,6 @@ bool_t ecPreIsOperable(const ec_pre_t* pre)
 			pre->type != ec_pre_comb && pre->h == 0);
 }
 
-#define ecPrePt(pre, pos, ec) ((pre)->pts + (pos) * (ec)->d * (ec)->f->n)
-
 #define ecPreSNZ_local(n, ec_d)\
 /* t */		O_OF_W(ec_d * n)
 
@@ -175,8 +176,9 @@ void ecPreSNZ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	// pre
 	ASSERT(ecIsOperable(ec));
 	ASSERT(w > 0);
-	ASSERT(memIsDisjoint2(a, O_OF_W(2 * ec->f->n),
-		pre, sizeof(ec_pre_t) + O_OF_W(ec->d * ec->f->n * (SIZE_1 << w))));
+	ASSERT(memIsDisjoint2(
+		pre, sizeof(ec_pre_t) + O_OF_W(ec->d * ec->f->n * (SIZE_1 << w)),
+		a, O_OF_W(2 * ec->f->n)));
 	// разметить стек
 	memSlice(stack,
 		ecPreSNZ_local(ec->f->n, ec->d), SIZE_0, SIZE_MAX,
@@ -224,14 +226,15 @@ bool_t ecPreSNZA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	// pre
 	ASSERT(ecIsOperable(ec));
 	ASSERT(w > 0);
-	ASSERT(memIsDisjoint2(a, O_OF_W(2 * ec->f->n),
-		pre, sizeof(ec_pre_t) + O_OF_W(2 * ec->f->n * (SIZE_1 << w))));
+	ASSERT(memIsDisjoint2(
+		pre, sizeof(ec_pre_t) + O_OF_W(2 * ec->f->n * (SIZE_1 << w)),
+		a, O_OF_W(2 * ec->f->n)));
 	// разметить стек
 	memSlice(stack,
 		ecPreSNZA_local(ec->f->n, ec->d), SIZE_0, SIZE_MAX,
 		&t1, &t2, &stack);
 	// pt[0] <- a
-	wwCopy(ecPrePt(pre, 0, ec), a, 2 * ec->f->n);
+	wwCopy(ecPrePtA(pre, 0, ec), a, 2 * ec->f->n);
 	// вычислить малые кратные
 	if (w > 1)
 	{
@@ -240,8 +243,8 @@ bool_t ecPreSNZA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 		// pt[i] <- t1 + pt[i - 1]
 		for (i = 1; i < SIZE_1 << (w - 1); ++i)
 		{
-			ecAddA(t2, t1, ecPrePt(pre, i - 1, ec), ec, stack);
-			if (!ecToA(ecPrePt(pre, i, ec), t2, ec, stack))
+			ecAddA(t2, t1, ecPrePtA(pre, i - 1, ec), ec, stack);
+			if (!ecToA(ecPrePtA(pre, i, ec), t2, ec, stack))
 				return FALSE;
 		}
 	}
@@ -328,7 +331,7 @@ static size_t ecFinAddA_deep(size_t n, size_t ec_d, size_t ec_deep)
 В функции ecMulPreNAF() для определения b = da (d-кратного точки a) применяется
 оконный NAF с длиной окна w >= 2. Реализован алгоритм 3.36 из [HMV04].
 
-Используются малые нечетные кратные a вида:
+Используются малые нечетные кратные a вида
 	\pm (2i + 1)a,  i = 0, 1, ..., 2^{w-2} - 1.
 
 Имеются три стратегии:
@@ -354,7 +357,7 @@ static size_t ecFinAddA_deep(size_t n, size_t ec_d, size_t ec_deep)
 	(2^{w - 2} - 2) + l / (w + 1) -> min.
 
 В функции ecMulA() реализована композиция функций ecPreSNZ() (предвычисления)
-и ecMulPreSNZ(). 
+и ecMulPreNAF(). 
 
 [HMV04] Hankerson D., Menezes A., Vanstone S. Guide to Elliptic Curve
         Cryptography, Springer, 2004.
@@ -477,7 +480,7 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 
 /*
 *******************************************************************************
-Кратная точка: метод SNZ (Signed Non-Zero)
+Кратная точка: метод SNZ
 
 В функции ecMulPreSNZ() для определения кратной точки b = da при нечетной 
 кратности d используется ее представление в форме
@@ -493,7 +496,7 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 Реализован следующий алгоритм (см. [BCL+14; p. 9-11, algorithm 1], 
 а также [APS22]):
 1. Для i = 0, 1, ..., (2^{w-1} - 1):
-	1) pt[i] <- (2i - 1)a, pt[-i] <- -pt[i].	// предвычисления, схема SNZ
+	1) pt[i] <- (2i + 1)a, pt[-i] <- -pt[i].	// предвычисления, схема SNZ
 2. t <- p[d_{k-1} / 2].
 3. Для i = k - 2, ..., 1:
 	1) t <- 2^w t;								// P <- 2P
@@ -506,14 +509,14 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 потому что при этом (и только при этом) сложении может произойти исключительная
 ситуация -- совпадение операндов t и pt[d_0] с переключением от сложения
 к удвоению. Завершающее сложение выполняется с помощью функции интерфейса 
-ec_finadd_i, если таковая указана в описании кривой. Предполагается, что функция 
-ec_finadd_i регулярна, и тогда сложение и удвоение будут выполняться по одним и 
-тем же формулам.
+ec_finadd_i, если таковая указана в описании кривой. Предполагается, что
+функция ec_finadd_i регулярна, и тогда сложение и удвоение будут выполняться
+по одним и тем же формулам.
 
-[OkeTak03] Okeya K., Takagi T. The width-w NAF method provides small memory and
-           fast elliptic scalar multiplications secure against side channel
-		   attacks. In Cryptographers’ Track at the RSA Conference, 2003,
-		   pp. 328-343. Springer Berlin Heidelberg.
+В функции ecMulPreSNZA() предварительно рассчитанные точки являются аффинными,
+а не проективными. Это позволяет заменить регулярные сложения P <- P + P
+на P <- P + A и финишное сложение A <- P + P на A <- P + A.
+
 [BCL+14]   Bos J.W., Costello C., Longa P., Naehrig M. Selecting Elliptic
 		   Curves for Cryptography: An Efficiency and Security Analysis, 2014,
 		   https://eprint.iacr.org/2014/130.pdf.
@@ -522,13 +525,6 @@ ec_finadd_i регулярна, и тогда сложение и удвоени
 		   Kriptogr., 13:2, 2022, https://doi.org/10.4213/mvk406.
 *******************************************************************************
 */
-
-static size_t ecSNZWidth(size_t l)
-{
-	if (l <= 256)
-		return 5;
-	return 6;
-}
 
 #define ecMulPreSNZ_local(n, ec_d, m)\
 /* dd */	O_OF_W(m),\
@@ -602,6 +598,94 @@ size_t ecMulPreSNZ_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 		ecMulPreSNZ_local(n, ec_d, m),
 		ecFinAdd_deep(n, ec_d, ec_deep),
 		SIZE_MAX);
+}
+
+#define ecMulPreSNZA_local(n, ec_d, m)\
+/* dd */	O_OF_W(m),\
+/* t */		O_OF_W(ec_d * n)\
+
+bool_t ecMulPreSNZA(word b[], const ec_pre_t* pre, const ec_o* ec,
+	const word d[], size_t m, void* stack)
+{
+	register word neg;
+	register word digit;
+	register word hi;
+	register bool_t ret;
+	size_t mb;
+	size_t snz_width;
+	size_t k;
+	size_t i;
+	word* dd;			/* [m] */
+	word* t;			/* [ec->d * ec->f->n] */
+	// pre
+	ASSERT(ecIsOperable(ec));
+	ASSERT(ecGroupIsOperable(ec));
+	ASSERT(ecPreIsOperable(pre));
+	ASSERT(pre->type == ec_pre_snza);
+	ASSERT(wwWordSize(ec->order, ec->f->n + 1) == m);
+	ASSERT(zzIsOdd(ec->order, m) && m > 1);
+	ASSERT(wwCmp(d, ec->order, m) < 0);
+	// размерности
+	mb = wwBitSize(ec->order, m);
+	snz_width = pre->w;
+	// разметить стек
+	memSlice(stack,
+		ecMulPreSNZA_local(ec->f->n, ec->d, m), SIZE_0, SIZE_MAX,
+		&dd, &t, &stack);
+	// dd <- (d & 1) ? d : ec->order - d
+	neg = WORD_1 - (d[0] & 1);
+	zzSubIf(dd, ec->order, d, m, neg);
+	ASSERT(zzIsOdd(dd, m));
+	// число цифр SNZ
+	k = (mb + snz_width - 1) / snz_width;
+	ASSERT(k > 1);
+	// старшая цифра
+	--k;
+	digit = wwGetBits(dd, k * snz_width, mb - k * snz_width);
+	wwCopy(t, ecPrePtA(pre, digit >> 1, ec), ec->d * ec->f->n);
+	hi = WORD_1 - (digit & 1), hi <<= snz_width - 1;
+	// обработать остальные цифры
+	while (--k)
+	{
+		for (i = snz_width; --i;)
+			ecDbl(t, t, ec, stack);
+		digit = wwGetBits(dd, k * snz_width, snz_width);
+		ecDblAddA(t, t, ecPrePtA(pre, hi | (digit >> 1), ec), ec, stack);
+		hi = WORD_1 - (digit & 1), hi <<= snz_width - 1;
+	}
+	// завершающие удвоения и финишное сложение
+	for (i = snz_width; i--;)
+		ecDbl(t, t, ec, stack);
+	digit = wwGetBits(dd, 0, snz_width);
+	ASSERT(digit & 1);
+	ret = (ec->finadda) ?
+		ec->finadda(b, t, ecPrePtA(pre, hi | (digit >> 1), ec), neg, ec,
+			stack) :
+		ecFinAddA(b, t, ecPrePtA(pre, hi | (digit >> 1), ec), neg, ec, stack);
+	// очистка и возврат
+	CLEAN3(neg, digit, hi);
+	return ret;
+}
+
+size_t ecMulPreSNZA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
+{
+	return memSliceSize(
+		ecMulPreSNZA_local(n, ec_d, m),
+		ecFinAddA_deep(n, ec_d, ec_deep),
+		SIZE_MAX);
+}
+
+/*
+*******************************************************************************
+На удаление
+*******************************************************************************
+*/
+
+static size_t ecSNZWidth(size_t l)
+{
+	if (l <= 256)
+		return 5;
+	return 6;
 }
 
 #define ecMulA2_local(n, ec_d, pre_count)\
