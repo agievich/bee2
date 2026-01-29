@@ -4,7 +4,7 @@
 \brief Benchmarks for elliptic curves over prime fields
 \project bee2/test
 \created 2013.10.17
-\version 2026.01.28
+\version 2026.01.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -81,7 +81,7 @@ bool_t ecpBench()
 				(unsigned)tmSpeed(reps, ticks));
 		}
 		// ecPre+MulPre[SNZ]
-		for (w = 4; w <= 6; ++w)
+		for (w = 3; w <= 6; ++w)
 		{
 			for (i = 0, ticks = tmTicks(); i < reps; ++i)
 			{
@@ -111,7 +111,7 @@ bool_t ecpBench()
 				(unsigned)tmSpeed(reps, ticks));
 		}
 		// ecMulPre[SNZ]
-		for (w = 4; w <= 6; ++w)
+		for (w = 3; w <= 6; ++w)
 		{
 			ecPreSNZ(pre, ec->base, w, ec, stack);
 			for (i = 0, ticks = tmTicks(); i < reps; ++i)
@@ -126,7 +126,7 @@ bool_t ecpBench()
 				(unsigned)tmSpeed(reps, ticks));
 		}
 		// ecMulPre[SNZA]
-		for (w = 4; w <= 6; ++w)
+		for (w = 3; w <= 6; ++w)
 		{
 			ecPreSNZA(pre, ec->base, w, ec, stack);
 			for (i = 0, ticks = tmTicks(); i < reps; ++i)

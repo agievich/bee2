@@ -4,7 +4,7 @@
 \brief Tests for elliptic curves over prime fields
 \project bee2/test
 \created 2017.05.29
-\version 2026.01.28
+\version 2026.01.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -60,23 +60,29 @@ bool_t ecpTest()
 	ec_o* ec;		/* [ec_keep] */
 	qr_o* f;		/* [f_keep] */
 	octet* t;		/* [3 * no] */
-	word* pts;		/* [6 * 3 * n] */
-	word* pt0;		/*   [3 * n] */
-	word* pt1;		/*   [3 * n] */
-	word* pt2;		/*   [3 * n] */
-	word* pt3;		/*   [3 * n] */
-	word* pt4;		/*   [3 * n] */
-	word* pt5;		/*   [3 * n] */
-	word* d;		/* [n] */
+	ec_pre_t* pre;	/* [64 якобиевы точки] */
+	word* pt0;		/* [3 * n] */
+	word* pt1;		/* [3 * n] */
+	word* pt2;		/* [3 * n] */
+	word* pt3;		/* [3 * n] */
+	word* pt4;		/* [3 * n] */
+	word* pt5;		/* [3 * n] */
+	word* d;		/* [n + 1] */
 	void* stack;
 	// создать состояние
 	state = blobCreate2(
 		ec_keep,
 		f_keep,
 		3 * no,
-		O_OF_W(6 * 3 * n) | SIZE_HI,
-		O_OF_W(n),
-		utilMax(16,
+		(sizeof(ec_pre_t) + O_OF_W(64 * 3 * n)) | SIZE_HI,
+		O_OF_W(3 * n),
+		O_OF_W(3 * n),
+		O_OF_W(3 * n),
+		O_OF_W(3 * n),
+		O_OF_W(3 * n),
+		O_OF_W(3 * n),
+		O_OF_W(n + 1),
+		utilMax(17,
 			gfpCreate_deep(no),
 			ecpCreateJ_deep(n, f_deep),
 			ecGroupCreate_deep(f_deep),
@@ -92,17 +98,19 @@ bool_t ecpTest()
 			ecPreSNZ_deep(n, 3, ec_deep),
 			ecMulPreSNZ_deep(n, 3, ec_deep, n),
 			ecPreSNZA_deep(n, 3, ec_deep),
-			ecMulPreSNZA_deep(n, 3, ec_deep, n)),
+			ecMulPreSNZA_deep(n, 3, ec_deep, n),
+			ecAddMulA_deep(n, 3, ec_deep, 4, (size_t)1, (size_t)2, (size_t)3, (size_t)4)),
 		SIZE_MAX,
-		&ec, &f, &t, &pts, &d, &stack);
+		&ec, &f, &t, &pre, &pt0, &pt1, &pt2, &pt3, &pt4, &pt5, &d, &stack);
 	if (state == 0)
 		return FALSE;
-	pt0 = pts, pt1 = pt0 + 3 * n, pt2 = pt1 + 3 * n, pt3 = pt2 + 3 * n,
-		pt4 = pt3 + 3 * n, pt5 = pt4 + 3 * n;
 	// создать f = GF(p)
 	hexToRev(t, p);
 	if (!gfpCreate(f, t, no, stack))
+	{
+		blobClose(state);
 		return FALSE;
+	}
 	// создать ec = EC_{ab}(f)
 	hexToRev(t, a), hexToRev(t + no, b);
 	if (!ecpCreateJ(ec, f, t, t + no, stack) || ec->d != 3) 
@@ -159,24 +167,6 @@ bool_t ecpTest()
 			return FALSE;
 		}
 	}
-	// ecMulA() vs ecMulA2()
-/*
-	{
-		wwCopy(d, ec->order, n);
-		zzSubW2(d, n, 1);
-		while (!wwIsZero(d, n))
-		{
-			if (!ecMulA2(pt0, ec->base, ec, d, n, stack) ||
-				!ecMulA(pt1, ec->base, ec, d, n, stack) ||
-				!wwEq(pt0, pt1, 2 * n))
-				return FALSE;
-			wwShLo(d, n, 1);
-		}
-		if (ecMulA(pt0, ec->base, ec, d, n, stack) ||
-			ecMulA2(pt1, ec->base, ec, d, n, stack))
-			return FALSE;
-	}
-*/
 	// финишное сложение
 	if (ec->finadd)
 	{
@@ -311,37 +301,162 @@ bool_t ecpTest()
 		}
 	}
 	// предвычисления по схеме SNZ
-	if (FALSE)
 	{
-		// (pt0, pt1, pt2, pt3) <- (base, 3 base, 5 base, 7 base)
-		ecpPreSNZ(pts, ec->base, 3, ec, stack);
-		// pt0 == base?
-		ecToA(pt4, pt0, ec, stack);
-		if (!wwEq(pt5, ec->base, 2 * n))
+		size_t i;
+		// pt[0..64) <- (1, 3, ..., 31, -31, ..., -3, -1)base
+		ecPreSNZ(pre, ec->base, 6, ec, stack);
+		// pt[i] == -pt[63 - i]?
+		for (i = 0; i < 32; ++i)
+		{
+			ecNeg(pt0, ecPrePt(pre, 63 - i, ec), ec, stack);
+			ecNeg(pt0, pt0, ec, stack);
+			ecAdd(pt0, pt0, ecPrePt(pre, i, ec), ec, stack);
+			if (ecToA(pt0, pt0, ec, stack))
+			{
+				blobClose(state);
+				return FALSE;
+			}
+		}
+		// pt0 <- \sum_{i = 0}^31 2^{31 - i} pt[i]
+		wwCopy(pt0, ecPrePt(pre, 0, ec), 3 * n);
+		for (i = 1; i < 32; ++i)
+		{
+			ecDbl(pt0, pt0, ec, stack);
+			ecAdd(pt0, pt0, ecPrePt(pre, i, ec), ec, stack);
+		}
+		// pt0 == \sum_{i = 0}^31 (2i + 1) 2^{31 - i} base?
+		wwSetW(d, n, 1);
+		for (i = 1; i < 32; ++i)
+		{
+			wwShHi(d, n, 1);
+			zzAddW2(d, n, (word)(2 * i + 1));
+		}
+		if (!ecToA(pt0, pt0, ec, stack) ||
+			!ecMulA(pt1, ec->base, ec, d, n, stack) ||
+			!wwEq(pt0, pt1, 2 * n))
 		{
 			blobClose(state);
 			return FALSE;
 		}
-		// pt1 == 3 base?
-		d[0] = 3, ecMulA(pt5, ec->base, ec, d, 1, stack);
-		ecToA(pt4, pt1, ec, stack);
-		if (!wwEq(pt4, pt5, 2 * n))
+	}
+	// предвычисления по схеме SNZA
+	{
+		size_t i;
+		// pt[0..64) <- (1, 3, ..., 31, -31, ..., -3, -1)base
+		if (!ecPreSNZA(pre, ec->base, 6, ec, stack))
 		{
 			blobClose(state);
 			return FALSE;
 		}
-		// pt2 == 5 base?
-		d[0] = 5, ecMulA(pt5, ec->base, ec, d, 1, stack);
-		ecToA(pt4, pt2, ec, stack);
-		if (!wwEq(pt4, pt5, 2 * n))
+		// pt[i] == -pt[63 - i]?
+		for (i = 0; i < 32; ++i)
+		{
+			ecNegA(pt0, ecPrePtA(pre, 63 - i, ec), ec, stack);
+			ecNegA(pt0, pt0, ec, stack);
+			if (ecpAddAA(pt0, pt0, ecPrePtA(pre, i, ec), ec, stack))
+			{
+				blobClose(state);
+				return FALSE;
+			}
+		}
+		// pt0 <- pt[1] - pt[0]
+		ecNegA(pt0, ecPrePtA(pre, 0, ec), ec, stack);
+		if (!ecpAddAA(pt0, pt0, ecPrePtA(pre, 1, ec), ec, stack))
 		{
 			blobClose(state);
 			return FALSE;
 		}
-		// pt3 == 7 base?
-		d[0] = 7, ecMulA(pt5, ec->base, ec, d, 1, stack);
-		ecToA(pt4, pt3, ec, stack);
-		if (!wwEq(pt4, pt5, 2 * n))
+		// pt[i+1] - pt[i] == pt0?
+		for (i = 1; i + 1 < 32; ++i)
+		{
+			ecNegA(pt1, ecPrePtA(pre, i, ec), ec, stack);
+			if (!ecpAddAA(pt1, pt1, ecPrePtA(pre, i + 1, ec), ec, stack) ||
+				!wwEq(pt0, pt1, 2 * n))
+			{
+				blobClose(state);
+				return FALSE;
+			}
+		}
+		// pt0 == 2 base?
+		if (!ecpAddAA(pt1, ec->base, ec->base, ec, stack) ||
+			!wwEq(pt0, pt1, 2 * n))
+		{
+			blobClose(state);
+			return FALSE;
+		}
+	}
+	// кратная точка: ecMulA vs ecMulPreSNZ
+	{
+		size_t w;
+		for (w = 5; w <= 6; ++w)
+		{
+			wwCopy(d, ec->order, n);
+			zzSubW2(d, n, 1);
+			ecPreSNZ(pre, ec->base, w, ec, stack);
+			while (!wwIsZero(d, n))
+			{
+				if (!ecMulPreSNZ(pt0, pre, ec, d, n, stack) ||
+					!ecMulA(pt1, ec->base, ec, d, n, stack) ||
+					!wwEq(pt0, pt1, 2 * n))
+				{
+					blobClose(state);
+					return FALSE;
+				}
+				wwShLo(d, n, 11);
+			}
+			if (ecMulPreSNZ(pt0, pre, ec, d, n, stack) ||
+				ecMulA(pt1, ec->base, ec, d, n, stack))
+			{
+				blobClose(state);
+				return FALSE;
+			}
+		}
+	}
+	// кратная точка: ecMulA vs ecMulPreSNZA
+	{
+		size_t w;
+		for (w = 5; w <= 6; ++w)
+		{
+			wwCopy(d, ec->order, n);
+			zzSubW2(d, n, 1);
+			ecPreSNZA(pre, ec->base, w, ec, stack);
+			while (!wwIsZero(d, n))
+			{
+				if (!ecMulPreSNZA(pt0, pre, ec, d, n, stack) ||
+					!ecMulA(pt1, ec->base, ec, d, n, stack) ||
+					!wwEq(pt0, pt1, 2 * n))
+				{
+					blobClose(state);
+					return FALSE;
+				}
+				wwShLo(d, n, 23);
+			}
+			if (ecMulPreSNZA(pt0, pre, ec, d, n, stack) ||
+				ecMulA(pt1, ec->base, ec, d, n, stack))
+			{
+				blobClose(state);
+				return FALSE;
+			}
+		}
+	}
+	// сумма кратных точек: ecMulA vs ecAddMulA
+	if (n >= 4)
+	{
+		if (!ecAddMulA(pt0, ec, stack, 4,
+				ec->base, ec->order, (size_t)1,
+				ec->base, ec->order, (size_t)2,
+				ec->base, ec->order, (size_t)3,
+				ec->base, ec->order, (size_t)4))
+		{
+			blobClose(state);
+			return FALSE;
+		}
+		wwCopy(d, ec->order, n);
+		d[4] = zzAddW2(d + 3, 1, zzAdd2(d, ec->order, 3));
+		d[4] += zzAddW2(d + 2, 2, zzAdd2(d, ec->order, 2));
+		d[4] += zzAddW2(d + 1, 3, zzAdd2(d, ec->order, 1));
+		if (!ecMulA(pt1, ec->base, ec, d, 5, stack) ||
+			!wwEq(pt0, pt1, 2 * n))
 		{
 			blobClose(state);
 			return FALSE;

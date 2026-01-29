@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2014.03.04
-\version 2026.01.28
+\version 2026.01.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -139,7 +139,8 @@ P <- P + A и P <- P + P меняются на A <- A + A.
 ускорения второй функции можно рассчитать малые кратные в проективных 
 координатах, а затем быстро перейти к аффинным координатам с помощью
 одновременного обращения сразу нескольких элементов поля. Одновременное
-обращение известно как трюк Монтгомери [Doc05; algorithm 11.15, p. 209]:
+обращение известно как трюк Монтгомери [Mon87] (см. также
+[Doc05; algorithm 11.15, p. 209]):
 	U_1 <- Z_1
 	for t = 2,..., T: U_t <- U_{t-1} Z_t
 	V <- U_T^{-1}
@@ -150,6 +151,8 @@ P <- P + A и P <- P + P меняются на A <- A + A.
 Трюк не применяется, поскольку на данном уровне описания кривой структура
 проективных координат не определена.
 
+[Mon87] Montogomery P, Speeding the Pollard and elliptic curve method of
+        factorization. Mathematics of Computation, 48 (177), 1987, 243--264.
 [Doc05] Doche C. Finite Field Arithmetic. In: Handbook of Elliptic and
 		Hyperelliptic Curve Cryptography. Chapman & Hall/CRC, 2005.
 *******************************************************************************
@@ -250,7 +253,7 @@ bool_t ecPreSNZA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	}
 	// pt[pre_count - i] <- -pt[i]
 	for (i = 0; i < SIZE_1 << (w - 1); ++i)
-		ecNegA(ecPrePt(pre, (SIZE_1 << w) - 1 - i, ec), ecPrePt(pre, i, ec),
+		ecNegA(ecPrePtA(pre, (SIZE_1 << w) - 1 - i, ec), ecPrePtA(pre, i, ec),
 			ec, stack);
 	// заполнить остальные поля
 	pre->type = ec_pre_snza;
@@ -538,7 +541,6 @@ bool_t ecMulPreSNZ(word b[], const ec_pre_t* pre, const ec_o* ec,
 	register word hi;
 	register bool_t ret;
 	size_t mb;
-	size_t snz_width;
 	size_t k;
 	size_t i;
 	word* dd;			/* [m] */
@@ -553,7 +555,6 @@ bool_t ecMulPreSNZ(word b[], const ec_pre_t* pre, const ec_o* ec,
 	ASSERT(wwCmp(d, ec->order, m) < 0);
 	// размерности
 	mb = wwBitSize(ec->order, m);
-	snz_width = pre->w;
 	// разметить стек
 	memSlice(stack,
 		ecMulPreSNZ_local(ec->f->n, ec->d, m), SIZE_0, SIZE_MAX,
@@ -563,26 +564,26 @@ bool_t ecMulPreSNZ(word b[], const ec_pre_t* pre, const ec_o* ec,
 	zzSubIf(dd, ec->order, d, m, neg);
 	ASSERT(zzIsOdd(dd, m));
 	// число цифр SNZ
-	k = (mb + snz_width - 1) / snz_width;
+	k = (mb + pre->w - 1) / pre->w;
 	ASSERT(k > 1);
 	// старшая цифра
 	--k;
-	digit = wwGetBits(dd, k * snz_width, mb - k * snz_width);
+	digit = wwGetBits(dd, k * pre->w, mb - k * pre->w);
 	wwCopy(t, ecPrePt(pre, digit >> 1, ec), ec->d * ec->f->n);
-	hi = WORD_1 - (digit & 1), hi <<= snz_width - 1;
+	hi = WORD_1 - (digit & 1), hi <<= pre->w - 1;
 	// обработать остальные цифры
 	while (--k)
 	{
-		for (i = snz_width; i--;)
+		for (i = pre->w; i--;)
 			ecDbl(t, t, ec, stack);
-		digit = wwGetBits(dd, k * snz_width, snz_width);
+		digit = wwGetBits(dd, k * pre->w, pre->w);
 		ecAdd(t, t, ecPrePt(pre, hi | (digit >> 1), ec), ec, stack);
-		hi = WORD_1 - (digit & 1), hi <<= snz_width - 1;
+		hi = WORD_1 - (digit & 1), hi <<= pre->w - 1;
 	}
 	// завершающие удвоения и финишное сложение
-	for (i = snz_width; i--;)
+	for (i = pre->w; i--;)
 		ecDbl(t, t, ec, stack);
-	digit = wwGetBits(dd, 0, snz_width);
+	digit = wwGetBits(dd, 0, pre->w);
 	ASSERT(digit & 1);
 	ret = (ec->finadd) ?
 		ec->finadd(b, t, ecPrePt(pre, hi | (digit >> 1), ec), neg, ec, stack) :
@@ -612,7 +613,6 @@ bool_t ecMulPreSNZA(word b[], const ec_pre_t* pre, const ec_o* ec,
 	register word hi;
 	register bool_t ret;
 	size_t mb;
-	size_t snz_width;
 	size_t k;
 	size_t i;
 	word* dd;			/* [m] */
@@ -627,7 +627,6 @@ bool_t ecMulPreSNZA(word b[], const ec_pre_t* pre, const ec_o* ec,
 	ASSERT(wwCmp(d, ec->order, m) < 0);
 	// размерности
 	mb = wwBitSize(ec->order, m);
-	snz_width = pre->w;
 	// разметить стек
 	memSlice(stack,
 		ecMulPreSNZA_local(ec->f->n, ec->d, m), SIZE_0, SIZE_MAX,
@@ -637,26 +636,26 @@ bool_t ecMulPreSNZA(word b[], const ec_pre_t* pre, const ec_o* ec,
 	zzSubIf(dd, ec->order, d, m, neg);
 	ASSERT(zzIsOdd(dd, m));
 	// число цифр SNZ
-	k = (mb + snz_width - 1) / snz_width;
+	k = (mb + pre->w - 1) / pre->w;
 	ASSERT(k > 1);
 	// старшая цифра
 	--k;
-	digit = wwGetBits(dd, k * snz_width, mb - k * snz_width);
-	wwCopy(t, ecPrePtA(pre, digit >> 1, ec), ec->d * ec->f->n);
-	hi = WORD_1 - (digit & 1), hi <<= snz_width - 1;
+	digit = wwGetBits(dd, k * pre->w, mb - k * pre->w);
+	ecFromA(t, ecPrePtA(pre, digit >> 1, ec), ec, stack);
+	hi = WORD_1 - (digit & 1), hi <<= pre->w - 1;
 	// обработать остальные цифры
 	while (--k)
 	{
-		for (i = snz_width; --i;)
+		for (i = pre->w; --i;)
 			ecDbl(t, t, ec, stack);
-		digit = wwGetBits(dd, k * snz_width, snz_width);
+		digit = wwGetBits(dd, k * pre->w, pre->w);
 		ecDblAddA(t, t, ecPrePtA(pre, hi | (digit >> 1), ec), ec, stack);
-		hi = WORD_1 - (digit & 1), hi <<= snz_width - 1;
+		hi = WORD_1 - (digit & 1), hi <<= pre->w - 1;
 	}
 	// завершающие удвоения и финишное сложение
-	for (i = snz_width; i--;)
+	for (i = pre->w; i--;)
 		ecDbl(t, t, ec, stack);
-	digit = wwGetBits(dd, 0, snz_width);
+	digit = wwGetBits(dd, 0, pre->w);
 	ASSERT(digit & 1);
 	ret = (ec->finadda) ?
 		ec->finadda(b, t, ecPrePtA(pre, hi | (digit >> 1), ec), neg, ec,
@@ -672,61 +671,6 @@ size_t ecMulPreSNZA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 	return memSliceSize(
 		ecMulPreSNZA_local(n, ec_d, m),
 		ecFinAddA_deep(n, ec_d, ec_deep),
-		SIZE_MAX);
-}
-
-/*
-*******************************************************************************
-На удаление
-*******************************************************************************
-*/
-
-static size_t ecSNZWidth(size_t l)
-{
-	if (l <= 256)
-		return 5;
-	return 6;
-}
-
-#define ecMulA2_local(n, ec_d, pre_count)\
-/* pre */	sizeof(ec_pre_t) + O_OF_W(pre_count * ec_d * n)
-
-bool_t ecMulA2(word b[], const word a[], const ec_o* ec,
-	const word d[], size_t m, void* stack)
-{
-	size_t mb;
-	size_t snz_width;
-	size_t pre_count;
-	ec_pre_t* pre;			/* [pre_count проективных точек] */
-	// pre
-	ASSERT(ecIsOperable(ec));
-	ASSERT(ecGroupIsOperable(ec));
-	ASSERT(wwWordSize(ec->order, ec->f->n + 1) == m);
-	ASSERT(zzIsOdd(ec->order, m) && m > 1);
-	ASSERT(wwCmp(d, ec->order, m) < 0);
-	// размерности
-	mb = wwBitSize(ec->order, m);
-	snz_width = ecSNZWidth(mb);
-	pre_count = SIZE_1 << snz_width;
-	// разметить стек
-	memSlice(stack,
-		ecMulA2_local(ec->f->n, ec->d, pre_count), SIZE_0, SIZE_MAX,
-		&pre, &stack);
-	// предвычисления
-	ecPreSNZ(pre, a, snz_width, ec, stack);
-	// кратная точка по методу SNZ
-	return ecMulPreSNZ(b, pre, ec, d, m, stack);
-}
-
-size_t ecMulA2_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
-{
-	const size_t snz_width = ecSNZWidth(B_OF_W(m));
-	const size_t pre_count = SIZE_1 << snz_width;
-	return memSliceSize(
-		ecMulA2_local(n, ec_d, pre_count),
-		utilMax(2,
-			ecMulPreSNZ_deep(n, ec_d, ec_deep, m),
-			ecFinAdd_deep(n, ec_d, ec_deep)),
 		SIZE_MAX);
 }
 
