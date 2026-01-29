@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2012.04.19
-\version 2026.01.28
+\version 2026.01.29
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -567,11 +567,17 @@ typedef struct ec_o
 #define ecIsO(a, ec)\
 	wwIsZero(ecZ(a, (ec)->f->n), (ec)->f->n)
 
+#define ecPt(pts, pos, ec)\
+	((pts) + (pos) * (ec)->d * (ec)->f->n)
+
 #define ecPrePt(pre, pos, ec)\
-	((pre)->pts + (pos) * (ec)->d * (ec)->f->n)
+	ecPt(pre->pts, pos, ec)
+
+#define ecPtA(pts, pos, ec)\
+	((pts) + (pos) * 2 * (ec)->f->n)
 
 #define ecPrePtA(pre, pos, ec)\
-	((pre)->pts + (pos) * 2 * (ec)->f->n)
+	ecPtA(pre->pts, pos, ec)
 
 /*
 *******************************************************************************
@@ -791,8 +797,10 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 		условных переходов;
 	-	функция ec->add регулярна: сложение a + b, a != \pm b, a != O, b != O,
 		выполняется без условных переходов;
-	-	ec->finadd != 0 и функция ec->finadd регулярна: сложение и удвоение
-		выполняются по одним и тем же формулам без условных переходов.
+	-	справедливо, по крайней мере, одно из условий:
+		a) ec->order mod 2^{pre->w} == ec->order mod 2^{pre->w + 1};
+		b) ec->finadd != 0 и функция ec->finadd регулярна: сложение и удвоение
+	       выполняются по одним и тем же формулам без условных переходов.
 */
 bool_t ecMulPreSNZ(
 	word b[],				/*!< [out] кратная точка */
@@ -834,8 +842,10 @@ size_t ecMulPreSNZ_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 	-	если ec->dbladda != 0, то функция ec->dbladda регулярна: вычисление
 		2a + b, 2a != \pm b, a != O, b != O, выполняется без условных
 		переходов;
-	-	ec->finadda != 0 и функция ec->finadda регулярна: сложение и удвоение
-		выполняются по одним и тем же формулам без условных переходов.
+	-	справедливо, по крайней мере, одно из условий:
+		a) ec->order mod 2^{pre->w} == ec->order mod 2^{pre->w + 1};
+		b) ec->finadda != 0 и функция ec->finadda регулярна: сложение и
+	       удвоение выполняются по одним и тем же формулам без условных переходов.
 */
 bool_t ecMulPreSNZA(
 	word b[],				/*!< [out] кратная точка */
