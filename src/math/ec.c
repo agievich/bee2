@@ -676,6 +676,17 @@ size_t ecMulPreSNZA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 
 /*
 *******************************************************************************
+Кратная точка: метод Comb
+
+[LimLee94] Lim, C.H., Lee, P.J. More Flexible Exponentiation with
+           Precomputation. In: Advances in Cryptology -- CRYPTO ’94. 1994.
+           Lecture Notes in Computer Science, vol 839. Springer, Berlin,
+		   Heidelberg. https://doi.org/10.1007/3-540-48658-5_11.
+*******************************************************************************
+*/
+
+/*
+*******************************************************************************
 Имеет порядок?
 *******************************************************************************
 */

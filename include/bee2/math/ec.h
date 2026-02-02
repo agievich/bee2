@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2012.04.19
-\version 2026.01.29
+\version 2026.02.02
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -450,17 +450,17 @@ typedef enum
 	.
 	\pre 0 < w && w < B_PER_W.
 	\pre h > 0 <=> type == ec_pre_comb.
-	\remark Схему SNZ было предложено в использовать в работе [OkeTak03],
+	\remark Схему SNZ предложено в использовать в работе [OkeTak03],
 	схему Comb -- в работе [HPB05].
 	.
+	[OkeTak03] Okeya K., Takagi T. The width-w NAF method provides small memory
+			   and fast elliptic scalar multiplications secure against side
+			   channel attacks. In Cryptographers’ Track at the RSA Conference,
+			   2003, pp. 328-343. Springer, Berlin Heidelberg.
 	[HPB05]    Hedabou M., Pinel P., Beneteau L. Countermeasures for preventing
 	           comb method against SCA attacks. In: International Conference
 	           on Information Security Practice and Experience, 2005, pp. 85-96, 
 	           Springer, Berlin Heidelberg.
-	[OkeTak03] Okeya K., Takagi T. The width-w NAF method provides small memory
-	           and fast elliptic scalar multiplications secure against side
-	           channel attacks. In Cryptographers’ Track at the RSA Conference,
-	           2003, pp. 328-343. Springer, Berlin Heidelberg.
 */
 typedef struct ec_pre_t
 {
