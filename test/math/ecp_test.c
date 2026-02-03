@@ -213,6 +213,43 @@ bool_t ecpTest()
 			return FALSE;
 		}
 	}
+	// установка знака
+	if (ec->sgn)
+	{
+		ecFromA(pt0, ec->base, ec, stack);
+		wwCopy(pt1, pt0, 3 * n);
+		ecSgn(pt0, 0, ec, stack);
+		if (!wwEq(pt0, pt1, 3 * n))
+		{
+			blobClose(state);
+			return FALSE;
+		}
+		ecSgn(pt0, 1, ec, stack);
+		ecNeg(pt1, pt1, ec, stack);
+		if (!wwEq(pt0, pt1, 3 * n))
+		{
+			blobClose(state);
+			return FALSE;
+		}
+	}
+	// установка знака аффинной точки
+	if (ec->sgna)
+	{
+		wwCopy(pt0, ec->base, 2 * n);
+		ecSgnA(pt0, 0, ec, stack);
+		if (!wwEq(pt0, ec->base, 2 * n))
+		{
+			blobClose(state);
+			return FALSE;
+		}
+		ecSgnA(pt0, 1, ec, stack);
+		ecNegA(pt1, ec->base, ec, stack);
+		if (!wwEq(pt0, pt1, 2 * n))
+		{
+			blobClose(state);
+			return FALSE;
+		}
+	}
 	// финишное сложение
 	if (ec->finadd)
 	{
@@ -248,7 +285,7 @@ bool_t ecpTest()
 		// pt0 <- pt1 + pt1 == 2 base, pt0 == pt2?
 		ec->finadd(pt0, pt1, pt1, ec, stack);
 		ecToA(pt5, pt2, ec, stack);
-		if (!wwEq(pt0, pt2, 2 * n))
+		if (!wwEq(pt0, pt5, 2 * n))
 		{
 			blobClose(state);
 			return FALSE;
