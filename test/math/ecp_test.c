@@ -167,94 +167,7 @@ bool_t ecpTest()
 			return FALSE;
 		}
 	}
-	// финишное сложение
-	if (ec->finadd)
-	{
-		// (pt1, pt2, pt3, pt4) <- (base, 2 base, 3 base, 4 base)
-		ecFromA(pt1, ec->base, ec, stack);
-		ecAddA(pt2, pt1, ec->base, ec, stack);
-		ecAddA(pt3, pt2, ec->base, ec, stack);
-		ecAddA(pt4, pt3, ec->base, ec, stack);
-		// pt0 <- pt1 + pt2 = 3 base, pt0 == pt3?
-		ec->finadd(pt0, pt1, pt2, 0, ec, stack);
-		ecToA(pt5, pt3, ec, stack);
-		if (!wwEq(pt0, pt5, 2 * n))
-		{
-			blobClose(state);
-			return FALSE;
-		}
-		// pt0 <- -(pt1 + pt3) == -4 base, pt0 == -pt4?
-		ec->finadd(pt0, pt1, pt3, 1, ec, stack);
-		ecNeg(pt5, pt4, ec, stack);
-		ecToA(pt5, pt5, ec, stack);
-		if (!wwEq(pt0, pt5, 2 * n))
-		{
-			blobClose(state);
-			return FALSE;
-		}
-		// pt0 <- -(pt2 + pt2) == -4 base, pt0 == -pt4?
-		ec->finadd(pt0, pt2, pt2, 1, ec, stack);
-		if (!wwEq(pt0, pt5, 2 * n))
-		{
-			blobClose(state);
-			return FALSE;
-		}
-		// pt0 <- pt1 + pt1 == 2 base, pt0 == pt2?
-		ec->finadd(pt0, pt1, pt1, 0, ec, stack);
-		ecToA(pt5, pt2, ec, stack);
-		if (!wwEq(pt0, pt5, 2 * n))
-		{
-			blobClose(state);
-			return FALSE;
-		}
-	}
-	// финишное сложение с аффинной точкой
-	if (ec->finadda)
-	{
-		// (pt1, pt2, pt3, pt4) <- (base, 2 base, 3 base, 4 base)
-		ecFromA(pt1, ec->base, ec, stack);
-		ecAddA(pt2, pt1, ec->base, ec, stack);
-		ecAddA(pt3, pt2, ec->base, ec, stack);
-		ecAddA(pt4, pt3, ec->base, ec, stack);
-		// pt0 <- pt1 + pt2 = 3 base, pt0 == pt3?
-		ecToA(pt5, pt2, ec, stack);
-		ec->finadda(pt0, pt1, pt5, 0, ec, stack);
-		ecToA(pt5, pt3, ec, stack);
-		if (!wwEq(pt0, pt5, 2 * n))
-		{
-			blobClose(state);
-			return FALSE;
-		}
-		// pt0 <- -(pt1 + pt3) == -4 base, pt0 == -pt4?
-		ecToA(pt5, pt3, ec, stack);
-		ec->finadda(pt0, pt1, pt5, 1, ec, stack);
-		ecNeg(pt5, pt4, ec, stack);
-		ecToA(pt5, pt5, ec, stack);
-		if (!wwEq(pt0, pt5, 2 * n))
-		{
-			blobClose(state);
-			return FALSE;
-		}
-		// pt0 <- -(pt2 + pt2) == -4 base, pt0 == -pt4?
-		ecToA(pt5, pt2, ec, stack);
-		ec->finadda(pt0, pt2, pt5, 1, ec, stack);
-		ecNeg(pt5, pt4, ec, stack);
-		ecToA(pt5, pt5, ec, stack);
-		if (!wwEq(pt0, pt5, 2 * n))
-		{
-			blobClose(state);
-			return FALSE;
-		}
-		// pt0 <- pt1 + pt1 == 2 base, pt0 ==? pt2
-		ec->finadda(pt0, pt1, ec->base, 0, ec, stack);
-		ecToA(pt5, pt2, ec, stack);
-		if (!wwEq(pt0, pt5, 2 * n))
-		{
-			blobClose(state);
-			return FALSE;
-		}
-	}
-	// удвоение и сложение с аффинной точкой
+	// удвоение со сложением с аффинной точкой
 	if (ec->dbladda)
 	{
 		// pt0 <- 2 base + base
@@ -295,6 +208,91 @@ bool_t ecpTest()
 		// pt0 == 5 base?
 		d[0] = 5, ecMulA(pt3, ec->base, ec, d, 1, stack);
 		if (!ecToA(pt0, pt0, ec, stack) || !wwEq(pt0, pt3, 2 * n))
+		{
+			blobClose(state);
+			return FALSE;
+		}
+	}
+	// финишное сложение
+	if (ec->finadd)
+	{
+		// (pt1, pt2, pt3, pt4) <- (base, 2 base, 3 base, 4 base)
+		ecFromA(pt1, ec->base, ec, stack);
+		ecAddA(pt2, pt1, ec->base, ec, stack);
+		ecAddA(pt3, pt2, ec->base, ec, stack);
+		ecAddA(pt4, pt3, ec->base, ec, stack);
+		// pt0 <- pt1 + pt2 = 3 base, pt0 == pt3?
+		ec->finadd(pt0, pt1, pt2, ec, stack);
+		ecToA(pt5, pt3, ec, stack);
+		if (!wwEq(pt0, pt5, 2 * n))
+		{
+			blobClose(state);
+			return FALSE;
+		}
+		// pt0 <- pt1 + pt3 == 4 base, pt0 == pt4?
+		ec->finadd(pt0, pt1, pt3, ec, stack);
+		ecToA(pt5, pt4, ec, stack);
+		if (!wwEq(pt0, pt5, 2 * n))
+		{
+			blobClose(state);
+			return FALSE;
+		}
+		// pt0 <- pt2 + pt2 == 4 base, pt0 == pt4?
+		ec->finadd(pt0, pt2, pt2, ec, stack);
+		ecToA(pt5, pt4, ec, stack);
+		if (!wwEq(pt0, pt5, 2 * n))
+		{
+			blobClose(state);
+			return FALSE;
+		}
+		// pt0 <- pt1 + pt1 == 2 base, pt0 == pt2?
+		ec->finadd(pt0, pt1, pt1, ec, stack);
+		ecToA(pt5, pt2, ec, stack);
+		if (!wwEq(pt0, pt2, 2 * n))
+		{
+			blobClose(state);
+			return FALSE;
+		}
+	}
+	// финишное сложение с аффинной точкой
+	if (ec->finadda)
+	{
+		// (pt1, pt2, pt3, pt4) <- (base, 2 base, 3 base, 4 base)
+		ecFromA(pt1, ec->base, ec, stack);
+		ecAddA(pt2, pt1, ec->base, ec, stack);
+		ecAddA(pt3, pt2, ec->base, ec, stack);
+		ecAddA(pt4, pt3, ec->base, ec, stack);
+		// pt0 <- pt1 + pt2 = 3 base, pt0 == pt3?
+		ecToA(pt5, pt2, ec, stack);
+		ec->finadda(pt0, pt1, pt5, ec, stack);
+		ecToA(pt5, pt3, ec, stack);
+		if (!wwEq(pt0, pt5, 2 * n))
+		{
+			blobClose(state);
+			return FALSE;
+		}
+		// pt0 <- pt1 + pt3 == 4 base, pt0 == pt4?
+		ecToA(pt5, pt3, ec, stack);
+		ec->finadda(pt0, pt1, pt5, ec, stack);
+		ecToA(pt5, pt4, ec, stack);
+		if (!wwEq(pt0, pt5, 2 * n))
+		{
+			blobClose(state);
+			return FALSE;
+		}
+		// pt0 <- pt2 + pt2 == 4 base, pt0 == pt4?
+		ecToA(pt5, pt2, ec, stack);
+		ec->finadda(pt0, pt2, pt5, ec, stack);
+		ecToA(pt5, pt4, ec, stack);
+		if (!wwEq(pt0, pt5, 2 * n))
+		{
+			blobClose(state);
+			return FALSE;
+		}
+		// pt0 <- pt1 + pt1 == 2 base, pt0 ==? pt2
+		ec->finadda(pt0, pt1, ec->base, ec, stack);
+		ecToA(pt5, pt2, ec, stack);
+		if (!wwEq(pt0, pt5, 2 * n))
 		{
 			blobClose(state);
 			return FALSE;

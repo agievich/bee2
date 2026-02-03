@@ -4,7 +4,7 @@
 \brief Elliptic curves over prime fields
 \project bee2 [cryptographic library]
 \created 2012.06.26
-\version 2026.01.27
+\version 2026.02.03
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -187,11 +187,9 @@ static void ecpNegJ(word b[], const word a[], const ec_o* ec, void* stack)
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
 	ASSERT(ecpSeemsOnJ(a, ec));
 	ASSERT(wwIsSameOrDisjoint(a, b, 3 * ec->f->n));
-	// xb <- xa
+	// b <- (xa, -ya, za)
 	qrCopy(ecX(b), ecX(a), ec->f);
-	// yb <- -ya
 	zmNeg(ecY(b, ec->f->n), ecY(a, ec->f->n), ec->f);
-	// zb <- za
 	qrCopy(ecZ(b, ec->f->n), ecZ(a, ec->f->n), ec->f);
 }
 
@@ -1028,6 +1026,32 @@ size_t ecpDblAddAJ_deep(size_t n, size_t f_deep)
 
 /*
 *******************************************************************************
+Изменение знака
+******************************************************************************
+*/
+
+// [3n]b <- (-1)^neg [3n]a (J <- \pm J)
+static void ecpSgnJ(word a[], register word neg, const ec_o* ec, void* stack)
+{
+	ASSERT(ecIsOperable(ec) && ec->d == 3);
+	ASSERT(ecpSeemsOnJ(a, ec));
+	ASSERT(neg == 0 || neg == 1);
+	// a <- (xa, (-1)^neg ya, za)
+	zzNegModIf(ecY(a, ec->f->n), ecY(a, ec->f->n), ec->f->mod, ec->f->n, neg);
+}
+
+// [2n]b <- (-1)^neg [2n]a (A <- \pm A)
+static void ecpSgnAJ(word a[], register word neg, const ec_o* ec, void* stack)
+{
+	ASSERT(ecIsOperable(ec));
+	ASSERT(ecpSeemsOnJ(a, ec));
+	ASSERT(neg == 0 || neg == 1);
+	// a <- (xa, (-1)^neg ya)
+	zzNegModIf(ecY(a, ec->f->n), ecY(a, ec->f->n), ec->f->mod, ec->f->n, neg);
+}
+
+/*
+*******************************************************************************
 Финишное сложение
 
 Использованы полные (complete) формулы сложения / удвоения из работы [RCB15].
@@ -1055,9 +1079,9 @@ size_t ecpDblAddAJ_deep(size_t n, size_t f_deep)
 /* t4 */	O_OF_W(n),\
 /* t5 */	O_OF_W(n)
 
-// [2n]с <- (-1)^neg ([3n]a + [3n]b) (A <- J + J)
+// [2n]с <- [3n]a + [3n]b (A <- J + J)
 static bool_t ecpFinAdd(word c[], const word a[], const word b[],
-	register word neg, const ec_o* ec, void* stack)
+	const ec_o* ec, void* stack)
 {
 	size_t n;
 	register bool_t ret;
@@ -1139,8 +1163,6 @@ static bool_t ecpFinAdd(word c[], const word a[], const word b[],
 	qrInv(t0, ecZ(pt3, n), ec->f, stack);
 	qrMul(ecX(c), ecX(pt3), t0, ec->f, stack);
 	qrMul(ecY(c, n), ecY(pt3, n), t0, ec->f, stack);
-	// c <- (-1)^neg c
-	zzNegModIf(ecY(c, n), ecY(c, n), ec->f->mod, n, neg);
 	return ret;
 }
 
@@ -1163,9 +1185,9 @@ static size_t ecpFinAdd_deep(size_t n, size_t f_deep)
 /* t4 */	O_OF_W(n),\
 /* t5 */	O_OF_W(n)
 
-// [2n]с <- (-1)^neg ([3n]a + [2n]b) (A <- J + A)
+// [2n]с <- [3n]a + [2n]b (A <- J + A)
 static bool_t ecpFinAddA(word c[], const word a[], const word b[],
-	register word neg, const ec_o* ec, void* stack)
+	const ec_o* ec, void* stack)
 {
 	size_t n;
 	register bool_t ret;
@@ -1234,8 +1256,6 @@ static bool_t ecpFinAddA(word c[], const word a[], const word b[],
 	qrInv(t0, ecZ(pt3, n), ec->f, stack);
 	qrMul(ecX(c), ecX(pt3), t0, ec->f, stack);
 	qrMul(ecY(c, n), ecY(pt3, n), t0, ec->f, stack);
-	// c <- (-1)^neg c
-	zzNegModIf(ecY(c, n), ecY(c, n), ec->f->mod, n, neg);
 	return ret;
 }
 
@@ -1307,8 +1327,10 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	ec->adda = ecpAddAJ;
 	ec->dbl = bA3 ? ecpDblJA3 : ecpDblJ;
 	ec->dbla = ecpDblAJ;
-	ec->dbladda = ecpDblAddAJ;
 	ec->tpl = bA3 ? ecpTplJA3 : ecpTplJ;
+	ec->dbladda = ecpDblAddAJ;
+	ec->sgn = ecpSgnJ;
+	ec->sgna = ecpSgnAJ;
 	ec->finadd = ecpFinAdd;
 	ec->finadda = ecpFinAddA;
 	ec->deep = utilMax(9,
@@ -1349,9 +1371,9 @@ size_t ecpCreateJ_deep(size_t n, size_t f_deep)
 			ecpDblJ_deep(n, f_deep),
 			ecpDblJA3_deep(n, f_deep),
 			ecpDblAJ_deep(n, f_deep),
-			ecpDblAddAJ_deep(n, f_deep),
 			ecpTplJ_deep(n, f_deep),
 			ecpTplJA3_deep(n, f_deep),
+			ecpDblAddAJ_deep(n, f_deep),
 			ecpFinAdd_deep(n, f_deep),
 			ecpFinAddA_deep(n, f_deep)),
 		SIZE_MAX);
@@ -1586,14 +1608,12 @@ size_t ecpIsOnA_deep(size_t n, size_t f_deep)
 
 void ecpNegA(word b[], const word a[], const ec_o* ec)
 {
-	const size_t n = ec->f->n;
-	// pre
 	ASSERT(ecIsOperable(ec));
 	ASSERT(ecpSeemsOnA(a, ec));
-	ASSERT(wwIsSameOrDisjoint(a, b, 2 * n));
+	ASSERT(wwIsSameOrDisjoint(a, b, 2 * ec->f->n));
 	// (xb, yb) <- (xa, -ya)
 	qrCopy(ecX(b), ecX(a), ec->f);
-	zmNeg(ecY(b, n), ecY(a, n), ec->f);
+	zmNeg(ecY(b, ec->f->n), ecY(a, ec->f->n), ec->f);
 }
 
 #define ecpAddAA_local(n)\

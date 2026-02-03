@@ -281,7 +281,7 @@ size_t ecPreSNZA_deep(size_t n, size_t ec_d, size_t ec_deep)
 /* t */		O_OF_W(ec_d * n)
 
 static bool_t ecFinAdd(word c[], const word a[], const word b[],
-	register word neg, const ec_o* ec, void* stack)
+	const ec_o* ec, void* stack)
 {
 	word* t;			/* [ec->d * ec->f->n] */
 	ASSERT(ecIsOperable(ec));
@@ -289,8 +289,6 @@ static bool_t ecFinAdd(word c[], const word a[], const word b[],
 		ecFinAdd_local(ec->f->n, ec->d), SIZE_0, SIZE_MAX,
 		&t, &stack);
 	ecAdd(t, a, b, ec, stack);
-	if (neg)
-		ecNeg(t, t, ec, stack);
 	return ecToA(c, t, ec, stack);
 }
 
@@ -306,7 +304,7 @@ static size_t ecFinAdd_deep(size_t n, size_t ec_d, size_t ec_deep)
 /* t */		O_OF_W(ec_d * n)
 
 static bool_t ecFinAddA(word c[], const word a[], const word b[],
-	register word neg, const ec_o* ec, void* stack)
+	const ec_o* ec, void* stack) 
 {
 	word* t;			/* [ec->d * ec->f->n] */
 	ASSERT(ecIsOperable(ec));
@@ -314,8 +312,6 @@ static bool_t ecFinAddA(word c[], const word a[], const word b[],
 		ecFinAddA_local(ec->f->n, ec->d), SIZE_0, SIZE_MAX,
 		&t, &stack);
 	ecAddA(t, a, b, ec, stack);
-	if (neg)
-		ecNeg(t, t, ec, stack);
 	return ecToA(c, t, ec, stack);
 }
 
@@ -585,9 +581,15 @@ bool_t ecMulPreSNZ(word b[], const ec_pre_t* pre, const ec_o* ec,
 		ecDbl(t, t, ec, stack);
 	digit = wwGetBits(dd, 0, pre->w);
 	ASSERT(digit & 1);
-	ret = (ec->finadd) ?
-		ec->finadd(b, t, ecPrePt(pre, hi | (digit >> 1), ec), neg, ec, stack) :
-		ecFinAdd(b, t, ecPrePt(pre, hi | (digit >> 1), ec), neg, ec, stack);
+	if (ec->finadd)
+		ret = ec->finadd(b, t, ecPrePt(pre, hi | (digit >> 1), ec), ec, stack);
+	else
+	{
+		ecAdd(t, t, ecPrePt(pre, hi | (digit >> 1), ec), ec, stack);
+		ret = ecToA(b, t, ec, stack);
+	}
+	// настройка знака
+	ecSgnA(b, neg, ec, stack);
 	// очистка и возврат
 	CLEAN3(neg, digit, hi);
 	return ret;
@@ -657,10 +659,16 @@ bool_t ecMulPreSNZA(word b[], const ec_pre_t* pre, const ec_o* ec,
 		ecDbl(t, t, ec, stack);
 	digit = wwGetBits(dd, 0, pre->w);
 	ASSERT(digit & 1);
-	ret = (ec->finadda) ?
-		ec->finadda(b, t, ecPrePtA(pre, hi | (digit >> 1), ec), neg, ec,
-			stack) :
-		ecFinAddA(b, t, ecPrePtA(pre, hi | (digit >> 1), ec), neg, ec, stack);
+	if (ec->finadd)
+		ret = ec->finadda(b, t, ecPrePtA(pre, hi | (digit >> 1), ec), ec,
+			stack);
+	else
+	{
+		ecAddA(t, t, ecPrePtA(pre, hi | (digit >> 1), ec), ec, stack);
+		ret = ecToA(b, t, ec, stack);
+	}
+	// настройка знака
+	ecSgnA(b, neg, ec, stack);
 	// очистка и возврат
 	CLEAN3(neg, digit, hi);
 	return ret;
