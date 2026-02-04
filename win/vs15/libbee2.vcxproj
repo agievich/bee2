@@ -424,6 +424,7 @@
     <ClCompile Include="..\..\src\math\ecp\ecp_a.c" />
     <ClCompile Include="..\..\src\math\ecp\ecp_j.c" />
     <ClCompile Include="..\..\src\math\ecp\ecp_misc.c" />
+    <ClCompile Include="..\..\src\math\ecp\ecp_pre.c" />
     <ClCompile Include="..\..\src\math\gf2.c" />
     <ClCompile Include="..\..\src\math\gfp.c" />
     <ClCompile Include="..\..\src\math\pp\pp_etc.c" />

@@ -60,7 +60,7 @@ bool_t ecpTest()
 	ec_o* ec;		/* [ec_keep] */
 	qr_o* f;		/* [f_keep] */
 	octet* t;		/* [3 * no] */
-	ec_pre_t* pre;	/* [64 якобиевы точки] */
+	ec_pre_t* pre;	/* [32 якобиевы точки] */
 	word* pt0;		/* [3 * n] */
 	word* pt1;		/* [3 * n] */
 	word* pt2;		/* [3 * n] */
@@ -82,7 +82,7 @@ bool_t ecpTest()
 		O_OF_W(3 * n),
 		O_OF_W(3 * n),
 		O_OF_W(n + 1),
-		utilMax(17,
+		utilMax(18,
 			gfpCreate_deep(no),
 			ecpCreateJ_deep(n, f_deep),
 			ecGroupCreate_deep(f_deep),
@@ -96,6 +96,7 @@ bool_t ecpTest()
 			ecpSubAA_deep(n, f_deep),
 			ecMulA_deep(n, 3, ec_deep, n),
 			ecPreSNZ_deep(n, 3, ec_deep),
+			ecpPreSNZ_deep(n, f_deep, 6),
 			ecMulPreSNZ_deep(n, 3, ec_deep, n),
 			ecPreSNZA_deep(n, 3, ec_deep),
 			ecMulPreSNZA_deep(n, 3, ec_deep, n),
@@ -339,7 +340,7 @@ bool_t ecpTest()
 	{
 		size_t i;
 		// pt[0..32) <- (1, 3, ..., 31)base
-		ecPreSNZ(pre, ec->base, 6, ec, stack);
+		ecpPreSNZ(pre, ec->base, 6, ec, stack);
 		// pt0 <- \sum_{i = 0}^31 2^{31 - i} pt[i]
 		wwCopy(pt0, ecPrePt(pre, 0, ec), 3 * n);
 		for (i = 1; i < 32; ++i)
