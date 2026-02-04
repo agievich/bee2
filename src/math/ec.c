@@ -21,12 +21,6 @@
 
 /*
 *******************************************************************************
-Вспомогательные функции и определения
-*******************************************************************************
-*/
-
-/*
-*******************************************************************************
 Управление описанием кривой
 *******************************************************************************
 */
@@ -496,6 +490,8 @@ bool_t ecMulPreSNZ(word b[], const ec_pre_t* pre, const ec_o* ec,
 	register word borrow;
 	register bool_t ret;
 	size_t mb;
+	size_t pre_count;
+	size_t pt_size;
 	size_t mask;
 	size_t pos;
 	size_t i;
@@ -513,6 +509,8 @@ bool_t ecMulPreSNZ(word b[], const ec_pre_t* pre, const ec_o* ec,
 	// размерности
 	mb = wwBitSize(ec->order, m);
 	ASSERT(mb >= 2 * pre->w);
+	pre_count = SIZE_1 << (pre->w - 1);
+	pt_size = ec->d * ec->f->n;
 	mask = WORD_BIT_POS(pre->w) - 2;
 	// разметить стек
 	memSlice(stack,
@@ -525,7 +523,7 @@ bool_t ecMulPreSNZ(word b[], const ec_pre_t* pre, const ec_o* ec,
 	// обработать старшую цифру
 	pos = (mb - 1) / pre->w, pos *= pre->w;
 	digit = wwGetBits(dd, pos, mb - pos);
-	wwCopy(t, ecPrePt(pre, digit >> 1, ec), ec->d * ec->f->n);
+	wwSel(t, pre->pts, pre_count, pt_size, digit >> 1);
 	borrow = WORD_1 - (digit & 1);
 	// обработать остальные цифры
 	while (pos -= pre->w)
@@ -534,7 +532,7 @@ bool_t ecMulPreSNZ(word b[], const ec_pre_t* pre, const ec_o* ec,
 			ecDbl(t, t, ec, stack);
 		digit = wwGetBits(dd, pos, pre->w);
 		digit ^= (WORD_0 - borrow) & mask;
-		wwCopy(pt, ecPrePt(pre, digit >> 1, ec), ec->d * ec->f->n);
+		wwSel(pt, pre->pts, pre_count, pt_size, digit >> 1);
 		ecSgn(pt, borrow, ec, stack);
 		ecAdd(t, t, pt, ec, stack);
 		borrow = WORD_1 - (digit & 1);
@@ -546,7 +544,7 @@ bool_t ecMulPreSNZ(word b[], const ec_pre_t* pre, const ec_o* ec,
 	digit = wwGetBits(dd, 0, pre->w);
 	ASSERT(digit & 1);
 	digit ^= (WORD_0 - borrow) & mask;
-	wwCopy(pt, ecPrePt(pre, digit >> 1, ec), ec->d * ec->f->n);
+	wwSel(pt, pre->pts, pre_count, pt_size, digit >> 1);
 	ecSgn(pt, borrow, ec, stack);
 	ret = (ec->finadd) ?
 		ec->finadd(b, t, pt, ec, stack) :
@@ -569,7 +567,7 @@ size_t ecMulPreSNZ_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 #define ecMulPreSNZA_local(n, ec_d, m)\
 /* dd */	O_OF_W(m),\
 /* t */		O_OF_W(ec_d * n),\
-/* pt */	O_OF_W(ec_d * n)
+/* pt */	O_OF_W(2 * n)
 
 bool_t ecMulPreSNZA(word b[], const ec_pre_t* pre, const ec_o* ec,
 	const word d[], size_t m, void* stack)
@@ -579,23 +577,27 @@ bool_t ecMulPreSNZA(word b[], const ec_pre_t* pre, const ec_o* ec,
 	register word borrow;
 	register bool_t ret;
 	size_t mb;
+	size_t pre_count;
+	size_t pt_size;
 	size_t mask;
 	size_t pos;
 	size_t i;
 	word* dd;			/* [m] */
 	word* t;			/* [ec->d * ec->f->n] */
-	word* pt;			/* [ec->d * ec->f->n] */
+	word* pt;			/* [2 * ec->f->n] */
 	// pre
 	ASSERT(ecIsOperable(ec));
 	ASSERT(ecGroupIsOperable(ec));
 	ASSERT(ecPreIsOperable(pre));
-	ASSERT(pre->type == ec_pre_snz);
+	ASSERT(pre->type == ec_pre_snza);
 	ASSERT(wwWordSize(ec->order, ec->f->n + 1) == m);
 	ASSERT(zzIsOdd(ec->order, m) && m > 1);
 	ASSERT(wwCmp(d, ec->order, m) < 0);
 	// размерности
 	mb = wwBitSize(ec->order, m);
 	ASSERT(mb >= 2 * pre->w);
+	pre_count = SIZE_1 << (pre->w - 1);
+	pt_size = 2 * ec->f->n;
 	mask = WORD_BIT_POS(pre->w) - 2;
 	// разметить стек
 	memSlice(stack,
@@ -608,7 +610,7 @@ bool_t ecMulPreSNZA(word b[], const ec_pre_t* pre, const ec_o* ec,
 	// обработать старшую цифру
 	pos = (mb - 1) / pre->w, pos *= pre->w;
 	digit = wwGetBits(dd, pos, mb - pos);
-	wwCopy(pt, ecPrePtA(pre, digit >> 1, ec), 2 * ec->f->n);
+	wwSel(pt, pre->pts, pre_count, pt_size, digit >> 1);
 	ecFromA(t, pt, ec, stack);
 	borrow = WORD_1 - (digit & 1);
 	// обработать остальные цифры
@@ -618,7 +620,7 @@ bool_t ecMulPreSNZA(word b[], const ec_pre_t* pre, const ec_o* ec,
 			ecDbl(t, t, ec, stack);
 		digit = wwGetBits(dd, pos, pre->w);
 		digit ^= (WORD_0 - borrow) & mask;
-		wwCopy(pt, ecPrePtA(pre, digit >> 1, ec), 2 * ec->f->n);
+		wwSel(pt, pre->pts, pre_count, pt_size, digit >> 1);
 		ecSgnA(pt, borrow, ec, stack);
 		ecDblAddA(t, t, pt, ec, stack);
 		borrow = WORD_1 - (digit & 1);
@@ -630,7 +632,7 @@ bool_t ecMulPreSNZA(word b[], const ec_pre_t* pre, const ec_o* ec,
 	digit = wwGetBits(dd, 0, pre->w);
 	ASSERT(digit & 1);
 	digit ^= (WORD_0 - borrow) & mask;
-	wwCopy(pt, ecPrePtA(pre, digit >> 1, ec), 2 * ec->f->n);
+	wwSel(pt, pre->pts, pre_count, pt_size, digit >> 1);
 	ecSgnA(pt, borrow, ec, stack);
 	ret = (ec->finadda) ?
 		ec->finadda(b, t, pt, ec, stack) :
