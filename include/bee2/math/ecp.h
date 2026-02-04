@@ -267,11 +267,11 @@ size_t ecpSWU_deep(size_t n, size_t f_deep);
 
 /*!	\brief Предвычисления по схеме SNZ
 
-	На эллиптической кривой ec вычисляются 2^w малых нечетных кратных
+	На эллиптической кривой ec вычисляются 2^{w-1} малых нечетных кратных
 	аффинной точки [2 * ec->f->n]a. Кратные размещаются в буфере
-	[2^w * ec->d * ec->f->n]pre:
+	[2^{w-1} * ec->d * ec->f->n]pre:
 	\code
-		pre[0:2^w) <- (-(2^w - 1)a, ..., -3a, a, 3a, ..., (2^w - 1)a).
+		pre[0:2^{w-1}) <- (a, 3a, ..., (2^w - 1)a).
 	\endcode
 	Каждое кратное является проективной точкой и занимает ec->d * ec->f->n 
 	машинных слов.
@@ -281,19 +281,17 @@ size_t ecpSWU_deep(size_t n, size_t f_deep);
 	\pre Координаты a лежат в базовом поле.
 	\expect Описание ec корректно.
 	\expect Точка a лежит на кривой.
-	\deep{stack} ecpPreSNZ_deep(ec->f->n, ec->f->deep, ec->d, ec->deep, w).
+	\deep{stack} ecpPreSNZ_deep(ec->f->n, ec->f->deep, w).
 */
 void ecpPreSNZ(
-	word pre[],				/*!< [out] малые кратные */
+	ec_pre_t* pre,			/*!< [out] предвычисленные точки */
 	const word a[],			/*!< [in] исходная точка */
 	size_t w,				/*!< [in] ширина окна */
 	const struct ec_o* ec,	/*!< [in] описание эллиптической кривой */
 	void* stack				/*!< [in] вспомогательная память */
 );
 
-size_t ecpPreSNZ_deep(size_t n, size_t f_deep, size_t ec_d, size_t ec_deep, 
-	size_t w);
-
+size_t ecpPreSNZ_deep(size_t n, size_t f_deep, size_t w);
 
 #ifdef __cplusplus
 } /* extern "C" */

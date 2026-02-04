@@ -342,6 +342,9 @@
     <ClCompile Include="..\..\src\math\ecp\ecp_misc.c">
       <Filter>Source Files\math\ecp</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\math\ecp\ecp_pre.c">
+      <Filter>Source Files\math\ecp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\bee2\crypto\bake.h">

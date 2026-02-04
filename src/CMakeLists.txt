@@ -75,6 +75,7 @@ set(src
   math/ecp/ecp_a.c
   math/ecp/ecp_j.c
   math/ecp/ecp_misc.c
+  math/ecp/ecp_pre.c
   math/gf2.c
   math/gfp.c
   math/pp/pp_etc.c

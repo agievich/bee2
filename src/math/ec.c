@@ -173,7 +173,7 @@ void ecPreSNZ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	ASSERT(ecIsOperable(ec));
 	ASSERT(w > 0);
 	ASSERT(memIsDisjoint2(
-		pre, sizeof(ec_pre_t) + O_OF_W(ec->d * ec->f->n * (SIZE_1 << w)),
+		pre, sizeof(ec_pre_t) + O_OF_W(ec->d * ec->f->n * (SIZE_1 << (w - 1))),
 		a, O_OF_W(2 * ec->f->n)));
 	// разметить стек
 	memSlice(stack,
@@ -219,7 +219,7 @@ bool_t ecPreSNZA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	ASSERT(ecIsOperable(ec));
 	ASSERT(w > 0);
 	ASSERT(memIsDisjoint2(
-		pre, sizeof(ec_pre_t) + O_OF_W(2 * ec->f->n * (SIZE_1 << w)),
+		pre, sizeof(ec_pre_t) + O_OF_W(2 * ec->f->n * (SIZE_1 << (w - 1))),
 		a, O_OF_W(2 * ec->f->n)));
 	// разметить стек
 	memSlice(stack,

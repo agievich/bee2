@@ -599,6 +599,10 @@
 						RelativePath="..\..\src\math\ecp\ecp_misc.c"
 						>
 					</File>
+					<File
+						RelativePath="..\..\src\math\ecp\ecp_pre.c"
+						>
+					</File>
 				</Filter>
 			</Filter>
 			<Filter
