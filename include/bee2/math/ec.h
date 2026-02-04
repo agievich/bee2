@@ -866,6 +866,8 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 		условных переходов;
 	-	функция ec->add регулярна: сложение a + b, a != \pm b, a != O, b != O,
 		выполняется без условных переходов;
+	-	ec->sgn != 0 и функция ec->sgn регулярна: знак точки устанавливается
+		без условных переходов;
 	-	справедливо, по крайней мере, одно из условий:
 		a) ec->order mod 2^{pre->w} == ec->order mod 2^{pre->w + 1};
 		b) ec->finadd != 0 и функция ec->finadd регулярна: сложение и удвоение
@@ -911,6 +913,8 @@ size_t ecMulPreSNZ_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 	-	если ec->dbladda != 0, то функция ec->dbladda регулярна: вычисление
 		2a + b, 2a != \pm b, a != O, b != O, выполняется без условных
 		переходов;
+	-	ec->sgna != 0 и функция ec->sgna регулярна: знак точки устанавливается
+		без условных переходов;
 	-	справедливо, по крайней мере, одно из условий:
 		a) ec->order mod 2^{pre->w} == ec->order mod 2^{pre->w + 1};
 		b) ec->finadda != 0 и функция ec->finadda регулярна: сложение и
