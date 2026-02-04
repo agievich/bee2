@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2014.03.04
-\version 2026.02.03
+\version 2026.02.04
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -112,8 +112,7 @@ bool_t ecGroupIsOperable(const ec_o* ec)
 - t <- 2a;													// P <- 2A
 - pt[0] <- a;
 - pt[1] <- t + pt[0];										// P <- P + A
-- pt[i] <- t + pt[i - 1], i = 2, 3, ..., 2^{w-1} - 1;		// P <- P + P
-- pt[2^w - 1 - i] = -pt[i], i = 0, 1, ..., 2^{w-1} - 1.
+- pt[i] <- t + pt[i - 1], i = 2, 3, ..., 2^{w-1} - 1.		// P <- P + P
 
 Итоговая сложность:
 	1(P <- 2A) + 1(P <- P + A) + (2^{w-1} - 2)(P <- P + P).
@@ -162,10 +161,10 @@ bool_t ecPreIsOperable(const ec_pre_t* pre)
 {
 	return memIsValid(pre, sizeof(pre)) &&
 		(pre->type == ec_pre_snz || pre->type == ec_pre_snza ||
-			pre->type == ec_pre_comb) &&
+			pre->type == ec_pre_hpb) &&
 		pre->w > 0 && pre->w < B_PER_W &&
-		(pre->type == ec_pre_comb && pre->h > 0 ||
-			pre->type != ec_pre_comb && pre->h == 0);
+		(pre->type == ec_pre_hpb && pre->h > 0 ||
+			pre->type != ec_pre_hpb && pre->h == 0);
 }
 
 #define ecPreSNZ_local(n, ec_d)\
@@ -199,10 +198,6 @@ void ecPreSNZ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 		for (i = 2; i < SIZE_1 << (w - 1); ++i)
 			ecAdd(ecPrePt(pre, i, ec), t, ecPrePt(pre, i - 1, ec), ec, stack);
 	}
-	// pt[pre_count - i] <- -pt[i]
-	for (i = 0; i < SIZE_1 << (w - 1); ++i)
-		ecNeg(ecPrePt(pre, (SIZE_1 << w) - 1 - i, ec), ecPrePt(pre, i, ec),
-			ec, stack);
 	// заполнить остальные поля
 	pre->type = ec_pre_snz;
 	pre->w = w, pre->h = 0;
@@ -251,10 +246,6 @@ bool_t ecPreSNZA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 				return FALSE;
 		}
 	}
-	// pt[pre_count - i] <- -pt[i]
-	for (i = 0; i < SIZE_1 << (w - 1); ++i)
-		ecNegA(ecPrePtA(pre, (SIZE_1 << w) - 1 - i, ec), ecPrePtA(pre, i, ec),
-			ec, stack);
 	// заполнить остальные поля
 	pre->type = ec_pre_snza;
 	pre->w = w, pre->h = 0;
@@ -446,23 +437,38 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 Реализован следующий алгоритм (см. [BCL+14; p. 9-11, algorithm 1], 
 а также [APS22]):
 1. Для i = 0, 1, ..., (2^{w-1} - 1):
-	1) pt[i] <- (2i + 1)a;					// предвычисления: SNZ
-	2) pt[-i] = =pt[i].
-2. t <- p[d_{k-1} / 2].
+	1) pt[i] <- (2i + 1)a.						// предвычисления: SNZ
+2. t <- pt[d_{k-1} / 2].
 3. Для i = k - 2, ..., 1:
-	1) t <- 2^w t;							// P <- 2P
-	1) t <- t + pt[d_i / 2].				// P <- P + P
+	1) t <- 2^w t;								// P <- 2P
+	1) t <- t + sgn(d_i) pt[|d_i| / 2].			// P <- P + P
 4. t <- 2^w t.
-5. t <- t + pt[d_0 / 2].					// A <- P + P
+5. t <- t + sgn(d_0) pt[|d_0| / 2].				// A <- P + P
 6. Возвратить t.
 
-\remark Сложение t + pt[d_0] вынесено за рамки основного цикла на шаге 3,
-потому что при этом (и только при этом) сложении может произойти исключительная
-ситуация -- совпадение операндов t и pt[d_0] с переключением от сложения
-к удвоению. Завершающее сложение выполняется с помощью функции интерфейса 
-ec_finadd_i, если таковая указана в описании кривой. Предполагается, что
-функция ec_finadd_i регулярна, и тогда сложение и удвоение будут выполняться
-по одним и тем же формулам.
+\remark Сложение t + sgn(d_0) pt[|d_0| / 2] вынесено за рамки основного цикла
+на шаге 3, потому что при этом (и только при этом) сложении может произойти
+исключительная ситуация -- совпадение операндов t и sgn(d_0) pt[|d_0| / 2]
+с переключением от сложения к удвоению. Завершающее сложение выполняется
+с помощью функции интерфейса ec_finadd_i, если таковая указана в описании
+кривой. Предполагается, что функция ec_finadd_i регулярна, и тогда сложение
+и удвоение будут выполняться по одним и тем же формулам.
+
+\remark Расчет цифр d_i (см. [APS22]):
+1. Записать
+     d = d_0 + d_1 (2^w) + ... + d_{k-1} (2^w)^{k-1},
+   где d_i \in {0, 1, ..., 2^w - 1}.
+2. (d_{k-1}, borrow) <- (d_{k-1} + (d_{k-1} % 2), d_{k-1} % 2).
+3. Для i = k - 2, ...., 0:
+   1) (d_i, borrow) <- (d_i - borrow * 2^w + (d_i % 2), d_i % 2).
+
+\remark Выражение
+   borrow ? d_i : d_i - 2^w,
+по которому определяется индекс в таблице pt, вычисляется следующим образом:
+   mask <- 2^w - 2, d_i <- d_i ^ ((0 - borrow) & mask).
+Поскольку младший разряд mask нулевой, сохраняется четность цифры d_i и эту
+четность можно использовать для пересчета borrow:
+  borrow <- d_i % 2.
 
 В функции ecMulPreSNZA() предварительно рассчитанные точки являются аффинными,
 а не проективными. Это позволяет заменить регулярные сложения P <- P + P
@@ -487,10 +493,11 @@ bool_t ecMulPreSNZ(word b[], const ec_pre_t* pre, const ec_o* ec,
 {
 	register word neg;
 	register word digit;
-	register word hi;
+	register word borrow;
 	register bool_t ret;
 	size_t mb;
-	size_t k;
+	size_t mask;
+	size_t pos;
 	size_t i;
 	word* dd;			/* [m] */
 	word* t;			/* [ec->d * ec->f->n] */
@@ -505,49 +512,49 @@ bool_t ecMulPreSNZ(word b[], const ec_pre_t* pre, const ec_o* ec,
 	ASSERT(wwCmp(d, ec->order, m) < 0);
 	// размерности
 	mb = wwBitSize(ec->order, m);
+	ASSERT(mb >= 2 * pre->w);
+	mask = WORD_BIT_POS(pre->w) - 2;
 	// разметить стек
 	memSlice(stack,
 		ecMulPreSNZ_local(ec->f->n, ec->d, m), SIZE_0, SIZE_MAX,
 		&dd, &t, &pt, &stack);
-	// dd <- (d & 1) ? d : ec->order - d
+	// dd <- (d % 2) ? d : ec->order - d
 	neg = WORD_1 - (d[0] & 1);
 	zzSubIf(dd, ec->order, d, m, neg);
 	ASSERT(zzIsOdd(dd, m));
-	// число цифр SNZ
-	k = (mb + pre->w - 1) / pre->w;
-	ASSERT(k > 1);
-	// старшая цифра
-	--k;
-	digit = wwGetBits(dd, k * pre->w, mb - k * pre->w);
+	// обработать старшую цифру
+	pos = (mb - 1) / pre->w, pos *= pre->w;
+	digit = wwGetBits(dd, pos, mb - pos);
 	wwCopy(t, ecPrePt(pre, digit >> 1, ec), ec->d * ec->f->n);
-	hi = WORD_1 - (digit & 1), hi <<= pre->w - 1;
+	borrow = WORD_1 - (digit & 1);
 	// обработать остальные цифры
-	while (--k)
+	while (pos -= pre->w)
 	{
 		for (i = pre->w; i--;)
 			ecDbl(t, t, ec, stack);
-		digit = wwGetBits(dd, k * pre->w, pre->w);
-		wwCopy(pt, ecPrePt(pre, hi | (digit >> 1), ec), ec->d * ec->f->n);
+		digit = wwGetBits(dd, pos, pre->w);
+		digit ^= (WORD_0 - borrow) & mask;
+		wwCopy(pt, ecPrePt(pre, digit >> 1, ec), ec->d * ec->f->n);
+		ecSgn(pt, borrow, ec, stack);
 		ecAdd(t, t, pt, ec, stack);
-		hi = WORD_1 - (digit & 1), hi <<= pre->w - 1;
+		borrow = WORD_1 - (digit & 1);
 	}
-	// завершающие удвоения и финишное сложение
+	// завершающие удвоения
 	for (i = pre->w; i--;)
 		ecDbl(t, t, ec, stack);
+	// финишное сложение
 	digit = wwGetBits(dd, 0, pre->w);
 	ASSERT(digit & 1);
-	wwCopy(pt, ecPrePt(pre, hi | (digit >> 1), ec), ec->d * ec->f->n);
-	if (ec->finadd)
-		ret = ec->finadd(b, t, pt, ec, stack);
-	else
-	{
-		ecAdd(t, t, pt, ec, stack);
-		ret = ecToA(b, t, ec, stack);
-	}
+	digit ^= (WORD_0 - borrow) & mask;
+	wwCopy(pt, ecPrePt(pre, digit >> 1, ec), ec->d * ec->f->n);
+	ecSgn(pt, borrow, ec, stack);
+	ret = (ec->finadd) ?
+		ec->finadd(b, t, pt, ec, stack) :
+		(ecAdd(t, t, pt, ec, stack), ecToA(b, t, ec, stack));
 	// настройка знака
 	ecSgnA(b, neg, ec, stack);
 	// очистка и возврат
-	CLEAN3(neg, digit, hi);
+	CLEAN3(neg, digit, borrow);
 	return ret;
 }
 
@@ -561,72 +568,77 @@ size_t ecMulPreSNZ_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 
 #define ecMulPreSNZA_local(n, ec_d, m)\
 /* dd */	O_OF_W(m),\
-/* t */		O_OF_W(ec_d * n)\
+/* t */		O_OF_W(ec_d * n),\
+/* pt */	O_OF_W(ec_d * n)
 
 bool_t ecMulPreSNZA(word b[], const ec_pre_t* pre, const ec_o* ec,
 	const word d[], size_t m, void* stack)
 {
 	register word neg;
 	register word digit;
-	register word hi;
+	register word borrow;
 	register bool_t ret;
 	size_t mb;
-	size_t k;
+	size_t mask;
+	size_t pos;
 	size_t i;
 	word* dd;			/* [m] */
 	word* t;			/* [ec->d * ec->f->n] */
+	word* pt;			/* [ec->d * ec->f->n] */
 	// pre
 	ASSERT(ecIsOperable(ec));
 	ASSERT(ecGroupIsOperable(ec));
 	ASSERT(ecPreIsOperable(pre));
-	ASSERT(pre->type == ec_pre_snza);
+	ASSERT(pre->type == ec_pre_snz);
 	ASSERT(wwWordSize(ec->order, ec->f->n + 1) == m);
 	ASSERT(zzIsOdd(ec->order, m) && m > 1);
 	ASSERT(wwCmp(d, ec->order, m) < 0);
 	// размерности
 	mb = wwBitSize(ec->order, m);
+	ASSERT(mb >= 2 * pre->w);
+	mask = WORD_BIT_POS(pre->w) - 2;
 	// разметить стек
 	memSlice(stack,
-		ecMulPreSNZA_local(ec->f->n, ec->d, m), SIZE_0, SIZE_MAX,
-		&dd, &t, &stack);
-	// dd <- (d & 1) ? d : ec->order - d
+		ecMulPreSNZ_local(ec->f->n, ec->d, m), SIZE_0, SIZE_MAX,
+		&dd, &t, &pt, &stack);
+	// dd <- (d % 2) ? d : ec->order - d
 	neg = WORD_1 - (d[0] & 1);
 	zzSubIf(dd, ec->order, d, m, neg);
 	ASSERT(zzIsOdd(dd, m));
-	// число цифр SNZ
-	k = (mb + pre->w - 1) / pre->w;
-	ASSERT(k > 1);
-	// старшая цифра
-	--k;
-	digit = wwGetBits(dd, k * pre->w, mb - k * pre->w);
-	ecFromA(t, ecPrePtA(pre, digit >> 1, ec), ec, stack);
-	hi = WORD_1 - (digit & 1), hi <<= pre->w - 1;
+	// обработать старшую цифру
+	pos = (mb - 1) / pre->w, pos *= pre->w;
+	digit = wwGetBits(dd, pos, mb - pos);
+	wwCopy(pt, ecPrePtA(pre, digit >> 1, ec), 2 * ec->f->n);
+	ecFromA(t, pt, ec, stack);
+	borrow = WORD_1 - (digit & 1);
 	// обработать остальные цифры
-	while (--k)
+	while (pos -= pre->w)
 	{
 		for (i = pre->w; --i;)
 			ecDbl(t, t, ec, stack);
-		digit = wwGetBits(dd, k * pre->w, pre->w);
-		ecDblAddA(t, t, ecPrePtA(pre, hi | (digit >> 1), ec), ec, stack);
-		hi = WORD_1 - (digit & 1), hi <<= pre->w - 1;
+		digit = wwGetBits(dd, pos, pre->w);
+		digit ^= (WORD_0 - borrow) & mask;
+		wwCopy(pt, ecPrePtA(pre, digit >> 1, ec), 2 * ec->f->n);
+		ecSgnA(pt, borrow, ec, stack);
+		ecDblAddA(t, t, pt, ec, stack);
+		borrow = WORD_1 - (digit & 1);
 	}
-	// завершающие удвоения и финишное сложение
+	// завершающие удвоения
 	for (i = pre->w; i--;)
 		ecDbl(t, t, ec, stack);
+	// финишное сложение
 	digit = wwGetBits(dd, 0, pre->w);
 	ASSERT(digit & 1);
-	if (ec->finadd)
-		ret = ec->finadda(b, t, ecPrePtA(pre, hi | (digit >> 1), ec), ec,
-			stack);
-	else
-	{
-		ecAddA(t, t, ecPrePtA(pre, hi | (digit >> 1), ec), ec, stack);
-		ret = ecToA(b, t, ec, stack);
-	}
+	digit ^= (WORD_0 - borrow) & mask;
+	wwCopy(pt, ecPrePtA(pre, digit >> 1, ec), 2 * ec->f->n);
+	ecSgnA(pt, borrow, ec, stack);
+	ret = (ec->finadda) ?
+		ec->finadda(b, t, pt, ec, stack) :
+		(ecAddA(t, t, pt, ec, stack), ecToA(b, t, ec, stack));
 	// настройка знака
 	ecSgnA(b, neg, ec, stack);
 	// очистка и возврат
-	CLEAN3(neg, digit, hi);
+	CLEAN3(neg, digit, borrow);
 	return ret;
 }
 

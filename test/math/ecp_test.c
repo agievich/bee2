@@ -4,7 +4,7 @@
 \brief Tests for elliptic curves over prime fields
 \project bee2/test
 \created 2017.05.29
-\version 2026.01.29
+\version 2026.02.04
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -74,7 +74,7 @@ bool_t ecpTest()
 		ec_keep,
 		f_keep,
 		3 * no,
-		(sizeof(ec_pre_t) + O_OF_W(64 * 3 * n)) | SIZE_HI,
+		(sizeof(ec_pre_t) + O_OF_W(32 * 3 * n)) | SIZE_HI,
 		O_OF_W(3 * n),
 		O_OF_W(3 * n),
 		O_OF_W(3 * n),
@@ -338,20 +338,8 @@ bool_t ecpTest()
 	// предвычисления по схеме SNZ
 	{
 		size_t i;
-		// pt[0..64) <- (1, 3, ..., 31, -31, ..., -3, -1)base
+		// pt[0..32) <- (1, 3, ..., 31)base
 		ecPreSNZ(pre, ec->base, 6, ec, stack);
-		// pt[i] == -pt[63 - i]?
-		for (i = 0; i < 32; ++i)
-		{
-			ecNeg(pt0, ecPrePt(pre, 63 - i, ec), ec, stack);
-			ecNeg(pt0, pt0, ec, stack);
-			ecAdd(pt0, pt0, ecPrePt(pre, i, ec), ec, stack);
-			if (ecToA(pt0, pt0, ec, stack))
-			{
-				blobClose(state);
-				return FALSE;
-			}
-		}
 		// pt0 <- \sum_{i = 0}^31 2^{31 - i} pt[i]
 		wwCopy(pt0, ecPrePt(pre, 0, ec), 3 * n);
 		for (i = 1; i < 32; ++i)
@@ -377,22 +365,11 @@ bool_t ecpTest()
 	// предвычисления по схеме SNZA
 	{
 		size_t i;
-		// pt[0..64) <- (1, 3, ..., 31, -31, ..., -3, -1)base
+		// pt[0..32) <- (1, 3, ..., 31)base
 		if (!ecPreSNZA(pre, ec->base, 6, ec, stack))
 		{
 			blobClose(state);
 			return FALSE;
-		}
-		// pt[i] == -pt[63 - i]?
-		for (i = 0; i < 32; ++i)
-		{
-			ecNegA(pt0, ecPrePtA(pre, 63 - i, ec), ec, stack);
-			ecNegA(pt0, pt0, ec, stack);
-			if (ecpAddAA(pt0, pt0, ecPrePtA(pre, i, ec), ec, stack))
-			{
-				blobClose(state);
-				return FALSE;
-			}
 		}
 		// pt0 <- pt[1] - pt[0]
 		ecNegA(pt0, ecPrePtA(pre, 0, ec), ec, stack);
