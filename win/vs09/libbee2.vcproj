@@ -497,10 +497,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\src\math\ecp.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\src\math\gf2.c"
 					>
 				</File>
@@ -581,6 +577,26 @@
 					</File>
 					<File
 						RelativePath="..\..\src\math\pp\pp_red.c"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="ecp"
+					>
+					<File
+						RelativePath="..\..\src\math\ecp\ecp_a.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\math\ecp\ecp_j.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\math\ecp\ecp_lcl.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\math\ecp\ecp_misc.c"
 						>
 					</File>
 				</Filter>

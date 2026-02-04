@@ -55,11 +55,11 @@
     <Filter Include="Source Files\core\rng">
       <UniqueIdentifier>{d79259c8-57bc-4d08-8356-012f773be234}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\math\ecp">
+      <UniqueIdentifier>{b675af6f-3f48-4922-87c1-ad79ce813caa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\math\ecp.c">
-      <Filter>Source Files\math</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\math\gf2.c">
       <Filter>Source Files\math</Filter>
     </ClCompile>
@@ -333,6 +333,15 @@
     <ClCompile Include="..\..\src\core\rng\rng_trng.c">
       <Filter>Source Files\core\rng</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\math\ecp\ecp_a.c">
+      <Filter>Source Files\math\ecp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\math\ecp\ecp_j.c">
+      <Filter>Source Files\math\ecp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\math\ecp\ecp_misc.c">
+      <Filter>Source Files\math\ecp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\bee2\crypto\bake.h">
@@ -496,6 +505,9 @@
     </ClInclude>
     <ClInclude Include="..\..\include\bee2\core\file.h">
       <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\math\ecp\ecp_lcl.h">
+      <Filter>Source Files\math\ecp</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

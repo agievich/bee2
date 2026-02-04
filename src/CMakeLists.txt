@@ -72,7 +72,9 @@ set(src
   crypto/pfok.c
   math/ec.c
   math/ec2.c
-  math/ecp.c
+  math/ecp/ecp_a.c
+  math/ecp/ecp_j.c
+  math/ecp/ecp_misc.c
   math/gf2.c
   math/gfp.c
   math/pp/pp_etc.c
