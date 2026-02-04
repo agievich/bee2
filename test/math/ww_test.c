@@ -4,7 +4,7 @@
 \brief Tests for operations on arbitrary length words
 \project bee2/test
 \created 2023.03.31
-\version 2025.07.27
+\version 2026.02.04
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -51,8 +51,15 @@ bool_t wwTest()
 			wwCmp(a, b, 8) <= 0 || FAST(wwCmp)(a, b, 8) <= 0 ||
 			wwCmp2(a, 7, b, 8) >= 0 || FAST(wwCmp2)(a, 7, b, 8) >= 0)
 		return FALSE;
+	// выбор фрагмента
+	wwSetZero(b, 8);
+	b[3] = 2, b[4] = 4, b[5] = 5;
+	wwSetZero(c, 8);
+	wwSel(c, b, 2, 3, 1);
+	if (!wwEq(c, b + 3, 3) || !wwIsZero(c + 3, 8 - 3))
+		return FALSE;
 	// операции с битами
-	ASSERT(wwIsRepW(b, 8, 0x36));
+	wwRepW(b, 8, 0x36);
 	if (wwTestBit(b, 0) || !wwTestBit(b, 1) ||
 		wwTestBit(b, 0 + B_PER_W) || !wwTestBit(b, 1 + B_PER_W) ||
 		wwTestBit(b, B_PER_W - 1) || wwTestBit(b, 2 * B_PER_W - 1) ||

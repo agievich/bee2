@@ -4,7 +4,7 @@
 \brief Arbitrary length words
 \project bee2 [cryptographic library]
 \created 2012.04.18
-\version 2026.01.27
+\version 2026.02.04
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -292,6 +292,20 @@ size_t wwOctetSize(const word a[], size_t n)
 		while ((a[n] & mask) == 0)
 			--pos, mask >>= 8;
 		return n * O_PER_W + pos + 1;
+	}
+}
+
+void wwSel(word b[], const word a[], size_t count, size_t m, size_t pos)
+{
+	size_t i, j;
+	ASSERT(wwIsDisjoint2(b, m, a, count * m));
+	ASSERT(pos < count);
+	wwSetZero(b, m);
+	for (i = 0; i < count; ++i)
+	{
+		register word mask = wordEq0M(i, pos);
+		for (j = 0; j < m; ++j)
+			b[j] |= a[i * m + j] & mask;
 	}
 }
 
