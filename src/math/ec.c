@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2014.03.04
-\version 2026.02.04
+\version 2026.02.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -173,7 +173,7 @@ void ecPreSNZ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	ASSERT(ecIsOperable(ec));
 	ASSERT(w > 0);
 	ASSERT(memIsDisjoint2(
-		pre, sizeof(ec_pre_t) + O_OF_W(ec->d * ec->f->n * (SIZE_1 << (w - 1))),
+		pre, sizeof(ec_pre_t) + O_OF_W(ec->d * ec->f->n * SIZE_BIT_POS(w - 1)),
 		a, O_OF_W(2 * ec->f->n)));
 	// разметить стек
 	memSlice(stack,
@@ -189,10 +189,10 @@ void ecPreSNZ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 		// pt[1] <- t + a
 		ecAddA(ecPrePt(pre, 1, ec), t, a, ec, stack);
 		// pt[i] <- t + pt[i - 1]
-		for (i = 2; i < SIZE_1 << (w - 1); ++i)
+		for (i = 2; i < SIZE_BIT_POS(w - 1); ++i)
 			ecAdd(ecPrePt(pre, i, ec), t, ecPrePt(pre, i - 1, ec), ec, stack);
 	}
-	// заполнить остальные поля
+	// заполнить служебные поля
 	pre->type = ec_pre_snz;
 	pre->w = w, pre->h = 0;
 }
@@ -219,7 +219,7 @@ bool_t ecPreSNZA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	ASSERT(ecIsOperable(ec));
 	ASSERT(w > 0);
 	ASSERT(memIsDisjoint2(
-		pre, sizeof(ec_pre_t) + O_OF_W(2 * ec->f->n * (SIZE_1 << (w - 1))),
+		pre, sizeof(ec_pre_t) + O_OF_W(2 * ec->f->n * SIZE_BIT_POS(w - 1)),
 		a, O_OF_W(2 * ec->f->n)));
 	// разметить стек
 	memSlice(stack,
@@ -233,14 +233,14 @@ bool_t ecPreSNZA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 		// t1 <- 2 a
 		ecDblA(t1, a, ec, stack);
 		// pt[i] <- t1 + pt[i - 1]
-		for (i = 1; i < SIZE_1 << (w - 1); ++i)
+		for (i = 1; i < SIZE_BIT_POS(w - 1); ++i)
 		{
 			ecAddA(t2, t1, ecPrePtA(pre, i - 1, ec), ec, stack);
 			if (!ecToA(ecPrePtA(pre, i, ec), t2, ec, stack))
 				return FALSE;
 		}
 	}
-	// заполнить остальные поля
+	// заполнить служебные поля
 	pre->type = ec_pre_snza;
 	pre->w = w, pre->h = 0;
 	return TRUE;
@@ -386,7 +386,7 @@ bool_t ecMulA(word b[], const word a[], const ec_o* ec,
 	if (m == 0)
 		return FALSE;
 	naf_width = ecNAFWidth(B_OF_W(m));
-	pre_count = SIZE_1 << (naf_width - 1);
+	pre_count = SIZE_BIT_POS(naf_width - 1);
 	// разметить стек
 	memSlice(stack,
 		ecMulA_local(ec->f->n, ec->d, pre_count), SIZE_0, SIZE_MAX,
@@ -404,7 +404,7 @@ bool_t ecMulA(word b[], const word a[], const ec_o* ec,
 size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 {
 	const size_t naf_width = ecNAFWidth(B_OF_W(m));
-	const size_t pre_count = SIZE_1 << (naf_width - 1);
+	const size_t pre_count = SIZE_BIT_POS(naf_width - 1);
 	return memSliceSize(
 		ecMulA_local(n, ec_d, pre_count),
 		utilMax(2,
@@ -509,7 +509,7 @@ bool_t ecMulPreSNZ(word b[], const ec_pre_t* pre, const ec_o* ec,
 	// размерности
 	mb = wwBitSize(ec->order, m);
 	ASSERT(mb >= 2 * pre->w);
-	pre_count = SIZE_1 << (pre->w - 1);
+	pre_count = SIZE_BIT_POS(pre->w - 1);
 	pt_size = ec->d * ec->f->n;
 	mask = WORD_BIT_POS(pre->w) - 2;
 	// разметить стек
@@ -596,7 +596,7 @@ bool_t ecMulPreSNZA(word b[], const ec_pre_t* pre, const ec_o* ec,
 	// размерности
 	mb = wwBitSize(ec->order, m);
 	ASSERT(mb >= 2 * pre->w);
-	pre_count = SIZE_1 << (pre->w - 1);
+	pre_count = SIZE_BIT_POS(pre->w - 1);
 	pt_size = 2 * ec->f->n;
 	mask = WORD_BIT_POS(pre->w) - 2;
 	// разметить стек
@@ -754,7 +754,7 @@ bool_t ecAddMulA(word b[], const ec_o* ec, void* stack, size_t k, ...)
 		m[i] = wwWordSize(d, m[i]);
 		// зарезервировать память для naf[i] и pre[i]
 		naf_width[i] = ecNAFWidth(B_OF_W(m[i]));
-		pre_count = SIZE_1 << (naf_width[i] - 1);
+		pre_count = SIZE_BIT_POS(naf_width[i] - 1);
 		memSlice(stack,
 			O_OF_W(2 * m[i] + 1),
 			sizeof(ec_pre_t) + O_OF_W(pre_count * ec->d * ec->f->n),
@@ -820,7 +820,7 @@ size_t ecAddMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t k, ...)
 	{
 		size_t m = va_arg(args, size_t);
 		size_t naf_width = ecNAFWidth(B_OF_W(m));
-		size_t pre_count = SIZE_1 << (naf_width - 1);
+		size_t pre_count = SIZE_BIT_POS(naf_width - 1);
 		ret += memSliceSize(
 			O_OF_W(2 * m + 1),
 			sizeof(ec_pre_t) + O_OF_W(ec_d * n * pre_count),

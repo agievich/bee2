@@ -4,7 +4,7 @@
 \brief Quotient rings
 \project bee2 [cryptographic library]
 \created 2013.09.14
-\version 2025.09.29
+\version 2026.02.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -103,7 +103,7 @@ void qrPower(word c[], const word a[], const word b[], size_t m,
 	const qr_o* r, void* stack)
 {
 	const size_t w = qrCalcSlideWidth(m);
-	const size_t powers_count = SIZE_1 << (w - 1);
+	const size_t powers_count = SIZE_BIT_POS(w - 1);
 	register word slide;
 	register size_t slide_size;
 	size_t pos;
@@ -182,7 +182,7 @@ void qrPower(word c[], const word a[], const word b[], size_t m,
 
 size_t qrPower_deep(size_t n, size_t m, size_t r_deep)
 {
-	const size_t powers_count = SIZE_1 << (qrCalcSlideWidth(m) - 1);
+	const size_t powers_count = SIZE_BIT_POS(qrCalcSlideWidth(m) - 1);
 	return memSliceSize(
 		qrPower_local(n, powers_count), 
 		r_deep,

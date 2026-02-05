@@ -4,7 +4,7 @@
 \brief Random number generation: entropy sources based on timers
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2026.01.20
+\version 2026.02.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -201,7 +201,7 @@ static bool_t tmCtrIsValid()
 
 static tm_ticks_t tmCtrTicks()
 {
-	register size_t reps = SIZE_1 << 20;
+	register size_t reps = SIZE_BIT_POS(20);
 	ASSERT(tmCtrIsValid());
 	while (reps--)
 		if (_tm_ctr_ticks != _tm_ctr_ticks2)
