@@ -4,7 +4,7 @@
 \brief Benchmarks for elliptic curves over prime fields
 \project bee2/test
 \created 2013.10.17
-\version 2026.01.29
+\version 2026.02.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -16,6 +16,7 @@
 #include <bee2/core/tm.h>
 #include <bee2/core/util.h>
 #include <bee2/math/ec.h>
+#include <bee2/math/ecp.h>
 #include <crypto/bign/bign_lcl.h>
 
 /*
@@ -46,9 +47,10 @@ bool_t ecpBench()
 		O_OF_W(2 * ec->f->n),
 		O_OF_W(ec->f->n),
 		sizeof(ec_pre_t) + O_OF_W(64 * 3 * ec->f->n),
-		utilMax(5,
+		utilMax(6,
 			ecMulA_deep(ec->f->n, ec->d, ec->deep, ec->f->n),
 			ecPreSNZ_deep(ec->f->n, ec->d, ec->deep),
+			ecpPreSNZ_deep(ec->f->n, ec->f->deep, 6),
 			ecMulPreSNZ_deep(ec->f->n, ec->d, ec->deep, ec->f->n),
 			ecPreSNZA_deep(ec->f->n, ec->d, ec->deep),
 			ecMulPreSNZA_deep(ec->f->n, ec->d, ec->deep, ec->f->n)),
@@ -136,6 +138,28 @@ bool_t ecpBench()
 			}
 			ticks = tmTicks() - ticks;
 			printf("  ecMulPre[SNZA,w=%u]:       %u cycles/pt [%u pts/sec]\n",
+				(unsigned)w,
+				(unsigned)(ticks / reps),
+				(unsigned)tmSpeed(reps, ticks));
+		}
+		// ecPre[SNZ]
+		for (w = 3; w <= 6; ++w)
+		{
+			for (i = 0, ticks = tmTicks(); i < reps; ++i)
+				ecPreSNZ(pre, ec->base, w, ec, stack);
+			ticks = tmTicks() - ticks;
+			printf("  ecPre[SNZ,w=%u]:           %u cycles/pre [%u pre/sec]\n",
+				(unsigned)w,
+				(unsigned)(ticks / reps),
+				(unsigned)tmSpeed(reps, ticks));
+		}
+		// ecpPre[SNZ]
+		for (w = 3; w <= 6; ++w)
+		{
+			for (i = 0, ticks = tmTicks(); i < reps; ++i)
+				ecpPreSNZ(pre, ec->base, w, ec, stack);
+			ticks = tmTicks() - ticks;
+			printf("  ecpPre[SNZ,w=%u]:          %u cycles/pre [%u pre/sec]\n",
 				(unsigned)w,
 				(unsigned)(ticks / reps),
 				(unsigned)tmSpeed(reps, ticks));
