@@ -92,11 +92,12 @@ version 3. See Copyright Notices in bee2/info.h.
 /* t1 */		O_OF_W(n),\
 /* t2 */		O_OF_W(n),\
 /* dy2 */		O_OF_W(n),\
-/* pW */		O_OF_W((SIZE_BIT_POS(w) - 1) * n),\
-/* pW2 */		O_OF_W((SIZE_BIT_POS(w) - 2) * n),\
-/* pWW */		O_OF_W(3 * n),\
-/* pWW2 */		O_OF_W(SIZE_BIT_POS(w - 2) * n),\
-/* pWW4 */		O_OF_W(n)
+/* Ws */		O_OF_W((SIZE_BIT_POS(w) - 1) * n),\
+/* W2s */		O_OF_W((SIZE_BIT_POS(w) - 2) * n),\
+/* WWs */		O_OF_W(3 * n),\
+/* WWy2s */		O_OF_W(SIZE_BIT_POS(w - 2) * n),\
+/* WWy4s */		O_OF_W(n),\
+/* WWWs */		O_OF_W((SIZE_BIT_POS(w - 1) - 2) * n)
 
 void ecpPreSNZ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	void* stack) 
@@ -105,11 +106,12 @@ void ecpPreSNZ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	word* t1;				/* [n] */
 	word* t2;				/* [n] */
 	word* dy2;				/* [n] (2y)² */
-	word* pW;				/* [(2^w - 1) * n] Wᵢ */
-	word* pW2;				/* [2 * (2^{w-1} - 1) * n] Wᵢ² */
-	word* pWW;				/* [3 * n] Wᵢ₋₁ Wᵢ₊₁ */
-	word* pWWy2;			/* [2^{w-2} * n] (2y)² Wᵢ₋₁ Wᵢ₊₁ */
-	word* pWWy4;			/* [n] (2y)² Wᵢ₋₁ Wᵢ₊₁ */
+	word* Ws;				/* [(2^w - 1) * n] Wᵢ */
+	word* W2s;				/* [(2^w - 2) * n] Wᵢ² */
+	word* WWs;				/* [3 * n] Wᵢ₋₁ Wᵢ₊₁ */
+	word* WWy2s;			/* [2^{w-2} * n] (2y)² Wᵢ₋₁ Wᵢ₊₁ */
+	word* WWy4s;			/* [n] (2y)² Wᵢ₋₁ Wᵢ₊₁ */
+	word* WWWs;				/* [(2^{w-1} - 2) * n] Wᵢ₊₂Wᵢ₋₁² - Wᵢ₋₂Wᵢ₊₁² */
 	size_t i;
 	word* pt;
 	// pre
@@ -123,7 +125,7 @@ void ecpPreSNZ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	// разметить стек
 	memSlice(stack,
 		ecpPreSNZ_local(n, w), SIZE_0, SIZE_MAX,
-		&t1, &t2, &dy2, &pW, &pW2, &pWW, &pWWy2, &pWWy4, &stack);
+		&t1, &t2, &dy2, &Ws, &W2s, &WWs, &WWy2s, &WWy4s, &WWWs, &stack);
 	// первая точка
 	pt = pre->pts;
 	ecFromA(pt, a, ec, stack);
@@ -131,72 +133,66 @@ void ecpPreSNZ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 
 /*** SmallMultJ: этап 1 ***/
 
-#define W(i) (pW + ((i) - 3) * n)
-#define W2(i) (pW2 + ((i) - 3) * n)
-#define WW(i) (pWW + ((i) % 3) * n)
-#define WWy2(i) (pWWy2 + (((i) - 3) >> 1) * n)
-#define WWy4(i) (pWWy4)
+#define W(i) (Ws + ((i) - 3) * n)
+#define W2(i) (W2s + ((i) - 3) * n)
+#define WW(i) (WWs + ((i) % 3) * n)
+#define WWy2(i) (WWy2s + (((i) - 3) >> 1) * n)
+#define WWy4(i) (WWy4s)
+#define WWW(i) (WWWs + ((i) - 3) * n)
 
 	// dy2 <- (2y)²
 	gfpDouble(dy2, ecY(a, n), ec->f);
 	qrSqr(dy2, dy2, ec->f, stack);
-	// [W₃], [W₄]
+	// W₃, W₄
 	{
-		word* x2 = pWW;
+		word* x2 = WWs;
 		word* bx = x2 + n;
 		word* a2 = bx + n;
 		// (x2, bx, a2) <- (x², b x, A²)
 		qrSqr(x2, ecX(a), ec->f, stack);
 		qrMul(bx, ec->B, ecX(a), ec->f, stack);
 		qrSqr(a2, ec->A, ec->f, stack);
-		// [W₃]
-		{
-			// [W₃] <- 3(x²+A)²
-			qrAdd(t1, x2, ec->A, ec->f);	// x²+A
-			qrSqr(t1, t1, ec->f, stack);	// (x²+A)²
-			gfpDouble(t2, t1, ec->f);		// 2(x²+A)²
-			qrAdd(W(3), t1, t2, ec->f);		// 3(x²+A)²
-			// [W₃] <- 3(x²+A)² − 4(a²−3Bx)
-			gfpDouble(t1, bx, ec->f);		// 2Bx
-			qrAdd(t1, t1, bx, ec->f);		// 3Bx
-			qrSub(t1, a2, t1, ec->f);		// A²−3Bx
-			gfpDouble(t1, t1, ec->f);		// 2(A²−3Bx)
-			gfpDouble(t1, t1, ec->f);		// 4(A²−3Bx)
-			qrSub(W(3), W(3), t1, ec->f);
-		}
-		// [W₄]
-		{
-			// [W₄] <- 4Bx(5x²-A)
-			gfpDouble(t1, x2, ec->f);				// 2x²
-			gfpDouble(t1, t1, ec->f);				// 4x²
-			qrAdd(t1, t1, x2, ec->f);				// 5x²
-			qrSub(t1, t1, ec->A, ec->f);			// 5x²-A
-			qrMul(t1, bx, t1, ec->f, stack);		// Bx(5x²-A)
-			gfpDouble(t1, t1, ec->f);				// 2Bx(5x²-A)
-			gfpDouble(W(4), t1, ec->f);				// 4Bx(5x²-A)
-			// [W₄] <- x⁶ + 4Bx(5x²-A)
-			qrMul(t1, x2, ecX(a), ec->f, stack);
-			qrSqr(t2, t1, ec->f, stack);
-			qrAdd(W(4), t2, W(4), ec->f);
-			// [W₄] <- x⁶ + 4Bx(5x²-A) + 5Ax(x³-Ax)
-			qrMul(t2, ec->A, ecX(a), ec->f, stack);	// Ax
-			qrSub(t1, t1, t2, ec->f);				// x³-Ax
-			qrMul(t1, t1, t2, ec->f, stack);		// Ax(x³-Ax)
-			gfpDouble(t2, t1, ec->f);				// 2Ax(x³-Ax)
-			gfpDouble(t2, t2, ec->f);				// 4Ax(x³-Ax)
-			qrAdd(t1, t1, t2, ec->f);				// 5Ax(x³-Ax)
-			qrAdd(W(4), W(4), t1, ec->f);
-			// [W₄] <- x⁶ + 4Bx(5x²-A) + 5Ax(x³-Ax) - 8B²
-			qrSqr(t1, ec->B, ec->f, stack);			// B²
-			gfpDouble(t1, t1, ec->f);				// 2B²
-			gfpDouble(t1, t1, ec->f);				// 4B²
-			gfpDouble(t1, t1, ec->f);				// 8B²
-			qrSub(W(4), W(4), t1, ec->f);
-			// [W₄] <- 2(x⁶ + 4Bx(5x²-A) + 5Ax(x³-Ax) - 8B² - A³)
-			qrMul(t2, a2, ec->A, ec->f, stack);		// A³
-			qrSub(W(4), W(4), t2, ec->f);
-			gfpDouble(W(4), W(4), ec->f);
-		}
+		// [W₃] <- 3(x²+A)² − 4(a²−3Bx)
+		qrAdd(t1, x2, ec->A, ec->f);			// x²+A
+		qrSqr(t1, t1, ec->f, stack);			// (x²+A)²
+		gfpDouble(t2, t1, ec->f);				// 2(x²+A)²
+		qrAdd(W(3), t1, t2, ec->f);				// 3(x²+A)²
+		gfpDouble(t1, bx, ec->f);				// 2Bx
+		qrAdd(t1, t1, bx, ec->f);				// 3Bx
+		qrSub(t1, a2, t1, ec->f);				// A²−3Bx
+		gfpDouble(t1, t1, ec->f);				// 2(A²−3Bx)
+		gfpDouble(t1, t1, ec->f);				// 4(A²−3Bx)
+		qrSub(W(3), W(3), t1, ec->f);
+		// [W₄] <- 4Bx(5x²-A)
+		gfpDouble(t1, x2, ec->f);				// 2x²
+		gfpDouble(t1, t1, ec->f);				// 4x²
+		qrAdd(t1, t1, x2, ec->f);				// 5x²
+		qrSub(t1, t1, ec->A, ec->f);			// 5x²-A
+		qrMul(t1, bx, t1, ec->f, stack);		// Bx(5x²-A)
+		gfpDouble(t1, t1, ec->f);				// 2Bx(5x²-A)
+		gfpDouble(W(4), t1, ec->f);				// 4Bx(5x²-A)
+		// [W₄] <- x⁶ + 4Bx(5x²-A)
+		qrMul(t1, x2, ecX(a), ec->f, stack);
+		qrSqr(t2, t1, ec->f, stack);
+		qrAdd(W(4), t2, W(4), ec->f);
+		// [W₄] <- x⁶ + 4Bx(5x²-A) + 5Ax(x³-Ax)
+		qrMul(t2, ec->A, ecX(a), ec->f, stack);	// Ax
+		qrSub(t1, t1, t2, ec->f);				// x³-Ax
+		qrMul(t1, t1, t2, ec->f, stack);		// Ax(x³-Ax)
+		gfpDouble(t2, t1, ec->f);				// 2Ax(x³-Ax)
+		gfpDouble(t2, t2, ec->f);				// 4Ax(x³-Ax)
+		qrAdd(t1, t1, t2, ec->f);				// 5Ax(x³-Ax)
+		qrAdd(W(4), W(4), t1, ec->f);
+		// [W₄] <- x⁶ + 4Bx(5x²-A) + 5Ax(x³-Ax) - 8B²
+		qrSqr(t1, ec->B, ec->f, stack);			// B²
+		gfpDouble(t1, t1, ec->f);				// 2B²
+		gfpDouble(t1, t1, ec->f);				// 4B²
+		gfpDouble(t1, t1, ec->f);				// 8B²
+		qrSub(W(4), W(4), t1, ec->f);
+		// [W₄] <- 2(x⁶ + 4Bx(5x²-A) + 5Ax(x³-Ax) - 8B² - A³)
+		qrMul(t2, a2, ec->A, ec->f, stack);		// A³
+		qrSub(W(4), W(4), t2, ec->f);
+		gfpDouble(W(4), W(4), ec->f);
 	}
 	// [W₃²] <- W₃²
 	qrSqr(W2(3), W(3), ec->f, stack);
@@ -206,35 +202,50 @@ void ecpPreSNZ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	qrSqr(W2(4), W(4), ec->f, stack);
 	// [W₂W₄] <- W₄
 	qrCopy(WW(3), W(4), ec->f);
-	// [(2y)²W₂W₄] <- (2y)²W₂W₄
+	// [(2y)²W₂W₄] <- (2y)² W₂W₄
 	qrMul(WWy2(3), dy2, WW(3), ec->f, stack);
-	// [(2y)⁴W₂W₄] <- (2y)²(2y)²W₂W₄
+	// [(2y)⁴W₂W₄] <- (2y)² (2y)²W₂W₄
 	qrMul(WWy4(3), dy2, WWy2(3), ec->f, stack);
-	// [W₅] <- (2y)⁴W₂W₄ − W₁W₃W₃²
-	qrMul(t1, WW(2), W2(3), ec->f, stack);	// W₁W₃W₃²
+	// [W₅] <- (2y)⁴W₂W₄ − W₁W₃ W₃²
+	qrMul(t1, WW(2), W2(3), ec->f, stack);
 	qrSub(W(5), WWy4(3), t1, ec->f);
 	// [W₅²] <- W₅²
 	qrSqr(W2(5), W(5), ec->f, stack);
+	// [W₅W₂² − W₁W₄²] <- W₅ - W₄²
+	qrSub(WWW(3), W(5), W2(4), ec->f);
+	// [W₆] <- W₃(W₅W₂² − W₁W₄²)
+	qrMul(W(6), W(3), WWW(3), ec->f, stack);
+	// [W₆W₃² − W₂W₅²] <- W₆W₃² - W₅²
+	qrMul(WWW(4), W(6), W2(3), ec->f, stack);
+	qrSub(WWW(4), WWW(4), W2(5), ec->f);
 
 /* Этап 2 */
 
-	// [W₂ᵢ], [W₂ᵢ₊₁], [Wᵢ Wᵢ₊₂], i=3,4...,2ʷ⁻¹
+	// i=3,4...,2ʷ⁻¹: W₂ᵢ, W₂ᵢ₊₁, Wᵢ Wᵢ₊₂
 	for (i = 3; i <= SIZE_BIT_POS(w - 1); ++i)
 	{
 		// [WᵢWᵢ₊₂] <- ((Wᵢ + Wᵢ₊₂)² - Wᵢ² - Wᵢ₊₂²) / 2
-		gfpMul2(WW(i+1), W(i), W(i+2), W2(i), W2(i+2), ec->f, stack);
-		// [W₆] <- W₃W₅ - W₁W₃W₄²
-		if (i == 3)
+		gfpMul2(WW(i + 1), W(i), W(i + 2), W2(i), W2(i + 2), ec->f, stack);
+
+/*
+		// [Wᵢ₊₂Wᵢ² − Wᵢ₋₂Wᵢ₊₁²] <- Wᵢ₊₂Wᵢ² − Wᵢ₋₂Wᵢ₊₁²
+		if (i >= 5)
 		{
-			qrMul(t1, WW(i-1), W2(i+1), ec->f, stack);		// (W₁W₃) W₄²
-			qrSub(W(2*i), WW(i+1), t1, ec->f);
+			qrMul(WWW(i), W(i + 2), W2(i), ec->f, stack);
+			qrMul(t1, W(i - 2), W2(i + 1), ec->f, stack);
+			qrSub(WWW(i), WWW(i), t1, ec->f);
 		}
+		// [W₂ᵢ] <- Wᵢ(Wᵢ₊₂Wᵢ₋₁² - Wᵢ₋₂Wᵢ₊₁²)
+		if (i >= 4)
+			qrMul(W(2*i), W(i), WWW(i), ec->f, stack);
+*/
+
 		// [W₂ᵢ] <- (WᵢWᵢ₊₂)Wᵢ₋₁² - (Wᵢ₋₂Wᵢ)Wᵢ₊₁²
-		else
+		if (i >= 4)
 		{
-			qrMul(t1, WW(i-1), W2(i+1), ec->f, stack);		// (Wᵢ₋₂Wᵢ)Wᵢ₊₁²
-			qrMul(W(2*i), WW(i+1), W2(i-1), ec->f, stack);	// (WᵢWᵢ₊₂)Wᵢ₋₁²
-			qrSub(W(2*i), W(2*i), t1, ec->f);
+			qrMul(t1, WW(i - 1), W2(i + 1), ec->f, stack);
+			qrMul(W(2 * i), WW(i + 1), W2(i - 1), ec->f, stack);
+			qrSub(W(2 * i), W(2 * i), t1, ec->f);
 		}
 		// [W₂ᵢ²] <- W₂ᵢ²
 		qrSqr(W2(2*i), W(2*i), ec->f, stack);
