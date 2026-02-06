@@ -4,7 +4,7 @@
 \brief Benchmarks for elliptic curves over prime fields
 \project bee2/test
 \created 2013.10.17
-\version 2026.02.05
+\version 2026.02.06
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -78,21 +78,21 @@ bool_t ecpBench()
 				ecMulA(pt, ec->base, ec, d, ec->f->n, stack);
 			}
 			ticks = tmTicks() - ticks;
-			printf("  ecMulA:                   %u cycles/pt [%u pts/sec]\n",
+			printf("  ecMulA:                    %u cycles/pt [%u pts/sec]\n",
 				(unsigned)(ticks / reps),
 				(unsigned)tmSpeed(reps, ticks));
 		}
-		// ecPre+MulPre[SNZ]
+		// ecpPre+MulPre[SNZ]
 		for (w = 3; w <= 6; ++w)
 		{
 			for (i = 0, ticks = tmTicks(); i < reps; ++i)
 			{
 				prngCOMBOStepR(d, ec->f->no, combo_state);
-				ecPreSNZ(pre, ec->base, w, ec, stack);
+				ecpPreSNZ(pre, ec->base, w, ec, stack);
 				ecMulPreSNZ(pt, pre, ec, d, ec->f->n, stack);
 			}
 			ticks = tmTicks() - ticks;
-			printf("  ecPre+ecMulPre[SNZ,w=%u]:  %u cycles/pt [%u pts/sec]\n",
+			printf("  ecpPre+ecMulPre[SNZ,w=%u]:  %u cycles/pt [%u pts/sec]\n",
 				(unsigned)w,
 				(unsigned)(ticks / reps),
 				(unsigned)tmSpeed(reps, ticks));
@@ -107,7 +107,7 @@ bool_t ecpBench()
 				ecMulPreSNZA(pt, pre, ec, d, ec->f->n, stack);
 			}
 			ticks = tmTicks() - ticks;
-			printf("  ecPre+ecMulPre[SNZA,w=%u]: %u cycles/pt [%u pts/sec]\n",
+			printf("  ecPre+ecMulPre[SNZA,w=%u]:  %u cycles/pt [%u pts/sec]\n",
 				(unsigned)w,
 				(unsigned)(ticks / reps),
 				(unsigned)tmSpeed(reps, ticks));
@@ -122,7 +122,7 @@ bool_t ecpBench()
 				ecMulPreSNZ(pt, pre, ec, d, ec->f->n, stack);
 			}
 			ticks = tmTicks() - ticks;
-			printf("  ecMulPre[SNZ,w=%u]:        %u cycles/pt [%u pts/sec]\n",
+			printf("  ecMulPre[SNZ,w=%u]:         %u cycles/pt [%u pts/sec]\n",
 				(unsigned)w,
 				(unsigned)(ticks / reps),
 				(unsigned)tmSpeed(reps, ticks));
@@ -137,7 +137,7 @@ bool_t ecpBench()
 				ecMulPreSNZA(pt, pre, ec, d, ec->f->n, stack);
 			}
 			ticks = tmTicks() - ticks;
-			printf("  ecMulPre[SNZA,w=%u]:       %u cycles/pt [%u pts/sec]\n",
+			printf("  ecMulPre[SNZA,w=%u]:        %u cycles/pt [%u pts/sec]\n",
 				(unsigned)w,
 				(unsigned)(ticks / reps),
 				(unsigned)tmSpeed(reps, ticks));
@@ -148,7 +148,7 @@ bool_t ecpBench()
 			for (i = 0, ticks = tmTicks(); i < reps; ++i)
 				ecPreSNZ(pre, ec->base, w, ec, stack);
 			ticks = tmTicks() - ticks;
-			printf("  ecPre[SNZ,w=%u]:           %u cycles/pre [%u pre/sec]\n",
+			printf("  ecPre[SNZ,w=%u]:            %u cycles/pre [%u pre/sec]\n",
 				(unsigned)w,
 				(unsigned)(ticks / reps),
 				(unsigned)tmSpeed(reps, ticks));
@@ -159,7 +159,7 @@ bool_t ecpBench()
 			for (i = 0, ticks = tmTicks(); i < reps; ++i)
 				ecpPreSNZ(pre, ec->base, w, ec, stack);
 			ticks = tmTicks() - ticks;
-			printf("  ecpPre[SNZ,w=%u]:          %u cycles/pre [%u pre/sec]\n",
+			printf("  ecpPre[SNZ,w=%u]:           %u cycles/pre [%u pre/sec]\n",
 				(unsigned)w,
 				(unsigned)(ticks / reps),
 				(unsigned)tmSpeed(reps, ticks));
