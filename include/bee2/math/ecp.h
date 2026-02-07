@@ -4,7 +4,7 @@
 \brief Elliptic curves over prime fields
 \project bee2 [cryptographic library]
 \created 2012.06.24
-\version 2026.01.26
+\version 2026.02.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -267,21 +267,15 @@ size_t ecpSWU_deep(size_t n, size_t f_deep);
 
 /*!	\brief Предвычисления по схеме SNZ
 
-	На эллиптической кривой ec вычисляются 2^{w-1} малых нечетных кратных
-	аффинной точки [2 * ec->f->n]a. Кратные размещаются в буфере
-	[2^{w-1} * ec->d * ec->f->n]pre:
-	\code
-		pre[0:2^{w-1}) <- (a, 3a, ..., (2^w - 1)a).
-	\endcode
-	Каждое кратное является проективной точкой и занимает ec->d * ec->f->n 
-	машинных слов.
-	\pre w >= 3.
+	На эллиптической кривой ec выполняются предвычисления по схеме SNZ 
+	с аффинной точкой [2 * ec->f->n]a и окном шириной w. Результат сохраняется 
+	в контейнере pre.
 	\pre Описание ec работоспособно.
-	\pre Буферы a и pre либо не пересекаются, либо указатели a и pre совпадают.
 	\pre Координаты a лежат в базовом поле.
+	\pre w >= 3.
 	\expect Описание ec корректно.
-	\expect Точка a лежит на кривой.
-	\deep{stack} ecpPreSNZ_deep(ec->f->n, ec->f->deep, w).
+	\expect Точка a лежит на ec.
+	\deep{stack} ecpPreSNZ_deep(ec->f->n, ec->d, ec->deep, w).
 */
 void ecpPreSNZ(
 	ec_pre_t* pre,			/*!< [out] предвычисленные точки */
@@ -292,6 +286,32 @@ void ecpPreSNZ(
 );
 
 size_t ecpPreSNZ_deep(size_t n, size_t f_deep, size_t w);
+
+/*!	\brief Предвычисления по схеме SNZA
+
+	На эллиптической кривой ec выполняются предвычисления по схеме SNZA 
+	с аффинной точкой [2 * ec->f->n]a и окном шириной w. Результат сохраняется 
+	в контейнере pre. 
+	\pre Описание ec работоспособно.
+	\pre Координаты a лежат в базовом поле.
+	\pre w >= 3.
+	\expect Описание ec корректно.
+	\expect Точка a лежит на ec.
+	\return TRUE, если среди предвычисленных точек нет O, и FALSE в противном
+	случае.
+	\remark При обнаружении точки O предвычисления прерываются с неопределенным
+	результатом в pre->pts.
+	\deep{stack} ecPreSNZA_deep(ec->f->n, ec->d, ec->deep).
+*/
+bool_t ecpPreSNZA(
+	ec_pre_t* pre,			/*!< [out] предвычисленные точки */
+	const word a[],			/*!< [in] исходная точка */
+	size_t w,				/*!< [in] ширина окна */
+	const struct ec_o* ec,	/*!< [in] описание эллиптической кривой */
+	void* stack				/*!< [in] вспомогательная память */
+);
+
+size_t ecpPreSNZA_deep(size_t n, size_t f_deep, size_t w);
 
 #ifdef __cplusplus
 } /* extern "C" */
