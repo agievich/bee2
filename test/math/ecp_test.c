@@ -4,7 +4,7 @@
 \brief Tests for elliptic curves over prime fields
 \project bee2/test
 \created 2017.05.29
-\version 2026.02.04
+\version 2026.02.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -82,7 +82,7 @@ bool_t ecpTest()
 		O_OF_W(3 * n),
 		O_OF_W(3 * n),
 		O_OF_W(n + 1),
-		utilMax(18,
+		utilMax(19,
 			gfpCreate_deep(no),
 			ecpCreateJ_deep(n, f_deep),
 			ecGroupCreate_deep(f_deep),
@@ -96,9 +96,10 @@ bool_t ecpTest()
 			ecpSubAA_deep(n, f_deep),
 			ecMulA_deep(n, 3, ec_deep, n),
 			ecPreSNZ_deep(n, 3, ec_deep),
-			ecpPreSNZ_deep(n, f_deep, 6),
-			ecMulPreSNZ_deep(n, 3, ec_deep, n),
 			ecPreSNZA_deep(n, 3, ec_deep),
+			ecpPreSNZ_deep(n, f_deep, 6),
+			ecpPreSNZA_deep(n, f_deep, 6),
+			ecMulPreSNZ_deep(n, 3, ec_deep, n),
 			ecMulPreSNZA_deep(n, 3, ec_deep, n),
 			ecAddMulA_deep(n, 3, ec_deep, 4, (size_t)1, (size_t)2, (size_t)3, (size_t)4)),
 		SIZE_MAX,
@@ -367,7 +368,7 @@ bool_t ecpTest()
 	{
 		size_t i;
 		// pt[0..32) <- (1, 3, ..., 31)base
-		if (!ecPreSNZA(pre, ec->base, 6, ec, stack))
+		if (!ecpPreSNZA(pre, ec->base, 6, ec, stack))
 		{
 			blobClose(state);
 			return FALSE;
