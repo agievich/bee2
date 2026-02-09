@@ -46,15 +46,17 @@ bool_t ecpBench()
 		prngCOMBO_keep(),
 		O_OF_W(2 * ec->f->n),
 		O_OF_W(ec->f->n),
-		sizeof(ec_pre_t) + O_OF_W(64 * 3 * ec->f->n),
-		utilMax(7,
+		sizeof(ec_pre_t) + O_OF_W(43 * 32 * 3 * ec->f->n),
+		utilMax(9,
 			ecMulA_deep(ec->f->n, ec->d, ec->deep, ec->f->n),
 			ecPreSNZ_deep(ec->f->n, ec->d, ec->deep),
 			ecPreSNZA_deep(ec->f->n, ec->d, ec->deep),
+			ecPreSNZH_deep(ec->f->n, ec->d, ec->deep),
 			ecpPreSNZ_deep(ec->f->n, ec->f->deep, 6),
 			ecpPreSNZA_deep(ec->f->n, ec->f->deep, 6),
 			ecMulPreSNZ_deep(ec->f->n, ec->d, ec->deep, ec->f->n),
-			ecMulPreSNZA_deep(ec->f->n, ec->d, ec->deep, ec->f->n)),
+			ecMulPreSNZA_deep(ec->f->n, ec->d, ec->deep, ec->f->n),
+			ecMulPreSNZH_deep(ec->f->n, ec->d, ec->deep, ec->f->n)),
 		SIZE_MAX,
 		&combo_state, &pt, &d, &pre, &stack);
 	if (state == 0)
@@ -139,6 +141,22 @@ bool_t ecpBench()
 			}
 			ticks = tmTicks() - ticks;
 			printf("  ecMulPre[SNZA,w=%u]:        %u cycles/pt [%u pts/sec]\n",
+				(unsigned)w,
+				(unsigned)(ticks / reps),
+				(unsigned)tmSpeed(reps, ticks));
+		}
+		// ecMulPre[SNZH]
+		for (w = 3; w <= 6; ++w)
+		{
+			size_t h = (B_OF_W(ec->f->n) + w - 1) / w;
+			ecPreSNZH(pre, ec->base, w, h, ec, stack);
+			for (i = 0, ticks = tmTicks(); i < reps; ++i)
+			{
+				prngCOMBOStepR(d, ec->f->no, combo_state);
+				ecMulPreSNZH(pt, pre, ec, d, ec->f->n, stack);
+			}
+			ticks = tmTicks() - ticks;
+			printf("  ecMulPre[SNZH,w=%u]:        %u cycles/pt [%u pts/sec]\n",
 				(unsigned)w,
 				(unsigned)(ticks / reps),
 				(unsigned)tmSpeed(reps, ticks));

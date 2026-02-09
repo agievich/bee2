@@ -127,10 +127,6 @@ P <- P + A и P <- P + P меняются на A <- A + A.
 - (P <- 2P) -- время работы функции ec->dbl.
 -----------------------------------------------------
 * [или прямых вычислений в аффинных координатах]
-
-\remark Функции ecPreSNZ() и особенно ecPreSNZA() не оптимальны. Ускоренные
-алгоритмы предвычислений для кривых над GF(p) реализованы в функциях
-ecPreSNZ() и ecpPreSNZA().
 *******************************************************************************
 */
 
@@ -138,10 +134,9 @@ bool_t ecPreIsOperable(const ec_pre_t* pre)
 {
 	return memIsValid(pre, sizeof(pre)) &&
 		(pre->type == ec_pre_snz || pre->type == ec_pre_snza ||
-			pre->type == ec_pre_hpb) &&
+			pre->type == ec_pre_snzh || pre->type == ec_pre_hpb) &&
 		pre->w > 0 && pre->w < B_PER_W &&
-		(pre->type == ec_pre_hpb && pre->h > 0 ||
-			pre->type != ec_pre_hpb && pre->h == 0);
+		((pre->type != ec_pre_snzh && pre->type != ec_pre_hpb) ^ (pre->h > 0));
 }
 
 #define ecPreSNZ_local(n, ec_d)\
@@ -156,7 +151,7 @@ void ecPreSNZ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	ASSERT(ecIsOperable(ec));
 	ASSERT(w > 0);
 	ASSERT(memIsDisjoint2(
-		pre, sizeof(ec_pre_t) + O_OF_W(ec->d * ec->f->n * SIZE_BIT_POS(w - 1)),
+		pre, sizeof(ec_pre_t) + O_OF_W(SIZE_BIT_POS(w - 1) * ec->d * ec->f->n),
 		a, O_OF_W(2 * ec->f->n)));
 	// разметить стек
 	memSlice(stack,
@@ -202,7 +197,7 @@ bool_t ecPreSNZA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	ASSERT(ecIsOperable(ec));
 	ASSERT(w > 0);
 	ASSERT(memIsDisjoint2(
-		pre, sizeof(ec_pre_t) + O_OF_W(2 * ec->f->n * SIZE_BIT_POS(w - 1)),
+		pre, sizeof(ec_pre_t) + O_OF_W(SIZE_BIT_POS(w - 1) * 2 * ec->f->n),
 		a, O_OF_W(2 * ec->f->n)));
 	// разметить стек
 	memSlice(stack,
@@ -234,6 +229,59 @@ size_t ecPreSNZA_deep(size_t n, size_t ec_d, size_t ec_deep)
 	return memSliceSize(
 		ecPreSNZA_local(n, ec_d),
 		ec_deep,
+		SIZE_MAX);
+}
+
+#define ecPreSNZH_local(n, ec_d)\
+/* t */		O_OF_W(ec_d * n)
+
+bool_t ecPreSNZH(ec_pre_t* pre, const word a[], size_t w, size_t h,
+	const ec_o* ec, void* stack)
+{
+	word* t;			/* [ec->d * ec->f->n] */
+	size_t i;
+	word* prev;
+	word* cur;
+	// pre
+	ASSERT(ecIsOperable(ec));
+	ASSERT(w > 0 && h > 0);
+	ASSERT(memIsDisjoint2(
+		pre, sizeof(ec_pre_t) + O_OF_W(SIZE_BIT_POS(w - 1) * h * 2 * ec->f->n),
+		a, O_OF_W(2 * ec->f->n)));
+	// разметить стек
+	memSlice(stack,
+		ecPreSNZH_local(ec->f->n, ec->d), SIZE_0, SIZE_MAX,
+		&t, &stack);
+	// первая строка
+	if (!ecPreSNZA(pre, a, w, ec, stack))
+		return FALSE;
+	// остальные строки
+	prev = pre->pts, cur = prev + SIZE_BIT_POS(w - 1) * 2 * ec->f->n;
+	for (i = 0; i < h; ++i)
+	{
+		word* pt;
+		for (pt = cur; prev != cur; pt += 2 * ec->f->n, prev += 2 * ec->f->n)
+		{
+			size_t j = SIZE_BIT_POS(w);
+			ecDblA(t, prev, ec, stack);
+			while (--j)
+				ecDbl(t, t, ec, stack);
+			if (!ecToA(pt, t, ec, stack))
+				return FALSE;
+		}
+		cur = pt;
+	}
+	// заполнить служебные поля
+	pre->type = ec_pre_snzh;
+	pre->w = w, pre->h = h;
+	return TRUE;
+}
+
+size_t ecPreSNZH_deep(size_t n, size_t ec_d, size_t ec_deep)
+{
+	return memSliceSize(
+		ecPreSNZH_local(n, ec_d),
+		ecPreSNZA_deep(n, ec_d, ec_deep),
 		SIZE_MAX);
 }
 
@@ -584,7 +632,7 @@ bool_t ecMulPreSNZA(word b[], const ec_pre_t* pre, const ec_o* ec,
 	mask = WORD_BIT_POS(pre->w) - 2;
 	// разметить стек
 	memSlice(stack,
-		ecMulPreSNZ_local(ec->f->n, ec->d, m), SIZE_0, SIZE_MAX,
+		ecMulPreSNZA_local(ec->f->n, ec->d, m), SIZE_0, SIZE_MAX,
 		&dd, &t, &pt, &stack);
 	// dd <- (d % 2) ? d : ec->order - d
 	neg = WORD_1 - (d[0] & 1);
@@ -631,6 +679,94 @@ size_t ecMulPreSNZA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 {
 	return memSliceSize(
 		ecMulPreSNZA_local(n, ec_d, m),
+		ec_deep,
+		SIZE_MAX);
+}
+
+#define ecMulPreSNZH_local(n, ec_d, m)\
+/* dd */	O_OF_W(m),\
+/* t */		O_OF_W(ec_d * n),\
+/* pt */	O_OF_W(2 * n)
+
+bool_t ecMulPreSNZH(word b[], const ec_pre_t* pre, const ec_o* ec,
+	const word d[], size_t m, void* stack)
+{
+	register word neg;
+	register word digit;
+	register word borrow;
+	register bool_t ret;
+	size_t mb;
+	size_t row_count;
+	size_t pt_size;
+	size_t mask;
+	size_t pos;
+	const word* row;
+	word* dd;			/* [m] */
+	word* t;			/* [ec->d * ec->f->n] */
+	word* pt;			/* [2 * ec->f->n] */
+	// pre
+	ASSERT(ecIsOperable(ec));
+	ASSERT(ecGroupIsOperable(ec));
+	ASSERT(ecPreIsOperable(pre));
+	ASSERT(pre->type == ec_pre_snzh);
+	ASSERT(wwWordSize(ec->order, ec->f->n + 1) == m);
+	ASSERT(zzIsOdd(ec->order, m) && m > 1);
+	ASSERT(wwCmp(d, ec->order, m) < 0);
+	// размерности
+	mb = wwBitSize(ec->order, m);
+	ASSERT(2 * pre->w <= mb && mb <= pre->w * pre->h);
+	row_count = SIZE_BIT_POS(pre->w - 1);
+	pt_size = 2 * ec->f->n;
+	mask = WORD_BIT_POS(pre->w) - 2;
+	// разметить стек
+	memSlice(stack,
+		ecMulPreSNZH_local(ec->f->n, ec->d, m), SIZE_0, SIZE_MAX,
+		&dd, &t, &pt, &stack);
+	// dd <- (d % 2) ? d : ec->order - d
+	neg = WORD_1 - (d[0] & 1);
+	zzSubIf(dd, ec->order, d, m, neg);
+	ASSERT(zzIsOdd(dd, m));
+	// позиция старшей цифры, старшая строка pre
+	pos = (mb - 1) / pre->w;
+	row = pre->pts + pos * pt_size;
+	pos *= pre->w;
+	// обработать старшую цифру
+	digit = wwGetBits(dd, pos, mb - pos);
+	wwSel(pt, row, row_count, pt_size, digit >> 1);
+	ecFromA(t, pt, ec, stack);
+	borrow = WORD_1 - (digit & 1);
+	// обработать остальные цифры
+	while (pos -= pre->w)
+	{
+		row -= row_count * pt_size;
+		digit = wwGetBits(dd, pos, pre->w);
+		digit ^= (WORD_0 - borrow) & mask;
+		wwSel(pt, row, row_count, pt_size, digit >> 1);
+		ecSgnA(pt, borrow, ec, stack);
+		ecDblAddA(t, t, pt, ec, stack);
+		borrow = WORD_1 - (digit & 1);
+	}
+	// финишное сложение
+	row -= row_count * pt_size;
+	digit = wwGetBits(dd, 0, pre->w);
+	ASSERT(digit & 1);
+	digit ^= (WORD_0 - borrow) & mask;
+	wwSel(pt, pre->pts, row_count, pt_size, digit >> 1);
+	ecSgnA(pt, borrow, ec, stack);
+	ret = (ec->finadda) ?
+		ec->finadda(b, t, pt, ec, stack) :
+		(ecAddA(t, t, pt, ec, stack), ecToA(b, t, ec, stack));
+	// настройка знака
+	ecSgnA(b, neg, ec, stack);
+	// очистка и возврат
+	CLEAN3(neg, digit, borrow);
+	return ret;
+}
+
+size_t ecMulPreSNZH_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
+{
+	return memSliceSize(
+		ecMulPreSNZH_local(n, ec_d, m),
 		ec_deep,
 		SIZE_MAX);
 }

@@ -273,6 +273,8 @@ size_t ecpSWU_deep(size_t n, size_t f_deep);
 	\pre Описание ec работоспособно.
 	\pre Координаты a лежат в базовом поле.
 	\pre w >= 3.
+	\pre memIsValid(pre, sizeof(ec_pre_t) +
+		O_OF_W(SIZE_BIT_POS(w - 1) * ec->d * ec->f->n)).
 	\expect Описание ec корректно.
 	\expect Точка a лежит на ec.
 	\deep{stack} ecpPreSNZ_deep(ec->f->n, ec->d, ec->deep, w).
@@ -295,6 +297,8 @@ size_t ecpPreSNZ_deep(size_t n, size_t f_deep, size_t w);
 	\pre Описание ec работоспособно.
 	\pre Координаты a лежат в базовом поле.
 	\pre w >= 3.
+	\pre memIsValid(pre, sizeof(ec_pre_t) +
+		O_OF_W(SIZE_BIT_POS(w - 1) * 2 * ec->f->n)).
 	\expect Описание ec корректно.
 	\expect Точка a лежит на ec.
 	\return TRUE, если среди предвычисленных точек нет O, и FALSE в противном
