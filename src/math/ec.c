@@ -257,14 +257,14 @@ bool_t ecPreSNZH(ec_pre_t* pre, const word a[], size_t w, size_t h,
 		return FALSE;
 	// остальные строки
 	prev = pre->pts, cur = prev + SIZE_BIT_POS(w - 1) * 2 * ec->f->n;
-	for (i = 0; i < h; ++i)
+	for (i = 1; i < h; ++i)
 	{
 		word* pt;
 		for (pt = cur; prev != cur; pt += 2 * ec->f->n, prev += 2 * ec->f->n)
 		{
-			size_t j = SIZE_BIT_POS(w);
+			size_t j;
 			ecDblA(t, prev, ec, stack);
-			while (--j)
+			for (j = 1; j < w; ++j)
 				ecDbl(t, t, ec, stack);
 			if (!ecToA(pt, t, ec, stack))
 				return FALSE;
@@ -273,7 +273,7 @@ bool_t ecPreSNZH(ec_pre_t* pre, const word a[], size_t w, size_t h,
 	}
 	// заполнить служебные поля
 	pre->type = ec_pre_snzh;
-	pre->w = w, pre->h = h;
+	pre->h = h;
 	return TRUE;
 }
 
@@ -728,7 +728,7 @@ bool_t ecMulPreSNZH(word b[], const ec_pre_t* pre, const ec_o* ec,
 	ASSERT(zzIsOdd(dd, m));
 	// позиция старшей цифры, старшая строка pre
 	pos = (mb - 1) / pre->w;
-	row = pre->pts + pos * pt_size;
+	row = pre->pts + pos * row_count * pt_size;
 	pos *= pre->w;
 	// обработать старшую цифру
 	digit = wwGetBits(dd, pos, mb - pos);
@@ -738,16 +738,15 @@ bool_t ecMulPreSNZH(word b[], const ec_pre_t* pre, const ec_o* ec,
 	// обработать остальные цифры
 	while (pos -= pre->w)
 	{
-		row -= row_count * pt_size;
 		digit = wwGetBits(dd, pos, pre->w);
 		digit ^= (WORD_0 - borrow) & mask;
+		row -= row_count * pt_size;
 		wwSel(pt, row, row_count, pt_size, digit >> 1);
 		ecSgnA(pt, borrow, ec, stack);
-		ecDblAddA(t, t, pt, ec, stack);
+		ecAddA(t, t, pt, ec, stack);
 		borrow = WORD_1 - (digit & 1);
 	}
 	// финишное сложение
-	row -= row_count * pt_size;
 	digit = wwGetBits(dd, 0, pre->w);
 	ASSERT(digit & 1);
 	digit ^= (WORD_0 - borrow) & mask;

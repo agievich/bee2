@@ -53,6 +53,8 @@ typedef void (*ec_pre_snz_i)(ec_pre_t* pre, const word a[], size_t w,
 typedef bool_t (*ec_pre_snza_i)(ec_pre_t* pre, const word a[], size_t w,
 	const struct ec_o* ec, void* stack);
 
+const size_t max_pre_count = (B_OF_O(no) + 5) / 6 * 32;
+
 bool_t ecpTest()
 {
 	// функции предвычислений
@@ -85,7 +87,7 @@ bool_t ecpTest()
 		ec_keep,
 		f_keep,
 		3 * no,
-		(sizeof(ec_pre_t) + O_OF_W(32 * 3 * n)) | SIZE_HI,
+		(sizeof(ec_pre_t) + O_OF_W(max_pre_count * 3 * n)) | SIZE_HI,
 		O_OF_W(3 * n),
 		O_OF_W(3 * n),
 		O_OF_W(3 * n),
@@ -108,10 +110,12 @@ bool_t ecpTest()
 			ecMulA_deep(n, 3, ec_deep, n),
 			ecPreSNZ_deep(n, 3, ec_deep),
 			ecPreSNZA_deep(n, 3, ec_deep),
+			ecPreSNZH_deep(n, 3, ec_deep),
 			ecpPreSNZ_deep(n, f_deep, 6),
 			ecpPreSNZA_deep(n, f_deep, 6),
 			ecMulPreSNZ_deep(n, 3, ec_deep, n),
 			ecMulPreSNZA_deep(n, 3, ec_deep, n),
+			ecMulPreSNZH_deep(n, 3, ec_deep, n),
 			ecAddMulA_deep(n, 3, ec_deep, 4,
 				(size_t)1, (size_t)2, (size_t)3, (size_t)4)),
 		SIZE_MAX,
@@ -447,7 +451,11 @@ bool_t ecpTest()
 		{
 			wwCopy(d, ec->order, n);
 			zzSubW2(d, n, 1);
-			ecpPreSNZA(pre, ec->base, w, ec, stack);
+			if (!ecpPreSNZA(pre, ec->base, w, ec, stack))
+			{
+				blobClose(state);
+				return FALSE;
+			}
 			while (!wwIsZero(d, n))
 			{
 				if (!ecMulPreSNZA(pt0, pre, ec, d, n, stack) ||
@@ -460,6 +468,38 @@ bool_t ecpTest()
 				wwShLo(d, n, 23);
 			}
 			if (ecMulPreSNZA(pt0, pre, ec, d, n, stack) ||
+				ecMulA(pt1, ec->base, ec, d, n, stack))
+			{
+				blobClose(state);
+				return FALSE;
+			}
+		}
+	}
+	// кратная точка: ecMulA vs ecMulPreSNZH
+	{
+		size_t w;
+		for (w = 3; w <= 6; ++w)
+		{
+			size_t h = (B_OF_W(ec->f->n) + w - 1) / w;
+			wwCopy(d, ec->order, n);
+			zzSubW2(d, n, 1);
+			if (!ecPreSNZH(pre, ec->base, w, h, ec, stack))
+			{
+				blobClose(state);
+				return FALSE;
+			}
+			while (!wwIsZero(d, n))
+			{
+				if (!ecMulPreSNZH(pt0, pre, ec, d, n, stack) ||
+					!ecMulA(pt1, ec->base, ec, d, n, stack) ||
+					!wwEq(pt0, pt1, 2 * n))
+				{
+					blobClose(state);
+					return FALSE;
+				}
+				wwShLo(d, n, 13);
+			}
+			if (ecMulPreSNZH(pt0, pre, ec, d, n, stack) ||
 				ecMulA(pt1, ec->base, ec, d, n, stack))
 			{
 				blobClose(state);
