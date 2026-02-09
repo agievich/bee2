@@ -770,6 +770,8 @@ bool_t ecPreIsOperable(
 	\expect Описание ec корректно.
 	\expect Точка a лежит на ec.
 	\deep{stack} ecPreSNZ_deep(ec->f->n, ec->d, ec->deep).
+	\remark Функция ecPreSNZ() не оптимальна. Ускоренный алгоритм вычисления
+	малых нечетных кратных для кривых над GF(p) реализован в ecpPreSNZ().
 */
 void ecPreSNZ(
 	ec_pre_t* pre,				/*!< [out] предвычисленные точки */
@@ -796,6 +798,8 @@ size_t ecPreSNZ_deep(size_t n, size_t ec_d, size_t ec_deep);
 	\remark При обнаружении точки O предвычисления прерываются с неопределенным
 	результатом в pre->pts.
 	\deep{stack} ecPreSNZA_deep(ec->f->n, ec->d, ec->deep).
+	\remark Функция ecPreSNZA() не оптимальна. Ускоренный алгоритм вычисления
+	малых нечетных кратных для кривых над GF(p) реализован в ecpPreSNZA().
 */
 bool_t ecPreSNZA(
 	ec_pre_t* pre,				/*!< [out] предвычисленные точки */

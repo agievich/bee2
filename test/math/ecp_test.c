@@ -4,7 +4,7 @@
 \brief Tests for elliptic curves over prime fields
 \project bee2/test
 \created 2017.05.29
-\version 2026.02.07
+\version 2026.02.09
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -47,8 +47,17 @@ static size_t cofactor = 1;
 *******************************************************************************
 */
 
+typedef void (*ec_pre_snz_i)(ec_pre_t* pre, const word a[], size_t w,
+	const struct ec_o* ec, void* stack);
+
+typedef bool_t (*ec_pre_snza_i)(ec_pre_t* pre, const word a[], size_t w,
+	const struct ec_o* ec, void* stack);
+
 bool_t ecpTest()
 {
+	// функции предвычислений
+	const ec_pre_snz_i pre_snz_fn[] = { ecPreSNZ, ecpPreSNZ };
+	const ec_pre_snza_i pre_snza_fn[] = { ecPreSNZA, ecpPreSNZA };
 	// размерности
 	const size_t n = W_OF_O(no);
 	const size_t f_keep = gfpCreate_keep(no);
@@ -69,6 +78,8 @@ bool_t ecpTest()
 	word* pt5;		/* [3 * n] */
 	word* d;		/* [n + 1] */
 	void* stack;
+	// другие переменные
+	size_t pos;
 	// создать состояние
 	state = blobCreate2(
 		ec_keep,
@@ -101,7 +112,8 @@ bool_t ecpTest()
 			ecpPreSNZA_deep(n, f_deep, 6),
 			ecMulPreSNZ_deep(n, 3, ec_deep, n),
 			ecMulPreSNZA_deep(n, 3, ec_deep, n),
-			ecAddMulA_deep(n, 3, ec_deep, 4, (size_t)1, (size_t)2, (size_t)3, (size_t)4)),
+			ecAddMulA_deep(n, 3, ec_deep, 4,
+				(size_t)1, (size_t)2, (size_t)3, (size_t)4)),
 		SIZE_MAX,
 		&ec, &f, &t, &pre, &pt0, &pt1, &pt2, &pt3, &pt4, &pt5, &d, &stack);
 	if (state == 0)
@@ -338,10 +350,11 @@ bool_t ecpTest()
 		}
 	}
 	// предвычисления по схеме SNZ
+	for (pos = 0; pos < COUNT_OF(pre_snz_fn); ++pos)
 	{
 		size_t i;
 		// pt[0..32) <- (1, 3, ..., 31)base
-		ecpPreSNZ(pre, ec->base, 6, ec, stack);
+		pre_snz_fn[pos](pre, ec->base, 6, ec, stack);
 		// pt0 <- \sum_{i = 0}^31 2^{31 - i} pt[i]
 		wwCopy(pt0, ecPrePt(pre, 0, ec), 3 * n);
 		for (i = 1; i < 32; ++i)
@@ -365,10 +378,11 @@ bool_t ecpTest()
 		}
 	}
 	// предвычисления по схеме SNZA
+	for (pos = 0; pos < COUNT_OF(pre_snza_fn); ++pos)
 	{
 		size_t i;
 		// pt[0..32) <- (1, 3, ..., 31)base
-		if (!ecpPreSNZA(pre, ec->base, 6, ec, stack))
+		if (!pre_snza_fn[pos](pre, ec->base, 6, ec, stack))
 		{
 			blobClose(state);
 			return FALSE;
@@ -402,11 +416,11 @@ bool_t ecpTest()
 	// кратная точка: ecMulA vs ecMulPreSNZ
 	{
 		size_t w;
-		for (w = 5; w <= 6; ++w)
+		for (w = 3; w <= 6; ++w)
 		{
 			wwCopy(d, ec->order, n);
 			zzSubW2(d, n, 1);
-			ecPreSNZ(pre, ec->base, w, ec, stack);
+			ecpPreSNZ(pre, ec->base, w, ec, stack);
 			while (!wwIsZero(d, n))
 			{
 				if (!ecMulPreSNZ(pt0, pre, ec, d, n, stack) ||
@@ -429,11 +443,11 @@ bool_t ecpTest()
 	// кратная точка: ecMulA vs ecMulPreSNZA
 	{
 		size_t w;
-		for (w = 5; w <= 6; ++w)
+		for (w = 3; w <= 6; ++w)
 		{
 			wwCopy(d, ec->order, n);
 			zzSubW2(d, n, 1);
-			ecPreSNZA(pre, ec->base, w, ec, stack);
+			ecpPreSNZA(pre, ec->base, w, ec, stack);
 			while (!wwIsZero(d, n))
 			{
 				if (!ecMulPreSNZA(pt0, pre, ec, d, n, stack) ||

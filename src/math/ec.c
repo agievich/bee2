@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2014.03.04
-\version 2026.02.05
+\version 2026.02.09
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -128,26 +128,9 @@ P <- P + A и P <- P + P меняются на A <- A + A.
 -----------------------------------------------------
 * [или прямых вычислений в аффинных координатах]
 
-\remark Функция ecPreSNZ() и особенно ecPreSNZA() не оптимальны. Для 
-ускорения второй функции можно рассчитать малые кратные в проективных 
-координатах, а затем быстро перейти к аффинным координатам с помощью
-одновременного обращения сразу нескольких элементов поля. Одновременное
-обращение известно как трюк Монтгомери [Mon87] (см. также
-[Doc05; algorithm 11.15, p. 209]):
-	U_1 <- Z_1
-	for t = 2,..., T: U_t <- U_{t-1} Z_t
-	V <- U_T^{-1}
-	for t = T,..., 2:
-		Z_t^{-1} <- V U_{t-1}
-		V <- V Z_t
-	Z_1^{-1} <- V
-Трюк не применяется, поскольку на данном уровне описания кривой структура
-проективных координат не определена.
-
-[Mon87] Montogomery P, Speeding the Pollard and elliptic curve method of
-        factorization. Mathematics of Computation, 48 (177), 1987, 243--264.
-[Doc05] Doche C. Finite Field Arithmetic. In: Handbook of Elliptic and
-		Hyperelliptic Curve Cryptography. Chapman & Hall/CRC, 2005.
+\remark Функции ecPreSNZ() и особенно ecPreSNZA() не оптимальны. Ускоренные
+алгоритмы предвычислений для кривых над GF(p) реализованы в функциях
+ecPreSNZ() и ecpPreSNZA().
 *******************************************************************************
 */
 
@@ -287,7 +270,7 @@ size_t ecPreSNZA_deep(size_t n, size_t ec_d, size_t ec_deep)
 	(2^{w - 2} - 2) + l / (w + 1) -> min.
 
 В функции ecMulA() реализована композиция функций ecPreSNZ() (предвычисления)
-и ecMulPreNAF(). 
+и ecMulPreNAF().
 
 [HMV04] Hankerson D., Menezes A., Vanstone S. Guide to Elliptic Curve
         Cryptography, Springer, 2004.
