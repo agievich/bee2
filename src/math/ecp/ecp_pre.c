@@ -4,7 +4,7 @@
 \brief Elliptic curves over prime fields: precomputations
 \project bee2 [cryptographic library]
 \created 2021.07.18
-\version 2026.02.07
+\version 2026.02.09
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -44,31 +44,32 @@ version 3. See Copyright Notices in bee2/info.h.
 
 Алгоритм выполняется в 3 этапа. Этапам соответствуют следующие шаги алгоритма:
 - этап 1 -- шаги 1 -- 16 (расчет начальных выражений);
-- этап 2 -- шаги 17, 18, 20 (расчет основных выражений);
-- этап 3 -- шаги 19, 21 (формирование точек).
+- этап 2 -- шаги 17, 18, 20 (расчет основных выражений, формирование первой 
+  половины точек);
+- этап 3 -- шаги 19, 21 (формирование оставшихся точек).
 
 Для повышения читабельности используются макросы, которые покрывают следующие
 выражения:
-1. W(i) -- значения многочленов Wᵢ, i=3,4,...,2ʷ+1:
-	* память: 2ʷ-1 (элементов поля);
+1. W(i) -- значения многочленов Wᵢ, i = 3, 4, ..., 2ʷ + 1:
+	* память: 2ʷ - 1 (элементов поля);
 	* вычисляются на этапах 1 и 2, используются на этапах 1--3;
 	* кэшируются все значения.
-2. W2(i) --	квадраты Wᵢ², i=3,4...,2ʷ:
-	* память: 2ʷ-2.
-3. WW(i) -- произведения WᵢWᵢ₊₂, i=1,3...,2ʷ⁻¹:
+2. W2(i) --	квадраты Wᵢ², i = 3, 4, ..., 2ʷ:
+	* память: 2ʷ - 2.
+3. WW(i) -- произведения WᵢWᵢ₊₂, i = 1, 2, ..., 2ʷ⁻¹:
 	* память: 2;
 	* вычисляются на этапах 1 и 2, используются на этапах 1--3;
 	* кэшируются все значения.
-4. WWy2(i) -- произведения (2y)²WᵢWᵢ₊₂, i=3,5,...,2ʷ⁻¹+1:
+4. WWy2(i) -- произведения (2y)²WᵢWᵢ₊₂, i = 2, 4, ..., 2ʷ⁻¹:
 	* память: 2;
 	* вычисляются и используются на этапах 1 и 2;
 	* кэшируются 2 последовательных значения: текущее и предыдущее.
-5. WWy4(i) -- произведения (2y)⁴WᵢWᵢ₊₂, i=3,5,...,2ʷ⁻¹-1:
+5. WWy4(i) -- произведения (2y)⁴WᵢWᵢ₊₂, i = 2, 4, ..., 2ʷ⁻¹:
 	* память: 1;
 	* вычисляются и используются на этапах 1 и 2;
 	* кэшируется только текущее значение.
-6. WWW(i) -- выражения Wᵢ₊₂Wᵢ₋₁²-Wᵢ₋₂Wᵢ₊₁², i=3,4,...,2ʷ⁻¹:
-	* память: 2ʷ⁻¹-2;
+6. WWW(i) -- выражения Wᵢ₊₂Wᵢ₋₁² - Wᵢ₋₂Wᵢ₊₁², i = 3, 4, ..., 2ʷ⁻¹:
+	* память: 2ʷ⁻¹ - 2;
 	* вычисляются на этапах 1 и 2, используются на этапах 1--3;
 	* кэшируются все значения.
 
@@ -104,7 +105,7 @@ void ecpPreSNZ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	word* WWs;				/* [2 * n] WᵢWᵢ₊₂ */
 	word* WWy2s;			/* [2 * n] (2y)²WᵢWᵢ₊₂ */
 	word* WWy4s;			/* [n] (2y)⁴WᵢWᵢ₊₂ */
-	word* WWWs;				/* [(2^{w-1} - 2) * n] Wᵢ₊₂Wᵢ₋₁²-Wᵢ₋₂Wᵢ₊₁² */
+	word* WWWs;				/* [(2^{w-1} - 2) * n] Wᵢ₊₂Wᵢ₋₁² - Wᵢ₋₂Wᵢ₊₁² */
 	size_t i;
 	word* pt;
 	// pre
@@ -147,7 +148,7 @@ void ecpPreSNZ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 		qrSqr(x2, ecX(a), ec->f, stack);
 		qrMul(bx, ec->B, ecX(a), ec->f, stack);
 		qrSqr(a2, ec->A, ec->f, stack);
-		// [W₃] <- 3(x²+A)² − 4(a²−3Bx)
+		// [W₃] <- 3(x²+A)²−4(a²−3Bx)
 		qrAdd(t, x2, ec->A, ec->f);				// x²+A
 		qrSqr(t, t, ec->f, stack);				// (x²+A)²
 		gfpDouble(t1, t, ec->f);				// 2(x²+A)²
@@ -206,7 +207,7 @@ void ecpPreSNZ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	qrSub(W(5), WWy4(2), t, ec->f);
 	// [W₅²] <- W₅²
 	qrSqr(W2(5), W(5), ec->f, stack);
-	// [W₅W₂²−W₁W₄²] <- W₅-W₄²
+	// [W₅W₂² − W₁W₄²] <- W₅-W₄²
 	qrSub(WWW(3), W(5), W2(4), ec->f);
 	// [W₆] <- W₃(W₅W₂²−W₁W₄²)
 	qrMul(W(6), W(3), WWW(3), ec->f, stack);
@@ -216,7 +217,7 @@ void ecpPreSNZ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 
 /* SmallMultJ: этап 2 */
 
-	// W₂ᵢ, W₂ᵢ₊₁, Wᵢ₊₂Wᵢ²−Wᵢ₋₂Wᵢ₊₁², WᵢWᵢ₊₂ для i=3,4...,2ʷ⁻¹
+	// W₂ᵢ, W₂ᵢ₊₁, Wᵢ₊₂Wᵢ²−Wᵢ₋₂Wᵢ₊₁², WᵢWᵢ₊₂ для i=3,4,...,2ʷ⁻¹
 	// (Xᵢ:Yᵢ:Zᵢ) для нечетных i
 	for (i = 3; i <= SIZE_BIT_POS(w - 1); ++i)
 	{
@@ -274,7 +275,7 @@ void ecpPreSNZ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 
 /* SmallMultJ: этап 3 */
 
-	// (Xᵢ:Yᵢ:Zᵢ) для i=2ʷ⁻¹+1,...,2ʷ-1
+	// (Xᵢ:Yᵢ:Zᵢ) для i=2ʷ⁻¹+1,2ʷ⁻¹+3,...,2ʷ-1
 	while (1)
 	{
 		// [Yᵢ] <- y(Wᵢ₊₂Wᵢ₋₁²-Wᵢ₋₂Wᵢ₊₁²)
@@ -328,26 +329,43 @@ size_t ecpPreSNZ_deep(size_t n, size_t f_deep, size_t w)
 
 Алгоритм выполняется в 4 этапа. Этапам соответствуют следующие шаги алгоритма:
 - этап 1 -- шаги 1 -- 13 (расчет начальных выражений);
-- этап 2 -- шаг 14, частично шаги 16 и 18 (расчет основных выражений);
+- этап 2 -- шаг 14 (расчет основных выражений);
 - этап 3 -- шаг 15 (обращение элементов поля);
 - этап 4 -- шаги 16 -- 20 (формирование точек).
 
 В целом кэшируются те же выражения, что и в ecpPreSNZ(). Отличия:
-- не кэшируется выражение Wᵢ₊₂Wᵢ₋₁²-Wᵢ₋₂Wᵢ₊₁². Соответственно макрос 
+- не кэшируется выражение Wᵢ₊₂Wᵢ₋₁² - Wᵢ₋₂Wᵢ₊₁². Соответственно макрос 
   WWW не используется;
+- выражения (2y)²WᵢWᵢ₊₂ сохраняются в координатах выходных точек.
+  В частности, при четном i выражение (2y)²WᵢWᵢ₊₂ сохраняется в x-координате
+  (i + 1)-й точки и используется на этапе 4 для вычисления xᵢ₊₁;
 - кэшируется не 2, а 3 последовательных значения WᵢWᵢ₊₂. Это связано
   с тем, что на итерациях этапа 2 используются пары выражений 
   Wᵢ₋₁Wᵢ₊₁ и WᵢWᵢ₊₂, а на итерациях этапа 4 -- пары Wᵢ₋₂Wᵢ и WᵢWᵢ₊₂.
 
 Дополнительный макрос:
-7. W2I(i) -- выражения Wᵢ⁻², i=3,5,...,2ʷ-1:
-	* память: 2ʷ⁻¹-1;
-	* на этапе 2 кэшируются значения (∏ᵥ Wᵥ²: v = 3,5,...,i);
-	* на этапе 3 вычисляются актуальные значения Wᵢ⁻², которые используются на
-	  этапе 4.
+7. W2I(i) -- выражения Wᵢ⁻², i = 3, 5, ..., 2ʷ - 1:
+	* память: 2ʷ⁻¹ - 1;
+	* вычисляются на этапе 3, используются на этапе 4;
+	* предварительно в ячейках памяти для выражений размещаются произведения
+	  (∏ᵥ Wᵥ²: v <= i).
 
-Точки (xᵢ,yᵢ), i=3,5,..,2ʷ⁻¹-1, начинают формироваться на этапе 2 и завершают
-на этапе 4, после обращения Wᵢ².
+\remark Произведения (∏ᵥ Wᵥ²: v <= i) используются для одновременного
+обращения (Wᵢ²) с помощью следующего алгоритма:
+1. V₃ <- W₃².
+2. Для i = 5, 7, ..., m = 2ʷ - 1:
+   1) Vᵢ <- Vᵢ₋₂Wᵢ² == (∏ᵥ Wᵥ²: v <= i).
+3. t <- Vₘ⁻¹ = (∏ᵥ Wᵥ²: v <= m)⁻¹.
+4. Для i = m, m - 2, ..., 5:
+   1) (Wᵢ⁻², t) <- (t Vᵢ₋₂, t Wᵢ²).
+5. W₃⁻² <- t.
+Алгоритм предложен в [Mon87] (см. также [Doc05; algorithm 11.15, p. 209])
+и известен как трюк Монтгомери.
+
+[Mon87] Montogomery P, Speeding the Pollard and elliptic curve method of
+		factorization. Mathematics of Computation, 48 (177), 1987, 243--264.
+[Doc05] Doche C. Finite Field Arithmetic. In: Handbook of Elliptic and
+		Hyperelliptic Curve Cryptography. Chapman & Hall/CRC, 2005.
 *******************************************************************************
 */
 
@@ -362,7 +380,6 @@ size_t ecpPreSNZ_deep(size_t n, size_t f_deep, size_t w)
 /* Ws */		O_OF_W((SIZE_BIT_POS(w) - 1) * n),\
 /* W2s */		O_OF_W((SIZE_BIT_POS(w) - 2) * n),\
 /* WWs */		O_OF_W(3 * n),\
-/* WWy2s */		O_OF_W(2 * n),\
 /* WWy4s */		O_OF_W(n),\
 /* W2Is */		O_OF_W((SIZE_BIT_POS(w - 1) - 1) * n)
 
@@ -375,7 +392,6 @@ bool_t ecpPreSNZA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	word* Ws;				/* [(2^w - 1) * n] Wᵢ */
 	word* W2s;				/* [(2^w - 2) * n] Wᵢ² */
 	word* WWs;				/* [3 * n] WᵢWᵢ₊₂ */
-	word* WWy2s;			/* [2 * n] (2y)²WᵢWᵢ₊₂ */
 	word* WWy4s;			/* [n] (2y)⁴WᵢWᵢ₊₂ */
 	word* W2Is;				/* [(2^{w-1} - 1) * n] Wᵢ⁻² */
 	size_t i;
@@ -391,7 +407,7 @@ bool_t ecpPreSNZA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	// разметить стек
 	memSlice(stack,
 		ecpPreSNZA_local(n, w), SIZE_0, SIZE_MAX,
-		&t, &dy2, &Ws, &W2s, &WWs, &WWy2s, &WWy4s, &W2Is, &stack);
+		&t, &dy2, &Ws, &W2s, &WWs, &WWy4s, &W2Is, &stack);
 	// первая точка
 	pt = pre->pts;
 	wwCopy(pt, a, 2 * n);
@@ -401,9 +417,9 @@ bool_t ecpPreSNZA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 #define W(i) (Ws + ((i) - 3) * n)
 #define W2(i) (W2s + ((i) - 3) * n)
 #define WW(i) (WWs + ((i) % 3) * n)
-#define WWy2(i) (WWy2s + ((i) % 2) * n)
+#define WWy2(i) (pre->pts + (i) * n)
 #define WWy4(i) (WWy4s)
-#define W2I(i) (W2Is + ((i) >> 1) * n)
+#define W2I(i) (W2Is + (((i) - 3) >> 1) * n)
 
 /* SmallMultA: этап 1 */
 
@@ -484,10 +500,7 @@ bool_t ecpPreSNZA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 
 /* SmallMultA: этап 2 */
 
-	// [W₃⁻²] <- W₃
-	wwCopy(W2I(3), W(3), n);
 	// W₂ᵢ, W₂ᵢ₊₁, WᵢWᵢ₊₂ для i=3,4...,2ʷ⁻¹
-	// Vᵢ и предварительные точки (xᵢ,yᵢ) для нечетных i
 	for (i = 3; i <= SIZE_BIT_POS(w - 1); ++i)
 	{
 		// [WᵢWᵢ₊₂] <- ((Wᵢ+Wᵢ₊₂)²-Wᵢ²-Wᵢ₊₂²)/2
@@ -509,22 +522,12 @@ bool_t ecpPreSNZA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 		// [W₂ᵢ²] <- W₂ᵢ²
 		qrSqr(W2(2 * i), W(2 * i), ec->f, stack);
 		// W₂ᵢ₊₁
-		// Vᵢ и предварительные (xᵢ,yᵢ) при нечетном i
 		if (i & 1)
 		{
 			// [W₂ᵢ₊₁] <- (WᵢWᵢ₊₂)Wᵢ²-((2y)⁴Wᵢ₋₁Wᵢ₊₁)Wᵢ₊₁²
 			qrMul(t, WWy4(i - 1), W2(i + 1), ec->f, stack);
 			qrMul(W(2 * i + 1), WW(i), W2(i), ec->f, stack);
 			qrSub(W(2 * i + 1), W(2 * i + 1), t, ec->f);
-			// [xᵢ] <- (2y)²Wᵢ₋₁Wᵢ₊₁
-			wwCopy(ecX(pt), WWy4(i - 1), n);
-			// [yᵢ] <- yW₂ᵢ
-			qrMul(ecY(pt, n), ecY(a, n), W2(2 * i), ec->f, stack);
-			// [Wᵢ⁻²] <- [Wᵢ₋₂⁻²]Wᵢ²
-			if (i >= 5)
-				qrMul(W2I(i), W2I(i - 2), W2(i), ec->f, stack);
-			// к следующей точке
-			pt += 2 * n;
  		}
 		else
 		{
@@ -541,32 +544,31 @@ bool_t ecpPreSNZA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 		if (i != SIZE_BIT_POS(w - 1))
 			qrSqr(W2(2 * i + 1), W(2 * i + 1), ec->f, stack);
 	}
-	// [xᵢ] <- (2y)²Wᵢ₋₁Wᵢ₊₁ для i = 2ʷ⁻¹ + 1
-	ASSERT(i == SIZE_BIT_POS(w - 1) + 1);
-	wwCopy(ecX(pt), WWy2(i - 1), n);
 
 /* SmallMultA: этап 3 */
 
-	// обращение
-	i = SIZE_BIT_POS(w) - 1;
-	// (∏ᵥ Wᵥ²: v = 3,5,...,2ʷ-1) == 0?
+	// (∏ᵥ Wᵥ²: v <= i)
+	wwCopy(W2I(3), W2(3), n);
+	for (i = 3; i + 2 < SIZE_BIT_POS(w); i += 2)
+		qrMul(W2I(i + 2), W2I(i), W2(i + 2), ec->f, stack);
+	// t <- (∏ᵥ Wᵥ²: v <= 2ʷ-1)⁻¹
+	ASSERT(i == SIZE_BIT_POS(w) - 1);
 	if (qrIsZero(W2I(i), ec->f))
 		return FALSE;
+	qrInv(t, W2I(i), ec->f, stack);
+	// Wᵢ⁻²
 	{
 		word* t1 = WWy4s;
-		// t <- (∏ᵥ Wᵥ²: v <= 2ʷ-1)⁻¹
-		qrInv(t, W2I(i), ec->f, stack);
-		// Wᵢ⁻²
 		for (; i > 3; i -= 2)
 		{
-			// t1 <- (∏ᵥ Wᵥ²: v < i)⁻¹
-			qrMul(t1, t, W2I(i), ec->f, stack);
-			// [Wᵢ⁻²] <- (∏ᵥ Wᵥ²: v <= i)⁻¹ (∏ᵥ Wᵥ²: v < i)
+			// t1 <- (∏ᵥ Wᵥ²: v <= i)⁻¹ Wᵢ² == (∏ᵥ Wᵥ²: v < i)⁻¹
+			qrMul(t1, t, W2(i), ec->f, stack);
+			// [Wᵢ⁻²] <- (∏ᵥ Wᵥ²: v <= i)⁻¹ (∏ᵥ Wᵥ²: v < i) == Wᵥ⁻²
 			qrMul(W2I(i), t, W2I(i - 2), ec->f, stack);
 			// t <- t1
 			wwCopy(t, t1, n);
 		}
-		// [W₃⁻²] <- (∏ᵥ Wᵥ²: v <= 3)⁻¹
+		// [W₃⁻²] <- (∏ᵥ Wᵥ²: v = 3)⁻¹
 		wwCopy(W2I(3), t, n);
 	}
 
@@ -574,23 +576,25 @@ bool_t ecpPreSNZA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 
 	// (xᵢ,yᵢ) для i=3,5,..,2ʷ⁻¹-1
 	ASSERT(i == 3);
-	for (pt = pre->pts + 2 * n; i < SIZE_BIT_POS(w - 1); i += 2, pt += 2 * n)
+	for (; i < SIZE_BIT_POS(w - 1); i += 2, pt += 2 * n)
 	{
-		// [xᵢ] <- x-[xᵢ]Wᵢ⁻² = x-((2y)²Wᵢ₋₁Wᵢ₊₁)Wᵢ⁻²
-		qrMul(ecX(pt), ecX(pt), W2I(i), ec->f, stack);
+		// [xᵢ] <- x-((2y)²Wᵢ₋₁Wᵢ₊₁)Wᵢ⁻²
+		qrMul(ecX(pt), WWy2(i - 1), W2I(i), ec->f, stack);
 		qrSub(ecX(pt), ecX(a), ecX(pt), ec->f);
-		// [yᵢ] <- [yᵢ](Wᵢ⁻²)² = (yW₂ᵢ)(Wᵢ⁻²)²
+		// [yᵢ] <- yW₂ᵢ(Wᵢ⁻²)²
 		qrSqr(t, W2I(i), ec->f, stack);
+		qrMul(ecY(pt, n), ecY(a, n), W(2 * i), ec->f, stack);
 		qrMul(ecY(pt, n), ecY(pt, n), t, ec->f, stack);
 	}
-	// [xᵢ] <- x-[xᵢ]Wᵢ⁻² = x-((2y)²Wᵢ₋₁Wᵢ₊₁)Wᵢ⁻² для i=2ʷ⁻¹+1
+	// [xᵢ] <- x-((2y)²Wᵢ₋₁Wᵢ₊₁)Wᵢ⁻² для i=2ʷ⁻¹+1
 	ASSERT(i == SIZE_BIT_POS(w - 1) + 1);
-	qrMul(ecX(pt), ecX(pt), W2I(i), ec->f, stack);
+	qrMul(ecX(pt), WWy2(i - 1), W2I(i), ec->f, stack);
 	qrSub(ecX(pt), ecX(a), ecX(pt), ec->f);
-	// (xᵢ,yᵢ) для i=2ʷ⁻¹+1,...,2ʷ-1
+
+	// (xᵢ,yᵢ) для i=2ʷ⁻¹+1,2ʷ⁻¹+3,...,2ʷ-1
 	while (1)
 	{
-		if (i == SIZE_BIT_POS(w) - 1)
+		if (i != SIZE_BIT_POS(w) - 1)
 			// [WᵢWᵢ₊₂] <- ((Wᵢ+Wᵢ₊₂)²-Wᵢ²-Wᵢ₊₂²)/2
 			gfpMul2(WW(i), W(i), W(i + 2), W2(i), W2(i + 2), ec->f, stack);
 		else

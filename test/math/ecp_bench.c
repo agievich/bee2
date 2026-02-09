@@ -4,7 +4,7 @@
 \brief Benchmarks for elliptic curves over prime fields
 \project bee2/test
 \created 2013.10.17
-\version 2026.02.06
+\version 2026.02.09
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -47,12 +47,13 @@ bool_t ecpBench()
 		O_OF_W(2 * ec->f->n),
 		O_OF_W(ec->f->n),
 		sizeof(ec_pre_t) + O_OF_W(64 * 3 * ec->f->n),
-		utilMax(6,
+		utilMax(7,
 			ecMulA_deep(ec->f->n, ec->d, ec->deep, ec->f->n),
 			ecPreSNZ_deep(ec->f->n, ec->d, ec->deep),
-			ecpPreSNZ_deep(ec->f->n, ec->f->deep, 6),
-			ecMulPreSNZ_deep(ec->f->n, ec->d, ec->deep, ec->f->n),
 			ecPreSNZA_deep(ec->f->n, ec->d, ec->deep),
+			ecpPreSNZ_deep(ec->f->n, ec->f->deep, 6),
+			ecpPreSNZA_deep(ec->f->n, ec->f->deep, 6),
+			ecMulPreSNZ_deep(ec->f->n, ec->d, ec->deep, ec->f->n),
 			ecMulPreSNZA_deep(ec->f->n, ec->d, ec->deep, ec->f->n)),
 		SIZE_MAX,
 		&combo_state, &pt, &d, &pre, &stack);
@@ -82,7 +83,7 @@ bool_t ecpBench()
 				(unsigned)(ticks / reps),
 				(unsigned)tmSpeed(reps, ticks));
 		}
-		// ecpPre+MulPre[SNZ]
+		// ecpPre+ecMulPre[SNZ]
 		for (w = 3; w <= 6; ++w)
 		{
 			for (i = 0, ticks = tmTicks(); i < reps; ++i)
@@ -97,17 +98,17 @@ bool_t ecpBench()
 				(unsigned)(ticks / reps),
 				(unsigned)tmSpeed(reps, ticks));
 		}
-		// ecPre+MulPre[SNZA]
+		// ecpPre+ecMulPre[SNZA]
 		for (w = 4; w <= 6; ++w)
 		{
 			for (i = 0, ticks = tmTicks(); i < reps; ++i)
 			{
 				prngCOMBOStepR(d, ec->f->no, combo_state);
-				ecPreSNZA(pre, ec->base, w, ec, stack);
+				ecpPreSNZA(pre, ec->base, w, ec, stack);
 				ecMulPreSNZA(pt, pre, ec, d, ec->f->n, stack);
 			}
 			ticks = tmTicks() - ticks;
-			printf("  ecPre+ecMulPre[SNZA,w=%u]:  %u cycles/pt [%u pts/sec]\n",
+			printf("  ecpPre+ecMulPre[SNZA,w=%u]: %u cycles/pt [%u pts/sec]\n",
 				(unsigned)w,
 				(unsigned)(ticks / reps),
 				(unsigned)tmSpeed(reps, ticks));
