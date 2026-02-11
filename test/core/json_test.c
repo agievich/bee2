@@ -4,7 +4,7 @@
 \brief Tests for JSON
 \project bee2/test
 \created 2025.05.08
-\version 2025.05.10
+\version 2026.02.11
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -21,7 +21,7 @@
 *******************************************************************************
 */
 
-static err_t jsonTestStr()
+static bool_t jsonTestStr()
 {
 	const char* jsons[] =
 	{
@@ -61,7 +61,7 @@ static err_t jsonTestStr()
 *******************************************************************************
 */
 
-static err_t jsonTestSize()
+static bool_t jsonTestSize()
 {
 	const char* jsons[] =
 	{
@@ -123,7 +123,7 @@ static err_t jsonTestSize()
 *******************************************************************************
 */
 
-static err_t jsonTestObj()
+static bool_t jsonTestObj()
 {
 	const char* names[] = { "a", "b", "c" };
 	const char* jsons[] =
@@ -175,7 +175,7 @@ static err_t jsonTestObj()
 *******************************************************************************
 */
 
-static err_t jsonTestArr()
+static bool_t jsonTestArr()
 {
 	const char* jsons[] =
 	{
@@ -216,7 +216,7 @@ static err_t jsonTestArr()
 
 #include <stdio.h>
 
-static err_t jsonTestEnc()
+static bool_t jsonTestEnc()
 {
 	const char* fmts[] =
 	{

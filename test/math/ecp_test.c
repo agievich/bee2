@@ -85,6 +85,7 @@ bool_t ecpTest()
 	void* stack;
 	// другие переменные
 	size_t pos;
+	size_t w;
 	// создать состояние
 	state = blobCreate2(
 		ec_keep,
@@ -425,9 +426,9 @@ bool_t ecpTest()
 		}
 	}
 	// предвычисления по схеме HPB
+	for (w = min_w; w <= max_w; ++w)
 	{
-		const size_t w = max_w;
-		const size_t h = min_h;
+		const size_t h = (B_OF_O(no) + w - 1) / w;
 		size_t i;
 		// pre[0..2^{w-1}) <- (1, 3, ..., 2^{w-1}-1)base
 		ecPreHPB(pre, ec->base, w, h, ec, stack);
@@ -458,125 +459,113 @@ bool_t ecpTest()
 		}
 	}
 	// кратная точка: ecMulA vs ecMulPreSNZ
+	for (w = min_w; w <= max_w; ++w)
 	{
-		size_t w;
-		for (w = min_w; w <= max_w; ++w)
+		wwCopy(d, ec->order, n);
+		zzSubW2(d, n, 1);
+		ecpPreSNZ(pre, ec->base, w, ec, stack);
+		while (!wwIsZero(d, n))
 		{
-			wwCopy(d, ec->order, n);
-			zzSubW2(d, n, 1);
-			ecpPreSNZ(pre, ec->base, w, ec, stack);
-			while (!wwIsZero(d, n))
-			{
-				if (!ecMulPreSNZ(pt0, pre, ec, d, n, stack) ||
-					!ecMulA(pt1, ec->base, ec, d, n + 1, stack) ||
-					!wwEq(pt0, pt1, 2 * n))
-				{
-					blobClose(state);
-					return FALSE;
-				}
-				wwShLo(d, n, 11);
-			}
-			if (ecMulPreSNZ(pt0, pre, ec, d, n, stack) ||
-				ecMulA(pt1, ec->base, ec, d, n, stack))
+			if (!ecMulPreSNZ(pt0, pre, ec, d, n, stack) ||
+				!ecMulA(pt1, ec->base, ec, d, n + 1, stack) ||
+				!wwEq(pt0, pt1, 2 * n))
 			{
 				blobClose(state);
 				return FALSE;
 			}
+			wwShLo(d, n, 11);
+		}
+		if (ecMulPreSNZ(pt0, pre, ec, d, n, stack) ||
+			ecMulA(pt1, ec->base, ec, d, n, stack))
+		{
+			blobClose(state);
+			return FALSE;
 		}
 	}
 	// кратная точка: ecMulA vs ecMulPreSNZA
+	for (w = min_w; w <= max_w; ++w)
 	{
-		size_t w;
-		for (w = min_w; w <= max_w; ++w)
+		wwCopy(d, ec->order, n);
+		zzSubW2(d, n, 1);
+		if (!ecpPreSNZA(pre, ec->base, w, ec, stack))
 		{
-			wwCopy(d, ec->order, n);
-			zzSubW2(d, n, 1);
-			if (!ecpPreSNZA(pre, ec->base, w, ec, stack))
+			blobClose(state);
+			return FALSE;
+		}
+		while (!wwIsZero(d, n))
+		{
+			if (!ecMulPreSNZA(pt0, pre, ec, d, n, stack) ||
+				!ecMulA(pt1, ec->base, ec, d, n, stack) ||
+				!wwEq(pt0, pt1, 2 * n))
 			{
 				blobClose(state);
 				return FALSE;
 			}
-			while (!wwIsZero(d, n))
-			{
-				if (!ecMulPreSNZA(pt0, pre, ec, d, n, stack) ||
-					!ecMulA(pt1, ec->base, ec, d, n, stack) ||
-					!wwEq(pt0, pt1, 2 * n))
-				{
-					blobClose(state);
-					return FALSE;
-				}
-				wwShLo(d, n, 23);
-			}
-			if (ecMulPreSNZA(pt0, pre, ec, d, n, stack) ||
-				ecMulA(pt1, ec->base, ec, d, n, stack))
-			{
-				blobClose(state);
-				return FALSE;
-			}
+			wwShLo(d, n, 23);
+		}
+		if (ecMulPreSNZA(pt0, pre, ec, d, n, stack) ||
+			ecMulA(pt1, ec->base, ec, d, n, stack))
+		{
+			blobClose(state);
+			return FALSE;
 		}
 	}
 	// кратная точка: ecMulA vs ecMulPreSNZH
+	for (w = min_w; w <= max_w; ++w)
 	{
-		size_t w;
-		for (w = min_w; w <= max_w; ++w)
+		const size_t h = (B_OF_O(no) + w - 1) / w;
+		wwCopy(d, ec->order, n);
+		zzSubW2(d, n, 1);
+		if (!ecPreSNZH(pre, ec->base, w, h, ec, stack))
 		{
-			const size_t h = (B_OF_W(ec->f->n) + w - 1) / w;
-			wwCopy(d, ec->order, n);
-			zzSubW2(d, n, 1);
-			if (!ecPreSNZH(pre, ec->base, w, h, ec, stack))
+			blobClose(state);
+			return FALSE;
+		}
+		while (!wwIsZero(d, n))
+		{
+			if (!ecMulPreSNZH(pt0, pre, ec, d, n, stack) ||
+				!ecMulA(pt1, ec->base, ec, d, n, stack) ||
+				!wwEq(pt0, pt1, 2 * n))
 			{
 				blobClose(state);
 				return FALSE;
 			}
-			while (!wwIsZero(d, n))
-			{
-				if (!ecMulPreSNZH(pt0, pre, ec, d, n, stack) ||
-					!ecMulA(pt1, ec->base, ec, d, n, stack) ||
-					!wwEq(pt0, pt1, 2 * n))
-				{
-					blobClose(state);
-					return FALSE;
-				}
-				wwShLo(d, n, 13);
-			}
-			if (ecMulPreSNZH(pt0, pre, ec, d, n, stack) ||
-				ecMulA(pt1, ec->base, ec, d, n, stack))
-			{
-				blobClose(state);
-				return FALSE;
-			}
+			wwShLo(d, n, 13);
+		}
+		if (ecMulPreSNZH(pt0, pre, ec, d, n, stack) ||
+			ecMulA(pt1, ec->base, ec, d, n, stack))
+		{
+			blobClose(state);
+			return FALSE;
 		}
 	}
 	// кратная точка: ecMulA vs ecMulPreHPB
+	for (w = min_w; w <= max_w; ++w)
 	{
-		size_t w;
-		for (w = min_w; w <= max_w; ++w)
+		const size_t h = (B_OF_O(no) + w - 1) / w;
+		wwCopy(d, ec->order, n);
+		zzSubW2(d, n, 1);
+		if (!ecPreHPB(pre, ec->base, w, h, ec, stack))
 		{
-			const size_t h = (B_OF_W(ec->f->n) + w - 1) / w;
-			wwCopy(d, ec->order, n);
-			zzSubW2(d, n, 1);
-			if (!ecPreHPB(pre, ec->base, w, h, ec, stack))
+			blobClose(state);
+			return FALSE;
+		}
+		while (!wwIsZero(d, n))
+		{
+			if (!ecMulPreHPB(pt0, pre, ec, d, n, stack) ||
+				!ecMulA(pt1, ec->base, ec, d, n, stack) ||
+				!wwEq(pt0, pt1, 2 * n))
 			{
 				blobClose(state);
 				return FALSE;
 			}
-			while (!wwIsZero(d, n))
-			{
-				if (!ecMulPreHPB(pt0, pre, ec, d, n, stack) ||
-					!ecMulA(pt1, ec->base, ec, d, n, stack) ||
-					!wwEq(pt0, pt1, 2 * n))
-				{
-					blobClose(state);
-					return FALSE;
-				}
-				wwShLo(d, n, 15);
-			}
-			if (ecMulPreHPB(pt0, pre, ec, d, n, stack) ||
-				ecMulA(pt1, ec->base, ec, d, n, stack))
-			{
-				blobClose(state);
-				return FALSE;
-			}
+			wwShLo(d, n, 15);
+		}
+		if (ecMulPreHPB(pt0, pre, ec, d, n, stack) ||
+			ecMulA(pt1, ec->base, ec, d, n, stack))
+		{
+			blobClose(state);
+			return FALSE;
 		}
 	}
 	// сумма кратных точек: ecMulA vs ecAddMulA

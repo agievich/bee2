@@ -892,9 +892,11 @@ order-d.
 2. t <- pre[d_{hw-1}d_{(h(w-1)-1}... d_{h-1}].
 3. Для i = 2, 3, ..., h-1:
 	1) t <- 2 t;
-	1) t <- t + sgn(d_{hw-i})pt[0 d_{h(w-1)-i}...d_{h-i}].
+	2) t <- t + sgn(d_{hw-i})
+              pt[d_{hw-i}d_{h(w-1)-i}...d_{h-i} ^ d_{hw-i}...d_{hw-i}].
 4. t <- 2 t.
-5. t <- t + sgn(hw-h) pt[0 d_{h(w-1)-h)}...d_0].
+5. t <- t + sgn(d_{hw-h}) 
+          pt[d_{hw-h}d_{h(w-1)-h)}...d_0 ^ d_{hw-h}...d_{hw-h}].
 6. Возвратить t.
 
 [HPB05]    Hedabou M., Pinel P., Beneteau L. Countermeasures for preventing
@@ -918,6 +920,7 @@ bool_t ecMulPreHPB(word b[], const ec_pre_t* pre, const ec_o* ec,
 {
 	register word neg;
 	register word digit;
+	register word hi;
 	register bool_t ret;
 	size_t mb;
 	size_t pre_count;
@@ -949,6 +952,7 @@ bool_t ecMulPreHPB(word b[], const ec_pre_t* pre, const ec_o* ec,
 		&dd, &t, &pt, &stack);
 	// dd <- (d % 2) ? d : ec->order - d
 	neg = WORD_1 - (d[0] & 1);
+	dd[m] = 0;
 	zzSubIf(dd, ec->order, d, m, neg);
 	ASSERT(zzIsOdd(dd, m));
 	// перекодировать dd
@@ -966,33 +970,35 @@ bool_t ecMulPreHPB(word b[], const ec_pre_t* pre, const ec_o* ec,
 	wwSel(pt, pre->pts, pre_count, pt_size, digit);
 	ecFromA(t, pt, ec, stack);
 	// обработать остальные цифры
-	for (pos = 1; pos < pre->h; ++pos)
+	for (pos = 2; pos < pre->h; ++pos)
 	{
 		// сформировать цифру
-		digit = (word)wwTestBit(dd, mb - pos);
-		for (i = 1; i < pre->w; ++i)
+		hi = (word)wwTestBit(dd, mb - pos);
+		for (digit = 0, i = 1; i < pre->w; ++i)
 			digit <<= 1, digit ^= (word)wwTestBit(dd, mb - i * pre->h - pos);
+		digit ^= (WORD_0 - hi) & mask;
 		// удвоить и сложить
-		wwSel(pt, pre->pts, pre_count, pt_size, digit & mask);
-		ecSgnA(pt, digit >> (pre->w - 1), ec, stack);
+		wwSel(pt, pre->pts, pre_count, pt_size, digit);
+		ecSgnA(pt, hi, ec, stack);
 		ecDblAddA(t, t, pt, ec, stack);
 	}
 	// удвоить
 	ecDbl(t, t, ec, stack);
 	// сформировать последнюю цифру
-	digit = (word)wwTestBit(dd, mb - pos);
-	for (i = 1; i < pre->w; ++i)
+	hi = (word)wwTestBit(dd, mb - pos);
+	for (digit = 0, i = 1; i < pre->w; ++i)
 		digit <<= 1, digit ^= (word)wwTestBit(dd, mb - i * pre->h - pos);
+	digit ^= (WORD_0 - hi) & mask;
 	// финишное сложение
-	wwSel(pt, pre->pts, pre_count, pt_size, digit & mask);
-	ecSgnA(pt, digit >> (pre->w - 1), ec, stack);
+	wwSel(pt, pre->pts, pre_count, pt_size, digit);
+	ecSgnA(pt, hi, ec, stack);
 	ret = (ec->finadda) ?
 		ec->finadda(b, t, pt, ec, stack) :
 		(ecAddA(t, t, pt, ec, stack), ecToA(b, t, ec, stack));
 	// настройка знака
 	ecSgnA(b, neg, ec, stack);
 	// очистка и возврат
-	CLEAN2(neg, digit);
+	CLEAN3(neg, digit, hi);
 	return ret;
 }
 
@@ -1039,7 +1045,7 @@ size_t ecHasOrderA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 
 Реализован алгоритм 3.51 (interleaving with NAF) из [HMV04].
 
-Для каждого d[i] строится naf[i] длиной l[i] с шириной окна w[i].
+Для каждого d[i] строится naf[i] длиной l[i] и окном шириной w[i].
 
 Сложность алгоритма:
 	max l[i](P <- 2P) + \sum {i=1}^k
