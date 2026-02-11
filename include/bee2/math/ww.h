@@ -4,7 +4,7 @@
 \brief Arbitrary length words
 \project bee2 [cryptographic library]
 \created 2012.04.18
-\version 2026.01.27
+\version 2026.02.11
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -94,6 +94,10 @@ extern "C" {
 /*!	Буферы слов [n]a, [m]b и [k]c не пересекаются? */
 #define wwIsDisjoint3(a, n, b, m, c, k)\
 	memIsDisjoint3(a, O_OF_W(n), b, O_OF_W(m), c, O_OF_W(k))
+
+/*!	Биты словв [n]a инвертируются */
+#define wwNeg(a, n)\
+	memNeg(a, O_OF_W(n))
 
 /*
 *******************************************************************************
