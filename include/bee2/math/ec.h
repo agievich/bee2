@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2012.04.19
-\version 2026.02.04
+\version 2026.02.11
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -513,14 +513,11 @@ typedef enum
 	  \endcode
 	- HPB: вычисляются аффинные точки
 	  \code
-		[b_{w-1} ... b_1 b_0]a = \sum_{i=0}^{w-1} b_i 2^{h i} a,
+		[c_{w-1}... c_1 c_0]a = \sum_{i=0}^{w-1}(1-2c_i)(2^h)^i a,
 	  \endcode
-	  где b_i in {-1, 1}, b_{w-1} == 1. Точка [b_{w-1} ... b_1 b_0]a
-	  размещаются в массиве pts по индексу, двоичная запись которого есть
-	  \code
-		с_{w-1}...c_1 c_0,
-	  \endcode
-	  где c_i = 0, если b_i = 1, и c_i = 1, если b_i = -1.
+	  где c_i in {0, 1}, c_{w-1} == 0. Точка [c_{w-1}... c_1 c_0]a
+	  размещается в pts по индексу, двоичная запись которого --
+	  c_{w-1}... c_1 c_0.  
 	.
 	\pre 0 < w && w < B_PER_W.
 	\pre h > 0 <=> type \in { ec_pre_snzh, ec_pre_hpb }.
@@ -861,6 +858,35 @@ bool_t ecPreSNZH(
 
 size_t ecPreSNZH_deep(size_t n, size_t ec_d, size_t ec_deep);
 
+/*!	\brief Предвычисления по схеме HPB
+
+	На эллиптической кривой ec выполняются предвычисления по схеме HPB
+	с аффинной точкой [2 * ec->f->n]a и окном шириной w. Результат сохраняется
+	в контейнере pre.
+	\pre Описание ec работоспособно.
+	\pre Координаты a лежат в базовом поле.
+	\pre w > 1 && h > 0.
+	\pre memIsValid(pre, sizeof(ec_pre_t) +
+		O_OF_W(SIZE_BIT_POS(w - 1) * 2 * ec->f->n)).
+	\expect Описание ec корректно.
+	\expect Точка a лежит на ec.
+	\return TRUE, если среди предвычисленных точек нет O, и FALSE в противном
+	случае.
+	\remark При обнаружении точки O предвычисления прерываются с неопределенным
+	результатом в pre->pts.
+	\deep{stack} ecPreHPB_deep(ec->f->n, ec->d, ec->deep, h).
+*/
+bool_t ecPreHPB(
+	ec_pre_t* pre,				/*!< [out] предвычисленные точки */
+	const word a[],				/*!< [in] исходная точка */
+	size_t w,					/*!< [in] ширина окна */
+	size_t h,					/*!< [in] высота окна */
+	const ec_o* ec,				/*!< [in] описание кривой */
+	void* stack					/*!< [in] вспомогательная память */
+);
+
+size_t ecPreHPB_deep(size_t n, size_t ec_d, size_t ec_deep, size_t h);
+
 /*
 *******************************************************************************
 Макрооперации с аффинными точками
@@ -997,10 +1023,10 @@ size_t ecMulPreSNZA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 	\pre Описание группы точек в ec работоспособно.
 	\pre Контейнер pre работоспособен.
 	\pre pre->type == ec_pre_snzh.
-	\pre pre->w * pre->h >= wwBitSize(ec->order, m).
 	\pre Длина ec->order в машинных словах равняется m.
 	\pre m > 1.
 	\pre d < ec->order.
+	\pre pre->w * pre->h >= wwBitSize(ec->order, m).
 	\pre Координаты a лежат в базовом поле.
 	\expect Описание ec корректно.
 	\expect Точки контейнера pre корректно рассчитаны по a.
@@ -1030,6 +1056,54 @@ bool_t ecMulPreSNZH(
 );
 
 size_t ecMulPreSNZH_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
+
+/*!	\brief Кратная точка с предвычислениями по схеме SNZA
+
+	Определяется аффинная точка [2 * ec->f->n]b эллиптической кривой ec,
+	которая является [m]d-кратной точки a, по которой построен контейнер pre
+	с предвычисленными по схеме HPB точками:
+	\code
+		b <- d a.
+	\endcode
+	\pre Описание ec работоспособно.
+	\pre Описание группы точек в ec работоспособно.
+	\pre Контейнер pre работоспособен.
+	\pre pre->type == ec_pre_hpb.
+	\pre Длина ec->order в машинных словах равняется m.
+	\pre m > 1.
+	\pre d < ec->order.
+	\pre wwBitSize(ec->order, m) <= pre->w * pre->h &&
+		pre->w * pre->h < wwBitSize(ec->order, m) + B_PER_W.
+	\pre Координаты a лежат в базовом поле.
+	\expect Описание ec корректно.
+	\expect Точки контейнера pre корректно рассчитаны по a.
+	\return TRUE, если кратная точка отличается от O, и FALSE в противном
+	случае.
+	\deep{stack} ecMulPreHPB_deep(ec->f->n, ec->d, ec->deep, m).
+	\safe Функция регулярна по [m]d при выполнении следующих условий:
+	-	функция ec->dbl регулярна: удвоение 2 a, a != O, выполняется без
+		условных переходов;
+	-	функция ec->adda регулярна: сложение a + b, a != \pm b, a != O, b != O,
+		выполняется без условных переходов;
+	-	если ec->dbladda != 0, то функция ec->dbladda регулярна: вычисление
+		2a + b, 2a != \pm b, a != O, b != O, выполняется без условных
+		переходов;
+	-	ec->sgna != 0 и функция ec->sgna регулярна: знак точки устанавливается
+		без условных переходов;
+	-	ec->finadda != 0 и функция ec->finadda регулярна: сложение и удвоение
+		выполняются по одним и тем же формулам без условных переходов;
+	-	pre->w * pre->h == wwBitSize(ec->order, m).
+*/
+bool_t ecMulPreHPB(
+	word b[],				/*!< [out] кратная точка */
+	const ec_pre_t* pre,	/*!< [in] предвычисленные точки */
+	const ec_o* ec,			/*!< [in] описание кривой */
+	const word d[],			/*!< [in] кратность */
+	size_t m,				/*!< [in] длина d в машинных словах */
+	void* stack				/*!< [in] вспомогательная память */
+);
+
+size_t ecMulPreHPB_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 
 /*!	\brief Имеет порядок?
 
