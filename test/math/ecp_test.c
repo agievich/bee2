@@ -27,7 +27,7 @@ static bool_t ecpTestEc(const ec_o* ec)
 {
 	// размерности
 	const size_t n = ec->f->n;
-	const size_t min_w = 3;
+	const size_t min_w = 1;
 	const size_t max_w = 6;
 	const size_t max_pre_count = SIZE_BIT_POS(max_w - 1);
 	// состояние
@@ -94,7 +94,7 @@ static bool_t ecpTestEc(const ec_o* ec)
 		}
 	}
 	// предвычисления по схеме SNZ
-	for (w = min_w; w <= max_w; ++w)
+	for (w = MAX2(3, min_w); w <= max_w; ++w)
 	{
 		// pre[0..2^w) <- (1, 3, ..., 2^w-1)base
 		ecpPreSNZ(pre, ec->base, w, ec, stack);
@@ -121,7 +121,7 @@ static bool_t ecpTestEc(const ec_o* ec)
 		}
 	}
 	// предвычисления по схеме SNZA
-	for (w = min_w; w <= max_w; ++w)
+	for (w = MAX2(3, min_w); w <= max_w; ++w)
 	{
 		// pre[0..2^w) <- (1, 3, ..., 2^w-1)base
 		if (!ecpPreSNZA(pre, ec->base, w, ec, stack))

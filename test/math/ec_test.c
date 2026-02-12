@@ -78,8 +78,8 @@ bool_t ecTestEc(const ec_o* ec)
 	// размерности
 	const size_t n = ec->f->n;
 	const size_t no = ec->f->no;
-	const size_t min_w = 3;
-	const size_t max_w = 6;
+	const size_t min_w = 1;
+	const size_t max_w = 4;
 	const size_t min_h = (B_OF_O(no) + max_w - 1) / max_w;
 	const size_t max_h = (B_OF_O(no) + min_w - 1) / min_w;
 	const size_t max_pre_count = min_h * SIZE_BIT_POS(max_w - 1);
@@ -366,11 +366,15 @@ bool_t ecTestEc(const ec_o* ec)
 	{
 		size_t i;
 		// pre[0..2^w) <- (1, 3, ..., 2^w-1)base
-		if (!ecPreSNZA(pre, ec->base, w, ec, stack))
+		if (!ecPreSNZA(pre, ec->base, w, ec, stack) ||
+			!wwEq(ecPrePtA(pre, 0, ec), ec->base, 2 * n))
 		{
 			blobClose(state);
 			return FALSE;
 		}
+		// пропустить проверки при w = 1
+		if (w == 1)
+			continue;
 		// pt0 <- pre[1] - pre[0]
 		ecNegA(pt0, ecPrePtA(pre, 0, ec), ec, stack);
 		if (!ecAddAA(pt0, pt0, ecPrePtA(pre, 1, ec), ec, stack))
