@@ -4,7 +4,7 @@
 \brief STB 34.101.66 (bake): miscellaneous (curves, KDF)
 \project bee2 [cryptographic library]
 \created 2014.04.14
-\version 2025.09.25
+\version 2026.02.12
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -62,7 +62,7 @@ err_t bakeEcStart(void* state, const bign_params* params)
 	ASSERT(wwBitSize(f->mod, n) == params->l * 2);
 	ASSERT(wwGetBits(f->mod, 0, 2) == 3);
 	// создать кривую и группу
-	if (!ecpCreateJ(ec, f, params->a, params->b, stack) ||
+	if (!ecpCreateJ(ec, f, params->a, params->b, TRUE, stack) ||
 		!ecGroupCreate(ec, 0, params->yG, params->q, no, 1, stack))
 		return ERR_BAD_PARAMS;
 	ASSERT(wwBitSize(ec->order, n) == params->l * 2);

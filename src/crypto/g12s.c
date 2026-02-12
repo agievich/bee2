@@ -630,7 +630,7 @@ static err_t g12sEcCreate(
 		return ERR_BAD_PARAMS;
 	}
 	// создать кривую и группу
-	if (!ecpCreateJ(ec, f, params->a, params->b, stack) ||
+	if (!ecpCreateJ(ec, f, params->a, params->b, FALSE, stack) ||
 		!ecGroupCreate(ec, params->xP, params->yP, params->q, 
 			params->l / 8, params->n, stack))
 	{

@@ -214,7 +214,7 @@ bool_t ecpBench()
 	bign_params params[1];
 	ec_o* ec;
 	// создать кривую
-	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK ||
+	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.2") != ERR_OK ||
 		bignEcCreate(&ec, params) != ERR_OK)
 		return FALSE;
 	// оценка

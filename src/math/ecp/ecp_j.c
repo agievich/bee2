@@ -4,7 +4,7 @@
 \brief Elliptic curves over prime fields: Jacobian coordinates
 \project bee2 [cryptographic library]
 \created 2012.06.26
-\version 2026.02.04
+\version 2026.02.12
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -1013,16 +1013,26 @@ static void ecpSgnAJ(word a[], register word neg, const ec_o* ec, void* stack)
 *******************************************************************************
 Финишное сложение
 
-Использованы полные (complete) формулы сложения / удвоения из работы [RCB15].
+Использованы полные (complete) формулы сложения / удвоения из работы [RCB15],
+в свою очередь основанные на формулах работы [BosLen95].
 
 В формулах используются однородные (Homogenious, H) координаты:
 	x = X / Z, y = Y / Z.
-
 Преобразование H <- J:
 	(X Z : Y : Z^3) <- (X : Y : Z).
 
-[RCB15] Renes J., Costello C., Batina L. Complete addition formulas for prime
-        order elliptic curves. 2015. https://eprint.iacr.org/2015/1060.pdf.
+\remark Хотя в названии работы [RCB15] фигурируют слова "prime order", формулы
+остаются корректными для групп нечетного порядка. Цитата:
+	``...we point that the word "prime" in our title can be relaxed to "odd";
+	the completeness of the Bosma–Lenstra formulas only requires the
+	non-existence of rational two-torsion points (see Sections 2 and 3), i.e.,
+	that the group order #E(Fq) is not even.''
+
+[RCB15]    Renes J., Costello C., Batina L. Complete addition formulas for
+           prime order elliptic curves. 2015.
+		   https://eprint.iacr.org/2015/1060.pdf.
+[BosLen95] Bosma W., Lenstra H.W. Complete systems of two addition laws
+           for elliptic curves. Journal of Number theory, 53(2):229–240, 1995.
 *******************************************************************************
 */
 
@@ -1242,8 +1252,8 @@ static size_t ecpFinAddA_deep(size_t n, size_t f_deep)
 #define ecpCreateJ_local(n)\
 /* t */			O_OF_W(n)
 
-bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[], 
-	void* stack)
+bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
+	bool_t odd_order, void* stack)
 {
 	register bool_t bA3;
 	word* t; 			/* [n] */
@@ -1290,8 +1300,12 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	ec->dbladda = ecpDblAddAJ;
 	ec->sgn = ecpSgnJ;
 	ec->sgna = ecpSgnAJ;
-	ec->finadd = ecpFinAdd;
-	ec->finadda = ecpFinAddA;
+	if (odd_order)
+	{
+		ec->finadd = ecpFinAdd;
+		ec->finadda = ecpFinAddA;
+	}
+	// для простоты учитываем в том числе глубину ecpFinAdd/ecpFinAddA
 	ec->deep = utilMax(9,
 		ecpToAJ_deep(f->n, f->deep),
 		ecpAddJ_deep(f->n, f->deep),
