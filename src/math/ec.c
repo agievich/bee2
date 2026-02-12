@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2014.03.04
-\version 2026.02.11
+\version 2026.02.12
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -76,8 +76,7 @@ bool_t ecGroupCreate(ec_o* ec, const octet xbase[], const octet ybase[],
 		return FALSE;
 	// установить порядок и кофактор
 	wwFrom(ec->order, order, order_len);
-	wwSetZero(ec->order + W_OF_O(order_len), 
-		ec->f->n + 1 - W_OF_O(order_len));
+	wwSetZero(ec->order + W_OF_O(order_len), ec->f->n + 1 - W_OF_O(order_len));
 	ec->cofactor = (word)cofactor;
 	// все нормально
 	return TRUE;
@@ -350,7 +349,7 @@ bool_t ecPreHPB(ec_pre_t* pre, const word a[], size_t w, size_t h,
 	if (!ecToA(ecPrePtA(pre, 0, ec), t2, ec, stack))
 		return FALSE;
 	// pre[next] <- pre[cur] \pm dbls[diff(next, cur)]
-	for (i = 1, code = 0; i < WORD_BIT_POS(w - 1); ++i)
+	for (i = 1, code = 0; i < (size_t)WORD_BIT_POS(w - 1); ++i)
 	{
 		size_t pos;
 		pos = wordParity(code) ? wordCTZ(code) + 1 : 0;

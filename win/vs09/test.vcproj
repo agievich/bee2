@@ -257,6 +257,10 @@
 				Name="math"
 				>
 				<File
+					RelativePath="..\..\test\math\ec_test.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\test\math\ecp_bench.c"
 					>
 				</File>
