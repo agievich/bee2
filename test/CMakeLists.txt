@@ -35,6 +35,7 @@ add_executable(testbee2
   crypto/g12s_test.c
   crypto/pfok_test.c
   crypto/stb99_test.c
+  math/ec_test.c
   math/ecp_test.c
   math/ecp_bench.c
   math/pp_test.c

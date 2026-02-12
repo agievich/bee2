@@ -4,7 +4,7 @@
 \brief Benchmarks for elliptic curves over prime fields
 \project bee2/test
 \created 2013.10.17
-\version 2026.02.11
+\version 2026.02.12
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -12,11 +12,9 @@
 
 #include <stdio.h>
 #include <bee2/core/blob.h>
-#include <bee2/core/err.h>
 #include <bee2/core/prng.h>
 #include <bee2/core/tm.h>
 #include <bee2/core/util.h>
-#include <bee2/math/ec.h>
 #include <bee2/math/ecp.h>
 #include <crypto/bign/bign_lcl.h>
 
@@ -26,7 +24,7 @@
 *******************************************************************************
 */
 
-bool_t ecpBench_internal(const ec_o* ec)
+static bool_t ecpBenchEc(const ec_o* ec)
 {
 	const size_t n = ec->f->n;
 	const size_t no = ec->f->no;
@@ -47,7 +45,7 @@ bool_t ecpBench_internal(const ec_o* ec)
 		prngCOMBO_keep(),
 		O_OF_W(2 * n),
 		O_OF_W(n),
-		sizeof(ec_pre_t) + O_OF_W(max_pre_count * 3 * n),
+		sizeof(ec_pre_t) + O_OF_W(max_pre_count * ec->d * n),
 		utilMax(11,
 			ecMulA_deep(n, ec->d, ec->deep, n),
 			ecPreSNZ_deep(n, ec->d, ec->deep),
@@ -220,7 +218,7 @@ bool_t ecpBench()
 		bignEcCreate(&ec, params) != ERR_OK)
 		return FALSE;
 	// оценка
-	ret = ecpBench_internal(ec);
+	ret = ecpBenchEc(ec);
 	// завершение
 	bignEcClose(ec);
 	return ret;

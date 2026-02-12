@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): local declarations
 \project bee2 [cryptographic library]
 \created 2014.04.03
-\version 2025.09.24
+\version 2026.02.12
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -14,6 +14,7 @@
 #define __BEE2_BIGN_LCL_H
 
 #include "bee2/crypto/bign.h"
+#include "bee2/math/ec.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -187,39 +188,6 @@ typedef size_t(*bign_deep_i)(
 	size_t ec_d,			/*!< [in] число проективных координат */
 	size_t ec_deep			/*!< [in] глубина стека эллиптической кривой */
 	);
-
-/*!	\brief Длина состояния
-
-	Возвращается длина состояния (в октетах) высокоуровневой функции,
-	которая работает на уровне стойкости l и имеет потребности в стеке deep.
-	\pre l == 128 || l == 192 || l == 256.
-	\return Длина состояния.
-	\remark Состояние включает как локальные переменные, так и стек.
-*/
-size_t bignStart_keep(
-	size_t l,				/*!< [in] уровень стойкости */
-	bign_deep_i deep		/*!< [in] потребности в стековой памяти */
-);
-
-/*!	\brief Начало работы с параметрами
-
-	По долговременным параметрам params по адресу state формируется описание
-	эллиптической кривой.
-	\pre bignParamsCheck(params) == ERR_OK.
-	\return ERR_OK, если описание успешно создано, и код ошибки в противном
-	случае.
-	\remark Высокоуровневый механизм должен работать по следующей схеме:
-	-	описать потребности в стеке с помощью функции интерфейса bign_deep_i;
-	-	определить длину состояния, вызвав bignStart_keep();
-	-	определить начало стека как память в state сразу после описания
-		эллиптической кривой.
-	.
-*/
-err_t bignStart(
-	void* state,				/*!< [out] состояние */
-	const bign_params* params	/*!< [in] долговременные параметры */
-);
-
 
 #ifdef __cplusplus
 } /* extern "C" */
