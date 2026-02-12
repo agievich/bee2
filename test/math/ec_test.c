@@ -122,7 +122,7 @@ bool_t ecTestEc(const ec_o* ec)
 			ecMulPreSNZH_deep(n, ec->d, ec->deep, n),
 			ecMulPreHPB_deep(n, ec->d, ec->deep, n),
 			ecAddMulA_deep(n, ec->d, ec->deep, 4,
-			(size_t)1, (size_t)2, (size_t)3, (size_t)4)),
+				(size_t)1, (size_t)2, (size_t)3, (size_t)4)),
 		SIZE_MAX,
 		&pre, &pt0, &pt1, &pt2, &pt3, &pt4, &pt5, &d, &stack);
 	if (state == 0)
@@ -583,10 +583,10 @@ bool_t ecTestEc(const ec_o* ec)
 Проверочная кривая:
 - p -- простое, p = 3 (mod 4);
 - a = p - 3;
-- q = |E_{a,b}(FF_p)| -- простое число;
-- ybase = b^((p + 1) / 4) mod p.
+- q, порядок группы точек, -- простое число;
+- xbase = 0, ybase = b^((p + 1) / 4) mod p (ybase^2 = b mod p).
 
-\remark Вычисление порядка в PARI/GP:
+\remark Вычисление порядка группы в PARI/GP:
 \code
 	p = 2^256 - 189
 	a = p - 3
@@ -671,9 +671,9 @@ bool_t ecTest()
 		blobClose(state);
 		return FALSE;
 	}
-	// создать ec = EC_{ab}(f)
+	// создать ec = EC_{a,b}(f)
 	hexToRev(t, a), hexToRev(t + no, b);
-	if (!ecpCreateJ(ec, f, t, t + no, stack) || ec->d != 3) 
+	if (!ecpCreateJ(ec, f, t, t + no, TRUE, stack) || ec->d != 3) 
 	{
 		blobClose(state);
 		return FALSE;
@@ -707,7 +707,7 @@ bool_t ecTest()
 	objCopy(f, objPtr(ec, 0, qr_o));
 	// создать ec = EC_{a-2, b}(f)
 	hexToRev(t, a), t[0] -= 2, hexToRev(t + no, b);
-	if (!ecpCreateJ(ec, f, t, t + no, stack))
+	if (!ecpCreateJ(ec, f, t, t + no, FALSE, stack))
 	{
 		blobClose(state);
 		return FALSE;
