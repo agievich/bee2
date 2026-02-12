@@ -83,7 +83,7 @@ static bool_t ecpBenchEc(const ec_o* ec)
 				(unsigned)tmSpeed(reps, ticks));
 		}
 		// ecpPre+ecMulPre[SNZ]
-		for (w = min_w; w <= max_w; ++w)
+		for (w = MAX2(3, min_w); w <= max_w; ++w)
 		{
 			for (i = 0, ticks = tmTicks(); i < reps; ++i)
 			{
@@ -98,7 +98,7 @@ static bool_t ecpBenchEc(const ec_o* ec)
 				(unsigned)tmSpeed(reps, ticks));
 		}
 		// ecpPre+ecMulPre[SNZA]
-		for (w = min_w; w <= max_w; ++w)
+		for (w = MAX2(3, min_w); w <= max_w; ++w)
 		{
 			for (i = 0, ticks = tmTicks(); i < reps; ++i)
 			{
@@ -186,7 +186,7 @@ static bool_t ecpBenchEc(const ec_o* ec)
 				(unsigned)tmSpeed(reps, ticks));
 		}
 		// ecpPre[SNZ]
-		for (w = min_w; w <= max_w; ++w)
+		for (w = MAX2(3, min_w); w <= max_w; ++w)
 		{
 			for (i = 0, ticks = tmTicks(); i < reps; ++i)
 				ecpPreSNZ(pre, ec->base, w, ec, stack);
@@ -214,7 +214,7 @@ bool_t ecpBench()
 	bign_params params[1];
 	ec_o* ec;
 	// создать кривую
-	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.2") != ERR_OK ||
+	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK ||
 		bignEcCreate(&ec, params) != ERR_OK)
 		return FALSE;
 	// оценка
