@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers: Euclidian gcd algorithms
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2026.01.22
+\version 2026.02.12
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -73,7 +73,15 @@
 1) бинарный алгоритм опережает обычный (полные деления) примерно в 2 раза и
 2) опережает смешанный (полные деления и деления на 2) примерно в 1.5 раза.
 
-\todo Регуляризация?
+\todo Регуляризация: [BerYan19], [Por20].
+
+[BerYan19] Bernstein D., Yang B.-Y. Fast constant-time gcd computation and 
+           modular inversion. IACR Transactions on Cryptographic Hardware and 
+           Embedded Systems, 2019(3), 340-398.
+           https://eprint.iacr.org/2019/266.
+[Por20]    Pornin T. Optimized Binary GCD for Modular Inversion. Cryptology 
+           ePrint Archive, 2020, paper 2020/972. 
+           https://eprint.iacr.org/2020/972.
 *******************************************************************************
 */
 
@@ -447,9 +455,7 @@ size_t zzDivMod_deep(size_t n)
 *******************************************************************************
 Почти обращение по модулю
 
-В zzAlmostDivMod() реализован алгоритм Калиски [B.S.Kaliski Jr. The Montgomery
-inverse and its applications. IEEE Transactions on Computers, 44(8):1064–1065,
-1995]:
+В zzAlmostDivMod() реализован алгоритм Калиски [Kal95]:
 	u <- a
 	da0 <- 1
 	v <- mod
@@ -480,16 +486,19 @@ inverse and its applications. IEEE Transactions on Computers, 44(8):1064–1065,
 -	числа da, da0 лежат в интервале [0, 2 * mod - 1];
 -	wwBitSize(mod) <= k <= 2 * wwBitSize(mod).
 
-\remark В [E. Savas, K. Koc. The Montgomery Modular Inverse -- Revisited.
-IEEE Transactions on Computers, 49(7):763–766, 2000] рассмотрен случай, когда
-a и mod < 2^m, причем условие a < mod может нарушаться. Доказано, что в этом
-случае
+\remark В [SavKoc00] рассмотрен случай, когда a и mod < 2^m, причем условие 
+a < mod может нарушаться. Доказано, что в этом случае:
 -	числа da, da0 лежат в интервале [0, 2 * mod - 1];
 -	wwBitSize(mod) <= k <= m + wwBitSize(mod).
 
 \todo В перечисленных статьях предполагается, что mod -- простое число.
 Проверить, что результаты можно распространить на случай произвольного
 нечетного mod. Можно ли сузить интервал [0, 2 * mod - 1]?
+
+[Kal95]    Kaliski B.S., Jr. The Montgomery inverse and its applications. 
+           IEEE Transactions on Computers, 44(8):1064–1065, 1995.
+[SavKoc00] Savas E., Koc K. The Montgomery Modular Inverse -- Revisited.
+           IEEE Transactions on Computers, 49(7):763–766, 2000.
 *******************************************************************************
 */
 
