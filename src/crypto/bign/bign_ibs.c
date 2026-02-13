@@ -173,7 +173,7 @@ err_t bignIdSignEc(octet id_sig[], const ec_o* ec, const octet oid_der[],
 		O_OF_W(n / 2),
 		utilMax(4,
 			beltHash_keep(),
-			ecMulA_deep(n, ec->d, ec->deep, n),
+			bignMulBase_deep(n, ec->f->deep, ec->deep),
 			zzMul_deep(n / 2, n),
 			zzMod_deep(n + n / 2 + 1, n)),
 		SIZE_MAX,
@@ -194,7 +194,7 @@ err_t bignIdSignEc(octet id_sig[], const ec_o* ec, const octet oid_der[],
 		return ERR_BAD_RNG;
 	}
 	// V <- k G
-	if (!ecMulA(V, ec->base, ec, k, n, stack))
+	if (!bignMulBase(V, ec, k, stack))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;
@@ -284,7 +284,7 @@ err_t bignIdSign2Ec(octet id_sig[], const ec_o* ec, const octet oid_der[],
 			beltHash_keep(),
 			32,
 			beltWBL_keep(),
-			ecMulA_deep(n, ec->d, ec->deep, n),
+			bignMulBase_deep(n, ec->f->deep, ec->deep),
 			zzMul_deep(n / 2, n),
 			zzMod_deep(n + n / 2 + 1, n)),
 		SIZE_MAX,
@@ -324,7 +324,7 @@ err_t bignIdSign2Ec(octet id_sig[], const ec_o* ec, const octet oid_der[],
 		}
 	}
 	// V <- k G
-	if (!ecMulA(V, ec->base, ec, k, n, stack))
+	if (!bignMulBase(V, ec, k, stack))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;

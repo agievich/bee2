@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): key transport
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.10.23
+\version 2026.02.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -56,8 +56,9 @@ err_t bignKeyWrapEc(octet token[], const ec_o* ec, const octet key[],
 		O_OF_W(n),
 		O_OF_W(2 * n),
 		(size_t)32,
-		utilMax(2,
-			ecMulA_deep(n, ec->d, ec->deep, n),
+		utilMax(3,
+			bignMulA_deep(n, ec->f->deep, ec->deep),
+			bignMulBase_deep(n, ec->f->deep, ec->deep),
 			beltKWP_keep()),
 		SIZE_MAX,
 		&k, &R, &theta, &stack);
@@ -76,7 +77,7 @@ err_t bignKeyWrapEc(octet token[], const ec_o* ec, const octet key[],
 		blobClose(state);
 		return ERR_BAD_PUBKEY;
 	}
-	if (!ecMulA(R, R, ec, k, n, stack))
+	if (!bignMulA(R, R, ec, k, stack))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;
@@ -84,7 +85,7 @@ err_t bignKeyWrapEc(octet token[], const ec_o* ec, const octet key[],
 	// theta <- <R>_{256}
 	qrTo(theta, ecX(R), ec->f, stack);
 	// R <- k G
-	if (!ecMulA(R, ec->base, ec, k, n, stack))
+	if (!bignMulBase(R, ec, k, stack))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;
@@ -162,7 +163,7 @@ err_t bignKeyUnwrapEc(octet key[], const ec_o* ec, const octet token[],
 		utilMax(3,
 			beltKWP_keep(),
 			qrPower_deep(n, n, ec->f->deep),
-			ecMulA_deep(n, ec->d, ec->deep, n)),
+			bignMulA_deep(n, ec->f->deep, ec->deep)),
 		SIZE_MAX,
 		&d, &R, &t1, &t2, &theta, &header2, &stack);
 	if (state == 0)
@@ -199,7 +200,7 @@ err_t bignKeyUnwrapEc(octet key[], const ec_o* ec, const octet token[],
 		return ERR_BAD_KEYTOKEN;
 	}
 	// R <- d R
-	if (!ecMulA(R, R, ec, d, n, stack))
+	if (!bignMulA(R, R, ec, d, stack))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;

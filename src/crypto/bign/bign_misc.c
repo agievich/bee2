@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): miscellaneous (OIDs, keys, DH)
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.09.26
+\version 2026.02.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -21,6 +21,83 @@
 #include "bee2/math/ww.h"
 #include "bee2/math/zz.h"
 #include "bign_lcl.h"
+
+/*
+*******************************************************************************
+Кратная точка
+*******************************************************************************
+*/
+
+static size_t bignMulAWidth(size_t l)
+{
+	return l <= 128 ? 5 : 6;
+}
+
+#define bignMulA_local(n, pre_count)\
+/* pre */	sizeof(ec_pre_t) + O_OF_W(pre_count * 3 * n)
+
+bool_t bignMulA(word b[], const word a[], const ec_o* ec, const word d[],
+	void* stack)
+{
+	size_t w;
+	size_t pre_count;
+	ec_pre_t* pre;			/* [pre_count проективных точек] */
+	// pre
+	ASSERT(ecIsOperable(ec) && ec->d == 3);
+	// размерности
+	w = bignMulAWidth(B_OF_W(ec->f->n));
+	pre_count = SIZE_BIT_POS(w - 1);
+	// разметить стек
+	memSlice(stack,
+		bignMulA_local(ec->f->n, pre_count), SIZE_0, SIZE_MAX,
+		&pre, &stack);
+	// метод SNZ
+	ecpPreSNZ(pre, a, w, ec, stack);
+	return ecMulPreSNZ(b, pre, ec, d, ec->f->n, stack);
+}
+
+size_t bignMulA_deep(size_t n, size_t f_deep, size_t ec_deep)
+{
+	const size_t w = bignMulAWidth(B_OF_W(n));
+	const size_t pre_count = SIZE_BIT_POS(w - 1);
+	return memSliceSize(
+		bignMulA_local(n, pre_count),
+		utilMax(2,
+			ecpPreSNZ_deep(n, f_deep, w),
+			ecMulPreSNZ_deep(n, 3, ec_deep, n)),
+		SIZE_MAX);
+}
+
+bool_t bignMulBase(word a[], const ec_o* ec, const word d[], void* stack)
+{
+	ASSERT(ecIsOperable(ec) && ec->d == 3);
+	if (ec->pre)
+	{
+		ASSERT(ecPreIsOperable(ec->pre));
+		switch (ec->pre->type)
+		{
+			case ec_pre_snzh:
+				return ecMulPreSNZH(a, ec->pre, ec, d, ec->f->n, stack);
+			case ec_pre_hpb:
+				return ecMulPreHPB(a, ec->pre, ec, d, ec->f->n, stack);
+			case ec_pre_snza:
+				return ecMulPreSNZA(a, ec->pre, ec, d, ec->f->n, stack);
+			case ec_pre_snz:
+				return ecMulPreSNZ(a, ec->pre, ec, d, ec->f->n, stack);
+		}
+	}
+	return bignMulA(a, ec->base, ec, d, stack);
+}
+
+size_t bignMulBase_deep(size_t n, size_t f_deep, size_t ec_deep)
+{
+	return utilMax(4,
+		bignMulA_deep(n, f_deep, ec_deep),
+		ecMulPreSNZH_deep(n, 3, ec_deep, n),
+		ecMulPreHPB_deep(n, 3, ec_deep, n),
+		ecMulPreSNZA_deep(n, 3, ec_deep, n),
+		ecMulPreSNZ_deep(n, 3, ec_deep, n));
+}
 
 /*
 *******************************************************************************
@@ -76,7 +153,7 @@ err_t bignKeypairGenEc(octet privkey[], octet pubkey[], const ec_o* ec,
 	state = blobCreate2(
 		O_OF_W(n),
 		O_OF_W(2 * n),
-		ecMulA_deep(n, ec->d, ec->deep, n),
+		bignMulBase_deep(n, ec->f->deep, ec->deep),
 		SIZE_MAX,
 		&d, &Q, &stack);
 	if (state == 0)
@@ -88,7 +165,7 @@ err_t bignKeypairGenEc(octet privkey[], octet pubkey[], const ec_o* ec,
 		return ERR_BAD_RNG;
 	}
 	// Q <- d G
-	if (!ecMulA(Q, ec->base, ec, d, n, stack))
+	if (!bignMulBase(Q, ec, d, stack))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;
@@ -141,7 +218,7 @@ err_t bignKeypairValEc(const ec_o* ec, const octet privkey[],
 	state = blobCreate2(
 		O_OF_W(n),
 		O_OF_W(2 * n),
-		ecMulA_deep(n, ec->d, ec->deep, n),
+		bignMulBase_deep(n, ec->f->deep, ec->deep),
 		SIZE_MAX,
 		&d, &Q, &stack);
 	if (state == 0)
@@ -155,7 +232,7 @@ err_t bignKeypairValEc(const ec_o* ec, const octet privkey[],
 		return ERR_BAD_PRIVKEY;
 	}
 	// Q <- d G
-	if (!ecMulA(Q, ec->base, ec, d, n, stack))
+	if (!bignMulBase(Q, ec, d, stack))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;
@@ -264,7 +341,7 @@ err_t bignPubkeyCalcEc(octet pubkey[], const ec_o* ec, const octet privkey[])
 	state = blobCreate2(
 		O_OF_W(n),
 		O_OF_W(2 * n),
-		ecMulA_deep(n, ec->d, ec->deep, n),
+		bignMulBase_deep(n, ec->f->deep, ec->deep),
 		SIZE_MAX,
 		&d, &Q, &stack);
 	if (state == 0)
@@ -277,7 +354,7 @@ err_t bignPubkeyCalcEc(octet pubkey[], const ec_o* ec, const octet privkey[])
 		return ERR_BAD_PRIVKEY;
 	}
 	// Q <- d G
-	if (!ecMulA(Q, ec->base, ec, d, n, stack))
+	if (!bignMulBase(Q, ec, d, stack))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;
@@ -336,7 +413,7 @@ err_t bignDHEc(octet key[], const ec_o* ec, const octet privkey[],
 		O_OF_W(2 * n),
 		utilMax(2,
 			ecpIsOnA_deep(n, ec->f->deep),
-			ecMulA_deep(n, ec->d, ec->deep, n)),
+			bignMulA_deep(n, ec->f->deep, ec->deep)),
 		SIZE_MAX,
 		&u, &K, &V, &stack);
 	if (state == 0)
@@ -357,7 +434,7 @@ err_t bignDHEc(octet key[], const ec_o* ec, const octet privkey[],
 		return ERR_BAD_PUBKEY;
 	}
 	// V <- u V
-	if (!ecMulA(V, V, ec, u, n, stack))
+	if (!bignMulA(V, V, ec, u, stack))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;
