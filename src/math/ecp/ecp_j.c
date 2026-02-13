@@ -4,7 +4,7 @@
 \brief Elliptic curves over prime fields: Jacobian coordinates
 \project bee2 [cryptographic library]
 \created 2012.06.26
-\version 2026.02.12
+\version 2026.02.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -1246,8 +1246,7 @@ static size_t ecpFinAddA_deep(size_t n, size_t f_deep)
 /* A */			O_OF_W(n),\
 /* B */			O_OF_W(n),\
 /* base */		O_OF_W(2 * n),\
-/* order */		O_OF_W(n + 1),\
-/* pre */		SIZE_0
+/* order */		O_OF_W(n + 1)
 
 #define ecpCreateJ_local(n)\
 /* t */			O_OF_W(n)
@@ -1274,7 +1273,7 @@ bool_t ecpCreateJ(ec_o* ec, const qr_o* f, const octet A[], const octet B[],
 	// разметить состояние и стек
 	memSlice(ec->descr,
 		ecpCreateJ_state(f->n), SIZE_MAX,
-		&ec->A, &ec->B, &ec->base, &ec->order, &ec->pre);
+		&ec->A, &ec->B, &ec->base, &ec->order);
 	memSlice(stack,
 		ecpCreateJ_local(f->n), SIZE_0, SIZE_MAX,
 		&t, &stack);

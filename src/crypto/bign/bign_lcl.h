@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): local declarations
 \project bee2 [cryptographic library]
 \created 2014.04.03
-\version 2026.02.12
+\version 2026.02.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -110,6 +110,63 @@ void bignEcClose(
 
 /*
 *******************************************************************************
+Кратная точка
+
+Регулярные функции вычисления кратной точки.
+*******************************************************************************
+*/
+
+/*!	\brief Кратная точка
+
+	Определяется аффинная точка [2 * ec->f->n]b эллиптической кривой ec, 
+	которая является [ec->f->n]d-кратной аффинной точки [2 * ec->f->n]a:
+	\code
+		b <- d a.
+	\endcode
+	\pre Описание ec работоспособно.
+	\pre Координаты a лежат в базовом поле.
+	\expect Кривая ec удовлетворяет соглашениям Bign.
+	\expect В ec используются якобиевы координаты.
+	\expect Точка a лежит на ec.
+	\return TRUE, если кратная точка отличается от O, и FALSE в противном
+	случае.
+	\deep{stack} bignMulA_deep(ec->f->n, ec->d, ec->deep).
+*/
+bool_t bignMulA(
+	word b[],			/*!< [out] кратная точка */
+	const word a[],		/*!< [in] базовая точка */
+	const ec_o* ec,		/*!< [in] описание кривой */
+	const word d[],		/*!< [in] кратность */
+	void* stack			/*!< [in] вспомогательная память */
+);
+
+size_t bignMulA_deep(size_t n, size_t ec_d, size_t ec_deep);
+
+/*!	\brief Кратная базовая точка
+
+	Определяется аффинная точка [2 * ec->f->n]b эллиптической кривой ec,
+	которая является [ec->f->n]d-кратной точки ec->base:
+	\code
+		a <- d (ec->base).
+	\endcode
+	\pre Описание ec работоспособно.
+	\expect Кривая ec удовлетворяет соглашениям Bign.
+	\expect В ec используются якобиевы координаты.
+	\return TRUE, если кратная точка отличается от O, и FALSE в противном
+	случае.
+	\deep{stack} bignMulBase_deep(ec->f->n, ec->d, ec->deep).
+*/
+bool_t bignMulBase(
+	word a[],			/*!< [out] кратная точка */
+	const ec_o* ec,		/*!< [in] описание кривой */
+	const word d[],		/*!< [in] кратность */
+	void* stack			/*!< [in] вспомогательная память */
+);
+
+size_t bignMulBase_deep(size_t n, size_t ec_d, size_t ec_deep);
+
+/*
+*******************************************************************************
 ЕС-функции
 
 \expect Кривая ec создана с помощью bignEcCreate().
@@ -166,28 +223,6 @@ err_t bignIdSign2Ec(octet id_sig[], const ec_o* ec, const octet oid_der[],
 err_t bignIdVerifyEc(const ec_o* ec, const octet oid_der[], size_t oid_len,
 	const octet id_hash[], const octet hash[], const octet id_sig[],
 	const octet id_pubkey[], const octet pubkey[]);
-
-/*
-*******************************************************************************
-К удалению
-*******************************************************************************
-*/
-
-/*!	\brief Потребности в стеке
-
-	Определяется глубина стека, который требуется высокоуровневой функции
-	для работы с эллиптической кривой, описываемой объясненными ниже
-	размерностями n, f_deep, ec_d, ec_deep.
-	\remark При расчете глубины не следует учитывать память для
-	размещения описаний базового поля и эллиптической кривой.
-*/
-
-typedef size_t(*bign_deep_i)(
-	size_t n,				/*!< [in] число слов для хранения элемента поля */
-	size_t f_deep,			/*!< [in] глубина стека базового поля */
-	size_t ec_d,			/*!< [in] число проективных координат */
-	size_t ec_deep			/*!< [in] глубина стека эллиптической кривой */
-	);
 
 #ifdef __cplusplus
 } /* extern "C" */

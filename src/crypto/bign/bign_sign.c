@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): digital signature
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.10.22
+\version 2026.02.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -65,7 +65,7 @@ err_t bignSignEc(octet sig[], const ec_o* ec, const octet oid_der[],
 		O_OF_W(n / 2),
 		utilMax(4,
 			beltHash_keep(),
-			ecMulA_deep(n, ec->d, ec->deep, n),
+			bignMulBase_deep(n, ec->f->deep, ec->deep),
 			zzMul_deep(n / 2, n),
 			zzMod_deep(n + n / 2 + 1, n)),
 		SIZE_MAX,
@@ -86,7 +86,7 @@ err_t bignSignEc(octet sig[], const ec_o* ec, const octet oid_der[],
 		return ERR_BAD_RNG;
 	}
 	// R <- k G
-	if (!ecMulA(R, ec->base, ec, k, n, stack))
+	if (!bignMulBase(R, ec, k, stack))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;
@@ -177,7 +177,7 @@ err_t bignSign2Ec(octet sig[], const ec_o* ec, const octet oid_der[],
 			beltHash_keep(),
 			(size_t)32,
 			beltWBL_keep(),
-			ecMulA_deep(n, ec->d, ec->deep, n),
+			bignMulBase_deep(n, ec->f->deep, ec->deep),
 			zzMul_deep(n / 2, n),
 			zzMod_deep(n + n / 2 + 1, n)),
 		SIZE_MAX,
@@ -217,7 +217,7 @@ err_t bignSign2Ec(octet sig[], const ec_o* ec, const octet oid_der[],
 		}
 	}
 	// R <- k G
-	if (!ecMulA(R, ec->base, ec, k, n, stack))
+	if (!bignMulBase(R, ec, k, stack))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;
