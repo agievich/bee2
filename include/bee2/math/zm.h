@@ -4,7 +4,7 @@
 \brief Quotient rings of integers modulo m
 \project bee2 [cryptographic library]
 \created 2013.09.14
-\version 2025.09.28
+\version 2026.02.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -20,6 +20,7 @@
 #ifndef __ZM_H
 
 #include "bee2/math/qr.h"
+#include "bee2/math/ww.h"
 
 #ifdef __cplusplus
 extern "C" {
