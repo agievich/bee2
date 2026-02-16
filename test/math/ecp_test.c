@@ -55,8 +55,8 @@ static bool_t ecpTestEc(const ec_o* ec)
 			ecpAddAA_deep(n, ec->f->deep),
 			ecpSubAA_deep(n, ec->f->deep),
 			ecMulA_deep(n, ec->d, ec->deep, n),
-			ecpPreSNZ_deep(n, ec->f->deep, max_w),
-			ecpPreSNZA_deep(n, ec->f->deep, max_w)),
+			ecpPreSO_deep(n, ec->f->deep, max_w),
+			ecpPreSOA_deep(n, ec->f->deep, max_w)),
 		SIZE_MAX,
 		&pre, &pt0, &pt1, &d, &stack);
 	if (state == 0)
@@ -93,11 +93,11 @@ static bool_t ecpTestEc(const ec_o* ec)
 			return FALSE;
 		}
 	}
-	// предвычисления по схеме SNZ
+	// предвычисления по схеме SO
 	for (w = MAX2(3, min_w); w <= max_w; ++w)
 	{
 		// pre[0..2^w) <- (1, 3, ..., 2^w-1)base
-		ecpPreSNZ(pre, ec->base, w, ec, stack);
+		ecpPreSO(pre, ec->base, w, ec, stack);
 		// pt0 <- \sum_{i = 0}^{2^w-1} 2^{2^{w-1}-1-i} pre[i]
 		wwCopy(pt0, ecPrePt(pre, 0, ec), ec->d * n);
 		for (i = 1; i < SIZE_BIT_POS(w - 1); ++i)
@@ -120,11 +120,11 @@ static bool_t ecpTestEc(const ec_o* ec)
 			return FALSE;
 		}
 	}
-	// предвычисления по схеме SNZA
+	// предвычисления по схеме SOA
 	for (w = MAX2(3, min_w); w <= max_w; ++w)
 	{
 		// pre[0..2^w) <- (1, 3, ..., 2^w-1)base
-		if (!ecpPreSNZA(pre, ec->base, w, ec, stack))
+		if (!ecpPreSOA(pre, ec->base, w, ec, stack))
 		{
 			blobClose(state);
 			return FALSE;

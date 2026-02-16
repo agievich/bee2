@@ -4,7 +4,7 @@
 \brief Benchmarks for elliptic curves over prime fields
 \project bee2/test
 \created 2013.10.17
-\version 2026.02.12
+\version 2026.02.16
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -48,16 +48,16 @@ static bool_t ecpBenchEc(const ec_o* ec)
 		sizeof(ec_pre_t) + O_OF_W(max_pre_count * ec->d * n),
 		utilMax(11,
 			ecMulA_deep(n, ec->d, ec->deep, n),
-			ecPreSNZ_deep(n, ec->d, ec->deep),
-			ecPreSNZA_deep(n, ec->d, ec->deep),
-			ecPreSNZH_deep(n, ec->d, ec->deep),
-			ecPreHPB_deep(n, ec->d, ec->deep, max_h),
-			ecpPreSNZ_deep(n, ec->f->deep, max_w),
-			ecpPreSNZA_deep(n, ec->f->deep, max_w),
-			ecMulPreSNZ_deep(n, ec->d, ec->deep, n),
-			ecMulPreSNZA_deep(n, ec->d, ec->deep, n),
-			ecMulPreSNZH_deep(n, ec->d, ec->deep, n),
-			ecMulPreHPB_deep(n, ec->d, ec->deep, n)),
+			ecPreSO_deep(n, ec->d, ec->deep),
+			ecPreSOA_deep(n, ec->d, ec->deep),
+			ecPreSOH_deep(n, ec->d, ec->deep),
+			ecPreSI_deep(n, ec->d, ec->deep, max_h),
+			ecpPreSO_deep(n, ec->f->deep, max_w),
+			ecpPreSOA_deep(n, ec->f->deep, max_w),
+			ecMulPreSO_deep(n, ec->d, ec->deep, n),
+			ecMulPreSOA_deep(n, ec->d, ec->deep, n),
+			ecMulPreSOH_deep(n, ec->d, ec->deep, n),
+			ecMulPreSI_deep(n, ec->d, ec->deep, n)),
 		SIZE_MAX,
 		&combo_state, &pt, &d, &pre, &stack);
 	if (state == 0)
@@ -78,120 +78,120 @@ static bool_t ecpBenchEc(const ec_o* ec)
 				ecMulA(pt, ec->base, ec, d, n, stack);
 			}
 			ticks = tmTicks() - ticks;
-			printf("  ecMulA:                    %u cycles/pt [%u pts/sec]\n",
+			printf("  ecMulA:                   %u cycles/pt [%u pts/sec]\n",
 				(unsigned)(ticks / reps),
 				(unsigned)tmSpeed(reps, ticks));
 		}
-		// ecpPre+ecMulPre[SNZ]
+		// ecpPre+ecMulPre[SO]
 		for (w = MAX2(3, min_w); w <= max_w; ++w)
 		{
 			for (i = 0, ticks = tmTicks(); i < reps; ++i)
 			{
 				prngCOMBOStepR(d, no, combo_state);
-				ecpPreSNZ(pre, ec->base, w, ec, stack);
-				ecMulPreSNZ(pt, pre, ec, d, n, stack);
+				ecpPreSO(pre, ec->base, w, ec, stack);
+				ecMulPreSO(pt, pre, ec, d, n, stack);
 			}
 			ticks = tmTicks() - ticks;
-			printf("  ecpPre+ecMulPre[SNZ,w=%u]:  %u cycles/pt [%u pts/sec]\n",
+			printf("  ecpPre+ecMulPre[SO,w=%u]:  %u cycles/pt [%u pts/sec]\n",
 				(unsigned)w,
 				(unsigned)(ticks / reps),
 				(unsigned)tmSpeed(reps, ticks));
 		}
-		// ecpPre+ecMulPre[SNZA]
+		// ecpPre+ecMulPre[SOA]
 		for (w = MAX2(3, min_w); w <= max_w; ++w)
 		{
 			for (i = 0, ticks = tmTicks(); i < reps; ++i)
 			{
 				prngCOMBOStepR(d, no, combo_state);
-				ecpPreSNZA(pre, ec->base, w, ec, stack);
-				ecMulPreSNZA(pt, pre, ec, d, n, stack);
+				ecpPreSOA(pre, ec->base, w, ec, stack);
+				ecMulPreSOA(pt, pre, ec, d, n, stack);
 			}
 			ticks = tmTicks() - ticks;
-			printf("  ecpPre+ecMulPre[SNZA,w=%u]: %u cycles/pt [%u pts/sec]\n",
+			printf("  ecpPre+ecMulPre[SOA,w=%u]: %u cycles/pt [%u pts/sec]\n",
 				(unsigned)w,
 				(unsigned)(ticks / reps),
 				(unsigned)tmSpeed(reps, ticks));
 		}
-		// ecMulPre[SNZ]
+		// ecMulPre[SO]
 		for (w = min_w; w <= max_w; ++w)
 		{
-			ecPreSNZ(pre, ec->base, w, ec, stack);
+			ecPreSO(pre, ec->base, w, ec, stack);
 			for (i = 0, ticks = tmTicks(); i < reps; ++i)
 			{
 				prngCOMBOStepR(d, no, combo_state);
-				ecMulPreSNZ(pt, pre, ec, d, n, stack);
+				ecMulPreSO(pt, pre, ec, d, n, stack);
 			}
 			ticks = tmTicks() - ticks;
-			printf("  ecMulPre[SNZ,w=%u]:         %u cycles/pt [%u pts/sec]\n",
+			printf("  ecMulPre[SO,w=%u]:         %u cycles/pt [%u pts/sec]\n",
 				(unsigned)w,
 				(unsigned)(ticks / reps),
 				(unsigned)tmSpeed(reps, ticks));
 		}
-		// ecMulPre[SNZA]
+		// ecMulPre[SOA]
 		for (w = min_w; w <= max_w; ++w)
 		{
-			ecPreSNZA(pre, ec->base, w, ec, stack);
+			ecPreSOA(pre, ec->base, w, ec, stack);
 			for (i = 0, ticks = tmTicks(); i < reps; ++i)
 			{
 				prngCOMBOStepR(d, no, combo_state);
-				ecMulPreSNZA(pt, pre, ec, d, n, stack);
+				ecMulPreSOA(pt, pre, ec, d, n, stack);
 			}
 			ticks = tmTicks() - ticks;
-			printf("  ecMulPre[SNZA,w=%u]:        %u cycles/pt [%u pts/sec]\n",
+			printf("  ecMulPre[SOA,w=%u]:        %u cycles/pt [%u pts/sec]\n",
 				(unsigned)w,
 				(unsigned)(ticks / reps),
 				(unsigned)tmSpeed(reps, ticks));
 		}
-		// ecMulPre[SNZH]
+		// ecMulPre[SOH]
 		for (w = min_w; w <= max_w; ++w)
 		{
 			size_t h = (B_OF_O(no) + w - 1) / w;
-			ecPreSNZH(pre, ec->base, w, h, ec, stack);
+			ecPreSOH(pre, ec->base, w, h, ec, stack);
 			for (i = 0, ticks = tmTicks(); i < reps; ++i)
 			{
 				prngCOMBOStepR(d, no, combo_state);
-				ecMulPreSNZH(pt, pre, ec, d, n, stack);
+				ecMulPreSOH(pt, pre, ec, d, n, stack);
 			}
 			ticks = tmTicks() - ticks;
-			printf("  ecMulPre[SNZH,w=%u]:        %u cycles/pt [%u pts/sec]\n",
+			printf("  ecMulPre[SOH,w=%u]:        %u cycles/pt [%u pts/sec]\n",
 				(unsigned)w,
 				(unsigned)(ticks / reps),
 				(unsigned)tmSpeed(reps, ticks));
 		}
-		// ecMulPre[HPB]
+		// ecMulPre[SI]
 		for (w = min_w; w <= max_w; ++w)
 		{
 			size_t h = (B_OF_O(no) + w - 1) / w;
-			ecPreHPB(pre, ec->base, w, h, ec, stack);
+			ecPreSI(pre, ec->base, w, h, ec, stack);
 			for (i = 0, ticks = tmTicks(); i < reps; ++i)
 			{
 				prngCOMBOStepR(d, no, combo_state);
-				ecMulPreHPB(pt, pre, ec, d, n, stack);
+				ecMulPreSI(pt, pre, ec, d, n, stack);
 			}
 			ticks = tmTicks() - ticks;
-			printf("  ecMulPre[HPB,w=%u]:         %u cycles/pt [%u pts/sec]\n",
+			printf("  ecMulPre[SI,w=%u]:         %u cycles/pt [%u pts/sec]\n",
 				(unsigned)w,
 				(unsigned)(ticks / reps),
 				(unsigned)tmSpeed(reps, ticks));
 		}
-		// ecPre[SNZ]
+		// ecPre[SO]
 		for (w = min_w; w <= max_w; ++w)
 		{
 			for (i = 0, ticks = tmTicks(); i < reps; ++i)
-				ecPreSNZ(pre, ec->base, w, ec, stack);
+				ecPreSO(pre, ec->base, w, ec, stack);
 			ticks = tmTicks() - ticks;
-			printf("  ecPre[SNZ,w=%u]:            %u cycles/pre [%u pre/sec]\n",
+			printf("  ecPre[SO,w=%u]:            %u cycles/pre [%u pre/sec]\n",
 				(unsigned)w,
 				(unsigned)(ticks / reps),
 				(unsigned)tmSpeed(reps, ticks));
 		}
-		// ecpPre[SNZ]
+		// ecpPre[SO]
 		for (w = MAX2(3, min_w); w <= max_w; ++w)
 		{
 			for (i = 0, ticks = tmTicks(); i < reps; ++i)
-				ecpPreSNZ(pre, ec->base, w, ec, stack);
+				ecpPreSO(pre, ec->base, w, ec, stack);
 			ticks = tmTicks() - ticks;
-			printf("  ecpPre[SNZ,w=%u]:           %u cycles/pre [%u pre/sec]\n",
+			printf("  ecpPre[SO,w=%u]:           %u cycles/pre [%u pre/sec]\n",
 				(unsigned)w,
 				(unsigned)(ticks / reps),
 				(unsigned)tmSpeed(reps, ticks));

@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2014.03.04
-\version 2026.02.12
+\version 2026.02.16
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -100,7 +100,7 @@ bool_t ecGroupIsOperable(const ec_o* ec)
 *******************************************************************************
 Предвычисления
 
-В функции ecPreSNZ() реализован следуюший алгоритм:
+В функции ecPreSO() реализован следуюший алгоритм:
 1. t <- 2a.								// P <- 2A
 2. pre[0] <- a.
 3. pre[1] <- t + pre[0].				// P <- P + A
@@ -110,7 +110,7 @@ bool_t ecGroupIsOperable(const ec_o* ec)
 Итоговая сложность:
 	1(P <- 2A) + 1(P <- P + A) + (2^{w-1} - 2)(P <- P + P).
 
-В функции ecPreSNZA() реализован тот тот же алгоритм, только операция P <- 2A
+В функции ecPreSOA() реализован тот тот же алгоритм, только операция P <- 2A
 в нем меняется на A <- 2A, а операции P <- P + A и P <- P + P меняются
 на A <- A + A.
 
@@ -127,44 +127,41 @@ bool_t ecGroupIsOperable(const ec_o* ec)
 -----------------------------------------------------
 * [или прямых вычислений в аффинных координатах]
 
-В функции ecPreHPB() вычисляются точки
-	[b_{w-1} ... b_1 b_0]a = \sum_{i=0}^{w-1} b_i 2^{h i} a,
-где b_i in {-1, 1}, b_{w-1} == 1. Точка [b_{w-1} ... b_1 b_0]a
-размещается в массиве предвычисленных точек по индексу, двоичная запись
-которого есть
-	с_{w-1}...c_1 c_0,
-где c_i = 0, если b_i = 1, и c_i = 1, если b_i = -1.
+В функции ecPreSI() вычисляются точки
+	[c_{w-1} ... c_1 c_0]a = \sum_{i=0}^{w-1}(1-2c_i)(2^h)^i a,
+где c_i in {0, 1}, c_{w-1} == 1. Точка [c_{w-1}...c_1 c_0]a
+размещается в массиве предвычисленных точек по индексу c_{w-1}...c_1 c_0.
 
-Слова code = с_{w-1}...c_1 c_0 просматриваются как слова кода Грея:
-соседние слова отличаются только в одном бите. Если это бит номер i,
-то новая точка получается из [b_{w-1} ... b_1 b_0]a:
+Слова с_{w-1}...c_1 c_0 просматриваются как слова кода Грея: соседние
+слова отличаются только в одном бите. Если это бит номер i, то новая точка
+получается из [с_{w-1}...с_1 с_0]a:
 - добавлением точки (2(2^h)^i)a при c_i = 1; 
 - вычитанием точки (2(2^h)^i)a при c_i = 0.
 
-Определение следующего за code слова выполняется следующим образом
-(см. [War03; глава 13], нумерация битов справа налево от 0):
+Определение следующего за code = с_{w-1}...c_1 c_0 слова выполняется
+следующим образом (см. [War03; глава 13], нумерация битов справа налево от 0):
 1. Если code содержит четное число единиц, то pos <- 0. Иначе
    pos <- (позиция первой справа единицы) + 1.
 2. Инвертировать бит code номер pos.
 
 [War03] Уоррен Генри Мл. Алгоритмические трюки для программистов,
-		М.: Издательский дом <<Вильямс>>, 2003.
+		М.: Издательский дом "Вильямс", 2003.
 *******************************************************************************
 */
 
 bool_t ecPreIsOperable(const ec_pre_t* pre)
 {
 	return memIsValid(pre, sizeof(pre)) &&
-		(pre->type == ec_pre_snz || pre->type == ec_pre_snza ||
-			pre->type == ec_pre_snzh || pre->type == ec_pre_hpb) &&
+		(pre->type == ec_pre_so || pre->type == ec_pre_soa ||
+			pre->type == ec_pre_soh || pre->type == ec_pre_si) &&
 		pre->w > 0 && pre->w < B_PER_W &&
-		((pre->type != ec_pre_snzh && pre->type != ec_pre_hpb) ^ (pre->h > 0));
+		((pre->type != ec_pre_soh && pre->type != ec_pre_si) ^ (pre->h > 0));
 }
 
-#define ecPreSNZ_local(n, ec_d)\
+#define ecPreSO_local(n, ec_d)\
 /* t */		O_OF_W(ec_d * n)
 
-void ecPreSNZ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
+void ecPreSO(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	void* stack)
 {
 	word* t;			/* [ec->d * ec->f->n] */
@@ -177,7 +174,7 @@ void ecPreSNZ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 		a, O_OF_W(2 * ec->f->n)));
 	// разметить стек
 	memSlice(stack,
-		ecPreSNZ_local(ec->f->n, ec->d), SIZE_0, SIZE_MAX,
+		ecPreSO_local(ec->f->n, ec->d), SIZE_0, SIZE_MAX,
 		&t, &stack);
 	// pre[0] <- a
 	ecFromA(ecPrePt(pre, 0, ec), a, ec, stack);
@@ -193,23 +190,23 @@ void ecPreSNZ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 			ecAdd(ecPrePt(pre, i, ec), t, ecPrePt(pre, i - 1, ec), ec, stack);
 	}
 	// заполнить служебные поля
-	pre->type = ec_pre_snz;
+	pre->type = ec_pre_so;
 	pre->w = w, pre->h = 0;
 }
 
-size_t ecPreSNZ_deep(size_t n, size_t ec_d, size_t ec_deep)
+size_t ecPreSO_deep(size_t n, size_t ec_d, size_t ec_deep)
 {
 	return memSliceSize(
-		ecPreSNZ_local(n, ec_d),
+		ecPreSO_local(n, ec_d),
 		ec_deep,
 		SIZE_MAX);
 }
 
-#define ecPreSNZA_local(n, ec_d)\
+#define ecPreSOA_local(n, ec_d)\
 /* t1 */	O_OF_W(ec_d * n),\
 /* t2 */	O_OF_W(ec_d * n)
 
-bool_t ecPreSNZA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
+bool_t ecPreSOA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	void* stack)
 {
 	word* t1;			/* [ec->d * ec->f->n] */
@@ -223,7 +220,7 @@ bool_t ecPreSNZA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 		a, O_OF_W(2 * ec->f->n)));
 	// разметить стек
 	memSlice(stack,
-		ecPreSNZA_local(ec->f->n, ec->d), SIZE_0, SIZE_MAX,
+		ecPreSOA_local(ec->f->n, ec->d), SIZE_0, SIZE_MAX,
 		&t1, &t2, &stack);
 	// pre[0] <- a
 	wwCopy(ecPrePtA(pre, 0, ec), a, 2 * ec->f->n);
@@ -241,23 +238,23 @@ bool_t ecPreSNZA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 		}
 	}
 	// заполнить служебные поля
-	pre->type = ec_pre_snza;
+	pre->type = ec_pre_soa;
 	pre->w = w, pre->h = 0;
 	return TRUE;
 }
 
-size_t ecPreSNZA_deep(size_t n, size_t ec_d, size_t ec_deep)
+size_t ecPreSOA_deep(size_t n, size_t ec_d, size_t ec_deep)
 {
 	return memSliceSize(
-		ecPreSNZA_local(n, ec_d),
+		ecPreSOA_local(n, ec_d),
 		ec_deep,
 		SIZE_MAX);
 }
 
-#define ecPreSNZH_local(n, ec_d)\
+#define ecPreSOH_local(n, ec_d)\
 /* t */		O_OF_W(ec_d * n)
 
-bool_t ecPreSNZH(ec_pre_t* pre, const word a[], size_t w, size_t h,
+bool_t ecPreSOH(ec_pre_t* pre, const word a[], size_t w, size_t h,
 	const ec_o* ec, void* stack)
 {
 	word* t;			/* [ec->d * ec->f->n] */
@@ -272,10 +269,10 @@ bool_t ecPreSNZH(ec_pre_t* pre, const word a[], size_t w, size_t h,
 		a, O_OF_W(2 * ec->f->n)));
 	// разметить стек
 	memSlice(stack,
-		ecPreSNZH_local(ec->f->n, ec->d), SIZE_0, SIZE_MAX,
+		ecPreSOH_local(ec->f->n, ec->d), SIZE_0, SIZE_MAX,
 		&t, &stack);
 	// первая строка
-	if (!ecPreSNZA(pre, a, w, ec, stack))
+	if (!ecPreSOA(pre, a, w, ec, stack))
 		return FALSE;
 	// остальные строки
 	prev = pre->pts, cur = prev + SIZE_BIT_POS(w - 1) * 2 * ec->f->n;
@@ -294,25 +291,25 @@ bool_t ecPreSNZH(ec_pre_t* pre, const word a[], size_t w, size_t h,
 		cur = pt;
 	}
 	// заполнить служебные поля
-	pre->type = ec_pre_snzh;
+	pre->type = ec_pre_soh;
 	pre->h = h;
 	return TRUE;
 }
 
-size_t ecPreSNZH_deep(size_t n, size_t ec_d, size_t ec_deep)
+size_t ecPreSOH_deep(size_t n, size_t ec_d, size_t ec_deep)
 {
 	return memSliceSize(
-		ecPreSNZH_local(n, ec_d),
-		ecPreSNZA_deep(n, ec_d, ec_deep),
+		ecPreSOH_local(n, ec_d),
+		ecPreSOA_deep(n, ec_d, ec_deep),
 		SIZE_MAX);
 }
 
-#define ecPreHPB_local(n, ec_d, h)\
+#define ecPreSI_local(n, ec_d, h)\
 /* t1 */		O_OF_W(ec_d * n),\
 /* t2 */		O_OF_W(ec_d * n),\
 /* dbls */		O_OF_W(h * ec_d * n)
 
-bool_t ecPreHPB(ec_pre_t* pre, const word a[], size_t w, size_t h,
+bool_t ecPreSI(ec_pre_t* pre, const word a[], size_t w, size_t h,
 	const ec_o* ec, void* stack)
 {
 	word* t1;			/* [ec->d * ec->f->n] */
@@ -328,7 +325,7 @@ bool_t ecPreHPB(ec_pre_t* pre, const word a[], size_t w, size_t h,
 		a, O_OF_W(2 * ec->f->n)));
 	// разметить стек
 	memSlice(stack,
-		ecPreHPB_local(ec->f->n, ec->d, h), SIZE_0, SIZE_MAX,
+		ecPreSI_local(ec->f->n, ec->d, h), SIZE_0, SIZE_MAX,
 		&t1, &t2, &dbls, &stack);
 	// dbls[i] <- 2(2^h)^i a, t2 <- \sum_{i=0}^{w-1} (2^h)^i a
 	ecFromA(t1, a, ec, stack);
@@ -361,15 +358,15 @@ bool_t ecPreHPB(ec_pre_t* pre, const word a[], size_t w, size_t h,
 			return FALSE;
 	}
 	// заполнить служебные поля
-	pre->type = ec_pre_hpb;
+	pre->type = ec_pre_si;
 	pre->w = w, pre->h = h;
 	return TRUE;
 }
 
-size_t ecPreHPB_deep(size_t n, size_t ec_d, size_t ec_deep, size_t h)
+size_t ecPreSI_deep(size_t n, size_t ec_d, size_t ec_deep, size_t h)
 {
 	return memSliceSize(
-		ecPreHPB_local(n, ec_d, h),
+		ecPreSI_local(n, ec_d, h),
 		ec_deep,
 		SIZE_MAX);
 }
@@ -386,8 +383,8 @@ size_t ecPreHPB_deep(size_t n, size_t ec_d, size_t ec_deep, size_t h)
 
 Имеются три стратегии:
 1)	w = 2 и малые кратные вообще не рассчитываются;
-2)	w > 2 и малые кратные рассчитываются в аффинных координатах (схема SNZA);
-3)	w > 2 и малые кратные рассчитываются в проективных координатах (схема SNZ).
+2)	w > 2 и малые кратные рассчитываются в аффинных координатах (схема SOA);
+3)	w > 2 и малые кратные рассчитываются в проективных координатах (схема SO).
 
 Если малые кратные рассчитываются по схеме "последовательно складывать
 с удвоенной исходной точкой", то средняя общая сложность нахождения
@@ -406,7 +403,7 @@ size_t ecPreHPB_deep(size_t n, size_t ec_d, size_t ec_deep, size_t h)
 Длина окна w выбирается как решение следующей оптимизационной задачи:
 	(2^{w - 2} - 2) + l / (w + 1) -> min.
 
-В функции ecMulA() реализована композиция функций ecPreSNZ() (предвычисления)
+В функции ecMulA() реализована композиция функций ecPreSO() (предвычисления)
 и ecMulPreNAF().
 
 [HMV04] Hankerson D., Menezes A., Vanstone S. Guide to Elliptic Curve
@@ -441,7 +438,7 @@ static bool_t ecMulPreNAF(word b[], const ec_pre_t* pre, const ec_o* ec,
 	// pre
 	ASSERT(ecIsOperable(ec));
 	ASSERT(ecPreIsOperable(pre));
-	ASSERT(pre->type == ec_pre_snz);
+	ASSERT(pre->type == ec_pre_so);
 	// разметить стек
 	memSlice(stack,
 		ecMulPreNAF_local(ec->f->n, ec->d, m), SIZE_0, SIZE_MAX,
@@ -512,7 +509,7 @@ bool_t ecMulA(word b[], const word a[], const ec_o* ec,
 		ecMulA_local(ec->f->n, ec->d, pre_count), SIZE_0, SIZE_MAX,
 		&pre, &stack);
 	// предвычисления: pre[i] <- (2i + 1)a
-	ecPreSNZ(pre, a, naf_width - 1, ec, stack);
+	ecPreSO(pre, a, naf_width - 1, ec, stack);
 	// предвычисления: pre[pre_count - 1 - i] <- -pre[i]
 	for (i = 0; i < pre_count / 2; ++i)
 		ecNeg(ecPrePt(pre, pre_count - 1 - i, ec), 
@@ -528,21 +525,21 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 	return memSliceSize(
 		ecMulA_local(n, ec_d, pre_count),
 		utilMax(2,
-			ecPreSNZ_deep(m, ec_d, ec_deep),
+			ecPreSO_deep(m, ec_d, ec_deep),
 			ecMulPreNAF_deep(n, ec_d, ec_deep, m)),
 		SIZE_MAX);
 }
 
 /*
 *******************************************************************************
-Кратная точка: метод SNZ и его модификации
+Кратная точка: метод SO и его модификации
 
-В функции ecMulPreSNZ() для определения кратной точки b = da при нечетной 
+В функции ecMulPreSO() для определения кратной точки b = da при нечетной 
 кратности d используется ее представление в форме
 	d_{k-1} (2^w)^{k-1} + ... + d_1 (2^w) + d_0.
 Здесь d_i \in {\pm 1, \pm 3, ..., \pm (2^w-1)} -- ненулевые (нечетные) цифры
 со знаком (signed non-zero). Предполагается, что точка a лежит в группе
-нечетного порядка order, (2^w)^{k-1} < order < (2^w)^k. Представление SNZ
+нечетного порядка order, (2^w)^{k-1} < order < (2^w)^k. Представление SO
 предложено в [OkeTak03].
 
 Если кратность d четная, то она предварительно меняется на order-d. Для этого
@@ -550,7 +547,7 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 
 Реализован следующий алгоритм (см. [BCL+14; p. 9-11, algorithm 1], [APS22]):
 1. Для i = 0, 1, ..., 2^{w-1}-1:
-	1) pre[i] <- (2i + 1)a.						// предвычисления: SNZ
+	1) pre[i] <- (2i + 1)a.						// предвычисления: SO
 2. t <- pre[d_{k-1} / 2].
 3. Для i = k-2, ..., 2, 1:
 	1) t <- 2^w t;								// P <- 2P
@@ -583,21 +580,25 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 четность можно использовать для пересчета borrow:
   borrow <- d_i % 2.
 
-В функции ecMulPreSNZA() предварительно рассчитанные точки являются аффинными,
+В функции ecMulPreSOA() предварительно рассчитанные точки являются аффинными,
 а не проективными. Это позволяет заменить регулярные сложения P <- P + P
 на P <- P + A и финишное сложение A <- P + P на A <- P + A.
 
-В функции ecMulPreSNZH() предполагается, что аффинные точки предварительно
+В функции ecMulPreSOH() предполагается, что аффинные точки предварительно
 рассчитаны для каждой цифры обрабатываемого скаляра d. Это позволяет
 избавиться от удвоений:
 1. Для i = 0, 1, ..., k-1 и j = 0, 1, ..., 2^{w-1}-1:
-	1) pre[i][j] <- (2^w)^i(2j + 1)a.			// предвычисления: SNZH
+	1) pre[i][j] <- (2^w)^i(2j + 1)a.			// предвычисления: SOH
 2. t <- pre[k-1][d_{k-1}/2].
 3. Для i = k-2, ..., 2, 1:
 	1) t <- t + sgn(d_i) pre[i]t[|d_i|/2].		// P <- P + P
 4. t <- t + sgn(d_0) pre[0][|d_0|/2].			// A <- P + P
 5. Возвратить t.
 
+[OkeTak03] Okeya K., Takagi T. The width-w NAF method provides small memory
+		   and fast elliptic scalar multiplications secure against side
+		   channel attacks. In Cryptographers’ Track at the RSA Conference,
+		   2003, pp. 328-343. Springer, Berlin Heidelberg.
 [BCL+14]   Bos J.W., Costello C., Longa P., Naehrig M. Selecting Elliptic
 		   Curves for Cryptography: An Efficiency and Security Analysis, 2014,
 		   https://eprint.iacr.org/2014/130.pdf.
@@ -607,12 +608,12 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 *******************************************************************************
 */
 
-#define ecMulPreSNZ_local(n, ec_d, m)\
+#define ecMulPreSO_local(n, ec_d, m)\
 /* dd */	O_OF_W(m),\
 /* t */		O_OF_W(ec_d * n),\
 /* pt */	O_OF_W(ec_d * n)
 
-bool_t ecMulPreSNZ(word b[], const ec_pre_t* pre, const ec_o* ec,
+bool_t ecMulPreSO(word b[], const ec_pre_t* pre, const ec_o* ec,
 	const word d[], size_t m, void* stack)
 {
 	register word neg;
@@ -632,7 +633,7 @@ bool_t ecMulPreSNZ(word b[], const ec_pre_t* pre, const ec_o* ec,
 	ASSERT(ecIsOperable(ec));
 	ASSERT(ecGroupIsOperable(ec));
 	ASSERT(ecPreIsOperable(pre));
-	ASSERT(pre->type == ec_pre_snz);
+	ASSERT(pre->type == ec_pre_so);
 	ASSERT(wwWordSize(ec->order, ec->f->n + 1) == m);
 	ASSERT(zzIsOdd(ec->order, m) && m > 1);
 	ASSERT(wwCmp(d, ec->order, m) < 0);
@@ -644,7 +645,7 @@ bool_t ecMulPreSNZ(word b[], const ec_pre_t* pre, const ec_o* ec,
 	mask = WORD_BIT_POS(pre->w) - 2;
 	// разметить стек
 	memSlice(stack,
-		ecMulPreSNZ_local(ec->f->n, ec->d, m), SIZE_0, SIZE_MAX,
+		ecMulPreSO_local(ec->f->n, ec->d, m), SIZE_0, SIZE_MAX,
 		&dd, &t, &pt, &stack);
 	// dd <- (d % 2) ? d : ec->order - d
 	neg = WORD_1 - (d[0] & 1);
@@ -686,20 +687,20 @@ bool_t ecMulPreSNZ(word b[], const ec_pre_t* pre, const ec_o* ec,
 	return ret;
 }
 
-size_t ecMulPreSNZ_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
+size_t ecMulPreSO_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 {
 	return memSliceSize(
-		ecMulPreSNZ_local(n, ec_d, m),
+		ecMulPreSO_local(n, ec_d, m),
 		ec_deep,
 		SIZE_MAX);
 }
 
-#define ecMulPreSNZA_local(n, ec_d, m)\
+#define ecMulPreSOA_local(n, ec_d, m)\
 /* dd */	O_OF_W(m),\
 /* t */		O_OF_W(ec_d * n),\
 /* pt */	O_OF_W(2 * n)
 
-bool_t ecMulPreSNZA(word b[], const ec_pre_t* pre, const ec_o* ec,
+bool_t ecMulPreSOA(word b[], const ec_pre_t* pre, const ec_o* ec,
 	const word d[], size_t m, void* stack)
 {
 	register word neg;
@@ -719,7 +720,7 @@ bool_t ecMulPreSNZA(word b[], const ec_pre_t* pre, const ec_o* ec,
 	ASSERT(ecIsOperable(ec));
 	ASSERT(ecGroupIsOperable(ec));
 	ASSERT(ecPreIsOperable(pre));
-	ASSERT(pre->type == ec_pre_snza);
+	ASSERT(pre->type == ec_pre_soa);
 	ASSERT(wwWordSize(ec->order, ec->f->n + 1) == m);
 	ASSERT(zzIsOdd(ec->order, m) && m > 1);
 	ASSERT(wwCmp(d, ec->order, m) < 0);
@@ -731,7 +732,7 @@ bool_t ecMulPreSNZA(word b[], const ec_pre_t* pre, const ec_o* ec,
 	mask = WORD_BIT_POS(pre->w) - 2;
 	// разметить стек
 	memSlice(stack,
-		ecMulPreSNZA_local(ec->f->n, ec->d, m), SIZE_0, SIZE_MAX,
+		ecMulPreSOA_local(ec->f->n, ec->d, m), SIZE_0, SIZE_MAX,
 		&dd, &t, &pt, &stack);
 	// dd <- (d % 2) ? d : ec->order - d
 	neg = WORD_1 - (d[0] & 1);
@@ -774,20 +775,20 @@ bool_t ecMulPreSNZA(word b[], const ec_pre_t* pre, const ec_o* ec,
 	return ret;
 }
 
-size_t ecMulPreSNZA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
+size_t ecMulPreSOA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 {
 	return memSliceSize(
-		ecMulPreSNZA_local(n, ec_d, m),
+		ecMulPreSOA_local(n, ec_d, m),
 		ec_deep,
 		SIZE_MAX);
 }
 
-#define ecMulPreSNZH_local(n, ec_d, m)\
+#define ecMulPreSOH_local(n, ec_d, m)\
 /* dd */	O_OF_W(m),\
 /* t */		O_OF_W(ec_d * n),\
 /* pt */	O_OF_W(2 * n)
 
-bool_t ecMulPreSNZH(word b[], const ec_pre_t* pre, const ec_o* ec,
+bool_t ecMulPreSOH(word b[], const ec_pre_t* pre, const ec_o* ec,
 	const word d[], size_t m, void* stack)
 {
 	register word neg;
@@ -807,7 +808,7 @@ bool_t ecMulPreSNZH(word b[], const ec_pre_t* pre, const ec_o* ec,
 	ASSERT(ecIsOperable(ec));
 	ASSERT(ecGroupIsOperable(ec));
 	ASSERT(ecPreIsOperable(pre));
-	ASSERT(pre->type == ec_pre_snzh);
+	ASSERT(pre->type == ec_pre_soh);
 	ASSERT(wwWordSize(ec->order, ec->f->n + 1) == m);
 	ASSERT(zzIsOdd(ec->order, m) && m > 1);
 	ASSERT(wwCmp(d, ec->order, m) < 0);
@@ -819,7 +820,7 @@ bool_t ecMulPreSNZH(word b[], const ec_pre_t* pre, const ec_o* ec,
 	mask = WORD_BIT_POS(pre->w) - 2;
 	// разметить стек
 	memSlice(stack,
-		ecMulPreSNZH_local(ec->f->n, ec->d, m), SIZE_0, SIZE_MAX,
+		ecMulPreSOH_local(ec->f->n, ec->d, m), SIZE_0, SIZE_MAX,
 		&dd, &t, &pt, &stack);
 	// dd <- (d % 2) ? d : ec->order - d
 	neg = WORD_1 - (d[0] & 1);
@@ -861,21 +862,21 @@ bool_t ecMulPreSNZH(word b[], const ec_pre_t* pre, const ec_o* ec,
 	return ret;
 }
 
-size_t ecMulPreSNZH_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
+size_t ecMulPreSOH_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 {
 	return memSliceSize(
-		ecMulPreSNZH_local(n, ec_d, m),
+		ecMulPreSOH_local(n, ec_d, m),
 		ec_deep,
 		SIZE_MAX);
 }
 
 /*
 *******************************************************************************
-Кратная точка: метод HPB
+Кратная точка: метод SI
 
-В функции ecMulPreHPB() вычисление кратной точки выполняется по методу HPB,
-предложенному в [HPB05]. Метод HPB является модификацией метода Comb,
-предложенного в [LimLee94] (см. также [HMV04; algorithm 3.44]).
+В функции ecMulPreSI() вычисление кратной точки выполняется по методу,
+предложенному в [HPB05]. Это модификация метода Comb, введенного в [LimLee94]
+(см. также [HMV04; algorithm 3.44]).
 
 Для определения кратной точки b = da при нечетной кратности d используется
 ее представление в форме
@@ -883,7 +884,7 @@ size_t ecMulPreSNZH_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 где d_i \in {\pm 1}. 
 
 Как обычно, если кратность d четная, то она предварительно меняется на
-order-d.
+order - d.
 
 Реализован следующий алгоритм:
 1. Для с_{w-1} = 0 и с_{w-2}...c_0 \in {0,1}^{w-1}:
@@ -898,6 +899,19 @@ order-d.
           pt[d_{hw-h}d_{h(w-1)-h)}...d_0 ^ d_{hw-h}...d_{hw-h}].
 6. Возвратить t.
 
+Переход от двоичного представления
+	d = \sum_{i=0}^{hw-1} d_i 2^i,		d_i \in {0,1}, d_0 = 1,
+к \pm 1 представлению
+	d = \sum_{i=0}^{hw-1}(1-2 e_i) 2^i,	e_i \in {0,1},
+реализуется следующим образом:
+	(e_{hw-1}, ..., e_1, e_0) <- (0, d_{hw-1} ^ 1, ..., d_1 ^ 1).
+
+\remark Обоснование:
+	\sum_{i=0}^{hw-1}(1-2 e_i) 2^i =
+	  2^{hw-1} + \sum_{i=0}^{hw-2}(2 d_{i+1}-1)2^i = 
+	  2^{hw-1} - \sum_{i=0}^{hw-2}2^i + \sum_{i=1}^{hw-1}d_i 2^i =
+	  1 + \sum_{i=1}^{hw-1}d_i 2^i = d.
+
 [HPB05]    Hedabou M., Pinel P., Beneteau L. Countermeasures for preventing
            comb method against SCA attacks. In: International Conference
            on Information Security Practice and Experience, 2005, pp. 85-96,
@@ -909,12 +923,12 @@ order-d.
 *******************************************************************************
 */
 
-#define ecMulPreHPB_local(n, ec_d, m)\
+#define ecMulPreSI_local(n, ec_d, m)\
 /* dd */	O_OF_W(m + 1),\
 /* t */		O_OF_W(ec_d * n),\
 /* pt */	O_OF_W(2 * n)
 
-bool_t ecMulPreHPB(word b[], const ec_pre_t* pre, const ec_o* ec,
+bool_t ecMulPreSI(word b[], const ec_pre_t* pre, const ec_o* ec,
 	const word d[], size_t m, void* stack)
 {
 	register word neg;
@@ -934,7 +948,7 @@ bool_t ecMulPreHPB(word b[], const ec_pre_t* pre, const ec_o* ec,
 	ASSERT(ecIsOperable(ec));
 	ASSERT(ecGroupIsOperable(ec));
 	ASSERT(ecPreIsOperable(pre));
-	ASSERT(pre->type == ec_pre_hpb);
+	ASSERT(pre->type == ec_pre_si);
 	ASSERT(wwWordSize(ec->order, ec->f->n + 1) == m);
 	ASSERT(zzIsOdd(ec->order, m) && m > 1);
 	ASSERT(wwCmp(d, ec->order, m) < 0);
@@ -947,7 +961,7 @@ bool_t ecMulPreHPB(word b[], const ec_pre_t* pre, const ec_o* ec,
 	mask = WORD_BIT_POS(pre->w - 1) - 1;
 	// разметить стек
 	memSlice(stack,
-		ecMulPreHPB_local(ec->f->n, ec->d, m), SIZE_0, SIZE_MAX,
+		ecMulPreSI_local(ec->f->n, ec->d, m), SIZE_0, SIZE_MAX,
 		&dd, &t, &pt, &stack);
 	// dd <- (d % 2) ? d : ec->order - d
 	neg = WORD_1 - (d[0] & 1);
@@ -1001,10 +1015,10 @@ bool_t ecMulPreHPB(word b[], const ec_pre_t* pre, const ec_o* ec,
 	return ret;
 }
 
-size_t ecMulPreHPB_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
+size_t ecMulPreSI_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 {
 	return memSliceSize(
-		ecMulPreHPB_local(n, ec_d, m),
+		ecMulPreSI_local(n, ec_d, m),
 		ec_deep,
 		SIZE_MAX);
 }
@@ -1113,7 +1127,7 @@ bool_t ecAddMulA(word b[], const ec_o* ec, void* stack, size_t k, ...)
 			naf_max_size = naf_size[i];
 		naf_pos[i] = 0;
 		// предвычисления
-		ecPreSNZ(pre[i], a, naf_width[i] - 1, ec, stack);
+		ecPreSO(pre[i], a, naf_width[i] - 1, ec, stack);
 		for (j = 0; j < pre_count / 2; ++j)
 			ecNeg(ecPrePt(pre[i], pre_count - 1 - j, ec), 
 				ecPrePt(pre[i], j, ec), ec, stack);
@@ -1159,7 +1173,7 @@ size_t ecAddMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t k, ...)
 	va_list args;
 	ret = memSliceSize(
 		ecAddMulA_local(n, ec_d, k),
-		ecPreSNZ_deep(n, ec_d, ec_deep),
+		ecPreSO_deep(n, ec_d, ec_deep),
 		SIZE_MAX);
 	va_start(args, k);
 	for (i = 0; i < k; ++i)

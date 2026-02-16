@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): miscellaneous (OIDs, keys, DH)
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2026.02.13
+\version 2026.02.16
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -51,9 +51,9 @@ bool_t bignMulA(word b[], const word a[], const ec_o* ec, const word d[],
 	memSlice(stack,
 		bignMulA_local(ec->f->n, pre_count), SIZE_0, SIZE_MAX,
 		&pre, &stack);
-	// метод SNZ
-	ecpPreSNZ(pre, a, w, ec, stack);
-	return ecMulPreSNZ(b, pre, ec, d, ec->f->n, stack);
+	// метод SO
+	ecpPreSO(pre, a, w, ec, stack);
+	return ecMulPreSO(b, pre, ec, d, ec->f->n, stack);
 }
 
 size_t bignMulA_deep(size_t n, size_t f_deep, size_t ec_deep)
@@ -63,8 +63,8 @@ size_t bignMulA_deep(size_t n, size_t f_deep, size_t ec_deep)
 	return memSliceSize(
 		bignMulA_local(n, pre_count),
 		utilMax(2,
-			ecpPreSNZ_deep(n, f_deep, w),
-			ecMulPreSNZ_deep(n, 3, ec_deep, n)),
+			ecpPreSO_deep(n, f_deep, w),
+			ecMulPreSO_deep(n, 3, ec_deep, n)),
 		SIZE_MAX);
 }
 
@@ -76,14 +76,14 @@ bool_t bignMulBase(word a[], const ec_o* ec, const word d[], void* stack)
 		ASSERT(ecPreIsOperable(ec->pre));
 		switch (ec->pre->type)
 		{
-			case ec_pre_snzh:
-				return ecMulPreSNZH(a, ec->pre, ec, d, ec->f->n, stack);
-			case ec_pre_hpb:
-				return ecMulPreHPB(a, ec->pre, ec, d, ec->f->n, stack);
-			case ec_pre_snza:
-				return ecMulPreSNZA(a, ec->pre, ec, d, ec->f->n, stack);
-			case ec_pre_snz:
-				return ecMulPreSNZ(a, ec->pre, ec, d, ec->f->n, stack);
+			case ec_pre_soh:
+				return ecMulPreSOH(a, ec->pre, ec, d, ec->f->n, stack);
+			case ec_pre_si:
+				return ecMulPreSI(a, ec->pre, ec, d, ec->f->n, stack);
+			case ec_pre_soa:
+				return ecMulPreSOA(a, ec->pre, ec, d, ec->f->n, stack);
+			case ec_pre_so:
+				return ecMulPreSO(a, ec->pre, ec, d, ec->f->n, stack);
 		}
 	}
 	return bignMulA(a, ec->base, ec, d, stack);
@@ -93,10 +93,10 @@ size_t bignMulBase_deep(size_t n, size_t f_deep, size_t ec_deep)
 {
 	return utilMax(4,
 		bignMulA_deep(n, f_deep, ec_deep),
-		ecMulPreSNZH_deep(n, 3, ec_deep, n),
-		ecMulPreHPB_deep(n, 3, ec_deep, n),
-		ecMulPreSNZA_deep(n, 3, ec_deep, n),
-		ecMulPreSNZ_deep(n, 3, ec_deep, n));
+		ecMulPreSOH_deep(n, 3, ec_deep, n),
+		ecMulPreSI_deep(n, 3, ec_deep, n),
+		ecMulPreSOA_deep(n, 3, ec_deep, n),
+		ecMulPreSO_deep(n, 3, ec_deep, n));
 }
 
 /*

@@ -4,7 +4,7 @@
 \brief 32-bit unsigned words
 \project bee2 [cryptographic library]
 \created 2015.10.28
-\version 2026.01.20
+\version 2026.02.16
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -18,7 +18,7 @@
 *******************************************************************************
 Использованы алгоритмы из следующих источников:
 [War03] Уоррен Генри Мл. Алгоритмические трюки для программистов,
-	    М.: Издательский дом <<Вильямс>>, 2003.
+	    М.: Издательский дом "Вильямс", 2003.
 [And05] Andersen S.A. Bit Twidding Hacks, 1997-2005.
         http://graphics.stanford.edu/~seander/bithacks.html.
 

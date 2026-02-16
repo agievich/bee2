@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2012.04.19
-\version 2026.02.11
+\version 2026.02.16
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -483,10 +483,10 @@ typedef bool_t(*ec_finadda_i)(
 */
 typedef enum
 {
-	ec_pre_snz = 1,		/*!< схема SNZ */
-	ec_pre_snza, 		/*!< схема SNZA */
-	ec_pre_snzh, 		/*!< схема SNZH */
-	ec_pre_hpb, 		/*!< схема HPB */
+	ec_pre_so = 1,		/*!< схема SO */
+	ec_pre_soa, 		/*!< схема SOA */
+	ec_pre_soh, 		/*!< схема SOH */
+	ec_pre_si,	 		/*!< схема SI */
 } ec_pre_type;
 
 /*!	\brief Предвычисленные точки 
@@ -495,15 +495,15 @@ typedef enum
 	определенной точке a в соответствии с определенной схемой предвычислений.
 	Число предвычисленных точек определяется шириной окна w и обычно равняется
 	2^{w-1}. Поддерживаются следующие схемы:
-	- SNZ (Signed Non-Zero): вычисляется проективные точки
+	- SO (Small Odd): вычисляется проективные точки
 	  \code
 		a, 3a, ..., (2^w-1)a;
 	  \endcode
-	- SNZA: вычисляются аффинные точки
+	- SOA: вычисляются аффинные точки
 	  \code
 		a, 3a, ..., (2^w-1)a;
 	  \endcode
-	- SNZH: вычисляются аффинные точки
+	- SOH: вычисляются аффинные точки
 	  \code
 			 2^{0} (a, 3a, ..., (2^w-1)a),
 		     2^{w} (a, 3a, ..., (2^w-1)a),
@@ -511,7 +511,7 @@ typedef enum
 		                   ...
 		2^{(h-1)w} (a, 3a, ..., (2^w-1)a);
 	  \endcode
-	- HPB: вычисляются аффинные точки
+	- SI (Signed Interleaved): вычисляются аффинные точки
 	  \code
 		[c_{w-1}... c_1 c_0]a = \sum_{i=0}^{w-1}(1-2c_i)(2^h)^i a,
 	  \endcode
@@ -520,18 +520,7 @@ typedef enum
 	  c_{w-1}... c_1 c_0.  
 	.
 	\pre 0 < w && w < B_PER_W.
-	\pre h > 0 <=> type \in { ec_pre_snzh, ec_pre_hpb }.
-	\remark Схему SNZ предложено в использовать в работе [OkeTak03],
-	схему HPB -- в работе [HPB05].
-	.
-	[OkeTak03] Okeya K., Takagi T. The width-w NAF method provides small memory
-			   and fast elliptic scalar multiplications secure against side
-			   channel attacks. In Cryptographers’ Track at the RSA Conference,
-			   2003, pp. 328-343. Springer, Berlin Heidelberg.
-	[HPB05]    Hedabou M., Pinel P., Beneteau L. Countermeasures for preventing
-	           comb method against SCA attacks. In: International Conference
-	           on Information Security Practice and Experience, 2005, pp. 85-96, 
-	           Springer, Berlin Heidelberg.
+	\pre h > 0 <=> type \in { ec_pre_soh, ec_pre_si }.
 */
 typedef struct ec_pre_t
 {
@@ -765,7 +754,7 @@ bool_t ecGroupIsOperable(
 	- буфер [sizeof(ec_pre_t)]pre корректен;
 	- pre->type \in ec_pre_type;
 	- pre->w > 0;
-	- pre->h > 0 <=> pre->type \in { ec_pre_snzh, ec_pre_hpb }.
+	- pre->h > 0 <=> pre->type \in { ec_pre_soh, ec_pre_si }.
 	.
 	\return Признак работоспособности.
 */
@@ -773,9 +762,9 @@ bool_t ecPreIsOperable(
 	const ec_pre_t* pre			/*!< [in] предвычисленные точки */
 );
 
-/*!	\brief Предвычисления по схеме SNZ
+/*!	\brief Предвычисления по схеме SO
 
-	На эллиптической кривой ec выполняются предвычисления по схеме SNZ 
+	На эллиптической кривой ec выполняются предвычисления по схеме SO 
 	с аффинной точкой [2 * ec->f->n]a и окном шириной w. Результат сохраняется 
 	в контейнере pre.
 	\pre Описание ec работоспособно.
@@ -785,11 +774,11 @@ bool_t ecPreIsOperable(
 		O_OF_W(SIZE_BIT_POS(w - 1) * ec->d * ec->f->n)).
 	\expect Описание ec корректно.
 	\expect Точка a лежит на ec.
-	\deep{stack} ecPreSNZ_deep(ec->f->n, ec->d, ec->deep).
-	\remark Ускоренной редакцией ecPreSNZ() для кривых над GF(p) является
-	функция ecpPreSNZ().
+	\deep{stack} ecPreSO_deep(ec->f->n, ec->d, ec->deep).
+	\remark Ускоренной редакцией ecPreSO() для кривых над GF(p) является
+	функция ecpPreSO().
 */
-void ecPreSNZ(
+void ecPreSO(
 	ec_pre_t* pre,				/*!< [out] предвычисленные точки */
 	const word a[],				/*!< [in] исходная точка */
 	size_t w,					/*!< [in] ширина окна */
@@ -797,11 +786,11 @@ void ecPreSNZ(
 	void* stack					/*!< [in] вспомогательная память */
 );
 
-size_t ecPreSNZ_deep(size_t n, size_t ec_d, size_t ec_deep);
+size_t ecPreSO_deep(size_t n, size_t ec_d, size_t ec_deep);
 
-/*!	\brief Предвычисления по схеме SNZA
+/*!	\brief Предвычисления по схеме SOA
 
-	На эллиптической кривой ec выполняются предвычисления по схеме SNZA 
+	На эллиптической кривой ec выполняются предвычисления по схеме SOA 
 	с аффинной точкой [2 * ec->f->n]a и окном шириной w. Результат сохраняется 
 	в контейнере pre. 
 	\pre Описание ec работоспособно.
@@ -815,11 +804,11 @@ size_t ecPreSNZ_deep(size_t n, size_t ec_d, size_t ec_deep);
 	случае.
 	\remark При обнаружении точки O предвычисления прерываются с неопределенным
 	результатом в pre->pts.
-	\deep{stack} ecPreSNZA_deep(ec->f->n, ec->d, ec->deep).
-	\remark Ускоренной редакцией ecPreSNZA() для кривых над GF(p) является
-	функция ecpPreSNZA().
+	\deep{stack} ecPreSOA_deep(ec->f->n, ec->d, ec->deep).
+	\remark Ускоренной редакцией ecPreSOA() для кривых над GF(p) является
+	функция ecpPreSOA().
 */
-bool_t ecPreSNZA(
+bool_t ecPreSOA(
 	ec_pre_t* pre,				/*!< [out] предвычисленные точки */
 	const word a[],				/*!< [in] исходная точка */
 	size_t w,					/*!< [in] ширина окна */
@@ -827,11 +816,11 @@ bool_t ecPreSNZA(
 	void* stack					/*!< [in] вспомогательная память */
 );
 
-size_t ecPreSNZA_deep(size_t n, size_t ec_d, size_t ec_deep);
+size_t ecPreSOA_deep(size_t n, size_t ec_d, size_t ec_deep);
 
-/*!	\brief Предвычисления по схеме SNZH
+/*!	\brief Предвычисления по схеме SOH
 
-	На эллиптической кривой ec выполняются предвычисления по схеме SNZH
+	На эллиптической кривой ec выполняются предвычисления по схеме SOH
 	с аффинной точкой [2 * ec->f->n]a и окном шириной w. Результат сохраняется
 	в контейнере pre.
 	\pre Описание ec работоспособно.
@@ -845,9 +834,9 @@ size_t ecPreSNZA_deep(size_t n, size_t ec_d, size_t ec_deep);
 	случае.
 	\remark При обнаружении точки O предвычисления прерываются с неопределенным
 	результатом в pre->pts.
-	\deep{stack} ecPreSNZH_deep(ec->f->n, ec->d, ec->deep).
+	\deep{stack} ecPreSOH_deep(ec->f->n, ec->d, ec->deep).
 */
-bool_t ecPreSNZH(
+bool_t ecPreSOH(
 	ec_pre_t* pre,				/*!< [out] предвычисленные точки */
 	const word a[],				/*!< [in] исходная точка */
 	size_t w,					/*!< [in] ширина окна */
@@ -856,11 +845,11 @@ bool_t ecPreSNZH(
 	void* stack					/*!< [in] вспомогательная память */
 );
 
-size_t ecPreSNZH_deep(size_t n, size_t ec_d, size_t ec_deep);
+size_t ecPreSOH_deep(size_t n, size_t ec_d, size_t ec_deep);
 
-/*!	\brief Предвычисления по схеме HPB
+/*!	\brief Предвычисления по схеме SI
 
-	На эллиптической кривой ec выполняются предвычисления по схеме HPB
+	На эллиптической кривой ec выполняются предвычисления по схеме SI
 	с аффинной точкой [2 * ec->f->n]a и окном шириной w. Результат сохраняется
 	в контейнере pre.
 	\pre Описание ec работоспособно.
@@ -874,9 +863,9 @@ size_t ecPreSNZH_deep(size_t n, size_t ec_d, size_t ec_deep);
 	случае.
 	\remark При обнаружении точки O предвычисления прерываются с неопределенным
 	результатом в pre->pts.
-	\deep{stack} ecPreHPB_deep(ec->f->n, ec->d, ec->deep, h).
+	\deep{stack} ecPreSI_deep(ec->f->n, ec->d, ec->deep, h).
 */
-bool_t ecPreHPB(
+bool_t ecPreSI(
 	ec_pre_t* pre,				/*!< [out] предвычисленные точки */
 	const word a[],				/*!< [in] исходная точка */
 	size_t w,					/*!< [in] ширина окна */
@@ -885,7 +874,7 @@ bool_t ecPreHPB(
 	void* stack					/*!< [in] вспомогательная память */
 );
 
-size_t ecPreHPB_deep(size_t n, size_t ec_d, size_t ec_deep, size_t h);
+size_t ecPreSI_deep(size_t n, size_t ec_d, size_t ec_deep, size_t h);
 
 /*
 *******************************************************************************
@@ -920,18 +909,18 @@ bool_t ecMulA(
 
 size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 
-/*!	\brief Кратная точка с предвычислениями по схеме SNZ
+/*!	\brief Кратная точка с предвычислениями по схеме SO
 
 	Определяется аффинная точка [2 * ec->f->n]b эллиптической кривой ec, 
 	которая является [m]d-кратной точки a, по которой построен контейнер pre
-	с предвычисленными по схеме SNZ точками:
+	с предвычисленными по схеме SO точками:
 	\code
 		b <- d a.
 	\endcode
 	\pre Описание ec работоспособно.
 	\pre Описание группы точек в ec работоспособно.
 	\pre Контейнер pre работоспособен.
-	\pre pre->type == ec_pre_snz.
+	\pre pre->type == ec_pre_so.
 	\pre Длина ec->order в машинных словах равняется m.
 	\pre m > 1.
 	\pre d < ec->order.
@@ -940,7 +929,7 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 	\expect Точки контейнера pre корректно рассчитаны по a.
 	\return TRUE, если кратная точка отличается от O, и FALSE в противном
 	случае.
-	\deep{stack} ecMulPreSNZ_deep(ec->f->n, ec->d, ec->deep, m).
+	\deep{stack} ecMulPreSO_deep(ec->f->n, ec->d, ec->deep, m).
 	\safe Функция регулярна по [m]d при выполнении следующих условий:
 	-	функция ec->dbl регулярна: удвоение 2 a, a != O, выполняется без
 		условных переходов;
@@ -953,7 +942,7 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 		b) ec->finadd != 0 и функция ec->finadd регулярна: сложение и удвоение
 	       выполняются по одним и тем же формулам без условных переходов.
 */
-bool_t ecMulPreSNZ(
+bool_t ecMulPreSO(
 	word b[],				/*!< [out] кратная точка */
 	const ec_pre_t* pre,	/*!< [in] предвычисленные точки */
 	const ec_o* ec,			/*!< [in] описание кривой */
@@ -962,20 +951,20 @@ bool_t ecMulPreSNZ(
 	void* stack				/*!< [in] вспомогательная память */
 );
 
-size_t ecMulPreSNZ_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
+size_t ecMulPreSO_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 
-/*!	\brief Кратная точка с предвычислениями по схеме SNZA
+/*!	\brief Кратная точка с предвычислениями по схеме SOA
 
 	Определяется аффинная точка [2 * ec->f->n]b эллиптической кривой ec,
 	которая является [m]d-кратной точки a, по которой построен контейнер pre
-	с предвычисленными по схеме SNZA точками:
+	с предвычисленными по схеме SOA точками:
 	\code
 		b <- d a.
 	\endcode
 	\pre Описание ec работоспособно.
 	\pre Описание группы точек в ec работоспособно.
 	\pre Контейнер pre работоспособен.
-	\pre pre->type == ec_pre_snza.
+	\pre pre->type == ec_pre_soa.
 	\pre Длина ec->order в машинных словах равняется m.
 	\pre m > 1.
 	\pre d < ec->order.
@@ -984,7 +973,7 @@ size_t ecMulPreSNZ_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 	\expect Точки контейнера pre корректно рассчитаны по a.
 	\return TRUE, если кратная точка отличается от O, и FALSE в противном
 	случае.
-	\deep{stack} ecMulPreSNZA_deep(ec->f->n, ec->d, ec->deep, m).
+	\deep{stack} ecMulPreSOA_deep(ec->f->n, ec->d, ec->deep, m).
 	\safe Функция регулярна по [m]d при выполнении следующих условий:
 	-	функция ec->dbl регулярна: удвоение 2 a, a != O, выполняется без
 		условных переходов;
@@ -998,9 +987,10 @@ size_t ecMulPreSNZ_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 	-	справедливо, по крайней мере, одно из условий:
 		a) ec->order mod 2^{pre->w} == ec->order mod 2^{pre->w + 1};
 		b) ec->finadda != 0 и функция ec->finadda регулярна: сложение и
-	       удвоение выполняются по одним и тем же формулам без условных переходов.
+	       удвоение выполняются по одним и тем же формулам без условных 
+		   переходов.
 */
-bool_t ecMulPreSNZA(
+bool_t ecMulPreSOA(
 	word b[],				/*!< [out] кратная точка */
 	const ec_pre_t* pre,	/*!< [in] предвычисленные точки */
 	const ec_o* ec,			/*!< [in] описание кривой */
@@ -1009,20 +999,20 @@ bool_t ecMulPreSNZA(
 	void* stack				/*!< [in] вспомогательная память */
 );
 
-size_t ecMulPreSNZA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
+size_t ecMulPreSOA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 
-/*!	\brief Кратная точка с предвычислениями по схеме SNZH
+/*!	\brief Кратная точка с предвычислениями по схеме SOH
 
 	Определяется аффинная точка [2 * ec->f->n]b эллиптической кривой ec,
 	которая является [m]d-кратной точки a, по которой построен контейнер pre
-	с предвычисленными по схеме SNZH точками:
+	с предвычисленными по схеме SOH точками:
 	\code
 		b <- d a.
 	\endcode
 	\pre Описание ec работоспособно.
 	\pre Описание группы точек в ec работоспособно.
 	\pre Контейнер pre работоспособен.
-	\pre pre->type == ec_pre_snzh.
+	\pre pre->type == ec_pre_soh.
 	\pre Длина ec->order в машинных словах равняется m.
 	\pre m > 1.
 	\pre d < ec->order.
@@ -1032,7 +1022,7 @@ size_t ecMulPreSNZA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 	\expect Точки контейнера pre корректно рассчитаны по a.
 	\return TRUE, если кратная точка отличается от O, и FALSE в противном
 	случае.
-	\deep{stack} ecMulPreSNZH_deep(ec->f->n, ec->d, ec->deep, m).
+	\deep{stack} ecMulPreSOH_deep(ec->f->n, ec->d, ec->deep, m).
 	\safe Функция регулярна по [m]d при выполнении следующих условий:
 	-	если ec->dbladda == 0, то функция ec->adda регулярна: сложение a + b,
 		a != \pm b, a != O, b != O, выполняется без условных переходов;
@@ -1044,9 +1034,10 @@ size_t ecMulPreSNZA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 	-	справедливо, по крайней мере, одно из условий:
 		a) ec->order mod 2^{pre->w} == ec->order mod 2^{pre->w + 1};
 		b) ec->finadda != 0 и функция ec->finadda регулярна: сложение и
-		   удвоение выполняются по одним и тем же формулам без условных переходов.
+		   удвоение выполняются по одним и тем же формулам без условных 
+		   переходов.
 */
-bool_t ecMulPreSNZH(
+bool_t ecMulPreSOH(
 	word b[],				/*!< [out] кратная точка */
 	const ec_pre_t* pre,	/*!< [in] предвычисленные точки */
 	const ec_o* ec,			/*!< [in] описание кривой */
@@ -1055,20 +1046,20 @@ bool_t ecMulPreSNZH(
 	void* stack				/*!< [in] вспомогательная память */
 );
 
-size_t ecMulPreSNZH_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
+size_t ecMulPreSOH_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 
-/*!	\brief Кратная точка с предвычислениями по схеме SNZA
+/*!	\brief Кратная точка с предвычислениями по схеме SOA
 
 	Определяется аффинная точка [2 * ec->f->n]b эллиптической кривой ec,
 	которая является [m]d-кратной точки a, по которой построен контейнер pre
-	с предвычисленными по схеме HPB точками:
+	с предвычисленными по схеме SI точками:
 	\code
 		b <- d a.
 	\endcode
 	\pre Описание ec работоспособно.
 	\pre Описание группы точек в ec работоспособно.
 	\pre Контейнер pre работоспособен.
-	\pre pre->type == ec_pre_hpb.
+	\pre pre->type == ec_pre_si.
 	\pre Длина ec->order в машинных словах равняется m.
 	\pre m > 1.
 	\pre d < ec->order.
@@ -1079,7 +1070,7 @@ size_t ecMulPreSNZH_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 	\expect Точки контейнера pre корректно рассчитаны по a.
 	\return TRUE, если кратная точка отличается от O, и FALSE в противном
 	случае.
-	\deep{stack} ecMulPreHPB_deep(ec->f->n, ec->d, ec->deep, m).
+	\deep{stack} ecMulPreSI_deep(ec->f->n, ec->d, ec->deep, m).
 	\safe Функция регулярна по [m]d при выполнении следующих условий:
 	-	функция ec->dbl регулярна: удвоение 2 a, a != O, выполняется без
 		условных переходов;
@@ -1094,7 +1085,7 @@ size_t ecMulPreSNZH_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 		выполняются по одним и тем же формулам без условных переходов;
 	-	pre->w * pre->h == wwBitSize(ec->order, m).
 */
-bool_t ecMulPreHPB(
+bool_t ecMulPreSI(
 	word b[],				/*!< [out] кратная точка */
 	const ec_pre_t* pre,	/*!< [in] предвычисленные точки */
 	const ec_o* ec,			/*!< [in] описание кривой */
@@ -1103,7 +1094,7 @@ bool_t ecMulPreHPB(
 	void* stack				/*!< [in] вспомогательная память */
 );
 
-size_t ecMulPreHPB_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
+size_t ecMulPreSI_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 
 /*!	\brief Имеет порядок?
 
