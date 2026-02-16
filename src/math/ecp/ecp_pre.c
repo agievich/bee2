@@ -4,7 +4,7 @@
 \brief Elliptic curves over prime fields: precomputations
 \project bee2 [cryptographic library]
 \created 2021.07.18
-\version 2026.02.09
+\version 2026.02.16
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -36,7 +36,7 @@ version 3. See Copyright Notices in bee2/info.h.
 
 /*
 *******************************************************************************
-Предвычисления: схема SNZ
+Предвычисления: схема SO
 
 Реализован алгоритм SmallMultJ, предложенный в [APS22]. Алгоритм основан на
 многочленах деления и требует примерно 19/2 M + 7/2 S операций на каждую
@@ -84,7 +84,7 @@ version 3. See Copyright Notices in bee2/info.h.
 	#error "Conflicting preprocessor definitions"
 #endif
 
-#define ecpPreSNZ_local(n, w)\
+#define ecpPreSO_local(n, w)\
 /* t */			O_OF_W(n),\
 /* dy2 */		O_OF_W(n),\
 /* Ws */		O_OF_W((SIZE_BIT_POS(w) - 1) * n),\
@@ -94,7 +94,7 @@ version 3. See Copyright Notices in bee2/info.h.
 /* WWy4s */		O_OF_W(n),\
 /* WWWs */		O_OF_W((SIZE_BIT_POS(w - 1) - 2) * n)
 
-void ecpPreSNZ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
+void ecpPreSO(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	void* stack) 
 {
 	size_t n;
@@ -118,7 +118,7 @@ void ecpPreSNZ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	n = ec->f->n;
 	// разметить стек
 	memSlice(stack,
-		ecpPreSNZ_local(n, w), SIZE_0, SIZE_MAX,
+		ecpPreSO_local(n, w), SIZE_0, SIZE_MAX,
 		&t, &dy2, &Ws, &W2s, &WWs, &WWy2s, &WWy4s, &WWWs, &stack);
 	// первая точка
 	pt = pre->pts;
@@ -306,21 +306,21 @@ void ecpPreSNZ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 /* SmallMultJ: end */
 
 	// заполнить служебные поля
-	pre->type = ec_pre_snz;
+	pre->type = ec_pre_so;
 	pre->w = w, pre->h = 0;
 }
 
-size_t ecpPreSNZ_deep(size_t n, size_t f_deep, size_t w)
+size_t ecpPreSO_deep(size_t n, size_t f_deep, size_t w)
 {
 	return memSliceSize(
-		ecpPreSNZ_local(n, w),
+		ecpPreSO_local(n, w),
 		f_deep,
 		SIZE_MAX);
 }
 
 /*
 *******************************************************************************
-Предвычисления: схема SNZA
+Предвычисления: схема SOA
 
 Реализован алгоритм SmallMultA, предложенный в [APS22]. Алгоритм основан на
 многочленах деления и требует примерно 25/2 M + 5 S операций на каждую
@@ -333,7 +333,7 @@ size_t ecpPreSNZ_deep(size_t n, size_t f_deep, size_t w)
 - этап 3 -- шаг 15 (обращение элементов поля);
 - этап 4 -- шаги 16 -- 20 (формирование точек).
 
-В целом кэшируются те же выражения, что и в ecpPreSNZ(). Отличия:
+В целом кэшируются те же выражения, что и в ecpPreSO(). Отличия:
 - не кэшируется выражение Wᵢ₊₂Wᵢ₋₁² - Wᵢ₋₂Wᵢ₊₁². Соответственно макрос 
   WWW не используется;
 - выражения (2y)²WᵢWᵢ₊₂ сохраняются в координатах выходных точек.
@@ -374,7 +374,7 @@ size_t ecpPreSNZ_deep(size_t n, size_t f_deep, size_t w)
 	#error "Conflicting preprocessor definitions"
 #endif
 
-#define ecpPreSNZA_local(n, w)\
+#define ecpPreSOA_local(n, w)\
 /* t */			O_OF_W(n),\
 /* dy2 */		O_OF_W(n),\
 /* Ws */		O_OF_W((SIZE_BIT_POS(w) - 1) * n),\
@@ -383,7 +383,7 @@ size_t ecpPreSNZ_deep(size_t n, size_t f_deep, size_t w)
 /* WWy4s */		O_OF_W(n),\
 /* W2Is */		O_OF_W((SIZE_BIT_POS(w - 1) - 1) * n)
 
-bool_t ecpPreSNZA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
+bool_t ecpPreSOA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	void* stack) 
 {
 	size_t n;
@@ -406,7 +406,7 @@ bool_t ecpPreSNZA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	n = ec->f->n;
 	// разметить стек
 	memSlice(stack,
-		ecpPreSNZA_local(n, w), SIZE_0, SIZE_MAX,
+		ecpPreSOA_local(n, w), SIZE_0, SIZE_MAX,
 		&t, &dy2, &Ws, &W2s, &WWs, &WWy4s, &W2Is, &stack);
 	// первая точка
 	pt = pre->pts;
@@ -628,15 +628,15 @@ bool_t ecpPreSNZA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 /* SmallMultA: end */
 
 	// заполнить служебные поля
-	pre->type = ec_pre_snza;
+	pre->type = ec_pre_soa;
 	pre->w = w, pre->h = 0;
 	return TRUE;
 }
 
-size_t ecpPreSNZA_deep(size_t n, size_t f_deep, size_t w)
+size_t ecpPreSOA_deep(size_t n, size_t f_deep, size_t w)
 {
 	return memSliceSize(
-		ecpPreSNZA_local(n, w),
+		ecpPreSOA_local(n, w),
 		f_deep,
 		SIZE_MAX);
 }
