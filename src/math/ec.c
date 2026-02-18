@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2014.03.04
-\version 2026.02.16
+\version 2026.02.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -656,21 +656,23 @@ bool_t ecMulPreSO(word b[], const ec_pre_t* pre, const ec_o* ec,
 	digit = wwGetBits(dd, pos, mb - pos);
 	wwSel(t, pre->pts, pre_count, pt_size, digit >> 1);
 	borrow = WORD_1 - (digit & 1);
+	// t <- 2^w t
+	for (i = 0; i < pre->w; ++i)
+		ecDbl(t, t, ec, stack);
 	// обработать остальные цифры
 	while (pos -= pre->w)
 	{
-		for (i = pre->w; i--;)
-			ecDbl(t, t, ec, stack);
+		// сложить
 		digit = wwGetBits(dd, pos, pre->w);
 		digit ^= (WORD_0 - borrow) & mask;
 		wwSel(pt, pre->pts, pre_count, pt_size, digit >> 1);
 		ecSgn(pt, borrow, ec, stack);
 		ecAdd(t, t, pt, ec, stack);
 		borrow = WORD_1 - (digit & 1);
+		// удвоить
+		for (i = 0; i < pre->w; ++i)
+			ecDbl(t, t, ec, stack);
 	}
-	// завершающие удвоения
-	for (i = pre->w; i--;)
-		ecDbl(t, t, ec, stack);
 	// финишное сложение
 	digit = wwGetBits(dd, 0, pre->w);
 	ASSERT(digit & 1);
@@ -742,23 +744,30 @@ bool_t ecMulPreSOA(word b[], const ec_pre_t* pre, const ec_o* ec,
 	pos = (mb - 1) / pre->w, pos *= pre->w;
 	digit = wwGetBits(dd, pos, mb - pos);
 	wwSel(pt, pre->pts, pre_count, pt_size, digit >> 1);
-	ecFromA(t, pt, ec, stack);
 	borrow = WORD_1 - (digit & 1);
+	// t <- 2^{w-1} pt
+	if (pre->w > 1)
+		ecDblA(t, pt, ec, stack);
+	else
+		ecFromA(t, pt, ec, stack);
+	for (i = 2; i < pre->w; ++i)
+		ecDbl(t, t, ec, stack);
 	// обработать остальные цифры
 	while (pos -= pre->w)
 	{
-		for (i = pre->w; --i;)
-			ecDbl(t, t, ec, stack);
+		// удвоить со сложением
 		digit = wwGetBits(dd, pos, pre->w);
 		digit ^= (WORD_0 - borrow) & mask;
 		wwSel(pt, pre->pts, pre_count, pt_size, digit >> 1);
 		ecSgnA(pt, borrow, ec, stack);
 		ecDblAddA(t, t, pt, ec, stack);
 		borrow = WORD_1 - (digit & 1);
+		// t <- 2^{w-1} t
+		for (i = 1; i < pre->w; ++i)
+			ecDbl(t, t, ec, stack);
 	}
-	// завершающие удвоения
-	for (i = pre->w; i--;)
-		ecDbl(t, t, ec, stack);
+	// завершающее удвоение
+	ecDbl(t, t, ec, stack);
 	// финишное сложение
 	digit = wwGetBits(dd, 0, pre->w);
 	ASSERT(digit & 1);
