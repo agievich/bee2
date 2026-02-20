@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2012.04.19
-\version 2026.02.16
+\version 2026.02.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -485,7 +485,8 @@ typedef enum
 {
 	ec_pre_so = 1,		/*!< схема SO */
 	ec_pre_soa, 		/*!< схема SOA */
-	ec_pre_soh, 		/*!< схема SOH */
+	ec_pre_sh,	 		/*!< схема SH */
+	ec_pre_od,	 		/*!< схема OD */
 	ec_pre_si,	 		/*!< схема SI */
 } ec_pre_type;
 
@@ -503,7 +504,11 @@ typedef enum
 	  \code
 		a, 3a, ..., (2^w-1)a;
 	  \endcode
-	- SOH: вычисляются аффинные точки
+	- SH (Small Hi): вычисляются проективные точки
+	  \code
+		(2^{w-1})a, (2^{w-1}+1)a, ..., (2^w-1)a;
+	  \endcode
+	- OD (Odd Doubled): вычисляются аффинные точки
 	  \code
 			 2^{0} (a, 3a, ..., (2^w-1)a),
 		     2^{w} (a, 3a, ..., (2^w-1)a),
@@ -520,7 +525,7 @@ typedef enum
 	  c_{w-1}... c_1 c_0.  
 	.
 	\pre 0 < w && w < B_PER_W.
-	\pre h > 0 <=> type \in { ec_pre_soh, ec_pre_si }.
+	\pre h > 0 <=> type \in { ec_pre_od, ec_pre_si }.
 */
 typedef struct ec_pre_t
 {
@@ -754,7 +759,7 @@ bool_t ecGroupIsOperable(
 	- буфер [sizeof(ec_pre_t)]pre корректен;
 	- pre->type \in ec_pre_type;
 	- pre->w > 0;
-	- pre->h > 0 <=> pre->type \in { ec_pre_soh, ec_pre_si }.
+	- pre->h > 0 <=> pre->type \in { ec_pre_od, ec_pre_si }.
 	.
 	\return Признак работоспособности.
 */
@@ -818,9 +823,9 @@ bool_t ecPreSOA(
 
 size_t ecPreSOA_deep(size_t n, size_t ec_d, size_t ec_deep);
 
-/*!	\brief Предвычисления по схеме SOH
+/*!	\brief Предвычисления по схеме OD
 
-	На эллиптической кривой ec выполняются предвычисления по схеме SOH
+	На эллиптической кривой ec выполняются предвычисления по схеме OD
 	с аффинной точкой [2 * ec->f->n]a и окном шириной w. Результат сохраняется
 	в контейнере pre.
 	\pre Описание ec работоспособно.
@@ -834,9 +839,9 @@ size_t ecPreSOA_deep(size_t n, size_t ec_d, size_t ec_deep);
 	случае.
 	\remark При обнаружении точки O предвычисления прерываются с неопределенным
 	результатом в pre->pts.
-	\deep{stack} ecPreSOH_deep(ec->f->n, ec->d, ec->deep).
+	\deep{stack} ecPreOD_deep(ec->f->n, ec->d, ec->deep).
 */
-bool_t ecPreSOH(
+bool_t ecPreOD(
 	ec_pre_t* pre,				/*!< [out] предвычисленные точки */
 	const word a[],				/*!< [in] исходная точка */
 	size_t w,					/*!< [in] ширина окна */
@@ -845,7 +850,7 @@ bool_t ecPreSOH(
 	void* stack					/*!< [in] вспомогательная память */
 );
 
-size_t ecPreSOH_deep(size_t n, size_t ec_d, size_t ec_deep);
+size_t ecPreOD_deep(size_t n, size_t ec_d, size_t ec_deep);
 
 /*!	\brief Предвычисления по схеме SI
 
@@ -1001,18 +1006,18 @@ bool_t ecMulPreSOA(
 
 size_t ecMulPreSOA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 
-/*!	\brief Кратная точка с предвычислениями по схеме SOH
+/*!	\brief Кратная точка с предвычислениями по схеме OD
 
 	Определяется аффинная точка [2 * ec->f->n]b эллиптической кривой ec,
 	которая является [m]d-кратной точки a, по которой построен контейнер pre
-	с предвычисленными по схеме SOH точками:
+	с предвычисленными по схеме OD точками:
 	\code
 		b <- d a.
 	\endcode
 	\pre Описание ec работоспособно.
 	\pre Описание группы точек в ec работоспособно.
 	\pre Контейнер pre работоспособен.
-	\pre pre->type == ec_pre_soh.
+	\pre pre->type == ec_pre_od.
 	\pre Длина ec->order в машинных словах равняется m.
 	\pre m > 1.
 	\pre d < ec->order.
@@ -1022,7 +1027,7 @@ size_t ecMulPreSOA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 	\expect Точки контейнера pre корректно рассчитаны по a.
 	\return TRUE, если кратная точка отличается от O, и FALSE в противном
 	случае.
-	\deep{stack} ecMulPreSOH_deep(ec->f->n, ec->d, ec->deep, m).
+	\deep{stack} ecMulPreOD_deep(ec->f->n, ec->d, ec->deep, m).
 	\safe Функция регулярна по [m]d при выполнении следующих условий:
 	-	если ec->dbladda == 0, то функция ec->adda регулярна: сложение a + b,
 		a != \pm b, a != O, b != O, выполняется без условных переходов;
@@ -1037,7 +1042,7 @@ size_t ecMulPreSOA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 		   удвоение выполняются по одним и тем же формулам без условных 
 		   переходов.
 */
-bool_t ecMulPreSOH(
+bool_t ecMulPreOD(
 	word b[],				/*!< [out] кратная точка */
 	const ec_pre_t* pre,	/*!< [in] предвычисленные точки */
 	const ec_o* ec,			/*!< [in] описание кривой */
@@ -1046,9 +1051,9 @@ bool_t ecMulPreSOH(
 	void* stack				/*!< [in] вспомогательная память */
 );
 
-size_t ecMulPreSOH_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
+size_t ecMulPreOD_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 
-/*!	\brief Кратная точка с предвычислениями по схеме SOA
+/*!	\brief Кратная точка с предвычислениями по схеме SI
 
 	Определяется аффинная точка [2 * ec->f->n]b эллиптической кривой ec,
 	которая является [m]d-кратной точки a, по которой построен контейнер pre

@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): miscellaneous (OIDs, keys, DH)
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2026.02.16
+\version 2026.02.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -63,7 +63,7 @@ size_t bignMulA_deep(size_t n, size_t f_deep, size_t ec_deep)
 	return memSliceSize(
 		bignMulA_local(n, pre_count),
 		utilMax(2,
-			ecpPreSO_deep(n, f_deep, w),
+			ecpPreSO_deep(n, 3, f_deep),
 			ecMulPreSO_deep(n, 3, ec_deep, n)),
 		SIZE_MAX);
 }
@@ -76,8 +76,8 @@ bool_t bignMulBase(word a[], const ec_o* ec, const word d[], void* stack)
 		ASSERT(ecPreIsOperable(ec->pre));
 		switch (ec->pre->type)
 		{
-			case ec_pre_soh:
-				return ecMulPreSOH(a, ec->pre, ec, d, ec->f->n, stack);
+			case ec_pre_od:
+				return ecMulPreOD(a, ec->pre, ec, d, ec->f->n, stack);
 			case ec_pre_si:
 				return ecMulPreSI(a, ec->pre, ec, d, ec->f->n, stack);
 			case ec_pre_soa:
@@ -93,7 +93,7 @@ size_t bignMulBase_deep(size_t n, size_t f_deep, size_t ec_deep)
 {
 	return utilMax(4,
 		bignMulA_deep(n, f_deep, ec_deep),
-		ecMulPreSOH_deep(n, 3, ec_deep, n),
+		ecMulPreOD_deep(n, 3, ec_deep, n),
 		ecMulPreSI_deep(n, 3, ec_deep, n),
 		ecMulPreSOA_deep(n, 3, ec_deep, n),
 		ecMulPreSO_deep(n, 3, ec_deep, n));

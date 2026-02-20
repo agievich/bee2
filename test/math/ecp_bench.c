@@ -4,7 +4,7 @@
 \brief Benchmarks for elliptic curves over prime fields
 \project bee2/test
 \created 2013.10.17
-\version 2026.02.16
+\version 2026.02.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -50,13 +50,13 @@ static bool_t ecpBenchEc(const ec_o* ec)
 			ecMulA_deep(n, ec->d, ec->deep, n),
 			ecPreSO_deep(n, ec->d, ec->deep),
 			ecPreSOA_deep(n, ec->d, ec->deep),
-			ecPreSOH_deep(n, ec->d, ec->deep),
+			ecPreOD_deep(n, ec->d, ec->deep),
 			ecPreSI_deep(n, ec->d, ec->deep, max_h),
-			ecpPreSO_deep(n, ec->f->deep, max_w),
+			ecpPreSO_deep(n, ec->d, ec->f->deep),
 			ecpPreSOA_deep(n, ec->f->deep, max_w),
 			ecMulPreSO_deep(n, ec->d, ec->deep, n),
 			ecMulPreSOA_deep(n, ec->d, ec->deep, n),
-			ecMulPreSOH_deep(n, ec->d, ec->deep, n),
+			ecMulPreOD_deep(n, ec->d, ec->deep, n),
 			ecMulPreSI_deep(n, ec->d, ec->deep, n)),
 		SIZE_MAX,
 		&combo_state, &pt, &d, &pre, &stack);
@@ -142,18 +142,18 @@ static bool_t ecpBenchEc(const ec_o* ec)
 				(unsigned)(ticks / reps),
 				(unsigned)tmSpeed(reps, ticks));
 		}
-		// ecMulPre[SOH]
+		// ecMulPre[OD]
 		for (w = min_w; w <= max_w; ++w)
 		{
 			size_t h = (B_OF_O(no) + w - 1) / w;
-			ecPreSOH(pre, ec->base, w, h, ec, stack);
+			ecPreOD(pre, ec->base, w, h, ec, stack);
 			for (i = 0, ticks = tmTicks(); i < reps; ++i)
 			{
 				prngCOMBOStepR(d, no, combo_state);
-				ecMulPreSOH(pt, pre, ec, d, n, stack);
+				ecMulPreOD(pt, pre, ec, d, n, stack);
 			}
 			ticks = tmTicks() - ticks;
-			printf("  ecMulPre[SOH,w=%u]:        %u cycles/pt [%u pts/sec]\n",
+			printf("  ecMulPre[OD,w=%u]:         %u cycles/pt [%u pts/sec]\n",
 				(unsigned)w,
 				(unsigned)(ticks / reps),
 				(unsigned)tmSpeed(reps, ticks));
