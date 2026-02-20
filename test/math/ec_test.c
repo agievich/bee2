@@ -4,7 +4,7 @@
 \brief Tests for elliptic curves
 \project bee2/test
 \created 2026.02.12
-\version 2026.02.16
+\version 2026.02.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -115,11 +115,11 @@ bool_t ecTestEc(const ec_o* ec)
 			ecMulA_deep(n, ec->d, ec->deep, n),
 			ecPreSO_deep(n, ec->d, ec->deep),
 			ecPreSOA_deep(n, ec->d, ec->deep),
-			ecPreSOH_deep(n, ec->d, ec->deep),
+			ecPreOD_deep(n, ec->d, ec->deep),
 			ecPreSI_deep(n, ec->d, max_h, ec->deep),
 			ecMulPreSO_deep(n, ec->d, ec->deep, n),
 			ecMulPreSOA_deep(n, ec->d, ec->deep, n),
-			ecMulPreSOH_deep(n, ec->d, ec->deep, n),
+			ecMulPreOD_deep(n, ec->d, ec->deep, n),
 			ecMulPreSI_deep(n, ec->d, ec->deep, n),
 			ecAddMulA_deep(n, ec->d, ec->deep, 4,
 				(size_t)1, (size_t)2, (size_t)3, (size_t)4)),
@@ -517,21 +517,21 @@ bool_t ecTestEc(const ec_o* ec)
 			return FALSE;
 		}
 	}
-	// кратная точка: ecMulA vs ecMulPreSOH
+	// кратная точка: ecMulA vs ecMulPreOD
 	for (w = min_w; w <= max_w; ++w)
 	{
 		const size_t m = wwWordSize(ec->order, n + 1);
 		const size_t h = (B_OF_O(no) + w - 1) / w;
 		wwCopy(d, ec->order, m);
 		zzSubW2(d, m, 1);
-		if (!ecPreSOH(pre, ec->base, w, h, ec, stack))
+		if (!ecPreOD(pre, ec->base, w, h, ec, stack))
 		{
 			blobClose(state);
 			return FALSE;
 		}
 		while (!wwIsZero(d, m))
 		{
-			if (!ecMulPreSOH(pt0, pre, ec, d, m, stack) ||
+			if (!ecMulPreOD(pt0, pre, ec, d, m, stack) ||
 				!ecMulA(pt1, ec->base, ec, d, m, stack) ||
 				!wwEq(pt0, pt1, 2 * m))
 			{
@@ -540,7 +540,7 @@ bool_t ecTestEc(const ec_o* ec)
 			}
 			wwShLo(d, m, 34);
 		}
-		if (ecMulPreSOH(pt0, pre, ec, d, m, stack) ||
+		if (ecMulPreOD(pt0, pre, ec, d, m, stack) ||
 			ecMulA(pt1, ec->base, ec, d, m, stack))
 		{
 			blobClose(state);

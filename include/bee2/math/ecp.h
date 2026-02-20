@@ -4,7 +4,7 @@
 \brief Elliptic curves over prime fields
 \project bee2 [cryptographic library]
 \created 2012.06.24
-\version 2026.02.16
+\version 2026.02.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -282,7 +282,7 @@ size_t ecpSWU_deep(size_t n, size_t f_deep);
 		O_OF_W(SIZE_BIT_POS(w - 1) * ec->d * ec->f->n)).
 	\expect Описание ec корректно.
 	\expect Точка a лежит на ec.
-	\deep{stack} ecpPreSO_deep(ec->f->n, ec->d, ec->deep, w).
+	\deep{stack} ecpPreSO_deep(ec->f->n, ec->d, ec->f->deep).
 */
 void ecpPreSO(
 	ec_pre_t* pre,			/*!< [out] предвычисленные точки */
@@ -292,7 +292,7 @@ void ecpPreSO(
 	void* stack				/*!< [in] вспомогательная память */
 );
 
-size_t ecpPreSO_deep(size_t n, size_t f_deep, size_t w);
+size_t ecpPreSO_deep(size_t n, size_t ec_d, size_t f_deep);
 
 /*!	\brief Предвычисления по схеме SOA
 
@@ -302,7 +302,7 @@ size_t ecpPreSO_deep(size_t n, size_t f_deep, size_t w);
 	\pre Описание ec работоспособно.
 	\pre Координаты a лежат в базовом поле.
 	\pre w >= 3.
-	\pre memIsValid(pre, sizeof(ec_pre_t) +
+	\pre memIsValid(pre, sizeof(ec_pre_t) + 
 		O_OF_W(SIZE_BIT_POS(w - 1) * 2 * ec->f->n)).
 	\expect Описание ec корректно.
 	\expect Точка a лежит на ec.
