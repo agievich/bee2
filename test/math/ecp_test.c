@@ -691,10 +691,10 @@ static bool_t ecpTestEc(const ec_o* ec)
 			ecpAddAA_deep(n, ec->f->deep),
 			ecpSubAA_deep(n, ec->f->deep),
 			ecMulA_deep(n, ec->d, ec->deep, n),
+			ecpPreSO_deep(n, ec->f->deep),
+			ecpPreSOA_deep(n, ec->f->deep, max_w),
 			ecpSmallMultJ_deep(n, ec->f->deep, max_w),
-			ecpSmallMultA_deep(n, ec->f->deep, max_w),
-			ecpPreSO_deep(n, ec->d, ec->f->deep),
-			ecpPreSOA_deep(n, ec->f->deep, max_w)),
+			ecpSmallMultA_deep(n, ec->f->deep, max_w)),
 		SIZE_MAX,
 		&pre, &pt0, &pt1, &d, &stack);
 	if (state == 0)
@@ -736,7 +736,7 @@ static bool_t ecpTestEc(const ec_o* ec)
 	for (w = min_w; w <= max_w; ++w)
 	{
 		// ecpSmallMultJ() нельзя вызывать с w < 3
-		if (/*pre_so_fn[pos] == ecpSmallMultJ &&*/ w < 3)
+		if (pre_so_fn[pos] == ecpSmallMultJ && w < 3)
 			continue;
 		// pre[0..2^w) <- (1, 3, ..., 2^w-1)base
 		pre_so_fn[pos](pre, ec->base, w, ec, stack);
@@ -767,14 +767,18 @@ static bool_t ecpTestEc(const ec_o* ec)
 	for (w = min_w; w <= max_w; ++w)
 	{
 		// ecpSmallMultA() нельзя вызывать с w < 3
-		if (/*pre_so_fn[pos] == ecpSmallMultA &&*/ w < 3)
+		if (pre_soa_fn[pos] == ecpSmallMultA && w < 3)
 			continue;
 		// pre[0..2^w) <- (1, 3, ..., 2^w-1)base
-		if (!pre_soa_fn[pos](pre, ec->base, w, ec, stack))
+		if (!pre_soa_fn[pos](pre, ec->base, w, ec, stack) ||
+			!wwEq(ecPrePtA(pre, 0, ec), ec->base, n))
 		{
 			blobClose(state);
 			return FALSE;
 		}
+		// одна кратная точка?
+		if (w == 1)
+			continue;			
 		// pt0 <- pre[1] - pre[0]
 		ecNegA(pt0, ecPrePtA(pre, 0, ec), ec, stack);
 		if (!ecpAddAA(pt0, pt0, ecPrePtA(pre, 1, ec), ec, stack))

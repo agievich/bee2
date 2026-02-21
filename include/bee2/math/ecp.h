@@ -292,7 +292,7 @@ void ecpPreSO(
 	void* stack				/*!< [in] вспомогательная память */
 );
 
-size_t ecpPreSO_deep(size_t n, size_t ec_d, size_t f_deep);
+size_t ecpPreSO_deep(size_t n, size_t f_deep);
 
 /*!	\brief Предвычисления по схеме SOA
 
