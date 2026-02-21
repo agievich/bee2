@@ -4,7 +4,7 @@
 \brief Benchmarks for elliptic curves over prime fields
 \project bee2/test
 \created 2013.10.17
-\version 2026.02.18
+\version 2026.02.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -52,7 +52,7 @@ static bool_t ecpBenchEc(const ec_o* ec)
 			ecPreSOA_deep(n, ec->d, ec->deep),
 			ecPreOD_deep(n, ec->d, ec->deep),
 			ecPreSI_deep(n, ec->d, ec->deep, max_h),
-			ecpPreSO_deep(n, ec->d, ec->f->deep),
+			ecpPreSO_deep(n, ec->f->deep),
 			ecpPreSOA_deep(n, ec->f->deep, max_w),
 			ecMulPreSO_deep(n, ec->d, ec->deep, n),
 			ecMulPreSOA_deep(n, ec->d, ec->deep, n),

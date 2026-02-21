@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): miscellaneous (OIDs, keys, DH)
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2026.02.18
+\version 2026.02.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -63,7 +63,7 @@ size_t bignMulA_deep(size_t n, size_t f_deep, size_t ec_deep)
 	return memSliceSize(
 		bignMulA_local(n, pre_count),
 		utilMax(2,
-			ecpPreSO_deep(n, 3, f_deep),
+			ecpPreSO_deep(n, f_deep),
 			ecMulPreSO_deep(n, 3, ec_deep, n)),
 		SIZE_MAX);
 }
