@@ -4,13 +4,14 @@
 \brief Tests for elliptic curves over prime fields
 \project bee2/test
 \created 2017.05.29
-\version 2026.02.20
+\version 2026.02.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
 #include <bee2/core/blob.h>
+#include <bee2/core/prng.h>
 #include <bee2/core/util.h>
 #include <bee2/math/ecp.h>
 #include <bee2/math/gfp.h>
@@ -35,6 +36,7 @@
 		qrSub(c, c, b2, f);\
 		gfpHalf(c, c, f);\
 	} while(0)
+
 
 /*
 *******************************************************************************
@@ -645,26 +647,97 @@ static size_t ecpSmallMultA_deep(size_t n, size_t f_deep, size_t w)
 
 /*
 *******************************************************************************
+Контрольная сумма
+
+Для предвычисленных точек pre[0..count) вычисляется контрольная сумма
+	pre[0] \pm pre[1] \pm ... \pm pre[count-1],
+где знаки определяются псевдослучайным образом с помощью генератора COMBO.
+Генератор инициализируется затравочным значением seed.
+*******************************************************************************
+*/
+
+#define ecPreChecksum_local(n, ec_d)\
+/* state */		prngCOMBO_keep(),\
+/* t1 */		O_OF_W(ec_d * n),\
+/* t2 */		O_OF_W(ec_d * n),\
+/* r */			1
+
+static bool_t ecPreChecksum(word a[], const ec_pre_t* pre, u32 seed,
+	const ec_o* ec, void* stack)
+{
+	octet* state;			/* [prngCOMBO_keep()] */
+	word* t1;				/* [ec->d * ec->f->n] */
+	word* t2;				/* [ec->d * ec->f->n] */
+	octet* r;				/* [1] */
+	size_t count;
+	size_t i;
+	// pre
+	ASSERT(sizeof(state) >= prngCOMBO_keep());
+	ASSERT(ecIsOperable(ec));
+	ASSERT(ecPreIsOperable(pre));
+	// разметить стек
+	memSlice(stack,
+		ecPreChecksum_local(ec->f->n, ec->d), SIZE_0, SIZE_MAX,
+		&state, &t1, &t2, &r, &stack);
+	// инициализировать генератор COMBO
+	prngCOMBOStart(state, seed);
+	// число предвычисленных точек
+	count = SIZE_BIT_POS(pre->w - 1);
+	if (pre->type == ec_pre_sh)
+		++count;
+	else if (pre->type == ec_pre_so)
+		count *= pre->h;
+	// проективные предвычисленные точки?
+	if (pre->type == ec_pre_so || pre->type == ec_pre_sh)
+	{
+		wwCopy(t1, ecPrePt(pre, 0, ec), ec->d * ec->f->n);
+		for (i = 1; i < count; ++i)
+		{
+			prngCOMBOStepR(r, 1, state);
+			if (r[0] & 1)
+				ecNeg(t2, ecPrePt(pre, i, ec), ec, stack);
+			else
+				wwCopy(t2, ecPrePt(pre, i, ec), ec->d * ec->f->n);
+			ecAdd(t1, t1, t2, ec, stack);
+		}
+	}
+	else
+	{
+		ecFromA(t1, ecPrePtA(pre, 0, ec), ec, stack);
+		for (i = 1; i < count; ++i)
+		{
+			prngCOMBOStepR(r, 1, state);
+			if (r[0] & 1)
+				ecNegA(t2, ecPrePtA(pre, i, ec), ec, stack);
+			else
+				wwCopy(t2, ecPrePtA(pre, i, ec), 2 * ec->f->n);
+			ecAddA(t1, t1, t2, ec, stack);
+		}
+	}
+	return ecToA(a, t1, ec, stack);
+}
+
+static size_t ecPreChecksum_deep(size_t n, size_t ec_d, size_t ec_deep)
+{
+	return memSliceSize(
+		ecPreChecksum_local(n, ec_d),
+		ec_deep,
+		SIZE_MAX);
+}
+
+/*
+*******************************************************************************
 Тестирование на заданной кривой
 *******************************************************************************
 */
 
-typedef void(*ec_pre_so_i)(ec_pre_t* pre, const word a[], size_t w,
-	const struct ec_o* ec, void* stack);
-
-typedef bool_t(*ec_pre_soa_i)(ec_pre_t* pre, const word a[], size_t w,
-	const struct ec_o* ec, void* stack);
-
 static bool_t ecpTestEc(const ec_o* ec)
 {
-	// функции предвычислений
-	const ec_pre_so_i pre_so_fn[] = { ecpPreSO, ecpSmallMultJ };
-	const ec_pre_soa_i pre_soa_fn[] = { ecpPreSOA, ecpSmallMultA };
 	// размерности
 	const size_t n = ec->f->n;
 	const size_t min_w = 1;
 	const size_t max_w = 6;
-	const size_t max_pre_count = SIZE_BIT_POS(max_w - 1);
+	const size_t max_pre_count = SIZE_BIT_POS(max_w - 1) + 1;
 	// состояние
 	void* state;
 	ec_pre_t* pre;	/* [max_pre_count проективных точек] */
@@ -673,28 +746,31 @@ static bool_t ecpTestEc(const ec_o* ec)
 	word* d;		/* [n + 1] */
 	void* stack;
 	// другие переменные
-	size_t pos;
 	size_t w;
-	size_t i;
 	// создать состояние
 	state = blobCreate2(
 		sizeof(ec_pre_t) + O_OF_W(max_pre_count * ec->d * n),
 		O_OF_W(ec->d * n),
 		O_OF_W(ec->d * n),
 		O_OF_W(n + 1),
-		utilMax(12,
+		utilMax(17,
+			ec->deep,
 			ecpIsValid_deep(n, ec->f->deep),
 			ecpGroupSeemsValid_deep(n, ec->f->deep),
 			ecpGroupIsSafe_deep(n),
-			ec->deep,
 			ecpIsOnA_deep(n, ec->f->deep),
 			ecpAddAA_deep(n, ec->f->deep),
 			ecpSubAA_deep(n, ec->f->deep),
 			ecMulA_deep(n, ec->d, ec->deep, n),
-			ecpPreSO_deep(n, ec->f->deep),
-			ecpPreSOA_deep(n, ec->f->deep, max_w),
+			ecPreSO_deep(n, ec->d, ec->deep),
+			ecpPreSOJ_deep(n, ec->f->deep),
 			ecpSmallMultJ_deep(n, ec->f->deep, max_w),
-			ecpSmallMultA_deep(n, ec->f->deep, max_w)),
+			ecPreSOA_deep(n, ec->d, ec->deep),
+			ecpPreSOA_deep(n, ec->f->deep, max_w),
+			ecpSmallMultA_deep(n, ec->f->deep, max_w),
+			ecPreSH_deep(ec->deep),
+			ecpPreSHJ_deep(n, ec->f->deep, ec->deep),
+			ecPreChecksum_deep(n, ec->d, ec->f->deep)),
 		SIZE_MAX,
 		&pre, &pt0, &pt1, &d, &stack);
 	if (state == 0)
@@ -732,74 +808,71 @@ static bool_t ecpTestEc(const ec_o* ec)
 		}
 	}
 	// предвычисления: схема SO
-	for (pos = 0; pos < COUNT_OF(pre_so_fn); ++pos)
 	for (w = min_w; w <= max_w; ++w)
 	{
-		// ecpSmallMultJ() нельзя вызывать с w < 3
-		if (pre_so_fn[pos] == ecpSmallMultJ && w < 3)
+		const u32 seed = 23;
+		bool_t is_zero;
+		// эталонная контрольная сумма
+		ecPreSO(pre, ec->base, w, ec, stack);
+		is_zero = ecPreChecksum(pt0, pre, seed, ec, stack);
+		// проверить ecpPreSO()
+		ecpPreSOJ(pre, ec->base, w, ec, stack);
+		if (ecPreChecksum(pt1, pre, seed, ec, stack) != is_zero ||
+			!is_zero && !wwEq(pt0, pt1, 2 * n))
+		{
+			blobClose(state);
+			return FALSE;
+		}
+		// проверить ecpSmallMultJ()
+		if (w < 3)
 			continue;
-		// pre[0..2^w) <- (1, 3, ..., 2^w-1)base
-		pre_so_fn[pos](pre, ec->base, w, ec, stack);
-		// pt0 <- \sum_{i = 0}^{2^w-1} 2^{2^{w-1}-1-i} pre[i]
-		wwCopy(pt0, ecPrePt(pre, 0, ec), ec->d * n);
-		for (i = 1; i < SIZE_BIT_POS(w - 1); ++i)
-		{
-			ecDbl(pt0, pt0, ec, stack);
-			ecAdd(pt0, pt0, ecPrePt(pre, i, ec), ec, stack);
-		}
-		// pt0 == \sum_{i = 0}^{2^w-1} (2i + 1) 2^{2^{w-1}-1-i} base?
-		wwSetW(d, n, 1);
-		for (i = 1; i < SIZE_BIT_POS(w - 1); ++i)
-		{
-			wwShHi(d, n, 1);
-			zzAddW2(d, n, (word)(2 * i + 1));
-		}
-		if (!ecToA(pt0, pt0, ec, stack) ||
-			!ecMulA(pt1, ec->base, ec, d, n, stack) ||
-			!wwEq(pt0, pt1, 2 * n))
+		ecpSmallMultJ(pre, ec->base, w, ec, stack);
+		if (ecPreChecksum(pt1, pre, seed, ec, stack) != is_zero ||
+			!is_zero && !wwEq(pt0, pt1, 2 * n))
 		{
 			blobClose(state);
 			return FALSE;
 		}
 	}
 	// предвычисления: схема SOA
-	for (pos = 0; pos < COUNT_OF(pre_soa_fn); ++pos)
 	for (w = min_w; w <= max_w; ++w)
 	{
-		// ecpSmallMultA() нельзя вызывать с w < 3
-		if (pre_soa_fn[pos] == ecpSmallMultA && w < 3)
+		const u32 seed = 34;
+		bool_t is_zero;
+		// эталонная контрольная сумма
+		ecPreSOA(pre, ec->base, w, ec, stack);
+		is_zero = ecPreChecksum(pt0, pre, seed, ec, stack);
+		// проверить ecpPreSOA()
+		ecpPreSOA(pre, ec->base, w, ec, stack);
+		if (ecPreChecksum(pt1, pre, seed, ec, stack) != is_zero ||
+			!is_zero && !wwEq(pt0, pt1, 2 * n))
+		{
+			blobClose(state);
+			return FALSE;
+		}
+		// проверить ecpSmallMultA()
+		if (w < 3)
 			continue;
-		// pre[0..2^w) <- (1, 3, ..., 2^w-1)base
-		if (!pre_soa_fn[pos](pre, ec->base, w, ec, stack) ||
-			!wwEq(ecPrePtA(pre, 0, ec), ec->base, n))
+		ecpSmallMultA(pre, ec->base, w, ec, stack);
+		if (ecPreChecksum(pt1, pre, seed, ec, stack) != is_zero ||
+			!is_zero && !wwEq(pt0, pt1, 2 * n))
 		{
 			blobClose(state);
 			return FALSE;
 		}
-		// одна кратная точка?
-		if (w == 1)
-			continue;			
-		// pt0 <- pre[1] - pre[0]
-		ecNegA(pt0, ecPrePtA(pre, 0, ec), ec, stack);
-		if (!ecpAddAA(pt0, pt0, ecPrePtA(pre, 1, ec), ec, stack))
-		{
-			blobClose(state);
-			return FALSE;
-		}
-		// pre[i+1] - pre[i] == pt0?
-		for (i = 1; i + 1 < SIZE_BIT_POS(w - 1); ++i)
-		{
-			ecNegA(pt1, ecPrePtA(pre, i, ec), ec, stack);
-			if (!ecpAddAA(pt1, pt1, ecPrePtA(pre, i + 1, ec), ec, stack) ||
-				!wwEq(pt0, pt1, 2 * n))
-			{
-				blobClose(state);
-				return FALSE;
-			}
-		}
-		// pt0 == 2 base?
-		if (!ecpAddAA(pt1, ec->base, ec->base, ec, stack) ||
-			!wwEq(pt0, pt1, 2 * n))
+	}
+	// предвычисления: схема SH
+	for (w = min_w; w <= max_w; ++w)
+	{
+		const u32 seed = 43;
+		bool_t is_zero;
+		// эталонная контрольная сумма
+		ecPreSH(pre, ec->base, w, ec, stack);
+		is_zero = ecPreChecksum(pt0, pre, seed, ec, stack);
+		// проверить ecpPreSOA()
+		ecpPreSHJ(pre, ec->base, w, ec, stack);
+		if (ecPreChecksum(pt1, pre, seed, ec, stack) != is_zero ||
+			!is_zero && !wwEq(pt0, pt1, 2 * n))
 		{
 			blobClose(state);
 			return FALSE;

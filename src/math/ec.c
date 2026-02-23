@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2014.03.04
-\version 2026.02.18
+\version 2026.02.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -171,7 +171,8 @@ void ecPreSO(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	ASSERT(ecIsOperable(ec));
 	ASSERT(0 < w && w < B_PER_W);
 	ASSERT(memIsDisjoint2(
-		pre, sizeof(ec_pre_t) + O_OF_W(SIZE_BIT_POS(w - 1) * ec->d * ec->f->n),
+		pre, sizeof(ec_pre_t) + 
+			O_OF_W(SIZE_BIT_POS(w - 1) * ec->d * ec->f->n),
 		a, O_OF_W(2 * ec->f->n)));
 	// разметить стек
 	memSlice(stack,
@@ -217,7 +218,8 @@ bool_t ecPreSOA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	ASSERT(ecIsOperable(ec));
 	ASSERT(0 < w && w < B_PER_W);
 	ASSERT(memIsDisjoint2(
-		pre, sizeof(ec_pre_t) + O_OF_W(SIZE_BIT_POS(w - 1) * 2 * ec->f->n),
+		pre, sizeof(ec_pre_t) + 
+			O_OF_W(SIZE_BIT_POS(w - 1) * 2 * ec->f->n),
 		a, O_OF_W(2 * ec->f->n)));
 	// разметить стек
 	memSlice(stack,
@@ -252,6 +254,46 @@ size_t ecPreSOA_deep(size_t n, size_t ec_d, size_t ec_deep)
 		SIZE_MAX);
 }
 
+void ecPreSH(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec, 
+	void* stack)
+{
+	size_t i;
+	// pre
+	ASSERT(ecIsOperable(ec));
+	ASSERT(0 < w && w < B_PER_W);
+	ASSERT(memIsDisjoint2(
+		pre, sizeof(ec_pre_t) + 
+			O_OF_W((SIZE_BIT_POS(w - 1) + 1) * ec->d * ec->f->n),
+		a, O_OF_W(2 * ec->f->n)));
+	// pre[2^{w-1}] <- 2a
+	ecDblA(ecPrePt(pre, SIZE_BIT_POS(w - 1), ec), a, ec, stack);
+	// вычислить малые кратные
+	if (w > 1)
+	{
+		// pre[0] <- 2^{w-1}a
+		wwCopy(ecPrePt(pre, 0, ec), ecPrePt(pre, SIZE_BIT_POS(w - 1), ec), 
+			ec->d * ec->f->n);
+		for (i = 2; i < w; ++i)
+			ecDbl(ecPrePt(pre, 0, ec), ecPrePt(pre, 0, ec), ec, stack);
+		// pre[i] <- pre[i - 1] + a
+		for (i = 1; i < SIZE_BIT_POS(w - 1); ++i)
+			ecAddA(ecPrePt(pre, i, ec), ecPrePt(pre, i - 1, ec), a, ec, stack);
+	}
+	else
+		// pre[0] <- a
+		ecFromA(ecPrePt(pre, 0, ec), a, ec, stack);
+	// заполнить служебные поля
+	pre->type = ec_pre_sh;
+	pre->w = w, pre->h = 0;
+}
+
+size_t ecPreSH_deep(size_t ec_deep)
+{
+	return memSliceSize(
+		ec_deep,
+		SIZE_MAX);
+}
+
 #define ecPreOD_local(n, ec_d)\
 /* t */		O_OF_W(ec_d * n)
 
@@ -266,7 +308,8 @@ bool_t ecPreOD(ec_pre_t* pre, const word a[], size_t w, size_t h,
 	ASSERT(ecIsOperable(ec));
 	ASSERT(0 < w && w < B_PER_W && h > 0);
 	ASSERT(memIsDisjoint2(
-		pre, sizeof(ec_pre_t) + O_OF_W(SIZE_BIT_POS(w - 1) * h * 2 * ec->f->n),
+		pre, sizeof(ec_pre_t) + 
+			O_OF_W(SIZE_BIT_POS(w - 1) * h * 2 * ec->f->n),
 		a, O_OF_W(2 * ec->f->n)));
 	// разметить стек
 	memSlice(stack,
@@ -322,7 +365,8 @@ bool_t ecPreSI(ec_pre_t* pre, const word a[], size_t w, size_t h,
 	ASSERT(ecIsOperable(ec));
 	ASSERT(0 < w && w < B_PER_W && h > 0);
 	ASSERT(memIsDisjoint2(
-		pre, sizeof(ec_pre_t) + O_OF_W(SIZE_BIT_POS(w - 1) * 2 * ec->f->n),
+		pre, sizeof(ec_pre_t) + 
+			O_OF_W(SIZE_BIT_POS(w - 1) * 2 * ec->f->n),
 		a, O_OF_W(2 * ec->f->n)));
 	// разметить стек
 	memSlice(stack,

@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2012.04.19
-\version 2026.02.18
+\version 2026.02.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -494,21 +494,21 @@ typedef enum
 
 	В поле pts размещаются точки эллиптической кривой, построенные по
 	определенной точке a в соответствии с определенной схемой предвычислений.
-	Число предвычисленных точек определяется шириной окна w и обычно равняется
-	2^{w-1}. Поддерживаются следующие схемы:
-	- SO (Small Odd): вычисляется проективные точки
+	Число предвычисленных точек определяется шириной и высотой окна. 
+	Поддерживаются следующие схемы:
+	- SO (Small Odd): вычисляется 2^{w-1} проективных точек
 	  \code
 		a, 3a, ..., (2^w-1)a;
 	  \endcode
-	- SOA: вычисляются аффинные точки
+	- SOA (Small Odd Affine): вычисляется 2^{w-1} аффинных точек
 	  \code
 		a, 3a, ..., (2^w-1)a;
 	  \endcode
-	- SH (Small Hi): вычисляются проективные точки
+	- SH (Small Hi): вычисляется 2^{w-1}+1 проективных точек
 	  \code
-		(2^{w-1})a, (2^{w-1}+1)a, ..., (2^w-1)a;
+		(2^{w-1})a, (2^{w-1}+1)a, ..., (2^w-1)a, 2a;
 	  \endcode
-	- OD (Odd Doubled): вычисляются аффинные точки
+	- OD (Odd Doubled): вычисляется h*2^{w-1} аффинных точек
 	  \code
 			 2^{0} (a, 3a, ..., (2^w-1)a),
 		     2^{w} (a, 3a, ..., (2^w-1)a),
@@ -516,7 +516,7 @@ typedef enum
 		                   ...
 		2^{(h-1)w} (a, 3a, ..., (2^w-1)a);
 	  \endcode
-	- SI (Signed Interleaved): вычисляются аффинные точки
+	- SI (Signed Interleaved): вычисляется 2^{w-1} аффинных точек
 	  \code
 		[c_{w-1}... c_1 c_0]a = \sum_{i=0}^{w-1}(1-2c_i)(2^h)^i a,
 	  \endcode
@@ -774,14 +774,12 @@ bool_t ecPreIsOperable(
 	в контейнере pre.
 	\pre Описание ec работоспособно.
 	\pre Координаты a лежат в базовом поле.
-	\pre w > 1.
+	\pre w > 0.
 	\pre memIsValid(pre, sizeof(ec_pre_t) +
 		O_OF_W(SIZE_BIT_POS(w - 1) * ec->d * ec->f->n)).
 	\expect Описание ec корректно.
 	\expect Точка a лежит на ec.
 	\deep{stack} ecPreSO_deep(ec->f->n, ec->d, ec->deep).
-	\remark Ускоренной редакцией ecPreSO() для кривых над GF(p) является
-	функция ecpPreSO().
 */
 void ecPreSO(
 	ec_pre_t* pre,				/*!< [out] предвычисленные точки */
@@ -800,7 +798,7 @@ size_t ecPreSO_deep(size_t n, size_t ec_d, size_t ec_deep);
 	в контейнере pre. 
 	\pre Описание ec работоспособно.
 	\pre Координаты a лежат в базовом поле.
-	\pre w > 1.
+	\pre w > 0.
 	\pre memIsValid(pre, sizeof(ec_pre_t) +
 		O_OF_W(SIZE_BIT_POS(w - 1) * 2 * ec->f->n)).
 	\expect Описание ec корректно.
@@ -808,10 +806,8 @@ size_t ecPreSO_deep(size_t n, size_t ec_d, size_t ec_deep);
 	\return TRUE, если среди предвычисленных точек нет O, и FALSE в противном
 	случае.
 	\remark При обнаружении точки O предвычисления прерываются с неопределенным
-	результатом в pre->pts.
+	результатом.
 	\deep{stack} ecPreSOA_deep(ec->f->n, ec->d, ec->deep).
-	\remark Ускоренной редакцией ecPreSOA() для кривых над GF(p) является
-	функция ecpPreSOA().
 */
 bool_t ecPreSOA(
 	ec_pre_t* pre,				/*!< [out] предвычисленные точки */
@@ -822,6 +818,32 @@ bool_t ecPreSOA(
 );
 
 size_t ecPreSOA_deep(size_t n, size_t ec_d, size_t ec_deep);
+
+/*!	\brief Предвычисления по схеме SH
+
+	На эллиптической кривой ec выполняются предвычисления по схеме SH
+	с аффинной точкой [2 * ec->f->n]a и окном шириной w. Результат сохраняется
+	в контейнере pre. 
+	\pre Описание ec работоспособно.
+	\pre Координаты a лежат в базовом поле.
+	\pre w > 0.
+	\pre memIsValid(pre, sizeof(ec_pre_t) +
+		O_OF_W(SIZE_BIT_POS(w - 1) * 2 * ec->f->n)).
+	\expect Описание ec корректно.
+	\expect Точка a лежит на ec.
+	\return TRUE, если среди предвычисленных точек нет O, и FALSE в противном
+	случае.
+	\deep{stack} ecPreSH_deep(ec->deep).
+*/
+void ecPreSH(
+	ec_pre_t* pre,				/*!< [out] предвычисленные точки */
+	const word a[],				/*!< [in] исходная точка */
+	size_t w,					/*!< [in] ширина окна */
+	const ec_o* ec,				/*!< [in] описание кривой */
+	void* stack					/*!< [in] вспомогательная память */
+);
+
+size_t ecPreSH_deep(size_t ec_deep);
 
 /*!	\brief Предвычисления по схеме OD
 
@@ -838,7 +860,7 @@ size_t ecPreSOA_deep(size_t n, size_t ec_d, size_t ec_deep);
 	\return TRUE, если среди предвычисленных точек нет O, и FALSE в противном
 	случае.
 	\remark При обнаружении точки O предвычисления прерываются с неопределенным
-	результатом в pre->pts.
+	результатом.
 	\deep{stack} ecPreOD_deep(ec->f->n, ec->d, ec->deep).
 */
 bool_t ecPreOD(
@@ -867,7 +889,7 @@ size_t ecPreOD_deep(size_t n, size_t ec_d, size_t ec_deep);
 	\return TRUE, если среди предвычисленных точек нет O, и FALSE в противном
 	случае.
 	\remark При обнаружении точки O предвычисления прерываются с неопределенным
-	результатом в pre->pts.
+	результатом.
 	\deep{stack} ecPreSI_deep(ec->f->n, ec->d, ec->deep, h).
 */
 bool_t ecPreSI(
