@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): miscellaneous (OIDs, keys, DH)
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2026.02.20
+\version 2026.02.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -52,7 +52,7 @@ bool_t bignMulA(word b[], const word a[], const ec_o* ec, const word d[],
 		bignMulA_local(ec->f->n, pre_count), SIZE_0, SIZE_MAX,
 		&pre, &stack);
 	// метод SO
-	ecpPreSO(pre, a, w, ec, stack);
+	ecpPreSOJ(pre, a, w, ec, stack);
 	return ecMulPreSO(b, pre, ec, d, ec->f->n, stack);
 }
 
@@ -63,7 +63,7 @@ size_t bignMulA_deep(size_t n, size_t f_deep, size_t ec_deep)
 	return memSliceSize(
 		bignMulA_local(n, pre_count),
 		utilMax(2,
-			ecpPreSO_deep(n, f_deep),
+			ecpPreSOJ_deep(n, f_deep),
 			ecMulPreSO_deep(n, 3, ec_deep, n)),
 		SIZE_MAX);
 }
@@ -84,6 +84,8 @@ bool_t bignMulBase(word a[], const ec_o* ec, const word d[], void* stack)
 				return ecMulPreSOA(a, ec->pre, ec, d, ec->f->n, stack);
 			case ec_pre_so:
 				return ecMulPreSO(a, ec->pre, ec, d, ec->f->n, stack);
+			default:
+				break;
 		}
 	}
 	return bignMulA(a, ec->base, ec, d, stack);

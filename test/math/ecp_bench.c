@@ -4,7 +4,7 @@
 \brief Benchmarks for elliptic curves over prime fields
 \project bee2/test
 \created 2013.10.17
-\version 2026.02.20
+\version 2026.02.23
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -52,7 +52,7 @@ static bool_t ecpBenchEc(const ec_o* ec)
 			ecPreSOA_deep(n, ec->d, ec->deep),
 			ecPreOD_deep(n, ec->d, ec->deep),
 			ecPreSI_deep(n, ec->d, ec->deep, max_h),
-			ecpPreSO_deep(n, ec->f->deep),
+			ecpPreSOJ_deep(n, ec->f->deep),
 			ecpPreSOA_deep(n, ec->f->deep, max_w),
 			ecMulPreSO_deep(n, ec->d, ec->deep, n),
 			ecMulPreSOA_deep(n, ec->d, ec->deep, n),
@@ -88,7 +88,7 @@ static bool_t ecpBenchEc(const ec_o* ec)
 			for (i = 0, ticks = tmTicks(); i < reps; ++i)
 			{
 				prngCOMBOStepR(d, no, combo_state);
-				ecpPreSO(pre, ec->base, w, ec, stack);
+				ecpPreSOJ(pre, ec->base, w, ec, stack);
 				ecMulPreSO(pt, pre, ec, d, n, stack);
 			}
 			ticks = tmTicks() - ticks;
@@ -189,7 +189,7 @@ static bool_t ecpBenchEc(const ec_o* ec)
 		for (w = MAX2(3, min_w); w <= max_w; ++w)
 		{
 			for (i = 0, ticks = tmTicks(); i < reps; ++i)
-				ecpPreSO(pre, ec->base, w, ec, stack);
+				ecpPreSOJ(pre, ec->base, w, ec, stack);
 			ticks = tmTicks() - ticks;
 			printf("  ecpPre[SO,w=%u]:           %u cycles/pre [%u pre/sec]\n",
 				(unsigned)w,
