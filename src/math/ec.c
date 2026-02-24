@@ -682,11 +682,11 @@ bool_t ecMulPreSO(word b[], const ec_pre_t* pre, const ec_o* ec,
 	ASSERT(ecPreIsOperable(pre));
 	ASSERT(pre->type == ec_pre_so);
 	ASSERT(wwWordSize(ec->order, ec->f->n + 1) == m);
-	ASSERT(zzIsOdd(ec->order, m) && m > 1);
+	ASSERT(zzIsOdd(ec->order, m));
 	ASSERT(wwCmp(d, ec->order, m) < 0);
 	// размерности
 	mb = wwBitSize(ec->order, m);
-	ASSERT(mb >= 2 * pre->w);
+	ASSERT(mb > pre->w);
 	pre_count = SIZE_BIT_POS(pre->w - 1);
 	pt_size = ec->d * ec->f->n;
 	mask = WORD_BIT_POS(pre->w) - 2;
@@ -771,11 +771,11 @@ bool_t ecMulPreSOA(word b[], const ec_pre_t* pre, const ec_o* ec,
 	ASSERT(ecPreIsOperable(pre));
 	ASSERT(pre->type == ec_pre_soa);
 	ASSERT(wwWordSize(ec->order, ec->f->n + 1) == m);
-	ASSERT(zzIsOdd(ec->order, m) && m > 1);
+	ASSERT(zzIsOdd(ec->order, m));
 	ASSERT(wwCmp(d, ec->order, m) < 0);
 	// размерности
 	mb = wwBitSize(ec->order, m);
-	ASSERT(mb >= 2 * pre->w);
+	ASSERT(mb > pre->w);
 	pre_count = SIZE_BIT_POS(pre->w - 1);
 	pt_size = 2 * ec->f->n;
 	mask = WORD_BIT_POS(pre->w) - 2;
@@ -813,7 +813,7 @@ bool_t ecMulPreSOA(word b[], const ec_pre_t* pre, const ec_o* ec,
 		for (i = 1; i < pre->w; ++i)
 			ecDbl(t, t, ec, stack);
 	}
-	// завершающее удвоение
+	// t <- 2t
 	ecDbl(t, t, ec, stack);
 	// финишное сложение
 	digit = wwGetBits(e, 0, pre->w);
@@ -866,11 +866,11 @@ bool_t ecMulPreOD(word b[], const ec_pre_t* pre, const ec_o* ec,
 	ASSERT(ecPreIsOperable(pre));
 	ASSERT(pre->type == ec_pre_od);
 	ASSERT(wwWordSize(ec->order, ec->f->n + 1) == m);
-	ASSERT(zzIsOdd(ec->order, m) && m > 1);
+	ASSERT(zzIsOdd(ec->order, m));
 	ASSERT(wwCmp(d, ec->order, m) < 0);
 	// размерности
 	mb = wwBitSize(ec->order, m);
-	ASSERT(2 * pre->w <= mb && mb <= pre->w * pre->h);
+	ASSERT(pre->w < mb && mb <= pre->w * pre->h);
 	row_count = SIZE_BIT_POS(pre->w - 1);
 	pt_size = 2 * ec->f->n;
 	mask = WORD_BIT_POS(pre->w) - 2;
@@ -1006,12 +1006,12 @@ bool_t ecMulPreSI(word b[], const ec_pre_t* pre, const ec_o* ec,
 	ASSERT(ecPreIsOperable(pre));
 	ASSERT(pre->type == ec_pre_si);
 	ASSERT(wwWordSize(ec->order, ec->f->n + 1) == m);
-	ASSERT(zzIsOdd(ec->order, m) && m > 1);
+	ASSERT(zzIsOdd(ec->order, m));
 	ASSERT(wwCmp(d, ec->order, m) < 0);
 	// размерности
 	mb = pre->w * pre->h;
+	ASSERT(pre->w < wwBitSize(ec->order, m));
 	ASSERT(wwBitSize(ec->order, m) <= mb);
-	ASSERT(mb < wwBitSize(ec->order, m) + B_PER_W);
 	pre_count = SIZE_BIT_POS(pre->w - 1);
 	pt_size = 2 * ec->f->n;
 	mask = WORD_BIT_POS(pre->w - 1) - 1;

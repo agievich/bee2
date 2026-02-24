@@ -948,8 +948,8 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 	\pre Описание группы точек в ec работоспособно.
 	\pre Контейнер pre работоспособен.
 	\pre pre->type == ec_pre_so.
-	\pre Длина ec->order в машинных словах равняется m.
-	\pre m > 1.
+	\pre wwWordSize(ec->order, ec->f->n + 1) == m.
+	\pre wwBitSize(ec->order, m) > pre->w.
 	\pre d < ec->order.
 	\pre Координаты a лежат в базовом поле.
 	\expect Описание ec корректно.
@@ -992,8 +992,8 @@ size_t ecMulPreSO_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 	\pre Описание группы точек в ec работоспособно.
 	\pre Контейнер pre работоспособен.
 	\pre pre->type == ec_pre_soa.
-	\pre Длина ec->order в машинных словах равняется m.
-	\pre m > 1.
+	\pre wwWordSize(ec->order, ec->f->n + 1) == m.
+	\pre wwBitSize(ec->order, m) > pre->w.
 	\pre d < ec->order.
 	\pre Координаты a лежат в базовом поле.
 	\expect Описание ec корректно.
@@ -1028,6 +1028,47 @@ bool_t ecMulPreSOA(
 
 size_t ecMulPreSOA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 
+/*!	\brief Кратная точка с предвычислениями по схеме SH
+
+	Определяется аффинная точка [2 * ec->f->n]b эллиптической кривой ec,
+	которая является [m]d-кратной точки a, по которой построен контейнер pre
+	с предвычисленными по схеме SO точками:
+	\code
+		b <- d a.
+	\endcode
+	\pre Описание ec работоспособно.
+	\pre Описание группы точек в ec работоспособно.
+	\pre Контейнер pre работоспособен.
+	\pre pre->type == ec_pre_sh.
+	\pre 0 < d && d < ec->order.
+	\pre wwBitSize(d, m) делится на pre->w.
+	\pre Координаты a лежат в базовом поле.
+	\expect Описание ec корректно.
+	\expect Точки контейнера pre корректно рассчитаны по a.
+	\return TRUE, если кратная точка отличается от O, и FALSE в противном
+	случае.
+	\deep{stack} ecMulPreSH_deep(ec->f->n, ec->d, ec->deep, m).
+	\safe Функция регулярна по [m]d при выполнении следующих условий:
+	-	функция ec->dbl регулярна: удвоение 2 a, a != O, выполняется без
+		условных переходов;
+	-	функция ec->add регулярна: сложение a + b, a != \pm b, a != O, b != O,
+		выполняется без условных переходов;
+	-	справедливо, по крайней мере, одно из условий:
+		a) ec->order mod 2^{pre->w} == ec->order mod 2^{pre->w + 1};
+		b) ec->finadd != 0 и функция ec->finadd регулярна: сложение и удвоение
+		   выполняются по одним и тем же формулам без условных переходов.
+*/
+bool_t ecMulPreSH(
+	word b[],				/*!< [out] кратная точка */
+	const ec_pre_t* pre,	/*!< [in] предвычисленные точки */
+	const ec_o* ec,			/*!< [in] описание кривой */
+	const word d[],			/*!< [in] кратность */
+	size_t m,				/*!< [in] длина d в машинных словах */
+	void* stack				/*!< [in] вспомогательная память */
+);
+
+size_t ecMulPreSH_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
+
 /*!	\brief Кратная точка с предвычислениями по схеме OD
 
 	Определяется аффинная точка [2 * ec->f->n]b эллиптической кривой ec,
@@ -1040,8 +1081,8 @@ size_t ecMulPreSOA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 	\pre Описание группы точек в ec работоспособно.
 	\pre Контейнер pre работоспособен.
 	\pre pre->type == ec_pre_od.
-	\pre Длина ec->order в машинных словах равняется m.
-	\pre m > 1.
+	\pre wwWordSize(ec->order, ec->f->n + 1) == m.
+	\pre wwBitSize(ec->order, m) > pre->w.
 	\pre d < ec->order.
 	\pre pre->w * pre->h >= wwBitSize(ec->order, m).
 	\pre Координаты a лежат в базовом поле.
@@ -1087,11 +1128,10 @@ size_t ecMulPreOD_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 	\pre Описание группы точек в ec работоспособно.
 	\pre Контейнер pre работоспособен.
 	\pre pre->type == ec_pre_si.
-	\pre Длина ec->order в машинных словах равняется m.
-	\pre m > 1.
+	\pre wwWordSize(ec->order, ec->f->n + 1) == m.
+	\pre pre->w < wwBitSize(ec->order, m).
+	\pre wwBitSize(ec->order, m) <= pre->w * pre->h.
 	\pre d < ec->order.
-	\pre wwBitSize(ec->order, m) <= pre->w * pre->h &&
-		pre->w * pre->h < wwBitSize(ec->order, m) + B_PER_W.
 	\pre Координаты a лежат в базовом поле.
 	\expect Описание ec корректно.
 	\expect Точки контейнера pre корректно рассчитаны по a.
