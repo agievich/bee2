@@ -4,7 +4,7 @@
 \brief Tests for elliptic curves over prime fields
 \project bee2/test
 \created 2017.05.29
-\version 2026.02.23
+\version 2026.02.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -672,7 +672,6 @@ static bool_t ecPreChecksum(word a[], const ec_pre_t* pre, u32 seed,
 	size_t count;
 	size_t i;
 	// pre
-	ASSERT(sizeof(state) >= prngCOMBO_keep());
 	ASSERT(ecIsOperable(ec));
 	ASSERT(ecPreIsOperable(pre));
 	// разметить стек
@@ -815,7 +814,7 @@ static bool_t ecpTestEc(const ec_o* ec)
 		// эталонная контрольная сумма
 		ecPreSO(pre, ec->base, w, ec, stack);
 		is_zero = ecPreChecksum(pt0, pre, seed, ec, stack);
-		// проверить ecpPreSO()
+		// проверить ecpPreSOJ()
 		ecpPreSOJ(pre, ec->base, w, ec, stack);
 		if (ecPreChecksum(pt1, pre, seed, ec, stack) != is_zero ||
 			!is_zero && !wwEq(pt0, pt1, 2 * n))
@@ -869,7 +868,7 @@ static bool_t ecpTestEc(const ec_o* ec)
 		// эталонная контрольная сумма
 		ecPreSH(pre, ec->base, w, ec, stack);
 		is_zero = ecPreChecksum(pt0, pre, seed, ec, stack);
-		// проверить ecpPreSOA()
+		// проверить ecpPreSHJ()
 		ecpPreSHJ(pre, ec->base, w, ec, stack);
 		if (ecPreChecksum(pt1, pre, seed, ec, stack) != is_zero ||
 			!is_zero && !wwEq(pt0, pt1, 2 * n))

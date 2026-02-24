@@ -32,13 +32,14 @@ static bool_t ecpBenchEc(const ec_o* ec)
 	const size_t max_w = 6;
 	const size_t min_h = (B_OF_O(no) + max_w - 1) / max_w;
 	const size_t max_h = (B_OF_O(no) + min_w - 1) / min_w;
-	const size_t max_pre_count = SIZE_BIT_POS(max_w - 1) * min_h;
+	const size_t max_pre_count = 
+		MAX2(min_h * SIZE_BIT_POS(max_w - 1), SIZE_BIT_POS(max_w - 1) + 1);
 	const size_t reps = 200;
 	void* state;
 	octet* combo_state;		/* [prngCOMBO_keep()] */
 	word* pt;				/* [2 * n] */
 	word* d;				/* [n] */
-	ec_pre_t* pre;			/* [SIZE_BIT_POS(max_w - 1) якобиевы точки] */
+	ec_pre_t* pre;			/* [max_pre_count проективных точек] */
 	void* stack;
 	// создать состояние
 	state = blobCreate2(

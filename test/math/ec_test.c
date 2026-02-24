@@ -4,7 +4,7 @@
 \brief Tests for elliptic curves
 \project bee2/test
 \created 2026.02.12
-\version 2026.02.23
+\version 2026.02.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -109,7 +109,7 @@ bool_t ecTestEc(const ec_o* ec)
 		O_OF_W(ec->d * n),
 		O_OF_W(ec->d * n),
 		O_OF_W(n + 1),
-		utilMax(14,
+		utilMax(15,
 			ec->deep,
 			ecHasOrderA_deep(n, ec->d, ec->deep, n),
 			ecAddAA_deep(n, ec->d, ec->deep),
@@ -119,6 +119,7 @@ bool_t ecTestEc(const ec_o* ec)
 			ecPreSOA_deep(n, ec->d, ec->deep),
 			ecPreSH_deep(ec->deep),
 			ecPreSI_deep(n, ec->d, max_h, ec->deep),
+			ecPreOD_deep(n, ec->d, ec->deep),
 			ecMulPreSO_deep(n, ec->d, ec->deep, n),
 			ecMulPreSOA_deep(n, ec->d, ec->deep, n),
 			ecMulPreOD_deep(n, ec->d, ec->deep, n),
