@@ -660,7 +660,7 @@ static size_t ecpSmallMultA_deep(size_t n, size_t f_deep, size_t w)
 /* state */		prngCOMBO_keep(),\
 /* t1 */		O_OF_W(ec_d * n),\
 /* t2 */		O_OF_W(ec_d * n),\
-/* r */			1
+/* r */			(size_t)1
 
 static bool_t ecPreChecksum(word a[], const ec_pre_t* pre, u32 seed,
 	const ec_o* ec, void* stack)
@@ -769,7 +769,7 @@ static bool_t ecpTestEc(const ec_o* ec)
 			ecpSmallMultA_deep(n, ec->f->deep, max_w),
 			ecPreSH_deep(ec->deep),
 			ecpPreSHJ_deep(n, ec->f->deep, ec->deep),
-			ecPreChecksum_deep(n, ec->d, ec->f->deep)),
+			ecPreChecksum_deep(n, ec->d, ec->deep)),
 		SIZE_MAX,
 		&pre, &pt0, &pt1, &d, &stack);
 	if (state == 0)

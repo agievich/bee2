@@ -118,7 +118,7 @@ bool_t ecTestEc(const ec_o* ec)
 			ecPreSO_deep(n, ec->d, ec->deep),
 			ecPreSOA_deep(n, ec->d, ec->deep),
 			ecPreSH_deep(ec->deep),
-			ecPreSI_deep(n, ec->d, max_h, ec->deep),
+			ecPreSI_deep(n, ec->d, ec->deep, max_h),
 			ecPreOD_deep(n, ec->d, ec->deep),
 			ecMulPreSO_deep(n, ec->d, ec->deep, n),
 			ecMulPreSOA_deep(n, ec->d, ec->deep, n),
