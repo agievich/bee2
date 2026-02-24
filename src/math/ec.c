@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2014.03.04
-\version 2026.02.23
+\version 2026.02.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -155,7 +155,7 @@ bool_t ecPreIsOperable(const ec_pre_t* pre)
 		(pre->type == ec_pre_so || pre->type == ec_pre_soa ||
 			pre->type == ec_pre_sh || pre->type == ec_pre_od ||
 			pre->type == ec_pre_si) &&
-		pre->w > 0 && pre->w < B_PER_W &&
+		0 < pre->w && pre->w < MIN2(B_PER_W, B_PER_S) &&
 		((pre->type != ec_pre_od && pre->type != ec_pre_si) ^ (pre->h > 0));
 }
 
@@ -166,10 +166,9 @@ void ecPreSO(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	void* stack)
 {
 	word* t;			/* [ec->d * ec->f->n] */
-	size_t i;
 	// pre
 	ASSERT(ecIsOperable(ec));
-	ASSERT(0 < w && w < B_PER_W);
+	ASSERT(0 < w && w < MIN2(B_PER_W, B_PER_S));
 	ASSERT(memIsDisjoint2(
 		pre, sizeof(ec_pre_t) + 
 			O_OF_W(SIZE_BIT_POS(w - 1) * ec->d * ec->f->n),
@@ -183,6 +182,7 @@ void ecPreSO(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	// вычислить малые кратные
 	if (w > 1)
 	{
+		size_t i;
 		// t <- 2 a
 		ecDblA(t, a, ec, stack);
 		// pre[1] <- t + a
@@ -213,10 +213,9 @@ bool_t ecPreSOA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 {
 	word* t1;			/* [ec->d * ec->f->n] */
 	word* t2;			/* [ec->d * ec->f->n] */
-	size_t i;
 	// pre
 	ASSERT(ecIsOperable(ec));
-	ASSERT(0 < w && w < B_PER_W);
+	ASSERT(0 < w && w < MIN2(B_PER_W, B_PER_S));
 	ASSERT(memIsDisjoint2(
 		pre, sizeof(ec_pre_t) + 
 			O_OF_W(SIZE_BIT_POS(w - 1) * 2 * ec->f->n),
@@ -230,6 +229,7 @@ bool_t ecPreSOA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	// вычислить малые кратные
 	if (w > 1)
 	{
+		size_t i;
 		// t1 <- 2 a
 		ecDblA(t1, a, ec, stack);
 		// pre[i] <- t1 + pre[i - 1]
@@ -257,10 +257,9 @@ size_t ecPreSOA_deep(size_t n, size_t ec_d, size_t ec_deep)
 void ecPreSH(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec, 
 	void* stack)
 {
-	size_t i;
 	// pre
 	ASSERT(ecIsOperable(ec));
-	ASSERT(0 < w && w < B_PER_W);
+	ASSERT(0 < w && w < MIN2(B_PER_W, B_PER_S));
 	ASSERT(memIsDisjoint2(
 		pre, sizeof(ec_pre_t) + 
 			O_OF_W((SIZE_BIT_POS(w - 1) + 1) * ec->d * ec->f->n),
@@ -270,6 +269,7 @@ void ecPreSH(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	// вычислить малые кратные
 	if (w > 1)
 	{
+		size_t i;
 		// pre[0] <- 2^{w-1}a
 		wwCopy(ecPrePt(pre, 0, ec), ecPrePt(pre, SIZE_BIT_POS(w - 1), ec), 
 			ec->d * ec->f->n);
@@ -306,7 +306,7 @@ bool_t ecPreOD(ec_pre_t* pre, const word a[], size_t w, size_t h,
 	word* cur;
 	// pre
 	ASSERT(ecIsOperable(ec));
-	ASSERT(0 < w && w < B_PER_W && h > 0);
+	ASSERT(0 < w && w < MIN2(B_PER_W, B_PER_S) && h > 0);
 	ASSERT(memIsDisjoint2(
 		pre, sizeof(ec_pre_t) + 
 			O_OF_W(SIZE_BIT_POS(w - 1) * h * 2 * ec->f->n),
@@ -344,7 +344,9 @@ size_t ecPreOD_deep(size_t n, size_t ec_d, size_t ec_deep)
 {
 	return memSliceSize(
 		ecPreOD_local(n, ec_d),
-		ecPreSOA_deep(n, ec_d, ec_deep),
+		utilMax(2,
+			ec_deep,
+			ecPreSOA_deep(n, ec_d, ec_deep)),
 		SIZE_MAX);
 }
 
@@ -363,7 +365,7 @@ bool_t ecPreSI(ec_pre_t* pre, const word a[], size_t w, size_t h,
 	word code;
 	// pre
 	ASSERT(ecIsOperable(ec));
-	ASSERT(0 < w && w < B_PER_W && h > 0);
+	ASSERT(0 < w && w < MIN2(B_PER_W, B_PER_S) && h > 0);
 	ASSERT(memIsDisjoint2(
 		pre, sizeof(ec_pre_t) + 
 			O_OF_W(SIZE_BIT_POS(w - 1) * 2 * ec->f->n),

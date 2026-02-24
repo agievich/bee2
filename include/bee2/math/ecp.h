@@ -4,7 +4,7 @@
 \brief Elliptic curves over prime fields
 \project bee2 [cryptographic library]
 \created 2012.06.24
-\version 2026.02.23
+\version 2026.02.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -277,7 +277,7 @@ size_t ecpSWU_deep(size_t n, size_t f_deep);
 	якобиевы координаты. Результат сохраняется в контейнере pre.
 	\pre Описание ec работоспособно.
 	\pre Координаты a лежат в базовом поле.
-	\pre w > 0.
+	\pre 0 < w && w < MIN2(B_PER_W, B_PER_S).
 	\pre memIsValid(pre, sizeof(ec_pre_t) +
 		O_OF_W(SIZE_BIT_POS(w - 1) * 3 * ec->f->n)).
 	\expect Описание ec корректно.
@@ -301,7 +301,7 @@ size_t ecpPreSOJ_deep(size_t n, size_t f_deep);
 	в контейнере pre. 
 	\pre Описание ec работоспособно.
 	\pre Координаты a лежат в базовом поле.
-	\pre w > 0.
+	\pre 0 < w && w < MIN2(B_PER_W, B_PER_S).
 	\pre memIsValid(pre, sizeof(ec_pre_t) + 
 		O_OF_W(SIZE_BIT_POS(w - 1) * 2 * ec->f->n)).
 	\expect Описание ec корректно.
@@ -329,7 +329,7 @@ size_t ecpPreSOA_deep(size_t n, size_t f_deep, size_t w);
 	якобиевы координаты. Результат сохраняется в контейнере pre. 
 	\pre Описание ec работоспособно.
 	\pre Координаты a лежат в базовом поле.
-	\pre w > 0.
+	\pre 0 < w && w < MIN2(B_PER_W, B_PER_S).
 	\pre memIsValid(pre, sizeof(ec_pre_t) + 
 		O_OF_W((SIZE_BIT_POS(w - 1) + 1) * 3 * ec->f->n)).
 	\expect Описание ec корректно.

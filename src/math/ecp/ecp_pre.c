@@ -4,7 +4,7 @@
 \brief Elliptic curves over prime fields: precomputations
 \project bee2 [cryptographic library]
 \created 2021.07.18
-\version 2026.02.23
+\version 2026.02.24
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -292,7 +292,7 @@ void ecpPreSOJ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	word* t;			/* [3 * ec->f->n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
-	ASSERT(0 < w && w < B_PER_W);
+	ASSERT(0 < w && w < MIN2(B_PER_W, B_PER_S));
 	ASSERT(memIsDisjoint2(pre, 
 		sizeof(ec_pre_t) + O_OF_W(SIZE_BIT_POS(w - 1) * 3 * ec->f->n),
 		a, O_OF_W(2 * ec->f->n)));
@@ -359,10 +359,9 @@ bool_t ecpPreSOA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	word* t1;			/* [3 * n] */
 	word* t2;			/* [3 * n] */
 	word* zs;			/* [(SIZE_BIT_POS(w - 1) - 1) * n] */
-	size_t i;
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
-	ASSERT(0 < w && w < B_PER_W);
+	ASSERT(0 < w && w < MIN2(B_PER_W, B_PER_S));
 	ASSERT(memIsDisjoint2(pre, 
 		sizeof(ec_pre_t) + O_OF_W(SIZE_BIT_POS(w - 1) * 2 * ec->f->n),
 		a, O_OF_W(2 * ec->f->n)));
@@ -376,6 +375,7 @@ bool_t ecpPreSOA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	// остальные кратные точки
 	if (w > 1)
 	{
+		size_t i;
 		// (t2, t1) <- (2a, a)
 		ecpIDblAJ(t2, t1, a, ec, stack);
 		// pre[1] <- t2 + t1 (с обновлением t2)
@@ -426,17 +426,16 @@ size_t ecpPreSOA_deep(size_t n, size_t f_deep, size_t w)
 		SIZE_MAX);
 }
 
-
 /*
 *******************************************************************************
 Предвычисления: схема SH, якобиевы координаты
 
 Алгоритм (w > 1):
-1. b <- 2a. 						// J <- 2A
-2. pre[0] <- 2^{w-2}b. 				// J <- 2J
+1. pre[2^{w-1}] <- 2a. 					// J <- 2A
+2. pre[0] <- 2^{w-2}pre[2^{w-1}].		// J <- 2J
 3. t <- a: t -- якобиева точка, Z(t) = Z(pre[0]).
 4. Для i = 1, 2, ..., 2^{w-1}:
-   1) pre[i] <- t + pre[i-1].		// JJ <- J + J, с обновлением t
+   1) pre[i] <- t + pre[i-1].			// JJ <- J + J, с обновлением t
 *******************************************************************************
 */
 
@@ -447,10 +446,9 @@ void ecpPreSHJ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	void* stack) 
 {
 	word* t;			/* [3 * ec->f->n] */
-	size_t i;
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
-	ASSERT(0 < w && w < B_PER_W);
+	ASSERT(0 < w && w < MIN2(B_PER_W, B_PER_S));
 	ASSERT(memIsDisjoint2(
 		pre, sizeof(ec_pre_t) + 
 			O_OF_W((SIZE_BIT_POS(w - 1) + 1) * 3 * ec->f->n),
@@ -465,6 +463,7 @@ void ecpPreSHJ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	if (w > 1)
 	{
 		const size_t n = ec->f->n;
+		size_t i;
 		// pre[0] <- 2^{w-1}a
 		wwCopy(ecPrePt(pre, 0, ec), ecPrePt(pre, SIZE_BIT_POS(w - 1), ec), 
 			3 * ec->f->n);
