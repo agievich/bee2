@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): miscellaneous (OIDs, keys, DH)
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2026.02.23
+\version 2026.03.03
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -44,6 +44,7 @@ bool_t bignMulA(word b[], const word a[], const ec_o* ec, const word d[],
 	ec_pre_t* pre;			/* [pre_count проективных точек] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
+	ASSERT(wwCmp(d, ec->order, ec->f->n) < 0);
 	// размерности
 	w = bignMulAWidth(B_OF_W(ec->f->n));
 	pre_count = SIZE_BIT_POS(w - 1);
@@ -65,6 +66,49 @@ size_t bignMulA_deep(size_t n, size_t f_deep, size_t ec_deep)
 		utilMax(2,
 			ecpPreSOJ_deep(n, f_deep),
 			ecMulPreSO_deep(n, 3, ec_deep, n)),
+		SIZE_MAX);
+}
+
+static size_t bignMulA2Width(size_t l)
+{
+	return l <= 128 ? 4 : 8;
+}
+
+#define bignMulA2_local(n, pre_count)\
+/* pre */	sizeof(ec_pre_t) + O_OF_W(pre_count * 3 * n)
+
+bool_t bignMulA2(word b[], const word a[], const ec_o* ec, const word d[],
+	size_t m, void* stack)
+{
+	size_t w;
+	size_t pre_count;
+	ec_pre_t* pre;			/* [pre_count проективных точек] */
+	// pre
+	ASSERT(ecIsOperable(ec) && ec->d == 3);
+	ASSERT(0 < wwBitSize(d, m));
+	ASSERT(wwBitSize(d, m) < wwBitSize(ec->order, ec->f->n + 1));
+	ASSERT((wwBitSize(d, m) - 1) % 8 == 0);
+	// размерности
+	w = bignMulA2Width(B_OF_W(ec->f->n));
+	pre_count = SIZE_BIT_POS(w - 1) + 3;
+	// разметить стек
+	memSlice(stack,
+		bignMulA2_local(ec->f->n, pre_count), SIZE_0, SIZE_MAX,
+		&pre, &stack);
+	// метод SH
+	ecpPreSHJ(pre, a, w, ec, stack);
+	return ecMulPreSH(b, pre, ec, d, m, stack);
+}
+
+size_t bignMulA2_deep(size_t n, size_t f_deep, size_t ec_deep, size_t m)
+{
+	const size_t w = bignMulA2Width(B_OF_W(m));
+	const size_t pre_count = SIZE_BIT_POS(w - 1) + 3;
+	return memSliceSize(
+		bignMulA2_local(n, pre_count),
+		utilMax(2,
+			ecpPreSHJ_deep(n, f_deep, ec_deep),
+			ecMulPreSH_deep(n, 3, ec_deep, m)),
 		SIZE_MAX);
 }
 

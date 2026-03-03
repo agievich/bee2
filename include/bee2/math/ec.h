@@ -773,7 +773,6 @@ bool_t ecPreIsOperable(
 	с аффинной точкой [2 * ec->f->n]a и окном шириной w. Результат сохраняется 
 	в контейнере pre.
 	\pre Описание ec работоспособно.
-	\pre Координаты a лежат в базовом поле.
 	\pre 0 < w && w < MIN2(B_PER_W, B_PER_S).
 	\pre memIsValid(pre, sizeof(ec_pre_t) +
 		O_OF_W(SIZE_BIT_POS(w - 1) * ec->d * ec->f->n)).
@@ -797,7 +796,6 @@ size_t ecPreSO_deep(size_t n, size_t ec_d, size_t ec_deep);
 	с аффинной точкой [2 * ec->f->n]a и окном шириной w. Результат сохраняется 
 	в контейнере pre. 
 	\pre Описание ec работоспособно.
-	\pre Координаты a лежат в базовом поле.
 	\pre 0 < w && w < MIN2(B_PER_W, B_PER_S).
 	\pre memIsValid(pre, sizeof(ec_pre_t) +
 		O_OF_W(SIZE_BIT_POS(w - 1) * 2 * ec->f->n)).
@@ -825,7 +823,6 @@ size_t ecPreSOA_deep(size_t n, size_t ec_d, size_t ec_deep);
 	с аффинной точкой [2 * ec->f->n]a и окном шириной w. Результат сохраняется
 	в контейнере pre. 
 	\pre Описание ec работоспособно.
-	\pre Координаты a лежат в базовом поле.
 	\pre 0 < w && w < MIN2(B_PER_W, B_PER_S).
 	\pre memIsValid(pre, sizeof(ec_pre_t) +
 		O_OF_W(SIZE_BIT_POS(w - 1) * 2 * ec->f->n)).
@@ -851,7 +848,6 @@ size_t ecPreSH_deep(size_t ec_deep);
 	с аффинной точкой [2 * ec->f->n]a и окном шириной w. Результат сохраняется
 	в контейнере pre.
 	\pre Описание ec работоспособно.
-	\pre Координаты a лежат в базовом поле.
 	\pre 0 < w && w < MIN2(B_PER_W, B_PER_S) && h > 0.
 	\pre memIsValid(pre, sizeof(ec_pre_t) +
 		O_OF_W(SIZE_BIT_POS(w - 1) * h * 2 * ec->f->n)).
@@ -880,7 +876,6 @@ size_t ecPreOD_deep(size_t n, size_t ec_d, size_t ec_deep);
 	с аффинной точкой [2 * ec->f->n]a и окном шириной w. Результат сохраняется
 	в контейнере pre.
 	\pre Описание ec работоспособно.
-	\pre Координаты a лежат в базовом поле.
 	\pre 0 < w && w < MIN2(B_PER_W, B_PER_S) && h > 0.
 	\pre memIsValid(pre, sizeof(ec_pre_t) +
 		O_OF_W(SIZE_BIT_POS(w - 1) * 2 * ec->f->n)).
@@ -917,7 +912,6 @@ size_t ecPreSI_deep(size_t n, size_t ec_d, size_t ec_deep, size_t h);
 		b <- d a.
 	\endcode
 	\pre Описание ec работоспособно.
-	\pre Координаты a лежат в базовом поле.
 	\expect Описание ec корректно.
 	\expect Точка a лежит на ec.
 	\return TRUE, если кратная точка отличается от O, и FALSE в противном
@@ -951,7 +945,6 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 	\pre wwWordSize(ec->order, ec->f->n + 1) == m.
 	\pre wwBitSize(ec->order, m) > pre->w.
 	\pre d < ec->order.
-	\pre Координаты a лежат в базовом поле.
 	\expect Описание ec корректно.
 	\expect Точки контейнера pre корректно рассчитаны по a.
 	\return TRUE, если кратная точка отличается от O, и FALSE в противном
@@ -995,7 +988,6 @@ size_t ecMulPreSO_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 	\pre wwWordSize(ec->order, ec->f->n + 1) == m.
 	\pre wwBitSize(ec->order, m) > pre->w.
 	\pre d < ec->order.
-	\pre Координаты a лежат в базовом поле.
 	\expect Описание ec корректно.
 	\expect Точки контейнера pre корректно рассчитаны по a.
 	\return TRUE, если кратная точка отличается от O, и FALSE в противном
@@ -1041,7 +1033,6 @@ size_t ecMulPreSOA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 	\pre Контейнер pre работоспособен.
 	\pre pre->type == ec_pre_sh.
 	\pre 0 < wwBitSize(d, m) && wwBitSize(d, m) - 1 делится на pre->w.
-	\pre Координаты a лежат в базовом поле.
 	\expect Описание ec корректно.
 	\expect Точки контейнера pre корректно рассчитаны по a.
 	\return TRUE, если кратная точка отличается от O, и FALSE в противном
@@ -1081,7 +1072,6 @@ size_t ecMulPreSH_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 	\pre wwBitSize(ec->order, m) > pre->w.
 	\pre d < ec->order.
 	\pre pre->w * pre->h >= wwBitSize(ec->order, m).
-	\pre Координаты a лежат в базовом поле.
 	\expect Описание ec корректно.
 	\expect Точки контейнера pre корректно рассчитаны по a.
 	\return TRUE, если кратная точка отличается от O, и FALSE в противном
@@ -1128,7 +1118,6 @@ size_t ecMulPreOD_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 	\pre pre->w < wwBitSize(ec->order, m).
 	\pre wwBitSize(ec->order, m) <= pre->w * pre->h.
 	\pre d < ec->order.
-	\pre Координаты a лежат в базовом поле.
 	\expect Описание ec корректно.
 	\expect Точки контейнера pre корректно рассчитаны по a.
 	\return TRUE, если кратная точка отличается от O, и FALSE в противном
@@ -1164,7 +1153,6 @@ size_t ecMulPreSI_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 	Проверяется, что аффинная точка [2 * ec->f->n]a имеет порядок [m]q 
 	в группе точек кривой ec.
 	\pre Описание ec работоспособно.
-	\pre Координаты a лежат в базовом поле.
 	\pre q > 0.
 	\expect Описание ec корректно.
 	\expect Точка a лежит на ec.

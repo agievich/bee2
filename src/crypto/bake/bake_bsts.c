@@ -4,7 +4,7 @@
 \brief STB 34.101.66 (bake): the BSTS protocol
 \project bee2 [cryptographic library]
 \created 2014.04.14
-\version 2026.01.08
+\version 2026.03.03
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -154,7 +154,7 @@ err_t bakeBSTSStep2(octet out[], void* state)
 		s->settings->rng_state))
 		return ERR_BAD_RNG;
 	// Vb <- ub G
-	if (!ecMulA(s->Vb, s->ec->base, s->ec, s->u, n, stack))
+	if (!bignMulBase(s->Vb, s->ec, s->u, stack))
 		return ERR_BAD_PARAMS;
 	// out <- <Vb>
 	qrTo(out, ecX(s->Vb), s->ec->f, stack);
@@ -168,7 +168,7 @@ static size_t bakeBSTSStep2_deep(size_t n, size_t f_deep, size_t ec_d,
 {
 	return utilMax(2,
 			f_deep,
-			ecMulA_deep(n, ec_d, ec_deep, n));
+			bignMulBase_deep(n, ec_d, ec_deep));
 }
 
 #define bakeBSTSStep3_local(n, no)\
@@ -197,6 +197,8 @@ err_t bakeBSTSStep3(octet out[], const octet in[], void* state)
 	if (!memIsValid(in, 2 * no) ||
 		!memIsValid(out, 3 * no + s->cert->len + 8))
 		return ERR_BAD_INPUT;
+	if (n % 2)
+		return ERR_NOT_IMPLEMENTED;
 	// разметить стек
 	memSlice(s->stack,
 		bakeBSTSStep3_local(n, no), SIZE_0, SIZE_MAX,
@@ -211,7 +213,7 @@ err_t bakeBSTSStep3(octet out[], const octet in[], void* state)
 		s->settings->rng_state))
 		return ERR_BAD_RNG;
 	// Va <- ua G
-	if (!ecMulA(Va, s->ec->base, s->ec, s->u, n, stack))
+	if (!bignMulBase(Va, s->ec, s->u, stack))
 		return ERR_BAD_PARAMS;
 	qrTo((octet*)Va, ecX(Va), s->ec->f, stack);
 	qrTo((octet*)Va + no, ecY(Va, n), s->ec->f, stack);
@@ -232,7 +234,7 @@ err_t bakeBSTSStep3(octet out[], const octet in[], void* state)
 	wwTo(out + 2 * no, no, sa);
 	memCopy(out + 3 * no, s->cert->data, s->cert->len);
 	// K <- beltHash(<ua Vb>_2l || helloa || hellob)
-	if (!ecMulA(Va, s->Vb, s->ec, s->u, n, stack))
+	if (!bignMulA(Va, s->Vb, s->ec, s->u, stack))
 		return ERR_BAD_PARAMS;
 	qrTo(K, ecX(Va), s->ec->f, stack);
 	beltHashStart(stack);
@@ -274,10 +276,11 @@ static size_t bakeBSTSStep3_deep(size_t n, size_t f_deep, size_t ec_d,
 {
 	return memSliceSize(
 		bakeBSTSStep3_local(n, O_OF_W(n)),
-		utilMax(9,
+		utilMax(10,
 			f_deep,
 			ecpIsOnA_deep(n, f_deep),
-			ecMulA_deep(n, ec_d, ec_deep, n),
+			bignMulBase_deep(n, ec_d, ec_deep),
+			bignMulA_deep(n, ec_d, ec_deep),
 			beltHash_keep(),
 			zzMul_deep(n / 2, n),
 			zzMod_deep(n + n / 2 + 1, n),
@@ -321,6 +324,8 @@ err_t bakeBSTSStep4(octet out[], const octet in[], size_t in_len,
 		vala == 0 ||
 		!memIsValid(out, no + s->cert->len + 8))
 		return ERR_BAD_INPUT;
+	if (n % 2)
+		return ERR_NOT_IMPLEMENTED;
 	// разметить стек
 	memSlice(s->stack,
 		bakeBSTSStep4_local(n, no), SIZE_0, SIZE_MAX,
@@ -331,7 +336,7 @@ err_t bakeBSTSStep4(octet out[], const octet in[], size_t in_len,
 		!ecpIsOnA(Va, s->ec, stack))
 		return ERR_BAD_POINT;
 	// K <- beltHash(<ub Va>_2l || helloa || hellob)
-	if (!ecMulA(Qa, Va, s->ec, s->u, n, stack))
+	if (!bignMulA(Qa, Va, s->ec, s->u, stack))
 		return ERR_BAD_PARAMS;
 	qrTo(K, ecX(Qa), s->ec->f, stack);
 	beltHashStart(stack);
@@ -426,7 +431,7 @@ static size_t bakeBSTSStep4_deep(size_t n, size_t f_deep, size_t ec_d,
 		utilMax(10,
 			f_deep,
 			ecpIsOnA_deep(n, f_deep),
-			ecMulA_deep(n, ec_d, ec_deep, n),
+			bignMulA_deep(n, ec_d, ec_deep),
 			beltHash_keep(),
 			zzMul_deep(n / 2, n),
 			zzMod_deep(n + n / 2 + 1, n),
@@ -460,6 +465,8 @@ err_t bakeBSTSStep5(const octet in[], size_t in_len, bake_certval_i valb,
 		!memIsValid(in, in_len) ||
 		valb == 0)
 		return ERR_BAD_INPUT;
+	if (n % 2)
+		return ERR_NOT_IMPLEMENTED;
 	// разметить стек
 	memSlice(s->stack,
 		bakeBSTSStep5_local(n), SIZE_0, SIZE_MAX,

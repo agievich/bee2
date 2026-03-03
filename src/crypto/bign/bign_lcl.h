@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): local declarations
 \project bee2 [cryptographic library]
 \created 2014.04.03
-\version 2026.02.13
+\version 2026.03.03
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -116,15 +116,15 @@ void bignEcClose(
 *******************************************************************************
 */
 
-/*!	\brief Кратная точка
+/*!	\brief Кратная точка на кривой Bign
 
-	Определяется аффинная точка [2 * ec->f->n]b эллиптической кривой ec, 
-	которая является [ec->f->n]d-кратной аффинной точки [2 * ec->f->n]a:
+	Определяется аффинная точка [2 * ec->f->n]b эллиптической кривой ec, которая
+	является [ec->f->n]d-кратной аффинной точки [2 * ec->f->n]a:
 	\code
 		b <- d a.
 	\endcode
 	\pre Описание ec работоспособно.
-	\pre Координаты a лежат в базовом поле.
+	\pre d < ec->order.
 	\expect Кривая ec удовлетворяет соглашениям Bign.
 	\expect В ec используются якобиевы координаты.
 	\expect Точка a лежит на ec.
@@ -141,6 +141,38 @@ bool_t bignMulA(
 );
 
 size_t bignMulA_deep(size_t n, size_t ec_d, size_t ec_deep);
+
+/*!	\brief Кратная точка на кривой Bign для скаляра специального вида
+
+	Определяется аффинная точка [2 * ec->f->n]b эллиптической кривой ec,
+	которая является [m]d-кратной аффинной точки [2 * ec->f->n]a:
+	\code
+		b <- d a.
+	\endcode
+	Скаляр d имеет специальный вид:
+	- 0 < wwBitSize(d, m);
+	- wwBitSize(d, m) < wwBitSize(ec->order, ec->f->n + 1);
+	- wwBitSize(d, m) - 1 делится на 8.
+	.
+	\pre Описание ec работоспособно.
+	\pre Соблюдаются ограничения на d.
+	\expect Кривая ec удовлетворяет соглашениям Bign.
+	\expect В ec используются якобиевы координаты.
+	\expect Точка a лежит на ec.
+	\return TRUE, если кратная точка отличается от O, и FALSE в противном
+	случае.
+	\deep{stack} bignMulA2_deep(ec->f->n, ec->d, ec->deep).
+*/
+bool_t bignMulA2(
+	word b[],			/*!< [out] кратная точка */
+	const word a[],		/*!< [in] базовая точка */
+	const ec_o* ec,		/*!< [in] описание кривой */
+	const word d[],		/*!< [in] кратность */
+	size_t m,			/*!< [in] длина d в машинных словах */
+	void* stack			/*!< [in] вспомогательная память */
+);
+
+size_t bignMulA2_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 
 /*!	\brief Кратная базовая точка
 

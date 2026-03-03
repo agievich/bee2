@@ -4,7 +4,7 @@
 \brief STB 34.101.66 (bake): the BPACE protocol
 \project bee2 [cryptographic library]
 \created 2014.04.14
-\version 2025.10.22
+\version 2026.03.03
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -254,7 +254,7 @@ err_t bakeBPACEStep3(octet out[], const octet in[], void* state)
 		s->settings->rng_state))
 		return ERR_BAD_RNG;
 	// Va <- ua W
-	if (!ecMulA(Va, s->W, s->ec, s->u, n, stack))
+	if (!bignMulA(Va, s->W, s->ec, s->u, stack))
 		return ERR_BAD_PARAMS;
 	// ...|| out <- <Va>
 	qrTo(out + no / 2, ecX(Va), s->ec->f, stack);
@@ -273,7 +273,7 @@ static size_t bakeBPACEStep3_deep(size_t n, size_t f_deep, size_t ec_d,
 		utilMax(4,
 			beltECB_keep(),
 			bakeSWUEc_deep(n, f_deep),
-			ecMulA_deep(n, ec_d, ec_deep, n),
+			bignMulA_deep(n, ec_d, ec_deep),
 			f_deep),
 		SIZE_MAX);
 }
@@ -324,11 +324,11 @@ err_t bakeBPACEStep4(octet out[], const octet in[], void* state)
 		s->settings->rng_state))
 		return ERR_BAD_RNG;
 	// K <- ub Va
-	if (!ecMulA(K, Va, s->ec, s->u, n, stack))
+	if (!bignMulA(K, Va, s->ec, s->u, stack))
 		return ERR_BAD_PARAMS;
 	qrTo((octet*)K, ecX(K), s->ec->f, stack);
 	// Vb <- ub W
-	if (!ecMulA(Vb, s->W, s->ec, s->u, n, stack))
+	if (!bignMulA(Vb, s->W, s->ec, s->u, stack))
 		return ERR_BAD_PARAMS;
 	qrTo((octet*)ecX(Vb), ecX(Vb), s->ec->f, stack);
 	qrTo((octet*)ecY(Vb, n), ecY(Vb, n), s->ec->f, stack);
@@ -376,7 +376,7 @@ static size_t bakeBPACEStep4_deep(size_t n, size_t f_deep, size_t ec_d,
 			f_deep,
 			beltECB_keep(),
 			bakeSWUEc_deep(n, f_deep),
-			ecMulA_deep(n, ec_d, ec_deep, n),
+			bignMulA_deep(n, ec_d, ec_deep),
 			beltHash_keep(),
 			beltKRP_keep(),
 			beltMAC_keep()),
@@ -417,7 +417,7 @@ err_t bakeBPACEStep5(octet out[], const octet in[], void* state)
 		!ecpIsOnA(Vb, s->ec, stack))
 		return ERR_BAD_POINT;
 	// K <- ua Vb
-	if (!ecMulA(K, Vb, s->ec, s->u, n, stack))
+	if (!bignMulA(K, Vb, s->ec, s->u, stack))
 		return ERR_BAD_PARAMS;
 	qrTo((octet*)K, ecX(K), s->ec->f, stack);
 	qrTo((octet*)Vb, ecX(Vb), s->ec->f, stack);
@@ -470,7 +470,7 @@ static size_t bakeBPACEStep5_deep(size_t n, size_t f_deep, size_t ec_d,
 		bakeBPACEStep5_local(n),
 		utilMax(5,
 			f_deep,
-			ecMulA_deep(n, ec_d, ec_deep, n),
+			bignMulA_deep(n, ec_d, ec_deep),
 			beltHash_keep(),
 			beltKRP_keep(),
 			beltMAC_keep()),

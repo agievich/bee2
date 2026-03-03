@@ -4,7 +4,7 @@
 \brief STB 34.101.66 (bake): the BMQV protocol
 \project bee2 [cryptographic library]
 \created 2014.04.14
-\version 2026.01.08
+\version 2026.03.03
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -164,7 +164,7 @@ err_t bakeBMQVStep2(octet out[], void* state)
 		s->settings->rng_state))
 		return ERR_BAD_RNG;
 	// Vb <- ub G
-	if (!ecMulA(Vb, s->ec->base, s->ec, s->u, n, stack))
+	if (!bignMulBase(Vb, s->ec, s->u, stack))
 		return ERR_BAD_PARAMS;
 	// out <- <Vb>
 	qrTo(out, ecX(Vb), s->ec->f, stack);
@@ -182,7 +182,7 @@ static size_t bakeBMQVStep2_deep(size_t n, size_t f_deep, size_t ec_d,
 		bakeBMQVStep2_local(n),
 		utilMax(2,
 			f_deep,
-			ecMulA_deep(n, ec_d, ec_deep, n)),
+			bignMulBase_deep(n, ec_d, ec_deep)),
 		SIZE_MAX);
 }
 
@@ -221,6 +221,8 @@ err_t bakeBMQVStep3(octet out[], const octet in[], const bake_cert* certb,
 		!memIsValid(certb->data, certb->len) ||
 		certb->val == 0)
 		return ERR_BAD_INPUT;
+	if (n % 2)
+		return ERR_NOT_IMPLEMENTED;
 	// разметить стек
 	memSlice(s->stack,
 		bakeBMQVStep3_local(n, no), SIZE_0, SIZE_MAX,
@@ -242,7 +244,7 @@ err_t bakeBMQVStep3(octet out[], const octet in[], const bake_cert* certb,
 		s->settings->rng_state))
 		return ERR_BAD_RNG;
 	// Va <- ua G
-	if (!ecMulA(Va, s->ec->base, s->ec, s->u, n, stack))
+	if (!bignMulBase(Va, s->ec, s->u, stack))
 		return ERR_BAD_PARAMS;
 	qrTo((octet*)Va, ecX(Va), s->ec->f, stack);
 	qrTo((octet*)Va + no, ecY(Va, n), s->ec->f, stack);
@@ -261,13 +263,13 @@ err_t bakeBMQVStep3(octet out[], const octet in[], const bake_cert* certb,
 	zzSubMod(sa, s->u, sa, s->ec->order, n);
 	// K <- sa(Vb - (2^l + t)Qb), K == O => K <- G
 	t[n / 2] = 1;
-	if (!ecMulA(Qb, Qb, s->ec, t, n / 2 + 1, stack))
+	if (!bignMulA2(Qb, Qb, s->ec, t, n / 2 + 1, stack))
 		return ERR_BAD_PARAMS;
 	if (!ecpSubAA(Vb, Vb, Qb, s->ec, stack))
 		qrTo(K, s->ec->base, s->ec->f, stack);
 	else
 	{
-		if (!ecMulA(Vb, Vb, s->ec, sa, n, stack))
+		if (!bignMulA(Vb, Vb, s->ec, sa, stack))
 			return ERR_BAD_PARAMS;
 		qrTo(K, ecX(Vb), s->ec->f, stack);
 	}
@@ -309,10 +311,11 @@ static size_t bakeBMQVStep3_deep(size_t n, size_t f_deep, size_t ec_d,
 {
 	return memSliceSize(
 		bakeBMQVStep3_local(n, O_OF_W(n)),
-		utilMax(9,
+		utilMax(10,
 			f_deep,
 			ecpIsOnA_deep(n, f_deep),
-			ecMulA_deep(n, ec_d, ec_deep, n),
+			bignMulA2_deep(n, ec_d, ec_deep, n / 2 + 1),
+			bignMulA_deep(n, ec_d, ec_deep),
 			beltHash_keep(),
 			zzMul_deep(n / 2, n),
 			zzMod_deep(n + n / 2 + 1, n),
@@ -355,6 +358,8 @@ err_t bakeBMQVStep4(octet out[], const octet in[], const bake_cert* certa,
 		!memIsValid(certa->data, certa->len) ||
 		certa->val == 0)
 		return ERR_BAD_INPUT;
+	if (n % 2)
+		return ERR_NOT_IMPLEMENTED;
 	// разметить стек
 	memSlice(s->stack,
 		bakeBMQVStep4_local(n, no), SIZE_0, SIZE_MAX,
@@ -384,13 +389,13 @@ err_t bakeBMQVStep4(octet out[], const octet in[], const bake_cert* certa,
 	zzSubMod(sb, s->u, sb, s->ec->order, n);
 	// K <- sb(Va - (2^l + t)Qa), K == O => K <- G
 	t[n / 2] = 1;
-	if (!ecMulA(Qa, Qa, s->ec, t, n / 2 + 1, stack))
+	if (!bignMulA2(Qa, Qa, s->ec, t, n / 2 + 1, stack))
 		return ERR_BAD_PARAMS;
 	if (!ecpSubAA(Va, Va, Qa, s->ec, stack))
 		qrTo(K, s->ec->base, s->ec->f, stack);
 	else
 	{
-		if (!ecMulA(Va, Va, s->ec, sb, n, stack))
+		if (!bignMulA(Va, Va, s->ec, sb, stack))
 			return ERR_BAD_PARAMS;
 		qrTo(K, ecX(Va), s->ec->f, stack);
 	}
@@ -440,10 +445,11 @@ static size_t bakeBMQVStep4_deep(size_t n, size_t f_deep, size_t ec_d,
 {
 	return memSliceSize(
 		bakeBMQVStep4_local(n, O_OF_W(n)),
-		utilMax(9,
+		utilMax(10,
 				f_deep,
 				ecpIsOnA_deep(n, f_deep),
-				ecMulA_deep(n, ec_d, ec_deep, n),
+				bignMulA2_deep(n, ec_d, ec_deep, n / 2 + 1),
+				bignMulA_deep(n, ec_d, ec_deep),
 				beltHash_keep(),
 				zzMul_deep(n / 2, n),
 				zzMod_deep(n + n / 2 + 1, n),
