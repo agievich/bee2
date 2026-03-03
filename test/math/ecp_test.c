@@ -4,7 +4,7 @@
 \brief Tests for elliptic curves over prime fields
 \project bee2/test
 \created 2017.05.29
-\version 2026.02.24
+\version 2026.03.03
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -683,7 +683,7 @@ static bool_t ecPreChecksum(word a[], const ec_pre_t* pre, u32 seed,
 	// число предвычисленных точек
 	count = SIZE_BIT_POS(pre->w - 1);
 	if (pre->type == ec_pre_sh)
-		++count;
+		count += 3;
 	else if (pre->type == ec_pre_so)
 		count *= pre->h;
 	// проективные предвычисленные точки?
@@ -736,7 +736,7 @@ static bool_t ecpTestEc(const ec_o* ec)
 	const size_t n = ec->f->n;
 	const size_t min_w = 1;
 	const size_t max_w = 6;
-	const size_t max_pre_count = SIZE_BIT_POS(max_w - 1) + 1;
+	const size_t max_pre_count = SIZE_BIT_POS(max_w - 1) + 3;
 	// состояние
 	void* state;
 	ec_pre_t* pre;	/* [max_pre_count проективных точек] */
@@ -810,14 +810,14 @@ static bool_t ecpTestEc(const ec_o* ec)
 	for (w = min_w; w <= max_w; ++w)
 	{
 		const u32 seed = 23;
-		bool_t is_zero;
+		bool_t nz;
 		// эталонная контрольная сумма
 		ecPreSO(pre, ec->base, w, ec, stack);
-		is_zero = ecPreChecksum(pt0, pre, seed, ec, stack);
+		nz = ecPreChecksum(pt0, pre, seed, ec, stack);
 		// проверить ecpPreSOJ()
 		ecpPreSOJ(pre, ec->base, w, ec, stack);
-		if (ecPreChecksum(pt1, pre, seed, ec, stack) != is_zero ||
-			!is_zero && !wwEq(pt0, pt1, 2 * n))
+		if (ecPreChecksum(pt1, pre, seed, ec, stack) != nz ||
+			nz && !wwEq(pt0, pt1, 2 * n))
 		{
 			blobClose(state);
 			return FALSE;
@@ -826,8 +826,8 @@ static bool_t ecpTestEc(const ec_o* ec)
 		if (w < 3)
 			continue;
 		ecpSmallMultJ(pre, ec->base, w, ec, stack);
-		if (ecPreChecksum(pt1, pre, seed, ec, stack) != is_zero ||
-			!is_zero && !wwEq(pt0, pt1, 2 * n))
+		if (ecPreChecksum(pt1, pre, seed, ec, stack) != nz ||
+			nz && !wwEq(pt0, pt1, 2 * n))
 		{
 			blobClose(state);
 			return FALSE;
@@ -837,14 +837,14 @@ static bool_t ecpTestEc(const ec_o* ec)
 	for (w = min_w; w <= max_w; ++w)
 	{
 		const u32 seed = 34;
-		bool_t is_zero;
+		bool_t nz;
 		// эталонная контрольная сумма
 		ecPreSOA(pre, ec->base, w, ec, stack);
-		is_zero = ecPreChecksum(pt0, pre, seed, ec, stack);
+		nz = ecPreChecksum(pt0, pre, seed, ec, stack);
 		// проверить ecpPreSOA()
 		ecpPreSOA(pre, ec->base, w, ec, stack);
-		if (ecPreChecksum(pt1, pre, seed, ec, stack) != is_zero ||
-			!is_zero && !wwEq(pt0, pt1, 2 * n))
+		if (ecPreChecksum(pt1, pre, seed, ec, stack) != nz ||
+			nz && !wwEq(pt0, pt1, 2 * n))
 		{
 			blobClose(state);
 			return FALSE;
@@ -853,8 +853,8 @@ static bool_t ecpTestEc(const ec_o* ec)
 		if (w < 3)
 			continue;
 		ecpSmallMultA(pre, ec->base, w, ec, stack);
-		if (ecPreChecksum(pt1, pre, seed, ec, stack) != is_zero ||
-			!is_zero && !wwEq(pt0, pt1, 2 * n))
+		if (ecPreChecksum(pt1, pre, seed, ec, stack) != nz ||
+			nz && !wwEq(pt0, pt1, 2 * n))
 		{
 			blobClose(state);
 			return FALSE;
@@ -864,14 +864,14 @@ static bool_t ecpTestEc(const ec_o* ec)
 	for (w = min_w; w <= max_w; ++w)
 	{
 		const u32 seed = 43;
-		bool_t is_zero;
+		bool_t nz;
 		// эталонная контрольная сумма
 		ecPreSH(pre, ec->base, w, ec, stack);
-		is_zero = ecPreChecksum(pt0, pre, seed, ec, stack);
+		nz = ecPreChecksum(pt0, pre, seed, ec, stack);
 		// проверить ecpPreSHJ()
 		ecpPreSHJ(pre, ec->base, w, ec, stack);
-		if (ecPreChecksum(pt1, pre, seed, ec, stack) != is_zero ||
-			!is_zero && !wwEq(pt0, pt1, 2 * n))
+		if (ecPreChecksum(pt1, pre, seed, ec, stack) != nz ||
+			nz && !wwEq(pt0, pt1, 2 * n))
 		{
 			blobClose(state);
 			return FALSE;

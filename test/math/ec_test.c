@@ -4,7 +4,7 @@
 \brief Tests for elliptic curves
 \project bee2/test
 \created 2026.02.12
-\version 2026.02.24
+\version 2026.03.03
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -84,7 +84,7 @@ bool_t ecTestEc(const ec_o* ec)
 	const size_t min_h = (B_OF_O(no) + max_w - 1) / max_w;
 	const size_t max_h = (B_OF_O(no) + min_w - 1) / min_w;
 	const size_t max_pre_count = 
-		MAX2(min_h * SIZE_BIT_POS(max_w - 1), SIZE_BIT_POS(max_w - 1) + 1);
+		MAX2(min_h * SIZE_BIT_POS(max_w - 1), SIZE_BIT_POS(max_w - 1) + 3);
 	// состояние
 	void* state;
 	ec_pre_t* pre;	/* [max_pre_count проективных точек] */
@@ -109,7 +109,7 @@ bool_t ecTestEc(const ec_o* ec)
 		O_OF_W(ec->d * n),
 		O_OF_W(ec->d * n),
 		O_OF_W(n + 1),
-		utilMax(15,
+		utilMax(16,
 			ec->deep,
 			ecHasOrderA_deep(n, ec->d, ec->deep, n),
 			ecAddAA_deep(n, ec->d, ec->deep),
@@ -124,6 +124,7 @@ bool_t ecTestEc(const ec_o* ec)
 			ecMulPreSOA_deep(n, ec->d, ec->deep, n),
 			ecMulPreOD_deep(n, ec->d, ec->deep, n),
 			ecMulPreSI_deep(n, ec->d, ec->deep, n),
+			ecMulPreSH_deep(n, ec->d, ec->deep, n),
 			ecAddMulA_deep(n, ec->d, ec->deep, 4,
 				(size_t)1, (size_t)2, (size_t)3, (size_t)4)),
 		SIZE_MAX,
@@ -407,26 +408,29 @@ bool_t ecTestEc(const ec_o* ec)
 	// предвычисления по схеме SH
 	for (w = min_w; w <= max_w; ++w)
 	{
-		// pre[0..2^w] <- (2^{w-1}, 2^{w-1}+1, ..., 2^w-1, 2)base
+		const size_t pre_count = SIZE_BIT_POS(w - 1) + 3;
+		// pre[0..pre_count) <- (2^{w-1}, 2^{w-1}+1, ..., 2^w-1, 2^w, 1, 2)base
 		ecPreSH(pre, ec->base, w, ec, stack);
-		// pt0 == 2base?
-		if (!ecToA(pt0, ecPrePt(pre, SIZE_BIT_POS(w - 1), ec), ec, stack) ||
+		// pre[-2..) == (1, 2)base?
+		if (!ecToA(pt0, ecPrePt(pre, pre_count - 2, ec), ec, stack) ||
+			!wwEq(pt0, ec->base, 2 * n) ||
+			!ecToA(pt0, ecPrePt(pre, pre_count - 1, ec), ec, stack) ||
 			!ecAddAA(pt1, ec->base, ec->base, ec, stack) ||
 			!wwEq(pt0, pt1, 2 * n))
 		{
 			blobClose(state);
 			return FALSE;
 		}
-		// pt0 <- \sum_{i=0}^{2^{w-1}-1} 2^{2^{w-1}-1-i} pre[i]
+		// pt0 <- \sum_{i=0}^{2^{w-1}} 2^{2^{w-1}-i} pre[i]
 		wwCopy(pt0, ecPrePt(pre, 0, ec), ec->d * n);
-		for (i = 1; i < SIZE_BIT_POS(w - 1); ++i)
+		for (i = 1; i <= SIZE_BIT_POS(w - 1); ++i)
 		{
 			ecDbl(pt0, pt0, ec, stack);
 			ecAdd(pt0, pt0, ecPrePt(pre, i, ec), ec, stack);
 		}
-		// pt0 == \sum_{i=0}^{2^{w-1}-1} (2^{w-1}+i)2^{2^{w-1}-1-i} base?
+		// pt0 == \sum_{i=0}^{2^{w-1}} (2^{w-1}+i)2^{2^{w-1}-i} base?
 		wwSetW(d, n, WORD_BIT_POS(w - 1));
-		for (i = 1; i < SIZE_BIT_POS(w - 1); ++i)
+		for (i = 1; i <= SIZE_BIT_POS(w - 1); ++i)
 		{
 			wwShHi(d, n, 1);
 			zzAddW2(d, n, WORD_BIT_POS(w - 1) + (word)i);
@@ -613,6 +617,29 @@ bool_t ecTestEc(const ec_o* ec)
 		{
 			blobClose(state);
 			return FALSE;
+		}
+	}
+	// кратная точка: ecMulA vs ecMulPreSH
+	for (w = min_w; w <= max_w; ++w)
+	{
+		const size_t m = wwWordSize(ec->order, n + 1);
+		const size_t mb = (wwBitSize(ec->order, n + 1) / 3 / w) * w;
+		if (mb < w)
+			continue;
+		wwCopy(d, ec->order, m);
+		wwTrimHi(d, m, mb);
+		wwSetBit(d, mb, TRUE);
+		ecPreSH(pre, ec->base, w, ec, stack);
+		while (!wwIsZero(d, m))
+		{
+			if (!ecMulPreSH(pt0, pre, ec, d, m, stack) ||
+				!ecMulA(pt1, ec->base, ec, d, m, stack) ||
+				!wwEq(pt0, pt1, 2 * n))
+			{
+				blobClose(state);
+				return FALSE;
+			}
+			wwShLo(d, m, w);
 		}
 	}
 	// все хорошо

@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2012.04.19
-\version 2026.02.24
+\version 2026.03.02
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -504,9 +504,9 @@ typedef enum
 	  \code
 		a, 3a, ..., (2^w-1)a;
 	  \endcode
-	- SH (Small Hi): вычисляется 2^{w-1}+1 проективных точек
+	- SH (Small Hi): вычисляется 2^{w-1}+2 проективных точек
 	  \code
-		(2^{w-1})a, (2^{w-1}+1)a, ..., (2^w-1)a, 2a;
+		(2^{w-1})a, (2^{w-1}+1)a, ..., (2^w-1)a, (2^w)a, 2a;
 	  \endcode
 	- OD (Odd Doubled): вычисляется h*2^{w-1} аффинных точек
 	  \code
@@ -1032,7 +1032,7 @@ size_t ecMulPreSOA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 
 	Определяется аффинная точка [2 * ec->f->n]b эллиптической кривой ec,
 	которая является [m]d-кратной точки a, по которой построен контейнер pre
-	с предвычисленными по схеме SO точками:
+	с предвычисленными по схеме SH точками:
 	\code
 		b <- d a.
 	\endcode
@@ -1040,8 +1040,7 @@ size_t ecMulPreSOA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 	\pre Описание группы точек в ec работоспособно.
 	\pre Контейнер pre работоспособен.
 	\pre pre->type == ec_pre_sh.
-	\pre 0 < d && d < ec->order.
-	\pre wwBitSize(d, m) делится на pre->w.
+	\pre 0 < wwBitSize(d, m) && wwBitSize(d, m) - 1 делится на pre->w.
 	\pre Координаты a лежат в базовом поле.
 	\expect Описание ec корректно.
 	\expect Точки контейнера pre корректно рассчитаны по a.
@@ -1049,14 +1048,11 @@ size_t ecMulPreSOA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 	случае.
 	\deep{stack} ecMulPreSH_deep(ec->f->n, ec->d, ec->deep, m).
 	\safe Функция регулярна по [m]d при выполнении следующих условий:
+	-	wwBitSize(d, m) < wwBitSize(ec->order, ec->f->n + 1);
 	-	функция ec->dbl регулярна: удвоение 2 a, a != O, выполняется без
 		условных переходов;
 	-	функция ec->add регулярна: сложение a + b, a != \pm b, a != O, b != O,
-		выполняется без условных переходов;
-	-	справедливо, по крайней мере, одно из условий:
-		a) ec->order mod 2^{pre->w} == ec->order mod 2^{pre->w + 1};
-		b) ec->finadd != 0 и функция ec->finadd регулярна: сложение и удвоение
-		   выполняются по одним и тем же формулам без условных переходов.
+		выполняется без условных переходов.
 */
 bool_t ecMulPreSH(
 	word b[],				/*!< [out] кратная точка */

@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2014.03.04
-\version 2026.02.24
+\version 2026.03.03
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -128,21 +128,21 @@ bool_t ecGroupIsOperable(const ec_o* ec)
 * [или прямых вычислений в аффинных координатах]
 
 В функции ecPreSI() вычисляются точки
-	[c_{w-1} ... c_1 c_0]a = \sum_{i=0}^{w-1}(1-2c_i)(2^h)^i a,
-где c_i in {0, 1}, c_{w-1} == 1. Точка [c_{w-1}...c_1 c_0]a
-размещается в массиве предвычисленных точек по индексу c_{w-1}...c_1 c_0.
+	[v_{w-1}, v_{w-2}, ..., v_0]a = \sum_{j=0}^{w-1}(1-2v_i)(2^h)^j a,
+где v_i in {0, 1}, v_{w-1} == 1. Точка [v_{w-1},...,v_0]a
+размещается в массиве предвычисленных точек по индексу v_{w-1}...v_0.
 
-Слова с_{w-1}...c_1 c_0 просматриваются как слова кода Грея: соседние
-слова отличаются только в одном бите. Если это бит номер i, то новая точка
-получается из [с_{w-1}...с_1 с_0]a:
-- добавлением точки (2(2^h)^i)a при c_i = 1; 
-- вычитанием точки (2(2^h)^i)a при c_i = 0.
+Слова v_{w-1}...v_1 v_0 просматриваются как слова кода Грея: соседние
+слова отличаются только в одном бите. Если это бит номер j, то новая точка
+получается из [v_{w-1}...v_1 v_0]a:
+- добавлением точки (2(2^h)^j)a при v_j = 1; 
+- вычитанием точки (2(2^h)^j)a при v_j = 0.
 
-Определение следующего за code = с_{w-1}...c_1 c_0 слова выполняется
+Определение следующего за v = v_{w-1}...v_1 v_0 слова выполняется
 следующим образом (см. [War03; глава 13], нумерация битов справа налево от 0):
-1. Если code содержит четное число единиц, то pos <- 0. Иначе
-   pos <- (позиция первой справа единицы) + 1.
-2. Инвертировать бит code номер pos.
+1. Если v содержит четное число единиц, то j <- 0. Иначе
+   j <- (позиция первой справа единицы) + 1.
+2. Инвертировать бит code номер j.
 
 [War03] Уоррен Генри Мл. Алгоритмические трюки для программистов,
 		М.: Издательский дом "Вильямс", 2003.
@@ -257,31 +257,35 @@ size_t ecPreSOA_deep(size_t n, size_t ec_d, size_t ec_deep)
 void ecPreSH(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec, 
 	void* stack)
 {
+	const size_t pre_count = SIZE_BIT_POS(w - 1) + 3;
 	// pre
 	ASSERT(ecIsOperable(ec));
 	ASSERT(0 < w && w < MIN2(B_PER_W, B_PER_S));
 	ASSERT(memIsDisjoint2(
-		pre, sizeof(ec_pre_t) + 
-			O_OF_W((SIZE_BIT_POS(w - 1) + 1) * ec->d * ec->f->n),
+		pre, sizeof(ec_pre_t) + O_OF_W(pre_count * ec->d * ec->f->n),
 		a, O_OF_W(2 * ec->f->n)));
-	// pre[2^{w-1}] <- 2a
-	ecDblA(ecPrePt(pre, SIZE_BIT_POS(w - 1), ec), a, ec, stack);
+	// pre[-2, -1] <- (a, 2a)
+	ecFromA(ecPrePt(pre, pre_count - 2, ec), a, ec, stack);
+	ecDblA(ecPrePt(pre, pre_count - 1, ec), a, ec, stack);
 	// вычислить малые кратные
 	if (w > 1)
 	{
 		size_t i;
 		// pre[0] <- 2^{w-1}a
-		wwCopy(ecPrePt(pre, 0, ec), ecPrePt(pre, SIZE_BIT_POS(w - 1), ec), 
+		wwCopy(ecPrePt(pre, 0, ec), ecPrePt(pre, pre_count - 1, ec), 
 			ec->d * ec->f->n);
 		for (i = 2; i < w; ++i)
 			ecDbl(ecPrePt(pre, 0, ec), ecPrePt(pre, 0, ec), ec, stack);
 		// pre[i] <- pre[i - 1] + a
-		for (i = 1; i < SIZE_BIT_POS(w - 1); ++i)
+		for (i = 1; i < pre_count - 3; ++i)
 			ecAddA(ecPrePt(pre, i, ec), ecPrePt(pre, i - 1, ec), a, ec, stack);
+		// pre[-3] <- 2 pre[0]
+		ecDbl(ecPrePt(pre, pre_count - 3, ec), ecPrePt(pre, 0, ec), ec, stack);
 	}
 	else
-		// pre[0] <- a
-		ecFromA(ecPrePt(pre, 0, ec), a, ec, stack);
+		// pre[0, 1] <- pre[-1, -2]
+		wwCopy(ecPrePt(pre, 0, ec), ecPrePt(pre, pre_count - 2, ec), 
+			2 * ec->d * ec->f->n);
 	// заполнить служебные поля
 	pre->type = ec_pre_sh;
 	pre->w = w, pre->h = 0;
@@ -583,11 +587,11 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 
 В функции ecMulPreSO() для определения кратной точки b = da при нечетной 
 кратности d используется ее представление в форме
-	d_{k-1} (2^w)^{k-1} + ... + d_1 (2^w) + d_0.
-Здесь d_i \in {\pm 1, \pm 3, ..., \pm (2^w-1)} -- ненулевые (нечетные) цифры
-со знаком (signed non-zero). Предполагается, что точка a лежит в группе
-нечетного порядка order, (2^w)^{k-1} < order < (2^w)^k. Представление SO
-предложено в [OkeTak03].
+	e_{h-1} (2^w)^{h-1} + ... + e_1 (2^w) + e_0.
+Здесь e_i \in {\pm 1, \pm 3, ..., \pm (2^w-1)} -- ненулевые нечетные цифры
+со знаком. Предполагается, что точка a лежит в группе нечетного порядка order,
+(2^w)^{h-1} < order < (2^w)^h. Представление SO предложено использовать 
+в [OkeTak03].
 
 Если кратность d четная, то она предварительно меняется на order-d. Для этого
 используется функция zzSubIf().
@@ -595,37 +599,37 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 Реализован следующий алгоритм (см. [BCL+14; p. 9-11, algorithm 1], [APS22]):
 1. Для i = 0, 1, ..., 2^{w-1}-1:
 	1) pre[i] <- (2i + 1)a.						// предвычисления: SO
-2. t <- pre[d_{k-1} / 2].
-3. Для i = k-2, ..., 2, 1:
+2. t <- pre[e_{h-1} / 2].
+3. Для i = h-2, ..., 2, 1:
 	1) t <- 2^w t;								// P <- 2P
-	1) t <- t + sgn(d_i) pre[|d_i|/2].			// P <- P + P
+	2) t <- t + sgn(e_i) pre[|e_i|/2].			// P <- P + P
 4. t <- 2^w t.
-5. t <- t + sgn(d_0) pre[|d_0|/2].				// A <- P + P
+5. t <- t + sgn(e_0) pre[|e_0|/2].				// A <- P + P
 6. Возвратить t.
 
-\remark Сложение t + sgn(d_0) pre[|d_0|/2] вынесено за рамки основного цикла
+\remark Сложение t + sgn(e_0) pre[|e_0|/2] вынесено за рамки основного цикла
 на шаге 3, потому что при этом (и только при этом) сложении может произойти
-исключительная ситуация -- совпадение операндов t и sgn(d_0) pre[|d_0|/2]
+исключительная ситуация -- совпадение операндов t и sgn(e_0) pre[|e_0|/2]
 с переключением от сложения к удвоению. Завершающее сложение выполняется
 с помощью функции интерфейса ec_finadd_i, если таковая указана в описании
 кривой. Предполагается, что функция ec_finadd_i регулярна, и тогда сложение
 и удвоение будут выполняться по одним и тем же формулам.
 
-\remark Расчет цифр d_i (см. [APS22]):
+\remark Расчет цифр e_i (см. [APS22]):
 1. Записать
-     d = d_{k-1} (2^w)^{k-1} + d_1 (2^w) + d_0,
+     d = d_{h-1} (2^w)^{h-1} + d_1 (2^w) + d_0,
    где d_i \in {0, 1, ..., 2^w-1}.
-2. (d_{h-1}, borrow) <- (d_{h-1} + (d_{h-1} % 2), d_{k-1} % 2).
-3. Для i = k-2, ...., 1, 0:
-   1) (d_i, borrow) <- (d_i - borrow * 2^w + (d_i % 2), d_i % 2).
+2. (e_{h-1}, borrow) <- (d_{h-1} + (d_{h-1} % 2), d_{h-1} % 2).
+3. Для i = h-2, ...., 1, 0:
+   1) (e_i, borrow) <- (d_i - borrow * 2^w + (d_i % 2), d_i % 2).
 
 \remark Выражение
-   borrow ? d_i : d_i - 2^w,
+   e_i = borrow ? d_i : d_i - 2^w,
 по которому определяется индекс в таблице pt, вычисляется следующим образом:
-   mask <- 2^w - 2, d_i <- d_i ^ ((0 - borrow) & mask).
-Поскольку младший разряд mask нулевой, сохраняется четность цифры d_i и эту
+   mask <- 2^w - 2, e_i <- d_i ^ ((0 - borrow) & mask).
+Поскольку младший разряд mask нулевой, в e_i переносится четность d_i, и эту
 четность можно использовать для пересчета borrow:
-  borrow <- d_i % 2.
+  borrow <- e_i % 2.
 
 В функции ecMulPreSOA() предварительно рассчитанные точки являются аффинными,
 а не проективными. Это позволяет заменить регулярные сложения P <- P + P
@@ -634,12 +638,12 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 В функции ecMulPreOD() предполагается, что аффинные точки предварительно
 рассчитаны для каждой цифры обрабатываемого скаляра d. Это позволяет
 избавиться от удвоений:
-1. Для i = 0, 1, ..., k-1 и j = 0, 1, ..., 2^{w-1}-1:
+1. Для i = 0, 1, ..., h-1 и j = 0, 1, ..., 2^{w-1}-1:
 	1) pre[i][j] <- (2^w)^i(2j + 1)a.			// предвычисления: OD
-2. t <- pre[k-1][d_{k-1}/2].
-3. Для i = k-2, ..., 2, 1:
-	1) t <- t + sgn(d_i) pre[i]t[|d_i|/2].		// P <- P + P
-4. t <- t + sgn(d_0) pre[0][|d_0|/2].			// A <- P + P
+2. t <- pre[h-1][e_{h-1}/2].
+3. Для i = h-2, ..., 2, 1:
+	1) t <- t + sgn(e_i) pre[i]t[|e_i|/2].		// P <- P + P
+4. t <- t + sgn(e_0) pre[0][|e_0|/2].			// A <- P + P
 5. Возвратить t.
 
 [OkeTak03] Okeya K., Takagi T. The width-w NAF method provides small memory
@@ -935,24 +939,28 @@ size_t ecMulPreOD_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 (см. также [HMV04; algorithm 3.44]).
 
 Для определения кратной точки b = da при нечетной кратности d используется
-ее представление в форме
-	d_{hw-1} 2^{hw-1} + d_{hw-2} 2^{hw-2} + ... + d_1 2^1 + d_0,
-где d_i \in {\pm 1}. 
+ее представление в виде
+	e_{hw-1} 2^{hw-1} + e_{hw-2} 2^{hw-2} + ... + e_1 2^1 + e_0,
+где e_i \in {\pm 1}. 
 
 Как обычно, если кратность d четная, то она предварительно меняется на
-order - d.
+order-d.
+
+Обозначения:
+* если e = (e_{hw-1},e_{hw-2},...,e_0), то 
+    e_{h,i} = (e_{(w-1)h+i},e_{(w-2)h+i},...,e_i), i = 0,1,...,h-1;
+* если v = (v_{w-1},v_{w-2},...,v_0) -- двоичный вектор, то 
+    sgn(v) = 1-2*v_{w-1}, |v| = sgn(v) > 0 ? v : ~v.
 
 Реализован следующий алгоритм:
-1. Для с_{w-1} = 0 и с_{w-2}...c_0 \in {0,1}^{w-1}:
-	1) pre[с_{w-1}с_{w-2}...c_0] = \sum_{i=0}^{w-1}(1-2c_i)(2^h)^i a.
-2. t <- pre[d_{hw-1}d_{(h(w-1)-1}... d_{h-1}].
-3. Для i = 2, 3, ..., h-1:
-	1) t <- 2 t;
-	2) t <- t + sgn(d_{hw-i})
-              pt[d_{hw-i}d_{h(w-1)-i}...d_{h-i} ^ d_{hw-i}...d_{hw-i}].
-4. t <- 2 t.
-5. t <- t + sgn(d_{hw-h}) 
-          pt[d_{hw-h}d_{h(w-1)-h)}...d_0 ^ d_{hw-h}...d_{hw-h}].
+1. Для v_{w-1} = 0 и v_{w-2},..., v_0 \in {0,1}:
+	1) pre[v_{w-1},v_{w-2},...,v_0] = \sum_{j=0}^{w-1}(1-2v_j)(2^h)^j a.
+2. t <- pre[e_{h,h-1}].
+3. t <- 2 t.
+4. Для i = h-2, h-3, ..., 1:
+	1) t <- t + sgn(e_{h,i})pt[|e_{h,i}|].
+	2) t <- 2 t.
+5. t <- t + sgn(e_{h,0})pt[|e_{h,0}|].
 6. Возвратить t.
 
 Переход от двоичного представления
@@ -1075,6 +1083,124 @@ size_t ecMulPreSI_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 {
 	return memSliceSize(
 		ecMulPreSI_local(n, ec_d, m),
+		ec_deep,
+		SIZE_MAX);
+}
+
+/*
+*******************************************************************************
+Кратная точка: метод SH
+
+В функции ecMulPreSH() определяется кратная точка b = (2^l + d)a. Используется 
+окно ширины w. Предполагается, что d < 2^l, l < bitlen(order) и w | l. Пусть
+h = l/w + 1.
+
+Скаляр 2^l+d записывается в виде
+	e_{h-1} (2^w)^{h-1} + ... + e_1 (2^w) + e_0.
+Здесь  e_i \in {2^{w-1}, \pm (2^{w-1}+1),...,\pm 2^w}, i = 0, 1,..., h-2, -- 
+ненулевые цифры с установленным старшим разрядом и e_{h-1} \in {1, 2}.
+
+Реализован следующий алгоритм:
+1. Для i = 0, 1, ..., 2^{w-1}:
+	1) pre[i] <- (2^{w-1} + i)a;				// предвычисления: SH
+	2) pre[2^{w-1} + 1] <- a;
+	3) pre[2^{w-1} + 2] <- 2a.
+2. t <- pre[2^{w-1}+e_{h-1}].
+3. Для i = h-2, ..., 1, 0:
+	1) t <- 2^w t;								// P <- 2P
+	2) t <- t + sgn(e_i) pre[|e_i|-2^{w-1}].	// P <- P + P
+4. Возвратить t.
+
+\remark Расчет цифр e_i:
+1. Записать
+     2^l + d = d_{h-1} (2^w)^{h-1} + d_1 (2^w) + d_0,
+   где d_i \in {0, 1, ..., 2^w-1}, d_{h-1} = 1.
+2. e_0 <- d_0.
+3. Для i = 0, 1, ...., h-1:
+   1) (e_i, e_{i+1}) <- e_i < 2^{w-1} ? (e_i-2^w, d_{i+1}+1) : (e_i, d_{i+1}).
+
+\remark Цифра e_i хранится в виде (w+1)-разрядного слова:
+* старший бит -- признак отрицательности;
+* младшие w+1 битов -- |e_i|-2^{w-1}.
+*******************************************************************************
+*/
+
+#define ecMulPreSH_local(n, ec_d, m)\
+/* e */		O_OF_W(2 * m),\
+/* t */		O_OF_W(ec_d * n),\
+/* pt */	O_OF_W(ec_d * n)
+
+bool_t ecMulPreSH(word b[], const ec_pre_t* pre, const ec_o* ec,
+	const word d[], size_t m, void* stack)
+{
+	register word digit;
+	register word carry;
+	size_t mb;
+	size_t pre_count;
+	size_t pt_size;
+	word mask;
+	word hi;
+	size_t i;
+	word* e;			/* [2 * m] */
+	word* t;			/* [ec->d * ec->f->n] */
+	word* pt;			/* [ec->d * ec->f->n] */
+	// pre
+	ASSERT(ecIsOperable(ec));
+	ASSERT(ecGroupIsOperable(ec));
+	ASSERT(ecPreIsOperable(pre));
+	ASSERT(pre->type == ec_pre_sh);
+	// размерности
+	mb = wwBitSize(d, m);
+	ASSERT(0 < mb && (mb - 1) % pre->w == 0);
+	pre_count = SIZE_BIT_POS(pre->w - 1) + 3;
+	pt_size = ec->d * ec->f->n;
+	mask = ~WORD_BIT_POS(pre->w);
+	hi = WORD_BIT_POS(pre->w - 1);
+	// разметить стек
+	memSlice(stack,
+		ecMulPreSH_local(ec->f->n, ec->d, m), SIZE_0, SIZE_MAX,
+		&e, &t, &pt, &stack);
+	// перекодирование
+	for (i = 0, carry  = 0; i < (mb - 1) / pre->w; ++i)
+	{
+		// digit <- d_i + carry
+		digit = wwGetBits(d, i * pre->w, pre->w);
+		digit += carry;
+		// carry <- (digit < 2^{w-1})
+		carry = wordLess01(digit, hi);
+		// digit <- carry ? digit - 2^w : digit
+		digit ^= SIZE_0 - carry;
+		digit += carry;
+		// \post w-й бит digit: признак отрицательности
+		// \post младшие w-1 битов digit: |digit - 2^w|
+		// сохранить digit в виде (признак, |digit - 2^w| - 2^{w-1})
+		wwSetBits(e, i * (pre->w + 1), pre->w + 1, digit - hi);
+	}
+	// обработать старшую цифру
+	ASSERT(wwTestBit(d, i * pre->w));
+	wwSel(t, ecPrePt(pre, pre_count - 2, ec), 2, pt_size, carry);
+	// обработать остальные цифры
+	while (i--)
+	{
+		size_t j;
+		// t <- 2^w t
+		for (j = 0; j < pre->w; ++j)
+			ecDbl(t, t, ec, stack);
+		// сложить
+		digit = wwGetBits(e, i * (pre->w + 1), pre->w + 1);
+		wwSel(pt, pre->pts, pre_count - 2, pt_size, digit & mask);
+		ecSgn(pt, digit >> pre->w, ec, stack);
+		ecAdd(t, t, pt, ec, stack);
+	}
+	// очистка и возврат
+	CLEAN2(digit, carry);
+	return ecToA(b, t, ec, stack);
+}
+
+size_t ecMulPreSH_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
+{
+	return memSliceSize(
+		ecMulPreSH_local(n, ec_d, m),
 		ec_deep,
 		SIZE_MAX);
 }
