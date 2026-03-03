@@ -292,6 +292,7 @@ void ecpPreSOJ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	word* t;			/* [3 * ec->f->n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
+	ASSERT(ecpSeemsOnA(a, ec));
 	ASSERT(0 < w && w < MIN2(B_PER_W, B_PER_S));
 	ASSERT(memIsDisjoint2(pre, 
 		sizeof(ec_pre_t) + O_OF_W(SIZE_BIT_POS(w - 1) * 3 * ec->f->n),
@@ -361,6 +362,7 @@ bool_t ecpPreSOA(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	word* zs;			/* [(SIZE_BIT_POS(w - 1) - 1) * n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
+	ASSERT(ecpSeemsOnA(a, ec));
 	ASSERT(0 < w && w < MIN2(B_PER_W, B_PER_S));
 	ASSERT(memIsDisjoint2(pre, 
 		sizeof(ec_pre_t) + O_OF_W(SIZE_BIT_POS(w - 1) * 2 * ec->f->n),
@@ -450,6 +452,7 @@ void ecpPreSHJ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec,
 	word* t;			/* [3 * ec->f->n] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
+	ASSERT(ecpSeemsOnA(a, ec));
 	ASSERT(0 < w && w < MIN2(B_PER_W, B_PER_S));
 	ASSERT(memIsDisjoint2(
 		pre, sizeof(ec_pre_t) + 
