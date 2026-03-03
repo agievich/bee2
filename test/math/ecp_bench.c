@@ -23,9 +23,12 @@
 *******************************************************************************
 Оценка производительности на заданной кривой
 
-\expect Функции ecMulPreSO(), ecMulPreSOA(), ecMulPreOD(), ecMulPreSI() и
-ecMulPreSH() регулярны на кривой ec. Поэтому скаляр d не рандомизируется,
-а вместо среднего времени замеряется минимальное.
+\expect Функции ecMulPreXX() регулярны на кривой ec. Поэтому скаляр d
+не рандомизируется, а вместо среднего времени замеряется минимальное.
+
+\remark Битовая длина скаляра функции ecMulPreSH() примерно в два раза меньше
+длин скаляров других функций. Такая логика соответствует применению
+ecMulPreSH() в реализации протоколов Bake.
 *******************************************************************************
 */
 
@@ -125,40 +128,6 @@ static bool_t ecpBenchEc(const ec_o* ec)
 				(unsigned)ticks,
 				(unsigned)tmSpeed(1, ticks));
 		}
-		// ecMulPre[SO]
-		for (w = min_w; w <= max_w; ++w)
-		{
-			ecPreSO(pre, ec->base, w, ec, stack);
-			wwSetW(d, m, 1);
-			for (i = 0, ticks = (tm_ticks_t)-1; i < reps; ++i)
-			{
-				tm_ticks_t t = tmTicks();
-				ecMulPreSO(pt, pre, ec, d, m, stack);
-				if ((t = tmTicks() - t) < ticks)
-					ticks = t;
-			}
-			printf("  ecMulPre[SO,w=%u]:         %u cycles/pt [%u pts/sec]\n",
-				(unsigned)w,
-				(unsigned)ticks,
-				(unsigned)tmSpeed(1, ticks));
-		}
-		// ecMulPre[SOA]
-		for (w = min_w; w <= max_w; ++w)
-		{
-			ecPreSOA(pre, ec->base, w, ec, stack);
-			wwSetW(d, m, 1);
-			for (i = 0, ticks = (tm_ticks_t)-1; i < reps; ++i)
-			{
-				tm_ticks_t t = tmTicks();
-				ecMulPreSOA(pt, pre, ec, d, m, stack);
-				if ((t = tmTicks() - t) < ticks)
-					ticks = t;
-			}
-			printf("  ecMulPre[SOA,w=%u]:        %u cycles/pt [%u pts/sec]\n",
-				(unsigned)w,
-				(unsigned)ticks,
-				(unsigned)tmSpeed(1, ticks));
-		}
 		// ecMulPre[OD]
 		for (w = min_w; w <= max_w; ++w)
 		{
@@ -195,23 +164,23 @@ static bool_t ecpBenchEc(const ec_o* ec)
 				(unsigned)ticks,
 				(unsigned)tmSpeed(1, ticks));
 		}
-		// ecMulPre[SH]
+		// ecPre+MulPre[SH]
 		for (w = min_w; w <= max_w; ++w)
 		{
 			const size_t mb = (B_OF_O(mo) / 2 / w) * w;
 			if (mb < w)
 				continue;
-			ecPreSH(pre, ec->base, w, ec, stack);
 			wwSetW(d, m, 1);
 			wwSetBit(d, mb, TRUE);
 			for (i = 0, ticks = (tm_ticks_t)-1; i < reps; ++i)
 			{
 				tm_ticks_t t = tmTicks();
+				ecpPreSHJ(pre, ec->base, w, ec, stack);
 				ecMulPreSH(pt, pre, ec, d, m, stack);
 				if ((t = tmTicks() - t) < ticks)
 					ticks = t;
 			}
-			printf("  ecMulPre[SH,w=%u]:         %u cycles/pt [%u pts/sec]\n",
+			printf("  ecpPre+ecMulPre[SH,w=%u]:  %u cycles/pt [%u pts/sec]\n",
 				(unsigned)w,
 				(unsigned)ticks,
 				(unsigned)tmSpeed(1, ticks));
