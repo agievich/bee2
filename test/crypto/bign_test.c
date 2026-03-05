@@ -4,22 +4,26 @@
 \brief Tests for STB 34.101.45 (bign)
 \project bee2/test
 \created 2012.08.27
-\version 2025.09.29
+\version 2026.03.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
+#include <stdio.h>
+#include <bee2/core/blob.h>
 #include <bee2/core/err.h>
 #include <bee2/core/mem.h>
 #include <bee2/core/hex.h>
 #include <bee2/core/str.h>
 #include <bee2/core/util.h>
+#include <bee2/math/ec.h>
 #include <bee2/math/ww.h>
 #include <bee2/math/zz.h>
 #include <bee2/crypto/bign.h>
 #include <bee2/crypto/belt.h>
 #include <bee2/crypto/brng.h>
+#include <crypto/bign/bign_lcl.h>
 
 /*
 *******************************************************************************
@@ -102,11 +106,130 @@ static err_t _calc_q(bign_params* params, void* state)
 
 /*
 *******************************************************************************
+Предвычисления с печатью
+*******************************************************************************
+*/
+
+static const char* ecPreTypename(ec_pre_type type)
+{
+	switch (type)
+	{
+	case ec_pre_so:
+		return "ec_pre_so";
+	case ec_pre_soa:
+		return "ec_pre_soa";
+	case ec_pre_od:
+		return "ec_pre_od";
+	case ec_pre_si:
+		return "ec_pre_si";
+	default:
+		return "unknown";
+	}
+}
+
+static err_t bignPrePrintEc(const ec_o* ec, ec_pre_type type, size_t w)
+{
+	err_t code;
+	size_t mb;
+	size_t coord_size;
+	size_t pre_count;
+	size_t h;
+	void* state;
+	ec_pre_t* pre;				/* [pre_count аффинных точек] */
+	void* stack;
+	size_t pos;
+	// размерности
+	mb = wwBitSize(ec->order, ec->f->n + 1);
+	coord_size = O_OF_W(ec->f->n);
+	if (w == 0 || (type == ec_pre_si && mb % w) || coord_size % 16)
+		return ERR_BAD_INPUT;
+	h = (type != ec_pre_soa) ? h = (mb + w - 1) / w : 0;
+	pre_count = SIZE_BIT_POS(w - 1);
+	if (type == ec_pre_od)
+		pre_count *= h;
+	// создать состояние
+	state = blobCreate2(
+		sizeof(ec_pre_t) + pre_count * 2 * coord_size,
+		utilMax(3,
+			ecPreSOA_deep(ec->f->n, ec->d, ec->deep),
+			ecPreOD_deep(ec->f->n, ec->d, ec->deep),
+			ecPreSI_deep(ec->f->n, ec->d, ec->deep, h)),
+		SIZE_MAX,
+		&pre, &stack);
+	if (state == 0)
+		return ERR_OUTOFMEMORY;
+	// предвычисления
+	switch (type)
+	{
+		case ec_pre_soa:
+			code = ecPreSOA(pre, ec->base, w, ec, stack) ? 
+				ERR_OK : ERR_BAD_PARAMS;
+			break;
+		case ec_pre_od:
+			code = ecPreOD(pre, ec->base, w, h, ec, stack) ? 
+				ERR_OK : ERR_BAD_PARAMS;
+			break;
+		case ec_pre_si:
+			code = ecPreSI(pre, ec->base, w, h, ec, stack) ? 
+				ERR_OK : ERR_BAD_PARAMS;
+			break;
+		default:
+			code = ERR_NOT_IMPLEMENTED;
+	}
+	ERR_CALL_HANDLE(code, blobClose(state));
+	// начало печати
+	printf(
+		"ec_pre_t _pre = {\n"
+        "\t%s, %u, %u,\n",
+		ecPreTypename(type), (unsigned)w, (unsigned)h);
+	// цикл по точкам
+	for (pos = 0; pos < pre_count; ++pos)
+	{
+		octet* ptr;
+		size_t i;
+		// печать точки
+		ptr = (octet*)ecPrePtA(pre, pos, ec);
+		wwTo(ptr, 2 * coord_size, ecPrePtA(pre, pos, ec));
+		for (i = 0; i < 2 * coord_size; ++i)
+		{
+			if (i % 16 == 0)
+				printf("\twwFromH16(%02X,", ptr[i]);
+			else if ((i + 1) % 16 == 0)
+				printf("%02X),\n", ptr[i]);
+			else
+				printf("%02X,", ptr[i]);
+		}
+	}
+	// завершение печати
+	printf("};\n");
+	// завершение
+	blobClose(state);
+	return code;
+}
+
+err_t bignPrePrint(const char* name, ec_pre_type type, size_t w)
+{
+	err_t code;
+	bign_params params[1];
+	ec_o* ec;
+	code = bignParamsStd(params, name);
+	ERR_CALL_CHECK(code);
+	code = bignParamsCheck(params);
+	ERR_CALL_CHECK(code);
+	code = bignEcCreate(&ec, params);
+	ERR_CALL_CHECK(code);
+	code = bignPrePrintEc(ec, type, w);
+	bignEcClose(ec);
+	return code;
+}
+
+/*
+*******************************************************************************
 Самотестирование
 
 -#	Выполняются тесты из приложения к СТБ 34.101.45.
 -#	Номера тестов соответствуют номерам таблиц приложения.
--#	Дополнительные тесты покрывают ошибки, выявленные в результате испытаний.
+-#	Дополнительные тесты покрывают ошибки, выявленные при испытаниях.
 *******************************************************************************
 */
 
