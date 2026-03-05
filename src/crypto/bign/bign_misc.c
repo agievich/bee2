@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): miscellaneous (OIDs, keys, DH)
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2026.03.03
+\version 2026.03.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -44,6 +44,7 @@ bool_t bignMulA(word b[], const word a[], const ec_o* ec, const word d[],
 	ec_pre_t* pre;			/* [pre_count проективных точек] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
+	ASSERT(wwWordSize(ec->order, ec->f->n + 1) == ec->f->n);
 	ASSERT(wwCmp(d, ec->order, ec->f->n) < 0);
 	// размерности
 	w = bignMulAWidth(B_OF_W(ec->f->n));
@@ -71,7 +72,7 @@ size_t bignMulA_deep(size_t n, size_t f_deep, size_t ec_deep)
 
 static size_t bignMulA2Width(size_t l)
 {
-	return l <= 128 ? 4 : 8;
+	return l < 128 ? 5 : 6;
 }
 
 #define bignMulA2_local(n, pre_count)\
@@ -85,19 +86,18 @@ bool_t bignMulA2(word b[], const word a[], const ec_o* ec, const word d[],
 	ec_pre_t* pre;			/* [pre_count проективных точек] */
 	// pre
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
-	ASSERT(0 < wwBitSize(d, m));
-	ASSERT(wwBitSize(d, m) < wwBitSize(ec->order, ec->f->n + 1));
-	ASSERT((wwBitSize(d, m) - 1) % 8 == 0);
+	ASSERT(wwWordSize(ec->order, ec->f->n + 1) == ec->f->n);
+	ASSERT(0 <= wwCmpW(d, m, 2) && wwCmp2(d, m, ec->order, ec->f->n) < 0);
 	// размерности
-	w = bignMulA2Width(B_OF_W(ec->f->n));
+	w = bignMulA2Width(B_OF_W(m));
 	pre_count = SIZE_BIT_POS(w - 1) + 3;
 	// разметить стек
 	memSlice(stack,
 		bignMulA2_local(ec->f->n, pre_count), SIZE_0, SIZE_MAX,
 		&pre, &stack);
-	// метод SH
-	ecpPreSHJ(pre, a, w, ec, stack);
-	return ecMulPreSH(b, pre, ec, d, m, stack);
+	// метод SO2
+	ecpPreSOJ(pre, a, w, ec, stack);
+	return ecMulPreSO2(b, pre, ec, d, m, stack);
 }
 
 size_t bignMulA2_deep(size_t n, size_t f_deep, size_t ec_deep, size_t m)
@@ -107,14 +107,15 @@ size_t bignMulA2_deep(size_t n, size_t f_deep, size_t ec_deep, size_t m)
 	return memSliceSize(
 		bignMulA2_local(n, pre_count),
 		utilMax(2,
-			ecpPreSHJ_deep(n, f_deep, ec_deep),
-			ecMulPreSH_deep(n, 3, ec_deep, m)),
+			ecpPreSOJ_deep(n, f_deep),
+			ecMulPreSO2_deep(n, 3, ec_deep, m)),
 		SIZE_MAX);
 }
 
 bool_t bignMulBase(word a[], const ec_o* ec, const word d[], void* stack)
 {
 	ASSERT(ecIsOperable(ec) && ec->d == 3);
+	ASSERT(wwWordSize(ec->order, ec->f->n + 1) == ec->f->n);
 	if (ec->pre)
 	{
 		ASSERT(ecPreIsOperable(ec->pre));

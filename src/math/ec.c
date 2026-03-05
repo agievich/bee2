@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2014.03.04
-\version 2026.03.03
+\version 2026.03.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -153,8 +153,7 @@ bool_t ecPreIsOperable(const ec_pre_t* pre)
 {
 	return memIsValid(pre, sizeof(pre)) &&
 		(pre->type == ec_pre_so || pre->type == ec_pre_soa ||
-			pre->type == ec_pre_sh || pre->type == ec_pre_od ||
-			pre->type == ec_pre_si) &&
+			pre->type == ec_pre_od || pre->type == ec_pre_si) &&
 		0 < pre->w && pre->w < MIN2(B_PER_W, B_PER_S) &&
 		((pre->type != ec_pre_od && pre->type != ec_pre_si) ^ (pre->h > 0));
 }
@@ -250,50 +249,6 @@ size_t ecPreSOA_deep(size_t n, size_t ec_d, size_t ec_deep)
 {
 	return memSliceSize(
 		ecPreSOA_local(n, ec_d),
-		ec_deep,
-		SIZE_MAX);
-}
-
-void ecPreSH(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec, 
-	void* stack)
-{
-	const size_t pre_count = SIZE_BIT_POS(w - 1) + 3;
-	// pre
-	ASSERT(ecIsOperable(ec));
-	ASSERT(0 < w && w < MIN2(B_PER_W, B_PER_S));
-	ASSERT(memIsDisjoint2(
-		pre, sizeof(ec_pre_t) + O_OF_W(pre_count * ec->d * ec->f->n),
-		a, O_OF_W(2 * ec->f->n)));
-	// pre[-2, -1] <- (a, 2a)
-	ecFromA(ecPrePt(pre, pre_count - 2, ec), a, ec, stack);
-	ecDblA(ecPrePt(pre, pre_count - 1, ec), a, ec, stack);
-	// вычислить малые кратные
-	if (w > 1)
-	{
-		size_t i;
-		// pre[0] <- 2^{w-1}a
-		wwCopy(ecPrePt(pre, 0, ec), ecPrePt(pre, pre_count - 1, ec), 
-			ec->d * ec->f->n);
-		for (i = 2; i < w; ++i)
-			ecDbl(ecPrePt(pre, 0, ec), ecPrePt(pre, 0, ec), ec, stack);
-		// pre[i] <- pre[i - 1] + a
-		for (i = 1; i < pre_count - 3; ++i)
-			ecAddA(ecPrePt(pre, i, ec), ecPrePt(pre, i - 1, ec), a, ec, stack);
-		// pre[-3] <- 2 pre[0]
-		ecDbl(ecPrePt(pre, pre_count - 3, ec), ecPrePt(pre, 0, ec), ec, stack);
-	}
-	else
-		// pre[0, 1] <- pre[-1, -2]
-		wwCopy(ecPrePt(pre, 0, ec), ecPrePt(pre, pre_count - 2, ec), 
-			2 * ec->d * ec->f->n);
-	// заполнить служебные поля
-	pre->type = ec_pre_sh;
-	pre->w = w, pre->h = 0;
-}
-
-size_t ecPreSH_deep(size_t ec_deep)
-{
-	return memSliceSize(
 		ec_deep,
 		SIZE_MAX);
 }
@@ -631,6 +586,10 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 четность можно использовать для пересчета borrow:
   borrow <- e_i % 2.
 
+В функции ecMulSO2() скаляр d делается нечетным не через замену на order-d,
+а через добавление 1. Соответственно по окончании вычислений из
+точки-результата вычитается базовая точка a.
+
 В функции ecMulPreSOA() предварительно рассчитанные точки являются аффинными,
 а не проективными. Это позволяет заменить регулярные сложения P <- P + P
 на P <- P + A и финишное сложение A <- P + P на A <- P + A.
@@ -705,7 +664,7 @@ bool_t ecMulPreSO(word b[], const ec_pre_t* pre, const ec_o* ec,
 	// обработать старшую цифру
 	pos = (mb - 1) / pre->w, pos *= pre->w;
 	digit = wwGetBits(e, pos, mb - pos);
-	wwSel(t, pre->pts, pre_count, pt_size, digit >> 1);
+	wwSel(t, pre->pts, pre_count, pt_size, (size_t)(digit >> 1));
 	borrow = WORD_1 - (digit & 1);
 	// t <- 2^w t
 	for (i = 0; i < pre->w; ++i)
@@ -716,7 +675,7 @@ bool_t ecMulPreSO(word b[], const ec_pre_t* pre, const ec_o* ec,
 		// сложить
 		digit = wwGetBits(e, pos, pre->w);
 		digit ^= (WORD_0 - borrow) & mask;
-		wwSel(pt, pre->pts, pre_count, pt_size, digit >> 1);
+		wwSel(pt, pre->pts, pre_count, pt_size, (size_t)(digit >> 1));
 		ecSgn(pt, borrow, ec, stack);
 		ecAdd(t, t, pt, ec, stack);
 		borrow = WORD_1 - (digit & 1);
@@ -728,7 +687,7 @@ bool_t ecMulPreSO(word b[], const ec_pre_t* pre, const ec_o* ec,
 	digit = wwGetBits(e, 0, pre->w);
 	ASSERT(digit & 1);
 	digit ^= (WORD_0 - borrow) & mask;
-	wwSel(pt, pre->pts, pre_count, pt_size, digit >> 1);
+	wwSel(pt, pre->pts, pre_count, pt_size, (size_t)(digit >> 1));
 	ecSgn(pt, borrow, ec, stack);
 	ret = (ec->finadd) ?
 		ec->finadd(b, t, pt, ec, stack) :
@@ -744,6 +703,88 @@ size_t ecMulPreSO_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 {
 	return memSliceSize(
 		ecMulPreSO_local(n, ec_d, m),
+		ec_deep,
+		SIZE_MAX);
+}
+
+#define ecMulPreSO2_local(n, ec_d, m)\
+/* e */		O_OF_W(m),\
+/* t */		O_OF_W(ec_d * n),\
+/* pts */	O_OF_W(2 * ec_d * n)
+
+bool_t ecMulPreSO2(word b[], const ec_pre_t* pre, const ec_o* ec,
+	const word d[], size_t m, void* stack)
+{
+	register word even;
+	register word digit;
+	register word borrow;
+	size_t mb;
+	size_t pre_count;
+	size_t pt_size;
+	size_t mask;
+	size_t pos;
+	size_t i;
+	word* e;			/* [m] */
+	word* t;			/* [ec->d * ec->f->n] */
+	word* pts;			/* [2 * ec->d * ec->f->n] */
+	word* pt;
+	// pre
+	ASSERT(ecIsOperable(ec));
+	ASSERT(ecGroupIsOperable(ec));
+	ASSERT(ecPreIsOperable(pre));
+	ASSERT(pre->type == ec_pre_so);
+	ASSERT(0 <= wwCmpW(d, m, 2) && wwCmp2(d, m, ec->order, ec->f->n + 1) < 0);
+	// размерности
+	mb = wwBitSize(d, m);
+	ASSERT(mb > pre->w);
+	pre_count = SIZE_BIT_POS(pre->w - 1);
+	pt_size = ec->d * ec->f->n;
+	mask = WORD_BIT_POS(pre->w) - 2;
+	// разметить стек
+	memSlice(stack,
+		ecMulPreSO2_local(ec->f->n, ec->d, m), SIZE_0, SIZE_MAX,
+		&e, &t, &pts, &stack);
+	pt = pts;
+	// e <- (d % 2) ? d : d + 1
+	wwCopy(e, d, m);
+	even = WORD_1 - (e[0] & 1);
+	e[0] |= 1;
+	ASSERT(zzIsOdd(e, m));
+	// обработать старшую цифру
+	pos = (mb - 1) / pre->w, pos *= pre->w;
+	digit = wwGetBits(e, pos, mb - pos);
+	wwSel(t, pre->pts, pre_count, pt_size, (size_t)(digit >> 1));
+	borrow = WORD_1 - (digit & 1);
+	// обработать остальные цифры
+	while (pos)
+	{
+		pos -= pre->w;
+		// t <- 2^w t
+		for (i = 0; i < pre->w; ++i)
+			ecDbl(t, t, ec, stack);
+		// сложить
+		digit = wwGetBits(e, pos, pre->w);
+		digit ^= (WORD_0 - borrow) & mask;
+		wwSel(pt, pre->pts, pre_count, pt_size, (size_t)(digit >> 1));
+		ecSgn(pt, borrow, ec, stack);
+		ecAdd(t, t, pt, ec, stack);
+		borrow = WORD_1 - (digit & 1);
+	}
+	// pts[0, 1] <- (t, t - a)
+	wwCopy(ecPt(pts, 0, ec), t, pt_size);
+	ecNeg(ecPt(pts, 1, ec), ecPrePt(pre, 0, ec), ec, stack);
+	ecAdd(ecPt(pts, 1, ec), t, ecPt(pts, 1, ec), ec, stack);
+	// t <- pts[even]
+	wwSel(t, pts, 2, pt_size, (size_t)even);
+	// очистка и возврат
+	CLEAN3(even, digit, borrow);
+	return ecToA(b, t, ec, stack);
+}
+
+size_t ecMulPreSO2_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
+{
+	return memSliceSize(
+		ecMulPreSO2_local(n, ec_d, m),
 		ec_deep,
 		SIZE_MAX);
 }
@@ -794,7 +835,7 @@ bool_t ecMulPreSOA(word b[], const ec_pre_t* pre, const ec_o* ec,
 	// обработать старшую цифру
 	pos = (mb - 1) / pre->w, pos *= pre->w;
 	digit = wwGetBits(e, pos, mb - pos);
-	wwSel(pt, pre->pts, pre_count, pt_size, digit >> 1);
+	wwSel(pt, pre->pts, pre_count, pt_size, (size_t)(digit >> 1));
 	borrow = WORD_1 - (digit & 1);
 	// t <- 2^{w-1} pt
 	if (pre->w > 1)
@@ -809,7 +850,7 @@ bool_t ecMulPreSOA(word b[], const ec_pre_t* pre, const ec_o* ec,
 		// удвоить со сложением
 		digit = wwGetBits(e, pos, pre->w);
 		digit ^= (WORD_0 - borrow) & mask;
-		wwSel(pt, pre->pts, pre_count, pt_size, digit >> 1);
+		wwSel(pt, pre->pts, pre_count, pt_size, (size_t)(digit >> 1));
 		ecSgnA(pt, borrow, ec, stack);
 		ecDblAddA(t, t, pt, ec, stack);
 		borrow = WORD_1 - (digit & 1);
@@ -823,7 +864,7 @@ bool_t ecMulPreSOA(word b[], const ec_pre_t* pre, const ec_o* ec,
 	digit = wwGetBits(e, 0, pre->w);
 	ASSERT(digit & 1);
 	digit ^= (WORD_0 - borrow) & mask;
-	wwSel(pt, pre->pts, pre_count, pt_size, digit >> 1);
+	wwSel(pt, pre->pts, pre_count, pt_size, (size_t)(digit >> 1));
 	ecSgnA(pt, borrow, ec, stack);
 	ret = (ec->finadda) ?
 		ec->finadda(b, t, pt, ec, stack) :
@@ -892,7 +933,7 @@ bool_t ecMulPreOD(word b[], const ec_pre_t* pre, const ec_o* ec,
 	pos *= pre->w;
 	// обработать старшую цифру
 	digit = wwGetBits(e, pos, mb - pos);
-	wwSel(pt, row, row_count, pt_size, digit >> 1);
+	wwSel(pt, row, row_count, pt_size, (size_t)(digit >> 1));
 	ecFromA(t, pt, ec, stack);
 	borrow = WORD_1 - (digit & 1);
 	// обработать остальные цифры
@@ -901,7 +942,7 @@ bool_t ecMulPreOD(word b[], const ec_pre_t* pre, const ec_o* ec,
 		digit = wwGetBits(e, pos, pre->w);
 		digit ^= (WORD_0 - borrow) & mask;
 		row -= row_count * pt_size;
-		wwSel(pt, row, row_count, pt_size, digit >> 1);
+		wwSel(pt, row, row_count, pt_size, (size_t)(digit >> 1));
 		ecSgnA(pt, borrow, ec, stack);
 		ecAddA(t, t, pt, ec, stack);
 		borrow = WORD_1 - (digit & 1);
@@ -910,7 +951,7 @@ bool_t ecMulPreOD(word b[], const ec_pre_t* pre, const ec_o* ec,
 	digit = wwGetBits(e, 0, pre->w);
 	ASSERT(digit & 1);
 	digit ^= (WORD_0 - borrow) & mask;
-	wwSel(pt, pre->pts, row_count, pt_size, digit >> 1);
+	wwSel(pt, pre->pts, row_count, pt_size, (size_t)(digit >> 1));
 	ecSgnA(pt, borrow, ec, stack);
 	ret = (ec->finadda) ?
 		ec->finadda(b, t, pt, ec, stack) :
@@ -1044,7 +1085,7 @@ bool_t ecMulPreSI(word b[], const ec_pre_t* pre, const ec_o* ec,
 		digit <<= 1, digit ^= (word)wwTestBit(e, mb - i * pre->h - 1);
 	ASSERT((digit & mask) == digit);
 	// обработать старшую цифру
-	wwSel(pt, pre->pts, pre_count, pt_size, digit);
+	wwSel(pt, pre->pts, pre_count, pt_size,( size_t)digit);
 	ecFromA(t, pt, ec, stack);
 	// обработать остальные цифры
 	for (pos = 2; pos < pre->h; ++pos)
@@ -1055,7 +1096,7 @@ bool_t ecMulPreSI(word b[], const ec_pre_t* pre, const ec_o* ec,
 			digit <<= 1, digit ^= (word)wwTestBit(e, mb - i * pre->h - pos);
 		digit ^= (WORD_0 - hi) & mask;
 		// удвоить и сложить
-		wwSel(pt, pre->pts, pre_count, pt_size, digit);
+		wwSel(pt, pre->pts, pre_count, pt_size, (size_t)digit);
 		ecSgnA(pt, hi, ec, stack);
 		ecDblAddA(t, t, pt, ec, stack);
 	}
@@ -1067,7 +1108,7 @@ bool_t ecMulPreSI(word b[], const ec_pre_t* pre, const ec_o* ec,
 		digit <<= 1, digit ^= (word)wwTestBit(e, mb - i * pre->h - pos);
 	digit ^= (WORD_0 - hi) & mask;
 	// финишное сложение
-	wwSel(pt, pre->pts, pre_count, pt_size, digit);
+	wwSel(pt, pre->pts, pre_count, pt_size, (size_t)digit);
 	ecSgnA(pt, hi, ec, stack);
 	ret = (ec->finadda) ?
 		ec->finadda(b, t, pt, ec, stack) :
@@ -1083,124 +1124,6 @@ size_t ecMulPreSI_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
 {
 	return memSliceSize(
 		ecMulPreSI_local(n, ec_d, m),
-		ec_deep,
-		SIZE_MAX);
-}
-
-/*
-*******************************************************************************
-Кратная точка: метод SH
-
-В функции ecMulPreSH() определяется кратная точка b = (2^l + d)a. Используется 
-окно ширины w. Предполагается, что d < 2^l, l < bitlen(order) и w | l. Пусть
-h = l/w + 1.
-
-Скаляр 2^l+d записывается в виде
-	e_{h-1} (2^w)^{h-1} + ... + e_1 (2^w) + e_0.
-Здесь  e_i \in {2^{w-1}, \pm (2^{w-1}+1),...,\pm 2^w}, i = 0, 1,..., h-2, -- 
-ненулевые цифры с установленным старшим разрядом и e_{h-1} \in {1, 2}.
-
-Реализован следующий алгоритм:
-1. Для i = 0, 1, ..., 2^{w-1}:
-	1) pre[i] <- (2^{w-1} + i)a;				// предвычисления: SH
-	2) pre[2^{w-1} + 1] <- a;
-	3) pre[2^{w-1} + 2] <- 2a.
-2. t <- pre[2^{w-1}+e_{h-1}].
-3. Для i = h-2, ..., 1, 0:
-	1) t <- 2^w t;								// P <- 2P
-	2) t <- t + sgn(e_i) pre[|e_i|-2^{w-1}].	// P <- P + P
-4. Возвратить t.
-
-\remark Расчет цифр e_i:
-1. Записать
-     2^l + d = d_{h-1} (2^w)^{h-1} + d_1 (2^w) + d_0,
-   где d_i \in {0, 1, ..., 2^w-1}, d_{h-1} = 1.
-2. e_0 <- d_0.
-3. Для i = 0, 1, ...., h-1:
-   1) (e_i, e_{i+1}) <- e_i < 2^{w-1} ? (e_i-2^w, d_{i+1}+1) : (e_i, d_{i+1}).
-
-\remark Цифра e_i хранится в виде (w+1)-разрядного слова:
-* старший бит -- признак отрицательности;
-* младшие w+1 битов -- |e_i|-2^{w-1}.
-*******************************************************************************
-*/
-
-#define ecMulPreSH_local(n, ec_d, m)\
-/* e */		O_OF_W(2 * m),\
-/* t */		O_OF_W(ec_d * n),\
-/* pt */	O_OF_W(ec_d * n)
-
-bool_t ecMulPreSH(word b[], const ec_pre_t* pre, const ec_o* ec,
-	const word d[], size_t m, void* stack)
-{
-	register word digit;
-	register word carry;
-	size_t mb;
-	size_t pre_count;
-	size_t pt_size;
-	word mask;
-	word hi;
-	size_t i;
-	word* e;			/* [2 * m] */
-	word* t;			/* [ec->d * ec->f->n] */
-	word* pt;			/* [ec->d * ec->f->n] */
-	// pre
-	ASSERT(ecIsOperable(ec));
-	ASSERT(ecGroupIsOperable(ec));
-	ASSERT(ecPreIsOperable(pre));
-	ASSERT(pre->type == ec_pre_sh);
-	// размерности
-	mb = wwBitSize(d, m);
-	ASSERT(0 < mb && (mb - 1) % pre->w == 0);
-	pre_count = SIZE_BIT_POS(pre->w - 1) + 3;
-	pt_size = ec->d * ec->f->n;
-	mask = ~WORD_BIT_POS(pre->w);
-	hi = WORD_BIT_POS(pre->w - 1);
-	// разметить стек
-	memSlice(stack,
-		ecMulPreSH_local(ec->f->n, ec->d, m), SIZE_0, SIZE_MAX,
-		&e, &t, &pt, &stack);
-	// перекодирование
-	for (i = 0, carry  = 0; i < (mb - 1) / pre->w; ++i)
-	{
-		// digit <- d_i + carry
-		digit = wwGetBits(d, i * pre->w, pre->w);
-		digit += carry;
-		// carry <- (digit < 2^{w-1})
-		carry = wordLess01(digit, hi);
-		// digit <- carry ? digit - 2^w : digit
-		digit ^= SIZE_0 - carry;
-		digit += carry;
-		// \post w-й бит digit: признак отрицательности
-		// \post младшие w-1 битов digit: |digit - 2^w|
-		// сохранить digit в виде (признак, |digit - 2^w| - 2^{w-1})
-		wwSetBits(e, i * (pre->w + 1), pre->w + 1, digit - hi);
-	}
-	// обработать старшую цифру
-	ASSERT(wwTestBit(d, i * pre->w));
-	wwSel(t, ecPrePt(pre, pre_count - 2, ec), 2, pt_size, carry);
-	// обработать остальные цифры
-	while (i--)
-	{
-		size_t j;
-		// t <- 2^w t
-		for (j = 0; j < pre->w; ++j)
-			ecDbl(t, t, ec, stack);
-		// сложить
-		digit = wwGetBits(e, i * (pre->w + 1), pre->w + 1);
-		wwSel(pt, pre->pts, pre_count - 2, pt_size, digit & mask);
-		ecSgn(pt, digit >> pre->w, ec, stack);
-		ecAdd(t, t, pt, ec, stack);
-	}
-	// очистка и возврат
-	CLEAN2(digit, carry);
-	return ecToA(b, t, ec, stack);
-}
-
-size_t ecMulPreSH_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m)
-{
-	return memSliceSize(
-		ecMulPreSH_local(n, ec_d, m),
 		ec_deep,
 		SIZE_MAX);
 }

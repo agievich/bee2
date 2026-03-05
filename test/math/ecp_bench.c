@@ -4,7 +4,7 @@
 \brief Benchmarks for elliptic curves over prime fields
 \project bee2/test
 \created 2013.10.17
-\version 2026.03.03
+\version 2026.03.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -26,9 +26,9 @@
 \expect Функции ecMulPreXX() регулярны на кривой ec. Поэтому скаляр d
 не рандомизируется, а вместо среднего времени замеряется минимальное.
 
-\remark Битовая длина скаляра функции ecMulPreSH() примерно в два раза меньше
+\remark Битовая длина скаляра функции ecMulPreSO2() примерно в два раза меньше
 длин скаляров других функций. Такая логика соответствует применению
-ecMulPreSH() в реализации протоколов Bake.
+ecMulPreSO2() в реализации протоколов Bake.
 *******************************************************************************
 */
 
@@ -41,8 +41,7 @@ static bool_t ecpBenchEc(const ec_o* ec)
 	const size_t max_w = 6;
 	const size_t min_h = (B_OF_O(mo) + max_w - 1) / max_w;
 	const size_t max_h = (B_OF_O(mo) + min_w - 1) / min_w;
-	const size_t max_pre_count = 
-		MAX2(min_h * SIZE_BIT_POS(max_w - 1), SIZE_BIT_POS(max_w - 1) + 3);
+	const size_t max_pre_count = min_h * SIZE_BIT_POS(max_w - 1);
 	const size_t reps = 200;
 	void* state;
 	octet* combo_state;		/* [prngCOMBO_keep()] */
@@ -56,20 +55,19 @@ static bool_t ecpBenchEc(const ec_o* ec)
 		O_OF_W(2 * n),
 		O_OF_W(m),
 		sizeof(ec_pre_t) + O_OF_W(max_pre_count * ec->d * n),
-		utilMax(13,
+		utilMax(12,
 			ecMulA_deep(n, ec->d, ec->deep, m),
 			ecPreSO_deep(n, ec->d, ec->deep),
 			ecPreSOA_deep(n, ec->d, ec->deep),
 			ecPreOD_deep(n, ec->d, ec->deep),
 			ecPreSI_deep(n, ec->d, ec->deep, max_h),
-			ecPreSH_deep(ec->deep),
 			ecpPreSOJ_deep(n, ec->f->deep),
 			ecpPreSOA_deep(n, ec->f->deep, max_w),
 			ecMulPreSO_deep(n, ec->d, ec->deep, m),
+			ecMulPreSO2_deep(n, ec->d, ec->deep, m),
 			ecMulPreSOA_deep(n, ec->d, ec->deep, m),
 			ecMulPreOD_deep(n, ec->d, ec->deep, m),
-			ecMulPreSI_deep(n, ec->d, ec->deep, m),
-			ecMulPreSH_deep(n, ec->d, ec->deep, m)),
+			ecMulPreSI_deep(n, ec->d, ec->deep, m)),
 		SIZE_MAX,
 		&combo_state, &pt, &d, &pre, &stack);
 	if (state == 0)
@@ -107,6 +105,27 @@ static bool_t ecpBenchEc(const ec_o* ec)
 					ticks = t;
 			}
 			printf("  ecpPre+ecMulPre[SO,w=%u]:  %u cycles/pt [%u pts/sec]\n",
+				(unsigned)w,
+				(unsigned)ticks,
+				(unsigned)tmSpeed(1, ticks));
+		}
+		// ecPre+MulPre[SO2]
+		for (w = min_w; w <= max_w; ++w)
+		{
+			const size_t mb = (B_OF_O(mo) / 2 / w) * w;
+			if (mb < w)
+				continue;
+			wwSetW(d, m, 1);
+			wwSetBit(d, mb, TRUE);
+			for (i = 0, ticks = (tm_ticks_t)-1; i < reps; ++i)
+			{
+				tm_ticks_t t = tmTicks();
+				ecpPreSOJ(pre, ec->base, w, ec, stack);
+				ecMulPreSO2(pt, pre, ec, d, m, stack);
+				if ((t = tmTicks() - t) < ticks)
+					ticks = t;
+			}
+			printf("  ecpPre+ecMulPre[SO2,w=%u]: %u cycles/pt [%u pts/sec]\n",
 				(unsigned)w,
 				(unsigned)ticks,
 				(unsigned)tmSpeed(1, ticks));
@@ -160,27 +179,6 @@ static bool_t ecpBenchEc(const ec_o* ec)
 					ticks = t;
 			}
 			printf("  ecMulPre[SI,w=%u]:         %u cycles/pt [%u pts/sec]\n",
-				(unsigned)w,
-				(unsigned)ticks,
-				(unsigned)tmSpeed(1, ticks));
-		}
-		// ecPre+MulPre[SH]
-		for (w = min_w; w <= max_w; ++w)
-		{
-			const size_t mb = (B_OF_O(mo) / 2 / w) * w;
-			if (mb < w)
-				continue;
-			wwSetW(d, m, 1);
-			wwSetBit(d, mb, TRUE);
-			for (i = 0, ticks = (tm_ticks_t)-1; i < reps; ++i)
-			{
-				tm_ticks_t t = tmTicks();
-				ecpPreSHJ(pre, ec->base, w, ec, stack);
-				ecMulPreSH(pt, pre, ec, d, m, stack);
-				if ((t = tmTicks() - t) < ticks)
-					ticks = t;
-			}
-			printf("  ecpPre+ecMulPre[SH,w=%u]:  %u cycles/pt [%u pts/sec]\n",
 				(unsigned)w,
 				(unsigned)ticks,
 				(unsigned)tmSpeed(1, ticks));

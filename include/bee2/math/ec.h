@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2012.04.19
-\version 2026.03.02
+\version 2026.03.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -485,7 +485,6 @@ typedef enum
 {
 	ec_pre_so = 1,		/*!< схема SO */
 	ec_pre_soa, 		/*!< схема SOA */
-	ec_pre_sh,	 		/*!< схема SH */
 	ec_pre_od,	 		/*!< схема OD */
 	ec_pre_si,	 		/*!< схема SI */
 } ec_pre_type;
@@ -503,10 +502,6 @@ typedef enum
 	- SOA (Small Odd Affine): вычисляется 2^{w-1} аффинных точек
 	  \code
 		a, 3a, ..., (2^w-1)a;
-	  \endcode
-	- SH (Small Hi): вычисляется 2^{w-1}+2 проективных точек
-	  \code
-		(2^{w-1})a, (2^{w-1}+1)a, ..., (2^w-1)a, (2^w)a, 2a;
 	  \endcode
 	- OD (Odd Doubled): вычисляется h*2^{w-1} аффинных точек
 	  \code
@@ -817,31 +812,6 @@ bool_t ecPreSOA(
 
 size_t ecPreSOA_deep(size_t n, size_t ec_d, size_t ec_deep);
 
-/*!	\brief Предвычисления по схеме SH
-
-	На эллиптической кривой ec выполняются предвычисления по схеме SH
-	с аффинной точкой [2 * ec->f->n]a и окном шириной w. Результат сохраняется
-	в контейнере pre. 
-	\pre Описание ec работоспособно.
-	\pre 0 < w && w < MIN2(B_PER_W, B_PER_S).
-	\pre memIsValid(pre, sizeof(ec_pre_t) +
-		O_OF_W(SIZE_BIT_POS(w - 1) * 2 * ec->f->n)).
-	\expect Описание ec корректно.
-	\expect Точка a лежит на ec.
-	\return TRUE, если среди предвычисленных точек нет O, и FALSE в противном
-	случае.
-	\deep{stack} ecPreSH_deep(ec->deep).
-*/
-void ecPreSH(
-	ec_pre_t* pre,				/*!< [out] предвычисленные точки */
-	const word a[],				/*!< [in] исходная точка */
-	size_t w,					/*!< [in] ширина окна */
-	const ec_o* ec,				/*!< [in] описание кривой */
-	void* stack					/*!< [in] вспомогательная память */
-);
-
-size_t ecPreSH_deep(size_t ec_deep);
-
 /*!	\brief Предвычисления по схеме OD
 
 	На эллиптической кривой ec выполняются предвычисления по схеме OD
@@ -930,7 +900,7 @@ bool_t ecMulA(
 
 size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 
-/*!	\brief Кратная точка с предвычислениями по схеме SO
+/*!	\brief Кратная точка по методу SO
 
 	Определяется аффинная точка [2 * ec->f->n]b эллиптической кривой ec, 
 	которая является [m]d-кратной точки a, по которой построен контейнер pre
@@ -944,6 +914,7 @@ size_t ecMulA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 	\pre pre->type == ec_pre_so.
 	\pre wwWordSize(ec->order, ec->f->n + 1) == m.
 	\pre wwBitSize(ec->order, m) > pre->w.
+	\pre zzIsOdd(ec->order, m).
 	\pre d < ec->order.
 	\expect Описание ec корректно.
 	\expect Точки контейнера pre корректно рассчитаны по a.
@@ -973,7 +944,48 @@ bool_t ecMulPreSO(
 
 size_t ecMulPreSO_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 
-/*!	\brief Кратная точка с предвычислениями по схеме SOA
+/*!	\brief Кратная точка по методу SO2
+
+	Определяется аффинная точка [2 * ec->f->n]b эллиптической кривой ec,
+	которая является [m]d-кратной точки a, по которой построен контейнер pre
+	с предвычисленными по схеме SO точками:
+	\code
+		b <- d a.
+	\endcode
+	\pre Описание ec работоспособно.
+	\pre Описание группы точек в ec работоспособно.
+	\pre Контейнер pre работоспособен.
+	\pre pre->type == ec_pre_so.
+	\pre wwBitSize(d, m) > pre->w.
+	\pre 2 <= d.
+	\expect Описание ec корректно.
+	\expect Точки контейнера pre корректно рассчитаны по a.
+	\return TRUE, если кратная точка отличается от O, и FALSE в противном
+	случае.
+	\deep{stack} ecMulPreSO2_deep(ec->f->n, ec->d, ec->deep, m).
+	\safe Функция регулярна по [m]d при фиксированной битовой длине d, если
+		выполнены следующие условия:
+	-	функция ec->dbl регулярна: удвоение 2 a, a != O, выполняется без
+		условных переходов;
+	-	функция ec->add регулярна: сложение a + b, a != \pm b, a != O, b != O,
+		выполняется без условных переходов;
+	-	функция ec->toa регулярна: преобразование в аффинную точку выполняется
+		без условных переходов;
+	-	zzIsOdd(ec->order, m);
+	-	2^{wwBitSize(d, m) + 1} < (ec->order + 3)/2 - 2^{pre->w}.
+*/
+bool_t ecMulPreSO2(
+	word b[],				/*!< [out] кратная точка */
+	const ec_pre_t* pre,	/*!< [in] предвычисленные точки */
+	const ec_o* ec,			/*!< [in] описание кривой */
+	const word d[],			/*!< [in] кратность */
+	size_t m,				/*!< [in] длина d в машинных словах */
+	void* stack				/*!< [in] вспомогательная память */
+);
+
+size_t ecMulPreSO2_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
+
+/*!	\brief Кратная точка по методу SOA
 
 	Определяется аффинная точка [2 * ec->f->n]b эллиптической кривой ec,
 	которая является [m]d-кратной точки a, по которой построен контейнер pre
@@ -987,6 +999,7 @@ size_t ecMulPreSO_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 	\pre pre->type == ec_pre_soa.
 	\pre wwWordSize(ec->order, ec->f->n + 1) == m.
 	\pre wwBitSize(ec->order, m) > pre->w.
+	\pre zzIsOdd(ec->order, m).
 	\pre d < ec->order.
 	\expect Описание ec корректно.
 	\expect Точки контейнера pre корректно рассчитаны по a.
@@ -1020,43 +1033,7 @@ bool_t ecMulPreSOA(
 
 size_t ecMulPreSOA_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 
-/*!	\brief Кратная точка с предвычислениями по схеме SH
-
-	Определяется аффинная точка [2 * ec->f->n]b эллиптической кривой ec,
-	которая является [m]d-кратной точки a, по которой построен контейнер pre
-	с предвычисленными по схеме SH точками:
-	\code
-		b <- d a.
-	\endcode
-	\pre Описание ec работоспособно.
-	\pre Описание группы точек в ec работоспособно.
-	\pre Контейнер pre работоспособен.
-	\pre pre->type == ec_pre_sh.
-	\pre 0 < wwBitSize(d, m) && wwBitSize(d, m) - 1 делится на pre->w.
-	\expect Описание ec корректно.
-	\expect Точки контейнера pre корректно рассчитаны по a.
-	\return TRUE, если кратная точка отличается от O, и FALSE в противном
-	случае.
-	\deep{stack} ecMulPreSH_deep(ec->f->n, ec->d, ec->deep, m).
-	\safe Функция регулярна по [m]d при выполнении следующих условий:
-	-	wwBitSize(d, m) < wwBitSize(ec->order, ec->f->n + 1);
-	-	функция ec->dbl регулярна: удвоение 2 a, a != O, выполняется без
-		условных переходов;
-	-	функция ec->add регулярна: сложение a + b, a != \pm b, a != O, b != O,
-		выполняется без условных переходов.
-*/
-bool_t ecMulPreSH(
-	word b[],				/*!< [out] кратная точка */
-	const ec_pre_t* pre,	/*!< [in] предвычисленные точки */
-	const ec_o* ec,			/*!< [in] описание кривой */
-	const word d[],			/*!< [in] кратность */
-	size_t m,				/*!< [in] длина d в машинных словах */
-	void* stack				/*!< [in] вспомогательная память */
-);
-
-size_t ecMulPreSH_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
-
-/*!	\brief Кратная точка с предвычислениями по схеме OD
+/*!	\brief Кратная точка по методу OD
 
 	Определяется аффинная точка [2 * ec->f->n]b эллиптической кривой ec,
 	которая является [m]d-кратной точки a, по которой построен контейнер pre
@@ -1070,6 +1047,7 @@ size_t ecMulPreSH_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 	\pre pre->type == ec_pre_od.
 	\pre wwWordSize(ec->order, ec->f->n + 1) == m.
 	\pre wwBitSize(ec->order, m) > pre->w.
+	\pre zzIsOdd(ec->order, m).
 	\pre d < ec->order.
 	\pre pre->w * pre->h >= wwBitSize(ec->order, m).
 	\expect Описание ec корректно.
@@ -1102,7 +1080,7 @@ bool_t ecMulPreOD(
 
 size_t ecMulPreOD_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 
-/*!	\brief Кратная точка с предвычислениями по схеме SI
+/*!	\brief Кратная точка по методу SI
 
 	Определяется аффинная точка [2 * ec->f->n]b эллиптической кривой ec,
 	которая является [m]d-кратной точки a, по которой построен контейнер pre
@@ -1117,6 +1095,7 @@ size_t ecMulPreOD_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 	\pre wwWordSize(ec->order, ec->f->n + 1) == m.
 	\pre pre->w < wwBitSize(ec->order, m).
 	\pre wwBitSize(ec->order, m) <= pre->w * pre->h.
+	\pre zzIsOdd(ec->order, m).
 	\pre d < ec->order.
 	\expect Описание ec корректно.
 	\expect Точки контейнера pre корректно рассчитаны по a.
