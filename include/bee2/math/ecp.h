@@ -4,7 +4,7 @@
 \brief Elliptic curves over prime fields
 \project bee2 [cryptographic library]
 \created 2012.06.24
-\version 2026.02.24
+\version 2026.03.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -321,31 +321,6 @@ bool_t ecpPreSOA(
 );
 
 size_t ecpPreSOA_deep(size_t n, size_t f_deep, size_t w);
-
-/*!	\brief Предвычисления по схеме SH
-
-	На эллиптической кривой ec выполняются предвычисления по схеме SH
-	с аффинной точкой [2 * ec->f->n]a и окном шириной w. Используются 
-	якобиевы координаты. Результат сохраняется в контейнере pre. 
-	\pre Описание ec работоспособно.
-	\pre Координаты a лежат в базовом поле.
-	\pre 0 < w && w < MIN2(B_PER_W, B_PER_S).
-	\pre memIsValid(pre, sizeof(ec_pre_t) + 
-		O_OF_W((SIZE_BIT_POS(w - 1) + 1) * 3 * ec->f->n)).
-	\expect Описание ec корректно.
-	\expect В ec установлены якобиевы координаты.
-	\expect Точка a лежит на ec.
-	\deep{stack} ecPreSHJ_deep(ec->f->n, ec->d, ec->deep).
-*/
-void ecpPreSHJ(
-	ec_pre_t* pre,			/*!< [out] предвычисленные точки */
-	const word a[],			/*!< [in] исходная точка */
-	size_t w,				/*!< [in] ширина окна */
-	const struct ec_o* ec,	/*!< [in] описание эллиптической кривой */
-	void* stack				/*!< [in] вспомогательная память */
-);
-
-size_t ecpPreSHJ_deep(size_t n, size_t f_deep, size_t ec_deep);
 
 #ifdef __cplusplus
 } /* extern "C" */

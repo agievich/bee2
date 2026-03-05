@@ -4,7 +4,7 @@
 \brief Tests for elliptic curves over prime fields
 \project bee2/test
 \created 2017.05.29
-\version 2026.03.03
+\version 2026.03.05
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -682,12 +682,10 @@ static bool_t ecPreChecksum(word a[], const ec_pre_t* pre, u32 seed,
 	prngCOMBOStart(state, seed);
 	// число предвычисленных точек
 	count = SIZE_BIT_POS(pre->w - 1);
-	if (pre->type == ec_pre_sh)
-		count += 3;
-	else if (pre->type == ec_pre_so)
+	if (pre->type == ec_pre_so)
 		count *= pre->h;
 	// проективные предвычисленные точки?
-	if (pre->type == ec_pre_so || pre->type == ec_pre_sh)
+	if (pre->type == ec_pre_so)
 	{
 		wwCopy(t1, ecPrePt(pre, 0, ec), ec->d * ec->f->n);
 		for (i = 1; i < count; ++i)
@@ -736,7 +734,7 @@ static bool_t ecpTestEc(const ec_o* ec)
 	const size_t n = ec->f->n;
 	const size_t min_w = 1;
 	const size_t max_w = 6;
-	const size_t max_pre_count = SIZE_BIT_POS(max_w - 1) + 3;
+	const size_t max_pre_count = SIZE_BIT_POS(max_w - 1);
 	// состояние
 	void* state;
 	ec_pre_t* pre;	/* [max_pre_count проективных точек] */
@@ -752,7 +750,7 @@ static bool_t ecpTestEc(const ec_o* ec)
 		O_OF_W(ec->d * n),
 		O_OF_W(ec->d * n),
 		O_OF_W(n + 1),
-		utilMax(17,
+		utilMax(15,
 			ec->deep,
 			ecpIsValid_deep(n, ec->f->deep),
 			ecpGroupSeemsValid_deep(n, ec->f->deep),
@@ -767,8 +765,6 @@ static bool_t ecpTestEc(const ec_o* ec)
 			ecPreSOA_deep(n, ec->d, ec->deep),
 			ecpPreSOA_deep(n, ec->f->deep, max_w),
 			ecpSmallMultA_deep(n, ec->f->deep, max_w),
-			ecPreSH_deep(ec->deep),
-			ecpPreSHJ_deep(n, ec->f->deep, ec->deep),
 			ecPreChecksum_deep(n, ec->d, ec->deep)),
 		SIZE_MAX,
 		&pre, &pt0, &pt1, &d, &stack);
@@ -853,23 +849,6 @@ static bool_t ecpTestEc(const ec_o* ec)
 		if (w < 3)
 			continue;
 		ecpSmallMultA(pre, ec->base, w, ec, stack);
-		if (ecPreChecksum(pt1, pre, seed, ec, stack) != nz ||
-			nz && !wwEq(pt0, pt1, 2 * n))
-		{
-			blobClose(state);
-			return FALSE;
-		}
-	}
-	// предвычисления: схема SH
-	for (w = min_w; w <= max_w; ++w)
-	{
-		const u32 seed = 43;
-		bool_t nz;
-		// эталонная контрольная сумма
-		ecPreSH(pre, ec->base, w, ec, stack);
-		nz = ecPreChecksum(pt0, pre, seed, ec, stack);
-		// проверить ecpPreSHJ()
-		ecpPreSHJ(pre, ec->base, w, ec, stack);
 		if (ecPreChecksum(pt1, pre, seed, ec, stack) != nz ||
 			nz && !wwEq(pt0, pt1, 2 * n))
 		{

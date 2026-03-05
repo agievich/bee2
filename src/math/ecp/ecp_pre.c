@@ -4,7 +4,7 @@
 \brief Elliptic curves over prime fields: precomputations
 \project bee2 [cryptographic library]
 \created 2021.07.18
-\version 2026.03.03
+\version 2026.03.05
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -425,82 +425,5 @@ size_t ecpPreSOA_deep(size_t n, size_t f_deep, size_t w)
 			ecpIDblAJ_deep(n, f_deep),
 			ecpReaddJ_deep(n, f_deep),
 			qrInvBatch_deep(n, f_deep, SIZE_BIT_POS(w - 1) - 1)),
-		SIZE_MAX);
-}
-
-/*
-*******************************************************************************
-Предвычисления: схема SH, якобиевы координаты
-
-Алгоритм (w > 1):
-1. pre[2^{w-1}+1] <- a.					// J <- A
-2. pre[2^{w-1}+2] <- 2a.				// J <- 2A
-3. pre[0] <- 2^{w-2}pre[2^{w-1}].		// J <- 2J
-4. t <- a: t -- якобиева точка, Z(t) = Z(pre[0]).
-5. Для i = 1, 2, ..., 2^{w-1}:
-   1) pre[i] <- t + pre[i-1].			// JJ <- J + J, с обновлением t
-*******************************************************************************
-*/
-
-#define ecpPreSHJ_local(n)\
-/* t */		O_OF_W(3 * n)
-
-void ecpPreSHJ(ec_pre_t* pre, const word a[], size_t w, const ec_o* ec, 
-	void* stack) 
-{
-	const size_t pre_count = SIZE_BIT_POS(w - 1) + 3;
-	word* t;			/* [3 * ec->f->n] */
-	// pre
-	ASSERT(ecIsOperable(ec) && ec->d == 3);
-	ASSERT(ecpSeemsOnA(a, ec));
-	ASSERT(0 < w && w < MIN2(B_PER_W, B_PER_S));
-	ASSERT(memIsDisjoint2(
-		pre, sizeof(ec_pre_t) + 
-			O_OF_W(pre_count * 3 * ec->f->n), a, O_OF_W(2 * ec->f->n)));
-	// разметить стек
-	memSlice(stack,
-		ecpPreSHJ_local(ec->f->n), SIZE_0, SIZE_MAX,
-		&t, &stack);
-	// pre[-2, -1] <- (a, 2a)
-	ecFromA(ecPrePt(pre, pre_count - 2, ec), a, ec, stack);
-	ecDblA(ecPrePt(pre, pre_count - 1, ec), a, ec, stack);
-	// вычислить малые кратные
-	if (w > 1)
-	{
-		const size_t n = ec->f->n;
-		size_t i;
-		// pre[0] <- 2^{w-1}a
-		wwCopy(ecPrePt(pre, 0, ec), ecPrePt(pre, pre_count - 1, ec), 
-			ec->d * ec->f->n);
-		for (i = 2; i < w; ++i)
-			ecDbl(ecPrePt(pre, 0, ec), ecPrePt(pre, 0, ec), ec, stack);
-		// t <- a: z(t) = z(pre[0])
-		wwCopy(ecZ(t, n), ecZ(ecPrePt(pre, 0, ec), n), n);
-		qrSqr(ecX(t), ecZ(t, n), ec->f, stack);
-		qrMul(ecY(t, n), ecX(t), ecZ(t, n), ec->f, stack);
-		qrMul(ecX(t), ecX(t), ecX(a), ec->f, stack);
-		qrMul(ecY(t, n), ecY(t, n), ecY(a, n), ec->f, stack);
-		// pre[i] <- pre[i - 1] + a
-		for (i = 1; i <= pre_count - 3; ++i)
-			ecpReaddJ(ecPrePt(pre, i, ec), t, t, ecPrePt(pre, i - 1, ec), ec, 
-				stack);
-	}
-	else
-		// pre[0, 1] <- pre[-1, -2]
-		wwCopy(ecPrePt(pre, 0, ec), ecPrePt(pre, pre_count - 2, ec), 
-			2 * 3 * ec->f->n);
-	// заполнить служебные поля
-	pre->type = ec_pre_sh;
-	pre->w = w, pre->h = 0;
-}
-
-size_t ecpPreSHJ_deep(size_t n, size_t f_deep, size_t ec_deep)
-{
-	return memSliceSize(
-		ecpPreSHJ_local(n),
-		utilMax(3,
-			ecpIDblAJ_deep(n, f_deep),
-			ecpReaddJ_deep(n, f_deep),
-			ec_deep),
 		SIZE_MAX);
 }
