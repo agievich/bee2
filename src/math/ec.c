@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2014.03.04
-\version 2026.03.05
+\version 2026.03.06
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -151,7 +151,7 @@ bool_t ecGroupIsOperable(const ec_o* ec)
 
 bool_t ecPreIsOperable(const ec_pre_t* pre)
 {
-	return memIsValid(pre, sizeof(pre)) &&
+	return memIsValid(pre, sizeof(ec_pre_t)) &&
 		(pre->type == ec_pre_so || pre->type == ec_pre_soa ||
 			pre->type == ec_pre_od || pre->type == ec_pre_si) &&
 		0 < pre->w && pre->w < MIN2(B_PER_W, B_PER_S) &&
