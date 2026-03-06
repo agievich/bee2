@@ -208,8 +208,10 @@ bool_t ecTestEc(const ec_o* ec)
 		ecDblA(pt1, ec->base, ec, stack);
 		ec->dbladda(pt0, pt1, ec->base, ec, stack);
 		// pt0 == 5 base?
-		d[0] = 5, ecMulA(pt3, ec->base, ec, d, 1, stack);
-		if (!ecToA(pt0, pt0, ec, stack) || !wwEq(pt0, pt3, 2 * n))
+		d[0] = 5;
+		if (!ecMulA(pt3, ec->base, ec, d, 1, stack) ||
+			!ecToA(pt0, pt0, ec, stack) ||
+			!wwEq(pt0, pt3, 2 * n))
 		{
 			blobClose(state);
 			return FALSE;
