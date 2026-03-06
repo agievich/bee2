@@ -85,7 +85,7 @@ static bool_t ecpBenchEc(const ec_o* ec)
 			for (i = 0, ticks = tmTicks(); i < reps; ++i)
 			{
 				prngCOMBOStepR(d, mo, combo_state);
-				ecMulA(pt, ec->base, ec, d, m, stack);
+				(void)ecMulA(pt, ec->base, ec, d, m, stack);
 			}
 			ticks = tmTicks() - ticks;
 			printf("  ecMulA:                   %u cycles/pt [%u pts/sec]\n",
@@ -100,7 +100,7 @@ static bool_t ecpBenchEc(const ec_o* ec)
 			{
 				tm_ticks_t t = tmTicks();
 				ecpPreSOJ(pre, ec->base, w, ec, stack);
-				ecMulPreSO(pt, pre, ec, d, m, stack);
+				(void)ecMulPreSO(pt, pre, ec, d, m, stack);
 				if ((t = tmTicks() - t) < ticks)
 					ticks = t;
 			}
@@ -121,7 +121,7 @@ static bool_t ecpBenchEc(const ec_o* ec)
 			{
 				tm_ticks_t t = tmTicks();
 				ecpPreSOJ(pre, ec->base, w, ec, stack);
-				ecMulPreSO2(pt, pre, ec, d, m, stack);
+				(void)ecMulPreSO2(pt, pre, ec, d, m, stack);
 				if ((t = tmTicks() - t) < ticks)
 					ticks = t;
 			}
@@ -137,8 +137,8 @@ static bool_t ecpBenchEc(const ec_o* ec)
 			for (i = 0, ticks = (tm_ticks_t)-1; i < reps; ++i)
 			{
 				tm_ticks_t t = tmTicks();
-				ecpPreSOA(pre, ec->base, w, ec, stack);
-				ecMulPreSOA(pt, pre, ec, d, m, stack);
+				(void)ecpPreSOA(pre, ec->base, w, ec, stack);
+				(void)ecMulPreSOA(pt, pre, ec, d, m, stack);
 				if ((t = tmTicks() - t) < ticks)
 					ticks = t;
 			}
@@ -151,12 +151,12 @@ static bool_t ecpBenchEc(const ec_o* ec)
 		for (w = min_w; w <= max_w; ++w)
 		{
 			size_t h = (B_OF_O(mo) + w - 1) / w;
-			ecPreOD(pre, ec->base, w, h, ec, stack);
+			(void)ecPreOD(pre, ec->base, w, h, ec, stack);
 			wwSetW(d, m, 1);
 			for (i = 0, ticks = (tm_ticks_t)-1; i < reps; ++i)
 			{
 				tm_ticks_t t = tmTicks();
-				ecMulPreOD(pt, pre, ec, d, m, stack);
+				(void)ecMulPreOD(pt, pre, ec, d, m, stack);
 				if ((t = tmTicks() - t) < ticks)
 					ticks = t;
 			}
@@ -169,12 +169,12 @@ static bool_t ecpBenchEc(const ec_o* ec)
 		for (w = min_w; w <= max_w; ++w)
 		{
 			size_t h = (B_OF_O(mo) + w - 1) / w;
-			ecPreSI(pre, ec->base, w, h, ec, stack);
+			(void)ecPreSI(pre, ec->base, w, h, ec, stack);
 			wwSetW(d, m, 1);
 			for (i = 0, ticks = (tm_ticks_t)-1; i < reps; ++i)
 			{
 				tm_ticks_t t = tmTicks();
-				ecMulPreSI(pt, pre, ec, d, m, stack);
+				(void)ecMulPreSI(pt, pre, ec, d, m, stack);
 				if ((t = tmTicks() - t) < ticks)
 					ticks = t;
 			}
