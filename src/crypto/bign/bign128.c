@@ -105,7 +105,7 @@ err_t bign128KeypairGen(octet privkey[32], octet pubkey[64], gen_i rng,
 	code = bign128EcLock(&ec);
 	ERR_CALL_CHECK(code);
 	code = bignKeypairGenEc(privkey, pubkey, ec, rng, rng_state);
-	bign128EcUnlock(ec);
+	bign128EcUnlock();
 	return code;
 }
 
@@ -116,7 +116,7 @@ err_t bign128KeypairVal(const octet privkey[32], const octet pubkey[64])
 	code = bign128EcLock(&ec);
 	ERR_CALL_CHECK(code);
 	code = bignKeypairValEc(ec, privkey, pubkey);
-	bign128EcUnlock(ec);
+	bign128EcUnlock();
 	return code;
 }
 
@@ -127,7 +127,7 @@ err_t bign128PubkeyVal(const octet pubkey[64])
 	code = bign128EcLock(&ec);
 	ERR_CALL_CHECK(code);
 	code = bignPubkeyValEc(ec, pubkey);
-	bign128EcUnlock(ec);
+	bign128EcUnlock();
 	return code;
 }
 
@@ -138,7 +138,7 @@ err_t bign128PubkeyCalc(octet pubkey[64], const octet privkey[32])
 	code = bign128EcLock(&ec);
 	ERR_CALL_CHECK(code);
 	code = bignPubkeyCalcEc(pubkey, ec, privkey);
-	bign128EcUnlock(ec);
+	bign128EcUnlock();
 	return code;
 }
 
@@ -150,7 +150,7 @@ err_t bign128DH(octet key[], const octet privkey[32], const octet pubkey[64],
 	code = bign128EcLock(&ec);
 	ERR_CALL_CHECK(code);
 	code = bignDHEc(key, ec, privkey, pubkey, key_len);
-	bign128EcUnlock(ec);
+	bign128EcUnlock();
 	return code;
 }
 
@@ -173,7 +173,7 @@ err_t bign128Sign(octet sig[48], const octet hash[32],
 	ERR_CALL_CHECK(code);
 	code = bignSignEc(sig, ec, _oid_der, sizeof(_oid_der), hash, privkey, rng,
 		rng_state);
-	bign128EcUnlock(ec);
+	bign128EcUnlock();
 	return code;
 }
 
@@ -186,7 +186,7 @@ err_t bign128Sign2(octet sig[48], const octet hash[32],
 	ERR_CALL_CHECK(code);
 	code = bignSign2Ec(sig, ec, _oid_der, sizeof(_oid_der), hash, privkey, t, 
 		t_len);
-	bign128EcUnlock(ec);
+	bign128EcUnlock();
 	return code;
 }
 
@@ -198,7 +198,7 @@ err_t bign128Verify(const octet hash[32], const octet sig[48],
 	code = bign128EcLock(&ec);
 	ERR_CALL_CHECK(code);
 	code = bignVerifyEc(ec, _oid_der, sizeof(_oid_der), hash, sig, pubkey);
-	bign128EcUnlock(ec);
+	bign128EcUnlock();
 	return code;
 }
 
@@ -216,7 +216,7 @@ err_t bign128KeyWrap(octet token[], const octet key[], size_t len,
 	code = bign128EcLock(&ec);
 	ERR_CALL_CHECK(code);
 	code = bignKeyWrapEc(token, ec, key, len, header, pubkey, rng, rng_state);
-	bign128EcUnlock(ec);
+	bign128EcUnlock();
 	return code;
 }
 
@@ -228,6 +228,6 @@ err_t bign128KeyUnwrap(octet key[], const octet token[], size_t len,
 	code = bign128EcLock(&ec);
 	ERR_CALL_CHECK(code);
 	code = bignKeyUnwrapEc(key, ec, token, len, header, privkey);
-	bign128EcUnlock(ec);
+	bign128EcUnlock();
 	return code;
 }
