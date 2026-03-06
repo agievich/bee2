@@ -764,6 +764,18 @@
 					Name="bign"
 					>
 					<File
+						RelativePath="..\..\src\crypto\bign\bign128.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\bign\bign192.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\bign\bign256.c"
+						>
+					</File>
+					<File
 						RelativePath="..\..\src\crypto\bign\bign_ec.c"
 						>
 					</File>

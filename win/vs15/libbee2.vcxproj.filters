@@ -345,6 +345,15 @@
     <ClCompile Include="..\..\src\math\ecp\ecp_pre.c">
       <Filter>Source Files\math\ecp</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\crypto\bign\bign128.c">
+      <Filter>Source Files\crypto\bign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\bign\bign256.c">
+      <Filter>Source Files\crypto\bign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\bign\bign192.c">
+      <Filter>Source Files\crypto\bign</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\bee2\crypto\bake.h">

@@ -151,5 +151,14 @@
     <ClCompile Include="..\..\test\math\ec_test.c">
       <Filter>Source Files\math</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\test\crypto\bign128_test.c">
+      <Filter>Source Files\crypto</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\crypto\bign256_test.c">
+      <Filter>Source Files\crypto</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\test\crypto\bign192_test.c">
+      <Filter>Source Files\crypto</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

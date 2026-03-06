@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2012.04.19
-\version 2026.03.05
+\version 2026.03.06
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -546,7 +546,7 @@ typedef struct ec_o
 	word* B;				/*!< коэффициент B */
 	word* base;				/*!< базовая точустановке знаковка */
 	word* order;			/*!< порядок группы точек */
-	ec_pre_t* pre;			/*!< предвычисленные точки */
+	const ec_pre_t* pre;	/*!< предвычисленные точки */
 // }
 	size_t d;				/*!< размерность */
 	word cofactor;			/*!< кофактор группы точек */
