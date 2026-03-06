@@ -105,7 +105,7 @@ err_t bign256KeypairGen(octet privkey[64], octet pubkey[128], gen_i rng,
 	code = bign256EcLock(&ec);
 	ERR_CALL_CHECK(code);
 	code = bignKeypairGenEc(privkey, pubkey, ec, rng, rng_state);
-	bign256EcUnlock(ec);
+	bign256EcUnlock();
 	return code;
 }
 
@@ -116,7 +116,7 @@ err_t bign256KeypairVal(const octet privkey[64], const octet pubkey[128])
 	code = bign256EcLock(&ec);
 	ERR_CALL_CHECK(code);
 	code = bignKeypairValEc(ec, privkey, pubkey);
-	bign256EcUnlock(ec);
+	bign256EcUnlock();
 	return code;
 }
 
@@ -127,7 +127,7 @@ err_t bign256PubkeyVal(const octet pubkey[128])
 	code = bign256EcLock(&ec);
 	ERR_CALL_CHECK(code);
 	code = bignPubkeyValEc(ec, pubkey);
-	bign256EcUnlock(ec);
+	bign256EcUnlock();
 	return code;
 }
 
@@ -138,7 +138,7 @@ err_t bign256PubkeyCalc(octet pubkey[128], const octet privkey[64])
 	code = bign256EcLock(&ec);
 	ERR_CALL_CHECK(code);
 	code = bignPubkeyCalcEc(pubkey, ec, privkey);
-	bign256EcUnlock(ec);
+	bign256EcUnlock();
 	return code;
 }
 
@@ -150,7 +150,7 @@ err_t bign256DH(octet key[], const octet privkey[64], const octet pubkey[128],
 	code = bign256EcLock(&ec);
 	ERR_CALL_CHECK(code);
 	code = bignDHEc(key, ec, privkey, pubkey, key_len);
-	bign256EcUnlock(ec);
+	bign256EcUnlock();
 	return code;
 }
 
@@ -173,7 +173,7 @@ err_t bign256Sign(octet sig[96], const octet hash[64],
 	ERR_CALL_CHECK(code);
 	code = bignSignEc(sig, ec, _oid_der, sizeof(_oid_der), hash, privkey, rng,
 		rng_state);
-	bign256EcUnlock(ec);
+	bign256EcUnlock();
 	return code;
 }
 
@@ -186,7 +186,7 @@ err_t bign256Sign2(octet sig[96], const octet hash[64],
 	ERR_CALL_CHECK(code);
 	code = bignSign2Ec(sig, ec, _oid_der, sizeof(_oid_der), hash, privkey, t, 
 		t_len);
-	bign256EcUnlock(ec);
+	bign256EcUnlock();
 	return code;
 }
 
@@ -198,7 +198,7 @@ err_t bign256Verify(const octet hash[64], const octet sig[96],
 	code = bign256EcLock(&ec);
 	ERR_CALL_CHECK(code);
 	code = bignVerifyEc(ec, _oid_der, sizeof(_oid_der), hash, sig, pubkey);
-	bign256EcUnlock(ec);
+	bign256EcUnlock();
 	return code;
 }
 
@@ -217,7 +217,7 @@ err_t bign256KeyWrap(octet token[], const octet key[], size_t len,
 	code = bign256EcLock(&ec);
 	ERR_CALL_CHECK(code);
 	code = bignKeyWrapEc(token, ec, key, len, header, pubkey, rng, rng_state);
-	bign256EcUnlock(ec);
+	bign256EcUnlock();
 	return code;
 }
 
@@ -229,6 +229,6 @@ err_t bign256KeyUnwrap(octet key[], const octet token[], size_t len,
 	code = bign256EcLock(&ec);
 	ERR_CALL_CHECK(code);
 	code = bignKeyUnwrapEc(key, ec, token, len, header, privkey);
-	bign256EcUnlock(ec);
+	bign256EcUnlock();
 	return code;
 }
