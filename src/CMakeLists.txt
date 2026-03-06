@@ -58,6 +58,9 @@ set(src
   crypto/bign/bign_misc.c
   crypto/bign/bign_params.c
   crypto/bign/bign_sign.c
+  crypto/bign/bign128.c
+  crypto/bign/bign192.c
+  crypto/bign/bign256.c
   crypto/bign96.c
   crypto/bpki.c
   crypto/botp.c

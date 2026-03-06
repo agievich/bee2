@@ -4,7 +4,7 @@
 \brief Arbitrary length words
 \project bee2 [cryptographic library]
 \created 2012.04.18
-\version 2026.03.05
+\version 2026.03.06
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -110,20 +110,20 @@ extern "C" {
 */
 
 #if (B_PER_W == 16)
-	#define wwH8(a, b, c, d, e, f, g, h)\
+	#define wwH8(a,b,c,d,e,f,g,h)\
 		0x##b##a, 0x##d##c, 0x##f##e, 0x##h##g
 #elif (B_PER_W == 32)
-	#define wwH8(a, b, c, d, e, f, g, h)\
+	#define wwH8(a,b,c,d,e,f,g,h)\
 		0x##d##c##b##a, 0x##h##g##f##e
 #elif (B_PER_W == 64)
-	#define wwH8(a, b, c, d, e, f, g, h)\
+	#define wwH8(a,b,c,d,e,f,g,h)\
 		0x##h##g##f##e##d##c##b##a
 #else
 	#error "Unsupported word size"
 #endif /* B_PER_W */
 
-#define wordH16(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p)\
-	wordH8(a, b, c, d, e, f, g, h), wordH8(i, j, k, l, m, n, o, p)
+#define wwH16(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p)\
+	wwH8(a,b,c,d,e,f,g,h), wwH8(i,j,k,l,m,n,o,p)
 
 /*
 *******************************************************************************

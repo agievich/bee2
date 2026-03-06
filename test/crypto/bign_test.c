@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.45 (bign)
 \project bee2/test
 \created 2012.08.27
-\version 2026.03.05
+\version 2026.03.06
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -143,7 +143,7 @@ static err_t bignPrePrintEc(const ec_o* ec, ec_pre_type type, size_t w)
 	coord_size = O_OF_W(ec->f->n);
 	if (w == 0 || (type == ec_pre_si && mb % w) || coord_size % 16)
 		return ERR_BAD_INPUT;
-	h = (type != ec_pre_soa) ? h = (mb + w - 1) / w : 0;
+	h = (type != ec_pre_soa) ? (mb + w - 1) / w : 0;
 	pre_count = SIZE_BIT_POS(w - 1);
 	if (type == ec_pre_od)
 		pre_count *= h;
@@ -179,8 +179,8 @@ static err_t bignPrePrintEc(const ec_o* ec, ec_pre_type type, size_t w)
 	ERR_CALL_HANDLE(code, blobClose(state));
 	// начало печати
 	printf(
-		"ec_pre_t _pre = {\n"
-        "\t%s, %u, %u,\n",
+		"static const ec_pre_t _pre = {\n"
+        "\t%s, %u, %u, {\n",
 		ecPreTypename(type), (unsigned)w, (unsigned)h);
 	// цикл по точкам
 	for (pos = 0; pos < pre_count; ++pos)
@@ -193,7 +193,7 @@ static err_t bignPrePrintEc(const ec_o* ec, ec_pre_type type, size_t w)
 		for (i = 0; i < 2 * coord_size; ++i)
 		{
 			if (i % 16 == 0)
-				printf("\twwFromH16(%02X,", ptr[i]);
+				printf("\twwH16(%02X,", ptr[i]);
 			else if ((i + 1) % 16 == 0)
 				printf("%02X),\n", ptr[i]);
 			else
@@ -201,7 +201,7 @@ static err_t bignPrePrintEc(const ec_o* ec, ec_pre_type type, size_t w)
 		}
 	}
 	// завершение печати
-	printf("};\n");
+	printf("}};\n");
 	// завершение
 	blobClose(state);
 	return code;
@@ -399,8 +399,9 @@ bool_t bignTest()
 	if (bignVerify(params, der, count, hash, sig, pubkey) != ERR_OK)
 		return FALSE;
 	// тест Г.5
-	bignKeyWrap(token, params, beltH(), 32, beltH() + 64,
-		pubkey, brngCTRXStepR, state);
+	if (bignKeyWrap(token, params, beltH(), 32, beltH() + 64,
+		pubkey, brngCTRXStepR, state) != ERR_OK)
+		return FALSE;
 	if (!hexEq(token,
 		"4856093A0F6C13015FC8E15F1B23A762"
 		"02D2F4BA6E5EC52B78658477F6486DE6"
@@ -408,15 +409,15 @@ bool_t bignTest()
 		"3F91C0126044B22267BF30BD6F1DA29E"
 		"0647CF39C1D59A56BB0194E0F4F8A2BB"))
 		return FALSE;
-	bignKeyUnwrap(token, params, token, 32 + 16 + 32, beltH() + 64,
-		privkey);
+	if (bignKeyUnwrap(token, params, token, 32 + 16 + 32, beltH() + 64,
+		privkey) != ERR_OK)
+		return FALSE;
 	if (!memEq(token, beltH(), 32))
 		return FALSE;
 	// тест Г.6
 	if (beltHash(hash, beltH(), 13) != ERR_OK)
 		return FALSE;
-	if (bignSign2(sig, params, der, count, hash, privkey, 0, 0) 
-		!= ERR_OK)
+	if (bignSign2(sig, params, der, count, hash, privkey, 0, 0) != ERR_OK)
 		return FALSE;
 	wwFrom(q, params->q, 32);
 	wwFrom(d, privkey, 32);
@@ -502,8 +503,9 @@ bool_t bignTest()
 	id_pubkey[0] ^= 1;
 	// дополнительный тест для проверки bignIdSign2
 	if (bignIdSign2(id_sig, params, der, count, id_hash, hash, 
-		id_privkey, 0, 0) != ERR_OK ||
-		bignIdVerify(params, der, count, id_hash, hash, id_sig, 
+		id_privkey, 0, 0) != ERR_OK)
+		return FALSE;
+	if (bignIdVerify(params, der, count, id_hash, hash, id_sig, 
 		id_pubkey, pubkey) != ERR_OK)
 		return FALSE;
 	id_sig[0] ^= 1;
@@ -530,10 +532,12 @@ bool_t bignTest()
 		return FALSE;
 	// дополнительный тест: транспорт ключа из 16 октетов
 	if (bignKeyWrap(token, params, beltH(), 16, beltH() + 64,
-			pubkey, brngCTRXStepR, state) != ERR_OK ||
-		bignKeyUnwrap(token, params, token, 32 + 16 + 16, beltH() + 64,
-			privkey) != ERR_OK ||
-		!memEq(token, beltH(), 16))
+			pubkey, brngCTRXStepR, state) != ERR_OK)
+		return FALSE;
+	if (bignKeyUnwrap(token, params, token, 32 + 16 + 16, beltH() + 64,
+		privkey) != ERR_OK)
+		return FALSE;
+	if (!memEq(token, beltH(), 16))
 		return FALSE;
 	// дополнительные тесты (vs OpenSSL)
 	hexTo(key, "49FEFF8076CD9480");

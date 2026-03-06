@@ -4,7 +4,7 @@
 \brief Benchmarks for elliptic curves over prime fields
 \project bee2/test
 \created 2013.10.17
-\version 2026.03.05
+\version 2026.03.06
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -37,8 +37,8 @@ static bool_t ecpBenchEc(const ec_o* ec)
 	const size_t n = ec->f->n;
 	const size_t m = wwWordSize(ec->order, n + 1);
 	const size_t mo = wwOctetSize(ec->order, m);
-	const size_t min_w = 3;
-	const size_t max_w = 6;
+	const size_t min_w = 5;
+	const size_t max_w = 7;
 	const size_t min_h = (B_OF_O(mo) + max_w - 1) / max_w;
 	const size_t max_h = (B_OF_O(mo) + min_w - 1) / min_w;
 	const size_t max_pre_count = min_h * SIZE_BIT_POS(max_w - 1);

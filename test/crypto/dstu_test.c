@@ -4,7 +4,7 @@
 \brief Tests for DSTU 4145-2002 (Ukraine)
 \project bee2/test
 \created 2012.03.01
-\version 2025.09.28
+\version 2026.03.06
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -15,13 +15,6 @@
 #include <bee2/core/prng.h>
 #include <bee2/core/util.h>
 #include <bee2/crypto/dstu.h>
-
-/*
-*******************************************************************************
-COMBO-генератор
-*******************************************************************************
-*/
-#define combo_rng prngCOMBOStepR
 
 /*
 *******************************************************************************
@@ -98,7 +91,7 @@ bool_t dstuTest()
 	// максимальная длина ЭЦП
 	ld = B_OF_O(2 * DSTU_SIZE);
 	// сгенерировать hash
-	combo_rng(hash, 32, state);
+	prngCOMBOStepR(hash, 32, state);
 	// проверить кривую dstu_163pb
 	if (dstuPointGen(params->P, params, prngCOMBOStepR, state) != ERR_OK ||
 		dstuPointVal(params, params->P) != ERR_OK ||

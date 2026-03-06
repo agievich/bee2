@@ -213,6 +213,18 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\test\crypto\bign128_test.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\test\crypto\bign192_test.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\test\crypto\bign256_test.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\test\crypto\bign96_test.c"
 					>
 				</File>
