@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): Bign algorithms with bign-curve256v1 and belt-hash
 \project bee2 [cryptographic library]
 \created 2026.03.05
-\version 2026.03.06
+\version 2026.03.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -36,7 +36,7 @@ static mt_mtx_t _mtx[1];		/*< мьютекс */
 static bool_t _inited;			/*< мьютекс создан? */
 static ec_o* _ec;				/*< кривая */
 
-static void bign128EcDestroy()
+static void bign128Destroy()
 {
 	mtMtxLock(_mtx);
 	bignEcClose(_ec), _ec = 0;
@@ -44,14 +44,14 @@ static void bign128EcDestroy()
 	mtMtxClose(_mtx);
 }
 
-static void bign128EcInit()
+static void bign128Init()
 {
 	ASSERT(!_inited);
 	// создать мьютекс
 	if (!mtMtxCreate(_mtx))
 		return;
 	// зарегистрировать деструктор
-	if (!utilOnExit(bign128EcDestroy))
+	if (!utilOnExit(bign128Destroy))
 	{
 		mtMtxClose(_mtx);
 		return;
@@ -59,11 +59,11 @@ static void bign128EcInit()
 	_inited = TRUE;
 }
 
-static err_t bign128EcLock(const ec_o** pec)
+static err_t bign128Ec(const ec_o** pec)
 {
 	ASSERT(memIsValid(pec, sizeof(const ec_o*)));
 	// инициализировать однократно
-	if (!mtCallOnce(&_once, bign128EcInit) || !_inited)
+	if (!mtCallOnce(&_once, bign128Init) || !_inited)
 		return ERR_FILE_CREATE;
 	// заблокировать мьютекс
 	mtMtxLock(_mtx);
@@ -83,12 +83,8 @@ static err_t bign128EcLock(const ec_o** pec)
 	}
 	// возвратить кривую
 	*pec = _ec;
-	return ERR_OK;
-}
-
-static void bign128EcUnlock()
-{
 	mtMtxUnlock(_mtx);
+	return ERR_OK;
 }
 
 /*
@@ -102,44 +98,36 @@ err_t bign128KeypairGen(octet privkey[32], octet pubkey[64], gen_i rng,
 {
 	err_t code;
 	const ec_o* ec;
-	code = bign128EcLock(&ec);
+	code = bign128Ec(&ec);
 	ERR_CALL_CHECK(code);
-	code = bignKeypairGenEc(privkey, pubkey, ec, rng, rng_state);
-	bign128EcUnlock();
-	return code;
+	return bignKeypairGenEc(privkey, pubkey, ec, rng, rng_state);
 }
 
 err_t bign128KeypairVal(const octet privkey[32], const octet pubkey[64])
 {
 	err_t code;
 	const ec_o* ec;
-	code = bign128EcLock(&ec);
+	code = bign128Ec(&ec);
 	ERR_CALL_CHECK(code);
-	code = bignKeypairValEc(ec, privkey, pubkey);
-	bign128EcUnlock();
-	return code;
+	return bignKeypairValEc(ec, privkey, pubkey);
 }
 
 err_t bign128PubkeyVal(const octet pubkey[64])
 {
 	err_t code;
 	const ec_o* ec;
-	code = bign128EcLock(&ec);
+	code = bign128Ec(&ec);
 	ERR_CALL_CHECK(code);
-	code = bignPubkeyValEc(ec, pubkey);
-	bign128EcUnlock();
-	return code;
+	return bignPubkeyValEc(ec, pubkey);
 }
 
 err_t bign128PubkeyCalc(octet pubkey[64], const octet privkey[32])
 {
 	err_t code;
 	const ec_o* ec;
-	code = bign128EcLock(&ec);
+	code = bign128Ec(&ec);
 	ERR_CALL_CHECK(code);
-	code = bignPubkeyCalcEc(pubkey, ec, privkey);
-	bign128EcUnlock();
-	return code;
+	return bignPubkeyCalcEc(pubkey, ec, privkey);
 }
 
 err_t bign128DH(octet key[], const octet privkey[32], const octet pubkey[64],
@@ -147,16 +135,16 @@ err_t bign128DH(octet key[], const octet privkey[32], const octet pubkey[64],
 {
 	err_t code;
 	const ec_o* ec;
-	code = bign128EcLock(&ec);
+	code = bign128Ec(&ec);
 	ERR_CALL_CHECK(code);
-	code = bignDHEc(key, ec, privkey, pubkey, key_len);
-	bign128EcUnlock();
-	return code;
+	return bignDHEc(key, ec, privkey, pubkey, key_len);
 }
 
 /*
 *******************************************************************************
 ЭЦП
+
+\remark DER(belt-hash) = 1.2.112.0.2.0.34.101.31.81
 *******************************************************************************
 */
 
@@ -169,12 +157,10 @@ err_t bign128Sign(octet sig[48], const octet hash[32],
 {
 	err_t code;
 	const ec_o* ec;
-	code = bign128EcLock(&ec);
+	code = bign128Ec(&ec);
 	ERR_CALL_CHECK(code);
-	code = bignSignEc(sig, ec, _oid_der, sizeof(_oid_der), hash, privkey, rng,
+	return bignSignEc(sig, ec, _oid_der, sizeof(_oid_der), hash, privkey, rng,
 		rng_state);
-	bign128EcUnlock();
-	return code;
 }
 
 err_t bign128Sign2(octet sig[48], const octet hash[32],
@@ -182,12 +168,10 @@ err_t bign128Sign2(octet sig[48], const octet hash[32],
 {
 	err_t code;
 	const ec_o* ec;
-	code = bign128EcLock(&ec);
+	code = bign128Ec(&ec);
 	ERR_CALL_CHECK(code);
-	code = bignSign2Ec(sig, ec, _oid_der, sizeof(_oid_der), hash, privkey, t, 
+	return bignSign2Ec(sig, ec, _oid_der, sizeof(_oid_der), hash, privkey, t, 
 		t_len);
-	bign128EcUnlock();
-	return code;
 }
 
 err_t bign128Verify(const octet hash[32], const octet sig[48], 
@@ -195,11 +179,9 @@ err_t bign128Verify(const octet hash[32], const octet sig[48],
 {
 	err_t code;
 	const ec_o* ec;
-	code = bign128EcLock(&ec);
+	code = bign128Ec(&ec);
 	ERR_CALL_CHECK(code);
-	code = bignVerifyEc(ec, _oid_der, sizeof(_oid_der), hash, sig, pubkey);
-	bign128EcUnlock();
-	return code;
+	return bignVerifyEc(ec, _oid_der, sizeof(_oid_der), hash, sig, pubkey);
 }
 
 /*
@@ -213,11 +195,9 @@ err_t bign128KeyWrap(octet token[], const octet key[], size_t len,
 {
 	err_t code;
 	const ec_o* ec;
-	code = bign128EcLock(&ec);
+	code = bign128Ec(&ec);
 	ERR_CALL_CHECK(code);
-	code = bignKeyWrapEc(token, ec, key, len, header, pubkey, rng, rng_state);
-	bign128EcUnlock();
-	return code;
+	return bignKeyWrapEc(token, ec, key, len, header, pubkey, rng, rng_state);
 }
 
 err_t bign128KeyUnwrap(octet key[], const octet token[], size_t len,
@@ -225,9 +205,7 @@ err_t bign128KeyUnwrap(octet key[], const octet token[], size_t len,
 {
 	err_t code;
 	const ec_o* ec;
-	code = bign128EcLock(&ec);
+	code = bign128Ec(&ec);
 	ERR_CALL_CHECK(code);
-	code = bignKeyUnwrapEc(key, ec, token, len, header, privkey);
-	bign128EcUnlock();
-	return code;
+	return bignKeyUnwrapEc(key, ec, token, len, header, privkey);
 }

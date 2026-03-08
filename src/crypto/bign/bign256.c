@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): Bign algorithms with bign-curve512v1 and bash512
 \project bee2 [cryptographic library]
 \created 2026.03.06
-\version 2026.03.06
+\version 2026.03.08
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -36,7 +36,7 @@ static mt_mtx_t _mtx[1];		/*< мьютекс */
 static bool_t _inited;			/*< мьютекс создан? */
 static ec_o* _ec;				/*< кривая */
 
-static void bign256EcDestroy()
+static void bign256Destroy()
 {
 	mtMtxLock(_mtx);
 	bignEcClose(_ec), _ec = 0;
@@ -44,14 +44,14 @@ static void bign256EcDestroy()
 	mtMtxClose(_mtx);
 }
 
-static void bign256EcInit()
+static void bign256Init()
 {
 	ASSERT(!_inited);
 	// создать мьютекс
 	if (!mtMtxCreate(_mtx))
 		return;
 	// зарегистрировать деструктор
-	if (!utilOnExit(bign256EcDestroy))
+	if (!utilOnExit(bign256Destroy))
 	{
 		mtMtxClose(_mtx);
 		return;
@@ -59,11 +59,11 @@ static void bign256EcInit()
 	_inited = TRUE;
 }
 
-static err_t bign256EcLock(const ec_o** pec)
+static err_t bign256Ec(const ec_o** pec)
 {
 	ASSERT(memIsValid(pec, sizeof(const ec_o*)));
 	// инициализировать однократно
-	if (!mtCallOnce(&_once, bign256EcInit) || !_inited)
+	if (!mtCallOnce(&_once, bign256Init) || !_inited)
 		return ERR_FILE_CREATE;
 	// заблокировать мьютекс
 	mtMtxLock(_mtx);
@@ -83,12 +83,8 @@ static err_t bign256EcLock(const ec_o** pec)
 	}
 	// возвратить кривую
 	*pec = _ec;
-	return ERR_OK;
-}
-
-static void bign256EcUnlock()
-{
 	mtMtxUnlock(_mtx);
+	return ERR_OK;
 }
 
 /*
@@ -102,44 +98,36 @@ err_t bign256KeypairGen(octet privkey[64], octet pubkey[128], gen_i rng,
 {
 	err_t code;
 	const ec_o* ec;
-	code = bign256EcLock(&ec);
+	code = bign256Ec(&ec);
 	ERR_CALL_CHECK(code);
-	code = bignKeypairGenEc(privkey, pubkey, ec, rng, rng_state);
-	bign256EcUnlock();
-	return code;
+	return bignKeypairGenEc(privkey, pubkey, ec, rng, rng_state);
 }
 
 err_t bign256KeypairVal(const octet privkey[64], const octet pubkey[128])
 {
 	err_t code;
 	const ec_o* ec;
-	code = bign256EcLock(&ec);
+	code = bign256Ec(&ec);
 	ERR_CALL_CHECK(code);
-	code = bignKeypairValEc(ec, privkey, pubkey);
-	bign256EcUnlock();
-	return code;
+	return bignKeypairValEc(ec, privkey, pubkey);
 }
 
 err_t bign256PubkeyVal(const octet pubkey[128])
 {
 	err_t code;
 	const ec_o* ec;
-	code = bign256EcLock(&ec);
+	code = bign256Ec(&ec);
 	ERR_CALL_CHECK(code);
-	code = bignPubkeyValEc(ec, pubkey);
-	bign256EcUnlock();
-	return code;
+	return bignPubkeyValEc(ec, pubkey);
 }
 
 err_t bign256PubkeyCalc(octet pubkey[128], const octet privkey[64])
 {
 	err_t code;
 	const ec_o* ec;
-	code = bign256EcLock(&ec);
+	code = bign256Ec(&ec);
 	ERR_CALL_CHECK(code);
-	code = bignPubkeyCalcEc(pubkey, ec, privkey);
-	bign256EcUnlock();
-	return code;
+	return bignPubkeyCalcEc(pubkey, ec, privkey);
 }
 
 err_t bign256DH(octet key[], const octet privkey[64], const octet pubkey[128],
@@ -147,16 +135,16 @@ err_t bign256DH(octet key[], const octet privkey[64], const octet pubkey[128],
 {
 	err_t code;
 	const ec_o* ec;
-	code = bign256EcLock(&ec);
+	code = bign256Ec(&ec);
 	ERR_CALL_CHECK(code);
-	code = bignDHEc(key, ec, privkey, pubkey, key_len);
-	bign256EcUnlock();
-	return code;
+	return bignDHEc(key, ec, privkey, pubkey, key_len);
 }
 
 /*
 *******************************************************************************
 ЭЦП
+
+\remark DER(bash512) = 1.2.112.0.2.0.34.101.77.13
 *******************************************************************************
 */
 
@@ -169,12 +157,10 @@ err_t bign256Sign(octet sig[96], const octet hash[64],
 {
 	err_t code;
 	const ec_o* ec;
-	code = bign256EcLock(&ec);
+	code = bign256Ec(&ec);
 	ERR_CALL_CHECK(code);
-	code = bignSignEc(sig, ec, _oid_der, sizeof(_oid_der), hash, privkey, rng,
+	return bignSignEc(sig, ec, _oid_der, sizeof(_oid_der), hash, privkey, rng,
 		rng_state);
-	bign256EcUnlock();
-	return code;
 }
 
 err_t bign256Sign2(octet sig[96], const octet hash[64],
@@ -182,12 +168,10 @@ err_t bign256Sign2(octet sig[96], const octet hash[64],
 {
 	err_t code;
 	const ec_o* ec;
-	code = bign256EcLock(&ec);
+	code = bign256Ec(&ec);
 	ERR_CALL_CHECK(code);
-	code = bignSign2Ec(sig, ec, _oid_der, sizeof(_oid_der), hash, privkey, t, 
+	return bignSign2Ec(sig, ec, _oid_der, sizeof(_oid_der), hash, privkey, t, 
 		t_len);
-	bign256EcUnlock();
-	return code;
 }
 
 err_t bign256Verify(const octet hash[64], const octet sig[96], 
@@ -195,11 +179,9 @@ err_t bign256Verify(const octet hash[64], const octet sig[96],
 {
 	err_t code;
 	const ec_o* ec;
-	code = bign256EcLock(&ec);
+	code = bign256Ec(&ec);
 	ERR_CALL_CHECK(code);
-	code = bignVerifyEc(ec, _oid_der, sizeof(_oid_der), hash, sig, pubkey);
-	bign256EcUnlock();
-	return code;
+	return bignVerifyEc(ec, _oid_der, sizeof(_oid_der), hash, sig, pubkey);
 }
 
 /*
@@ -214,11 +196,9 @@ err_t bign256KeyWrap(octet token[], const octet key[], size_t len,
 {
 	err_t code;
 	const ec_o* ec;
-	code = bign256EcLock(&ec);
+	code = bign256Ec(&ec);
 	ERR_CALL_CHECK(code);
-	code = bignKeyWrapEc(token, ec, key, len, header, pubkey, rng, rng_state);
-	bign256EcUnlock();
-	return code;
+	return bignKeyWrapEc(token, ec, key, len, header, pubkey, rng, rng_state);
 }
 
 err_t bign256KeyUnwrap(octet key[], const octet token[], size_t len,
@@ -226,9 +206,7 @@ err_t bign256KeyUnwrap(octet key[], const octet token[], size_t len,
 {
 	err_t code;
 	const ec_o* ec;
-	code = bign256EcLock(&ec);
+	code = bign256Ec(&ec);
 	ERR_CALL_CHECK(code);
-	code = bignKeyUnwrapEc(key, ec, token, len, header, privkey);
-	bign256EcUnlock();
-	return code;
+	return bignKeyUnwrapEc(key, ec, token, len, header, privkey);
 }
