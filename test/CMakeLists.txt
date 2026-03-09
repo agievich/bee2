@@ -30,6 +30,7 @@ add_executable(testbee2
   crypto/bign192_test.c
   crypto/bign256_test.c
   crypto/bign96_test.c
+  crypto/bign_bench.c
   crypto/botp_test.c
   crypto/bpki_test.c
   crypto/brng_test.c
