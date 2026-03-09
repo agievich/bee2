@@ -229,6 +229,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\test\crypto\bign_bench.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\test\crypto\bign_test.c"
 					>
 				</File>
