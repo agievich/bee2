@@ -152,7 +152,7 @@ static err_t bign96Ec(const ec_o** pec)
 		code = bignEcCreate(&_ec, params);
 		ERR_CALL_HANDLE(code, mtMtxUnlock(_mtx));
 		// настроить ec->pre
-//		_ec->pre = &_pre;
+		_ec->pre = &_pre;
 	}
 	// возвратить кривую
 	*pec = _ec;
