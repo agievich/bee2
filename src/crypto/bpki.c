@@ -4,7 +4,7 @@
 \brief STB 34.101.78 (bpki): PKI helpers
 \project bee2 [cryptographic library]
 \created 2021.04.03
-\version 2025.09.15
+\version 2026.03.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -17,7 +17,7 @@
 #include "bee2/core/rng.h"
 #include "bee2/core/util.h"
 #include "bee2/crypto/belt.h"
-#include "bee2/crypto/bign.h"
+#include "bee2/crypto/bign128.h"
 #include "bee2/crypto/bpki.h"
 
 /*
@@ -48,7 +48,6 @@ do {\
 *******************************************************************************
 */
 
-static const char oid_belt_hash[] = "1.2.112.0.2.0.34.101.31.81";
 static const char oid_bign_pubkey[] = "1.2.112.0.2.0.34.101.45.2.1";
 static const char oid_bign_curve192v1[] = "1.2.112.0.2.0.34.101.45.3.0";
 static const char oid_bign_curve256v1[] = "1.2.112.0.2.0.34.101.45.3.1";
@@ -622,9 +621,6 @@ err_t bpkiCSRRewrap(octet csr[], size_t csr_len, const octet privkey[],
 	err_t code;
 	size_t count;
 	bpki_csr_info_t ci[1];
-	bign_params params[1];
-	octet oid_der[16];
-	size_t oid_len = sizeof(oid_der);
 	octet* hash;
 	// входной контроль
 	if (privkey_len != 32)
@@ -635,26 +631,20 @@ err_t bpkiCSRRewrap(octet csr[], size_t csr_len, const octet privkey[],
 	count = bpkiCSRDec(ci, csr, csr_len);
 	if (count == SIZE_MAX || count != csr_len)
 		return ERR_BAD_FORMAT;
-	// загрузить стандартные параметры
-	code = bignParamsStd(params, oid_bign_curve256v1);
-	ERR_CALL_CHECK(code);
 	// сгенерировать открытый ключ
-	code = bignPubkeyCalc(csr + ci->pubkey_offset, params, privkey);
+	code = bign128PubkeyCalc(csr + ci->pubkey_offset, privkey);
 	ERR_CALL_CHECK(code);
 	// получить случайные числа
 	if (rngIsValid())
 		rngStepR(csr + ci->sig_offset, 48, 0);
-	// кодировать идентификатор алгоритма хэширования
-	code = bignOidToDER(oid_der, &oid_len, oid_belt_hash);
-	ERR_CALL_CHECK(code);
 	// хэшировать
 	if (!(hash = blobCreate(32)))
 		return ERR_OUTOFMEMORY;
 	code = beltHash(hash, csr + ci->body_offset, ci->body_len);
 	ERR_CALL_HANDLE(code, blobClose(hash));
 	// подписать
-	code = bignSign2(csr + ci->sig_offset, params, oid_der, oid_len,
-		hash, privkey, csr + ci->sig_offset, 48);
+	code = bign128Sign2(csr + ci->sig_offset, hash, privkey, 
+		csr + ci->sig_offset, 48);
 	// завершить
 	blobClose(hash);
 	return code;
@@ -666,9 +656,6 @@ err_t bpkiCSRUnwrap(octet pubkey[], size_t* pubkey_len, const octet csr[],
 	err_t code;
 	size_t count;
 	bpki_csr_info_t ci[1];
-	bign_params params[1];
-	octet oid_der[16];
-	size_t oid_len = sizeof(oid_der);
 	octet* hash;
 	// входной контроль
 	if (!memIsValid(csr, csr_len))
@@ -677,20 +664,13 @@ err_t bpkiCSRUnwrap(octet pubkey[], size_t* pubkey_len, const octet csr[],
 	count = bpkiCSRDec(ci, csr, csr_len);
 	if (count == SIZE_MAX || count != csr_len)
 		return ERR_BAD_FORMAT;
-	// загрузить стандартные параметры
-	code = bignParamsStd(params, oid_bign_curve256v1);
-	ERR_CALL_CHECK(code);
-	// кодировать идентификатор алгоритма хэширования
-	code = bignOidToDER(oid_der, &oid_len, oid_belt_hash);
-	ERR_CALL_CHECK(code);
 	// хэшировать
 	if (!(hash = blobCreate(32)))
 		return ERR_OUTOFMEMORY;
 	code = beltHash(hash, csr + ci->body_offset, ci->body_len);
 	ERR_CALL_HANDLE(code, blobClose(hash));
 	// проверить подпись
-	code = bignVerify(params, oid_der, oid_len, hash, csr + ci->sig_offset,
-		csr + ci->pubkey_offset);
+	code = bign128Verify(hash, csr + ci->sig_offset, csr + ci->pubkey_offset);
 	blobClose(hash);
 	ERR_CALL_CHECK(code);
 	// завершить

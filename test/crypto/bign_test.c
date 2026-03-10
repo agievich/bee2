@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.45 (bign)
 \project bee2/test
 \created 2012.08.27
-\version 2026.03.06
+\version 2026.03.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -141,7 +141,7 @@ static err_t bignPrePrintEc(const ec_o* ec, ec_pre_type type, size_t w)
 	// размерности
 	mb = wwBitSize(ec->order, ec->f->n + 1);
 	coord_size = O_OF_W(ec->f->n);
-	if (w == 0 || (type == ec_pre_si && mb % w) || coord_size % 16)
+	if (w == 0 || (type == ec_pre_si && mb % w) || coord_size % 8)
 		return ERR_BAD_INPUT;
 	h = (type != ec_pre_soa) ? (mb + w - 1) / w : 0;
 	pre_count = SIZE_BIT_POS(w - 1);

@@ -4,7 +4,7 @@
 \brief Experimental Bign signatures of security level 96
 \project bee2 [cryptographic library]
 \created 2021.01.20
-\version 2025.10.02
+\version 2026.03.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -12,19 +12,15 @@
 
 #include "bee2/core/blob.h"
 #include "bee2/core/err.h"
-#include "bee2/core/mem.h"
-#include "bee2/core/oid.h"
+#include "bee2/core/mt.h"
 #include "bee2/core/str.h"
 #include "bee2/core/u32.h"
 #include "bee2/core/util.h"
 #include "bee2/crypto/belt.h"
-#include "bee2/crypto/bign.h"
 #include "bee2/crypto/bign96.h"
-#include "bee2/math/gfp.h"
-#include "bee2/math/ecp.h"
 #include "bee2/math/ww.h"
 #include "bee2/math/zz.h"
-#include "bign/bign_lcl.h"
+#include "bign_lcl.h"
 
 /*
 *******************************************************************************
@@ -71,6 +67,101 @@ static const octet _curve96v1_yG[24] = {
 
 /*
 *******************************************************************************
+Загрузка стандартных параметров
+*******************************************************************************
+*/
+
+err_t bign96ParamsStd(bign_params* params, const char* name)
+{
+	if (!memIsValid(params, sizeof(bign_params)))
+		return ERR_BAD_INPUT;
+	if (strEq(name, _curve96v1_name))
+	{
+		memSetZero(params, sizeof(bign_params));
+		params->l = 96;
+		memCopy(params->p, _curve96v1_p, 24);
+		memCopy(params->a, _curve96v1_a, 24);
+		memCopy(params->seed, _curve96v1_seed, 8);
+		memCopy(params->b, _curve96v1_b, 24);
+		memCopy(params->q, _curve96v1_q, 24);
+		memCopy(params->yG, _curve96v1_yG, 24);
+		return ERR_OK;
+	}
+	return ERR_FILE_NOT_FOUND;
+}
+
+/*
+*******************************************************************************
+Предвычисленные точки
+*******************************************************************************
+*/
+
+#include "pre/bign96_pre_od7.c"
+
+/*
+*******************************************************************************
+Кривая
+*******************************************************************************
+*/
+
+static size_t _once;			/*< триггер однократности */
+static mt_mtx_t _mtx[1];		/*< мьютекс */
+static bool_t _inited;			/*< мьютекс создан? */
+static ec_o* _ec;				/*< кривая */
+
+static void bign96Destroy()
+{
+	mtMtxLock(_mtx);
+	bignEcClose(_ec), _ec = 0;
+	mtMtxUnlock(_mtx);
+	mtMtxClose(_mtx);
+}
+
+static void bign96Init()
+{
+	ASSERT(!_inited);
+	// создать мьютекс
+	if (!mtMtxCreate(_mtx))
+		return;
+	// зарегистрировать деструктор
+	if (!utilOnExit(bign96Destroy))
+	{
+		mtMtxClose(_mtx);
+		return;
+	}
+	_inited = TRUE;
+}
+
+static err_t bign96Ec(const ec_o** pec)
+{
+	ASSERT(memIsValid(pec, sizeof(const ec_o*)));
+	// инициализировать однократно
+	if (!mtCallOnce(&_once, bign96Init) || !_inited)
+		return ERR_FILE_CREATE;
+	// заблокировать мьютекс
+	mtMtxLock(_mtx);
+	// кривая не создана?
+	if (_ec == 0)
+	{
+		err_t code;
+		bign_params params[1];
+		// загрузить параметры
+		code = bign96ParamsStd(params, "1.2.112.0.2.0.34.101.45.3.0");
+		ERR_CALL_HANDLE(code, mtMtxUnlock(_mtx));
+		// создать кривую
+		code = bignEcCreate(&_ec, params);
+		ERR_CALL_HANDLE(code, mtMtxUnlock(_mtx));
+		// настроить ec->pre
+//		_ec->pre = &_pre;
+	}
+	// возвратить кривую
+	*pec = _ec;
+	mtMtxUnlock(_mtx);
+	return ERR_OK;
+}
+
+/*
+*******************************************************************************
 belt-32block
 
 Алгоритм belt-32block определен в СТБ 34.101.31-2020. В Bign96 счетчик
@@ -103,132 +194,61 @@ static void belt32BlockEncr(octet block[24], const u32 key[8], u32* round)
 
 /*
 *******************************************************************************
-Загрузка стандартных параметров
-*******************************************************************************
-*/
-
-err_t bign96ParamsStd(bign_params* params, const char* name)
-{
-	if (!memIsValid(params, sizeof(bign_params)))
-		return ERR_BAD_INPUT;
-	if (strEq(name, _curve96v1_name))
-	{
-		memSetZero(params, sizeof(bign_params));
-		params->l = 96;
-		memCopy(params->p, _curve96v1_p, 24);
-		memCopy(params->a, _curve96v1_a, 24);
-		memCopy(params->seed, _curve96v1_seed, 8);
-		memCopy(params->b, _curve96v1_b, 24);
-		memCopy(params->q, _curve96v1_q, 24);
-		memCopy(params->yG, _curve96v1_yG, 24);
-		return ERR_OK;
-	}
-	return ERR_FILE_NOT_FOUND;
-}
-
-/*
-*******************************************************************************
-Предварительная проверка параметров
-*******************************************************************************
-*/
-
-static err_t bign96ParamsCheck(const bign_params* params)
-{
-	err_t code;
-	code = bignParamsCheck2(params);
-	ERR_CALL_CHECK(code);
-	return (params->l == 96) ? ERR_OK : ERR_BAD_PARAMS;
-}
-
-/*
-*******************************************************************************
-Проверка параметров
-*******************************************************************************
-*/
-
-err_t bign96ParamsVal(const bign_params* params)
-{
-	err_t code;
-	ec_o* ec;
-	code = bign96ParamsCheck(params);
-	ERR_CALL_CHECK(code);
-	code = bignEcCreate(&ec, params);
-	ERR_CALL_CHECK(code);
-	code = bignParamsValEc(ec, params);
-	bignEcClose(ec);
-	return code;
-}
-
-/*
-*******************************************************************************
 Управление ключами
 *******************************************************************************
 */
 
-err_t bign96KeypairGen(octet privkey[24], octet pubkey[48],
-	const bign_params* params, gen_i rng, void* rng_state)
+err_t bign96KeypairGen(octet privkey[24], octet pubkey[48], gen_i rng, 
+	void* rng_state)
 {
 	err_t code;
-	ec_o* ec;
-	code = bign96ParamsCheck(params);
+	const ec_o* ec;
+	code = bign96Ec(&ec);
 	ERR_CALL_CHECK(code);
-	code = bignEcCreate(&ec, params);
-	ERR_CALL_CHECK(code);
-	code = bignKeypairGenEc(privkey, pubkey, ec, rng, rng_state);
-	bignEcClose(ec);
-	return code;
+	return bignKeypairGenEc(privkey, pubkey, ec, rng, rng_state);
 }
 
-err_t bign96KeypairVal(const bign_params* params, const octet privkey[24],
-	const octet pubkey[48])
+err_t bign96KeypairVal(const octet privkey[24], const octet pubkey[48])
 {
 	err_t code;
-	ec_o* ec;
-	code = bign96ParamsCheck(params);
+	const ec_o* ec;
+	code = bign96Ec(&ec);
 	ERR_CALL_CHECK(code);
-	code = bignEcCreate(&ec, params);
-	ERR_CALL_CHECK(code);
-	code = bignKeypairValEc(ec, privkey, pubkey);
-	bignEcClose(ec);
-	return code;
+	return bignKeypairValEc(ec, privkey, pubkey);
 }
 
-err_t bign96PubkeyVal(const bign_params* params, const octet pubkey[48])
+err_t bign96PubkeyVal(const octet pubkey[48])
 {
 	err_t code;
-	ec_o* ec;
-	code = bign96ParamsCheck(params);
+	const ec_o* ec;
+	code = bign96Ec(&ec);
 	ERR_CALL_CHECK(code);
-	code = bignEcCreate(&ec, params);
-	ERR_CALL_CHECK(code);
-	code = bignPubkeyValEc(ec, pubkey);
-	bignEcClose(ec);
-	return code;
+	return bignPubkeyValEc(ec, pubkey);
 }
 
-err_t bign96PubkeyCalc(octet pubkey[48], const bign_params* params,
-	const octet privkey[24])
+err_t bign96PubkeyCalc(octet pubkey[48], const octet privkey[24])
 {
 	err_t code;
-	ec_o* ec;
-	code = bign96ParamsCheck(params);
+	const ec_o* ec;
+	code = bign96Ec(&ec);
 	ERR_CALL_CHECK(code);
-	code = bignEcCreate(&ec, params);
-	ERR_CALL_CHECK(code);
-	code = bignPubkeyCalcEc(pubkey, ec, privkey);
-	bignEcClose(ec);
-	return code;
+	return bignPubkeyCalcEc(pubkey, ec, privkey);
 }
 
 /*
 *******************************************************************************
 Выработка ЭЦП
+
+\remark DER(belt-hash) = 1.2.112.0.2.0.34.101.31.81
 *******************************************************************************
 */
 
-err_t bign96SignEc(octet sig[34], const ec_o* ec, const octet oid_der[],
-	size_t oid_len, const octet hash[24], const octet privkey[24], gen_i rng,
-	void* rng_state)
+static const octet _oid_der[] = {
+	0x06, 0x09, 0x2A, 0x70, 0x00, 0x02, 0x00, 0x22, 0x65, 0x1F, 0x51,
+};
+
+err_t bign96SignEc(octet sig[34], const ec_o* ec, const octet hash[24],
+	const octet privkey[24], gen_i rng, void* rng_state)
 {
 	size_t n;
 	void* state;			
@@ -246,8 +266,6 @@ err_t bign96SignEc(octet sig[34], const ec_o* ec, const octet oid_der[],
 	if (!memIsValid(hash, 24) || !memIsValid(privkey, 24) ||
 		!memIsValid(sig, 34) || !memIsDisjoint2(hash, 24, sig, 34))
 		return ERR_BAD_INPUT;
-	if (oid_len == SIZE_MAX || oidFromDER(0, oid_der, oid_len) == SIZE_MAX)
-		return ERR_BAD_OID;
 	if (rng == 0)
 		return ERR_BAD_RNG;
 	// создать состояние
@@ -259,7 +277,7 @@ err_t bign96SignEc(octet sig[34], const ec_o* ec, const octet oid_der[],
 		O_OF_W(W_OF_O(13)),
 		utilMax(4,
 			beltHash_keep(),
-			ecMulA_deep(n, ec->d, ec->deep, n),
+			bignMulBase_deep(n, ec->d, ec->deep),
 			zzMul_deep(W_OF_O(13), n),
 			zzMod_deep(n + W_OF_O(13), n)),
 		SIZE_MAX,
@@ -280,7 +298,7 @@ err_t bign96SignEc(octet sig[34], const ec_o* ec, const octet oid_der[],
 		return ERR_BAD_RNG;
 	}
 	// R <- k G
-	if (!ecMulA(R, ec->base, ec, k, n, stack))
+	if (!bignMulBase(R, ec, k, stack))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;
@@ -288,7 +306,7 @@ err_t bign96SignEc(octet sig[34], const ec_o* ec, const octet oid_der[],
 	qrTo((octet*)R, ecX(R), ec->f, stack);
 	// s0 <- belt-hash(oid || R || H) mod 2^80 + 2^l
 	beltHashStart(stack);
-	beltHashStepH(oid_der, oid_len, stack);
+	beltHashStepH(_oid_der, sizeof(_oid_der), stack);
 	beltHashStepH(R, 24, stack);
 	beltHashStepH(hash, 24, stack);
 	beltHashStepG2(sig, 10, stack);
@@ -309,31 +327,18 @@ err_t bign96SignEc(octet sig[34], const ec_o* ec, const octet oid_der[],
 	return ERR_OK;
 }
 
-err_t bign96Sign(octet sig[34], const bign_params* params,
-	const octet oid_der[], size_t oid_len, const octet hash[24],
-	const octet privkey[24], gen_i rng,	void* rng_state)
+err_t bign96Sign(octet sig[34], const octet hash[24], const octet privkey[24], 
+	gen_i rng, void* rng_state)
 {
 	err_t code;
-	ec_o* ec;
-	code = bign96ParamsCheck(params);
+	const ec_o* ec;
+	code = bign96Ec(&ec);
 	ERR_CALL_CHECK(code);
-	code = bignEcCreate(&ec, params);
-	ERR_CALL_CHECK(code);
-	code = bign96SignEc(sig, ec, oid_der, oid_len, hash, privkey, rng,
-		rng_state);
-	bignEcClose(ec);
-	return code;
+	return bign96SignEc(sig, ec, hash, privkey, rng, rng_state);
 }
 
-/*
-*******************************************************************************
-Детерминированная выработка ЭЦП
-*******************************************************************************
-*/
-
-err_t bign96Sign2Ec(octet sig[34], const ec_o* ec, const octet oid_der[],
-	size_t oid_len, const octet hash[24], const octet privkey[24],
-	const void* t, size_t t_len)
+err_t bign96Sign2Ec(octet sig[34], const ec_o* ec, const octet hash[24],
+	const octet privkey[24], const void* t, size_t t_len)
 {
 	size_t n;
 	void* state;
@@ -353,8 +358,6 @@ err_t bign96Sign2Ec(octet sig[34], const ec_o* ec, const octet oid_der[],
 	if (!memIsValid(hash, 24) || !memIsValid(privkey, 24) ||
 		!memIsValid(sig, 34) || !memIsDisjoint2(hash, 24, sig, 34))
 		return ERR_BAD_INPUT;
-	if (oid_len == SIZE_MAX || oidFromDER(0, oid_der, oid_len) == SIZE_MAX)
-		return ERR_BAD_OID;
 	if (!memIsNullOrValid(t, t_len))
 		return ERR_BAD_INPUT;
 	// создать состояние
@@ -369,7 +372,7 @@ err_t bign96Sign2Ec(octet sig[34], const ec_o* ec, const octet oid_der[],
 			beltHash_keep(),
 			(size_t)32,
 			beltKWP_keep(),
-			ecMulA_deep(n, ec->d, ec->deep, n),
+			bignMulA_deep(n, ec->d, ec->deep),
 			zzMul_deep(W_OF_O(13), n),
 			zzMod_deep(n + W_OF_O(13), n)),
 	SIZE_MAX,
@@ -385,7 +388,7 @@ err_t bign96Sign2Ec(octet sig[34], const ec_o* ec, const octet oid_der[],
 	}
 	// хэшировать oid
 	beltHashStart(hash_state);
-	beltHashStepH(oid_der, oid_len, hash_state);
+	beltHashStepH(_oid_der, sizeof(_oid_der), hash_state);
 	// сгенерировать k по алгоритму 6.3.3
 	{
 		// theta <- belt-hash(oid || d || t)
@@ -408,7 +411,7 @@ err_t bign96Sign2Ec(octet sig[34], const ec_o* ec, const octet oid_der[],
 		}
 	}
 	// R <- k G
-	if (!ecMulA(R, ec->base, ec, k, n, stack))
+	if (!bignMulA(R, ec->base, ec, k, stack))
 	{
 		blobClose(state);
 		return ERR_BAD_PARAMS;
@@ -435,19 +438,14 @@ err_t bign96Sign2Ec(octet sig[34], const ec_o* ec, const octet oid_der[],
 	return ERR_OK;
 }
 
-err_t bign96Sign2(octet sig[34], const bign_params* params,
-	const octet oid_der[], size_t oid_len, const octet hash[24],
-	const octet privkey[24], const void* t, size_t t_len)
+err_t bign96Sign2(octet sig[34], const octet hash[24], const octet privkey[24],
+	const void* t, size_t t_len)
 {
 	err_t code;
-	ec_o* ec;
-	code = bign96ParamsCheck(params);
+	const ec_o* ec;
+	code = bign96Ec(&ec);
 	ERR_CALL_CHECK(code);
-	code = bignEcCreate(&ec, params);
-	ERR_CALL_CHECK(code);
-	code = bign96Sign2Ec(sig, ec, oid_der, oid_len, hash, privkey, t, t_len);
-	bignEcClose(ec);
-	return code;
+	return bign96Sign2Ec(sig, ec, hash, privkey, t, t_len);
 }
 
 /*
@@ -456,8 +454,8 @@ err_t bign96Sign2(octet sig[34], const bign_params* params,
 *******************************************************************************
 */
 
-err_t bign96VerifyEc(const ec_o* ec, const octet oid_der[], size_t oid_len,
-	const octet hash[24], const octet sig[34], const octet pubkey[48])
+err_t bign96VerifyEc(const ec_o* ec, const octet hash[24], const octet sig[34],
+	const octet pubkey[48])
 {
 	err_t code;
 	size_t n;
@@ -476,8 +474,6 @@ err_t bign96VerifyEc(const ec_o* ec, const octet oid_der[], size_t oid_len,
 	if (!memIsValid(hash, 24) || !memIsValid(sig, 34) ||
 		!memIsValid(pubkey, 48))
 		return ERR_BAD_INPUT;
-	if (oid_len == SIZE_MAX || oidFromDER(0, oid_der, oid_len) == SIZE_MAX)
-		return ERR_BAD_OID;
 	// создать состояние
 	state = blobCreate2(
 		O_OF_W(2 * n),
@@ -528,7 +524,7 @@ err_t bign96VerifyEc(const ec_o* ec, const octet oid_der[], size_t oid_len,
 	qrTo((octet*)R, ecX(R), ec->f, stack);
 	// s0 == belt-hash(oid || R || H) mod 2^80?
 	beltHashStart(stack);
-	beltHashStepH(oid_der, oid_len, stack);
+	beltHashStepH(_oid_der, sizeof(_oid_der), stack);
 	beltHashStepH(R, 24, stack);
 	beltHashStepH(hash, 24, stack);
 	code = beltHashStepV2(sig, 10, stack) ? ERR_OK : ERR_BAD_SIG;
@@ -537,17 +533,12 @@ err_t bign96VerifyEc(const ec_o* ec, const octet oid_der[], size_t oid_len,
 	return code;
 }
 
-err_t bign96Verify(const bign_params* params, const octet oid_der[],
-	size_t oid_len, const octet hash[24], const octet sig[34],
+err_t bign96Verify(const octet hash[24], const octet sig[34], 
 	const octet pubkey[48])
 {
 	err_t code;
-	ec_o* ec;
-	code = bign96ParamsCheck(params);
+	const ec_o* ec;
+	code = bign96Ec(&ec);
 	ERR_CALL_CHECK(code);
-	code = bignEcCreate(&ec, params);
-	ERR_CALL_CHECK(code);
-	code = bign96VerifyEc(ec, oid_der, oid_len, hash, sig, pubkey);
-	bignEcClose(ec);
-	return code;
+	return bign96VerifyEc(ec, hash, sig, pubkey);
 }
