@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): BAUTH protocol
 \project bee2 [cryptographic library]
 \created 2022.02.22
-\version 2025.10.22
+\version 2026.03.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -319,10 +319,10 @@ err_t btokBAuthCTStep2(octet out[], const bake_cert* certt, void* state)
 		s->settings->rng_state))
 		return ERR_BAD_RNG;
 	// Vct <- uct G
-	if (!ecMulA(Vct, s->ec->base, s->ec, s->u, n, stack))
+	if (!bignMulBase(Vct, s->ec, s->u, stack))
 		return ERR_BAD_PARAMS;
 	// K <- uct Qt
-	if (!ecMulA(K, Qt, s->ec, s->u, n, stack))
+	if (!bignMulA(K, Qt, s->ec, s->u, stack))
 		return ERR_BAD_PARAMS;
 	// сохранить ecX(Vct)
 	qrTo(s->V, ecX(Vct), s->ec->f, stack);
@@ -340,9 +340,10 @@ static size_t btokBAuthCTStep2_deep(size_t n, size_t f_deep, size_t ec_d,
 {
 	return memSliceSize(
 		btokBAuthCTStep2_local(n),
-		utilMax(2,
+		utilMax(3,
 			f_deep,
-			ecMulA_deep(n, ec_d, ec_deep, n)),
+			bignMulBase_deep(n, ec_d, ec_deep),
+			bignMulA_deep(n, ec_d, ec_deep)),
 		SIZE_MAX);
 }
 
@@ -382,7 +383,7 @@ err_t btokBAuthTStep3(octet out[], const octet in[], void* state)
 		!ecpIsOnA(s->Vct, s->ec, stack))
 		return ERR_BAD_POINT;
 	// K <- dt Vct
-	if (!ecMulA(K, s->Vct, s->ec, s->d, n, stack))
+	if (!bignMulA(K, s->Vct, s->ec, s->d, stack))
 		return ERR_BAD_PARAMS;
 	qrTo((octet*)K, ecX(K), s->ec->f, stack);
 	// Rct <- belt-keyunwrap(Zct, 0^16, K)
@@ -440,7 +441,7 @@ static size_t btokBAuthTStep3_deep(size_t n, size_t f_deep, size_t ec_d,
 		btokBAuthTStep3_local(n, O_OF_W(n)),
 		utilMax(5,
 			f_deep,
-			ecMulA_deep(n, ec_d, ec_deep, n),
+			bignMulA_deep(n, ec_d, ec_deep),
 			beltHash_keep(),
 			beltKRP_keep(),
 			beltMAC_keep()),
@@ -545,9 +546,8 @@ static size_t btokBAuthCTStep4_deep(size_t n, size_t f_deep, size_t ec_d,
 {
 	return memSliceSize(
 		btokBAuthCTStep4_local(n),
-		utilMax(5,
+		utilMax(4,
 			f_deep,
-			ecMulA_deep(n, ec_d, ec_deep, n),
 			beltHash_keep(),
 			beltKRP_keep(),
 			beltMAC_keep()),

@@ -4,7 +4,7 @@
 \brief Command-line interface to Bee2: signing files
 \project bee2/cmd
 \created 2022.08.20
-\version 2025.10.10
+\version 2026.10.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -21,7 +21,9 @@
 #include <bee2/core/util.h>
 #include <bee2/crypto/bash.h>
 #include <bee2/crypto/belt.h>
-#include <bee2/crypto/bign.h>
+#include <bee2/crypto/bign128.h>
+#include <bee2/crypto/bign192.h>
+#include <bee2/crypto/bign256.h>
 #include <bee2/crypto/bign96.h>
 #include <bee2/crypto/btok.h>
 #include "bee2/cmd.h"
@@ -300,28 +302,6 @@ static err_t cmdSigHash(octet hash[], size_t hash_len, const char* name,
 
 /*
 *******************************************************************************
-Долговременные параметры
-*******************************************************************************
-*/
-
-static err_t cmdSigParamsStd(bign_params* params, size_t privkey_len)
-{
-	switch (privkey_len)
-	{
-	case 24:
-		return bign96ParamsStd(params, "1.2.112.0.2.0.34.101.45.3.0");
-	case 32:
-		return bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.1");
-	case 48:
-		return bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.2");
-	case 64:
-		return bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.3");
-	}
-	return ERR_BAD_INPUT;
-}
-
-/*
-*******************************************************************************
 Выработка подписи
 *******************************************************************************
 */
@@ -330,11 +310,8 @@ err_t cmdSigSign(const char* sig_name, const char* name, const char* certs,
 	const octet date[6], const octet privkey[], size_t privkey_len)
 {
 	err_t code;
-	size_t oid_len = 16;
 	void* state;
 	cmd_sig_t* sig;				/* [1] */
-	bign_params* params;		/* [1] */
-	octet* oid_der;				/* [oid_len] */
 	octet* hash;				/* [privkey_len] */
 	octet* t;					/* [privkey_len] */
 	size_t t_len;
@@ -350,12 +327,10 @@ err_t cmdSigSign(const char* sig_name, const char* name, const char* certs,
 	// выделить и разметить память
 	code = cmdBlobCreate2(state,
 		sizeof(cmd_sig_t),
-		sizeof(bign_params),
-		oid_len,
 		privkey_len,
 		privkey_len,
 		SIZE_MAX,
-		&sig, &params, &oid_der, &hash, &t);
+		&sig, &hash, &t);
 	ERR_CALL_CHECK(code);
 	// зафиксировать дату
 	memCopy(sig->date, date, 6);
@@ -385,43 +360,33 @@ err_t cmdSigSign(const char* sig_name, const char* name, const char* certs,
 			privkey_len);
 		ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	}
-	// загрузить долговременные параметры
-	code = cmdSigParamsStd(params, privkey_len);
-	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// хэшировать
 	code = cmdSigHash(hash, privkey_len, name, 0, sig->certs, sig->certs_len, 
 		sig->date);
 	ERR_CALL_HANDLE(code, cmdBlobClose(state));
-	if (privkey_len <= 32)
-	{
-		code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.31.81");
-		ERR_CALL_HANDLE(code, cmdBlobClose(state));
-		ASSERT(oid_len == 11);
-	}
-	else 
-	{
-		code = bignOidToDER(oid_der, &oid_len, privkey_len == 48 ? 
-			"1.2.112.0.2.0.34.101.77.12" : "1.2.112.0.2.0.34.101.77.13");
-		ERR_CALL_HANDLE(code, cmdBlobClose(state));
-		ASSERT(oid_len == 11);
-	}
 	// получить случайные числа
 	if (rngIsValid())
 		rngStepR(t, t_len = privkey_len, 0);
 	else
 		t_len = 0;
 	// подписать
-	if (privkey_len == 24)
+	switch (privkey_len)
 	{
-		code = bign96Sign2(sig->sig, params, oid_der, oid_len, hash, privkey, 
-			t, t_len);
+	case 32:
+		code = bign128Sign2(sig->sig, hash, privkey, t, t_len);
+		sig->sig_len = 48;
+		break;
+	case 48:
+		code = bign192Sign2(sig->sig, hash, privkey, t, t_len);
+		sig->sig_len = 72;
+		break;
+	case 64:
+		code = bign256Sign2(sig->sig, hash, privkey, t, t_len);
+		sig->sig_len = 96;
+		break;
+	case 24:
+		code = bign96Sign2(sig->sig, hash, privkey, t, t_len);
 		sig->sig_len = 34;
-	}
-	else
-	{
-		code = bignSign2(sig->sig, params, oid_der, oid_len, hash, privkey, 
-			t, t_len);
-		sig->sig_len = privkey_len / 2 * 3;
 	}
 	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// сохранить подпись
@@ -444,12 +409,9 @@ err_t cmdSigVerify(const char* name, const char* sig_name,
 	const octet pubkey[], size_t pubkey_len)
 {
 	err_t code;
-	size_t oid_len = 16;
 	void* state;
 	cmd_sig_t* sig;				/* [1] */
 	btok_cvc_t* cvc;			/* [1] */
-	bign_params* params;		/* [1] */
-	octet* oid_der;				/* [oid_len] */
 	octet* hash;				/* [pubkey_len / 2] */
 	size_t drop;
 	// входной контроль
@@ -462,11 +424,9 @@ err_t cmdSigVerify(const char* name, const char* sig_name,
 	code = cmdBlobCreate2(state, 
 		sizeof(cmd_sig_t),
 		sizeof(btok_cvc_t),
-		sizeof(bign_params),
-		oid_len,
 		pubkey_len / 2,
 		SIZE_MAX,
-		&sig, &cvc, &params, &oid_der, &hash);
+		&sig, &cvc, &hash);
 	ERR_CALL_CHECK(code);
 	// читать подпись
 	code = cmdSigRead(sig, &drop, sig_name);	
@@ -497,37 +457,41 @@ err_t cmdSigVerify(const char* name, const char* sig_name,
 			code = ERR_BAD_PUBKEY;
 		ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	}
-	// загрузить долговременные параметры
-	code = cmdSigParamsStd(params, pubkey_len / 2);
-	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// хэшировать
 	code = cmdSigHash(hash, pubkey_len / 2, name, drop, sig->certs, 
 		sig->certs_len, sig->date);
 	ERR_CALL_HANDLE(code, cmdBlobClose(state));
-	if (pubkey_len <= 64)
-	{
-		code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.31.81");
-		ERR_CALL_HANDLE(code, cmdBlobClose(state));
-		ASSERT(oid_len == 11);
-	}
-	else 
-	{
-		code = bignOidToDER(oid_der, &oid_len, pubkey_len == 96 ? 
-			"1.2.112.0.2.0.34.101.77.12" : "1.2.112.0.2.0.34.101.77.13");
-		ERR_CALL_HANDLE(code, cmdBlobClose(state));
-		ASSERT(oid_len == 11);
-	}
 	// проверить открытый ключ
-	if (pubkey_len == 48)
-		code = bign96PubkeyVal(params, pubkey);
-	else
-		code = bignPubkeyVal(params, pubkey);
+	switch (pubkey_len)
+	{
+	case 64:
+		code = bign128PubkeyVal(pubkey);
+		break;
+	case 96:
+		code = bign192PubkeyVal(pubkey);
+		break;
+	case 128:
+		code = bign256PubkeyVal(pubkey);
+		break;
+	case 48:
+		code = bign96PubkeyVal(pubkey);
+	}
 	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// проверить подпись
-	if (pubkey_len == 48)
-		code = bign96Verify(params, oid_der, oid_len, hash, sig->sig, pubkey);
-	else
-		code = bignVerify(params, oid_der, oid_len, hash, sig->sig, pubkey);
+	switch (pubkey_len)
+	{
+	case 64:
+		code = bign128Verify(hash, sig->sig, pubkey);
+		break;
+	case 96:
+		code = bign192Verify(hash, sig->sig, pubkey);
+		break;
+	case 128:
+		code = bign256Verify(hash, sig->sig, pubkey);
+		break;
+	case 48:
+		code = bign96Verify(hash, sig->sig, pubkey);
+	}
 	// завершить
 	cmdBlobClose(state);
 	return code;
@@ -537,12 +501,9 @@ err_t cmdSigVerify2(const char* name, const char* sig_name,
 	const octet anchor[], size_t anchor_len)
 {
 	err_t code;
-	size_t oid_len = 16;
 	void* state;
 	cmd_sig_t* sig;				/* [1] */
 	btok_cvc_t* cvc;			/* [1] */
-	bign_params* params;		/* [1] */
-	octet* oid_der;				/* [oid_len] */
 	octet* hash;				/* [64] */
 	size_t drop;
 	size_t offset;
@@ -555,11 +516,9 @@ err_t cmdSigVerify2(const char* name, const char* sig_name,
 	code = cmdBlobCreate2(state, 
 		sizeof(cmd_sig_t),
 		sizeof(btok_cvc_t),
-		sizeof(bign_params),
-		oid_len,
 		(size_t)64,
 		SIZE_MAX,
-		&sig, &cvc, &params, &oid_der, &hash);
+		&sig, &cvc, &hash);
 	ERR_CALL_CHECK(code);
 	// читать подпись
 	code = cmdSigRead(sig, &drop, sig_name);	
@@ -583,39 +542,41 @@ err_t cmdSigVerify2(const char* name, const char* sig_name,
 	// разобрать последний сертификат
 	code = btokCVCUnwrap(cvc, sig->certs + offset, cert_len, 0, 0);
 	ERR_CALL_HANDLE(code, cmdBlobClose(state));
-	// загрузить долговременные параметры
-	code = cmdSigParamsStd(params, cvc->pubkey_len / 2);
-	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// хэшировать
 	code = cmdSigHash(hash, cvc->pubkey_len / 2, name, drop, sig->certs, 
 		sig->certs_len, sig->date);
 	ERR_CALL_HANDLE(code, cmdBlobClose(state));
-	if (cvc->pubkey_len <= 64)
-	{
-		code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.31.81");
-		ERR_CALL_HANDLE(code, cmdBlobClose(state));
-		ASSERT(oid_len == 11);
-	}
-	else 
-	{
-		code = bignOidToDER(oid_der, &oid_len, cvc->pubkey_len == 96 ? 
-			"1.2.112.0.2.0.34.101.77.12" : "1.2.112.0.2.0.34.101.77.13");
-		ERR_CALL_HANDLE(code, cmdBlobClose(state));
-		ASSERT(oid_len == 11);
-	}
 	// проверить открытый ключ
-	if (cvc->pubkey_len == 48)
-		code = bign96PubkeyVal(params, cvc->pubkey);
-	else
-		code = bignPubkeyVal(params, cvc->pubkey);
+	switch (cvc->pubkey_len)
+	{
+	case 64:
+		code = bign128PubkeyVal(cvc->pubkey);
+		break;
+	case 96:
+		code = bign192PubkeyVal(cvc->pubkey);
+		break;
+	case 128:
+		code = bign256PubkeyVal(cvc->pubkey);
+		break;
+	case 48:
+		code = bign96PubkeyVal(cvc->pubkey);
+	}
 	ERR_CALL_HANDLE(code, cmdBlobClose(state));
 	// проверить подпись
-	if (cvc->pubkey_len == 48)
-		code = bign96Verify(params, oid_der, oid_len, hash, sig->sig, 
-			cvc->pubkey);
-	else
-		code = bignVerify(params, oid_der, oid_len, hash, sig->sig, 
-			cvc->pubkey);
+	switch (cvc->pubkey_len)
+	{
+	case 64:
+		code = bign128Verify(hash, sig->sig, cvc->pubkey);
+		break;
+	case 96:
+		code = bign192Verify(hash, sig->sig, cvc->pubkey);
+		break;
+	case 128:
+		code = bign256Verify(hash, sig->sig, cvc->pubkey);
+		break;
+	case 48:
+		code = bign96Verify(hash, sig->sig, cvc->pubkey);
+	}
 	// завершить
 	cmdBlobClose(state);
 	return code;

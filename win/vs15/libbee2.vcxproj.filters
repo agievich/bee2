@@ -264,9 +264,6 @@
     <ClCompile Include="..\..\src\crypto\btok\btok_bauth.c">
       <Filter>Source Files\crypto\btok</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\crypto\bign96.c">
-      <Filter>Source Files\crypto</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\crypto\stb99.c">
       <Filter>Source Files\crypto</Filter>
     </ClCompile>
@@ -352,6 +349,9 @@
       <Filter>Source Files\crypto\bign</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\crypto\bign\bign192.c">
+      <Filter>Source Files\crypto\bign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\bign\bign96.c">
       <Filter>Source Files\crypto\bign</Filter>
     </ClCompile>
   </ItemGroup>

@@ -4,7 +4,7 @@
 \brief STB 34.101.79 (btok): CV certificates
 \project bee2 [cryptographic library]
 \created 2022.07.04
-\version 2025.09.15
+\version 2026.03.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -20,7 +20,9 @@
 #include "bee2/core/util.h"
 #include "bee2/crypto/bash.h"
 #include "bee2/crypto/belt.h"
-#include "bee2/crypto/bign.h"
+#include "bee2/crypto/bign128.h"
+#include "bee2/crypto/bign192.h"
+#include "bee2/crypto/bign256.h"
 #include "bee2/crypto/bign96.h"
 #include "bee2/crypto/btok.h"
 
@@ -41,81 +43,67 @@ static const char oid_esign_auth_ext[] = "1.2.112.0.2.0.34.101.79.8.1";
 *******************************************************************************
 */
 
-static err_t btokParamsStd(bign_params* params, size_t privkey_len)
+static err_t btokPubkeyCalc(octet pubkey[], const octet privkey[],
+	size_t privkey_len)
 {
 	switch (privkey_len)
 	{
-	case 24:
-		return bign96ParamsStd(params, "1.2.112.0.2.0.34.101.45.3.0");
 	case 32:
-		return bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.1");
+		return bign128PubkeyCalc(pubkey, privkey);
 	case 48:
-		return bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.2");
+		return bign192PubkeyCalc(pubkey, privkey);
 	case 64:
-		return bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.3");
+		return bign256PubkeyCalc(pubkey, privkey);
+	case 24:
+		return bign96PubkeyCalc(pubkey, privkey);
 	}
 	return ERR_BAD_INPUT;
 }
 
-static err_t btokPubkeyCalc(octet pubkey[], const octet privkey[],
-	size_t privkey_len)
-{
-	err_t code;
-	bign_params params[1];
-	// загрузить параметры
-	code = btokParamsStd(params, privkey_len);
-	ERR_CALL_CHECK(code);
-	// вычислить ключ
-	return privkey_len == 24 ? bign96PubkeyCalc(pubkey, params, privkey) :
-		bignPubkeyCalc(pubkey, params, privkey);
-}
-
 static err_t btokPubkeyVal(const octet pubkey[], size_t pubkey_len)
 {
-	err_t code;
-	bign_params params[1];
-	// входной контроль
-	if (pubkey_len % 2)
-		return ERR_BAD_INPUT;
-	// загрузить параметры
-	code = btokParamsStd(params, pubkey_len / 2);
-	ERR_CALL_CHECK(code);
-	// проверить ключ
-	return pubkey_len == 48 ? bign96PubkeyVal(params, pubkey) :
-		bignPubkeyVal(params, pubkey);
+	switch (pubkey_len)
+	{
+	case 64:
+		return bign128PubkeyVal(pubkey);
+	case 96:
+		return bign192PubkeyVal(pubkey);
+	case 128:
+		return bign256PubkeyVal(pubkey);
+	case 48:
+		return bign96PubkeyVal(pubkey);
+	}
+	return ERR_BAD_INPUT;
 }
 
 static err_t btokKeypairVal(const octet privkey[], size_t privkey_len,
 	const octet pubkey[], size_t pubkey_len)
 {
-	err_t code;
-	bign_params params[1];
-	// входной еонтроль
 	if (pubkey_len != 2 * privkey_len)
 		return ERR_BAD_KEYPAIR;
-	// загрузить параметры
-	code = btokParamsStd(params, privkey_len);
-	ERR_CALL_CHECK(code);
-	// проверить пару ключей
-	return privkey_len == 24 ? bign96KeypairVal(params, privkey, pubkey) :
-		bignKeypairVal(params, privkey, pubkey);
+	switch (pubkey_len)
+	{
+	case 64:
+		return bign128KeypairVal(privkey, pubkey);
+	case 96:
+		return bign192KeypairVal(privkey, pubkey);
+	case 128:
+		return bign256KeypairVal(privkey, pubkey);
+	case 48:
+		return bign96KeypairVal(privkey, pubkey);
+	}
+	return ERR_BAD_INPUT;
 }
 
 static err_t btokSign(octet sig[], const void* buf, size_t count,
 	const octet privkey[], size_t privkey_len)
 {
 	err_t code;
-	bign_params params[1];
-	octet oid_der[16];
-	size_t oid_len = sizeof(oid_der);
 	void* state;
 	octet* hash;				/* [privkey_len] */
 	octet* t;					/* [privkey_len] */
 	void* hash_state;			/* [beltHash_keep() || bashHash_keep()] */
 	size_t t_len;
-	// загрузить параметры
-	code = btokParamsStd(params, privkey_len);
-	ERR_CALL_CHECK(code);
 	// создать состояние
 	state = blobCreate2(
 		privkey_len,
@@ -131,19 +119,12 @@ static err_t btokSign(octet sig[], const void* buf, size_t count,
 		beltHashStart(hash_state);
 		beltHashStepH(buf, count, hash_state);
 		beltHashStepG2(hash, privkey_len, hash_state);
-		code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.31.81");
-		ERR_CALL_HANDLE(code, blobClose(state));
-		ASSERT(oid_len == 11);
 	}
 	else
 	{
 		bashHashStart(hash_state, privkey_len * 4);
 		bashHashStepH(buf, count, hash_state);
 		bashHashStepG(hash, privkey_len, hash_state);
-		code = bignOidToDER(oid_der, &oid_len, privkey_len == 48 ? 
-			"1.2.112.0.2.0.34.101.77.12" : "1.2.112.0.2.0.34.101.77.13");
-		ERR_CALL_HANDLE(code, blobClose(state));
-		ASSERT(oid_len == 11);
 	}
 	// получить случайные числа
 	if (rngIsValid())
@@ -151,12 +132,23 @@ static err_t btokSign(octet sig[], const void* buf, size_t count,
 	else
 		t_len = 0;
 	// подписать
-	if (privkey_len == 24)
-		code = bign96Sign2(sig, params, oid_der, oid_len, hash, privkey,
-			t, t_len);
-	else
-		code = bignSign2(sig, params, oid_der, oid_len, hash, privkey,
-			t, t_len);
+	switch (privkey_len)
+	{
+	case 32:
+		code = bign128Sign2(sig, hash, privkey, t, t_len);
+		break;
+	case 48:
+		code = bign192Sign2(sig, hash, privkey, t, t_len);
+		break;
+	case 64:
+		code = bign256Sign2(sig, hash, privkey, t, t_len);
+		break;
+	case 24:
+		code = bign96Sign2(sig, hash, privkey, t, t_len);
+		break;
+	default:
+		code = ERR_BAD_INPUT;
+	}
 	// завершить
 	blobClose(state);
 	return code;
@@ -166,17 +158,11 @@ static err_t btokVerify(const void* buf, size_t count, const octet sig[],
 	const octet pubkey[], size_t pubkey_len)
 {
 	err_t code;
-	bign_params params[1];
-	octet oid_der[16];
-	size_t oid_len = sizeof(oid_der);
 	void* state;
 	octet* hash;				/* [pubkey_len / 2] */
 	void* hash_state;			/* [beltHash_keep() || bashHash_keep()] */
-	// входной контроль
-	if (pubkey_len % 2)
-		return ERR_BAD_INPUT;
-	// загрузить параметры
-	code = btokParamsStd(params, pubkey_len / 2);
+	// проверить открытый ключ
+	code = btokPubkeyVal(pubkey, pubkey_len);
 	ERR_CALL_CHECK(code);
 	// создать состояние
 	state = blobCreate2(
@@ -192,31 +178,28 @@ static err_t btokVerify(const void* buf, size_t count, const octet sig[],
 		beltHashStart(hash_state);
 		beltHashStepH(buf, count, hash_state);
 		beltHashStepG2(hash, pubkey_len / 2, hash_state);
-		code = bignOidToDER(oid_der, &oid_len, "1.2.112.0.2.0.34.101.31.81");
-		ERR_CALL_HANDLE(code, blobClose(state));
-		ASSERT(oid_len == 11);
 	}
 	else
 	{
 		bashHashStart(hash_state, pubkey_len * 2);
 		bashHashStepH(buf, count, hash_state);
 		bashHashStepG(hash, pubkey_len / 2, hash_state);
-		code = bignOidToDER(oid_der, &oid_len, pubkey_len == 96 ? 
-			"1.2.112.0.2.0.34.101.77.12" : "1.2.112.0.2.0.34.101.77.13");
-		ERR_CALL_HANDLE(code, blobClose(state));
-		ASSERT(oid_len == 11);
 	}
 	// проверить открытый ключ
-	if (pubkey_len == 48)
-		code = bign96PubkeyVal(params, pubkey);
-	else
-		code = bignPubkeyVal(params, pubkey);
-	ERR_CALL_HANDLE(code, blobClose(state));
-	// проверить подпись
-	if (pubkey_len == 48)
-		code = bign96Verify(params, oid_der, oid_len, hash, sig, pubkey);
-	else
-		code = bignVerify(params, oid_der, oid_len, hash, sig, pubkey);
+	switch (pubkey_len)
+	{
+	case 64:
+		code = bign128Verify(hash, sig, pubkey);
+		break;
+	case 96:
+		code = bign192Verify(hash, sig, pubkey);
+		break;
+	case 128:
+		code = bign256Verify(hash, sig, pubkey);
+		break;
+	case 48:
+		code = bign96Verify(hash, sig, pubkey);
+	}
 	// завершить
 	blobClose(state);
 	return code;

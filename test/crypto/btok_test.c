@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.79 (btok)
 \project bee2/test
 \created 2022.07.07
-\version 2025.09.29
+\version 2026.03.10
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -16,7 +16,9 @@
 #include <bee2/core/prng.h>
 #include <bee2/core/str.h>
 #include <bee2/crypto/belt.h>
-#include <bee2/crypto/bign.h>
+#include <bee2/crypto/bign128.h>
+#include <bee2/crypto/bign192.h>
+#include <bee2/crypto/bign256.h>
 #include <bee2/crypto/bign96.h>
 #include <bee2/crypto/btok.h>
 
@@ -109,7 +111,6 @@ static bool_t btokCVCTest()
 	btok_cvc_t cvc1[1];
 	btok_cvc_t cvc2[1];
 	btok_cvc_t cvc3[1];
-	bign_params params[1];
 	octet privkey0[64];
 	octet privkey1[48];
 	octet privkey2[32];
@@ -135,8 +136,7 @@ static bool_t btokCVCTest()
 	cvc0->pubkey_len = 128;
 	if (btokCVCCheck(cvc0) == ERR_OK)
 		return FALSE;
-	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.3") != ERR_OK ||
-		bignKeypairGen(privkey0, cvc0->pubkey, params, prngEchoStepR,
+	if (bign256KeypairGen(privkey0, cvc0->pubkey, prngEchoStepR,
 			state) != ERR_OK ||
 		btokCVCCheck(cvc0) != ERR_OK)
 		return FALSE;
@@ -175,8 +175,7 @@ static bool_t btokCVCTest()
 	memSet(cvc1->hat_eid, 0xDD, sizeof(cvc1->hat_eid));
 	memSet(cvc1->hat_esign, 0x33, sizeof(cvc1->hat_esign));
 	cvc1->pubkey_len = 96;
-	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.2") != ERR_OK ||
-		bignKeypairGen(privkey1, cvc1->pubkey, params, prngEchoStepR,
+	if (bign192KeypairGen(privkey1, cvc1->pubkey, prngEchoStepR,
 			state) != ERR_OK ||
 		btokCVCCheck(cvc1) != ERR_OK)
 		return FALSE;
@@ -212,8 +211,7 @@ static bool_t btokCVCTest()
 	memSet(cvc2->hat_eid, 0x88, sizeof(cvc2->hat_eid));
 	memSet(cvc2->hat_esign, 0x11, sizeof(cvc2->hat_esign));
 	cvc2->pubkey_len = 64;
-	if (bignParamsStd(params, "1.2.112.0.2.0.34.101.45.3.1") != ERR_OK ||
-		bignKeypairGen(privkey2, cvc2->pubkey, params, prngEchoStepR,
+	if (bign128KeypairGen(privkey2, cvc2->pubkey, prngEchoStepR,
 			state) != ERR_OK ||
 		btokCVCCheck(cvc2) != ERR_OK)
 		return FALSE;
@@ -236,8 +234,7 @@ static bool_t btokCVCTest()
 	hexTo(cvc3->from, "020200070102");
 	hexTo(cvc3->until, "020901020301");
 	cvc3->pubkey_len = 48;
-	if (bign96ParamsStd(params, "1.2.112.0.2.0.34.101.45.3.0") != ERR_OK ||
-		bign96KeypairGen(privkey3, cvc3->pubkey, params, prngEchoStepR,
+	if (bign96KeypairGen(privkey3, cvc3->pubkey, prngEchoStepR,
 			state) != ERR_OK ||
 		btokCVCCheck(cvc3) != ERR_OK)
 		return FALSE;

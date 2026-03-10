@@ -61,7 +61,7 @@ set(src
   crypto/bign/bign128.c
   crypto/bign/bign192.c
   crypto/bign/bign256.c
-  crypto/bign96.c
+  crypto/bign/bign96.c
   crypto/bpki.c
   crypto/botp.c
   crypto/brng.c

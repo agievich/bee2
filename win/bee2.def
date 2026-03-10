@@ -311,15 +311,13 @@ EXPORTS
 	btokCVCVal					@1507
 	btokCVCVal2					@1508
 
-	bign96ParamsStd				@1601
-	bign96ParamsVal				@1602
-	bign96KeypairGen			@1603
-	bign96KeypairVal			@1604
-	bign96PubkeyVal				@1605
-	bign96PubkeyCalc			@1606
-	bign96Sign					@1607
-	bign96Sign2					@1608
-	bign96Verify				@1609
+	bign96KeypairGen			@1601
+	bign96KeypairVal			@1602
+	bign96PubkeyVal				@1603
+	bign96PubkeyCalc			@1604
+	bign96Sign					@1605
+	bign96Sign2					@1606
+	bign96Verify				@1607
 
 	stb99SeedVal				@1701
 	stb99SeedAdj				@1702
