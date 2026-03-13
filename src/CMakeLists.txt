@@ -103,7 +103,7 @@ add_library(bee2_static STATIC ${src})
 set_target_properties(bee2_static PROPERTIES OUTPUT_NAME bee2_static)
 
 if(UNIX AND NOT APPLE)
-  target_link_libraries(bee2_static ${CMAKE_DL_LIBS})
+  target_link_libraries(bee2_static ${CMAKE_DL_LIBS} pthread)
 else()
   target_link_libraries(bee2_static)
 endif()
