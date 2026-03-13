@@ -22,7 +22,7 @@ jobs:
         - BUILD_TYPE: Check
           BUILD_FAST: OFF
           BASH_PLATFORM: BASH_SSE2
-          CC: gcc
+          CC: clang
         - BUILD_TYPE: ASan
           BUILD_FAST: OFF
           BASH_PLATFORM: BASH_32
