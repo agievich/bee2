@@ -4,7 +4,7 @@
 \brief Elliptic curves
 \project bee2 [cryptographic library]
 \created 2012.04.19
-\version 2026.03.10
+\version 2026.03.13
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -1113,7 +1113,7 @@ size_t ecMulPreOD_deep(size_t n, size_t ec_d, size_t ec_deep, size_t m);
 		переходов;
 	-	ec->sgna != 0 и функция ec->sgna регулярна: знак точки устанавливается
 		без условных переходов;
-	-	pre->w * pre->h == wwBitSize(ec->order, m);
+	-	pre->h >= pre->w + 2 && (pre->h - 1) * pre->w < wwBitSize(ec->order, m);
 	-	функция (ec->finadda != 0) ? ec->finadda : ec->adda регулярна: сложения
 		a + b, a + a, a + (-a) выполняются по одним и тем же формулам без 
 		условных переходов; 
