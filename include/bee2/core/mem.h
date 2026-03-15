@@ -4,7 +4,7 @@
 \brief Memory management
 \project bee2 [cryptographic library]
 \created 2012.07.16
-\version 2025.10.20
+\version 2026.03.15
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -441,6 +441,19 @@ void memSwap(
 void memRev(
 	void* buf,		/*!< [out] буфер */
 	size_t count	/*!< [in] размер буфера */
+);
+
+/*!	\brief Предварительная загрузка
+
+	Октеты буфера [count]buf прочитываются с шагом, который определяется 
+	размером линии кэш-памяти (cache line).
+	\remark Функция предназначена для защиты от кэш-атак.
+	Функцию следует вызывать перед обращениями к ячейкам памяти по 
+	ключезависимым адресам.
+*/
+void memPrefetch(
+	const void* buf,	/*!< [in] буфер */
+	size_t count		/*!< [in] размер буфера */
 );
 
 /*
