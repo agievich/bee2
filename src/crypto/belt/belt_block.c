@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): block encryption
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.10.02
+\version 2026.03.15
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -194,6 +194,14 @@ static const u32 H29[256] = {
 	HEx16(D4,EF,D9,B4,3A,62,28,75,91,14,10,EA,77,6C,DA,1D, 29),
 };
 
+#ifndef SAFE_FAST
+	#define beltHPrefetch()\
+		memPrefetch(H5, 256 * 4), memPrefetch(H13, 256 * 4),\
+		memPrefetch(H21, 256 * 4), memPrefetch(H29, 256 * 4)
+#else
+	#define beltHPrefetch() 
+#endif
+
 /*
 *******************************************************************************
 G-блоки
@@ -303,6 +311,7 @@ void beltBlockEncr(octet block[16], const u32 key[8])
 	t[2] = u32Rev(t[2]);
 	t[3] = u32Rev(t[3]);
 #endif
+	beltHPrefetch();
 	E((t + 0), (t + 1), (t + 2), (t + 3), key);
 #if (OCTET_ORDER == BIG_ENDIAN)
 	t[3] = u32Rev(t[3]);
@@ -314,11 +323,13 @@ void beltBlockEncr(octet block[16], const u32 key[8])
 
 void beltBlockEncr2(u32 block[4], const u32 key[8])
 {
+	beltHPrefetch();
 	E((block + 0), (block + 1), (block + 2), (block + 3), key);
 }
 
 void beltBlockEncr3(u32* a, u32* b, u32* c, u32* d, const u32 key[8])
 {
+	beltHPrefetch();
 	E(a, b, c, d, key);
 }
 
@@ -339,6 +350,7 @@ void beltBlockDecr(octet block[16], const u32 key[8])
 	t[2] = u32Rev(t[2]);
 	t[3] = u32Rev(t[3]);
 #endif
+	beltHPrefetch();
 	D((t + 0), (t + 1), (t + 2), (t + 3), key);
 #if (OCTET_ORDER == BIG_ENDIAN)
 	t[3] = u32Rev(t[3]);
@@ -350,10 +362,12 @@ void beltBlockDecr(octet block[16], const u32 key[8])
 
 void beltBlockDecr2(u32 block[4], const u32 key[8])
 {
+	beltHPrefetch();
 	D((block + 0), (block + 1), (block + 2), (block + 3), key);
 }
 
 void beltBlockDecr3(u32* a, u32* b, u32* c, u32* d, const u32 key[8])
 {
+	beltHPrefetch();
 	D(a, b, c, d, key);
 }
