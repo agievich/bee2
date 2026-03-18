@@ -138,13 +138,17 @@ err_t rngSys2Read(void* buf, size_t* read, size_t count)
 err_t rngSysRead(void* buf, size_t* read, size_t count)
 {
 	file_t file;
+	size_t n;
 	ASSERT(memIsValid(read, O_PER_S));
 	ASSERT(memIsValid(buf, count));
 	file = fileOpen("/dev/urandom", "rb");
 	if (!file)
 		return ERR_FILE_OPEN;
-	*read = fileRead2(buf, count, file);
+	n = fileRead2(buf, count, file);
 	fclose(file);
+	if (n == SIZE_MAX)
+		return ERR_FILE_READ;
+	*read = n; 
 	return ERR_OK;
 }
 	
