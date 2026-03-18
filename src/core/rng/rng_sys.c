@@ -4,7 +4,7 @@
 \brief Random number generation: system entropy sources
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2025.12.24
+\version 2026.03.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -138,18 +138,14 @@ err_t rngSys2Read(void* buf, size_t* read, size_t count)
 err_t rngSysRead(void* buf, size_t* read, size_t count)
 {
 	file_t file;
-	size_t n;
-	ASSERT(memIsValid(read, O_PER_S));
+	err_t code;
 	ASSERT(memIsValid(buf, count));
 	file = fileOpen("/dev/urandom", "rb");
 	if (!file)
 		return ERR_FILE_OPEN;
-	n = fileRead2(buf, count, file);
-	fclose(file);
-	if (n == SIZE_MAX)
-		return ERR_FILE_READ;
-	*read = n; 
-	return ERR_OK;
+	code = fileRead(read, buf, count, file);
+	fileClose(file);
+	return code;
 }
 	
 #if defined(OS_APPLE)
