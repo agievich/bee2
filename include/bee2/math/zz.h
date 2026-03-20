@@ -4,7 +4,7 @@
 \brief Multiple-precision unsigned integers
 \project bee2 [cryptographic library]
 \created 2012.04.22
-\version 2026.01.20
+\version 2026.03.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -292,7 +292,7 @@ word zzSubW2(
 	\remark Функция используется при регуляризации.
 */
 void zzSubIf(
-	word с[],			/*!< [out] результат */
+	word c[],			/*!< [out] результат */
 	const word a[],		/*!< [in] потенциальное уменьшаемое */
 	const word b[],		/*!< [in] потенциальное вычитаемое */
 	size_t n,			/*!< [in] длина чисел в машинных словах */
