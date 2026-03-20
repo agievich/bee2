@@ -4,7 +4,7 @@
 \brief Random number generation: statistical tests
 \project bee2 [cryptographic library]
 \created 2014.10.13
-\version 2025.10.08
+\version 2026.03.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -24,10 +24,13 @@
 *******************************************************************************
 */
 
+#define memTestBit(buf, i)\
+	((((const octet*)(buf))[(i) / 8] >> ((i) % 8)) & 1)
+
 bool_t rngTestFIPS1(const octet buf[2500])
 {
-	register size_t s;
-	register word w;
+	size_t s;
+	word w;
 	size_t count;
 	ASSERT(memIsValid(buf, 2500));
 	for (w = 0, count = 2500; !memIsAligned(buf, O_PER_W); ++buf, --count)
@@ -41,17 +44,16 @@ bool_t rngTestFIPS1(const octet buf[2500])
 	for (w = 0; count; ++buf, --count)
 		w = (w << 8) | *buf;
 	s += wordWeight(w);
-	CLEAN(w);
 	return 9725 < s && s < 10275;
 }
 
 bool_t rngTestFIPS2(const octet buf[2500])
 {
 	u32 s[16];
-	size_t i = 2500;
+	size_t i;
 	ASSERT(memIsValid(buf, 2500));
 	memSetZero(s, sizeof(s));
-	while (i--)
+	for (i = 2500; i--;)
 		++s[buf[i] & 15], ++s[buf[i] >> 4];
 	s[0] *= s[0];
 	for (i = 1; i < 16; ++i)
@@ -62,16 +64,15 @@ bool_t rngTestFIPS2(const octet buf[2500])
 
 bool_t rngTestFIPS3(const octet buf[2500])
 {
-	word s[2][7];
+	size_t s[2][7];
 	octet b;
 	size_t l;
 	size_t i;
 	ASSERT(memIsValid(buf, 2500));
 	memSetZero(s, sizeof(s));
 	b = buf[0] & 1;
-	l = 1;
-	for (i = 1; i < 20000; ++i)
-		if ((buf[i / 8] >> i % 8 & 1) == b)
+	for (i = l = 1; i < 20000; ++i)
+		if (memTestBit(buf, i) == b)
 			++l;
 		else
 			++s[b][MIN2(l, 6)], b = !b, l = 1;
@@ -97,9 +98,8 @@ bool_t rngTestFIPS4(const octet buf[2500])
 	size_t i;
 	ASSERT(memIsValid(buf, 2500));
 	b = buf[0] & 1;
-	l = 1;
-	for (i = 1; i < 20000; ++i)
-		if ((buf[i / 8] >> i % 8 & 1) == b)
+	for (i = l = 1; i < 20000; ++i)
+		if (memTestBit(buf, i) == b)
 			++l;
 		else
 		{
@@ -109,4 +109,3 @@ bool_t rngTestFIPS4(const octet buf[2500])
 		}
 	return l < 26;
 }
-

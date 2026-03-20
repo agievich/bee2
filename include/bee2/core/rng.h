@@ -83,7 +83,7 @@ bool_t rngTestFIPS2(
 	выполняется: S_1 \in [2315, 2685], S_2 \in [1114, 1386],
 	S_3 \in [527, 723], S_4 \in [240, 384], S_5, S_6+ \in [103, 209].
 	Здесь S_i -- количество серий длины i = 1, 2, ..., S_6+ = S_6 + S_7 + ....
-	\remark Бит с номером i: wwTestBit((const word*)buf, i).
+	\remark Бит с номером i: (buf[i / 8] >> (i % 8)) & 1.
 */
 bool_t rngTestFIPS3(
 	const octet buf[2500]	/*!< [in] тестируемая последовательность */
@@ -96,7 +96,7 @@ bool_t rngTestFIPS3(
 	\return Признак успешного прохождения теста.
 	\remark Тест пройден, если в последовательности отсутствуют серии
 	длины 26 и больше.
-	\remark Бит с номером i: wwTestBit((const word*)buf, i).
+	\remark Бит с номером i: (buf[i / 8] >> (i % 8)) & 1.
 */
 bool_t rngTestFIPS4(
 	const octet buf[2500]	/*!< [in] тестируемая последовательность */

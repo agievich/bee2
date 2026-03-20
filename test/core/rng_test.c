@@ -4,7 +4,7 @@
 \brief Tests for random number generators
 \project bee2/test
 \created 2014.10.10
-\version 2025.10.07
+\version 2026.03.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -12,6 +12,7 @@
 
 #include <stdio.h>
 #include <bee2/core/hex.h>
+#include <bee2/core/mem.h>
 #include <bee2/core/rng.h>
 #include <bee2/core/util.h>
 
@@ -54,6 +55,15 @@ bool_t rngTest()
 				printf("rngSource[%5s]: %s\n", sources[pos], hex);
 		}
 	}
+	// тестирование специально подобранных данных
+	memSet(buf, 0x5C, 2500);
+	if (!rngTestFIPS1(buf) || rngTestFIPS2(buf) ||
+		rngTestFIPS3(buf) || !rngTestFIPS4(buf))
+		return FALSE;
+	memSet(buf + 10, 0x00, 69);
+	if (rngTestFIPS1(buf) || rngTestFIPS2(buf) ||
+		rngTestFIPS3(buf) || rngTestFIPS4(buf))
+		return FALSE;
 	// работа с ГСЧ
 	if (rngCreate(0, 0) != ERR_OK)
 		return FALSE;
