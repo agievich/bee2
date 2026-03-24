@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): key transport
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2026.02.13
+\version 2026.03.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -218,6 +218,7 @@ err_t bignKeyUnwrapEc(octet key[], const ec_o* ec, const octet token[],
 		header == 0 && !memIsZero(header2, 16))
 	{
 		memSetZero(key, len - no - 16);
+		blobClose(state);
 		return ERR_BAD_KEYTOKEN;
 	}
 	// завершение
