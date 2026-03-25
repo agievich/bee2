@@ -22,18 +22,18 @@
 #define __BEE2_INFO
 
 #define BEE2_NAME				"Bee2"
-#define BEE2_VERSION			"2.2.3"
+#define BEE2_VERSION			"2.2.4"
 #define BEE2_VERSION_MAJOR		"2"
 #define BEE2_VERSION_MINOR 		"2"
-#define BEE2_VERSION_PATCH		"3"
+#define BEE2_VERSION_PATCH		"4"
 #define BEE2_VERSION_NUM\
-	2, 2, 3
+	2, 2, 4
 
 /*!
 *******************************************************************************
 \mainpage Библиотека Bee2
 
-\version 2.2.3
+\version 2.2.4
 
 \section toc Содержание
 
