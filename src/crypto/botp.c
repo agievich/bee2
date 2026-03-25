@@ -4,7 +4,7 @@
 \brief STB 34.101.47/botp: OTP algorithms
 \project bee2 [cryptographic library]
 \created 2015.11.02
-\version 2025.09.23
+\version 2026.03.24
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -27,9 +27,8 @@
 В botpDT() реализован механизм "динамической обрезки" (dynamic truncation),
 объявленный в RFC 4226 для HMAC(SHA-1), а затем продолженный в RFC 6238, 6287 
 для HMAC(SHA-256) и HMAC(SHA-512). Пояснений по продолжению нет, но как выяснили
-экспериментально вот здесь 
-	http://crypto.stackexchange.com/questions/27474/
-	[how-does-the-hotp-dynamic-truncation-function-generalize-to-longer-hashes]
+экспериментально вот здесь
+	http://crypto.stackexchange.com/questions/27474/ 
 номер октета, с которого начинается пароль, определяется по последнему октету 
 mac.
 
@@ -164,7 +163,7 @@ bool_t botpHOTPStepV(const char* otp, void* state)
 	memCopy(st->ctr1, st->ctr, 8);
 	// проверить пароль
 	botpHOTPStepR(st->otp, state);
-	if (strEq(st->otp, otp))
+	if (strLen(otp) == st->digit && memEq(st->otp, otp, st->digit))
 		return TRUE;
 	// вернуться к первоначальному счетчику
 	memCopy(st->ctr, st->ctr1, 8);
@@ -282,7 +281,7 @@ bool_t botpTOTPStepV(const char* otp, tm_time_t t, void* state)
 	ASSERT(memIsDisjoint2(otp, strLen(otp) + 1, state, botpTOTP_keep()));
 	// вычислить и проверить пароль
 	botpTOTPStepR(st->otp, t, state);
-	return strEq(st->otp, otp);
+	return strLen(otp) == st->digit && memEq(st->otp, otp, st->digit);
 }
 
 err_t botpTOTPRand(char* otp, size_t digit, const octet key[], size_t key_len, 
@@ -573,7 +572,7 @@ bool_t botpOCRAStepV(const char* otp, const octet q[], size_t q_len,
 	memCopy(st->ctr1, st->ctr, 8);
 	// проверить пароль
 	botpOCRAStepR(st->otp, q, q_len, t, state);
-	if (strEq(st->otp, otp))
+	if (strLen(otp) == st->digit && memEq(st->otp, otp, st->digit))
 		return TRUE;
 	// вернуться к первоначальному счетчику
 	memCopy(st->ctr, st->ctr1, 8);
