@@ -4,18 +4,14 @@
 \brief Tests for TOML
 \project bee2/test
 \created 2023.08.22
-\version 2024.03.01
+\version 2026.04.01
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
 #include "bee2/core/toml.h"
-#include "bee2/core/err.h"
-#include "bee2/core/hex.h"
-#include "bee2/core/mem.h"
 #include "bee2/core/str.h"
-#include "bee2/core/util.h"
 
 /*
 *******************************************************************************

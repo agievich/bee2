@@ -4,21 +4,18 @@
 \brief TOML files processing
 \project bee2 [cryptographic library]
 \created 2023.07.12
-\version 2024.03.13
+\version 2026.04.01
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
+#include <ctype.h>
 #include "bee2/core/hex.h"
 #include "bee2/core/mem.h"
 #include "bee2/core/toml.h"
 #include "bee2/core/str.h"
 #include "bee2/core/util.h"
-
-#include <ctype.h>
-
-#define TOML_BUF_SIZE 1000
 
 /*
 *******************************************************************************
