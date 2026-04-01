@@ -354,6 +354,9 @@
     <ClCompile Include="..\..\src\crypto\bign\bign96.c">
       <Filter>Source Files\crypto\bign</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\core\toml.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\bee2\crypto\bake.h">
@@ -520,6 +523,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\math\ecp\ecp_lcl.h">
       <Filter>Source Files\math\ecp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\bee2\core\toml.h">
+      <Filter>Header Files\core</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

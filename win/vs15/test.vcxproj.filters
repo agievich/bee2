@@ -163,5 +163,8 @@
     <ClCompile Include="..\..\test\crypto\bign_bench.c">
       <Filter>Source Files\crypto</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\test\core\toml_test.c">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
