@@ -4,13 +4,14 @@
 \brief Dealing with entropy sources
 \project bee2/cmd 
 \created 2021.04.20
-\version 2025.10.07
+\version 2026.04.02
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
 #include <stdio.h>
+#include <math.h>
 #include <bee2/core/dec.h>
 #include <bee2/core/err.h>
 #include <bee2/core/file.h>
@@ -36,6 +37,7 @@
 Пример:
   bee2cmd es print
   bee2cmd es read trng2 128 file
+  bee2cmd es test file
 *******************************************************************************
 */
 
@@ -51,8 +53,10 @@ static int esUsage()
 		"    list available entropy sources and determine their health\n"
 		"  es read <source> <count> <file>\n"
 		"    read <count> Kbytes from <source> and store them in <file>\n"
-		"  <source> in {trng, trng2, sys, sys2, timer, timerNNN, jitter}\n"
-		"    timerNNN -- use NNN sleep delays to produce one output bit\n"
+		"    <source> in {trng, trng2, sys, sys2, timer, timerNNN, jitter}\n"
+		"      timerNNN -- use NNN sleep delays to produce one output bit\n"
+		"  es test <file>\n"
+		"    statistical testing of <file> (experimental)\n"
 		,
 		_name, _descr
 	);
@@ -69,22 +73,26 @@ print
 
 static err_t esPrint(int argc, char* argv[])
 {
-	const char* sources[] = { "trng", "trng2", "sys", "sys2", "timer" };
+	const char* sources[] = {
+		"trng", "trng2", "sys", "sys2", "timer", "jitter" };
 	size_t pos;
 	size_t count;
-	size_t read;
 	// проверить параметры
 	if (argc != 0)
 		return ERR_CMD_PARAMS;
 	// опрос источников
 	printf("Sources:");
 	for (pos = count = 0; pos < COUNT_OF(sources); ++pos)
-		if (rngESRead(&read, 0, 0, sources[pos]) == ERR_OK)
+	{
+		size_t read;
+		octet o;
+		if (rngESRead(&read, &o, 1, sources[pos]) == ERR_OK)
 		{
-			printf(" %s%c", sources[pos], 
+			printf(" %s%c", sources[pos],
 				rngESTest(sources[pos]) == ERR_OK ? '+' : '-');
 			++count;
 		}
+	}
 	printf(count ? "\n" : " none\n");
 	// общая работоспособность
 	printf("Health (at least two healthy sources): %c\n", 
@@ -214,6 +222,68 @@ static err_t esRead(int argc, char *argv[])
 
 /*
 *******************************************************************************
+Статистическое тестирование
+
+es test <file>
+*******************************************************************************
+*/
+
+extern u32 rngWht(const octet* buf, size_t count, void* stack);
+
+static err_t esTest(int argc, char *argv[])
+{
+	err_t code;
+	size_t size;
+	size_t count;
+	size_t log_count;
+	void* state;
+	octet* buf;			/* [count] */
+	void* stack;		/* [count * 8 * 4] */
+	file_t file;
+	u32 max;
+	double ratio;
+	// разбор командной строки: число параметров
+	if (argc != 1)
+		return ERR_CMD_PARAMS;
+	// разбор командной строки: имя входного файла
+	code = cmdFileValExist(1, argv);
+	ERR_CALL_CHECK(code);
+	// размер файла
+	size = cmdFileSize(argv[0]);
+	if (size == 0)
+		return ERR_FILE_SIZE;
+	count = 1, log_count = 0;
+	while (count <= size / 2 && count < SIZE_MAX / 8 / 4 / 2)
+		count *= 2, ++log_count;
+	// выделить и разметить память
+	code = cmdBlobCreate2(state,
+		count,
+		count * 8 * 4,
+		SIZE_MAX,
+		&buf, &stack);
+	ERR_CALL_CHECK(code);
+	// прочитать данные
+	code = cmdFileOpen(file, argv[0], "rb");
+	ERR_CALL_HANDLE(code, blobClose(state));
+	code = fileRead(&size, buf, count, file);
+	if (code != ERR_OK)
+		code = ERR_FILE_READ;
+	ERR_CALL_HANDLE(code, cmdBlobClose(state));
+	fileClose(file);
+	// статистическое тестирование
+	max = rngWht(buf, count, stack);
+	ratio = (double)count * 8, ratio = max / sqrt(2 * ratio * log(ratio));
+	printf(
+		"file = \"%s\" (2^%u bits)\n"
+		"max_wht = %lu (%f)\n",
+		argv[0], (unsigned)(log_count + 3), (unsigned long)max, ratio);
+	// завершение
+	cmdBlobClose(state);
+	return ERR_OK;
+}
+
+/*
+*******************************************************************************
 Главная функция
 *******************************************************************************
 */
@@ -230,6 +300,8 @@ static int esMain(int argc, char* argv[])
 		code = esPrint(argc - 1, argv + 1);
 	else if (strEq(argv[0], "read"))
 		code = esRead(argc - 1, argv + 1);
+	else if (strEq(argv[0], "test"))
+		code = esTest(argc - 1, argv + 1);
 	else
 		code = ERR_CMD_NOT_FOUND;
 	// завершить
