@@ -4,7 +4,7 @@
 \brief Dealing with entropy sources
 \project bee2/cmd 
 \created 2021.04.20
-\version 2026.04.02
+\version 2026.04.03
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -228,7 +228,8 @@ es test <file>
 *******************************************************************************
 */
 
-extern u32 rngWht(const octet* buf, size_t count, void* stack);
+extern size_t rngWhtEnc(i32* wh, const octet* buf, size_t count);
+extern u32 rngWhtMax(const i32* wh, size_t count);
 
 static err_t esTest(int argc, char *argv[])
 {
@@ -237,8 +238,7 @@ static err_t esTest(int argc, char *argv[])
 	size_t count;
 	size_t log_count;
 	void* state;
-	octet* buf;			/* [count] */
-	void* stack;		/* [count * 8 * 4] */
+	i32* wh;			/* [count * 8] */
 	file_t file;
 	u32 max;
 	double ratio;
@@ -257,26 +257,36 @@ static err_t esTest(int argc, char *argv[])
 		count *= 2, ++log_count;
 	// выделить и разметить память
 	code = cmdBlobCreate2(state,
-		count,
 		count * 8 * 4,
 		SIZE_MAX,
-		&buf, &stack);
+		&wh);
 	ERR_CALL_CHECK(code);
 	// прочитать данные
 	code = cmdFileOpen(file, argv[0], "rb");
 	ERR_CALL_HANDLE(code, blobClose(state));
-	code = fileRead(&size, buf, count, file);
-	if (code != ERR_OK)
-		code = ERR_FILE_READ;
-	ERR_CALL_HANDLE(code, cmdBlobClose(state));
+	for (size = 0; size < count;)
+	{
+		octet buf[1024];
+		size_t read;
+		// прочитать фрагмент данных
+		code = fileRead(&read, buf, MIN2(sizeof(buf), count - size), file);
+		if (code != ERR_OK)
+			code = ERR_FILE_READ;
+		ERR_CALL_HANDLE(code, cmdBlobClose(state));
+		// кодировать фрагмент
+		rngWhtEnc(wh + size * 8, buf, read);
+		// к следующему фрагменту
+		size += read;
+	}
 	fileClose(file);
 	// статистическое тестирование
-	max = rngWht(buf, count, stack);
-	ratio = (double)count * 8, ratio = max / sqrt(2 * ratio * log(ratio));
+	count *= 8, log_count += 3;
+	max = rngWhtMax(wh, count);
+	ratio = (double)count, ratio = max / sqrt(2 * ratio * log(ratio));
 	printf(
 		"file = \"%s\" (2^%u bits)\n"
 		"max_wht = %lu (%f)\n",
-		argv[0], (unsigned)(log_count + 3), (unsigned long)max, ratio);
+		argv[0], (unsigned)log_count, (unsigned long)max, ratio);
 	// завершение
 	cmdBlobClose(state);
 	return ERR_OK;
