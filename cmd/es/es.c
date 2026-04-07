@@ -4,7 +4,7 @@
 \brief Dealing with entropy sources
 \project bee2/cmd 
 \created 2021.04.20
-\version 2026.04.03
+\version 2026.04.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -153,6 +153,24 @@ static err_t rngReadSourceEx(size_t* read, void* buf, size_t count,
 	return ERR_OK;
 }
 
+static size_t decToSize(const char* dec)
+{
+	register size_t num;
+	ASSERT(decIsValid(dec));
+	for (num = 0; *dec; ++dec)
+	{
+		register size_t digit;
+		if (num > SIZE_MAX / 10)
+			return SIZE_MAX;
+		num *= 10;
+		digit = (size_t)(*dec - '0');
+		if (num + digit < num)
+			return SIZE_MAX;
+		num += digit;
+	}
+	return num;
+}
+
 static err_t esRead(int argc, char *argv[])
 {
 	err_t code;
@@ -160,7 +178,6 @@ static err_t esRead(int argc, char *argv[])
 	size_t par = 0;
 	size_t count;
 	file_t file;
-	octet buf[2048];
 	// разбор командной строки: число параметров
 	if (argc != 3)
 		return ERR_CMD_PARAMS;
@@ -182,39 +199,37 @@ static err_t esRead(int argc, char *argv[])
 		if (!decIsValid(argv[0]) || !strLen(argv[0]) || 
 			strLen(argv[0]) > 3 || decCLZ(argv[0]))
 			return ERR_CMD_PARAMS;
-		par = (size_t)decToU32(argv[0]);
+		par = decToSize(argv[0]);
+		ASSERT(par > 0 && par != SIZE_MAX);
 	}
 	else
 		return ERR_CMD_PARAMS;
 	// разбор командной строки: число Кбайтов
-	if (!decIsValid(argv[1]) || !strLen(argv[1]) || 
-		strLen(argv[1]) > 4 || decCLZ(argv[1]))
+	if (!decIsValid(argv[1]) || !strLen(argv[1]) || decCLZ(argv[1]))
 		return ERR_CMD_PARAMS;
-	count = (size_t)decToU32(argv[1]);
-	if (((count << 10) >> 10) != count)
+	count = decToSize(argv[1]);
+	if (count == SIZE_MAX)
 		return ERR_OUTOFRANGE;
-	count <<= 10;
 	// разбор командной строки: имя выходного файла
 	code = cmdFileValNotExist(1, argv + 2);
 	ERR_CALL_CHECK(code);
 	code = cmdFileOpen(file, argv[2], "wb");
 	ERR_CALL_CHECK(code);
 	// выгрузка данных
-	while (count)
+	while (count--)
 	{
+		octet buf[1024];
 		size_t read;
 		// читать
-		code = rngReadSourceEx(&read, buf,
-			MIN2(sizeof(buf), count), source, par);
+		code = rngReadSourceEx(&read, buf, 1024, source, par);
 		ERR_CALL_HANDLE(code, cmdFileClose(file));
-		if (read != MIN2(sizeof(buf), count))
+		if (read != 1024)
 			code = ERR_FILE_READ;
 		ERR_CALL_HANDLE(code, cmdFileClose(file));
 		// писать
 		if (fileWrite2(file, buf, read) != read)
 			code = ERR_FILE_WRITE;
 		ERR_CALL_HANDLE(code, cmdFileClose(file));
-		count -= read;
 	}
 	// завершение
 	return cmdFileClose2(file);

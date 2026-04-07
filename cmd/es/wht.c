@@ -2,9 +2,9 @@
 *******************************************************************************
 \file wht.c
 \brief Fast Walsh-Hadamard transform (experimental)
-\project bee2/cmd 
+\project bee2/cmd
 \created 2026.04.01
-\version 2026.04.03
+\version 2026.04.07
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -55,7 +55,7 @@
 *******************************************************************************
 */
 
-static const i32 _wh8[256][8] =
+static const char _wh8[256][8] =
 {
 	{ 8, 0, 0, 0, 0, 0, 0, 0}, { 6, 2,-2, 2,-2, 2,-2, 2},
 	{ 6, 2,-2, 2, 2,-2, 2,-2}, { 4, 4,-4, 4, 0, 0, 0, 0},
@@ -203,35 +203,49 @@ size_t rngWhtEnc(i32* wh, const octet* buf, size_t count)
 	ASSERT(memIsValid(buf, count));
 	ASSERT(memIsValid(wh, count * 8 * 4));
 	for (i = 0; i < count; ++i)
-		memCopy(wh + i * 8, _wh8[buf[i]], 8 * 4);
+	{
+		wh[i * 8 + 0] = _wh8[buf[i]][0];
+		wh[i * 8 + 1] = _wh8[buf[i]][1];
+		wh[i * 8 + 2] = _wh8[buf[i]][2];
+		wh[i * 8 + 3] = _wh8[buf[i]][3];
+		wh[i * 8 + 4] = _wh8[buf[i]][4];
+		wh[i * 8 + 5] = _wh8[buf[i]][5];
+		wh[i * 8 + 6] = _wh8[buf[i]][6];
+		wh[i * 8 + 7] = _wh8[buf[i]][7];
+	}
 	return count * 8;
 }
 
 /*
 *******************************************************************************
-Преобразование Уолша-Адамара
+Максимальный коэффициент Уолша-Адамара
 
-Преобразование Уолша-Адамара применяется к последовательности [count]wh,
-каждые 8 элементов которой являются спектром некоторого октета.
+Определяется максимальный по модулю коэффициент Уолша--Адамара
+последовательности [count]wh, каждые 8 элементов которой являются спектром
+некоторого октета. 
 
-\pre count -- степень двойки.
-\pre count <= 2^{30} (коэффициенты Уолша-Адамара укладываются в 32 бита).
+\pre count >= 8 && count -- степень двойки.
+\pre count <= 2^{32} (коэффициенты Уолша-Адамара укладываются в 32 бита).
 \expect Буфер [count]wh подготовлен с помощью rngWhtEnc().
-\return Максимальный по модулю коэффициент Уолша-Адамара.
+\return Максимальный по модулю коэффициент Уолша-Адамара или 0, если
+максимальный коэффициент равняется 2^32.
 *******************************************************************************
 */
 
+#define i32Abs(a) (u32)(((a) < 0) ? -(a) : (a))
+
 u32 rngWhtMax(i32* wh, size_t count)
 {
+	register u32 max;
+	register u32 t;
 	size_t i, j, h;
-	i32 max;
 	// pre
 	ASSERT(8 <= count && (count & (count - 1)) == 0);
-	ASSERT(B_PER_S < 32 || count <= SIZE_BIT_POS(30));
+	ASSERT(B_PER_S < 32 || (count >> 16) <= SIZE_BIT_POS(16));
 	ASSERT(count < SIZE_MAX / 4);
 	ASSERT(memIsValid(wh, count * 4));
 	// быстрое преобразование Уолша-Адамара
-	for (h = 8; h < count; h *= 2)
+	for (h = 8; h < count / 4; h *= 2)
 		for (i = 0; i < count; i += h * 2)
 			for (j = 0; j < h; ++j)
 			{
@@ -242,12 +256,28 @@ u32 rngWhtMax(i32* wh, size_t count)
 			}
 	// максимальный коэффициент
 	max = 0;
-	for (i = 0; i < count; ++i)
+	if (count == 8)
 	{
-		if (wh[i] > max)
-			max = wh[i];
-		else if (wh[i] < -max)
-			max = -wh[i];
+		for (i = 0; i < count; ++i)
+			if ((t = i32Abs(wh[i])) > max)
+				max = t;
 	}
-	return (u32)max;
+	else if (count == 16)
+	{
+		for (i = 0; i < count / 2; ++i)
+			if ((t = i32Abs(wh[i]) +
+				i32Abs(wh[i + count / 2])) > max)
+				max = t;
+	}
+	else
+	{
+		for (i = 0; i < count / 4; ++i)
+			if ((t = i32Abs(wh[i]) +
+				i32Abs(wh[i + count / 4]) +
+				i32Abs(wh[i + 2 * count / 4]) +
+				i32Abs(wh[i + 3 * count / 4])) > max)
+				max = t;
+	}
+	CLEAN(t);
+	return max;
 }
