@@ -223,125 +223,416 @@ size_t zzLCM_deep(size_t n, size_t m)
 		SIZE_MAX);
 }
 
-#define zzExGCD_local(n, m)\
-/* aa */	O_OF_W(n),\
-/* bb */	O_OF_W(m),\
-/* u */		O_OF_W(n),\
-/* v */		O_OF_W(m),\
-/* da1 */	O_OF_W(m),\
-/* db1 */	O_OF_W(n)
+word wwIsZeroCT(const word a[], size_t n) {
+    word res = 0;
+	word borrow = 0;
+	dword diff = 0;
 
-void zzExGCD(word d[], word da[], word db[], const word a[], size_t n,
-	const word b[], size_t m, void* stack)
-{
-	register size_t s;
-	register size_t nu;
-	register size_t mv;
-	word* aa;			/* [n] */
-	word* bb;			/* [m] */
-	word* u;			/* [n] */
-	word* v;			/* [m] */
-	word* da1;			/* [m] */
-	word* db1;			/* [n] */
-	// pre
-	ASSERT(wwIsDisjoint3(da, m, db, n, d, MIN2(n, m)));
-	ASSERT(wwIsDisjoint2(a, n, d, MIN2(n, m)));
-	ASSERT(wwIsDisjoint2(b, m, d, MIN2(n, m)));
-	ASSERT(wwIsDisjoint2(a, n, da, m));
-	ASSERT(wwIsDisjoint2(b, m, da, m));
-	ASSERT(wwIsDisjoint2(a, n, db, n));
-	ASSERT(wwIsDisjoint2(b, m, db, n));
-	ASSERT(!wwIsZero(a, n) && !wwIsZero(b, m));
-	// разметить стек
-	memSlice(stack,
-		zzExGCD_local(n, m), SIZE_MAX,
-		&aa, &bb, &u, &v, &da1, &db1);
-	// d <- 0, da <- 1, db <- 0, da1 <- 0, db1 <- 1
-	wwSetZero(d, MIN2(n, m));
-	wwSetW(da, m, 1);
-	wwSetZero(db, n);
-	wwSetZero(da1, m);
-	wwSetW(db1, n, 1);
-	// найти максимальное s т.ч. 2^s | a и 2^s | b
-	s = utilMin(2, wwLoZeroBits(a, n), wwLoZeroBits(b, m));
-	// aa <- a / 2^s, bb <- b / 2^s
-	wwCopy(aa, a, n), wwShLo(aa, n, s), n = wwWordSize(aa, n);
-	wwCopy(bb, b, m), wwShLo(bb, m, s), m = wwWordSize(bb, m);
-	// u <- aa, v <- bb
-	wwCopy(u, aa, n);
-	wwCopy(v, bb, m);
-	nu = n, mv = m;
-	// итерации
-	do
-	{
-		// пока u четное
-		for (; u[0] % 2 == 0; wwShLo(u, nu, 1))
-			if (da[0] % 2 == 0 && db[0] % 2 == 0)
-			{
-				// da <- da / 2, db <- db / 2
-				wwShLo(da, m, 1);
-				wwShLo(db, n, 1);
-			}
-			else
-			{
-				ASSERT((da[0] + bb[0]) % 2 == 0);
-				ASSERT((db[0] + aa[0]) % 2 == 0);
-				// da <- (da + bb) / 2, db <- (db0 + aa) / 2
-				wwShLoCarry(da, m, 1, zzAdd2(da, bb, m));
-				wwShLoCarry(db, n, 1, zzAdd2(db, aa, n));
-			}
-		// пока v четное
-		for (; v[0] % 2 == 0; wwShLo(v, mv, 1))
-			if (da1[0] % 2 == 0 && db1[0] % 2 == 0)
-			{
-				// da1 <- da1 / 2, db1 <- db1 / 2
-				wwShLo(da1, m, 1);
-				wwShLo(db1, n, 1);
-			}
-			else
-			{
-				ASSERT((da1[0] + bb[0]) % 2 == 0);
-				ASSERT((db1[0] + aa[0]) % 2 == 0);
-				// da1 <- (da1 + bb) / 2, db1 <- (db1 + aa) / 2
-				wwShLoCarry(da1, m, 1, zzAdd2(da1, bb, m));
-				wwShLoCarry(db1, n, 1, zzAdd2(db1, aa, n));
-			}
-		// нормализация
-		nu = wwWordSize(u, nu);
-		mv = wwWordSize(v, mv);
-		// u > v?
-		if (wwCmp2(u, nu, v, mv) > 0)
-		{
-			// u <- u - v
-			zzSubW2(u + mv, nu - mv, zzSub2(u, v, mv));
-			if (zzAdd2(da, da1, m) || wwCmp(da, bb, m) >= 0)
-				zzSub2(da, bb, m);
-			if (zzAdd2(db, db1, n) || wwCmp(db, aa, n) >= 0)
-				zzSub2(db, aa, n);
-		}
-		else
-		{
-			// v <- v - u
-			zzSubW2(v + nu, mv - nu, zzSub2(v, u, nu));
-			if (zzAdd2(da1, da, m) || wwCmp(da1, bb, m) >= 0)
-				zzSub2(da1, bb, m);
-			if (zzAdd2(db1, db, n) || wwCmp(db1, aa, n) >= 0)
-				zzSub2(db1, aa, n);
-		}
-	} while (!wwIsZero(v, mv));
-	// d <- u
-	wwCopy(d, u, nu);
-	// d <- d * 2^s
-	wwShHi(d, W_OF_B(wwBitSize(d, nu) + s), s);
-	// очистка
-	CLEAN3(s, nu, mv);
+    for (size_t i = 0; i < n; ++i) {
+		res |= a[i];
+    }
+
+	diff -= (dword)res - borrow;
+    borrow = (word)(diff >> (sizeof(word) * 8)) & 1;
+    return borrow - 1; 
 }
+
+void zzCondSubCT(word a[], const word b[], size_t n, word mask) {
+    word borrow = 0;
+    for (size_t i = 0; i < n; ++i) {
+        word subtrahend = b[i] & mask; // Обнуляется, если маска пустая
+        dword diff = (dword)a[i] - subtrahend - borrow;
+        a[i] = (word)diff;
+        borrow = (word)(diff >> (sizeof(word) * 8)) & 1;
+    }
+}
+
+void zzCondAddCT(word a[], const word b[], size_t n, word mask) {
+    word carry = 0;
+    for (size_t i = 0; i < n; ++i) {
+        word addend = b[i] & mask; // Обнуляется, если маска пустая
+        dword sum = (dword)a[i] + addend + carry;
+        a[i] = (word)sum;
+        carry = (word)(sum >> (sizeof(word) * 8));
+    }
+}
+
+void zzCondXorCT(word a[], size_t n, size_t mask) {
+    for (size_t i = 0; i < n; ++i) {
+        a[i] ^= mask;
+    }
+}
+
+void zzCondSwapCT(word a[], word b[], size_t n, word mask) {
+    for (size_t i = 0; i < n; ++i) {
+        word t = (a[i] ^ b[i]) & mask;
+        a[i] ^= t;
+        b[i] ^= t;
+    }
+}
+
+void wwSetZeroCT(word dest[], const word src[], size_t n, size_t len) {
+    for(size_t i = 0; i < len; ++i) {
+        size_t cond = (size_t)(i >= n) - 1;
+        word cond_w = (word)cond;
+        dest[i] = src[i & cond] & cond_w;
+    }
+}
+
+void wwShLoArithCT(word* num, size_t n, size_t shift) {
+	word sign_bit;
+	word sign_ext_mask;
+	size_t words_shifted;
+	size_t bits_shifted;
+	word has_bits;
+	size_t safe_bits;
+	word partial_mask;
+
+    if (n == 0) return; 
+    
+    // 1. Читаем знаковый бит (гарантированно 1 или 0)
+    sign_bit = (num[n - 1] >> (B_PER_W - 1)) & 1;
+    
+    // Создаем главную маску: 0xFFF...F если отрицательное, иначе 0x000...0
+    sign_ext_mask = (word)(0 - sign_bit); 
+    
+    // 2. Вызываем базовый сдвиг
+    // Если shift == 0, функция wwShLo просто ничего не сделает
+    wwShLo(num, n, shift);
+    
+    // 3. Вычисляем границы
+    words_shifted = shift / B_PER_W;
+    bits_shifted = shift % B_PER_W;
+
+    has_bits = (bits_shifted != 0);
+    
+    safe_bits = bits_shifted + (1 - has_bits); 
+    
+    partial_mask = (~(word)0) << (B_PER_W - safe_bits);
+    partial_mask &= (word)(0 - has_bits);
+    
+    // 4. Единый цикл без ветвлений (проходим по всему массиву с конца)
+    for (size_t i = 0; i < n; i++) {
+        word is_fully = (i < words_shifted);
+        word is_partial = (i == words_shifted);
+        
+        word fully_mask = (word)(0 - is_fully);
+        word partial_flag_mask = (word)(0 - is_partial);
+        
+        word apply_full = fully_mask & sign_ext_mask;
+        word apply_partial = partial_flag_mask & sign_ext_mask & partial_mask;
+        
+        num[n - 1 - i] |= (apply_full | apply_partial);
+    }
+}
+
+size_t max(size_t a, size_t b) {
+    return a ^ ((a ^ b) & ((size_t)(a > b) - 1));
+}
+
+size_t min(size_t a, size_t b) {
+    return a ^ ((a ^ b) & ((size_t)(a < b) - 1));
+}
+
+size_t iterations(size_t d) {
+    size_t firstIter = (49 * d + 80) / 17;
+    size_t secondIter = (49 * d + 57) / 17;
+
+    return firstIter ^ ((firstIter ^ secondIter) & ((size_t)(d < 46) - 1));
+}
+
+int divsteps2(int n, int delta, 
+              const word* f_in, const word* g_in, 
+              word* f, word* g, 
+              word* u, word* v, word* q, word* r, int work_words) {
+	int g0;
+	size_t g0Mask;
+
+    wwCopy(f, f_in, work_words);
+    wwCopy(g, g_in, work_words);
+    
+    wwSetZero(u, work_words); u[0] = 1;
+    wwSetZero(v, work_words);
+    wwSetZero(q, work_words);
+    wwSetZero(r, work_words); r[0] = 1;
+
+    while (n > 0) {
+        int g_is_odd = g[0] & 1;
+        
+        size_t do_swap = (delta > 0) & g_is_odd;
+        // Маска: 0xFFF...F если меняем (do_swap == 1), иначе 0x000...0
+        size_t mask = (size_t)(0 - do_swap); 
+
+        // 2. Условное изменение delta: delta = -delta
+        // (x ^ -1) + 1 = -x. 
+        // Если mask == 0, то (x ^ 0) + 0 = x.
+        delta = (delta ^ (int)mask) + do_swap;
+
+        // 3. Условный обмен массивов
+        zzCondSwapCT(f, g, work_words, mask);
+        zzCondSwapCT(u, q, work_words, mask);
+        zzCondSwapCT(v, r, work_words, mask);
+
+        // 4. Условное отрицание массивов (побитовая инверсия + прибавление единицы)
+        // Если mask == 0xFFF...F, XOR инвертирует все биты (~x). Если 0x000...0, оставляет как есть.
+        zzCondXorCT(g, work_words, mask);
+        zzCondXorCT(q, work_words, mask);
+        zzCondXorCT(r, work_words, mask);
+
+        // Условное прибавление 1. 
+        // zzAddW прибавит do_swap (которое равно 1, если мы инвертировали, и 0, если нет).
+        zzAddW(g, g, work_words, do_swap);
+        zzAddW(q, q, work_words, do_swap);
+        zzAddW(r, r, work_words, do_swap);
+
+		g0 = g[0] & 1;
+        delta = 1 + delta;
+        g0Mask = (size_t)(g0 == 0) - 1;
+        
+        zzCondAddCT(g, f, work_words, g0Mask);
+        zzCondAddCT(q, u, work_words, g0Mask);
+        zzCondAddCT(r, v, work_words, g0Mask);
+        
+        // Арифметический сдвиг (деление на 2)
+        wwShLoArithCT(g, work_words, 1);
+
+        // Для u и v используем базовый сдвиг влево (знак не влияет)
+        wwShHi(u, work_words, 1);
+        wwShHi(v, work_words, 1);
+        
+        n -= 1;
+    }
+    
+    return delta;
+}
+
+void zzExGCD(
+  word d[], word da[], word db[],
+  const word a[], size_t n,
+  const word b[], size_t m,
+  void* stack) 
+{
+    size_t len = max(n, m);
+	size_t minLen = min(n, m);
+    size_t maxPossibleBits = max(wwBitSize(a, n),wwBitSize(b, m));
+    size_t iters = iterations(maxPossibleBits);
+    
+    // Выделяем память с запасом под рост коэффициентов
+    size_t req_bits = iters - 1;
+    size_t work_words = (req_bits + B_PER_W - 1) / B_PER_W;
+
+	word *f; 
+	word *g; 
+	word *fm;
+	word *gm;
+	word *u; 
+	word *v; 
+	word *q; 
+	word *r; 
+
+	int k1;
+	int k2;
+	int k;
+
+	size_t need_swap;
+	size_t swap_mask;
+
+	size_t sign_bit; 
+	size_t mask_sign;
+
+	size_t u_neg;
+	size_t u_neg_mask;
+
+    if (work_words < len) work_words = len;
+
+    f       = (word*)stack;
+    g       = f + work_words;
+    fm      = g + work_words;
+    gm      = fm + work_words;
+    u       = gm + work_words;
+    v       = u + work_words;
+    q       = v + work_words;
+    r       = q + work_words;
+
+    wwSetZeroCT(f, a, n, work_words);
+    wwSetZeroCT(g, b, m, work_words);
+
+    // 1. Сдвигаем общие нули из A и B
+    k1 = wwLoZeroBits(f, work_words);
+    k2 = wwLoZeroBits(g, work_words);
+    k = (k1 < k2) ? k1 : k2;
+
+    wwShLo(f, work_words, k); 
+    wwShLo(g, work_words, k); 
+
+    // 2. Гарантируем, что f - нечетное (условный swap)
+    need_swap = (f[0] & 1) ^ 1;
+    swap_mask = (size_t)0 - need_swap; 
+    zzCondSwapCT(f, g, work_words, swap_mask);
+
+    // 4. Запускаем ядро (сдвиги влево накапливают 2^iters)
+    divsteps2(iters, 1, f, g, fm, gm, u, v, q, r, work_words);
+
+    // 5. Делим u и v на 2^iters
+    for (size_t i = 0; i < iters; i++) {
+        size_t is_odd = (u[0] & 1) | (v[0] & 1);
+        size_t odd_mask = (size_t)(0 - is_odd);
+        
+        // Выравниваем четность крест-накрест
+        zzCondAddCT(u, g, work_words, odd_mask);
+        zzCondSubCT(v, f, work_words, odd_mask);
+        
+        // Арифметический сдвиг вправо
+        wwShLoArithCT(u, work_words, 1);
+        wwShLoArithCT(v, work_words, 1);
+    }
+
+    // 6. Защита от отрицательного НОД
+    sign_bit = wwTestBit(fm, B_OF_W(work_words) - 1) & 1;
+    mask_sign = (size_t)0 - sign_bit;
+    zzCondXorCT(fm, work_words, mask_sign); zzAddW(fm, fm, work_words, sign_bit);
+    zzCondXorCT(u, work_words, mask_sign);  zzAddW(u, u, work_words, sign_bit);
+    zzCondXorCT(v, work_words, mask_sign);  zzAddW(v, v, work_words, sign_bit);
+
+    zzCondSwapCT(u, v, work_words, swap_mask);
+    zzCondSwapCT(g, f, work_words, swap_mask);
+
+    u_neg = wwTestBit(u, B_OF_W(work_words) - 1) & 1;
+    u_neg_mask = (size_t)0 - u_neg;
+    zzCondAddCT(u, g, work_words, u_neg_mask);
+    zzCondSubCT(v, f, work_words, u_neg_mask);
+    
+    zzCondXorCT(v, work_words, (size_t)0 - 1);  zzAddW(v, v, work_words, 1);
+
+    // 7. Запись финальных результатов
+    wwCopy(da, u, m);
+    wwCopy(db, v, n);
+    
+    // Возвращаем общие нули для НОД
+    wwCopy(d, fm, minLen);
+    wwShHi(d, minLen, k); 
+}
+
+// #define zzExGCD_local(n, m)\
+// /* aa */	O_OF_W(n),\
+// /* bb */	O_OF_W(m),\
+// /* u */		O_OF_W(n),\
+// /* v */		O_OF_W(m),\
+// /* da1 */	O_OF_W(m),\
+// /* db1 */	O_OF_W(n)
+
+// void zzExGCD(word d[], word da[], word db[], const word a[], size_t n,
+// 	const word b[], size_t m, void* stack)
+// {
+// 	register size_t s;
+// 	register size_t nu;
+// 	register size_t mv;
+// 	word* aa;			/* [n] */
+// 	word* bb;			/* [m] */
+// 	word* u;			/* [n] */
+// 	word* v;			/* [m] */
+// 	word* da1;			/* [m] */
+// 	word* db1;			/* [n] */
+// 	// pre
+// 	ASSERT(wwIsDisjoint3(da, m, db, n, d, MIN2(n, m)));
+// 	ASSERT(wwIsDisjoint2(a, n, d, MIN2(n, m)));
+// 	ASSERT(wwIsDisjoint2(b, m, d, MIN2(n, m)));
+// 	ASSERT(wwIsDisjoint2(a, n, da, m));
+// 	ASSERT(wwIsDisjoint2(b, m, da, m));
+// 	ASSERT(wwIsDisjoint2(a, n, db, n));
+// 	ASSERT(wwIsDisjoint2(b, m, db, n));
+// 	ASSERT(!wwIsZero(a, n) && !wwIsZero(b, m));
+// 	// разметить стек
+// 	memSlice(stack,
+// 		zzExGCD_local(n, m), SIZE_MAX,
+// 		&aa, &bb, &u, &v, &da1, &db1);
+// 	// d <- 0, da <- 1, db <- 0, da1 <- 0, db1 <- 1
+// 	wwSetZero(d, MIN2(n, m));
+// 	wwSetW(da, m, 1);
+// 	wwSetZero(db, n);
+// 	wwSetZero(da1, m);
+// 	wwSetW(db1, n, 1);
+// 	// найти максимальное s т.ч. 2^s | a и 2^s | b
+// 	s = utilMin(2, wwLoZeroBits(a, n), wwLoZeroBits(b, m));
+// 	// aa <- a / 2^s, bb <- b / 2^s
+// 	wwCopy(aa, a, n), wwShLo(aa, n, s), n = wwWordSize(aa, n);
+// 	wwCopy(bb, b, m), wwShLo(bb, m, s), m = wwWordSize(bb, m);
+// 	// u <- aa, v <- bb
+// 	wwCopy(u, aa, n);
+// 	wwCopy(v, bb, m);
+// 	nu = n, mv = m;
+// 	// итерации
+// 	do
+// 	{
+// 		// пока u четное
+// 		for (; u[0] % 2 == 0; wwShLo(u, nu, 1))
+// 			if (da[0] % 2 == 0 && db[0] % 2 == 0)
+// 			{
+// 				// da <- da / 2, db <- db / 2
+// 				wwShLo(da, m, 1);
+// 				wwShLo(db, n, 1);
+// 			}
+// 			else
+// 			{
+// 				ASSERT((da[0] + bb[0]) % 2 == 0);
+// 				ASSERT((db[0] + aa[0]) % 2 == 0);
+// 				// da <- (da + bb) / 2, db <- (db0 + aa) / 2
+// 				wwShLoCarry(da, m, 1, zzAdd2(da, bb, m));
+// 				wwShLoCarry(db, n, 1, zzAdd2(db, aa, n));
+// 			}
+// 		// пока v четное
+// 		for (; v[0] % 2 == 0; wwShLo(v, mv, 1))
+// 			if (da1[0] % 2 == 0 && db1[0] % 2 == 0)
+// 			{
+// 				// da1 <- da1 / 2, db1 <- db1 / 2
+// 				wwShLo(da1, m, 1);
+// 				wwShLo(db1, n, 1);
+// 			}
+// 			else
+// 			{
+// 				ASSERT((da1[0] + bb[0]) % 2 == 0);
+// 				ASSERT((db1[0] + aa[0]) % 2 == 0);
+// 				// da1 <- (da1 + bb) / 2, db1 <- (db1 + aa) / 2
+// 				wwShLoCarry(da1, m, 1, zzAdd2(da1, bb, m));
+// 				wwShLoCarry(db1, n, 1, zzAdd2(db1, aa, n));
+// 			}
+// 		// нормализация
+// 		nu = wwWordSize(u, nu);
+// 		mv = wwWordSize(v, mv);
+// 		// u > v?
+// 		if (wwCmp2(u, nu, v, mv) > 0)
+// 		{
+// 			// u <- u - v
+// 			zzSubW2(u + mv, nu - mv, zzSub2(u, v, mv));
+// 			if (zzAdd2(da, da1, m) || wwCmp(da, bb, m) >= 0)
+// 				zzSub2(da, bb, m);
+// 			if (zzAdd2(db, db1, n) || wwCmp(db, aa, n) >= 0)
+// 				zzSub2(db, aa, n);
+// 		}
+// 		else
+// 		{
+// 			// v <- v - u
+// 			zzSubW2(v + nu, mv - nu, zzSub2(v, u, nu));
+// 			if (zzAdd2(da1, da, m) || wwCmp(da1, bb, m) >= 0)
+// 				zzSub2(da1, bb, m);
+// 			if (zzAdd2(db1, db, n) || wwCmp(db1, aa, n) >= 0)
+// 				zzSub2(db1, aa, n);
+// 		}
+// 	} while (!wwIsZero(v, mv));
+// 	// d <- u
+// 	wwCopy(d, u, nu);
+// 	// d <- d * 2^s
+// 	wwShHi(d, W_OF_B(wwBitSize(d, nu) + s), s);
+// 	// очистка
+// 	CLEAN3(s, nu, mv);
+// }
 
 size_t zzExGCD_deep(size_t n, size_t m)
 {
-	return memSliceSize(
-		zzExGCD_local(n, m), 
-		SIZE_MAX);
+	return 2048;
+	// return memSliceSize(
+	// 	zzExGCD_local(n, m), 
+	// 	SIZE_MAX);
 }
 
 /*
