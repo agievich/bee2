@@ -4,7 +4,7 @@
 \brief Fast Walsh-Hadamard transform (experimental)
 \project bee2/cmd
 \created 2026.04.01
-\version 2026.04.07
+\version 2026.05.21
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -229,15 +229,29 @@ size_t rngWhtEnc(i32* wh, const octet* buf, size_t count)
 \expect Буфер [count]wh подготовлен с помощью rngWhtEnc().
 \return Максимальный по модулю коэффициент Уолша-Адамара или 0, если
 максимальный коэффициент равняется 2^32.
+
+\remark При count == 2^32 коэффициент Уолша-Адамара может достигать 
+значений \pm 2^32. Это произойдет только тогда, когда все остальные
+коэффициенты равняются нулю. При работе с типом int32 числа \pm 2^32 будут 
+представлены 0. В итоге все спектральные коэффициенты будут равняться 0.
+
+\remark При count == 2^31 коэффициент Уолша-Адамара может достигать 
+значений \pm 2^31. Это снова произойдет только тогда, когда все остальные
+коэффициенты равняются нулю. При работе с типом int32 оба числа \pm 2^31 
+будут представлены числом -2^31. В итоге минимальный спектральный коэффициент
+будет равняться -2^31.
+
+\remark По правилам Си для числа a типа i32 число (u32)a равняется 
+	(2^32 + a) mod 2^32.
 *******************************************************************************
 */
 
-#define i32Abs(a) (u32)(((a) < 0) ? -(a) : (a))
+#define i32NegAbs(a) (u32)(((a) < 0) ? (a) : -(a))
 
 u32 rngWhtMax(i32* wh, size_t count)
 {
-	register u32 max;
-	register u32 t;
+	register i32 min;
+	register i32 t;
 	size_t i, j, h;
 	// pre
 	ASSERT(8 <= count && (count & (count - 1)) == 0);
@@ -245,7 +259,7 @@ u32 rngWhtMax(i32* wh, size_t count)
 	ASSERT(count < SIZE_MAX / 4);
 	ASSERT(memIsValid(wh, count * 4));
 	// быстрое преобразование Уолша-Адамара
-	for (h = 8; h < count / 4; h *= 2)
+	for (h = 8; h < count / 2; h *= 2)
 		for (i = 0; i < count; i += h * 2)
 			for (j = 0; j < h; ++j)
 			{
@@ -255,29 +269,43 @@ u32 rngWhtMax(i32* wh, size_t count)
 				wh[i + j + h] = x - y;
 			}
 	// максимальный коэффициент
-	max = 0;
-	if (count == 8)
+	min = 0;
+	for (i = 0; i < count / 2; ++i)
 	{
-		for (i = 0; i < count; ++i)
-			if ((t = i32Abs(wh[i])) > max)
-				max = t;
-	}
-	else if (count == 16)
-	{
-		for (i = 0; i < count / 2; ++i)
-			if ((t = i32Abs(wh[i]) +
-				i32Abs(wh[i + count / 2])) > max)
-				max = t;
-	}
-	else
-	{
-		for (i = 0; i < count / 4; ++i)
-			if ((t = i32Abs(wh[i]) +
-				i32Abs(wh[i + count / 4]) +
-				i32Abs(wh[i + 2 * count / 4]) +
-				i32Abs(wh[i + 3 * count / 4])) > max)
-				max = t;
+		t = i32NegAbs(wh[i]) + i32NegAbs(wh[i + count / 2]);
+		min = (t < min) ? t : min;
 	}
 	CLEAN(t);
-	return max;
+	return (u32)0 - (u32)min;
+}
+
+/*
+*******************************************************************************
+Среднее значение максимального коэффициента Уолша-Адамара
+
+Строится оценка среднего значения максимального коэффициента Уолша-Адамара
+для случайной последовательности из 2^log_count битов. Используется статья [1],
+в которой доказано, что среднее значение близко к 
+	(2^(log_count + 1)(ln(log_count) - 0.5 ln(ln(log_count))))^{1/2}.
+
+\pre log_count <= 32.
+\return Оценка среднего.
+
+[LitShp09] Litsyn S., Shpunt A. On the Distribution of Boolean Function 
+           Nonlinearity. SIAM Journal om Discrete Mathematics, 2009, 
+           23(1):79--95.
+
+\remark Floor[Table[Sqrt[2^(n+1)(Log[2^n] - 0.5 Log[Log[2^n]])], {n, 0, 32}]]
+*******************************************************************************
+*/
+
+u32 rngWhtMaxMean(size_t log_count)
+{
+	const u32 mean[33] = {
+		0, 1, 3, 5, 8, 13, 21, 32, 48, 73, 110, 164, 243, 360, 529, 777, 1138,
+		1663, 2424, 3529, 5129, 7445, 10793, 15628, 22605, 32668, 47167, 
+		68048, 98099, 141324, 203463, 292747, 420974,
+	};
+	ASSERT(log_count <= 32);
+	return mean[log_count];
 }

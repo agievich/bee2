@@ -4,7 +4,7 @@
 \brief Dealing with entropy sources
 \project bee2/cmd 
 \created 2021.04.20
-\version 2026.04.07
+\version 2026.05.21
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -245,6 +245,7 @@ es test <file>
 
 extern size_t rngWhtEnc(i32* wh, const octet* buf, size_t count);
 extern u32 rngWhtMax(const i32* wh, size_t count);
+extern u32 rngWhtMaxMean(size_t log_count);
 
 static err_t esTest(int argc, char *argv[])
 {
@@ -268,7 +269,7 @@ static err_t esTest(int argc, char *argv[])
 	if (size == 0)
 		return ERR_FILE_SIZE;
 	count = 1, log_count = 0;
-	while (count <= size / 2 && count < SIZE_MAX / 8 / 4 / 2)
+	while (count <= size / 2 && log_count < 29)
 		count *= 2, ++log_count;
 	// выделить и разметить память
 	code = cmdBlobCreate2(state,
@@ -297,11 +298,13 @@ static err_t esTest(int argc, char *argv[])
 	// статистическое тестирование
 	count *= 8, log_count += 3;
 	max = rngWhtMax(wh, count);
-	ratio = (double)count, ratio = max / sqrt(2 * ratio * log(ratio));
-	printf(
-		"file = \"%s\" (2^%u bits)\n"
-		"max_wht = %lu (%f)\n",
-		argv[0], (unsigned)log_count, (unsigned long)max, ratio);
+	ratio = max ? (double)max : 4294967296.0;
+	ratio /= rngWhtMaxMean(log_count);
+	printf("file = \"%s\" (2^%u bits)\n", argv[0], (unsigned)log_count);
+	if (max)
+		printf("max_wht = %lu (%f)\n", (unsigned long)max, ratio);
+	else
+		printf("max_wht = 2^32 (%f)\n", ratio);
 	// завершение
 	cmdBlobClose(state);
 	return ERR_OK;

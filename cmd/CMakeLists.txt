@@ -32,7 +32,7 @@ add_executable(bee2cmd
 
 include_directories(include)
 
-target_link_libraries(bee2cmd bee2_static m)
+target_link_libraries(bee2cmd bee2_static)
 
 install(TARGETS bee2cmd
   DESTINATION ${CMAKE_INSTALL_BINDIR}
