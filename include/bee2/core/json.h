@@ -80,9 +80,10 @@ JSON-код представляет собой элемент с любым ч�
 \code
 	json_elem_t elem;
 	size_t c;
+	size_t elems_count = 1;
 	size_t size;
 	...
-	c = jsonArrDec(&elem, 1, json, count);
+	c = jsonArrDec(&elem, &elems_count, 1, json, count);
 	...
 	c = jsonSizeDec(&size, elem.json, elem.count);
 \endcode
@@ -167,15 +168,21 @@ size_t jsonObjDec(
 /*!	\brief Декодирование массива
 
 	Декодируется массив JSON, заданный кодом [count]json. В результате
-	декодирования определяются вложенные в массив элементы [elems_count?]elems.
+	декодирования определяются вложенные в массив элементы elems.
 	\pre Указатель json корректен.
-	\pre Любой из указателей elems и count может быть нулевым.
+	\pre Указатель elems может быть нулевым и тогда элементы не возвращаются.
+	\pre Указатель elems_count может быть нулевым и тогда число элементов
+	не возвращается.
+	\pre Если elems не нулевой, то elems_capacity задает число элементов elems.
 	\return Обработанная при декодировании длина JSON-кода (включая	
 	предваряющие и завершающие пробелы) или SIZE_MAX в случае ошибки.
+	\remark Если число элементов массива превышает elems_capacity, то
+	возвращается SIZE_MAX.
 */
 size_t jsonArrDec(
-	json_elem_t elems[],	/*!< [out] элементы */
-	size_t* elems_count,	/*!< [out] число элементов */
+	json_elem_t elems[],		/*!< [out] элементы */
+	size_t* elems_count,		/*!< [out] число элементов */
+	size_t elems_capacity,	/*!< [in] емкость массива элементов */
 	const char json[],		/*!< [in] код */
 	size_t count			/*!< [in] длина кода */
 );

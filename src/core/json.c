@@ -355,7 +355,8 @@ size_t jsonObjDec(json_elem_t elems[], const char json[], size_t count,
 */
 
 static size_t jsonArrParse(json_elem_t* elem, json_elem_t elems[], 
-	size_t* elems_count, const char json[], size_t count, size_t depth)
+	size_t* elems_count, size_t elems_capacity, const char json[], size_t count,
+	size_t depth)
 {
 	size_t c;
 	size_t c1;
@@ -371,7 +372,7 @@ static size_t jsonArrParse(json_elem_t* elem, json_elem_t elems[],
 	if ((c = jsonWsDec(json, count)) == SIZE_MAX)
 		return SIZE_MAX;
 	json += c, count -= c;
-	if (json[0] != '[')
+	if (count == 0 || json[0] != '[')
 		return SIZE_MAX;
 	if (elem)
 		elem->json = json, elem->count = c;
@@ -387,6 +388,8 @@ static size_t jsonArrParse(json_elem_t* elem, json_elem_t elems[],
 		// сохранить элемент
 		if (elems)
 		{
+			if (ec >= elems_capacity)
+				return SIZE_MAX;
 			ASSERT(memIsValid(elems, (ec + 1) * sizeof(json_elem_t)));
 			memCopy(elems + ec, &e, sizeof(json_elem_t));
 		}
@@ -411,10 +414,10 @@ static size_t jsonArrParse(json_elem_t* elem, json_elem_t elems[],
 	return c + jsonWsDec(json, count);
 }
 
-size_t jsonArrDec(json_elem_t elems[], size_t* elems_count, const char json[],
-	size_t count)
+size_t jsonArrDec(json_elem_t elems[], size_t* elems_count,
+	size_t elems_capacity, const char json[], size_t count)
 {
-	return jsonArrParse(0, elems, elems_count, json, count, 0);
+	return jsonArrParse(0, elems, elems_count, elems_capacity, json, count, 0);
 }
 
 /*
@@ -440,7 +443,7 @@ static size_t jsonElemParse(json_elem_t* elem, const char json[], size_t count,
 	if (json[0] == '{')
 		c1 = jsonObjParse(elem, json, count, depth + 1);
 	else if (json[0] == '[')
-		c1 = jsonArrParse(elem, 0, 0, json, count, depth + 1);
+		c1 = jsonArrParse(elem, 0, 0, 0, json, count, depth + 1);
 	else if (json[0] == '"')
 		c1 = jsonStrParse(elem, json, count);
 	else if ('0' <= json[0] && json[0] <= '9')

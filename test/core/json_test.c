@@ -195,19 +195,23 @@ static bool_t jsonTestArr()
 	size_t count;
 	size_t pos;
 	// корректные объекты
-	count = jsonArrDec(0, &size, jsons[0], strLen(jsons[0]));
+	count = jsonArrDec(0, &size, 0, jsons[0], strLen(jsons[0]));
 	if (count != strLen(jsons[0]) || size != 0)
 		return FALSE;
 	for (pos = 1; pos <= 5; ++pos)
 	{
-		count = jsonArrDec(elems, &size, jsons[pos], strLen(jsons[pos]));
+		count = jsonArrDec(elems, &size, COUNT_OF(elems), jsons[pos],
+			strLen(jsons[pos]));
 		if (count != strLen(jsons[pos]) || size != 7 - pos)
 			return FALSE;
 	}
+	count = jsonArrDec(elems, &size, 1, jsons[1], strLen(jsons[1]));
+	if (count != SIZE_MAX)
+		return FALSE;
 	// некорректные
 	for (; pos < COUNT_OF(jsons); ++pos)
 	{
-		count = jsonArrDec(0, &size, jsons[pos], strLen(jsons[pos]));
+		count = jsonArrDec(0, &size, 0, jsons[pos], strLen(jsons[pos]));
 		if (count != SIZE_MAX)
 			return FALSE;
 	}
