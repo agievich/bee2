@@ -96,7 +96,10 @@ Code coverage:
 ## Related projects
 
 * [Bee2evp](https://github.com/bcrypto/bee2evp): an OpenSSL engine over Bee2;
-* [Bee2j](https://github.com/bcrypto/bee2j): a Java wrapper over Bee2.
+* [Bee2j](https://github.com/bcrypto/bee2j): a Java wrapper;
+* [Bee2go](https://github.com/miniusercoder/bee2go): a Go wrapper;
+* [Bee2ports](https://github.com/bcrypto/bee2ports): wrappers for other 
+  languages.
 
 ## What is the logo?
 
