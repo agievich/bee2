@@ -272,6 +272,9 @@ static size_t jsonObjParse(json_elem_t* elem, const char json[], size_t count,
 			if (count && json[0] == '}')
 				return SIZE_MAX;
 		}
+		// если не ',' , то должна стоять '}'
+		else if (count == 0 || json[0] != '}')
+			return SIZE_MAX;
 	}
 	// декодировать }
 	if (count == 0 || json[0] != '}')
@@ -398,6 +401,9 @@ static size_t jsonArrParse(json_elem_t* elem, json_elem_t elems[],
 			if (count && json[0] == ']')
 				return SIZE_MAX;
 		}
+		// если не ',' , то должна стоять ']'
+		else if (count == 0 || json[0] != ']')
+			return SIZE_MAX;
 	}
 	// декодировать ]
 	if (count == 0 || json[0] != ']')
