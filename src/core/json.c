@@ -4,7 +4,7 @@
 \brief JSON
 \project bee2 [cryptographic library]
 \created 2025.05.07
-\version 2025.06.10
+\version 2026.06.09
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -264,16 +264,15 @@ static size_t jsonObjParse(json_elem_t* elem, const char json[], size_t count,
 		if ((c1 = jsonElemParse(0, json, count, depth + 1)) == SIZE_MAX)
 			return SIZE_MAX;
 		c += c1, json += c1, count -= c1;
-		// декодировать ,
-		if (count && json[0] == ',')
-		{
-			c1 = 1 + jsonWsDec(json + 1, count - 1);
-			c += c1, json += c1, count -= c1;
-			if (count && json[0] == '}')
-				return SIZE_MAX;
-		}
-		// если не ',' , то должна стоять '}'
-		else if (count == 0 || json[0] != '}')
+		// завершающая }?
+		if (count && json[0] == '}')
+			continue;
+		// нет, значит декодировать ,
+		if ((c1 = jsonDelimDec(json, count, ',')) == SIZE_MAX)
+			return SIZE_MAX;
+		c += c1, json += c1, count -= c1;
+		// висящие , запрещены
+		if (count && json[0] == '}')
 			return SIZE_MAX;
 	}
 	// декодировать }
@@ -393,16 +392,15 @@ static size_t jsonArrParse(json_elem_t* elem, json_elem_t elems[],
 			ASSERT(memIsValid(elems, (ec + 1) * sizeof(json_elem_t)));
 			memCopy(elems + ec, &e, sizeof(json_elem_t));
 		}
-		// декодировать ,
-		if (count && json[0] == ',')
-		{
-			c1 = 1 + jsonWsDec(json + 1, count - 1);
-			c += c1, json += c1, count -= c1;
-			if (count && json[0] == ']')
-				return SIZE_MAX;
-		}
-		// если не ',' , то должна стоять ']'
-		else if (count == 0 || json[0] != ']')
+		// завершающая ]?
+		if (count && json[0] == ']')
+			continue;
+		// нет, значит декодировать ,
+		if ((c1 = jsonDelimDec(json, count, ',')) == SIZE_MAX)
+			return SIZE_MAX;
+		c += c1, json += c1, count -= c1;
+		// висящие , запрещены
+		if (count && json[0] == ']')
 			return SIZE_MAX;
 	}
 	// декодировать ]

@@ -4,7 +4,7 @@
 \brief Tests for JSON
 \project bee2/test
 \created 2025.05.08
-\version 2026.02.11
+\version 2026.06.09
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -221,30 +221,9 @@ static bool_t jsonTestArr()
 
 /*
 *******************************************************************************
-Проверка корректности
+Кодирование
 *******************************************************************************
 */
-
-static bool_t jsonTestValid()
-{
-	const char* jsons[] =
-	{
-		"{\"a\": 1 \"b\": 2}",
-		"{\"a\": true \"b\": false}",
-		"{\"a\": [] \"b\": {}}",
-		"[1 2]",
-		"[true false]",
-		"[{} []]",
-		"[{\"a\": 1} {\"b\": 2}]",
-		"{\"a\": [1 2]}",
-	};
-	size_t pos;
-	// некорректные: пропущены запятые между элементами
-	for (pos = 0; pos < COUNT_OF(jsons); ++pos)
-		if (jsonIsValid(jsons[pos], strLen(jsons[pos])))
-			return FALSE;
-	return TRUE;
-}
 
 #include <stdio.h>
 
@@ -283,6 +262,33 @@ static bool_t jsonTestEnc()
 
 /*
 *******************************************************************************
+Валидация
+*******************************************************************************
+*/
+
+static bool_t jsonTestIsValid()
+{
+	const char* jsons[] =
+	{
+		"{\"a\": 1 \"b\": 2}",
+		"{\"a\": true \"b\": false}",
+		"{\"a\": [] \"b\": {}}",
+		"[1 2]",
+		"[true false]",
+		"[{} []]",
+		"[{\"a\": 1} {\"b\": 2}]",
+		"{\"a\": [1 2]}",
+	};
+	size_t pos;
+	// некорректные: пропущены запятые между элементами
+	for (pos = 0; pos < COUNT_OF(jsons); ++pos)
+		if (jsonIsValid(jsons[pos], strLen(jsons[pos])))
+			return FALSE;
+	return TRUE;
+}
+
+/*
+*******************************************************************************
 Главная функция
 *******************************************************************************
 */
@@ -290,5 +296,5 @@ static bool_t jsonTestEnc()
 bool_t jsonTest()
 {
 	return jsonTestStr() && jsonTestSize() && jsonTestObj() && jsonTestArr() &&
-		jsonTestValid() && jsonTestEnc();
+		jsonTestEnc() && jsonTestIsValid();
 }

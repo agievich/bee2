@@ -55,6 +55,8 @@ Contributors*
   - benchmarks (belt, bign, bash)
 - Fedor Dasko
   - code review
+- Arseni Novikau
+  - code review
 
 ---
-*in chronological order of the first contribution
+*in addition to the Github list; in chronological order of the first contribution
