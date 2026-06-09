@@ -137,6 +137,8 @@ static bool_t jsonTestObj()
 		"{\"a\": 1, \"b\": [1}}",
 		"{\"a\": 1, \"b\": 1,}",
 		"{\"a\": \"\\\"}",
+		"{\"a\": 1 \"b\":2}",
+		"{\"a\":[] \"b\":{}}",
 		"{\"a\": \"\t\" 1}",
 		"{\"a\": }",
 	};
@@ -154,7 +156,7 @@ static bool_t jsonTestObj()
 			return FALSE;
 	}
 	// некорректные
-	for (; pos <= 7; ++pos)
+	for (; pos <= 9; ++pos)
 	{
 		count = jsonObjDec(elems, jsons[pos], strLen(jsons[pos]), names, 2);
 		if (count != SIZE_MAX)
@@ -189,6 +191,9 @@ static bool_t jsonTestArr()
 		"[true, , null, 1]",
 		"[[true, , null, 1]",
 		"[true, n]",
+		"[true null]",
+		"[true, null  1]",
+		"[{\"a\": 1}{\"b\":2}]",
 	};
 	json_elem_t elems[6];
 	size_t size;
@@ -211,6 +216,33 @@ static bool_t jsonTestArr()
 		if (count != SIZE_MAX)
 			return FALSE;
 	}
+	return TRUE;
+}
+
+/*
+*******************************************************************************
+Проверка корректности
+*******************************************************************************
+*/
+
+static bool_t jsonTestValid()
+{
+	const char* jsons[] =
+	{
+		"{\"a\": 1 \"b\": 2}",
+		"{\"a\": true \"b\": false}",
+		"{\"a\": [] \"b\": {}}",
+		"[1 2]",
+		"[true false]",
+		"[{} []]",
+		"[{\"a\": 1} {\"b\": 2}]",
+		"{\"a\": [1 2]}",
+	};
+	size_t pos;
+	// некорректные: пропущены запятые между элементами
+	for (pos = 0; pos < COUNT_OF(jsons); ++pos)
+		if (jsonIsValid(jsons[pos], strLen(jsons[pos])))
+			return FALSE;
 	return TRUE;
 }
 
@@ -258,5 +290,5 @@ static bool_t jsonTestEnc()
 bool_t jsonTest()
 {
 	return jsonTestStr() && jsonTestSize() && jsonTestObj() && jsonTestArr() &&
-		jsonTestEnc();
+		jsonTestValid() && jsonTestEnc();
 }
