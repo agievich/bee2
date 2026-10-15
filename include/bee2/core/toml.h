@@ -4,7 +4,7 @@
 \brief TOML files processing
 \project bee2 [cryptographic library]
 \created 2023.07.12
-\version 2024.02.26
+\version 2026.10.15
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -30,7 +30,7 @@ extern "C" {
 *******************************************************************************
 \file toml.h
 
-Реализовано управление контейнерами формата TOML (Tom's Obvious Minimal 
+Реализовано управление файлами-контейнерами формата TOML (Tom's Obvious Minimal
 Language, см. https://toml.io).
 
 Контейнер TOML состоит из секций, секции состоят из пар "ключ -- значение".
@@ -98,10 +98,10 @@ bool_t tomlNameIsValid(
 
 /*!	\brief Запись значения ключа
 
-	В ключ key секции section контейнера toml записывается значение val.
-	При этом:
-	- если секция section отсутствует в контейнере toml, то она создается;
-	- если key == 0, то секция section удаляется из контейнера toml;
+	В ключ key секции section файла-контейнера TOML с именем file записывается
+	значение val. При этом:
+	- если секция section отсутствует в контейнере, то она создается;
+	- если key == 0, то секция section удаляется из контейнера;
 	- если ключ key отсутствует в секции section, то он создается;
 	- если val == 0, то ключ key удаляется из секции section.
 	\expect{ERR_BAD_NAME} tomlNameIsValid(section).
@@ -112,7 +112,7 @@ bool_t tomlNameIsValid(
 	к первой секции section и к первому ключу key в этой секции.
 */
 err_t tomlValSet(
-	const char* toml,		/*< [in] контейнер */
+	const char* file,		/*< [in] контейнер */
 	const char* section,	/*< [in] секция */
 	const char* key,		/*< [in] ключ */
 	const char* val			/*< [in] значение */
@@ -120,8 +120,8 @@ err_t tomlValSet(
 
 /*!	\brief Чтение значения ключа
 
-	Определяется значение [?count]val ключа key секции section контейнера 
-	toml.
+	Определяется значение [?count]val ключа key секции section контейнера TOML
+	с именем file.
 	\expect{ERR_BAD_NAME} tomlIsValidName(section) && tomlIsValidName(key).
 	\return ERR_OK в случае успеха и код ошибки в противном случае.
 	\remark В контейнере может быть несколько одноименных секций, в секциях 
@@ -131,7 +131,7 @@ err_t tomlValSet(
 err_t tomlValGet(
 	char* val,				/*< [out] значение */
 	size_t* count,			/*< [in,out] длина val */
-	const char* toml,		/*< [in] контейнер */
+	const char* file,		/*< [in] контейнер TOML */
 	const char* section,	/*< [in] секция */
 	const char* key			/*< [in] ключ */
 );
@@ -151,7 +151,7 @@ err_t tomlValGet(
 	\return Длина кода или SIZE_MAX в случае ошибки.
 */
 size_t tomlOctsEnc(
-	char* toml,				/*< [out] код */
+	char toml[],			/*< [out] код */
 	const octet* val,		/*< [in] строка октетов */
 	size_t count			/*< [in] длина val */
 );
@@ -171,7 +171,7 @@ size_t tomlOctsEnc(
 size_t tomlOctsDec(
 	octet* val,				/*< [out] строка октетов */
 	size_t* count,			/*< [out] длина val */
-	const char* toml		/*< [in] код */
+	const char toml[]		/*< [in] код */
 );
 
 /*!	\brief Кодирование неотрицательного целого
@@ -183,7 +183,7 @@ size_t tomlOctsDec(
 	\return Число октетов в TOML-коде или SIZE_MAX в случае ошибки.
 */
 size_t tomlSizeEnc(
-	char* toml,				/*< [out] код */
+	char toml[],			/*< [out] код */
 	size_t val				/*< [in] значение */
 );
 
@@ -197,7 +197,7 @@ size_t tomlSizeEnc(
 */
 size_t tomlSizeDec(
 	size_t* val,			/*< [out] значение */
-	const char* toml		/*< [in] код */
+	const char toml[]		/*< [in] код */
 );
 
 /*!	\brief Кодирование списка неотрицательных целых
@@ -209,7 +209,7 @@ size_t tomlSizeDec(
 	\return Длина кода или SIZE_MAX в случае ошибки.
 */
 size_t tomlSizesEnc(
-	char* toml,				/*< [out] код */
+	char toml[],			/*< [out] код */
 	const size_t* val,		/*< [in] список */
 	size_t count			/*< [in] длина val */
 );
@@ -228,7 +228,7 @@ size_t tomlSizesEnc(
 size_t tomlSizesDec(
 	size_t* val,			/*< [out] список */
 	size_t* count,			/*< [out] длина val */
-	const char* toml		/*< [in] код */
+	const char toml[]		/*< [in] код */
 );
 
 #ifdef __cplusplus

@@ -4,13 +4,14 @@
 \brief TOML files processing
 \project bee2 [cryptographic library]
 \created 2023.07.12
-\version 2026.04.01
+\version 2026.10.15
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
 #include <ctype.h>
+#include "bee2/core/err.h"
 #include "bee2/core/hex.h"
 #include "bee2/core/mem.h"
 #include "bee2/core/toml.h"
@@ -57,7 +58,7 @@ static bool_t strIsAlnum(char ch)
 	return (bool_t)isalnum(ch);
 }
 
-static size_t tomlSpaceDec(const char* toml)
+static size_t tomlSpaceDec(const char toml[])
 {
 	size_t count;
 	ASSERT(strIsValid(toml));
@@ -65,7 +66,7 @@ static size_t tomlSpaceDec(const char* toml)
 	return count;
 }
 
-static size_t tomlDelimDec(const char* toml, char delim)
+static size_t tomlDelimDec(const char toml[], char delim)
 {
 	size_t count;
 	// пропустить пробелы
@@ -79,7 +80,7 @@ static size_t tomlDelimDec(const char* toml, char delim)
 	return count + tomlSpaceDec(toml);
 }
 
-static size_t tomlDelimEnc(char* toml, char delim)
+static size_t tomlDelimEnc(char toml[], char delim)
 {
 	if (toml)
 	{
@@ -89,7 +90,7 @@ static size_t tomlDelimEnc(char* toml, char delim)
 	return 1;
 }
 
-static size_t tomlLFDec(const char* toml)
+static size_t tomlLFDec(const char toml[])
 {
 	size_t count;
 	// пропустить пробелы
@@ -111,7 +112,7 @@ static size_t tomlLFDec(const char* toml)
 
 #define tomlLFEnc(toml) tomlDelimEnc(toml, '\n')
 
-static size_t tomlCommentDec(const char* toml)
+static size_t tomlCommentDec(const char toml[])
 {
 	size_t count = 0;
 	ASSERT(strIsValid(toml));
@@ -145,7 +146,7 @@ static size_t tomlCommentDec(const char* toml)
 	return count;
 }
 
-static size_t tomlVertDec(const char* toml)
+static size_t tomlVertDec(const char toml[])
 {
 	size_t count = 0;
 	while (*toml)
@@ -179,7 +180,7 @@ static size_t tomlVertDec(const char* toml)
 *******************************************************************************
 */
 
-static size_t tomlNameBareDec(char* name, const char* toml)
+static size_t tomlNameBareDec(char* name, const char toml[])
 {
 	size_t count;
 	// pre
@@ -200,7 +201,7 @@ static size_t tomlNameBareDec(char* name, const char* toml)
 	return count;
 }
 
-static size_t tomlNameQuotedDec(char* name, const char* toml)
+static size_t tomlNameQuotedDec(char* name, const char toml[])
 {
 	size_t count;
 	// pre
@@ -223,7 +224,7 @@ static size_t tomlNameQuotedDec(char* name, const char* toml)
 	return count;
 }
 
-static size_t tomlNameDec(char* name, const char* toml)
+static size_t tomlNameDec(char* name, const char toml[])
 {
 	size_t count;
 	size_t c;
@@ -263,7 +264,7 @@ bool_t tomlNameIsValid(const char* name)
 	return name[count] == 0;
 }
 
-static size_t tomlNameDec2(const char* toml, const char* name)
+static size_t tomlNameDec2(const char toml[], const char* name)
 {
 	size_t count;
 	size_t c;
@@ -295,7 +296,7 @@ static size_t tomlNameDec2(const char* toml, const char* name)
 	return count;
 }
 
-static size_t tomlNameEnc(char* toml, const char* name)
+static size_t tomlNameEnc(char toml[], const char* name)
 {
 	size_t count;
 	size_t c;
@@ -327,7 +328,7 @@ static size_t tomlNameEnc(char* toml, const char* name)
 *******************************************************************************
 */
 
-static size_t tomlSectionDec(char* section, const char* toml)
+static size_t tomlSectionDec(char* section, const char toml[])
 {
 	size_t count;
 	size_t c;
@@ -348,7 +349,7 @@ static size_t tomlSectionDec(char* section, const char* toml)
 	return count + c;
 }
 
-static size_t tomlSectionDec2(const char* toml, const char* section)
+static size_t tomlSectionDec2(const char toml[], const char* section)
 {
 	size_t count;
 	size_t c;
@@ -369,7 +370,7 @@ static size_t tomlSectionDec2(const char* toml, const char* section)
 	return count + c;
 }
 
-static size_t tomlSectionEnc(char* toml, const char* section)
+static size_t tomlSectionEnc(char toml[], const char* section)
 {
 	size_t count;
 	size_t c;
@@ -377,12 +378,12 @@ static size_t tomlSectionEnc(char* toml, const char* section)
 	count = tomlDelimEnc(toml, '[');
 	if (count == SIZE_MAX)
 		return SIZE_MAX;
-	toml += count;
+	toml = toml ? toml + count : toml;
 	// кодировать имя
 	c = tomlNameEnc(toml, section);
 	if (c == SIZE_MAX)
 		return SIZE_MAX;
-	count += c, toml += c;
+	count += c, toml = toml ? toml + c : toml;
 	// кодировать ]
 	c = tomlDelimEnc(toml, ']');
 	if (c == SIZE_MAX)
@@ -393,29 +394,26 @@ static size_t tomlSectionEnc(char* toml, const char* section)
 /*
 *******************************************************************************
 Ключ
-
-\remark Следующая функция не потребовалась:
-\code
-	static size_t tomlKeyDec(char* key, const char* toml)
-	{
-		size_t count;
-		size_t c;
-		// декодировать имя
-		count = tomlNameDec(key, toml);
-		if (count == SIZE_MAX)
-			return SIZE_MAX;
-		toml += count;
-		// декодировать =
-		c = tomlDelimDec(toml, '=');
-		if (c == SIZE_MAX)
-			return SIZE_MAX;
-		return count + c;
-	}
-\endcode
 *******************************************************************************
 */
 
-static size_t tomlKeyDec2(const char* toml, const char* key)
+static size_t tomlKeyDec(char* key, const char toml[])
+{
+	size_t count;
+	size_t c;
+	// декодировать имя
+	count = tomlNameDec(key, toml);
+	if (count == SIZE_MAX)
+		return SIZE_MAX;
+	toml += count;
+	// декодировать =
+	c = tomlDelimDec(toml, '=');
+	if (c == SIZE_MAX)
+		return SIZE_MAX;
+	return count + c;
+}
+
+static size_t tomlKeyDec2(const char toml[], const char* key)
 {
 	size_t count;
 	size_t c;
@@ -431,7 +429,7 @@ static size_t tomlKeyDec2(const char* toml, const char* key)
 	return count + c;
 }
 
-static size_t tomlKeyEnc(char* toml, const char* key)
+static size_t tomlKeyEnc(char toml[], const char* key)
 {
 	size_t count;
 	size_t c;
@@ -439,18 +437,16 @@ static size_t tomlKeyEnc(char* toml, const char* key)
 	count = tomlNameEnc(toml, key);
 	if (count == SIZE_MAX)
 		return SIZE_MAX;
-	toml += count;
+	toml = toml ? toml + count : toml;
 	c = tomlDelimEnc(toml, ' ');
 	if (c == SIZE_MAX)
 		return SIZE_MAX;
-	toml += c;
-    count += c;
+    count += c, toml = toml ? toml + c : toml;
 	// кодировать =
 	c = tomlDelimEnc(toml, '=');
 	if (c == SIZE_MAX)
 		return SIZE_MAX;
-	toml += c;
-    count += c;
+	count += c, toml = toml ? toml + c : toml;
 	c = tomlDelimEnc(toml, ' ');
 	if (c == SIZE_MAX)
 		return SIZE_MAX;
@@ -472,7 +468,7 @@ static size_t tomlKeyEnc(char* toml, const char* key)
 *******************************************************************************
 */
 
-size_t tomlOctsEnc(char* toml, const octet* val, size_t count)
+size_t tomlOctsEnc(char toml[], const octet* val, size_t count)
 {
 	ASSERT(memIsValid(val, count));
 	if (toml)
@@ -484,7 +480,7 @@ size_t tomlOctsEnc(char* toml, const octet* val, size_t count)
 	return 2 + 2 * count;
 }
 
-static size_t tomlOctDec(octet* val, const char* toml)
+static size_t tomlOctDec(octet* val, const char toml[])
 {
 	char hex[3];
 	if (strLen(toml) < 2)
@@ -498,7 +494,7 @@ static size_t tomlOctDec(octet* val, const char* toml)
 	return 2;
 }
 
-size_t tomlOctsDec(octet* val, size_t* count, const char* toml)
+size_t tomlOctsDec(octet* val, size_t* count, const char toml[])
 {
 	size_t c;
 	size_t co;
@@ -547,7 +543,7 @@ size_t tomlOctsDec(octet* val, size_t* count, const char* toml)
 *******************************************************************************
 */
 
-size_t tomlSizeEnc(char* toml, size_t val)
+size_t tomlSizeEnc(char toml[], size_t val)
 {
 	size_t count = 0;
 	do
@@ -568,7 +564,7 @@ size_t tomlSizeEnc(char* toml, size_t val)
 	return count;
 }
 
-size_t tomlSizeDec(size_t* val, const char* toml)
+size_t tomlSizeDec(size_t* val, const char toml[])
 {
 	register size_t v;
 	size_t count;
@@ -608,7 +604,7 @@ size_t tomlSizeDec(size_t* val, const char* toml)
 *******************************************************************************
 */
 
-size_t tomlSizesEnc(char* toml, const size_t* val, size_t count)
+size_t tomlSizesEnc(char toml[], const size_t* val, size_t count)
 {
 	size_t c;
 	// pre
@@ -648,7 +644,7 @@ size_t tomlSizesEnc(char* toml, const size_t* val, size_t count)
 	return ++c;
 }
 
-size_t tomlSizesDec(size_t* val, size_t* count, const char* toml)
+size_t tomlSizesDec(size_t* val, size_t* count, const char toml[])
 {
 	size_t c;
 	size_t c1;
@@ -687,3 +683,31 @@ size_t tomlSizesDec(size_t* val, size_t* count, const char* toml)
 	}
 	return c;
 }
+
+/*
+*******************************************************************************
+Запись / чтение значений
+
+todo: реализовать
+*******************************************************************************
+*/
+
+err_t tomlValSet(const char* file, const char* section, const char* key, 
+	const char* val)
+{
+	(void)tomlSectionEnc(0, section);
+	(void)tomlKeyEnc(0, key);
+	return ERR_NOT_IMPLEMENTED;
+}
+
+err_t tomlValGet(char* val, size_t* count, const char* file, 
+	const char* section, const char* key)
+{
+	(void)tomlSectionDec(0, 0);
+	(void)tomlSectionDec2(0, section);
+	(void)tomlKeyDec(0, 0);
+	(void)tomlKeyDec2(0, key);
+	(void)tomlVertDec(0);
+	return ERR_NOT_IMPLEMENTED;
+}
+
