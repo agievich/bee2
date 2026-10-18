@@ -457,7 +457,7 @@ void beltECBStepD(
 /*!	\brief Зашифрование в режиме ECB
 
 	Буфер [count]src зашифровывается в режиме ECB на ключе [len]key. Результат 
-	зашифрования азмещается в буфере [count]dest.
+	зашифрования размещается в буфере [count]dest.
 	\expect{ERR_BAD_INPUT}
 	-	len == 16 || len == 24 || len == 32;
 	-	count >= 16.
@@ -535,7 +535,7 @@ void beltCBCRefresh(
 
 /*!	\brief Зашифрование в режиме CBC
 
-	Буфер [count]buf зашифровывается в режиме CFB с использованием и 
+	Буфер [count]buf зашифровывается в режиме CBC с использованием и 
 	обновлением state.
 	\pre count >= 16.
 	\expect beltCBCStart() < beltCBCRefresh()* < beltCBCStepE()*.
