@@ -4,7 +4,7 @@
 \brief TOML files processing
 \project bee2 [cryptographic library]
 \created 2023.07.12
-\version 2026.10.15
+\version 2026.10.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -125,8 +125,7 @@ static size_t tomlCommentDec(const char toml[])
 			break;
 		// обработать комментарий
 		count += c, toml += c;
-		while (toml[0] && toml[0] != '\n' && 
-			(toml[0] != '\r' || toml[0] != '\n'))
+		while (toml[0] && toml[0] != '\n' && toml[0] != '\r')
 		{
 			// управляющий символ, отличный от '\t'?
 			if (0x00 <= toml[0] && toml[0] <= 0x1F && toml[0] != '\t' ||

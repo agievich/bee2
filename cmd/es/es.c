@@ -4,7 +4,7 @@
 \brief Dealing with entropy sources
 \project bee2/cmd 
 \created 2021.04.20
-\version 2026.05.21
+\version 2026.10.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -288,13 +288,13 @@ static err_t esTest(int argc, char *argv[])
 		code = fileRead(&read, buf, MIN2(sizeof(buf), count - size), file);
 		if (code != ERR_OK)
 			code = ERR_FILE_READ;
-		ERR_CALL_HANDLE(code, cmdBlobClose(state));
+		ERR_CALL_HANDLE(code, (cmdFileClose(file), cmdBlobClose(state)));
 		// кодировать фрагмент
 		rngWhtEnc(wh + size * 8, buf, read);
 		// к следующему фрагменту
 		size += read;
 	}
-	fileClose(file);
+	cmdFileClose(file);
 	// статистическое тестирование
 	count *= 8, log_count += 3;
 	max = rngWhtMax(wh, count);
