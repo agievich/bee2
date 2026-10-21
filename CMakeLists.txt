@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5...3.31)
 project(BEE2
-  VERSION 2.2.4
+  VERSION 2.2.6
   LANGUAGES C
 )
 
