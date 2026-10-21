@@ -4,7 +4,7 @@
 \brief Tests for STB 34.101.31 (belt)
 \project bee2/test
 \created 2012.06.20
-\version 2025.10.22
+\version 2026.10.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -352,7 +352,8 @@ bool_t beltTest()
 		return FALSE;
 	// belt-cbc: тест A.11-2
 	memCopy(buf, beltH(), 36);
-	beltCBCStart(stack, beltH() + 128, 32, beltH() + 192);
+	beltCBCStart(stack, beltH() + 128, 32, 0);
+	beltCBCRefresh(stack, beltH() + 192);
 	beltCBCStepE(buf, 16, stack);
 	beltCBCStepE(buf + 16, 36 - 16, stack);
 	if (!hexEq(buf,
@@ -365,7 +366,8 @@ bool_t beltTest()
 		return FALSE;
 	// belt-cbc: тест A.12-1
 	memCopy(buf, beltH() + 64, 48);
-	beltCBCStart(stack, beltH() + 128 + 32, 32, beltH() + 192 + 16);
+	beltCBCStart(stack, beltH() + 128 + 32, 32, 0);
+	beltCBCRefresh(stack,  beltH() + 192 + 16);
 	beltCBCStepD(buf, 16, stack);
 	beltCBCStepD(buf + 16, 48 - 16, stack);
 	if (!hexEq(buf,
@@ -407,7 +409,8 @@ bool_t beltTest()
 		return FALSE;
 	// belt-cfb: тест A.14
 	memCopy(buf, beltH() + 64, 48);
-	beltCFBStart(stack, beltH() + 128 + 32, 32, beltH() + 192 + 16);
+	beltCFBStart(stack, beltH() + 128 + 32, 32, 0);
+	beltCFBRefresh(stack, beltH() + 192 + 16);
 	beltCFBStepD(buf, 15, stack);
 	beltCFBStepD(buf + 15, 7, stack);
 	beltCFBStepD(buf + 15 + 7, 48 - 15 - 7, stack);
@@ -422,7 +425,8 @@ bool_t beltTest()
 		return FALSE;
 	// belt-ctr: тест A.15
 	memCopy(buf, beltH(), 48);
-	beltCTRStart(stack, beltH() + 128, 32, beltH() + 192);
+	beltCTRStart(stack, beltH() + 128, 32, 0);
+	beltCTRRefresh(stack, beltH() + 192);
 	beltCTRStepE(buf, 15, stack);
 	beltCTRStepE(buf + 15, 7, stack);
 	beltCTRStepE(buf + 15 + 7, 48 - 15 - 7, stack);
@@ -471,7 +475,8 @@ bool_t beltTest()
 	if (!memEq(buf, buf1, 8))
 		return FALSE;
 	// belt-dwp: тест A.19-1 [+ инкрементальность]
-	beltDWPStart(stack, beltH() + 128, 32, beltH() + 192);
+	beltDWPStart(stack, beltH() + 128, 32, 0);
+	beltDWPRefresh(stack, beltH() + 192);
 	memCopy(buf, beltH(), 16);
 	beltDWPStepE(buf, 7, stack);
 	beltDWPStepE(buf + 7, 9, stack);
@@ -496,7 +501,8 @@ bool_t beltTest()
 	if (!memEq(buf, buf1, 16) || !memEq(mac, mac1, 8))
 		return FALSE;
 	// belt-che: тест A.19-2 [+ инкрементальность]
-	beltCHEStart(stack, beltH() + 128, 32, beltH() + 192);
+	beltCHEStart(stack, beltH() + 128, 32, 0);
+	beltCHERefresh(stack, beltH() + 192);
 	memCopy(buf, beltH(), 15);
 	beltCHEStepE(buf, 11, stack);
 	beltCHEStepE(buf + 11, 4, stack);
@@ -643,7 +649,8 @@ bool_t beltTest()
 		return FALSE;
 	// belt-bde: тест A.25-1
 	memCopy(buf, beltH() + 64, 48);
-	beltBDEStart(stack, beltH() + 128 + 32, 32, beltH() + 192 + 16);
+	beltBDEStart(stack, beltH() + 128 + 32, 32, 0);
+	beltBDERefresh(stack, beltH() + 192 + 16);
 	beltBDEStepD(buf, 16, stack);
 	beltBDEStepD(buf + 16, 48 - 16, stack);
 	if (!hexEq(buf,

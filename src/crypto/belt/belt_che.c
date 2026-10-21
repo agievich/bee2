@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): CHE (Ctr-Hash-Encrypt) authenticated encryption
 \project bee2 [cryptographic library]
 \created 2020.03.20
-\version 2025.10.02
+\version 2026.10.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -48,9 +48,17 @@ void beltCHEStart(void* state, const octet key[], size_t len,
 	const octet iv[16])
 {
 	belt_che_st* st = (belt_che_st*)state;
-	ASSERT(memIsDisjoint2(iv, 16, state, beltCHE_keep()));
-	// разобрать key и iv
+	ASSERT(memIsValid(state, beltCHE_keep()));
 	beltKeyExpand2(st->key, key, len);
+	if (iv)
+		beltCHERefresh(state, iv);
+}
+
+void beltCHERefresh(void* state, const octet iv[16])
+{
+	belt_che_st* st = (belt_che_st*)state;
+	ASSERT(memIsDisjoint2(iv, 16, state, beltCHE_keep()));
+	// подготовить r, s
 	beltBlockCopy(st->r, iv);
 	beltBlockEncr((octet*)st->r, st->key);
 	u32From(st->s, st->r, 16);

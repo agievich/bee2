@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): CTR encryption
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.10.02
+\version 2026.10.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -34,7 +34,6 @@ static void beltBlockIncU32(u32 block[4])
 	CLEAN(carry);
 }
 
-
 /*
 *******************************************************************************
 Шифрование в режиме CTR
@@ -56,8 +55,16 @@ void beltCTRStart(void* state, const octet key[], size_t len,
 	const octet iv[16])
 {
 	belt_ctr_st* st = (belt_ctr_st*)state;
-	ASSERT(memIsDisjoint2(iv, 16, state, beltCTR_keep()));
+	ASSERT(memIsValid(state, beltCTR_keep()));
 	beltKeyExpand2(st->key, key, len);
+	if (iv)
+		beltCTRRefresh(state, iv);
+}
+
+void beltCTRRefresh(void* state, const octet iv[16])
+{
+	belt_ctr_st* st = (belt_ctr_st*)state;
+	ASSERT(memIsDisjoint2(iv, 16, state, beltCTR_keep()));
 	u32From(st->ctr, iv, 16);
 	beltBlockEncr2(st->ctr, st->key);
 	st->reserved = 0;

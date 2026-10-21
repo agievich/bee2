@@ -20,6 +20,7 @@ set(src
   core/rng/rng_trng.c
   core/str.c
   core/tm.c
+  core/toml.c
   core/u16.c
   core/u32.c
   core/u64.c

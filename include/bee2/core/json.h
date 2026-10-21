@@ -4,7 +4,7 @@
 \brief JSON (JavaScript Object Notation, https://json.org)
 \project bee2 [cryptographic library]
 \created 2025.05.07
-\version 2025.05.13
+\version 2026.05.28
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -79,10 +79,13 @@ JSON-код представляет собой элемент с любым ч�
 передается не указатель на объект, а его поля по отдельности:
 \code
 	json_elem_t elem;
+	size_t elems_count;
 	size_t c;
 	size_t size;
 	...
-	c = jsonArrDec(&elem, 1, json, count);
+	c = jsonArrDec(0, &elems_count, json, count);
+	ASSERT(c != SIZE_MAX && elems_count == 1);
+	c = jsonArrDec(&elem, 0, json, count);
 	...
 	c = jsonSizeDec(&size, elem.json, elem.count);
 \endcode

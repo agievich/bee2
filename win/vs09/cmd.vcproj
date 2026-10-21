@@ -309,6 +309,10 @@
 					RelativePath="..\..\cmd\es\es.c"
 					>
 				</File>
+				<File
+					RelativePath="..\..\cmd\es\wht.c"
+					>
+				</File>
 			</Filter>
 			<Filter
 				Name="kg"

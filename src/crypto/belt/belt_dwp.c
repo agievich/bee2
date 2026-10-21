@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): DWP (datawrap = data encryption + authentication)
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.10.01
+\version 2026.10.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -45,10 +45,19 @@ void beltDWPStart(void* state, const octet key[], size_t len,
 	const octet iv[16])
 {
 	belt_dwp_st* st = (belt_dwp_st*)state;
+	ASSERT(memIsValid(state, beltDWP_keep()));
+	beltCTRStart(st->ctr, key, len, 0);
+	if (iv)
+		beltDWPRefresh(state, iv);
+}
+
+void beltDWPRefresh(void* state, const octet iv[16])
+{
+	belt_dwp_st* st = (belt_dwp_st*)state;
 	ASSERT(memIsDisjoint2(iv, 16, state, beltDWP_keep()));
-	// настроить CTR
-	beltCTRStart(st->ctr, key, len, iv);
-	// установить r, s
+	// обновить CTR
+	beltCTRRefresh(st->ctr, iv);
+	// подготовить r, s
 	beltBlockCopy(st->r, st->ctr->ctr);
 	ASSERT(memIsAligned(st->r, 4));
 	beltBlockEncr2((u32*)st->r, st->ctr->key);
@@ -56,6 +65,7 @@ void beltDWPStart(void* state, const octet key[], size_t len,
 	beltBlockRevU32(st->r);
 	beltBlockRevW(st->r);
 #endif
+	// подготовить t
 	wwFrom(st->t, beltH(), 16);
 	// обнулить счетчики
 	memSetZero(st->len, sizeof(st->len));
