@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Get source
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
     - name: Configure CMake
       run: >
         CC=gcc cmake -B ${{github.workspace}}/build 
@@ -28,7 +28,7 @@ jobs:
         test/testbee2
         cd cmd && cp ../../cmd/test/* . && ./test.sh
     - name: Upload report to Codecov
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@v7
       with:
         directory: ${{github.workspace}}/build
         fail_ci_if_error: true
