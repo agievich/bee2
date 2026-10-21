@@ -114,6 +114,7 @@ err_t rngTimerRead(void* buf, size_t* read, size_t count)
 static volatile bool_t _tm_ctr_loop;		/*< счетчик запущен? */
 static volatile tm_ticks_t _tm_ctr_ticks;	/*< текущее показание */
 static volatile tm_ticks_t _tm_ctr_ticks2;	/*< предыдущее показание */
+static bool_t _tm_ctr_close_registered;		/*< закрытие зарегистрировано? */
 
 #ifdef OS_WIN
 
@@ -221,11 +222,12 @@ static bool_t tmCtrStart()
 	if (!tmCtrCreate())
 		return FALSE;
 	// зарегистрировать закрытие
-	if (!utilOnExit(tmCtrClose))
+	if (!_tm_ctr_close_registered && !utilOnExit(tmCtrClose))
 	{
 		tmCtrClose();
 		return FALSE;
 	}
+	_tm_ctr_close_registered = TRUE;
 	return TRUE;
 }
 
@@ -345,5 +347,6 @@ err_t rngJitterRead(void* buf, size_t* read, size_t count)
 	}
 	CLEAN3(ticks, t, w);
 	*read = count;
+	tmCtrClose();
 	return ERR_OK;
 }
