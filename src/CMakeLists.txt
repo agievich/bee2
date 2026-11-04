@@ -14,6 +14,7 @@ set(src
   core/oid.c
   core/prng.c
   core/rng/rng_main.c
+  core/rng/rng_perfect.c
   core/rng/rng_sys.c
   core/rng/rng_test.c
   core/rng/rng_timer.c
