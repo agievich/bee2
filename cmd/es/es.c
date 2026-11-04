@@ -74,7 +74,7 @@ print
 static err_t esPrint(int argc, char* argv[])
 {
 	const char* sources[] = {
-		"trng", "trng2", "sys", "sys2", "timer", "jitter" };
+		"trng", "trng2", "sys", "sys2", "timer", "jitter", "perfect"};
 	size_t pos;
 	size_t count;
 	// проверить параметры
@@ -117,7 +117,8 @@ static err_t rngReadSourceEx(size_t* read, void* buf, size_t count,
 	if (strEq(source_name, "trng") || strEq(source_name, "trng2") ||
 		strEq(source_name, "sys") ||
 		strEq(source_name, "timer") && par == 0 ||
-		strEq(source_name, "jitter"))
+		strEq(source_name, "jitter") ||
+		strEq(source_name, "perfect"))
 		return rngESRead(read, buf, count, source_name);
 	// эксперименты с источником timer
 	{
@@ -192,6 +193,8 @@ static err_t esRead(int argc, char *argv[])
 		strCopy(source, "timer");
 	else if (strEq(argv[0], "jitter"))
 		strCopy(source, "jitter");
+	else if (strEq(argv[0], "perfect"))
+		strCopy(source, "perfect");
 	else if (strStartsWith(argv[0], "timer"))
 	{
 		strCopy(source, "timer");

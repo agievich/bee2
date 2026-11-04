@@ -86,7 +86,7 @@ err_t rngESHealth2()
 
 err_t rngESHealth()
 {
-	const char* sources[] = { "sys", "sys2", "timer", "jitter" };
+	const char* sources[] = { "sys", "sys2", "timer", "jitter", "perfect" };
 	size_t valid_sources = 0;
 	size_t pos;
 	// есть работоспособный физический источник?

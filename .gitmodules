@@ -1,7 +1,3 @@
-[submodule "perfect-random"]
-	path = perfect-random
-	url = https://github.com/mshunko101/perfect-random.git
-	branch = main
 [submodule "external/perfect-random"]
 	path = external/perfect-random
 	url = https://github.com/mshunko101/perfect-random.git
