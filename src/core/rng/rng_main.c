@@ -32,6 +32,7 @@ extern err_t rngTimerRead(void* buf, size_t* read, size_t count);
 extern err_t rngJitterRead(void* buf, size_t* read, size_t count);
 extern err_t rngSysRead(void* buf, size_t* read, size_t count);
 extern err_t rngSys2Read(void* buf, size_t* read, size_t count);
+extern err_t rngPerfectRead(void* buf, size_t* read, size_t count);
 
 err_t rngESRead(size_t* read, void* buf, size_t count, const char* source)
 {
@@ -47,6 +48,8 @@ err_t rngESRead(size_t* read, void* buf, size_t count, const char* source)
 		return rngSysRead(buf, read, count);
 	else if (strEq(source, "sys2"))
 		return rngSys2Read(buf, read, count);
+	else if (strEq(source, "perfect"))
+		return rngPerfectRead(buf, read, count);
 	return ERR_FILE_NOT_FOUND;
 }
 
@@ -83,7 +86,7 @@ err_t rngESHealth2()
 
 err_t rngESHealth()
 {
-	const char* sources[] = { "sys", "sys2", "timer", "jitter" };
+	const char* sources[] = { "sys", "sys2", "timer", "jitter", "perfect" };
 	size_t valid_sources = 0;
 	size_t pos;
 	// есть работоспособный физический источник?
@@ -164,7 +167,7 @@ static void rngInit()
 
 err_t rngCreate(read_i source, void* source_state)
 {
-	const char* sources[] = { "trng", "trng2", "sys", "sys2", "timer", "jitter" };
+	const char* sources[] = { "trng", "trng2", "sys", "sys2", "timer", "jitter", "perfect" };
 	size_t read, count, pos;
 	// инициализировать однократно
 	if (!mtCallOnce(&_once, rngInit) || !_inited)
@@ -273,7 +276,7 @@ void rngStepR2(void* buf, size_t count, void* state)
 
 void rngStepR(void* buf, size_t count, void* state)
 {
-	const char* sources[] = {"trng", "trng2", "sys", "sys2", "timer", "jitter"};
+	const char* sources[] = {"trng", "trng2", "sys", "sys2", "timer", "jitter", "perfect"};
 	size_t read, r, pos;
 	// блокировать мьютекс
 	ASSERT(_inited);

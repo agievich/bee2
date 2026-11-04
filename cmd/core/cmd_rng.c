@@ -145,7 +145,7 @@ err_t cmdRngStart(bool_t verbose)
 	if (verbose)
 	{
 		const char* sources[] = { 
-			"trng", "trng2", "sys", "sys2", "timer", "jitter"};
+			"trng", "trng2", "sys", "sys2", "timer", "jitter", "perfect"};
 		size_t pos;
 		size_t count;
 		size_t read;

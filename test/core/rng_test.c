@@ -26,7 +26,7 @@ bool_t rngTest()
 {
 	const char* sources[] = 
 	{ 
-		"trng", "trng2", "sys", "sys2", "timer", "jitter" 
+		"trng", "trng2", "sys", "sys2", "timer", "jitter" ,"perfect"
 	};
 	octet buf[2500];
 	char hex[33];
