@@ -3,7 +3,7 @@ rem ===========================================================================
 rem \brief Testing command-line interface
 rem \project bee2evp/cmd
 rem \created 2022.06.24
-rem \version 2025.10.18
+rem \version 2026.10.21
 rem \pre The working directory contains "zed.cert", "zed.csr", "zed.sk"
 rem ===========================================================================
 
@@ -719,6 +719,8 @@ if %ERRORLEVEL% neq 0 goto Error
 
 for %%A in (dd) do set dd_len=%%~zA
 if %dd_len% neq 1024 goto Error
+
+bee2cmd es test dd
 
 echo ****** OK
 

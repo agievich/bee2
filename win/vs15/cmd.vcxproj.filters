@@ -140,6 +140,9 @@
     <ClCompile Include="..\..\cmd\fmt\fmt.c">
       <Filter>Source Files\fmt</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\cmd\es\wht.c">
+      <Filter>Source Files\es</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\cmd\include\bee2\cmd.h">

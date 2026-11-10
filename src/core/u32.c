@@ -4,7 +4,7 @@
 \brief 32-bit unsigned words
 \project bee2 [cryptographic library]
 \created 2015.10.28
-\version 2026.02.16
+\version 2026.05.21
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -102,10 +102,10 @@ bool_t u32Parity(register u32 w)
 Число нулей
 
 Реализованы алгоритмы из [War03]:
--	u32CTZ_safe(): п. 5.4, второй абзац (стр. 92);
--	u32CTZ_fast(): листинг 5.13 (стр. 93);
--	u32CLZ_safe(): листинг 5.10 (стр. 89);
--	u32CLZ_fast(): листинг 5.6 (стр. 87).
+-	u32CTZ(): п. 5.4, второй абзац (стр. 92);
+-	FAST(u32CTZ)(): листинг 5.13 (стр. 93);
+-	u32CLZ(): листинг 5.10 (стр. 89);
+-	FAST(u32CLZ)(): листинг 5.6 (стр. 87).
 
 \remark Приведение типа (u32)(w << 1) в последней строке FAST(u32CTZ) 
 учитывает неявный integer promotion (см. zz_lcl.c) при "большом" int.

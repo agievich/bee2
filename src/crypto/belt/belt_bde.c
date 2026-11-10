@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): BDE (Blockwise Disk Encryption)
 \project bee2 [cryptographic library]
 \created 2018.06.28
-\version 2025.10.02
+\version 2026.10.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -40,8 +40,16 @@ void beltBDEStart(void* state, const octet key[], size_t len,
 	const octet iv[16])
 {
 	belt_bde_st* st = (belt_bde_st*)state;
-	ASSERT(memIsDisjoint2(iv, 16, state, beltBDE_keep()));
+	ASSERT(memIsValid(state, beltBDE_keep()));
 	beltKeyExpand2(st->key, key, len);
+	if (iv)
+		beltBDERefresh(state, iv);
+}
+
+void beltBDERefresh(void* state, const octet iv[16])
+{
+	belt_bde_st* st = (belt_bde_st*)state;
+	ASSERT(memIsDisjoint2(iv, 16, state, beltBDE_keep()));
 	u32From(st->s, iv, 16);
 	beltBlockEncr2(st->s, st->key);
 }

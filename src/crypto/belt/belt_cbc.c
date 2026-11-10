@@ -4,7 +4,7 @@
 \brief STB 34.101.31 (belt): CBC encryption
 \project bee2 [cryptographic library]
 \created 2012.12.18
-\version 2025.10.02
+\version 2026.10.18
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -83,8 +83,16 @@ void beltCBCStart(void* state, const octet key[], size_t len,
 	const octet iv[16])
 {
 	belt_cbc_st* st = (belt_cbc_st*)state;
-	ASSERT(memIsDisjoint2(iv, 16, state, beltCBC_keep()));
+	ASSERT(memIsValid(state, beltCBC_keep()));
 	beltKeyExpand2(st->key, key, len);
+	if (iv)
+		beltCBCRefresh(state, iv);
+}
+
+void beltCBCRefresh(void* state, const octet iv[16])
+{
+	belt_cbc_st* st = (belt_cbc_st*)state;
+	ASSERT(memIsDisjoint2(iv, 16, state, beltCBC_keep()));
 	beltBlockCopy(st->block, iv);
 }
 

@@ -1,6 +1,6 @@
 # Build and run tests using the AVX-512 instruction set
-# \remark `BUILD_CMD` is `OFF` because we need to stamp `bee2cmd` when 
-# building, but the stamp is calculated using `bash64` in emulation mode.
+# \remark `BUILD_CMD` is `OFF` because `bee2cmd` must be stamped during
+# the build, which require running it in emulation mode.
 
 name: avx512
 
@@ -15,11 +15,11 @@ jobs:
     name: Build and test
     runs-on: ubuntu-latest
     env:
-      SDE_URL: https://downloadmirror.intel.com/813591
-      SDE_NAME: sde-external-9.33.0-2024-01-07-lin
+      SDE_URL: https://downloadmirror.intel.com/924984
+      SDE_NAME: sde-external-10.13.1-2026-07-28-lin
     steps:
     - name: Get source
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
     - name: Configure CMake
       run: >
         CC=gcc cmake -B ${{github.workspace}}/build 

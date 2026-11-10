@@ -4,13 +4,14 @@
 \brief Dealing with entropy sources
 \project bee2/cmd 
 \created 2021.04.20
-\version 2025.10.07
+\version 2026.10.20
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
 */
 
 #include <stdio.h>
+#include <math.h>
 #include <bee2/core/dec.h>
 #include <bee2/core/err.h>
 #include <bee2/core/file.h>
@@ -36,6 +37,7 @@
 Пример:
   bee2cmd es print
   bee2cmd es read trng2 128 file
+  bee2cmd es test file
 *******************************************************************************
 */
 
@@ -51,8 +53,10 @@ static int esUsage()
 		"    list available entropy sources and determine their health\n"
 		"  es read <source> <count> <file>\n"
 		"    read <count> Kbytes from <source> and store them in <file>\n"
-		"  <source> in {trng, trng2, sys, sys2, timer, timerNNN, jitter}\n"
-		"    timerNNN -- use NNN sleep delays to produce one output bit\n"
+		"    <source> in {trng, trng2, sys, sys2, timer, timerNNN, jitter}\n"
+		"      timerNNN -- use NNN sleep delays to produce one output bit\n"
+		"  es test <file>\n"
+		"    statistical testing of <file> (experimental)\n"
 		,
 		_name, _descr
 	);
@@ -69,22 +73,26 @@ print
 
 static err_t esPrint(int argc, char* argv[])
 {
-	const char* sources[] = { "trng", "trng2", "sys", "sys2", "timer" };
+	const char* sources[] = {
+		"trng", "trng2", "sys", "sys2", "timer", "jitter" };
 	size_t pos;
 	size_t count;
-	size_t read;
 	// проверить параметры
 	if (argc != 0)
 		return ERR_CMD_PARAMS;
 	// опрос источников
 	printf("Sources:");
 	for (pos = count = 0; pos < COUNT_OF(sources); ++pos)
-		if (rngESRead(&read, 0, 0, sources[pos]) == ERR_OK)
+	{
+		size_t read;
+		octet o;
+		if (rngESRead(&read, &o, 1, sources[pos]) == ERR_OK)
 		{
-			printf(" %s%c", sources[pos], 
+			printf(" %s%c", sources[pos],
 				rngESTest(sources[pos]) == ERR_OK ? '+' : '-');
 			++count;
 		}
+	}
 	printf(count ? "\n" : " none\n");
 	// общая работоспособность
 	printf("Health (at least two healthy sources): %c\n", 
@@ -145,6 +153,24 @@ static err_t rngReadSourceEx(size_t* read, void* buf, size_t count,
 	return ERR_OK;
 }
 
+static size_t decToSize(const char* dec)
+{
+	register size_t num;
+	ASSERT(decIsValid(dec));
+	for (num = 0; *dec; ++dec)
+	{
+		register size_t digit;
+		if (num > SIZE_MAX / 10)
+			return SIZE_MAX;
+		num *= 10;
+		digit = (size_t)(*dec - '0');
+		if (num + digit < num)
+			return SIZE_MAX;
+		num += digit;
+	}
+	return num;
+}
+
 static err_t esRead(int argc, char *argv[])
 {
 	err_t code;
@@ -152,7 +178,6 @@ static err_t esRead(int argc, char *argv[])
 	size_t par = 0;
 	size_t count;
 	file_t file;
-	octet buf[2048];
 	// разбор командной строки: число параметров
 	if (argc != 3)
 		return ERR_CMD_PARAMS;
@@ -174,42 +199,115 @@ static err_t esRead(int argc, char *argv[])
 		if (!decIsValid(argv[0]) || !strLen(argv[0]) || 
 			strLen(argv[0]) > 3 || decCLZ(argv[0]))
 			return ERR_CMD_PARAMS;
-		par = (size_t)decToU32(argv[0]);
+		par = decToSize(argv[0]);
+		ASSERT(par > 0 && par != SIZE_MAX);
 	}
 	else
 		return ERR_CMD_PARAMS;
 	// разбор командной строки: число Кбайтов
-	if (!decIsValid(argv[1]) || !strLen(argv[1]) || 
-		strLen(argv[1]) > 4 || decCLZ(argv[1]))
+	if (!decIsValid(argv[1]) || !strLen(argv[1]) || decCLZ(argv[1]))
 		return ERR_CMD_PARAMS;
-	count = (size_t)decToU32(argv[1]);
-	if (((count << 10) >> 10) != count)
+	count = decToSize(argv[1]);
+	if (count == SIZE_MAX)
 		return ERR_OUTOFRANGE;
-	count <<= 10;
 	// разбор командной строки: имя выходного файла
 	code = cmdFileValNotExist(1, argv + 2);
 	ERR_CALL_CHECK(code);
 	code = cmdFileOpen(file, argv[2], "wb");
 	ERR_CALL_CHECK(code);
 	// выгрузка данных
-	while (count)
+	while (count--)
 	{
+		octet buf[1024];
 		size_t read;
 		// читать
-		code = rngReadSourceEx(&read, buf,
-			MIN2(sizeof(buf), count), source, par);
+		code = rngReadSourceEx(&read, buf, 1024, source, par);
 		ERR_CALL_HANDLE(code, cmdFileClose(file));
-		if (read != MIN2(sizeof(buf), count))
+		if (read != 1024)
 			code = ERR_FILE_READ;
 		ERR_CALL_HANDLE(code, cmdFileClose(file));
 		// писать
 		if (fileWrite2(file, buf, read) != read)
 			code = ERR_FILE_WRITE;
 		ERR_CALL_HANDLE(code, cmdFileClose(file));
-		count -= read;
 	}
 	// завершение
 	return cmdFileClose2(file);
+}
+
+/*
+*******************************************************************************
+Статистическое тестирование
+
+es test <file>
+*******************************************************************************
+*/
+
+extern size_t rngWhtEnc(i32* wh, const octet* buf, size_t count);
+extern u32 rngWhtMax(const i32* wh, size_t count);
+extern u32 rngWhtMaxMean(size_t log_count);
+
+static err_t esTest(int argc, char *argv[])
+{
+	err_t code;
+	size_t size;
+	size_t count;
+	size_t log_count;
+	void* state;
+	i32* wh;			/* [count * 8] */
+	file_t file;
+	u32 max;
+	double ratio;
+	// разбор командной строки: число параметров
+	if (argc != 1)
+		return ERR_CMD_PARAMS;
+	// разбор командной строки: имя входного файла
+	code = cmdFileValExist(1, argv);
+	ERR_CALL_CHECK(code);
+	// размер файла
+	size = cmdFileSize(argv[0]);
+	if (size == 0)
+		return ERR_FILE_SIZE;
+	count = 1, log_count = 0;
+	while (count <= size / 2 && log_count < 29)
+		count *= 2, ++log_count;
+	// выделить и разметить память
+	code = cmdBlobCreate2(state,
+		count * 8 * 4,
+		SIZE_MAX,
+		&wh);
+	ERR_CALL_CHECK(code);
+	// прочитать данные
+	code = cmdFileOpen(file, argv[0], "rb");
+	ERR_CALL_HANDLE(code, blobClose(state));
+	for (size = 0; size < count;)
+	{
+		octet buf[1024];
+		size_t read;
+		// прочитать фрагмент данных
+		code = fileRead(&read, buf, MIN2(sizeof(buf), count - size), file);
+		if (code != ERR_OK)
+			code = ERR_FILE_READ;
+		ERR_CALL_HANDLE(code, (cmdFileClose(file), cmdBlobClose(state)));
+		// кодировать фрагмент
+		rngWhtEnc(wh + size * 8, buf, read);
+		// к следующему фрагменту
+		size += read;
+	}
+	cmdFileClose(file);
+	// статистическое тестирование
+	count *= 8, log_count += 3;
+	max = rngWhtMax(wh, count);
+	ratio = max ? (double)max : 4294967296.0;
+	ratio /= rngWhtMaxMean(log_count);
+	printf("file = \"%s\" (2^%u bits)\n", argv[0], (unsigned)log_count);
+	if (max)
+		printf("max_wht = %lu (%f)\n", (unsigned long)max, ratio);
+	else
+		printf("max_wht = 2^32 (%f)\n", ratio);
+	// завершение
+	cmdBlobClose(state);
+	return ERR_OK;
 }
 
 /*
@@ -230,6 +328,8 @@ static int esMain(int argc, char* argv[])
 		code = esPrint(argc - 1, argv + 1);
 	else if (strEq(argv[0], "read"))
 		code = esRead(argc - 1, argv + 1);
+	else if (strEq(argv[0], "test"))
+		code = esTest(argc - 1, argv + 1);
 	else
 		code = ERR_CMD_NOT_FOUND;
 	// завершить

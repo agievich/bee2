@@ -3,7 +3,7 @@
 # \brief Testing command-line interface
 # \project bee2evp/cmd
 # \created 2022.06.24
-# \version 2025.10.18
+# \version 2026.10.21
 # \pre The working directory contains "zed.cert", "zed.csr", "zed.sk"
 # =============================================================================
 
@@ -547,6 +547,8 @@ test_es() {
   if [ "$(wc -c dd | awk '{print $1}')" != "1024" ]; then
     return 1
   fi
+
+  $bee2cmd es test
 
   return 0
 }

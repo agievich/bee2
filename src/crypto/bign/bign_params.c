@@ -4,7 +4,7 @@
 \brief STB 34.101.45 (bign): public parameters
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2025.09.26
+\version 2026.10.19
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -284,10 +284,10 @@ err_t bignParamsCheck(const bign_params* params)
 Проверка параметров
 
 -#	l \in {128, 192, 256} (bignParamsCheck)
--#	2^{l - 1} < p, q < 2^l (bignParamsCheck)
+-#	2^{2l - 1} < p, q < 2^{2l} (bignParamsCheck)
 -#	p \equiv 3 \mod 4 (bignParamsCheck)
 -#	0 < a (bignParamsCheck)
--#	0 < b (bignParamsCheck, zzJacobi)
+-#	0 < b (bignParamsCheck)
 -#	p -- простое (ecpIsValid)
 -#	q -- простое (ecpGroupIsSafe)
 -#	q != p (ecpGroupIsSafe)
@@ -298,6 +298,7 @@ err_t bignParamsCheck(const bign_params* params)
 -#	(b / p) = 1 (zzJacobi)
 -#	G = (0, b^{(p + 1) /4}) (bignParamsVal)
 -#	qG = O (ecpHasOrder)
+-#	p - q < 2^{l+1} (bignParamsVal)
 *******************************************************************************
 */
 
@@ -361,7 +362,10 @@ err_t bignParamsValEc(const ec_o* ec, const bign_params* params)
 	wwFrom(b, B, 64);
 	zzMod(b, b, W_OF_O(64), ec->f->mod, n, stack);
 	wwTo(B, 64, b);
-	// проверить условия алгоритма 6.1.4
+	// b (коэффициент кривой) \equiv B (mod p)?
+	// p -- простое?
+	// q -- простое && p^m \not\equiv 1 (mod q), m = 1, 2,..., 50?
+	// (b / p) == 1?
 	if (qrFrom(b, B, ec->f, stack) &&
 		wwEq(b, ec->B, n) &&
 		!wwIsZero(ec->B, n) &&
@@ -374,10 +378,20 @@ err_t bignParamsValEc(const ec_o* ec, const bign_params* params)
 		zzAddW2(b, n, 1);
 		wwShLo(b, n, 2);
 		qrPower(b, ec->B, b, n, ec->f, stack);
-		// оставшиеся условия
+		// yG == b^{(p + 1) / 4} mod p?
+		// q G == O?
 		if (!wwEq(b, ecY(ec->base, n), n) ||
 			!ecHasOrderA(ec->base, ec, ec->order, n, stack))
 			code = ERR_BAD_PARAMS;
+		// p - q < 2^{l+1}?
+		else
+		{
+			ASSERT(wwIsZero(ec->base, n));
+			wwSetBit(ec->base, B_OF_O(no / 2) + 1, 1);
+			if (zzSub2(ec->f->mod, ec->order, n) == 0 &&
+				wwCmp(ec->f->mod, ec->base, n) >= 0)
+				code = ERR_BAD_PARAMS;
+		}
 	}
 	else
 		code = ERR_BAD_PARAMS;
