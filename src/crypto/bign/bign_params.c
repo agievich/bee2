@@ -1,10 +1,10 @@
 /*
 *******************************************************************************
-\file bign.c
+\file bign_params.c
 \brief STB 34.101.45 (bign): public parameters
 \project bee2 [cryptographic library]
 \created 2012.04.27
-\version 2026.10.19
+\version 2026.11.11
 \copyright The Bee2 authors
 \license Licensed under the Apache License, Version 2.0 (see LICENSE.txt).
 *******************************************************************************
@@ -16,6 +16,7 @@
 #include "bee2/core/mem.h"
 #include "bee2/core/str.h"
 #include "bee2/core/util.h"
+#include "bee2/core/word.h"
 #include "bee2/crypto/belt.h"
 #include "bee2/crypto/bign.h"
 #include "bee2/math/ecp.h"
@@ -298,7 +299,7 @@ err_t bignParamsCheck(const bign_params* params)
 -#	(b / p) = 1 (zzJacobi)
 -#	G = (0, b^{(p + 1) /4}) (bignParamsVal)
 -#	qG = O (ecpHasOrder)
--#	p - q < 2^{l+1} (bignParamsVal)
+-#	q > p - 2^{l+1} (bignParamsVal)
 *******************************************************************************
 */
 
@@ -383,13 +384,13 @@ err_t bignParamsValEc(const ec_o* ec, const bign_params* params)
 		if (!wwEq(b, ecY(ec->base, n), n) ||
 			!ecHasOrderA(ec->base, ec, ec->order, n, stack))
 			code = ERR_BAD_PARAMS;
-		// p - q < 2^{l+1}?
+		// q > p - 2^{l+1}?
 		else
 		{
-			ASSERT(wwIsZero(ec->base, n));
-			wwSetBit(ec->base, B_OF_O(no / 2) + 1, 1);
-			if (zzSub2(ec->f->mod, ec->order, n) == 0 &&
-				wwCmp(ec->f->mod, ec->base, n) >= 0)
+			size_t l1 = B_OF_O(no / 2) + 1;
+			VERIFY(zzSubW2(ec->f->mod + l1 / B_PER_W, n - l1 / B_PER_W,
+				WORD_BIT_POS(l1 % B_PER_W)) == 0);
+			if (wwCmp(ec->order, ec->f->mod, n) <= 0)
 				code = ERR_BAD_PARAMS;
 		}
 	}
