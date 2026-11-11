@@ -106,14 +106,15 @@ err_t rngTimerRead(void* buf, size_t* read, size_t count)
 значение и сравнение повторяется. Если несовпадение соблюсти не удалось после 
 1024 попыток, то счетчик выдает значение 0.
 
-\expect Функции таймера-счетчика вызываются только в сихнронизированных 
-участках кода модуля rng_main.c. Дополнительная синхронизация не нужна.
+\expect Запуск, чтение и остановка таймера-счетчика сериализованы мьютексом
+источника jitter в rngJitterRead(), в том числе при прямом вызове rngESRead().
 *******************************************************************************
 */
 
 static volatile bool_t _tm_ctr_loop;		/*< счетчик запущен? */
 static volatile tm_ticks_t _tm_ctr_ticks;	/*< текущее показание */
 static volatile tm_ticks_t _tm_ctr_ticks2;	/*< предыдущее показание */
+static bool_t _tm_ctr_close_registered;		/*< закрытие зарегистрировано? */
 
 #ifdef OS_WIN
 
@@ -221,11 +222,12 @@ static bool_t tmCtrStart()
 	if (!tmCtrCreate())
 		return FALSE;
 	// зарегистрировать закрытие
-	if (!utilOnExit(tmCtrClose))
+	if (!_tm_ctr_close_registered && !utilOnExit(tmCtrClose))
 	{
 		tmCtrClose();
 		return FALSE;
 	}
+	_tm_ctr_close_registered = TRUE;
 	return TRUE;
 }
 
@@ -276,6 +278,29 @@ static bool_t tmCtrStart()
 *******************************************************************************
 */
 
+static size_t _jitter_once;
+static mt_mtx_t _jitter_mtx[1];
+static bool_t _jitter_inited;
+
+static void rngJitterDestroy()
+{
+	// tmCtrClose() зарегистрирован позже и вызывается раньше
+	mtMtxClose(_jitter_mtx);
+}
+
+static void rngJitterInit()
+{
+	ASSERT(!_jitter_inited);
+	if (!mtMtxCreate(_jitter_mtx))
+		return;
+	if (!utilOnExit(rngJitterDestroy))
+	{
+		mtMtxClose(_jitter_mtx);
+		return;
+	}
+	_jitter_inited = TRUE;
+}
+
 static bool_t rngJitterIsAvail()
 {
 	return tmCtrStart();
@@ -319,9 +344,16 @@ err_t rngJitterRead(void* buf, size_t* read, size_t count)
 	// pre
 	ASSERT(memIsValid(read, sizeof(size_t)));
 	ASSERT(memIsValid(buf, count));
+	// инициализировать однократно и заблокировать мьютекс
+	if (!mtCallOnce(&_jitter_once, rngJitterInit) || !_jitter_inited)
+		return ERR_FILE_CREATE;
+	mtMtxLock(_jitter_mtx);
 	// есть источник?
 	if (!rngJitterIsAvail())
+	{
+		mtMtxUnlock(_jitter_mtx);
 		return ERR_FILE_NOT_FOUND;
+	}
 	// генерация
 	for (i = 0, w = 0; i < count; ++i)
 	{
@@ -345,5 +377,7 @@ err_t rngJitterRead(void* buf, size_t* read, size_t count)
 	}
 	CLEAN3(ticks, t, w);
 	*read = count;
+	tmCtrClose();
+	mtMtxUnlock(_jitter_mtx);
 	return ERR_OK;
 }
